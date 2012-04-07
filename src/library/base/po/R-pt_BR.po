@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
 "PO-Revision-Date: 2005-12-17 10:55-0200\n"
 "Last-Translator: Fernando Henrique Ferraz P. da Rosa <feferraz@ime.usp.br>\n"
 "Language-Team: Portuguese <ldp-br@bazar.conectiva.com.br>\n"
@@ -177,6 +177,10 @@ msgstr "'x' deve ser um array de pelo menos duas dimensões"
 
 msgid "invalid 'dims'"
 msgstr "'dims' inválido"
+
+#, fuzzy
+msgid "extra arguments ignored:"
+msgstr "argumento 'drop' será ignorado"
 
 msgid "bad handler specification"
 msgstr "especificação de handler inválido"
@@ -640,6 +644,10 @@ msgstr "nenhum arquivo para onde copiar"
 msgid "more 'from' files than 'to' files"
 msgstr "mais arquivos 'from' do que 'to'"
 
+#, fuzzy
+msgid "'recursive' will be ignored"
+msgstr "argumento 'drop' será ignorado"
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "arquivo não pode ser copiado ao mesmo tempo em 'from' e 'to'"
 
@@ -678,8 +686,11 @@ msgstr "'vec' contem NAs"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' deve ser ordenado de forma não-decrescente"
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
-msgstr "'mode' deve ser \"double\" (\"real\") ou \"integer\""
+msgid "using the first element of 'value' of type expression"
+msgstr ""
+
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
+msgstr "'mode' deve ser \"double\" (\"real\"), \"integer\" ou \"character\""
 
 msgid "coercing argument to \"character\" for format=\"s\""
 msgstr "fazendo do argumento para \"character\" para format=\"s\""
@@ -786,29 +797,15 @@ msgstr ""
 msgid "invalid package name"
 msgstr "nome inválido"
 
-msgid "package '%s' has been merged into '%s'"
-msgstr "pacote '%s' foi incluído em '%s'"
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr "pacote 'lqs' foi movido de volta para o pacote 'MASS'"
-
-msgid "package 'MASS' has now been loaded"
-msgstr "pacote 'MASS' foi carregado"
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr "pacote 'MASS' parece não estar disponível nessa instalação do R"
-
-msgid "there is no package called '%s', version %s"
-msgstr "não há nenhum pacote chamado '%s', versão %s"
-
 msgid "there is no package called '%s'"
 msgstr "não há nenhum pacote chamado '%s'"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr "nenhuma biblioteca encontrada em 'lib.loc'"
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr "'%s' não é um pacote válido -- instalado antes do R 2.0.0?"
+#, fuzzy
+msgid "'%s' is not a valid installed package"
+msgstr "'%s' não é uma escolha válida"
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
@@ -1034,11 +1031,14 @@ msgstr ""
 "Rastreamento de funções requer o pacote methods, mas não foi possível "
 "carregar o seu espaço de nomes"
 
-msgid "Expected a single logical value for the S4 object state"
+msgid "Expected a single logical value for the S4 state flag"
 msgstr ""
 
 msgid "invalid to change the storage mode of a factor"
 msgstr ""
+
+msgid "package '%s' has been merged into '%s'"
+msgstr "pacote '%s' foi incluído em '%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' não é um objeto exportado de 'namespace:%s'"
@@ -1090,6 +1090,9 @@ msgstr "falha na atribuição de NativeSymbolInfo para"
 
 msgid "package '%s' does not have a name space"
 msgstr "pacote '%s' não tem um espaõ de nomes"
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr ""
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr "em '%s' classes para expor~tação não definidas: %s"
@@ -1532,6 +1535,35 @@ msgstr "'cmd' não pôde ser executado"
 msgid "'%s' execution failed with error code %d"
 msgstr "execução de 'cmd' falhou com erro código %d"
 
+msgid "-l option without value"
+msgstr ""
+
+#, fuzzy
+msgid "ERROR: no packages specified"
+msgstr "nenhum pacote encontrado"
+
+msgid "Removing from library"
+msgstr ""
+
+msgid "ERROR: cannot cd to directory"
+msgstr ""
+
+msgid "ERROR: no permission to remove from directory"
+msgstr ""
+
+msgid "T used instead of TRUE"
+msgstr ""
+
+msgid "F used instead of FALSE"
+msgstr ""
+
+msgid "items"
+msgstr ""
+
+#, fuzzy
+msgid "have been removed from the search path"
+msgstr "'%s' não encontrado no caminho de procura, usando pos = 2"
+
 msgid "cannot find name space environment"
 msgstr "não foi possível encontrar o ambiente de espaço de nomes"
 
@@ -1586,6 +1618,21 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#~ msgid "package 'lqs' has been moved back to package 'MASS'"
+#~ msgstr "pacote 'lqs' foi movido de volta para o pacote 'MASS'"
+
+#~ msgid "package 'MASS' has now been loaded"
+#~ msgstr "pacote 'MASS' foi carregado"
+
+#~ msgid "package 'MASS' seems to be missing from this R installation"
+#~ msgstr "pacote 'MASS' parece não estar disponível nessa instalação do R"
+
+#~ msgid "there is no package called '%s', version %s"
+#~ msgstr "não há nenhum pacote chamado '%s', versão %s"
+
+#~ msgid "'%s' is not a valid package -- installed < 2.0.0?"
+#~ msgstr "'%s' não é um pacote válido -- instalado antes do R 2.0.0?"
 
 #~ msgid "non-numeric data type in frame"
 #~ msgstr "tipo de dados não numérico no frame"

@@ -16,12 +16,21 @@
 
 grep <-
 function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
-         value = FALSE, fixed = FALSE, useBytes = FALSE)
+         value = FALSE, fixed = FALSE, useBytes = FALSE, invert = FALSE)
 {
     ## when value = TRUE we return names
     if(!is.character(x)) x <- structure(as.character(x), names=names(x))
     .Internal(grep(as.character(pattern), x, ignore.case, extended, value,
-                   perl, fixed, useBytes))
+                   perl, fixed, useBytes, invert))
+}
+
+grepl <-
+function(pattern, x, ignore.case = FALSE, extended = TRUE, perl = FALSE,
+         fixed = FALSE, useBytes = FALSE)
+{
+    if(!is.character(x)) x <- as.character(x)
+    .Internal(grepl(as.character(pattern), x, ignore.case, extended, FALSE,
+                   perl, fixed, useBytes, FALSE))
 }
 
 sub <-
@@ -69,7 +78,7 @@ function(pattern, x, ignore.case = FALSE, value = FALSE, max.distance = 0.1,
             return(rep.int(NA, length(x)))
     }
 
-    if(!is.character(pattern) || length(pattern) != 1 || !nzchar(pattern))
+    if(!is.character(pattern) || length(pattern) != 1L || !nzchar(pattern))
         stop("'pattern' must be a non-empty character string")
 
     n <- nchar(pattern, "c")

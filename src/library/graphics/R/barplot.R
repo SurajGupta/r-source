@@ -25,8 +25,9 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 	 xlim = NULL, ylim = NULL, xpd = TRUE, log = "",
 	 axes = TRUE, axisnames = TRUE,
 	 cex.axis = par("cex.axis"), cex.names = par("cex.axis"),
-	 inside = TRUE, plot = TRUE, axis.lty = 0, offset = 0, add = FALSE, ...)
-{
+         inside = TRUE, plot = TRUE, axis.lty = 0, offset = 0, add = FALSE,
+         args.legend = NULL, ...)
+ {
     if (!missing(inside)) .NotYetUsed("inside", error = FALSE)# -> help(.)
 
     if (is.null(space))
@@ -72,7 +73,7 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 
     if (beside) {
 	if (length(space) == 2)
-	    space <- rep.int(c(space[2], rep.int(space[1], NR - 1)), NC)
+	    space <- rep.int(c(space[2L], rep.int(space[1L], NR - 1)), NC)
 	width <- rep(width, length.out = NR)
     } else {
 	width <- rep(width, length.out = NC)
@@ -98,14 +99,14 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 	## if axis limit is set to < above, adjust bar base value
 	## to draw a full bar
 	rectbase <-
-	    if	    (logy && !horiz && !is.null(ylim))	ylim[1]
-	    else if (logx && horiz  && !is.null(xlim))	xlim[1]
+	    if	    (logy && !horiz && !is.null(ylim))	ylim[1L]
+	    else if (logx && horiz  && !is.null(xlim))	xlim[1L]
 	    else 0.9 * min(height, na.rm = TRUE)
     } else rectbase <- 0
 
     ## if stacked bar, set up base/cumsum levels, adjusting for log scale
     if (!beside)
-	height <- rbind(rectbase, apply(height, 2, cumsum))
+	height <- rbind(rectbase, apply(height, 2L, cumsum))
 
     rAdj <- offset + (if (log.dat) 0.9 * height else -0.01 * height)
 
@@ -147,8 +148,8 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 	else {
 	    ## noInside <- NC > 1 && !inside # outside border, but not inside
 	    ## bordr <- if(noInside) 0 else border
-	    for (i in 1:NC) {
-		xyrect(height[1:NR, i] + offset[i], w.l[i],
+	    for (i in 1L:NC) {
+		xyrect(height[1L:NR, i] + offset[i], w.l[i],
 		       height[ -1,  i] + offset[i], w.r[i],
 		       horizontal = horiz, angle = angle, density = density,
 		       col = col, border = border)# = bordr
@@ -176,9 +177,19 @@ function(height, width = 1, space = NULL, names.arg = NULL,
 		angle <- rev(angle)
 	    }
 	    xy <- par("usr")
-	    legend(xy[2] - xinch(0.1), xy[4] - yinch(0.1),
-		   legend = legend.text, angle = angle, density = density,
-		   fill = legend.col, xjust = 1, yjust = 1)
+            if(is.null(args.legend)) {
+                legend(xy[2L] - xinch(0.1), xy[4L] - yinch(0.1),
+                       legend = legend.text, angle = angle, density = density,
+                       fill = legend.col, xjust = 1, yjust = 1)
+            } else {
+                args.legend1 <- list(x = xy[2L] - xinch(0.1),
+                                     y = xy[4L] - yinch(0.1),
+                                     legend = legend.text,
+                                     angle = angle, density = density,
+                                     fill = legend.col, xjust = 1, yjust = 1)
+                args.legend1[names(args.legend)] <- args.legend
+                do.call("legend", args.legend1)
+            }
 	}
 	title(main = main, sub = sub, xlab = xlab, ylab = ylab, ...)
 	if(axes) axis(if(horiz) 1 else 2, cex.axis = cex.axis, ...)

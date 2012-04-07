@@ -104,6 +104,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
     char RCMD[] = "R CMD";
     int len = strlen(argv[0]);
     char env_path[MAX_PATH];
+    int timing = 1;
 
     if(!strncmp(argv[0]+len-4, "Rcmd", 4) ||
        !strncmp(argv[0]+len-4, "rcmd", 4) ||
@@ -136,7 +137,8 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	return(0);
     }
 
-    if (cmdarg > 0 && argc > cmdarg && strcmp(argv[cmdarg], "BATCH") == 0) {
+    if (cmdarg > 0 && argc > cmdarg && 
+	strcmp(argv[cmdarg], "BATCH") == 0) {
 	/* handle Rcmd BATCH internally */
 	char infile[MAX_PATH], outfile[MAX_PATH], *p, cmd_extra[CMD_LEN];
 	DWORD ret;
@@ -158,7 +160,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 
 	for(i = cmdarg + 1, iused = cmdarg; i < argc; i++) {
 	    if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
-		fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+		fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 "Usage: ", RCMD, " BATCH [options] infile [outfile]\n\n",
 "Run R non-interactively with input from infile and place output (stdout\n",
 "and stderr) to another file.  If not given, the name of the output file\n",
@@ -167,6 +169,7 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 "Options:\n"
 "  -h, --help		print short help message and exit\n",
 "  -v, --version		print version info and exit\n",
+"  --no-timing		do not report the timings\n",
 "  --			end processing of options\n\n",
 "Further arguments starting with a '-' are considered as options as long\n",
 "as '--' was not encountered, and are passed on to the R process, which\n",
@@ -174,13 +177,19 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 "Report bugs to <r-bugs@r-project.org>.");
 		return(0);
 	    }
-	    if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "-version")) {
+	    if (!strcmp(argv[i], "-v") || !strcmp(argv[i], "--version")) {
 		fprintf(stderr, "BATCH %s\n%s%s%s\n", "1.2",
 "Copyright (C) 1997-2004 R Core Development Team.\n",
 "This is free software; see the GNU General Public Licence version 2\n",
 "or later for copying conditions.  There is NO warranty.");
 		return(0);
 	    }
+	    if (!strcmp(argv[i], "--no-timing")) {
+		timing = 0;
+		iused = i;
+		continue;
+	    }
+
 	    if (!strcmp(argv[i], "--")) {
 		iused = i;
 		break;
@@ -217,7 +226,9 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    return(27);
 	}
 	strcat(cmd, cmd_extra);
-	putenv("R_BATCH=1234"); /* to get Last.sys run */
+	if(timing) 
+	    putenv("R_BATCH=1234"); 
+	/* to get ,Last.sys run: see profile/Common.R */
 
 	/* fprintf(stderr, "%s->%s\n", infile, outfile);
 	   fprintf(stderr, "%s\n", cmd); */
@@ -250,9 +261,32 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	}
 	CloseHandle(pi.hThread);
 	return(pwait(pi.hProcess));
+    } else if (cmdarg > 0 && argc > cmdarg && 
+	      strcmp(argv[cmdarg], "REMOVE") == 0) {
+	/* handle Rcmd REMOVE internally */
+	snprintf(cmd, CMD_LEN, 
+		 "%s/bin/Rterm.exe -f \"%s/share/R/REMOVE.R\" R_DEFAULT_PACKAGES=NULL --slave --args",
+		 getRHOME(), getRHOME());
+	for (i = cmdarg + 1; i < argc; i++){
+	    strcat(cmd, " ");
+	    if (strlen(cmd) + strlen(argv[i]) > 9900) {
+		fprintf(stderr, "command line too long\n");
+		return(27);
+	    }
+	    /* Library names could contain spaces */
+	    if(strchr(argv[i], ' ')) {
+		strcat(cmd, "\"");
+		strcat(cmd, argv[i]);
+		strcat(cmd, "\"");
+	    } else strcat(cmd, argv[i]);
+	}
+	status = system(cmd);
+	return(status);
     } else {
 	RHome = getRHOME();
-	if (argc > cmdarg+1 && strcmp(argv[cmdarg+1], "RHOME") == 0) {	    fprintf(stdout, "%s", RHome);
+	if (argc > cmdarg+1 && 
+	    strcmp(argv[cmdarg+1], "RHOME") == 0) {
+	    fprintf(stdout, "%s", RHome);
 	    return(0);
 	}
 	strcpy(RHOME, "R_HOME=");
@@ -311,9 +345,21 @@ int rcmdfn (int cmdarg, int argc, char **argv)
 	    } else if (strcmp(p, "Stangle") == 0) {
 		strcpy(cmd, "sh ");
 		strcat(cmd, RHome); strcat(cmd, "/bin/Stangle.sh");
+	    } else if (strcmp(p, "rtags") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/rtags.sh");
 	    } else if (strcmp(p, "config") == 0) {
 		strcpy(cmd, "sh ");
 		strcat(cmd, RHome); strcat(cmd, "/bin/config.sh");
+	    } else if (strcmp(p, "INSTALL") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/INSTALL.sh");
+	    } else if (strcmp(p, "SHLIB") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/SHLIB.sh");
+	    } else if (strcmp(p, "Rd2txt") == 0) {
+		strcpy(cmd, "sh ");
+		strcat(cmd, RHome); strcat(cmd, "/bin/Rd2txt.sh");
 	    } else {
 		if (!strcmp(".sh", p + strlen(p) - 3)) {
 		    strcpy(cmd, "sh ");

@@ -162,15 +162,15 @@
   special symbol name, for example, the universal, or forall, symbol is
   \code{symbol("\\042")}.
 
-  Note to TeX users: TeX's \code{\Upsilon} is \code{Upsilon1}, TeX's
-  \code{\varepsilon} is close to \code{epsilon}, and there is no
-  equivalent of TeX's \code{\epsilon}.  TeX's \code{\varpi} is close to
+  Note to TeX users: TeX's \code{\\Upsilon} is \code{Upsilon1}, TeX's
+  \samp{\\varepsilon} is close to \code{epsilon}, and there is no
+  equivalent of TeX's \samp{\\epsilon}.  TeX's \samp{\\varpi} is close to
   \code{omega1}.  \code{vartheta}, \code{varphi} and \code{varsigma} are
   allowed as synonyms for \code{theta1}, \code{phi1} and \code{sigma1}.
 
   \code{sigma1} is also known as \code{stigma}, its Unicode name.
 
-  Control characters (e.g. \code{\\n}) are not interpreted in character
+  Control characters (e.g. \samp{\\n}) are not interpreted in character
   strings in plotmath, unlike normal plotting.
 
   The fonts used are taken from the current font family, and so can be
@@ -191,8 +191,8 @@
 
 #ifdef unix
   In a UTF-8 locale any Unicode character can be entered, perhaps as a
-  \code{\uxxxx} or \code{\Uxxxxxxxx} escape sequence, but the issue is
-  whether the graphics device is apply to display the character.  The
+  \code{\\uxxxx} or \code{\\Uxxxxxxxx} escape sequence, but the issue is
+  whether the graphics device is able to display the character.  The
   widest range of characters is likely to be available in the
   \code{\link{X11}} device using cairo: see its help page for how
   installing additional fonts can help.
@@ -202,13 +202,13 @@
 #endif
 #ifdef windows
   Any Unicode character can be entered into a text string \emph{via} a
-  \code{\uxxxx} escape, or used by number in a call to
+  \code{\\uxxxx} escape, or used by number in a call to
   \code{\link{points}}.  The \code{\link{windows}} family of devices can
   display such characters if they are available in the font in use.  A good
   way to both find out which characters are available in a font and to
   determine the Unicode number is to use the \sQuote{Character Map}
   accessory (usually on the \sQuote{Start} menu under
-  \sQuote{Accessories->System Tools}.  You can also copy-and-paste
+  \sQuote{Accessories->System Tools}).  You can also copy-and-paste
   characters from the \sQuote{Character Map} window to \code{Rgui} (but
   not to \code{Rterm}).
 #endif

@@ -3,18 +3,19 @@
 #
 # Copyright (C) 2008 The R Foundation
 # This file is distributed under the same license as the R package.
-# Alexey Shipunov <dactylorhiza at gmail> 2008
+# Copyright (C) 2008 Alexey Shipunov <dactylorhiza at gmail>
+# Copyright (C) 2009 Anton Korobeynikov <asl at math dot spbu dot ru>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-10-06 16:47-0500\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
+"PO-Revision-Date: 2009-03-28 18:25+0300\n"
+"Last-Translator: Anton Korobeynikov <asl at math dot spbu dot ru>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=KOI8-R\n"
+"Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
@@ -38,7 +39,7 @@ msgid "'symbol.For' is not needed: please remove it"
 msgstr "'symbol.For' не нужен: удалите его"
 
 msgid "'%s' is deprecated."
-msgstr "'%s' не одобряется."
+msgstr "'%s' устарел"
 
 msgid "See help(\"Deprecated\") and help(\"%s-deprecated\")."
 msgstr "См. help(\"Deprecated\") и help(\"%s-deprecated\")."
@@ -128,7 +129,7 @@ msgid "replaced '[<-' by '\\\\[<-' in regular expression pattern"
 msgstr "образец регулярного выражения '[<-' заменен на '\\\\[<-'"
 
 msgid "RHS must be list"
-msgstr "RHS должен быть списком"
+msgstr "правая сторона присваивания должна быть списком"
 
 msgid "an object with that name already exists"
 msgstr "объект с таким именем уже есть"
@@ -140,7 +141,7 @@ msgid "invalid argument values in 'backsolve'"
 msgstr "неправильные значения аргумента в 'backsolve'"
 
 msgid "singular matrix in 'backsolve'. First zero in diagonal [%d]"
-msgstr "сингулярная матрица в 'backsolve'. Первый ноль в диагонали [%d]"
+msgstr "сингулярная матрица в 'backsolve'. Первый ноль на диагонали [%d]"
 
 msgid "complex matrices not permitted at present"
 msgstr "в настоящее время комплексные матрицы не разрешены"
@@ -155,7 +156,7 @@ msgid "non-matrix argument to 'chol'"
 msgstr "нематричный аргумент для 'chol'"
 
 msgid "matrix not positive definite"
-msgstr "матрица не положительно определенная"
+msgstr "матрица не является положительно определенной"
 
 msgid "non-positive definite matrix in 'chol'"
 msgstr "не положительно определенная матрица в 'chol'"
@@ -174,6 +175,9 @@ msgstr "'x' должен быть матрицей по крайней мере с двумя измерениями"
 
 msgid "invalid 'dims'"
 msgstr "неправильные 'dims'"
+
+msgid "extra arguments ignored:"
+msgstr "дополнительные аргументы проигнорированы"
 
 msgid "bad handler specification"
 msgstr "неправильное указание обработчика"
@@ -278,7 +282,7 @@ msgid "undefined columns selected"
 msgstr "выбраны не определенные колонки"
 
 msgid "rhs is the wrong length for indexing by a logical matrix"
-msgstr "неправильная длина 'rhs', чтобы проиндексировать логическую матрицу"
+msgstr "неправильная длина правой стороны выражения для того, чтобы проиндексировать логическую матрицу"
 
 msgid "only logical matrix subscripts are allowed in replacement"
 msgstr "только логические матричные индексы разрешены для замены"
@@ -410,7 +414,7 @@ msgid "'to' must be of length 1"
 msgstr "'to' должен быть длиной 1"
 
 msgid "'length.out' must be of length 1"
-msgstr "'длина.out' должен быть длиной 1"
+msgstr "'length.out' должен быть длиной 1"
 
 msgid "exactly two of 'to', 'by' and 'length.out' / 'along.with' must be specified"
 msgstr "нужно указать в точности два из: 'to', 'by' и 'length.out' / 'along.with'"
@@ -425,7 +429,7 @@ msgid "invalid string for 'by'"
 msgstr "неправильная строка для 'by'"
 
 msgid "invalid mode for 'by'"
-msgstr "неправильная мода для 'by'"
+msgstr "неправильный тип для 'by'"
 
 msgid "'by' is NA"
 msgstr "'by' является NA"
@@ -507,7 +511,7 @@ msgid ""
 msgstr ""
 "Неправильный формат DCF.\n"
 "Обычные строки должны иметь тег.\n"
-"Выступающие строки должны начинаться с:\n"
+"Неподходящие строки начинаются с:\n"
 "%s"
 
 msgid ""
@@ -518,7 +522,7 @@ msgid ""
 msgstr ""
 "Неправильный формат DCF.\n"
 "Продолжающиеся строки не должны начинать запись.\n"
-"Выступающие строки должны начинаться с:\n"
+"Неподходящие строки начинаются с:\n"
 "%s"
 
 msgid "'x' must be a square matrix"
@@ -537,7 +541,7 @@ msgid "replacement diagonal has wrong length"
 msgstr "у замены диагонали -- неправильная длина"
 
 msgid "'fromLast' must be TRUE or FALSE"
-msgstr "'quote' должен быть TRUE или FALSE"
+msgstr "'fromLast' должен быть TRUE или FALSE"
 
 msgid "MARGIN ="
 msgstr "MARGIN ="
@@ -611,6 +615,9 @@ msgstr "нет файлов, чтобы скопировать на"
 msgid "more 'from' files than 'to' files"
 msgstr "больше файлов 'from', чем 'to'"
 
+msgid "'recursive' will be ignored"
+msgstr "'recursive' будет проигнорирован"
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "файл не может быть скопирован одновременно 'from' и 'to'"
 
@@ -644,8 +651,11 @@ msgstr "'vec' содержит NA"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' должен быть сортирован не по уменьшению"
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
-msgstr "'mode' должна быть \"double\" (\"real\") или \"integer\""
+msgid "using the first element of 'value' of type expression"
+msgstr ""
+
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
+msgstr "'mode' должна быть \"double\" (\"real\"), \"integer\" или \"character\""
 
 msgid "coercing argument to \"character\" for format=\"s\""
 msgstr "преобразую аргумент в \"character\" для format=\"s\""
@@ -663,13 +673,13 @@ msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "поврежденная таблица данных: колонки будут обрезаны или заполнены NA"
 
 msgid "'zero.print' has length > 1"
-msgstr "'zero.print' имеет длина > 1"
+msgstr "'zero.print' имеет длину > 1"
 
 msgid "'zero.print' must be character, logical or NULL"
 msgstr "'zero.print' должен быть символом, логическим или NULL"
 
 msgid "'subset' must evaluate to logical"
-msgstr "'subset' должен оцениваться логически"
+msgstr "вычисление 'subset' должен приводить к булевому значению"
 
 msgid "'subset' must be logical"
 msgstr "'subset' должен быть логическим"
@@ -708,13 +718,13 @@ msgid "This is R %s, package '%s' needs %s %s"
 msgstr "Это -- R %s, а пакету '%s' нужен %s %s"
 
 msgid "package '%s' was built before R 2.0.0: please re-install it"
-msgstr "пакет '%s' был скомпилирован до R 2.0.0: пожалуйста, инсталлируйте его заново"
+msgstr "пакет '%s' был собран до R 2.0.0: пожалуйста, инсталлируйте его заново"
 
 msgid "package '%s' was built under R version %s"
-msgstr "пакет '%s' был скомпилирован под R версии %s"
+msgstr "пакет '%s' был собран под R версии %s"
 
 msgid "package '%s' was built for %s"
-msgstr "пакет '%s' был скомпилирован для %s"
+msgstr "пакет '%s' был собран для %s"
 
 msgid "package '%s' is not installed for 'arch=%s'"
 msgstr "пакет '%s' не установлен для 'arch=%s'"
@@ -743,29 +753,14 @@ msgstr ":"
 msgid "invalid package name"
 msgstr "неправильное имя пакета"
 
-msgid "package '%s' has been merged into '%s'"
-msgstr "пакет '%s' был слит с '%s'"
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr "пакет 'lqs' перемещен обратно в пакет 'MASS'"
-
-msgid "package 'MASS' has now been loaded"
-msgstr "пакет 'MASS' загрузился"
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr "пакет 'MASS', похоже, пропущен в данной установке R"
-
-msgid "there is no package called '%s', version %s"
-msgstr "нет пакета под названием '%s' и версии %s"
-
 msgid "there is no package called '%s'"
 msgstr "нет пакета под названием '%s'"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr "деревья библиотеки не найдены в 'lib.loc'"
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr "'%s' не является правильным пакет -- установлен под < 2.0.0?"
+msgid "'%s' is not a valid installed package"
+msgstr "'%s' не является правильным установленным пакетом"
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr "'%s' не найден в пути поиска, использую pos = 2"
@@ -795,7 +790,7 @@ msgid "%sPackages in library '%s':"
 msgstr "%sПакеты в библиотеке '%s':"
 
 msgid "no packages found"
-msgstr "пакетов не найдено"
+msgstr "пакеты не найдены"
 
 msgid "R packages available"
 msgstr "доступные R-пакеты"
@@ -976,11 +971,14 @@ msgstr "(загружено пространство имен методов)"
 msgid "Tracing functions requires the methods package, but unable to load methods namespace"
 msgstr "Трассировка функций требует пакета 'methods', но я не могу загрузить его пространство имен"
 
-msgid "Expected a single logical value for the S4 object state"
-msgstr "Для состояния \"объект S4\" ожидается простое логическое значение "
+msgid "Expected a single logical value for the S4 state flag"
+msgstr "Ожидается простое логическое значение для флага состояния S4"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "неправильно менять тип хранения фактора"
+
+msgid "package '%s' has been merged into '%s'"
+msgstr "пакет '%s' был слит с '%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' не является объектом, экспортированным из 'namespace:%s'"
@@ -1029,6 +1027,9 @@ msgstr "не удалось присвоить NativeSymbolInfo для"
 
 msgid "package '%s' does not have a name space"
 msgstr "пакет '%s' не имеет пространства имен"
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr "Указан 'exportClassPattern', но отсутствуют соответствующие классы в %s"
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr "в '%s' классы для экспорта не определены: %s"
@@ -1166,7 +1167,7 @@ msgid "'eps.correct' must be 0, 1, or 2"
 msgstr "'eps.correct' должен быть 0, 1, или 2"
 
 msgid "first argument must be a QR decomposition"
-msgstr "first аргумент должен быть 'QR decomposition'"
+msgstr "первый аргумент должен быть результатом QR разложения"
 
 msgid "'qr' and 'y' must have the same number of rows"
 msgstr "'qr' и 'y' должны иметь одинаковое количество строк"
@@ -1175,10 +1176,10 @@ msgid "exact singularity in 'qr.coef'"
 msgstr "точная сингулярность в 'qr.coef'"
 
 msgid "argument is not a QR decomposition"
-msgstr "аргумент не является 'QR decomposition'"
+msgstr "аргумент не является результатом QR разложения"
 
 msgid "not implemented for complex 'qr'"
-msgstr "не разработан для комплексных 'qr'"
+msgstr "не реализован для комплексных 'qr'"
 
 msgid "not supported for LAPACK QR"
 msgstr "не поддерживается LAPACK QR"
@@ -1256,7 +1257,7 @@ msgid "'b' must be compatible with 'a'"
 msgstr "'b' должен быть совместим с 'a'"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
-msgstr "solve.default вызвано с \"qr\" объект: используйте 'qr.solve'"
+msgstr "объект \"qr\" передан в solve.default: используйте 'qr.solve'"
 
 msgid "singular matrix 'a' in solve"
 msgstr "сингулярная матрица 'a' в 'solve'"
@@ -1266,7 +1267,7 @@ msgid ""
 "Did you intend to set 'partial'?"
 msgstr ""
 "'decreasing' должен быть логическим вектором длины-1.\n"
-"Вы собирались установить 'partial'?"
+"Вы собирались указать 'partial'?"
 
 msgid "'index.return' only for non-factors"
 msgstr "'index.return' -- только для не-факторов"
@@ -1455,6 +1456,33 @@ msgstr "'%s' не запускается"
 msgid "'%s' execution failed with error code %d"
 msgstr "выполнение '%s' прекращено: ошибка с кодом %d"
 
+msgid "-l option without value"
+msgstr "опция -l без значения"
+
+msgid "ERROR: no packages specified"
+msgstr "ОШИБКА: пакеты не указаны"
+
+msgid "Removing from library"
+msgstr "Удаляю из библиотеки"
+
+msgid "ERROR: cannot cd to directory"
+msgstr "ОШИБКА: не могу зайти в каталог"
+
+msgid "ERROR: no permission to remove from directory"
+msgstr "ОШИБКА: нет прав на удаление каталога"
+
+msgid "T used instead of TRUE"
+msgstr "T использовано вместо TRUE"
+
+msgid "F used instead of FALSE"
+msgstr "F использовано вместо FALSE"
+
+msgid "items"
+msgstr "элементы"
+
+msgid "have been removed from the search path"
+msgstr "удален из пути поиска"
+
 msgid "cannot find name space environment"
 msgstr "не могу найти окружение пространства имен"
 
@@ -1515,6 +1543,16 @@ msgstr[0] "Предупреждение:\n"
 msgstr[1] "Предупреждения:\n"
 msgstr[2] "Предупреждения:\n"
 
+#~ msgid "package 'lqs' has been moved back to package 'MASS'"
+#~ msgstr "пакет 'lqs' перемещен обратно в пакет 'MASS'"
+#~ msgid "package 'MASS' has now been loaded"
+#~ msgstr "пакет 'MASS' загрузился"
+#~ msgid "package 'MASS' seems to be missing from this R installation"
+#~ msgstr "пакет 'MASS', похоже, пропущен в данной установке R"
+#~ msgid "there is no package called '%s', version %s"
+#~ msgstr "нет пакета под названием '%s' и версии %s"
+#~ msgid "'%s' is not a valid package -- installed < 2.0.0?"
+#~ msgstr "'%s' не является правильным пакет -- установлен под < 2.0.0?"
 #~ msgid "non-numeric data type in frame"
 #~ msgstr "нечисловой тип данных в 'frame'"
 #~ msgid "class information lost from one or more columns"

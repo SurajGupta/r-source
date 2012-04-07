@@ -25,19 +25,19 @@ kronecker <- function (X, Y, FUN = "*", make.dimnames = FALSE, ...)
     dX <- dim(X)
     dY <- dim(Y)
     ld <- length(dX) - length(dY)
-    if (ld < 0)
+    if (ld < 0L)
 	dX <- dim(X) <- c(dX, rep.int(1, -ld))
-    else if (ld > 0)
+    else if (ld > 0L)
 	dY <- dim(Y) <- c(dY, rep.int(1, ld))
     opobj <- outer(X, Y, FUN, ...)
-    dp <- as.vector(t(matrix(1:(2*length(dX)), ncol = 2)[, 2:1]))
+    dp <- as.vector(t(matrix(1L:(2*length(dX)), ncol = 2)[, 2:1]))
     opobj <- aperm(opobj, dp)
     dim(opobj) <- dX * dY
 
     if (make.dimnames && !(is.null(dnx) && is.null(dny))) {
 	if (is.null(dnx))
 	    dnx <- vector("list", length(dX))
-	else if (ld < 0)
+	else if (ld < 0L)
 	    dnx <- c(dnx, vector("list", -ld))
 	tmp <- which(sapply(dnx, is.null))
 	dnx[tmp] <- lapply(tmp, function(i) rep.int("", dX[i]))
@@ -51,7 +51,7 @@ kronecker <- function (X, Y, FUN = "*", make.dimnames = FALSE, ...)
 
 	k <- length(dim(opobj))
 	dno <- vector("list", k)
-	for (i in 1:k) {
+	for (i in 1L:k) {
 	    tmp <- outer(dnx[[i]], dny[[i]], FUN="paste", sep=":")
 	    dno[[i]] <- as.vector(t(tmp))
 	}

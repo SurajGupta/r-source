@@ -355,7 +355,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SET_TAG(o, install(translateChar(STRING_ELT(names, j))));
 	SETCAR(o, findVar(TAG(o), source));
 	if (CAR(o) == R_UnboundValue)
-	    warning(_("Object \"%s\" not found"), CHAR(PRINTNAME(TAG(o))));
+	    warning(_("object '%s' not found"), CHAR(PRINTNAME(TAG(o))));
 	else nout++;
     }
     o = objs;
@@ -366,10 +366,9 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (CAR(o) == R_UnboundValue) continue;
 		obj_name = translateChar(STRING_ELT(names, i));
 		SET_STRING_ELT(outnames, nout++, STRING_ELT(names, i));
-		/* FIXME: should not use backticks when deparsing for S */
-		Rprintf(/* figure out if we need to quote the name */
-			isValidName(obj_name) ? "%s <-\n" : "`%s` <-\n",
-			obj_name);
+		if(isValidName(obj_name)) Rprintf("%s <-\n", obj_name);
+		else if(opts & S_COMPAT) Rprintf("\"%s\" <-\n", obj_name);
+		else Rprintf("`%s` <-\n", obj_name);
 		tval = deparse1(CAR(o), 0, opts);
 		for (j = 0; j < LENGTH(tval); j++)
 		    Rprintf("%s\n", CHAR(STRING_ELT(tval, j)));/* translated */
@@ -389,12 +388,18 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 		error(_("cannot write to this connection"));
 	    for (i = 0, nout = 0; i < nobjs; i++) {
 		const char *s;
+		int extra = 6;
 		if (CAR(o) == R_UnboundValue) continue;
 		SET_STRING_ELT(outnames, nout++, STRING_ELT(names, i));
 		s = translateChar(STRING_ELT(names, i));
-		/* FIXME: should not use backticks when deparsing for S */
-		res = Rconn_printf(con, "`%s` <-\n", s);
-		if(!havewarned && res < strlen(s) + 6)
+		if(isValidName(s)) {
+		    extra = 4;
+		    res = Rconn_printf(con, "%s <-\n", s);
+		} else if(opts & S_COMPAT)
+		    res = Rconn_printf(con, "\"%s\" <-\n", s);
+		else
+		    res = Rconn_printf(con, "`%s` <-\n", s);
+		if(!havewarned && res < strlen(s) + extra)
 		    warning(_("wrote too few characters"));
 		tval = deparse1(CAR(o), 0, opts);
 		for (j = 0; j < LENGTH(tval); j++) {
@@ -660,7 +665,15 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	    attr1(s, d);
 	    print2buff("quote(", d);
 	}
-	if (d->backtick)
+	if (localOpts & S_COMPAT) {
+	    const char *ss = CHAR(PRINTNAME(s));
+	    if (isValidName(ss)) print2buff(ss, d);
+	    else {
+		print2buff("\"", d);
+		print2buff(ss, d);
+		print2buff("\"", d);
+	    }
+	} else if (d->backtick)
 	    print2buff(backquotify(CHAR(PRINTNAME(s))), d);
 	else
 	    print2buff(CHAR(PRINTNAME(s)), d);
@@ -1009,10 +1022,15 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    print2buff("next", d);
 		    break;
 		case PP_SUBASS:
-		  /* FIXME: should not use backticks when deparsing for S */
-		    print2buff("`", d);
-		    print2buff(CHAR(PRINTNAME(op)), d); /* ASCII */
-		    print2buff("`(", d);
+		    if(d->opts & S_COMPAT) {
+			print2buff("\"", d);
+			print2buff(CHAR(PRINTNAME(op)), d); /* ASCII */
+			print2buff("\'(", d);
+		    } else {
+			print2buff("`", d);
+			print2buff(CHAR(PRINTNAME(op)), d); /* ASCII */
+			print2buff("`(", d);
+		    }
 		    args2buff(s, 0, 0, d);
 		    print2buff(")", d);
 		    break;
@@ -1061,13 +1079,17 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    else {
 			if ( isSymbol(CAR(s)) ){
 			    const char *ss = CHAR(PRINTNAME(CAR(s)));
-			    if ( !isValidName(ss) ){
-			      /* FIXME: should not use backticks when deparsing for S */
+			    if (isValidName(ss))
+				print2buff(ss, d);
+			    else if(d->opts & S_COMPAT) {
+				print2buff("\'", d);
+				print2buff(ss, d);
+				print2buff("\'", d);
+			    } else {
 				print2buff("`", d);
 				print2buff(ss, d);
 				print2buff("`", d);
-			    } else
-				print2buff(ss, d);
+			    }
 			}
 			else
 			    deparse2buff(CAR(s), d);

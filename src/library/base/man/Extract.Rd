@@ -223,7 +223,7 @@ x$name
   \code{\link{pmatch}}) to the names or dimnames of the object being
   subsetted (but never for subassignment).  Unlike S (Becker \emph{et
     al} p. 358)), \R has never used partial matching when extracting by
-  \code{[}.  As from \R 2.7.0, partial matching is not by default used
+  \code{[}, and as from \R 2.7.0 partial matching is not by default used
   by \code{[[} (see argument \code{exact}).
 
   Thus the default behaviour is to use partial matching only when
@@ -245,7 +245,7 @@ x$name
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{names}} for details of matching to names, and
@@ -264,12 +264,12 @@ x$name
 \examples{
 x <- 1:12; m <- matrix(1:6, nrow=2); li <- list(pi=pi, e = exp(1))
 x[10]                 # the tenth element of x
-x <- x[-1]	      # delete the 1st element of x
+x <- x[-1]            # delete the 1st element of x
 m[1,]                 # the first row of matrix m
 m[1, , drop = FALSE]  # is a 1-row matrix
 m[,c(TRUE,FALSE,TRUE)]# logical indexing
 m[cbind(c(1,2,1),3:1)]# matrix index
-m <- m[,-1]	      # delete the first column of m
+m <- m[,-1]           # delete the first column of m
 li[[1]]               # the first element of list li
 y <- list(1,2,a=4,5)
 y[c(3,4)]             # a list containing elements 3 and 4 of y

@@ -11,7 +11,7 @@ subdir = src/library
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = Makefile.in eof_file
+DISTFILES = Makefile.in Makefile.win eof_file
 
 SUBDIRS = profile $(R_PKGS_BASE) Recommended
 
@@ -24,7 +24,7 @@ R_CMD_BUILD_HELP = $(top_builddir)/bin/R CMD perl $(top_srcdir)/share/perl/build
 ## </NOTE>
 R_CMD_BUILD_HELP_OPTS =
 
-R_EXE = $(top_builddir)/bin/R --vanilla
+R_EXE = $(top_builddir)/bin/R --vanilla --slave
 
 PDFLATEX = @PDFLATEX@
 
@@ -33,37 +33,61 @@ all: Makefile R
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
+## FIXME: do some of this in parallel
 ## beware there is a bootstrapping problem here: tools uses tools to
 ## dump its namespace. So it works initially, but not to update.
+## When base is made we need to use 'date' to set the timestamp,
+## so we remake it before dumpung the DESCRIPTION files.
 R:
 	@$(MKINSTALLDIRS) $(top_builddir)/library
 	@for pkg in profile $(R_PKGS_BASE); do \
 	  (cd $${pkg} && $(MAKE)) || exit 1; \
 	done
+	@(cd base && $(MAKE) mkdesc)
 	@$(ECHO) "tools:::.vinstall_package_descriptions_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
-	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) --slave > /dev/null
+	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
 	@$(ECHO) "installing parsed NAMESPACE files"
 	@rm -f $(top_builddir)/library/tools/Meta/nsInfo.rds
 	@$(ECHO) "tools:::.vinstall_package_namespaces_as_RDS(\"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
-	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) --slave > /dev/null
+	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
 	@$(INSTALL_DATA) $(top_srcdir)/doc/html/R.css \
 	  $(top_builddir)/library
 
+## do metadata before help indices
 docs:
-	@$(ECHO) "building all R object docs (text, HTML, LaTeX, examples)"
+	@$(MAKE) metadata
+	@$(ECHO) "building all R documentation indices"
 	@$(MAKE) help-indices
+	@$(ECHO) "building all R object docs (text, HTML, LaTeX, examples)"
 	@$(MAKE) Rdfiles
-	@$(MAKE) indices
 	@touch stamp-docs
 
 help-indices:
 	@for pkg in $(R_PKGS_BASE); do \
-	  $(R_CMD_BUILD_HELP) $(R_CMD_BUILD_HELP_OPTS) --index $(srcdir)/$${pkg}; \
+	  $(ECHO) "tools:::.writePkgIndices(\"$(srcdir)/$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | LC_ALL=C $(R_EXE) || exit 1; \
 	done
+
+Rdfiles-new:
+	@for pkg in $(R_PKGS_BASE); do \
+	  $(ECHO) "tools:::.convertRdfiles(\"$(srcdir)/$${pkg}\", \"$(top_builddir)/library/$${pkg}\")" | LC_ALL=C $(R_EXE) || exit 1; \
+	done
+
+## NB this is called from tests/Examples/Makefile with the make variables set.
 Rdfiles:
 	@for pkg in $(R_PKGS_BASE); do \
 	  $(R_CMD_BUILD_HELP) $(R_CMD_BUILD_HELP_OPTS) $(srcdir)/$${pkg}; \
 	done
+
+base-test:
+	rm -f $(top_builddir)/library/base/html/*
+	rm -f $(top_builddir)/library/base/R-ex/*
+	$(R_CMD_BUILD_HELP) --html --example $(srcdir)/base
+base-new:
+	rm -f $(top_builddir)/library/base/html/*
+	rm -f $(top_builddir)/library/base/R-ex/*
+	@$(ECHO) "tools:::.convertRdfiles(\"$(srcdir)/base\", \"$(top_builddir)/library/base\")" | LC_ALL=C $(R_EXE)
+
+
 vignettes:
 	@if test "$(PDFLATEX)" = false; then \
           $(ECHO) "WARNING: cannot build/update package vignettes."; \
@@ -74,25 +98,29 @@ vignettes:
 	      $(ECHO) "building/updating vignettes for package '$${pkg}' ..."; \
 	      ($(ECHO) "tools:::.install_package_vignettes(\"$(srcdir)/$${pkg}\", \"$(top_builddir)/library/$${pkg}\")") | \
 	          R_DEFAULT_PACKAGES="utils,tools" LC_ALL=C \
-	            $(R_EXE) --slave > /dev/null; \
+	            $(R_EXE) > /dev/null; \
 	    fi; \
 	  done; \
 	fi
-indices:
-	@$(ECHO) "building/updating package indices ..."
+
+metadata:
+	@$(ECHO) "building/updating package metadata ..."
 	@$(ECHO) "tools:::.vinstall_package_indices(\"$(srcdir)\", \"$(top_builddir)/library\", \"$(R_PKGS_BASE)\")" | \
-	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) --slave > /dev/null
+	  R_DEFAULT_PACKAGES=tools LC_ALL=C $(R_EXE) > /dev/null
 	@cat $(top_builddir)/library/*/CONTENTS \
 	  > $(top_builddir)/doc/html/search/index.txt
 
 help:
 	@$(MAKE) Rdfiles R_CMD_BUILD_HELP_OPTS="--txt"
+
 html:
 	@$(MAKE) Rdfiles R_CMD_BUILD_HELP_OPTS="--html"
 	@$(ECHO) "tools:::unix.packages.html(.Library)" | \
 	  R_DEFAULT_PACKAGES=NULL LC_ALL=C "${R_EXE}" >/dev/null
+
 latex:
 	@$(MAKE) Rdfiles R_CMD_BUILD_HELP_OPTS="--latex"
+
 examples:
 	@$(MAKE) Rdfiles R_CMD_BUILD_HELP_OPTS="--example"
 
@@ -119,6 +147,24 @@ uninstall:
 	@rmdir "$(DESTDIR)$(rhome)/library" 2>/dev/null \
           || $(ECHO) "  subdir $(DESTDIR)$(rhome)/library not removed"
 
+install-tests:
+	@$(ECHO) "installing package tests ..."
+	@for pkg in $(R_PKGS_BASE); do \
+	  if test -d "$(srcdir)/$${pkg}/tests"; then \
+	    $(MKINSTALLDIRS) "$(DESTDIR)$(rhome)/library/$${pkg}/tests" ; \
+	    for f in $(srcdir)/$${pkg}/tests/*; do \
+	      $(INSTALL_DATA) $${f} "$(DESTDIR)$(rhome)/library/$${pkg}/tests"; \
+	    done; \
+	  fi; \
+	done
+@USE_RECOMMENDED_PACKAGES_TRUE@	@(cd Recommended && $(MAKE) $@)
+
+uninstall-tests:
+	@$(ECHO) "uninstalling package tests"
+	@for pkg in $(R_PKGS_BASE); do \
+	 rm -rf "$(DESTDIR)$(rhome)/library/$${pkg}/tests" ; \
+	done
+@USE_RECOMMENDED_PACKAGES_TRUE@	@(cd Recommended && $(MAKE) $@)
 
 mostlyclean: clean
 clean:

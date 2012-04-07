@@ -40,7 +40,7 @@ parse(file = "", n = NULL, text = NULL, prompt = "?", srcfile,
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{scan}}, \code{\link{source}}, \code{\link{eval}},
@@ -52,7 +52,7 @@ parse(file = "", n = NULL, text = NULL, prompt = "?", srcfile,
   
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows)
-  or CR (as used on classic MacOS).  The final line can be incomplete,
+  or CR (as used on classic Mac OS).  The final line can be incomplete,
   that is missing the final EOL marker.
 
   See \code{\link{source}} for the limits on the size of functions
@@ -83,7 +83,9 @@ parse(file = "", n = NULL, text = NULL, prompt = "?", srcfile,
   A syntax error (including an incomplete expression) will throw an error.
 
   Character strings in the result will have a declared encoding if
-  \code{encoding} is \code{"latin1"} or \code{"UTF-8"}.
+  \code{encoding} is \code{"latin1"} or \code{"UTF-8"}, or if
+  \code{text} is supplied with every element of known encoding in a
+  Latin-1 or UTF-8 locale.
 }
 \examples{
 cat("x <- c(1,4)\n  x ^ 3 -10 ; outer(1:7,5:9)\n", file="xyz.Rdmped")

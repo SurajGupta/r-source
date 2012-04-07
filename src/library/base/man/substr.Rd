@@ -11,9 +11,9 @@
 \title{Substrings of a Character Vector}
 \usage{
 substr(x, start, stop)
-substring(text, first, last = 1000000)
+substring(text, first, last = 1000000L)
 substr(x, start, stop) <- value
-substring(text, first, last = 1000000) <- value
+substring(text, first, last = 1000000L) <- value
 }
 \arguments{
   \item{x, text}{a character vector.}
@@ -75,7 +75,7 @@ substring(text, first, last = 1000000) <- value
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole. (\code{substring}.)
+  Wadsworth & Brooks/Cole. (\code{substring}.)
 }
 \seealso{
  \code{\link{strsplit}}, \code{\link{paste}}, \code{\link{nchar}}.

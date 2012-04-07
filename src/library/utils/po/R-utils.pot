@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-10-06 07:30\n"
+"POT-Creation-Date: 2009-03-17 19:28\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -479,6 +479,9 @@ msgstr ""
 msgid "bundle '%s' has extra contents %s"
 msgstr ""
 
+msgid "read.dcf() error on file '%s'"
+msgstr ""
+
 msgid "'priority' must be character or NULL"
 msgstr ""
 
@@ -524,6 +527,9 @@ msgstr ""
 msgid "packages %s are mutually dependent"
 msgstr ""
 
+msgid "Do not know which element of 'lib' to install dependencies into\nskipping dependencies"
+msgstr ""
+
 msgid "no packages were specified"
 msgstr ""
 
@@ -540,6 +546,9 @@ msgid "unable to install packages"
 msgstr ""
 
 msgid "unable to create"
+msgstr ""
+
+msgid "inferring 'repos = NULL' from the file name"
 msgstr ""
 
 msgid "cannot install MacOS X binary packages on Windows"
@@ -560,7 +569,7 @@ msgstr ""
 msgid "unable to create temporary directory '%s'"
 msgstr ""
 
-msgid "Do not know which element of 'lib' to install dependencies into\nskipping dependencies"
+msgid "installation of one of more packages failed,\n  probably %s"
 msgstr ""
 
 msgid "The downloaded packages are in\n\t%s"
@@ -701,6 +710,12 @@ msgstr ""
 msgid "Invalid roman numeral(s): %s"
 msgstr ""
 
+msgid "length mismatch: bug in code!"
+msgstr ""
+
+msgid "Processing file"
+msgstr ""
+
 msgid "no valid packages were specified"
 msgstr ""
 
@@ -797,6 +812,12 @@ msgstr ""
 msgid "options(\"browser\") not set"
 msgstr ""
 
+msgid "'latexcmd' is empty"
+msgstr ""
+
+msgid "'dvipscmd' is empty"
+msgstr ""
+
 msgid "invalid browser name, check options(\"browser\")."
 msgstr ""
 
@@ -827,6 +848,24 @@ msgstr ""
 msgid "Updating HTML index of packages in '.Library'"
 msgstr ""
 
+msgid "'tar' returned non-zero exit code %d"
+msgstr ""
+
+msgid "package '%s' successfully unpacked and MD5 sums checked"
+msgstr ""
+
+msgid "malformed bundle DESCRIPTION file, no Contains field"
+msgstr ""
+
+msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+msgstr ""
+
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr ""
+
+msgid "cannot remove prior installation of package"
+msgstr ""
+
 msgid "'memory.size()' is Windows-specific"
 msgstr ""
 
@@ -845,19 +884,7 @@ msgstr ""
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr ""
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr ""
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr ""
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr ""
-
 msgid "failed to create '%s'"
-msgstr ""
-
-msgid "unable to move temporary installation '%s' to '%s'"
 msgstr ""
 
 msgid "cannot remove prior installation of package '%s'"
@@ -881,15 +908,6 @@ msgstr ""
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr ""
 
-msgid "this function is intended to work with the Aqua GUI"
-msgstr ""
-
-msgid "'tar' returned non-zero exit code %d"
-msgstr ""
-
-msgid "cannot remove prior installation of package"
-msgstr ""
-
 msgid        "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0]    ""
@@ -897,11 +915,6 @@ msgstr[1]    ""
 
 msgid        "object '%s' not found"
 msgid_plural "objects '%s' not found"
-msgstr[0]    ""
-msgstr[1]    ""
-
-msgid        "'lib' element '%s'  is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
 msgstr[0]    ""
 msgstr[1]    ""
 
@@ -917,6 +930,11 @@ msgstr[1]    ""
 
 msgid        "also installing the dependency %s"
 msgid_plural "also installing the dependencies %s"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
 msgstr[0]    ""
 msgstr[1]    ""
 

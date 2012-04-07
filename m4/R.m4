@@ -156,37 +156,56 @@ fi])
 ## ------------
 AC_DEFUN([R_PROG_TEXMF],
 [AC_REQUIRE([R_PROG_PERL])
-AC_PATH_PROGS(DVIPS, [${DVIPS} dvips], false)
-AC_PATH_PROGS(TEX, [${TEX} tex], false)
-AC_PATH_PROGS(LATEX, [${LATEX} latex], false)
+## dvips is not used to make manuals, only in Rd2dvi and help-print.sh
+## the latter via options("dvipscmd"). Also sets R_DVIPSCMD.
+AC_PATH_PROGS(DVIPS, [${DVIPS} dvips], dvips)
+DVIPSCMD=${ac_cv_path_DVIPS}
+if test -z "${DVIPSCMD}"; then
+  DVIPSCMD=dvips
+fi
+AC_SUBST(DVIPSCMD)
+## TEX PDFTEX LATEX PDFLATEX MAKEINDEX TEXI2DVI are used to make manuals
+## LATEXCMD is used for options("latexcmd") (used in help-print.sh).
+## LATEXCMD PDFLATEXCMD MAKEINDEXCMD TEXI2DVICMD set default for R_<foo> in etc/Renviron
+AC_PATH_PROGS(TEX, [${TEX} tex], )
 if test -z "${ac_cv_path_TEX}" ; then
-  warn_dvi="you cannot build DVI versions of the R manuals"
-elif test -z "${ac_cv_path_LATEX}"; then
-  warn_dvi="you cannot build DVI versions of all the help pages"
+  warn_dvi1="you cannot build DVI versions of the R manuals"
+  AC_MSG_WARN([${warn_dvi1}])
 fi
-if test -n "${warn_dvi}"; then
-  AC_MSG_WARN([${warn_dvi}])
+AC_PATH_PROGS(LATEX, [${LATEX} latex], )
+LATEXCMD=${ac_cv_path_LATEX}
+if test -z "${ac_cv_path_LATEX}"; then
+  warn_dvi2="you cannot build DVI versions of all the help pages"
+  AC_MSG_WARN([${warn_dvi2}])
+  LATEXCMD=latex
 fi
-AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], false)
-AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], false)
-AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], false)
+AC_SUBST(LATEXCMD)
+AC_PATH_PROGS(MAKEINDEX, [${MAKEINDEX} makeindex], )
+MAKEINDEXCMD=${ac_cv_path_MAKEINDEX}
+if test -z "${MAKEINDEXCMD}"; then
+  MAKEINDEXCMD=makeindex
+fi
+AC_SUBST(MAKEINDEXCMD)
+AC_PATH_PROGS(PDFTEX, [${PDFTEX} pdftex], )
 if test -z "${ac_cv_path_PDFTEX}" ; then
-  warn_pdf="you cannot build PDF versions of the R manuals"
-elif test -z "${ac_cv_path_PDFLATEX}" ; then
-  warn_pdf="you cannot build PDF versions of all the help pages"
+  warn_pdf1="you cannot build PDF versions of the R manuals"
+  AC_MSG_WARN([${warn_pdf1}])
 fi
-if test -n "${warn_pdf}"; then
-  AC_MSG_WARN([${warn_pdf}])
+AC_PATH_PROGS(PDFLATEX, [${PDFLATEX} pdflatex], )
+PDFLATEXCMD=${ac_cv_path_PDFLATEX}
+if test -z "${ac_cv_path_PDFLATEX}" ; then
+  warn_pdf2="you cannot build PDF versions of all the help pages"
+  AC_MSG_WARN([${warn_pdf2}])
+  PDFLATEXCMD=pdflatex
 fi
+AC_SUBST(PDFLATEXCMD)
 R_PROG_MAKEINFO
-AC_PATH_PROGS(TEXI2DVI, [${TEXI2DVI} texi2dvi], false)
-## This test admittedly looks a bit strange ... see R_PROG_PERL.
-if test "${PERL}" = "${FALSE}"; then
-  AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
-else
-  INSTALL_INFO="\$(PERL) \$(top_srcdir)/tools/install-info.pl"
-  AC_SUBST(INSTALL_INFO)
+AC_PATH_PROGS(TEXI2DVI, [${TEXI2DVI} texi2dvi], )
+TEXI2DVICMD=${ac_cv_path_TEXI2DVI}
+if test -z "${TEXI2DVICMD}"; then
+  TEXI2DVICMD=texi2dvi
 fi
+AC_SUBST(TEXI2DVICMD)
 : ${R_RD4DVI="ae"}
 AC_SUBST(R_RD4DVI)
 : ${R_RD4PDF="times,hyper"}
@@ -199,11 +218,18 @@ AC_DEFUN([R_PROG_MAKEINFO],
 [AC_PATH_PROGS(MAKEINFO, [${MAKEINFO} makeinfo])
 if test -n "${MAKEINFO}"; then
   _R_PROG_MAKEINFO_VERSION
+  ## This test admittedly looks a bit strange ... see R_PROG_PERL.
+  if test "${PERL}" = "${FALSE}"; then
+    AC_PATH_PROGS(INSTALL_INFO, [${INSTALL_INFO} install-info], false)
+  else
+    INSTALL_INFO="\$(PERL) \$(top_srcdir)/tools/install-info.pl"
+    AC_SUBST(INSTALL_INFO)
+  fi
 fi
 if test "${r_cv_prog_makeinfo_v4}" != yes; then
   warn_info="you cannot build info or HTML versions of the R manuals"
   AC_MSG_WARN([${warn_info}])
-  MAKEINFO=false
+  MAKEINFO=""
 else
   MAKEINFO="${MAKEINFO}"
 fi
@@ -1378,13 +1404,10 @@ AC_DEFUN([R_PROG_OBJCXX],
 [AC_BEFORE([AC_PROG_CXX], [$0])
 AC_BEFORE([AC_PROG_OBJC], [$0])
 
-r_cached_objcxx=yes
-AC_MSG_CHECKING([for cached ObjC++ compiler])
+AC_MSG_CHECKING([for Objective C++ compiler])
 AC_CACHE_VAL([r_cv_OBJCXX],[
- AC_MSG_RESULT([none])
- r_cached_objcxx=no
+AC_MSG_RESULT([trying some possibilities])
 if test -n "${OBJCXX}"; then
-  AC_MSG_RESULT([defining OBJCXX to be ${OBJCXX}])
   R_PROG_OBJCXX_WORKS(${OBJCXX},,OBJCXX='')
 fi
 # try the sequence $OBJCXX, $CXX, $OBJC
@@ -1395,18 +1418,14 @@ if test -z "${OBJCXX}"; then
     fi
   )
 fi
-AC_MSG_CHECKING([for Objective C++ compiler])
+r_cv_OBJCXX="${OBJCXX}"
+])
+OBJCXX="${r_cv_OBJCXX}"
 if test -z "${OBJCXX}"; then
   AC_MSG_RESULT([no working compiler found])
 else
   AC_MSG_RESULT([${OBJCXX}])
 fi
-r_cv_OBJCXX="${OBJCXX}"
-if test "${r_cached_objcxx}" = yes; then
-  AC_MSG_RESULT(["${r_cv_OBJCXX}"])
-fi
-])
-OBJCXX="${r_cv_OBJCXX}"
 AC_SUBST(OBJCXX)
 ])# R_PROG_OBJCXX
 
@@ -1743,6 +1762,7 @@ fi])# R_X11_XMu
 # make sure the proper framework is found.
 # default action is to set have_..._fw to yes/no and to define
 # HAVE_..._FW if present
+# NB: the does NOT cache have_..._fw, so use with care
 
 AC_DEFUN([R_CHECK_FRAMEWORK],
 [ AC_CACHE_CHECK([for $1 in $2 framework], [r_cv_check_fw_$2],
@@ -1768,8 +1788,10 @@ if test "${want_aqua}" = yes; then
     darwin*)
       ## we can build AQUA only with CoreFoundation, otherwise
       ## Quartz device won't build
-      if test "${have_CoreFoundation_fw}" = yes; then
+      if test -n "${r_cv_check_fw_CoreFoundation}" ; then
         use_aqua=yes
+      else
+        AC_MSG_WARN([requested 'aqua' but CoreFoundation was not found])
       fi
       ;;
   esac
@@ -1777,7 +1799,7 @@ fi
 if test "${use_aqua}" = yes; then
   AC_DEFINE(HAVE_AQUA, 1,
             [Define if you have the Aqua headers and libraries,
-             and want the Aqua GUI to be built.])
+             and want the Aqua GUI components and quartz() device to be built.])
 fi
 ])# R_AQUA
 
@@ -2050,7 +2072,7 @@ AC_EGREP_CPP([yes],
 AC_DEFUN([_R_PATH_TCL_CONFIG],
 [AC_MSG_CHECKING([for tclConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TCL_CONFIG],
-[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib; do
+[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib /opt/freeware/lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tcl[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2076,7 +2098,7 @@ fi
 AC_DEFUN([_R_PATH_TK_CONFIG],
 [AC_MSG_CHECKING([for tkConfig.sh in library (sub)directories])
 AC_CACHE_VAL([r_cv_path_TK_CONFIG],
-[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib; do
+[for ldir in /usr/local/${LIBnn} /usr/${LIBnn} /${LIBnn} /opt/lib /sw/lib /opt/csw/lib /usr/sfw/lib /opt/freeware/lib; do
   for dir in \
       ${ldir} \
       `ls -d ${ldir}/tk[[8-9]].[[0-9]]* 2>/dev/null | sort -r`; do
@@ -2660,8 +2682,9 @@ fi
   if test -n "${r_cv_zdotu_is_usable}"; then
     AC_MSG_RESULT([yes])
   else
-    AC_MSG_RESULT([no])
-    if test "${have_vecLib_fw}" = "yes"; then
+    ## NB: this lot is not cached
+    if test "${r_cv_check_fw_vecLib}" != "no"; then
+      AC_MSG_RESULT([yes])
       ## for vecLib we have a work-around by using cblas_..._sub
       use_veclib_g95fix=yes
       ## The fix may not work with internal lapack, because
@@ -2670,6 +2693,7 @@ fi
       #      use_lapack=yes
       #	     with_lapack=""
     else
+      AC_MSG_RESULT([no])
       BLAS_LIBS=
       acx_blas_ok="no"
     fi
@@ -3451,7 +3475,7 @@ AC_DEFUN([R_CHECK_FUNCS],
 for ac_func in $1
 do
 R_CHECK_DECL($ac_func,
-             [AC_DEFINE_UNQUOTED([AS_TR_CPP([HAVE_$ac_func])], 1)], , [$2])dnl
+             [AC_DEFINE_UNQUOTED(AS_TR_CPP([HAVE_$ac_func]), 1)], , [$2])dnl
 done
 ])# R_CHECK_FUNCS
 
@@ -3721,6 +3745,39 @@ if test "${r_cv_mktime_errno}" = yes; then
   AC_DEFINE(MKTIME_SETS_ERRNO,, [Define if mktime sets errno.])
 fi
 ])# R_MKTIME_ERRNO
+
+## R_ICU
+## -----
+AC_DEFUN([R_ICU],
+[AC_CACHE_CHECK([for ICU], [r_cv_icu],
+[r_save_LIBS="${LIBS}"
+LIBS="${LIBS} -licuuc -licui18n"
+AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <unicode/utypes.h>
+#include <unicode/ucol.h>
+#include <unicode/uloc.h>
+#include <unicode/uiter.h>
+
+#include <stdlib.h>
+
+int main () {
+    UErrorCode  status = U_ZERO_ERROR;
+    UCollator *collator;
+    collator = ucol_open(NULL, &status);
+    if (U_FAILURE(status))  exit(1);
+    exit(0);
+}
+]])],
+[r_cv_icu=yes], [r_cv_icu=no], [r_cv_icu=no])
+LIBS="${r_save_LIBS}"
+])
+if test "x${r_cv_icu}" = xyes; then
+  AC_DEFINE(USE_ICU, 1, [Define to use ICU for collation.])
+  LIBS="${LIBS} -licuuc -licui18n"
+else
+  use_ICU=no
+fi
+])# R_ICU
 
 
 ### Local variables: ***

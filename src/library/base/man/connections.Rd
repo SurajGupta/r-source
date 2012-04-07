@@ -100,7 +100,7 @@ isIncomplete(con)
   (such as \code{http://}, \code{ftp://} or \code{file://}).
 
   For \code{gzfile} the description is the path to a file that is
-  compressed by \code{gzip}: it can also opened uncompressed files.
+  compressed by \code{gzip}: it can also open uncompressed files.
 
   For \code{bzfile} the description is the path to a file that is
   compressed by \code{bzip2}.
@@ -346,7 +346,7 @@ isIncomplete(con)
   (\url{http://people.debian.org/~kims/xclip/}), for example by
   \code{pipe("xclip -i", "w")} for the primary selection.
 
-  MacOS X users can use \code{pipe("pbpaste")} and
+  Mac OS X users can use \code{pipe("pbpaste")} and
   \code{pipe("pbcopy", "w")} to read from and write to that system's
   clipboard.
 #endif

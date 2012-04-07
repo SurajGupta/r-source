@@ -16,6 +16,9 @@
 
 # Send any bug reports to r-bugs@r-project.org
 
+# Define next as and when we have a 64-bit build
+# mode64bit = 1
+
 use Cwd;
 use File::Find;
 
@@ -27,6 +30,8 @@ my $SRCDIR=$ARGV[1];
 my $MDISDI=$ARGV[2];
 my $HelpStyle=$ARGV[3];
 my $Internet=$ARGV[4];
+my $Producer = $ARGV[5];
+
 
 $SRCDIR =~ s+/+\\+g; # need DOS-style paths
 
@@ -53,11 +58,11 @@ OutputBaseFilename=${RW}-win32
 PrivilegesRequired=none
 MinVersion=0,5.0
 END
+print "ArchitecturesInstallIn64BitMode=x64\nArchitectures=x64Allowed" if $mode64bit;
 
 my $lines=<<END;
 AppName=R for Windows $RVER
 AppVerName=R for Windows $RVER
-AppPublisher=R Development Core Team
 AppPublisherURL=http://www.r-project.org
 AppSupportURL=http://www.r-project.org
 AppUpdatesURL=http://www.r-project.org
@@ -105,35 +110,35 @@ Name: ko; MessagesFile: "Korean.isl"
 #include "CustomMsg.txt"
 
 [Tasks]
-Name: "desktopicon"; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; MinVersion: 4,4
-Name: "quicklaunchicon"; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; MinVersion: 4,4; Flags: unchecked 
-Name: "recordversion"; Description: {cm:recordversion}; GroupDescription: {cm:regentries}; MinVersion: 4,4
-Name: "associate"; Description: {cm:associate}; GroupDescription: {cm:regentries}; MinVersion: 4,4; Check: IsAdmin
+Name: "desktopicon"; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; MinVersion: 0,5.0
+Name: "quicklaunchicon"; Description: {cm:CreateQuickLaunchIcon}; GroupDescription: {cm:AdditionalIcons}; MinVersion: 0,5.0; Flags: unchecked 
+Name: "recordversion"; Description: {cm:recordversion}; GroupDescription: {cm:regentries}; MinVersion: 0,5.0
+Name: "associate"; Description: {cm:associate}; GroupDescription: {cm:regentries}; MinVersion: 0,5.0; Check: IsAdmin
 
 
 [Icons]
 Name: "{group}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
 Name: "{group}\\Uninstall R $RVER"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 4,4; Tasks: desktopicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
+Name: "{commondesktop}\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; MinVersion: 0,5.0; Tasks: desktopicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
 Name: "{userappdata}\\Microsoft\\Internet Explorer\\Quick Launch\\R $RVER"; Filename: "{app}\\bin\\Rgui.exe"; Tasks: quicklaunchicon; WorkingDir: "{userdocs}"; Parameters: {code:CmdParms}
 
 
 [Registry] 
-Root: HKLM; Subkey: "Software\\R-core"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
-Root: HKLM; Subkey: "Software\\R-core\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
-Root: HKLM; Subkey: "Software\\R-core\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
-Root: HKLM; Subkey: "Software\\R-core\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: IsAdmin
 
-Root: HKLM; Subkey: "Software\\R-core\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: IsAdmin
-Root: HKLM; Subkey: "Software\\R-core\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: IsAdmin
+Root: HKLM; Subkey: "Software\\$Producer\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: IsAdmin
 
-Root: HKCU; Subkey: "Software\\R-core"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
-Root: HKCU; Subkey: "Software\\R-core\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
-Root: HKCU; Subkey: "Software\\R-core\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
-Root: HKCU; Subkey: "Software\\R-core\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletekeyifempty; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\R"; Flags: uninsdeletevalue; ValueType: string; ValueName: "Current Version"; ValueData: "${RVER}"; Tasks: recordversion; Check: NonAdmin
 
-Root: HKCU; Subkey: "Software\\R-core\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: NonAdmin
-Root: HKCU; Subkey: "Software\\R-core\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\R\\${RVER}"; Flags: uninsdeletekey; Tasks: recordversion; Check: NonAdmin
+Root: HKCU; Subkey: "Software\\$Producer\\R\\${RVER}"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"; Tasks: recordversion; Check: NonAdmin
 
 Root: HKCR; Subkey: ".RData"; ValueType: string; ValueName: ""; ValueData: "RWorkspace"; Flags: uninsdeletevalue; Tasks: associate; Check: IsAdmin
 Root: HKCR; Subkey: "RWorkspace"; ValueType: string; ValueName: ""; ValueData: "R Workspace"; Flags: uninsdeletekey; Tasks: associate; Check: IsAdmin
@@ -142,6 +147,11 @@ Root: HKCR; Subkey: "RWorkspace\\shell\\open\\command"; ValueType: string; Value
 END
 
 print insfile $lines;
+if($Producer eq "R-core") {
+    print insfile "AppPublisher=R Development Core Team\n";
+} else {
+    print insfile "AppPublisher=$Producer\n";
+}
 print insfile $lines2;
 print insfile <<END;
 
@@ -170,6 +180,8 @@ Name: "libdocs"; Description: "Docs for Packages grid and survival"; Types: user
 Name: "trans"; Description: "Message Translations"; Types: user full custom
 Name: "latex"; Description: "Latex Help Files"; Types: full custom
 Name: "Rd"; Description: "Source Files for Help Pages"; Types: full custom
+Name: "tests"; Description: "Test files"; Types: full custom
+
 
 [Code]
 
@@ -373,14 +385,12 @@ END
 my %develfiles=("doc\\html\\logo.jpg" => 1,
 		"README.packages" => 1,
 		"COPYING.LIB" => 1,
-		"bin\\INSTALL" => 1,
-		"bin\\REMOVE" => 1,
-		"bin\\SHLIB" => 1,
+		"bin\\INSTALL,sh" => 1,
+		"bin\\SHLIB.sh" => 1,
 		"bin\\build" => 1,
 		"bin\\check" => 1,
-		"bin\\massage-Examples" => 1,
 		"bin\\Rd2dvi.sh" => 1,
-		"bin\\Rd2txt" => 1,
+		"bin\\Rd2txt.sh" => 1,
 		"bin\\Rdconv" => 1,
 		"bin\\Rdiff.sh" => 1,
 		"bin\\Sd2Rd" => 1,
@@ -434,6 +444,10 @@ sub listFiles {
 	    	$component = "latex";
 	} elsif (m/^library\\[^\\]*\\man/) {
 	    	$component = "Rd";
+	} elsif (m/^library\\[^\\]*\\tests/) {
+	    	$component = "tests";
+	} elsif (m/^tests/) {
+	    	$component = "tests";
 #	} elsif (m/^Tcl\\doc/) {
 #	    $component = "tcl/docs";
 	} elsif (m/^Tcl\\doc\\.*chm$/) {
@@ -452,16 +466,11 @@ sub listFiles {
 		 || m/^share\\texmf/
 		 || m/^bin\\build/
 		 || m/^bin\\check/
-		 || m/^bin\\INSTALL/
-		 || m/^bin\\massage-Examples/
 		 || m/^bin\\Rd2dvi.sh/
-		 || m/^bin\\Rd2txt/
 		 || m/^bin\\Rdconv/
 		 || m/^bin\\Rdiff.sh/
-		 || m/^bin\\REMOVE/
 		 || m/^bin\\Rprof/
 		 || m/^bin\\Sd2Rd/
-		 || m/^bin\\SHLIB/
 		 || m/^lib\\/) {
 	    $component = "devel";
 	} elsif (m/^library\\grid\\doc/

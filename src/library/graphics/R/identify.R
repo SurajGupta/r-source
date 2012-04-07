@@ -30,12 +30,12 @@ identify.default <-
     y <- xy$y
     if (length(x)==0) {
         if (pos)
-            return(list(ind=numeric(0), pos=numeric(0)))
+            return(list(ind=numeric(0L), pos=numeric(0L)))
         else
-            return(numeric(0))
+            return(numeric(0L))
     }
     z <- .Internal(identify(x, y, as.character(labels), n, plot, offset,
                             tolerance, atpen))
-    i <- seq.int(z[[1]])[z[[1]]]
-    if(pos) list(ind = i, pos = z[[2]][z[[1]]]) else i
+    i <- seq.int(z[[1L]])[z[[1L]]]
+    if(pos) list(ind = i, pos = z[[2L]][z[[1L]]]) else i
 }

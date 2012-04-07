@@ -16,7 +16,7 @@
 
 sort <- function(x, decreasing = FALSE, ...)
 {
-    if(!is.logical(decreasing) || length(decreasing) != 1)
+    if(!is.logical(decreasing) || length(decreasing) != 1L)
         stop("'decreasing' must be a length-1 logical vector.\nDid you intend to set 'partial'?")
     UseMethod("sort")
 }
@@ -51,7 +51,7 @@ sort.int <-
         if(index.return || decreasing || isfact || !missing(method))
 	    stop("unsupported options for partial sorting")
         if(!all(is.finite(partial))) stop("non-finite 'partial'")
-        y <- if(length(partial) <= 10) {
+        y <- if(length(partial) <= 10L) {
             partial <- .Internal(qsort(partial, FALSE))
             .Internal(psort(x, partial))
         } else .Internal(qsort(x, FALSE))
@@ -103,13 +103,13 @@ order <- function(..., na.last = TRUE, decreasing = FALSE)
     } else if(!is.na(na.last))
         return(.Internal(order(na.last, decreasing, ...)))
     ## remove nas
-    if(any(diff(sapply(z, length)) != 0))
+    if(any(diff(sapply(z, length)) != 0L))
         stop("argument lengths differ")
     ans <- sapply(z, is.na)
-    if(is.list(ans)) return(integer(0)) # happens for 0-length input
+    if(is.list(ans)) return(integer(0L)) # happens for 0-length input
     ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
-    if(all(!ok)) return(integer(0))
-    z[[1]][!ok] <- NA
+    if(all(!ok)) return(integer(0L))
+    z[[1L]][!ok] <- NA
     ans <- do.call("order", c(z, decreasing=decreasing))
     keep <- seq_along(ok)[ok]
     ans[ans %in% keep]
@@ -159,5 +159,5 @@ xtfrm.Surv <- function(x)
 .gtn <- function(x, strictly)
 {
     n <- length(x)
-    if(strictly) all(x[-1] > x[-n]) else all(x[-1] >= x[-n])
+    if(strictly) all(x[-1L] > x[-n]) else all(x[-1L] >= x[-n])
 }

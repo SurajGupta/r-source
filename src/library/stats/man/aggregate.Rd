@@ -75,6 +75,9 @@ aggregate(x, \dots)
   series covers a whole number of quarters or years: in particular
   aggregating a monthly series to quarters starting in February does not
   give a conventional quarterly series.
+  
+  \code{FUN} is passed to \code{\link{match.fun}}, and hence it can be a
+  function or a symbol or character string naming a function.
 }
 \value{
   For the time series method, a time series of class \code{"ts"} or
@@ -99,7 +102,7 @@ aggregate(x, \dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \examples{
 ## Compute the averages for the variables in 'state.x77', grouped

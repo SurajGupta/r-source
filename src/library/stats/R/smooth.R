@@ -30,7 +30,7 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
         stop("wrong endrule")
     n <- length(x)
     kind <- match.arg(kind)
-    if(substr(kind,1,3) == "3RS" && !do.ends)
+    if(substr(kind ,1L, 3L) == "3RS" && !do.ends)
         iend <- -iend
     else if(kind == "S")
         iend <- as.logical(do.ends)
@@ -39,7 +39,7 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
               as.double(x),
               y = double(n),
               n, iend,
-              iter = integer(1),
+              iter = integer(1L),
               DUP=FALSE,
 	      PACKAGE = "stats")[c("y","iter")]
 
@@ -63,7 +63,7 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
 
     structure(smo$y, kind = kind, twiced = twiceit,
               iter = smo$iter, changed = smo$changed,
-              endrule = if(substr(kind,1,1) == "3") rules[iend],
+              endrule = if(substr(kind, 1L, 1L) == "3") rules[iend],
               call = match.call(),
               class = c("tukeysmooth",if(is.ts(x)) "ts"))
 }

@@ -14,6 +14,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+
 ### * .install_package_description
 
 .install_package_description <-
@@ -58,7 +59,7 @@ function(dir, outDir)
         "i386-pc-mingw32"
     else
         R.version$platform
-    if (length(grep("-apple-darwin",R.version$platform)) > 0L &&
+    if (length(grep("-apple-darwin",R.version$platform)) &&
         nzchar(Sys.getenv("R_ARCH")))
         OStype <- sub(".*-apple-darwin", "universal-apple-darwin", OStype)
     Built <-
@@ -69,10 +70,9 @@ function(dir, outDir)
               if(file_test("-d", file.path(dir, "src"))) OStype
               else "",
               "; ",
-              ## Prefer date in ISO 8601 format.
-              ## Could also use
-              ##   format(Sys.time(), "%a %b %d %X %Y")
-              Sys.time(),
+              ## Prefer date in ISO 8601 format, UTC.
+              format(Sys.time(), tz = "UTC", usetz = TRUE),
+              ## Sys.time(),
               "; ",
               .OStype(),
               sep = "")
@@ -132,7 +132,7 @@ function(db, verbose = FALSE)
             entries <- lapply(Rdeps2, function(x)
                 paste(lapply(x, as.character), collapse=""))
             message("WARNING: 'Depends' entry has multiple dependencies on R: ",
-                    paste(unlist(entries), collapse=', '),
+                    paste(unlist(entries), collapse=", "),
                     "\n\tonly the first will be used in R < 2.7.0")
         }
         Rdeps <- Depends[["R", exact = TRUE]] # the first one
@@ -293,10 +293,17 @@ function(dir, outDir)
                outFile)
     enc <- as.vector(db["Encoding"])
     need_enc <- !is.na(enc) # Encoding was specified
-    ## assume that if locale if 'C' we can used 8-bit encodings unchanged.
+    ## assume that if locale is 'C' we can used 8-bit encodings unchanged.
     if(need_enc && capabilities("iconv") &&
        !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))
        ) {
+        ## syntax check: see below
+        op <- options(encoding = enc, showErrorCalls=FALSE)
+        on.exit(options(op))
+        for(f in codeFiles)
+            eval(substitute(parse(f), list(f=f)))
+        options(op); on.exit()
+
         con <- file(outFile, "a")
         on.exit(close(con))  # Windows does not like files left open
         for(f in codeFiles) {
@@ -307,6 +314,12 @@ function(dir, outDir)
             writeLines(tmp, con)
         }
     } else {
+        ## A syntax check here, both so that we do not install a
+        ## broken package and that we get better diagnostics.
+        op <- options(showErrorCalls=FALSE)
+        on.exit(options(op))
+        for(f in codeFiles)
+            eval(substitute(parse(f), list(f=f)))
         ## <NOTE>
         ## It may be safer to do
         ##   writeLines(sapply(codeFiles, readLines), outFile)
@@ -389,10 +402,11 @@ function(dir, outDir)
     newestRd <- max(file.info(allRd)$mtime)
     ## these files need not exist, which gives NA.
     upToDate <- file.info(file.path(outDir, indices))$mtime >= newestRd
-    if(file_test("-d", dataDir)) {
+    if(file_test("-d", dataDir)
+       && length(dataFiles <- list.files(dataDir))) {
         ## Note that the data index is computed from both the package's
         ## Rd files and the data sets actually available.
-        newestData <- max(file.info(list.files(dataDir))$mtime)
+        newestData <- max(file.info(dataFiles)$mtime)
         upToDate <- c(upToDate,
               file.info(file.path(outDir, "Meta", "data.rds"))$mtime >=
                         max(newestRd, newestData))
@@ -485,7 +499,7 @@ function(dir, outDir)
         cwd <- getwd()
         setwd(outVignetteDir)
         for(srcfile in vignetteIndex$File)
-            tryCatch(utils::Stangle(srcfile),
+            tryCatch(utils::Stangle(srcfile, quiet = TRUE),
                      error = function(e)
                      stop(gettextf("running Stangle on vignette '%s' failed with message:\n%s",
                                    srcfile, conditionMessage(e)),
@@ -527,6 +541,7 @@ function(src_dir, out_dir, packages)
     ## indices.
     ## Really only useful for base packages under Unix.
     ## See @file{src/library/Makefile.in}.
+    ## These days this is mostly installing the metadata
 
     for(p in unlist(strsplit(packages, "[[:space:]]+")))
         .install_package_indices(file.path(src_dir, p),
@@ -771,7 +786,7 @@ function(dir, packages)
 
 ### * .test_package_depends_R_version
 
-.test_package_depends_R_version <-
+.Rtest_package_depends_R_version <-
 function(dir)
 {
     if(missing(dir)) dir <- "."
@@ -809,9 +824,12 @@ function(dir)
             }
         }
     }
-    q(status = status)
+    status
 }
 
+.test_package_depends_R_version <-
+function(dir)
+    q(status = .Rtest_package_depends_R_version(dir))
 
 
 ### Local variables: ***

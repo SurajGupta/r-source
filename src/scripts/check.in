@@ -1,7 +1,7 @@
 #! @PERL@
 #-*- perl -*-
 
-# Copyright (C) 2000-2008 R Development Core Team
+# Copyright (C) 2000-2009 R Development Core Team
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ use Text::Wrap;
 ## Don't buffer output.
 $| = 1;
 
-my $revision = ' $Rev: 46996 $ ';
+my $revision = ' $Rev: 48236 $ ';
 my $version;
 my $name;
 $revision =~ / ([\d\.]*) /;
@@ -68,6 +68,7 @@ my @known_options = ("help|h", "version|v", "outdir|o:s", "library|l:s",
 		     "use-gct" => \$opt_use_gct, "no-codoc",
 		     "install=s" => \$opt_install, "no-install",
 		     "no-vignettes", "use-valgrind" => \$opt_use_valgrind,
+		     "install-args=s" => \$opt_install_args,
 		     "rcfile=s" => \$opt_rcfile,
 		     "check-subdirs=s" => \$opt_subdirs);
 GetOptions(@known_options) or usage();
@@ -129,6 +130,11 @@ my $R_check_executables =
     &R_getenv("_R_CHECK_EXECUTABLES_", "TRUE");
 my $R_check_executables_exclusions =
     &R_getenv("_R_CHECK_EXECUTABLES_EXCLUSIONS_", "TRUE");
+my $R_check_Rd_parse =
+    &R_getenv("_R_CHECK_RD_PARSE_", "TRUE");
+## This check needs codetools
+my $R_check_dot_internal =
+    &R_getenv("_R_CHECK_DOT_INTERNAL_", "FALSE");
 
 ## Maybe move basic configuration (and documentation) to
 ##   &file_path($R::Vars::R_HOME, "etc", "check.conf")
@@ -143,10 +149,10 @@ for my $file ($opt_rcfile) {
 	die "Error: failed to eval config file '$file'\n$@\n" if ($@);
 	## <NOTE>
 	## We prefer the above to the usual recommendation
-	## 	unless ($return = do($file)) {
-	## 	    warn "couldn't parse $file: $@" if $@;
-	## 	    warn "couldn't do $file: $!"    unless defined $return;
-	## 	    warn "couldn't run $file"       unless $return;
+	##	unless ($return = do($file)) {
+	##	    warn "couldn't parse $file: $@" if $@;
+	##	    warn "couldn't do $file: $!"    unless defined $return;
+	##	    warn "couldn't run $file"       unless $return;
 	##  }
 	## as do(FILE) cannot see lexicals in the enclosing scope.
 	## </NOTE>
@@ -173,6 +179,10 @@ $R_check_executables =
     &config_val_to_logical($R_check_executables);
 $R_check_executables_exclusions =
     &config_val_to_logical($R_check_executables_exclusions);
+$R_check_Rd_parse =
+    &config_val_to_logical($R_check_Rd_parse);
+$R_check_dot_internal =
+    &config_val_to_logical($R_check_dot_internal);
 ## <NOTE>
 ## This looks a bit strange, but tools:::.check_package_depends()
 ## currently gets the information about forcing suggests via an
@@ -402,7 +412,7 @@ foreach my $pkg (@ARGV) {
 		      "'$package_or_bundle_name' " .
 		      "version '$description->{\"Version\"}'");
 
-        if(defined $encoding) {$log->message("package encoding: $encoding");}
+	if(defined $encoding) {$log->message("package encoding: $encoding");}
 
 	## Check if we have any hope of installing
 
@@ -427,17 +437,17 @@ foreach my $pkg (@ARGV) {
 	## we are not going to install and hence not run any code.
 	## </NOTE>
 
-	if($opt_install) { 
-	    ## Try figuring out whether the package dependencies can be 
+	if($opt_install) {
+	    ## Try figuring out whether the package dependencies can be
 	    ## resolved at run time.  Ideally, the installation
 	    ## mechanism would do this, and we also do not check
 	    ## versions ... also see whether vignette and namespace
 	    ## package dependencies are recorded in DESCRIPTION.
-	    
+
 	    ## <NOTE>
-	    ## We are not checking base packages here, so all packages do 
-	    ## have a description file.  Bundles should have dependencies 
-	    ## only at the top level to be usable by install.packages and 
+	    ## We are not checking base packages here, so all packages do
+	    ## have a description file.  Bundles should have dependencies
+	    ## only at the top level to be usable by install.packages and
 	    ## friends, and `Writing R Extensions' requires this.
 	    ## </NOTE>
 
@@ -460,14 +470,14 @@ foreach my $pkg (@ARGV) {
 		my @msg_NAMESPACE =
 		    ("See section 'Package name spaces'",
 		     "of the 'Writing R Extensions' manual.\n");
-		
+
 		my $Rcmd = "tools:::.check_namespace(\"${pkgdir}\")";
 		my @out = R_runR($Rcmd, "${R_opts} --quiet",
 				 "R_DEFAULT_PACKAGES=NULL");
 		@out = grep(!/^\>/, @out);
 		if(scalar(@out) > 0) {
 		    $log->error();
-		    $log->print(join("\n", @out) . "\n");	    
+		    $log->print(join("\n", @out) . "\n");
 		    $log->print(wrap("", "", @msg_NAMESPACE));
 		    exit(1);
 		} else {
@@ -475,7 +485,7 @@ foreach my $pkg (@ARGV) {
 		}
 	    }
 
-	    $log->checking("package dependencies");
+	    $log->checking("$package_or_bundle dependencies");
 	    ## Everything listed in Depends or Suggests or Imports
 	    ## should be available for successfully running R CMD check.
 	    ## \VignetteDepends{} entries not "required" by the package code
@@ -544,7 +554,7 @@ foreach my $pkg (@ARGV) {
 			chdir(&file_path($pkgdir, $dir));
 			if(!(-f "Makefile") && !(-f "Makefile.win")) {
 			    opendir(DIR, ".") or die "cannot opendir $dir: $!";
-			    @srcfiles = grep { 
+			    @srcfiles = grep {
 				!(/\.$exts$/ || /^Makevars/ || /-win\.def$/ )
 				    && -f "$_" } readdir(DIR);
 			    closedir(DIR);
@@ -571,7 +581,7 @@ foreach my $pkg (@ARGV) {
 
 	## we need to do this before installation
 	if ($R_check_executables) {
-	    ## this is tailored to the FreeBSD/Linux file, 
+	    ## this is tailored to the FreeBSD/Linux file,
 	    ## see http://www.darwinsys.com/file/
 	    my $have_free_File = 0;
 	    my $tmpfile = R_tempfile("file");
@@ -596,7 +606,7 @@ foreach my $pkg (@ARGV) {
 		    my $bare_path = $file_path;
 		    $bare_path =~ s+^$pkgdir/++;
 		    ## watch out for spaces in file names here
-		    R_system("file '$file_name' > $tmpfile");	    
+		    R_system("file '$file_name' > $tmpfile");
 		    open FILE, "< $tmpfile";
 		    my @lines = <FILE>;
 		    close(FILE);
@@ -610,8 +620,8 @@ foreach my $pkg (@ARGV) {
 		   -f "$pkgdir/BinaryFiles") {
 		    my %bin;
 		    open FILE, "< $pkgdir/BinaryFiles";
-		    while (<FILE>) { 
-			chomp; 
+		    while (<FILE>) {
+			chomp;
 			s/\r$//;  # careless people get Windows files on other OSes
 			$bin{$_} = $_;
 		    }
@@ -641,7 +651,7 @@ foreach my $pkg (@ARGV) {
 		    my $file_path = $File::Find::name;
 		    my $bare_path = $file_path;
 		    $bare_path =~ s+^$pkgdir/++;
-		    push @exec_files, $bare_path 
+		    push @exec_files, $bare_path
 			if $file_path =~ /\.(exe|dll)$/;
 		}
 		find(\&find_execs2, "$pkgdir");
@@ -649,8 +659,8 @@ foreach my $pkg (@ARGV) {
 		   -f "$pkgdir/BinaryFiles") {
 		    my %bin;
 		    open FILE, "< $pkgdir/BinaryFiles";
-		    while (<FILE>) { 
-			chomp; 
+		    while (<FILE>) {
+			chomp;
 			s/\r$//;
 			$bin{$_} = $_;
 		    }
@@ -700,15 +710,17 @@ foreach my $pkg (@ARGV) {
 		    (($opt_install =~ /^check/) ||
 		     $R_check_use_install_log ||
 		     !(-t STDIN && -t STDOUT));
-		my $INSTALL_opts = "";
+		my $INSTALL_opts = $opt_install_args;
 		$INSTALL_opts = "--fake" if($opt_install eq "fake");
 		my $cmd;
 		if($WINDOWS) {
+		    ## avoid some quoting hell
+		    my $pkgd = Win32::GetShortPathName($pkgdir);
 		    $cmd = join(" ",
 				("Rcmd.exe INSTALL -l",
 				 &shell_quote_file_path($library),
 				 "$INSTALL_opts",
-				 &shell_quote_file_path($pkgdir)));
+				 &shell_quote_file_path($pkgd)));
 		} else {
 		    $cmd = join(" ",
 				(&shell_quote_file_path(${R::Vars::R_EXE}),
@@ -839,6 +851,20 @@ foreach my $pkg (@ARGV) {
 			@lines = grep(!/$warn_re/, @lines);
 		    }
 
+		    ## Warnings spotted by gcc with '-Wunused', which is
+		    ## implied by '-Wall'.  Currently only accessible
+		    ## via an internal environment variable.
+		    my $check_src_flag =
+			&R_getenv("_R_CHECK_SRC_MINUS_W_UNUSED_",
+				  "FALSE");
+		    $check_src_flag =
+			&config_val_to_logical($check_src_flag);
+		    if(!$check_src_flag) {
+			my $warn_re = "warning: unused";
+			@lines = grep(!/$warn_re/i, @lines);
+		    }
+		    ## (gfortran seems to use upper case.)
+
 		    ## Warnings spotted by gfortran 4.0 or better with
 		    ## -Wall.  Justified in principle, it seems.  Let's
 		    ## filter them for the time being, and maybe revert
@@ -893,8 +919,8 @@ foreach my $pkg (@ARGV) {
 		$dfile = &file_path($pkgdir, $ppkg, "DESCRIPTION");
 		my $fh = new IO::File($dfile, "w")
 		    or die "Error: cannot open file '$dpath' for writing\n";
-		my @lines = (@lines0, 
-			     &read_lines(&file_path($pkgdir, $ppkg, 
+		my @lines = (@lines0,
+			     &read_lines(&file_path($pkgdir, $ppkg,
 						    "DESCRIPTION.in")));
 		@lines = grep(!/^\s*$/, @lines); # Remove blank lines.
 		$fh->print(join("\n", @lines), "\n");
@@ -910,12 +936,20 @@ foreach my $pkg (@ARGV) {
 		      $is_base_pkg);
 	    $log->setstars("*");
 	}
+	## We could use the latex-ed pages, but we need the DESCRIPTION.in
+	check_pkg_manual($pkgdir, basename($pkgdir), $log);
     }
     else {
 	chdir($startdir);
 	check_pkg($pkgdir, $pkgoutdir, $startdir, $library,
-		  $is_bundle, $description, $log, $is_base_pkg, 
+		  $is_bundle, $description, $log, $is_base_pkg,
 		  $thispkg_subdirs);
+	my $instdir = &file_path($library, $pkgname);
+	if (-d &file_path($instdir, "latex")) {
+	    check_pkg_manual($instdir, $description->{"Package"}, $log);
+	} else {
+	    check_pkg_manual($pkgdir, $description->{"Package"}, $log);
+	}
     }
 
     if($log->{"warnings"}) {
@@ -999,7 +1033,7 @@ sub check_pkg {
     ## CON: Keyboard and display
     ## PRN: System list device, usually a parallel port
     ## AUX: Auxiliary device, usually a serial port
-    ## NUL: Bit-bucket device    
+    ## NUL: Bit-bucket device
     ## CLOCK$: System real-time clock
     ## COM1, COM2, COM3, COM4, COM5, COM6, COM7, COM8, COM9:
     ##   Serial communications ports 1-9
@@ -1162,7 +1196,7 @@ sub check_pkg {
 	else {
 	    find(\&find_wrong_perms_A, ".");
 	}
-        if(scalar(@bad_files) > 0) {
+	if(scalar(@bad_files) > 0) {
 	    $log->error();
 	    $log->print("Found the following files with " .
 			"insufficient permissions:\n");
@@ -1310,7 +1344,7 @@ sub check_pkg {
 	    $haveR = 0;
 	    $log->warning() unless $any;
 	    $any++;
-	    $log->print("Found directory 'R' with no source files.\n");	    
+	    $log->print("Found directory 'R' with no source files.\n");
 	}
     }
     if($R_check_subdirs_nocase) {
@@ -1356,7 +1390,7 @@ sub check_pkg {
 	my $file_name = basename($file_path);
 	my $bare_path = $file_path;
 	$bare_path =~ s+^\./++;
-	push(@check_files, $bare_path) 
+	push(@check_files, $bare_path)
 	    if -d $file_name && $file_path =~ /\.Rcheck$/;
     }
     find(\&find_check_names, ".");
@@ -1391,15 +1425,15 @@ sub check_pkg {
 
     &check_subdirs(".") unless ($subdirs eq "no");
     sub has_lazyload_data {
-        my ($dir) = @_;
-        my @files;
-        my $ans = 0;
-        if (-s &file_path($dir, "Rdata.rdb")
-            && -s &file_path($dir, "Rdata.rds")
-            && -s &file_path($dir, "Rdata.rdx")) {
-            $ans = 1;
-        }
-        $ans;
+	my ($dir) = @_;
+	my @files;
+	my $ans = 0;
+	if (-s &file_path($dir, "Rdata.rdb")
+	    && -s &file_path($dir, "Rdata.rds")
+	    && -s &file_path($dir, "Rdata.rdx")) {
+	    $ans = 1;
+	}
+	$ans;
     }
     ## Subdirectory 'data' without data sets?
     if((-d "data") && !&list_files_with_type("data", "data")
@@ -1470,7 +1504,7 @@ sub check_pkg {
     my $file = &file_path("inst", "CITATION");
     if(-f $file) {
 	my $Rcmd = "tools:::.check_citation(\"${file}\")";
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES=utils");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
@@ -1512,7 +1546,7 @@ sub check_pkg {
 	$log->checking("R files for syntax errors");
 	## we do want to warn on unrecognized escapes here
 	my $Rcmd = "options(warn=1);tools:::.check_package_code_syntax(\"R\")";
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES=NULL");
 	@out = grep(!/^\>/, @out);
 	if(scalar(grep(/^Error/, @out)) > 0) {
@@ -1526,7 +1560,7 @@ sub check_pkg {
 	    $log->result("OK");
 	}
     }
-    
+
     ## Check we can actually load the package
 
     if($opt_install) {
@@ -1637,11 +1671,11 @@ sub check_pkg {
 	if($opt_install) {
 	    $Rcmd .= "tools::checkS3methods(package = \"${pkgname}\")\n";
 	}
-        else {
+	else {
 	    $Rcmd .= "tools::checkS3methods(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
@@ -1673,9 +1707,9 @@ sub check_pkg {
 	    $Rcmd .= "tools::checkReplaceFuns(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
-        @out = grep(!/^\>/, @out);
+	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
 	    ## <NOTE>
 	    ## We really want to stop if we find offending replacement
@@ -1704,11 +1738,11 @@ sub check_pkg {
 	if($opt_install) {
 	    $Rcmd .= "tools::checkFF(package = \"${pkgname}\")\n";
 	}
-        else {
+	else {
 	    $Rcmd .= "tools::checkFF(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
@@ -1744,7 +1778,7 @@ sub check_pkg {
 				 ("The system-specific extension for",
 				  "shared libraries must not be added.\n",
 				  "See ?library.dynam.\n")));
-		
+
 		exit(1);
 	    }
 	}
@@ -1779,7 +1813,26 @@ sub check_pkg {
 		$log->print(join("\n", @out) . "\n");
 	    }
 	}
-	
+
+	## .Internal is intended for base packages
+	if((!$is_base_pkg) && $R_check_use_codetools && $R_check_dot_internal) {
+	    my $Rcmd = "options(warn=1,warnEscapes=FALSE)\n";
+	    if($opt_install) {
+		$Rcmd .= "tools:::.check_dotInternal(package = \"${pkgname}\")\n";
+	    }
+	    else {
+		$Rcmd .= "tools:::.check_dotInternal(dir = \"${pkgdir}\")\n";
+	    }
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->note() unless $any;
+		$any++;
+		$log->print(join("\n", @out) . "\n");
+	    }
+	}
+
 	$log->result("OK") unless $any;
     }
 
@@ -1816,6 +1869,20 @@ sub check_pkg {
 	else {
 	    $log->result("OK");
 	}
+	if($R_check_Rd_parse) {
+	    $log->checking("Rd files against version 2 parser");
+	    my $Rcmd = "options(warn=1)\ntools:::.check_package_parseRd('.')\n";
+	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			     "R_DEFAULT_PACKAGES=NULL");
+	    @out = grep(!/^\>/, @out);
+	    if(scalar(@out) > 0) {
+		$log->warning();
+		$log->print(join("\n", @out) . "\n");
+	    }
+	    else {
+		$log->result("OK");
+	    }
+	}
     }
 
     ## Check cross-references in R documentation files.
@@ -1843,7 +1910,7 @@ sub check_pkg {
 	else {
 	    $Rcmd .= "tools:::.check_Rd_xrefs(dir = \"${pkgdir}\")\n";
 	}
-	
+
 	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES=NULL");
 	@out = grep(!/^\>/, @out);
@@ -1869,8 +1936,8 @@ sub check_pkg {
 	    $Rcmd .= "tools::undoc(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
-                         "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
+			 "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
 	my @err = grep(/^Error/, @out);
 	@out = grep(!/^\>/, @out);
 	if(scalar(@err) > 0) {
@@ -1975,7 +2042,7 @@ sub check_pkg {
 	    $Rcmd .= "tools::checkDocFiles(dir = \"${pkgdir}\")\n";
 	}
 
-        my @out = R_runR($Rcmd, "${R_opts} --quiet",
+	my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			 "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
 	@out = grep(!/^\>/, @out);
 	if(scalar(@out) > 0) {
@@ -1991,7 +2058,7 @@ sub check_pkg {
 	    my @msg_doc_style =
 		("The \\usage entries for S3 methods should use",
 		 "the \\method markup and not their full name.\n");
-	    
+
 	    $Rcmd = "options(warn=1)\n";
 	    if($opt_install) {
 		$Rcmd .= "tools::checkDocStyle(package = \"${pkgname}\")\n";
@@ -1999,7 +2066,7 @@ sub check_pkg {
 	    else {
 		$Rcmd .= "tools::checkDocStyle(dir = \"${pkgdir}\")\n";
 	    }
-	    
+
 	    my @out = R_runR($Rcmd, "${R_opts} --quiet",
 			     "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'");
 	    @out = grep(!/^\>/, @out);
@@ -2052,7 +2119,7 @@ sub check_pkg {
 	foreach my $file (@src_files) {
 	    open(FILE, "< $file")
 	      or die "Error: cannot open '$file' for reading\n";
-            binmode(FILE);	# for Windows
+	    binmode(FILE);	# for Windows
 	    ## with CR line endings we will just get one incomplete line
 	    ## so all we can do is look for CR.
 	    while(<FILE>) {
@@ -2080,12 +2147,12 @@ sub check_pkg {
     if(!$is_base_pkg && (-d "src")) {
 	$log->checking("line endings in Makefiles");
 	## .win files are not checked, as CR/CRLF work there
-	my @src_files = ("src/Makevars", "src/Makevars.in", 
+	my @src_files = ("src/Makevars", "src/Makevars.in",
 			 "src/Makefile", "src/Makefile.in");
 	my @bad_files = ();
 	foreach my $file (@src_files) {
 	    open(FILE, "< $file") or next;
-            binmode(FILE);	# for Windows
+	    binmode(FILE);	# for Windows
 	    ## with CR line endings we will just get one incomplete line
 	    ## so all we can do is look for CR.
 	    while(<FILE>) {
@@ -2133,13 +2200,13 @@ sub check_pkg {
 	my $any;
 	$log->checking("for portable use of \$BLAS_LIBS");
 	my @makefiles;
-	push(@makefiles, &file_path("src", "Makevars")) 
+	push(@makefiles, &file_path("src", "Makevars"))
 	    if (-f &file_path("src", "Makevars"));
-	push(@makefiles, &file_path("src", "Makevars.in")) 
+	push(@makefiles, &file_path("src", "Makevars.in"))
 	    if (-f &file_path("src", "Makevars.in"));
-	push(@makefiles, &file_path("src", "Makefile")) 
+	push(@makefiles, &file_path("src", "Makefile"))
 	    if (-f &file_path("src", "Makefile"));
-	push(@makefiles, &file_path("src", "Makefile.in")) 
+	push(@makefiles, &file_path("src", "Makefile.in"))
 	    if (-f &file_path("src", "Makefile.in"));
 	foreach my $f (@makefiles) {
 	    open(FILE, "< $f")
@@ -2165,58 +2232,27 @@ sub check_pkg {
     ${R_opts} = ${R_opts}." -d valgrind" if $opt_use_valgrind;
 
     if($opt_examples && (-d &file_path($library, $pkgname, "R-ex"))) {
-	$log->creating("${pkgname}-Ex.R");
-	my $Rexdir = &file_path($library, $pkgname, "R-ex");
-        ## $Rexdir might contain spaces (not on Windows)
-        my $is_zipped = 0;
-	my $cmd;
 
-        if(-e &file_path($Rexdir, "Rex.zip")) {
-            $is_zipped = 1;
-	    my $UNZIP = &R_getenv("R_UNZIPCMD", "unzip");
-            my $Rexfile = &file_path($Rexdir, "Rex.zip");
-	    $cmd = join(" ",
-			("$UNZIP", "-q",
-			 &shell_quote_file_path($Rexfile),
-			 "-d",
-			 &shell_quote_file_path($Rexdir)));
-	    if(R_system($cmd)) {
-		$log->error();
-		$log->print("Cannot extract examples from ZIP archive.\n");
-		exit(1);
-	    }
-        }
-        if($WINDOWS) {
-            ## avoid Rcmd as line may be too long after expansion.
-            ## We've forced R_HOME and Rexdir to have no spaces already.
-            $cmd = "perl ${R::Vars::R_HOME}/bin/massage-Examples ".
-  		     "${pkgname} ${Rexdir} ".
-  		     "> ${pkgname}-Ex.R";
-        } else {
-	    $cmd =
-		join(" ",
-		     (&shell_quote_file_path(${R::Vars::R_EXE}),
-		      "CMD perl",
-		      &shell_quote_file_path(&file_path(${R::Vars::R_SHARE_DIR},
-							"perl",
-							"massage-Examples.pl")),
-		      "${pkgname}",
-		      &shell_quote_file_path(${Rexdir}),
-		      "> ${pkgname}-Ex.R"));
-        }
-
- 	if(R_system($cmd)) {
-  	    $log->error();
-	    $log->print("Running massage-Examples to create " .
-			"'${pkgname}-Ex.R' failed.\n");
-  	    exit(1);
-        }
-        if($is_zipped) {
-            unlink(&list_files_with_exts($Rexdir, "R"));
-        }
-
-	$log->result("OK");
 	$log->checking("examples");
+	
+	my $Rexdir = &file_path($library, $pkgname, "R-ex");
+	## $Rexdir might contain spaces (not on Windows, though)
+	$cmd = join(" ",
+		    ("(echo 'tools:::.createExdotR(\"${pkgname}\", \"${Rexdir}\")'",
+		     "| LC_ALL=C",
+		     &shell_quote_file_path(${R::Vars::R_EXE}),
+		     "--vanilla --slave)"
+		    ));
+	if(R_system($cmd)) {
+	    $log->error();
+	    $log->print("Running massageExamples to create " .
+			"'${pkgname}-Ex.R' failed.\n");
+	    exit(1);
+	}
+
+	if($is_zipped) {
+	    unlink(&list_files_with_exts($Rexdir, "R"));
+	}
 
 	my $enc = "";
 	if(defined($description->{"Encoding"})) {
@@ -2227,9 +2263,9 @@ sub check_pkg {
 		    $description->{"Encoding"},
 		    "' in an ASCII locale.\n";
 	    }
-        }
+	}
 	if($opt_use_gct) {
-            $cmd = join(" ",
+	    $cmd = join(" ",
 			("(echo 'gctorture(TRUE)';",
 			 "cat ${pkgname}-Ex.R) |",
 			 &shell_quote_file_path(${R::Vars::R_EXE}),
@@ -2249,7 +2285,7 @@ sub check_pkg {
 	    my $txt = join("\n", &read_lines("${pkgname}-Ex.Rout"));
 	    ## Look for the header section anchored by a subsequent call
 	    ## to flush(): needs to be kept in sync with the code in
-	    ## massage-Examples.pl.  Should perhaps also be more
+	    ## massageExamples (in testing.R).  Should perhaps also be more
 	    ## defensive about the prompt ...
 	    my @chunks = split(/(> \#\#\# \* [^\n]+\n> \n> flush)/, $txt);
 	    if(scalar(@chunks) > 2) {
@@ -2329,61 +2365,22 @@ sub check_pkg {
        && $opt_tests
        && (-d &file_path($pkgdir, "tests"))
        && &list_files(&file_path($pkgdir, "tests"))) {
-        $log->checking("tests");
-        my $testsrcdir = &file_path($pkgdir, "tests");
-        my $testdir = &file_path($pkgoutdir, "tests");
-        if(!(-d $testdir)) {
-            mkdir($testdir, 0755)
+	$log->checking("tests");
+	my $testsrcdir = &file_path($pkgdir, "tests");
+	my $testdir = &file_path($pkgoutdir, "tests");
+	if(!(-d $testdir)) {
+	    mkdir($testdir, 0755)
 	      or die "Error: cannot create directory '$testdir'\n";
-        }
-        chdir($testdir);
+	}
+	chdir($testdir);
 	dircopy($testsrcdir, ".");
-        my $makefiles = "-f " .
-	    &shell_quote_file_path(&file_path(${R::Vars::R_SHARE_DIR},
-					      "make", "tests.mk"));
-        if($WINDOWS) {
-            $makefiles = "-f ${R::Vars::R_SHARE_DIR}/make/wintests.mk";}
-        my $makevars = "";
-        if($WINDOWS && (-r "$testsrcdir/Makefile.win")) {
-            $makefiles .= " -f $testsrcdir/Makefile.win";
-        }
-        elsif(-r &file_path($testsrcdir, "Makefile")) {
-            $makefiles .= " -f " . &file_path($testsrcdir, "Makefile");
-        }
-        if($WINDOWS && (-r "$testsrcdir/Makevars.win")) {
-            $makevars = " -f $testsrcdir/Makevars.win";
-        }
-        elsif(-r &file_path($testsrcdir, "Makevars")) {
-            $makevars = " -f " . &file_path($testsrcdir, "Makevars");
-        }
-        else {
-            open(MAKEVARS, "> Makevars");
-            print MAKEVARS "makevars = -f Makevars\n";
-            ## at least windows does not pass env correctly to make
-            print MAKEVARS "R_LIBS = $ENV{'R_LIBS'}\n";
-	    ## No longer needed now that we dircopy() all of
-	    ## $testsrcdir:
-            ##   print MAKEVARS "srcdir = $testsrcdir\n";
-            ##   print MAKEVARS "VPATH = \$(srcdir)\n\n";
-            print MAKEVARS "test-src-1 =";
-	    foreach my $file (sort &list_files_with_exts($testdir, "R")) {
-                print MAKEVARS "\\\n " . basename($file);
-            }
-            print MAKEVARS "\n";
-            print MAKEVARS "test-src-auto =";
-	    foreach my $file (sort &list_files_with_exts($testdir, "Rin")) {
-                $file =~ s/Rin$/R/;
-                print MAKEVARS "\\\n " . basename($file);
-            }
-            print MAKEVARS "\n";
-	    print MAKEVARS "USE_GCT = $opt_use_gct\n";
-	    print MAKEVARS "R_OPTS = -d valgrind\n" if $opt_use_valgrind;
-            close(MAKEVARS);
-            $makevars = " -f Makevars";
-        }
-        print "\n";
-        if(R_system("${R::Vars::MAKE} $makefiles $makevars")) {
-            $log->error();
+	if($opt_use_gct) {$extra = "use_gct = TRUE";} else {$extra = "";}
+	$cmd = join(" ",
+		    ("(echo 'tools:::.runPackageTestsR($extra)' |",
+		     &shell_quote_file_path(${R::Vars::R_EXE}),
+		     "--vanilla --slave)") );
+	if(R_system($cmd)) {
+	    $log->error();
 	    ## Don't just fail: try to log where the problem occurred.
 	    ## First, find the test which failed.
 	    my @bad_files = &list_files_with_exts($testdir,
@@ -2403,10 +2400,10 @@ sub check_pkg {
 		$log->print("Last 13 lines of output:\n");
 		$log->print("  " . join("\n  ", @lines) . "\n");
 	    }
-            exit(1);
-        }
-        chdir($pkgoutdir);
-        $log->result("OK");
+	    exit(1);
+	}
+	chdir($pkgoutdir);
+	$log->result("OK");
     }
 
     ## Check package vignettes.
@@ -2448,7 +2445,7 @@ sub check_pkg {
 	    mkpath("inst/doc");
 	    dircopy($vignette_dir, "inst/doc");
 	    if ($R_check_latex_vignettes) {
-		$R_check_latex_vignettes = 0 
+		$R_check_latex_vignettes = 0
 		    if R_system("texi2dvi --version > /dev/null");
 	    }
 
@@ -2457,6 +2454,7 @@ sub check_pkg {
 	    ## packages, or just base?
 	    $Rcmd .= "checkVignettes(dir = '$pkgoutdir', workdir='src'";
 	    $Rcmd .= ", weave = FALSE" unless $R_check_weave_vignettes;
+	    $Rcmd .= ", tangle = FALSE" if $R_check_weave_vignettes;
 	    $Rcmd .= ", latex = TRUE" if $R_check_latex_vignettes;
 	    $Rcmd .= ")\n";
 	    my @out = R_runR($Rcmd, "${R_opts} --quiet");
@@ -2479,244 +2477,86 @@ sub check_pkg {
 
 	$log->result("OK") unless($any);
     }
-
-    ## Run LaTeX on the manual.
-
-    if($opt_latex) {
-        my $latex_dir = &file_path($library, $pkgname, "latex");
-	if(-d $latex_dir) {
-	    $ENV{'TEXINPUTS'} =
-	      env_path(&file_path($R::Vars::R_SHARE_DIR, "texmf"),
-		       $ENV{'TEXINPUTS'});
-            my $is_zipped = 0;
-            # latex files might have been zipped
-            if(-f &file_path($latex_dir, "Rhelp.zip")) {
-                $is_zipped = 1;
-		my $UNZIP = &R_getenv("R_UNZIPCMD", "unzip");
-		my $latex_file = &file_path($latex_dir, "Rhelp.zip");
-		$cmd = join(" ",
-			    ("$UNZIP", "-q",
-			     &shell_quote_file_path($latex_file),
-			     "-d",
-			     &shell_quote_file_path($latex_dir)));
-                if(R_system($cmd)) {
-		    $log->error();
-		    $log->print("Unzipping latex files failed.\n");
-		    exit(1);
-                }
-            }
-	    $log->creating("${pkgname}-manual.tex");
-	    my @tex_files = &list_files_with_exts($latex_dir, "tex");
-	    my %encodings;
-	    foreach my $file (@tex_files) {
-		open(FILE, "< $file")
-		  or die("Error: cannot open file '$file' for reading\n");
-		while(<FILE>) {
-		    if (/^\\inputencoding/) {
-			$enc = $_;
-			chomp $enc;
-			$enc =~ s/^\\inputencoding{(.*)}/\1/;
-			$encodings{$enc} = $enc;
-		    }
-		}
-		close(FILE);
-	    }
-	    my $encs = "";
-	    if (scalar(%encodings)) {
-		$encs = "\\usepackage[" . join(",", values %encodings) .
-		    "]{inputenc}\n";
-	    }
-	    open(MANUAL, "> ${pkgname}-manual.tex")
-	      or die("Error: cannot open file '${pkgname}-manual.tex'" .
-		     "for writing\n");
-	    print MANUAL "\\documentclass\{book\}\n" . $encs;
-	    ## Use the same Rd.sty defaults as Rd2dvi.
-	    if($HAVE_PDFLATEX) {
-		print MANUAL "\\usepackage[times,hyper]\{Rd\}\n";
-	    } else {
-		print MANUAL "\\usepackage[ae]\{Rd\}\n";
-	    }
-	    print MANUAL "\\begin\{document\}\n";
-	    foreach my $file (@tex_files) {
-		open(FILE, "< $file")
-		  or die("Error: cannot open file '$file' for reading\n");
-		while(<FILE>) {
-		    print MANUAL $_;
-		}
-		close(FILE);
-	    }
-	    print MANUAL "\\end\{document\}\n";
-	    close(MANUAL);
-            if($is_zipped) {
-		unlink(&list_files_with_exts($latex_dir, "tex"));
-            }
-	    $log->result("OK");
-	    if($HAVE_LATEX) {
-		my ($cmd, $fmt);
-		if($HAVE_PDFLATEX) {
-		    $cmd = "${R::Vars::PDFLATEX}";
-		    $cmd_name = "pdflatex";
-		    $fmt = "pdf";
-		} else {
-		    $cmd = "${R::Vars::LATEX}";
-		    $cmd_name = "latex";
-		    $fmt = "dvi";
-		}
-		$log->checking("${pkgname}-manual.tex using ${cmd_name}");
-		## <NOTE>
-		## We use \nonstopmode{} so that LaTeX really gives an
-	        ## error (and returns) if something is wrong, and all
-	        ## info goes to ${pkgname}-manual.log.
-		## We also suppress all output from running LaTeX.
-                ## We could also write stdout to a tempfile and replay
-                ## this in case of problems.  But does this really help?
-		if($WINDOWS) {
-		    ## check if we have MiKTeX and call latex accordingly
-		    ## (can't do this in R::Vars::LATEX as we need R::Utils.)
-		    my $Rout = R_tempfile("Rlatex");
-		    my $cmd2 = "$cmd --version > ${Rout}";
-		    R_system($cmd2);
-		    my $is_miktex = 0;
-		    open ROUT, "< $Rout";
-		    while (<ROUT>) {
-			chomp;
-			$is_miktex = 1 if /^MiKTeX/;
-		    }
-		    close ROUT;
-		    unlink($Rout);
-		    $out =~ s/\w//;
-		    if($is_miktex) {
-			my $R_HOME = $ENV{"R_HOME"};
-			$cmd .= " --include-directory=$R_HOME/share/texmf";
-		    }
-		}
-		$cmd .= " '\\nonstopmode{}\\input{${pkgname}-manual.tex}'";
-		$cmd .= " >/dev/null 2>&1";
-		## </NOTE>
-		if(R_system($cmd)) {
-		    $log->error();
-		    $log->print("LaTeX errors when creating \U$fmt\E version.\n");
-		    $log->print("This typically indicates Rd problems.\n");
-		    ## If possible, indicate the problems found.
-		    if(-f "${pkgname}-manual.log") {
-			my $Rcmd = "writeLines(tools:::.get_LaTeX_errors_from_log_file(\"${pkgname}-manual.log\"))";
-			my @out = R_runR($Rcmd, "${R_opts} --quiet",
-					 "R_DEFAULT_PACKAGES=NULL");
-			@out = grep(!/^\>/, @out);
-			if(scalar(@out) > 0) {
-			    $log->print("LaTeX errors found:\n");
-			    $log->print(join("\n", @out) . "\n");
-			}
-		    }
-		    exit(1);
-		}
-		$log->result("OK");
-	    }
-	}
-	else { # no latex dir
-	    if($HAVE_LATEX) {
-		my $Rd2dvi_opts = "--batch --no-preview --no-index";
-		my $fmt;
-		if($HAVE_PDFLATEX) {
-		    $Rd2dvi_opts = $Rd2dvi_opts . " --pdf";
-		    $fmt = "pdf";
-		} else {
-		    $fmt = "dvi";
-		}
-		$log->checking("\U$fmt\E version of manual");
-		my $cmd;
-		my $build_dir = R_tempfile("Rd2dvi");
-		if($WINDOWS) {
-		    $cmd = join(" ",
-				("Rcmd.exe Rd2dvi $Rd2dvi_opts",
-				 "--build-dir=${build_dir} --no-clean",
-				 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
-				 "$pkgdir"));
-		} else {
-		    $cmd = join(" ",
-				(&shell_quote_file_path("${R::Vars::R_EXE}"),
-				 "CMD Rd2dvi $Rd2dvi_opts",
-				 "--build-dir=${build_dir} --no-clean",
-				 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
-				 "$pkgdir"));
-		}
-		if(R_system($cmd)) {
-		    $log->error();
-		    $log->print("LaTeX errors when creating \U$fmt\E version.\n");
-		    $log->print("This typically indicates Rd problems.\n");
-		    ## If possible, indicate the problems found.
-		    my $latex_log = &file_path($build_dir, "Rd2.log");
-		    ## Note that Rd2dvi works on 'Rd2.tex'.
-		    if(-f $latex_log) {
-			my $Rcmd = "writeLines(tools:::.get_LaTeX_errors_from_log_file(\"${latex_log}\"))";
-			my @out = R_runR($Rcmd, "${R_opts} --quiet",
-					 "R_DEFAULT_PACKAGES=NULL");
-			@out = grep(!/^\>/, @out);
-			if(scalar(@out) > 0) {
-			    $log->print("LaTeX errors found:\n");
-			    $log->print(join("\n", @out) . "\n");
-			}
-		    }
-		    rmtree($build_dir);			
-		    exit(1);
-		}
-		rmtree($build_dir);
-		$log->result("OK");
-	    }
-	}
-    }
-
-    ## Run Rd2dvi on the DESCRIPTION.
-
-    ## Note that currently (2008-02-14) passing this and the above test
-    ## still does not ensure that R CMD Rd2dvi can produce the package
-    ## reference manual, as the above does not use makeindex.
-    
-    if($opt_latex && $ENV{"_R_CHECK_RD2DVI_DESCRIPTION_"}) {
-	my $Rd2dvi_opts = "--batch --no-preview --no-clean --only-meta";
-	my $ext;
-	if($HAVE_PDFLATEX) {
-	    $Rd2dvi_opts = $Rd2dvi_opts . " --pdf";
-	    $ext = "pdf";
-	} else {
-	    $ext = "dvi";
-	}
-	my $build_dir = R_tempfile("Rd2dvi");
-	$log->checking("\U$ext\E version of DESCRIPTION");	
-	my $cmd = join(" ",
-		       (&shell_quote_file_path("${R::Vars::R_EXE}"),
-			"CMD Rd2dvi $Rd2dvi_opts",
-			"--build-dir=${build_dir}",
-			"-o ${pkgname}-header.${ext} >/dev/null 2>&1",
-			"$pkgdir"));
-	if(R_system($cmd)) {
-	    $log->warning();
-	    $log->print("Problems when creating \U$ext\E version of DESCRIPTION.");
-	    ## If possible, indicate the problems found.
-	    my $latex_log = &file_path($build_dir, "Rd2.log");
-	    ## Note that Rd2dvi works on 'Rd2.tex'.
-	    if(-f $latex_log) {
-		my $Rcmd = "writeLines(tools:::.get_LaTeX_errors_from_log_file(\"${latex_log}\"))";
-		my @out = R_runR($Rcmd, "${R_opts} --quiet",
-				 "R_DEFAULT_PACKAGES=NULL");
-		@out = grep(!/^\>/, @out);
-		if(scalar(@out) > 0) {
-		    $log->print("LaTeX errors found:\n");
-		    $log->print(join("\n", @out) . "\n");
-		}
-	    }
-	}
-	else {
-	    $log->result("OK");
-	}
-	rmtree($build_dir);
-    }
-
 }
 
 
+## NB Bundles should have a bundle manual, not one for each package,
+## so this is no longer part of check_pkg.
+sub check_pkg_manual {
+    my ($pkgdir, $pkgname, $log) = @_;
+    ## Run LaTeX on the manual, if there are man pages
+    if ((-d &file_path($pkgdir, "latex)")) ||
+	(-d &file_path($pkgdir, "man")) ) {
+	if($opt_latex && $HAVE_LATEX) {
+	    $topdir = $pkgdir;
+	    my $Rd2dvi_opts = "--batch --no-preview";
+	    my $fmt;
+	    if($HAVE_PDFLATEX) {
+		$Rd2dvi_opts = $Rd2dvi_opts . " --pdf";
+		$fmt = "pdf";
+	    } else {
+		$fmt = "dvi";
+	    }
+	    $log->checking("\U$fmt\E version of manual");
+	    my $cmd0, $cmd;
+	    my $build_dir = R_tempfile("Rd2dvi");
+	    if($WINDOWS) {
+		$cmd0 = "Rcmd.exe";
+	    } else {
+		$cmd0 = &shell_quote_file_path("${R::Vars::R_EXE}");
+		$cmd0 = "$cmd0 CMD";
+	    }
+	    $cmd = join(" ",
+			($cmd0, "Rd2dvi $Rd2dvi_opts",
+			 "--build-dir=${build_dir} --no-clean",
+			 "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
+			 "$topdir"));
+	    my $res = R_system($cmd);
+	    my $latex_log = &file_path($build_dir, "Rd2.log");
+	    if(-f $latex_log) {copy($latex_log, "${pkgname}-manual.log");}
+	    if($res) {
+		my $latex_file = &file_path($build_dir, "Rd2.tex");
+		if(-f $latex_file) {copy($latex_file, "${pkgname}-manual.tex");}
+		$log->warning();
+		$log->print("LaTeX errors when creating \U$fmt\E version.\n");
+		$log->print("This typically indicates Rd problems.\n");
+		## If possible, indicate the problems found.
+		my $latex_log = &file_path($build_dir, "Rd2.log");
+		## Note that Rd2dvi works on 'Rd2.tex'.
+		if(-f $latex_log) {
+		    my $Rcmd = "writeLines(tools:::.get_LaTeX_errors_from_log_file(\"${latex_log}\"))";
+		    my @out = R_runR($Rcmd, "${R_opts} --quiet",
+				     "R_DEFAULT_PACKAGES=NULL");
+		    @out = grep(!/^\>/, @out);
+		    if(scalar(@out) > 0) {
+			$log->print("LaTeX errors found:\n");
+			$log->print(join("\n", @out) . "\n");
+		    }
+		}
+		rmtree($build_dir);
+		$log->checking("\U$fmt\E version of manual without index");
+		$cmd = join(" ",
+			    ($cmd0, "Rd2dvi $Rd2dvi_opts",
+			     "--build-dir=${build_dir} --no-clean --no-index",
+			     "-o ${pkgname}-manual.${fmt} >/dev/null 2>&1",
+			     "$topdir"));
+		if(R_system($cmd)) {
+		    $log->error();
+		    if(-f $latex_log) {copy($latex_log, "${pkgname}-manual.log");}
+		    rmtree($build_dir);
+		    exit(1);
+		}
+	    }
+	    rmtree($build_dir);
+	    $log->result("OK");
+	}
+    }
+}
+
+
+
 sub usage {
-    print STDERR <<END;
+    print <<END;
 Usage: R CMD $name [options] pkgs
 
 Check R packages from package sources, which can be directories or
@@ -2731,11 +2571,11 @@ run successfully.
 
 Options:
   -h, --help            print short help message and exit
-  -v, --version         print 'check' version info and exit
+  -v, --version         print version info and exit
   -l, --library=LIB     library directory used for test installation
-                        of packages (default is outdir)
+			of packages (default is outdir)
   -o, --outdir=DIR      directory used for logfiles, R output, etc.
-                        (default is 'pkg.Rcheck' in current directory,
+			(default is 'pkg.Rcheck' in current directory,
 			where 'pkg' is the name of the package checked)
       --no-clean        do not clean outdir before using it
       --no-codoc        do not check for code/documentation mismatches
@@ -2746,14 +2586,15 @@ Options:
       --no-latex        do not run LaTeX on help files
       --use-gct         use 'gctorture(TRUE)' when running examples/tests
       --use-valgrind    use 'valgrind' when running examples/tests/vignettes
+      --install-args=	command-line args to be passed to INSTALL
       --check-subdirs=default|yes|no
-                        run checks on the package subdirectories
+			run checks on the package subdirectories
 			(default is yes for a tarball, no otherwise)
       --rcfile=FILE     read configuration values from FILE
 
 By default, all test sections are turned on.
 
-Email bug reports to <r-bugs\@r-project.org>.
+Report bugs to <r-bugs\@r-project.org>.
 END
     exit 0;
 }

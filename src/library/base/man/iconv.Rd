@@ -33,7 +33,9 @@ iconvlist()
   The names of encodings and which ones are available (and indeed, if
   any are) is platform-dependent.  On all systems that support
   \code{iconv} you can use \code{""} for the encoding of the current
-  locale, as well as \code{"latin1"} and \code{"UTF-8"}.
+  locale, as well as \code{"latin1"} and \code{"UTF-8"}.  On most
+  systems (including those using \code{glibc} or \code{libinconv}, Mac
+  OS X and Windows) case is ignored when specifying an encoding.
 
 #ifdef unix
   On many platforms \code{iconvlist} provides an alphabetical list of
@@ -58,8 +60,7 @@ iconvlist()
   are ignored: they will always be translated as if from \code{from}
   even if declared otherwise.
 
-  As from \R 2.7.0 \code{"UTF8"} will be accepted as meaning the (more
-  correct) \code{"UTF-8"}.
+  \code{"UTF8"} will be accepted as meaning the (more correct) \code{"UTF-8"}.
 }
 \value{
   A character vector of the same length and the same attributes as
@@ -77,7 +78,8 @@ iconvlist()
   \code{\link{localeToCharset}}, \code{\link{file}}. 
 }
 \examples{\donttest{
-utils::head(iconvlist(), n = 50)
+## not all systems have iconvlist
+try(utils::head(iconvlist(), n = 50))
 
 \dontrun{
 ## convert from Latin-2 to UTF-8: two of the glibc iconv variants.

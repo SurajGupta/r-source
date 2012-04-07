@@ -36,13 +36,13 @@ library.dynam.unload(chname, libpath,
   \item{verbose}{a logical value indicating whether an announcement
     is printed on the console before loading the DLL.  The
     default value is taken from the verbose entry in the system
-    options.}
-  \item{file.ext}{the extension to append to the file name to specify
-    the library to be loaded. This defaults to the appropriate value
-    for the operating system.}
+    \code{\link{options}}.}
+  \item{file.ext}{the extension (including \samp{.} if used) to append
+    to the file name to specify the library to be loaded.  This defaults
+    to the appropriate value for the operatingsystem.}
   \item{\dots}{additional arguments needed by some libraries that
     are passed to the call to \code{\link{dyn.load}} to control
-    how the library is loaded.}
+    how the library and its dependencies are loaded.}
   \item{new}{a list of \code{"DLLInfo"} objects corresponding to the
     DLLs loaded by packages.  Can be missing.}
 }
@@ -54,16 +54,14 @@ library.dynam.unload(chname, libpath,
   \code{\link{.First.lib}} or \code{\link{.onLoad}}.  The
   system-specific extension for DLLs (e.g., \file{.so} or \file{.sl} on
   Unix systems, \file{.so} on Mac OS X, \file{.dll} on Windows) should
-  not be added.  Note that to allow for versioned installs, the
-  \code{chname} argument should not be set to the \code{pkgname}
-  argument of \code{.First.lib} or \code{.onLoad}.
-
-  If \code{\dots} does not include a named argument \code{Dllpath},
-  \code{\link{dyn.load}} is called with \code{DLLpath} set to the
-  package's \file{libs} directory.  (Currently only used under Windows.)
+  not be added.
 #ifdef windows
-  See the \dQuote{Windows} section of the help on \code{\link{dyn.load}}
-  for how to control where dependent DLLs are found.
+
+  If \code{\dots} does not include a named argument \code{DLLpath},
+  \code{\link{dyn.load}} is called with \code{DLLpath} set to the
+  package's \file{libs} directory.  See the \dQuote{Windows} section of
+  the help on \code{\link{dyn.load}} for how to control where dependent
+  DLLs are found.
 #endif
   
   \code{library.dynam.unload} is designed for use in
@@ -98,6 +96,10 @@ library.dynam.unload(chname, libpath,
   \code{library.dynam}: use \code{library.dynam.unload} to ensure
   that \code{.dynLibs} gets updated.  Otherwise a subsequent call to
   \code{library.dynam} will be told the object is already loaded.
+
+  Note that whether or not it is possible to unload a DLL and then
+  reload a revised version of the same file is OS-dependent: see the
+  \sQuote{Value} section of the help for  \code{\link{dyn.unload}}.
 }
 \seealso{
   \code{\link{getLoadedDLLs}} for information on \code{"DLLInfo"} and
@@ -112,7 +114,7 @@ library.dynam.unload(chname, libpath,
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \examples{
 ## Which DLLs were "dynamically loaded" by packages?

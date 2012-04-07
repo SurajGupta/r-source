@@ -88,7 +88,7 @@ prcomp(x, \dots)
     centred (and scaled if requested) data multiplied by the
     \code{rotation} matrix) is returned.  Hence, \code{cov(x)} is the
     diagonal matrix \code{diag(sdev^2)}.  For the formula method,
-    \code{napredict} is applied to handle the treatment of values
+    \code{\link{napredict}()} is applied to handle the treatment of values
     omitted by the \code{na.action}.}
   \item{center, scale}{the centering and scaling used, or \code{FALSE}.}
 }
@@ -111,7 +111,7 @@ prcomp(x, \dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 
   Mardia, K. V., J. T. Kent, and J. M. Bibby (1979)
   \emph{Multivariate Analysis}, London: Academic Press.

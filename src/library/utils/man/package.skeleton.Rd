@@ -4,6 +4,7 @@
 % Distributed under GPL 2 or later
 
 \name{package.skeleton}
+\Rdversion{1.1}
 \alias{package.skeleton}
 \title{Create a Skeleton for a New Source Package}
 \description{
@@ -15,7 +16,7 @@
 \usage{
 package.skeleton(name = "anRpackage", list,
                  environment = .GlobalEnv,
-	         path = ".", force = FALSE, namespace = FALSE,
+                 path = ".", force = FALSE, namespace = FALSE,
                  code_files = character())
 }
 \arguments{
@@ -61,7 +62,7 @@ package.skeleton(name = "anRpackage", list,
   
   The  filenames created for source and documentation try to be valid
   for all OSes known to run R.  Invalid characters are replaced by
-  \samp{\_}, invalid names are preceded by \samp{zz}, and finally the
+  \samp{_}, invalid names are preceded by \samp{zz}, and finally the
   converted names are made unique by \code{\link{make.unique}(sep =
     "_")}.  This can be done for code and help files but not data files
   (which are looked for by name). Also, the code and help files should

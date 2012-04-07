@@ -27,8 +27,8 @@
 \arguments{
   \item{name}{a character string giving the name of a C function or
     Fortran subroutine, or an object of class
-    \code{"\link{NativeSymbolInfo}"} or \code{"\link{NativeSymbol}"}
-    referring to such a name.}
+    \code{"\link{NativeSymbolInfo}"}, \code{"\link{RegisteredNativeSymbol}"}
+    or \code{"\link{NativeSymbol}"} referring to such a name.}
   \item{\dots}{arguments to be passed to the foreign function.}
   \item{NAOK}{if \code{TRUE} then any \code{\link{NA}} or
     \code{\link{NaN}} or \code{\link{Inf}} values in the arguments are
@@ -221,7 +221,7 @@
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole. (\code{.C} and \code{.Fortran}.)
+  Wadsworth & Brooks/Cole. (\code{.C} and \code{.Fortran}.)
 
   Chambers, J. M. (1998)
   \emph{Programming with Data. A Guide to the S Language}.

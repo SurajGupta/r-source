@@ -59,6 +59,8 @@ removeGeneric("f")
 ## objects should correspond to a call to show(), as per the green
 ## book, p. 332.  Therefore, the show() method is called, once defined,
 ## for auto-printing foo, regardless of the S3 or S4 print() method.
+## (But most of this example is irrelevant if one avoids S3 methods for
+## S4 classes, as one should.)
 setClass("bar", representation(a="numeric"))
 foo <- new("bar", a=pi)
 foo
@@ -73,10 +75,11 @@ print(foo)
 # not.  Can reinstate when S4 type is obligatory
 # print(foo, digits = 4)
 
-print.bar <- function(x, ...) cat("print method\n")
-foo
-print(foo)
-show(foo)
+## DON'T DO THIS:  S3 methods for S4 classes are a design error JMC iii.9.09
+## print.bar <- function(x, ...) cat("print method\n")
+## foo
+## print(foo)
+## show(foo)
 
 setMethod("print", "bar", function(x, ...){cat("S4 print method\n")})
 foo
@@ -164,7 +167,8 @@ setClass("C", contains = c("A", "B"), representation(z = "logical"),
          prototype = prototype(x = 1.5, y = "test", z = TRUE))
 (cc <- new("C"))
 ## failed reconcilePropertiesAndPrototype(..) after svn r37018
-
+stopifnot(identical(selectSuperClasses("C", dropVirtual = TRUE), c("A", "B")),
+	  0 == length(.selectSuperClasses(getClass("B")@contains)))
 
 ## "Logic" group -- was missing in R <= 2.4.0
 stopifnot(all(getGroupMembers("Logic") %in% c("&", "|")),
@@ -387,7 +391,7 @@ stopifnot(c("BIC", "coef", "confint", "logLik", "plot", "profile",
 em <- as.environment("package:methods")
 ggm <- getGenerics(em)
 gms <- c("addNextMethod", "body<-", "cbind2", "initialize",
-	 "loadMethod", "Math", "Ops", "rbind2", "show")
+	 "loadMethod", "Ops", "rbind2", "show")
 stopifnot(unlist(lapply(ggm, function(g) !is.null(getGeneric(g, where = em)))),
 	  unlist(lapply(ggm, function(g) !is.null(getGeneric(g)))),
 	  gms %in% ggm,
@@ -441,3 +445,42 @@ stopifnot(identical(m,			as(nf, "matrix")),
 	  identical(matrix(3:1,3,2),	as(n2, "matrix")),
 	  identical(matrix(1:6,ncol=2), as(n3, "matrix")))
 ## partly failed at times in pre-2.8.0
+
+if("S4_subsettable" == TRUE) { ## now (2.9.0) not thought to be a good idea
+## "[" subsetting of "simple S4" classes:
+for(bcl in c("list","integer","numeric")) {
+    setClass("C", contains= bcl)
+    x <- new("C", 1:3); x <- x[2:3]
+    stopifnot(is(x, "C"), is(rep(x, 3), "C"), is(rep.int(x, 2), "C"))
+}
+## used to drop the class in 2.8.0 and earlier
+}
+
+##From "Michael Lawrence" <....@fhcrc.org>  To r-devel@r-project, 25 Nov 2008:
+setGeneric("order", signature="...",
+	   function (..., na.last=TRUE, decreasing=FALSE)
+	   standardGeneric("order"))
+stopifnot(identical(rbind(1), matrix(1,1,1)))
+setGeneric("rbind", function(..., deparse.level=1)
+	   standardGeneric("rbind"), signature = "...")
+stopifnot(identical(rbind(1), matrix(1,1,1)))
+## gave Error in .Method( .... in R 2.8.0
+
+## median.default( <simple S4> )
+## FIXME: if we use "C" instead of "L", this fails because of caching
+setClass("L", contains = "list")
+## {simplistic, just for the sake of testing here} :
+setMethod("Compare", signature(e1="L", e2="ANY"),
+          function(e1,e2) sapply(e1, .Generic, e2=e2))
+setMethod("Summary", "L",
+	  function(x, ..., na.rm=FALSE) {x <- unlist(x); callNextMethod()})
+setMethod("[", signature(x="L", i="ANY", j="missing",drop="missing"),
+          function(x,i,j,drop) new("L", x@.Data[i]))
+x <- new("L", 1:3); x2 <- x[-2]
+stopifnot(unlist(x2) == (1:3)[-2],
+	  is(mx <- median(x), "L"), mx == 2,
+	  identical(mx, quantile(x, 0.5, names=FALSE)),
+	  ## median of two -> sum()
+	  median(x2) == 2)
+## median.default(x) was too stringent on x
+

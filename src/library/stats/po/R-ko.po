@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-26 08:39\n"
+"POT-Creation-Date: 2009-04-03 13:01\n"
 "PO-Revision-Date: 2005-05-26 15:05+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -20,7 +20,8 @@ msgstr "'acf'는 2 이상의 길이가 나오지 않으면 되지 않습니다"
 msgid "object not interpretable as a factor"
 msgstr "오브젝트는 인자로서 해석 할수 없습니다"
 
-msgid "cannot fit models without level ('alpha' must not be 0)."
+#, fuzzy
+msgid "cannot fit models without level ('alpha' must not be 0 or FALSE)."
 msgstr "레벨이 없는 모델은 적용시킬수 없습니다('alpha'는 0이면 안됩니다)"
 
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
@@ -141,6 +142,10 @@ msgid ""
 " does not match the length of the margins, %d"
 msgstr "FUN 길이 %d는 마진의 길이%d와 match하지 않습니다"
 
+#, fuzzy
+msgid "no rows to aggregate"
+msgstr "비교해야할 모델이 없습니다"
+
 msgid "'by' must be a list"
 msgstr "'by'는 list가 아니면 되지 않습니다"
 
@@ -201,6 +206,9 @@ msgstr "'formula'가 없거나 부정확합니다"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "그룹화 인자는 꼭 2 levels을 가지지 않으면 안됩니다"
+
+msgid "weights are not supported in a multistratum aov() fit"
+msgstr ""
 
 msgid "Error() model is singular"
 msgstr "Error()모델은 특이합니다"
@@ -783,6 +791,9 @@ msgstr ""
 msgid "negative values not allowed for the Poisson family"
 msgstr "포아송 패밀리에서 negative 값은 허용되지 않습니다"
 
+msgid "ignoring prior weights"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for quasipoisson family; available links are %s"
@@ -826,6 +837,9 @@ msgid ""
 "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
 msgstr "또는 1열이 성공수, 2열이 실패수인 2열의 행렬입니다"
 
+msgid "cannot simulate from non-integer prior.weights"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for quasibinomial family; available links are %s"
@@ -847,6 +861,9 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr "정확하지 않는 값은 gamma family에서 허용되지 않습니다"
 
+msgid "using weights as shape paraneters"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
@@ -857,6 +874,12 @@ msgstr ""
 
 msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "역정규 패밀리에서 정의값만 허용되지 않습니다"
+
+msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
+msgstr ""
+
+msgid "using weights as inverse variances"
+msgstr ""
 
 msgid ""
 "'variance' \"%s\" is invalid: possible values are \"mu(1-mu)\", \"mu\", "
@@ -1276,6 +1299,13 @@ msgstr "무효인 'lm'오브젝트: 항('terms') 혹은 'qr'성분이 없습니�
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr "오브젝트중의 나머지 자유도는 이 'lm'가 아니라고 시사합니다"
 
+msgid "family '"
+msgstr ""
+
+#, fuzzy
+msgid "' not implemented"
+msgstr "유형 '%s'는 실제 적용되지 않습니다"
+
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
 
@@ -1474,6 +1504,12 @@ msgstr ""
 "설계는 균형을 잃게 할 수 있습니다. se를 위해서 \n"
 "se.contrast()를 사용합니다"
 
+#, fuzzy
+msgid "design is unbalanced so cannot proceed"
+msgstr ""
+"설계는 균형을 잃게 할 수 있습니다. se를 위해서 \n"
+"se.contrast()를 사용합니다"
+
 msgid ""
 "Standard error information not returned as design is unbalanced. \n"
 "Standard errors can be obtained through 'se.contrast'."
@@ -1601,7 +1637,8 @@ msgstr ""
 msgid "'params' has wrong length"
 msgstr "'parames'는 잘못한 길이입니다"
 
-msgid "'varying' must be in 1:length(pars)"
+#, fuzzy
+msgid "'varying' must be in 1L:length(pars)"
 msgstr "'varying'는 1:length(pars)에 없으면 되지 않습니다"
 
 msgid "'varying' has wrong length"
@@ -1729,14 +1766,15 @@ msgstr "'x'와 'n'는 동일 길이가 나오지 않으면 되지 않습니다"
 msgid "too few groups"
 msgstr "그룹이 너무 적습니다"
 
+msgid "Not plotting observations with leverage one:"
+msgstr ""
+
 msgid "use only with \"lm\" objects"
 msgstr "\"lm\" 오브젝트에 대해서만 사용해주십시오"
 
-msgid "'which' must be in 1:6"
+#, fuzzy
+msgid "'which' must be in 1L:6"
 msgstr "'which'는 1:4에서 없으면 되지 않습니다"
-
-msgid "Not plotting observations with leverage one:"
-msgstr ""
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d}에서 없으면 되지 않습니다"
@@ -1746,6 +1784,29 @@ msgstr ""
 
 msgid "and there are no factor predictors; no plot no. 5"
 msgstr ""
+
+#, fuzzy
+msgid "'x' and 'T' have incompatible length"
+msgstr "'x'와 'g'는 동일 길이를 가지지 않으면 되지 않습니다"
+
+#, fuzzy
+msgid "'x' must be finite, nonnegative, and integer"
+msgstr "'x'는 non-negative 정수가 아니면 되지 않습니다"
+
+#, fuzzy
+msgid "'T' must be nonnegative"
+msgstr "'x'는 non-negative가 나오지 않으면 되지 않습니다"
+
+msgid "not enough data"
+msgstr "적당한 데이타가 없습니다"
+
+#, fuzzy
+msgid "The case k > 2 is unimplemented"
+msgstr "유형 '%s'는 실제 적용되지 않습니다"
+
+#, fuzzy
+msgid "'r' must be a single positive number"
+msgstr "'ratio'는 단일의 positive의 수가 아니면 되지 않습니다"
 
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
@@ -1839,9 +1900,6 @@ msgstr "'proj'는 \"mlm\"에 의한 실제 적용되지 있지 않습니다"
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj'는 다중 응답에 대해서는 실제 적용되지 않습니다"
 
-msgid "not enough data"
-msgstr "적당한 데이타가 없습니다"
-
 msgid "elements of 'n' must be positive"
 msgstr "'n'의 요소는 poitive가 아니면 되지 않습니다"
 
@@ -1897,7 +1955,8 @@ msgstr "'relevel'는 인자 전용입니다"
 msgid "'ref' must be an existing level"
 msgstr "'ref'는 기존의 수준이 아니면 되지 않습니다"
 
-msgid "ref = %d must be in 1:%d"
+#, fuzzy
+msgid "ref = %d must be in 1L:%d"
 msgstr "ref = %d는 1:%d에 없으면 되지 않습니다"
 
 msgid "Failed to guess time-varying variables from their names"
@@ -2056,6 +2115,10 @@ msgstr "spline: 최초와 마지막 y값이 다른 y[1]을 양쪽 모두를 위�
 #, fuzzy
 msgid "'spline' requires n >= 1"
 msgstr "'approx'는 n >= 1 인것을 필요로 합니다"
+
+#, fuzzy
+msgid "spline: first and last y values differ - using y[1L] for both"
+msgstr "spline: 최초와 마지막 y값이 다른 y[1]을 양쪽 모두를 위해서 사용합니다"
 
 #, fuzzy
 msgid "'deriv' must be between 0 and 3"

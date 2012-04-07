@@ -11,7 +11,7 @@ subdir = src/library/Recommended
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
-DISTFILES = Makefile.in .cvsignore
+DISTFILES = Makefile.in Makefile.win .cvsignore
 R = R_LIBS= $(top_builddir)/bin/R
 
 ## foo.ts is the timestamp for package foo;
@@ -63,6 +63,32 @@ install-strip: install
 
 uninstall:
 
+install-tests:
+	@(tmp=$${TMPDIR-/tmp}/R$$$$; mkdir $${tmp}; \
+	 cd "$(top_srcdir)"; abs_top_srcdir=`pwd`; \
+	 abs_MKINSTALLDIRS=`echo "$(MKINSTALLDIRS)" | sed "s:$(top_srcdir):$${abs_top_srcdir}:"` ; \
+	 cd $${tmp}; \
+	 for pkg in $(R_PKGS_RECOMMENDED_SOURCES); do \
+	   gzip -dc "$(abs_top_srcdir)/src/library/Recommended/$${pkg}.tgz" | $(TAR) xf - ; \
+	 done ; \
+	 for pkg in MASS class nnet spatial;  do \
+	  mv VR/$${pkg} . ; \
+	 done ; \
+	 for pkg in $(R_PKGS_RECOMMENDED); do \
+	  if test -d $${pkg}/tests; then \
+	    $${abs_MKINSTALLDIRS} "$(DESTDIR)$(rhome)/library/$${pkg}/tests" ; \
+	    for f in $${pkg}/tests/*; do \
+	      $(INSTALL_DATA) $${f} "$(DESTDIR)$(rhome)/library/$${pkg}/tests"; \
+	    done; \
+	  fi; \
+	 done)
+
+uninstall-tests:
+	@for pkg in $(R_PKGS_RECOMMENDED); do \
+	 rm -rf "$(DESTDIR)$(rhome)/library/$${pkg}/tests" ; \
+	done
+
+
 mostlyclean: clean
 clean:
 	-@test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
@@ -82,6 +108,6 @@ distdir: $(DISTFILES)
 	done
 
 
-## Hardcoded dependencies (see 'share/make/vars.mk')
+## Hardcoded dependencies (see '../../../share/make/vars.mk')
 mgcv.ts: nlme.ts VR.ts
 nlme.ts: lattice.ts

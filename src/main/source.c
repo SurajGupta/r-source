@@ -40,7 +40,7 @@ SEXP attribute_hidden getParseContext(void)
     char c;
 
     context[last] = '\0';
-    for (i=R_ParseContextLast; last>0 ; i--) {
+    for (i=R_ParseContextLast; last>0 ; i += PARSE_CONTEXT_SIZE - 1) {
 	i = i % PARSE_CONTEXT_SIZE;
 	context[--last] = R_ParseContext[i];
 	if (!context[last]) {
@@ -73,7 +73,10 @@ SEXP attribute_hidden getParseContext(void)
 	last = i;
     }
     /* get rid of empty line after last newline */
-    if (nread && !length(STRING_ELT(ans, nread-1))) nread--;
+    if (nread && !length(STRING_ELT(ans, nread-1))) {
+    	nread--;
+    	R_ParseContextLine--;
+    }
     PROTECT(ans2 = allocVector(STRSXP, nread));
     for(i = 0; i < nread; i++)
 	SET_STRING_ELT(ans2, i, STRING_ELT(ans, i));
@@ -93,30 +96,59 @@ void attribute_hidden getParseFilename(char* buffer, int buflen)
     }
 }
 
+static SEXP tabExpand(SEXP strings)
+{
+    int i;
+    char buffer[200], *b;
+    const char *input;
+    SEXP result;
+    PROTECT(result = allocVector(STRSXP, length(strings)));
+    for (i = 0; i < length(strings); i++) {
+    	input = CHAR(STRING_ELT(strings, i));
+    	for (b = buffer; input && b-buffer < 192; input++) {
+    	    if (*input == '\t') do {
+    	    	*b++ = ' ';
+    	    } while (((b-buffer) & 7) != 0);
+    	    else *b++ = *input;
+    	}
+    	*b = '\0';
+    	SET_STRING_ELT(result, i, mkCharCE(buffer, Rf_getCharCE(STRING_ELT(strings, i))));
+    }
+    UNPROTECT(1);
+    return result;
+}
+    	
 void attribute_hidden parseError(SEXP call, int linenum)
 {
-    SEXP context = getParseContext();
-    int len = length(context);
-    char filename[128];
+    SEXP context;
+    int len, width;
+    char filename[128], buffer[10];
+    PROTECT(context = tabExpand(getParseContext()));
+    len = length(context);
     if (linenum) {
 	getParseFilename(filename, sizeof(filename)-2);
-	if (strlen(filename)) strcpy(filename + strlen(filename), ": ");
+	if (strlen(filename)) strcpy(filename + strlen(filename), ":");
 
 	switch (len) {
 	case 0:
-	    error(_("%s%s on line %d"),
-		  filename, R_ParseErrorMsg, linenum);
+	    error(_("%s%d:%d: %s"),
+		  filename, linenum, R_ParseErrorCol, R_ParseErrorMsg);
 	    break;
 	case 1:
-	    error(_("%s%s at\n%d: %s"),
-		  filename, R_ParseErrorMsg, linenum,
-		  CHAR(STRING_ELT(context, 0)));
+	    sprintf(buffer, "%d: %n", R_ParseContextLine, &width); 
+	    Rprintf("Context is '%s'", CHAR(STRING_ELT(context,0)));
+	    error(_("%s%d:%d: %s\n%d: %s\n%*s"),
+		  filename, linenum, R_ParseErrorCol, R_ParseErrorMsg,
+		  R_ParseContextLine, CHAR(STRING_ELT(context, 0)), 
+		  width+R_ParseErrorCol, "^");
 	    break;
 	default:
-	    error(_("%s%s at\n%d: %s\n%d: %s"),
-		  filename, R_ParseErrorMsg, linenum-1,
-		  CHAR(STRING_ELT(context, len-2)),
-		      linenum, CHAR(STRING_ELT(context, len-1)));
+	    sprintf(buffer, "%d: %n", R_ParseContextLine, &width);
+	    error(_("%s%d:%d: %s\n%d: %s\n%d: %s\n%*s"),
+		  filename, linenum, R_ParseErrorCol, R_ParseErrorMsg,
+		  R_ParseContextLine-1, CHAR(STRING_ELT(context, len-2)),
+		  R_ParseContextLine, CHAR(STRING_ELT(context, len-1)), 
+		  width+R_ParseErrorCol, "^");
 	    break;
 	}
     } else {
@@ -135,6 +167,7 @@ void attribute_hidden parseError(SEXP call, int linenum)
 	    break;
 	}
     }
+    UNPROTECT(1);
 }
 
 /* "do_parse" - the user interface input/output to files.
@@ -149,8 +182,8 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP text, prompt, s, source;
     Rconnection con;
     Rboolean wasopen, old_latin1=known_to_be_latin1,
-	old_utf8=known_to_be_utf8;
-    int ifile, num;
+	old_utf8=known_to_be_utf8, allKnown = TRUE;
+    int ifile, num, i;
     const char *encoding;
     ParseStatus status;
 
@@ -172,8 +205,15 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' value"), "encoding");
     encoding = CHAR(STRING_ELT(CAR(args), 0)); /* ASCII */
     known_to_be_latin1 = known_to_be_utf8 = FALSE;
-    if(streql(encoding, "latin1")) known_to_be_latin1 = TRUE;
-    if(streql(encoding, "UTF-8"))  known_to_be_utf8 = TRUE;
+    /* allow 'encoding' to override declaration on 'text'. */
+    if(streql(encoding, "latin1")) {
+	known_to_be_latin1 = TRUE;
+	allKnown = FALSE;
+    }
+    if(streql(encoding, "UTF-8"))  {
+	known_to_be_utf8 = TRUE;
+	allKnown = FALSE;
+    }
 
     if (prompt == R_NilValue)
 	PROTECT(prompt);
@@ -181,14 +221,31 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(prompt = coerceVector(prompt, STRSXP));
 
     if (length(text) > 0) {
-	if (num == NA_INTEGER)
-	    num = -1;
+	/* If 'text' has known encoding then we can be sure it will be
+	   correctly re-encoded to the current encoding by
+	   translateChar in the parser and so could mark the result in
+	   a Latin-1 or UTF-8 locale.
+
+	   A small complication is that different elements could have
+	   different encodings, but all that matters is that all
+	   non-ASCII elements have known encoding.
+	*/
+	for(i = 0; i < length(text); i++)
+	    if(!ENC_KNOWN(STRING_ELT(text, i)) &&
+	       !strIsASCII(CHAR(STRING_ELT(text, i)))) {
+		allKnown = FALSE;
+		break;
+	    }
+	if(allKnown) {
+	    known_to_be_latin1 = old_latin1;
+	    known_to_be_utf8 = old_utf8;
+	}
+	if (num == NA_INTEGER) num = -1;
 	s = R_ParseVector(text, num, &status, source);
 	if (status != PARSE_OK) parseError(call, 0);
     }
     else if (ifile >= 3) {/* file != "" */
-	if (num == NA_INTEGER)
-	    num = -1;
+	if (num == NA_INTEGER) num = -1;
 	if(!wasopen) {
 	    if(!con->open(con)) error(_("cannot open the connection"));
 	    if(!con->canread) {
@@ -202,8 +259,7 @@ SEXP attribute_hidden do_parse(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (status != PARSE_OK) parseError(call, R_ParseError);
     }
     else {
-	if (num == NA_INTEGER)
-	    num = 1;
+	if (num == NA_INTEGER) num = 1;
 	s = R_ParseBuffer(&R_ConsoleIob, num, &status, prompt, source);
 	if (status != PARSE_OK) parseError(call, 0);
     }

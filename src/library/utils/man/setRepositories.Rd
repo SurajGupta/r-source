@@ -1,9 +1,10 @@
 % File src/library/utils/man/setRepositories.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{setRepositories}
+\Rdversion{1.1}
 \alias{setRepositories}
 \title{Select Package Repositories}
 \description{
@@ -19,7 +20,7 @@ setRepositories(graphics = getOption("menu.graphics"), ind = NULL)
 #endif
 #ifdef unix
     If true and \pkg{tcltk} and an X server are available, use a Tk
-    widget, or if under the AQUA interface use a MacOS X widget,
+    widget, or if under the AQUA interface use a Mac OS X widget,
 #endif
     otherwise use a text list in the console.}
   \item{ind}{\code{NULL} or a vector of integer indices, which have the
@@ -28,7 +29,7 @@ setRepositories(graphics = getOption("menu.graphics"), ind = NULL)
 }
 \details{
   The default list of known repositories is stored in the file
-  \file{\var{\link[base:Rhome]{R\_HOME}}/etc/repositories}.
+  \file{\var{\link[base:Rhome]{R_HOME}}/etc/repositories}.
   That file can be edited for a site, or a user can have a personal copy
   in \file{\var{HOME}/.R/repositories} which will take precedence.
 

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-09-30 18:51+0100\n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
+"PO-Revision-Date: 2009-03-29 21:29+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -171,6 +171,9 @@ msgstr "'x' doit être un tableau ayant au moins 2 dimensions"
 
 msgid "invalid 'dims'"
 msgstr "'dims' incorrect"
+
+msgid "extra arguments ignored:"
+msgstr "l'argument supplémentaire sera ignoré :"
 
 msgid "bad handler specification"
 msgstr "mauvaise définition de manipulateur (handler)"
@@ -608,6 +611,9 @@ msgstr "aucun fichier vers où copier"
 msgid "more 'from' files than 'to' files"
 msgstr "plus de fichiers 'from' que de fichiers 'to'"
 
+msgid "'recursive' will be ignored"
+msgstr "l'argument 'recursive' sera ignoré"
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "un fichier à copier ne peut à la fois être 'from' et 'to'"
 
@@ -641,8 +647,11 @@ msgstr "'vec' contient des valeurs manquantes (NAs)"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' doit être trié par ordre croissant"
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
-msgstr "'mode' doit être un \"double\" (\"réel\") ou \"integer\" (\"entier\")"
+msgid "using the first element of 'value' of type expression"
+msgstr "utilisation du premier élément de 'value' de type expression"
+
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
+msgstr "'mode' doit être un de \"double\" (\"real\"), \"integer\" ou \"character\""
 
 msgid "coercing argument to \"character\" for format=\"s\""
 msgstr "conversion automatique de l'argument en \"character\" pour format=\"s\""
@@ -740,29 +749,14 @@ msgstr " : "
 msgid "invalid package name"
 msgstr "nom de package incorrect"
 
-msgid "package '%s' has been merged into '%s'"
-msgstr "le package '%s' a été fusionné avec '%s'"
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr "le package 'lqs' est maintenant à nouveau dans le package 'MASS'"
-
-msgid "package 'MASS' has now been loaded"
-msgstr "le package 'MASS' est maintenant chargé"
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr "le package 'MASS' semble manquer dans cette installation de R"
-
-msgid "there is no package called '%s', version %s"
-msgstr "aucun package '%s', version %s n'est trouvé"
-
 msgid "there is no package called '%s'"
 msgstr "aucun package nommé '%s' n'est trouvé"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr "aucune arborescence de bibliothèque n'est trouvée dans 'lib.loc'"
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr "'%s' n'est pas un package valide -- a-t-il été installé < 2.0.0 ?"
+msgid "'%s' is not a valid installed package"
+msgstr "'%s' n'est pas un nom correct de package installé"
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr "'%s' n'est pas trouvé dans le chemin de recherche, utilisation de pos = 2"
@@ -973,11 +967,14 @@ msgstr "(espace de noms des méthodes chargé)"
 msgid "Tracing functions requires the methods package, but unable to load methods namespace"
 msgstr "Les fonctions de traçage nécessite le package methods, mais impossible de charger l'espace de noms de methods"
 
-msgid "Expected a single logical value for the S4 object state"
+msgid "Expected a single logical value for the S4 state flag"
 msgstr "Une valeur logique unique est attendue pour l'état de l'objet S4"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "le mode de stockage d'un objet \"factor\" ne peut être modifié"
+
+msgid "package '%s' has been merged into '%s'"
+msgstr "le package '%s' a été fusionné avec '%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' n'est pas un objet exporté depuis 'namespace:%s'"
@@ -1026,6 +1023,9 @@ msgstr "impossible d'assigner NativeSymbolInfo pour"
 
 msgid "package '%s' does not have a name space"
 msgstr "le package '%s' n'a pas d'espace de noms"
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr "exportClassPattern spécifié mais aucune classe ne correspond dans %s"
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr "classes à exporter non définies dans '%s' : %s"
@@ -1452,6 +1452,33 @@ msgstr "'%s' ne peut être exécuté"
 msgid "'%s' execution failed with error code %d"
 msgstr "l'exécution de '%s' a échoué avec le code d'erreur %d"
 
+msgid "-l option without value"
+msgstr "option -l sans valeur"
+
+msgid "ERROR: no packages specified"
+msgstr "ERREUR : aucun package spécifié"
+
+msgid "Removing from library"
+msgstr "Elimination de la bibliothèque"
+
+msgid "ERROR: cannot cd to directory"
+msgstr "ERREUR : impossible de rendre le répertoire actif"
+
+msgid "ERROR: no permission to remove from directory"
+msgstr "ERREUR : pas de permission d'effacer du répertoire"
+
+msgid "T used instead of TRUE"
+msgstr "T utilisé à la place de TRUE"
+
+msgid "F used instead of FALSE"
+msgstr "F utilisé à la place de FALSE"
+
+msgid "items"
+msgstr "éléments"
+
+msgid "have been removed from the search path"
+msgstr "a été éliminé du chemin de recherche"
+
 msgid "cannot find name space environment"
 msgstr "impossible de trouver l'espace de noms de l'environnement"
 
@@ -1503,6 +1530,16 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Message d'avis :\n"
 msgstr[1] "Messages d'avis :\n"
 
+#~ msgid "package 'lqs' has been moved back to package 'MASS'"
+#~ msgstr "le package 'lqs' est maintenant à nouveau dans le package 'MASS'"
+#~ msgid "package 'MASS' has now been loaded"
+#~ msgstr "le package 'MASS' est maintenant chargé"
+#~ msgid "package 'MASS' seems to be missing from this R installation"
+#~ msgstr "le package 'MASS' semble manquer dans cette installation de R"
+#~ msgid "there is no package called '%s', version %s"
+#~ msgstr "aucun package '%s', version %s n'est trouvé"
+#~ msgid "'%s' is not a valid package -- installed < 2.0.0?"
+#~ msgstr "'%s' n'est pas un package valide -- a-t-il été installé < 2.0.0 ?"
 #~ msgid "non-numeric data type in frame"
 #~ msgstr "type de données non numériques"
 #~ msgid "class information lost from one or more columns"

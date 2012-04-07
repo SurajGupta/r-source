@@ -1,0 +1,27 @@
+#-*- Makefile -*-
+#
+# ${RHOME}/tests/Examples/Makefile.win
+
+RHOME=../..
+ECHO = echo
+
+R_EXE = $(RHOME)/bin/Rterm --slave --vanilla
+
+all: test-Examples-Base
+
+test-Examples: test-Examples-Base
+
+## Used to collate examples in LC_ALL
+test-Examples-Base:
+	@$(ECHO) "tools::testInstalledPackages(scope='base', types='examples')" | $(R_EXE)
+
+
+test-Examples-Recommended: test-Examples-Base
+	@$(ECHO) "tools::testInstalledPackages(scope='recommended', types='examples')" | $(R_EXE)
+## </NOTE>
+
+mostlyclean: clean
+clean:
+	-@rm -f *.R *.Rout *.Rd* *.ps *.tex *.dat* data foo* ex*.gz
+distclean: clean
+	-@rm -f *.R*bak *.R*bakk *.R*prev .RData sink-examp.txt

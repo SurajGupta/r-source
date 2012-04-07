@@ -18,22 +18,22 @@ duplicated <- function(x, incomparables = FALSE, ...) UseMethod("duplicated")
 
 duplicated.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
-    if(is.na(fromLast <- as.logical(fromLast[1])))
+    if(is.na(fromLast <- as.logical(fromLast[1L])))
         stop("'fromLast' must be TRUE or FALSE")
     .Internal(duplicated(x, incomparables, fromLast))
 }
 
 duplicated.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
-    if(!is.logical(incomparables) || incomparables)
+    if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
     duplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
 }
 
 duplicated.matrix <- duplicated.array <-
-    function(x, incomparables = FALSE , MARGIN = 1, fromLast = FALSE, ...)
+    function(x, incomparables = FALSE , MARGIN = 1L, fromLast = FALSE, ...)
 {
-    if(!is.logical(incomparables) || incomparables)
+    if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
     ndim <- length(dim(x))
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
@@ -52,7 +52,7 @@ unique <- function(x, incomparables = FALSE, ...) UseMethod("unique")
 ## so it needs to handle some other cases.
 unique.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
-    if(is.na(fromLast <- as.logical(fromLast[1])))
+    if(is.na(fromLast <- as.logical(fromLast[1L])))
         stop("'fromLast' must be TRUE or FALSE")
     z <- .Internal(unique(x, incomparables, fromLast))
     if(is.factor(x))
@@ -67,7 +67,7 @@ unique.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 
 unique.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
-    if(!is.logical(incomparables) || incomparables)
+    if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
     x[!duplicated(x, fromLast = fromLast),  , drop = FALSE]
 }
@@ -75,10 +75,10 @@ unique.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 unique.matrix <- unique.array <-
     function(x, incomparables = FALSE , MARGIN = 1, fromLast = FALSE, ...)
 {
-    if(!is.logical(incomparables) || incomparables)
+    if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
     ndim <- length(dim(x))
-    if (length(MARGIN) > 1 || any(MARGIN > ndim))
+    if (length(MARGIN) > 1L || any(MARGIN > ndim))
         stop("MARGIN = ", MARGIN, " is invalid for dim = ", dim(x))
     temp <- apply(x, MARGIN, function(x) paste(x, collapse = "\r"))
     args <- rep(alist(a=), ndim)

@@ -2161,7 +2161,7 @@ pmax(x, y, na.rm=TRUE)
 stopifnot(identical(pmax(x, y, na.rm=TRUE), pmax(y, x, na.rm=TRUE)))
 
 # tests of classed quantities
-x <- .leap.seconds; y <- rev(x)
+x <- .leap.seconds[1:23]; y <- rev(x)
 x[2] <- y[2] <- x[3] <- y[4] <- NA
 format(pmin(x, y), tz="GMT")  # TZ names differ by platform
 class(pmin(x, y))
@@ -2288,3 +2288,52 @@ try(aggregate(z, by=z[1], FUN=sum))
 ## failed in unlist in 2.8.0, now gives explicit message.
 aggregate(data.frame(a=1:10)[F], list(rep(1:2, each=5)), sum)
 ## used to fail obscurely.
+
+
+## subsetting data frames with duplicate rows
+z <- data.frame(a=1, a=2, b=3, check.names=FALSE)
+z[] # OK
+z[1, ]
+## had row names a, a.1, b in 2.8.0.
+
+
+## incorrect warning due to lack of fuzz.
+TS <-  ts(co2[1:192], freq=24)
+tmp2 <- window(TS, start(TS), end(TS))
+## warned in 2.8.0
+
+## failed to add tag
+Call <- call("foo", 1)
+Call[["bar"]] <- 2
+Call
+## unnamed call in 2.8.1
+
+
+## .Call on symbol objects (not strings)
+## https://stat.ethz.ch/pipermail/r-devel/2008-December/051669.html
+try(.Call("R_GD_nullDevice", NULL))
+sym <- getDLLRegisteredRoutines("grDevices")$.Call[["R_GD_nullDevice"]]
+try(.Call(sym, NULL))
+try(.Call(sym$address, NULL))
+## wrong error in 2.8.1
+sym <- getDLLRegisteredRoutines("stats")$.C$prho
+try(.C(sym, NULL))
+try(.C(sym$address, NULL))
+## were OK
+
+
+## $<- on pairlists failed to duplicate (from Felix Andrews,
+## https://stat.ethz.ch/pipermail/r-devel/2009-January/051698.html)
+foo <- function(given = NULL) {
+    callObj <- quote(callFunc())
+    if (!is.null(given)) callObj$given <- given
+    if (is.null(given)) callObj$default <- TRUE
+    callObj
+}
+
+foo()
+foo(given = TRUE)
+foo("blah blah")
+foo(given = TRUE)
+foo()
+## altered foo() in 2.8.1.

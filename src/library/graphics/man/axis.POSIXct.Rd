@@ -47,6 +47,11 @@ axis.Date(side, x, at, format, labels = TRUE, \dots)
   and labels whereas if \code{x} is specified a suitable grid of labels
   is chosen. Printing of tick labels can be suppressed by using
   \code{labels = FALSE}.
+  
+  As from \R 2.9.0 the date-times for a \code{"POSIXct"} input are
+  interpreted in the timwzonw give by the \code{"tzone"} attribute it
+  there is one, otherwise the current timezone.  (Earlier vrsions always
+  used the current timezone.)
 }
 \value{
   The locations on the axis scale at which tick marks were drawn.
@@ -65,12 +70,13 @@ r <- as.POSIXct(round(range(time), "hours"))
 axis.POSIXct(1, at=seq(r[1], r[2], by="hour"), format="\%H")
 })
 
-plot(.leap.seconds, 1:23, type="n", yaxt="n",
+plot(.leap.seconds, seq_along(.leap.seconds), type="n", yaxt="n",
      xlab="leap seconds", ylab="", bty="n")
 rug(.leap.seconds)
 ## or as dates
 lps <- as.Date(.leap.seconds)
-plot(lps, 1:23, type = "n", yaxt = "n", xlab = "leap seconds",
+plot(lps, seq_along(.leap.seconds),
+     type = "n", yaxt = "n", xlab = "leap seconds",
      ylab = "", bty = "n")
 rug(lps)
 

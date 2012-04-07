@@ -16,7 +16,8 @@
 
 demo <-
 function(topic, package = NULL, lib.loc = NULL,
-	 character.only = FALSE, verbose = getOption("verbose"))
+	 character.only = FALSE, verbose = getOption("verbose"),
+	 echo = TRUE, ask = getOption("demo.ask"))
 {
     paths <- .find.package(package, lib.loc, verbose = verbose)
 
@@ -29,14 +30,14 @@ function(topic, package = NULL, lib.loc = NULL,
 	## List all possible demos.
 
 	## Build the demo db.
-	db <- matrix(character(0), nrow = 0, ncol = 4)
+	db <- matrix(character(0L), nrow = 0L, ncol = 4L)
 	for(path in paths) {
 	    entries <- NULL
 	    ## Check for new-style 'Meta/demo.rds', then for '00Index'.
 	    if(file_test("-f", INDEX <- file.path(path, "Meta", "demo.rds"))) {
 		entries <- .readRDS(INDEX)
 	    }
-	    if(NROW(entries) > 0) {
+	    if(NROW(entries)) {
 		db <- rbind(db,
 			    cbind(basename(path), dirname(path),
 				  entries))
@@ -61,29 +62,43 @@ function(topic, package = NULL, lib.loc = NULL,
 
     if(!character.only)
 	topic <- as.character(substitute(topic))
-    available <- character(0)
+    available <- character(0L)
     paths <- file.path(paths, "demo")
     for(p in paths) {
 	files <- basename(tools::list_files_with_type(p, "demo"))
 	## Files with base names sans extension matching topic
 	files <- files[topic == tools::file_path_sans_ext(files)]
-	if(length(files) > 0)
+	if(length(files))
 	    available <- c(available, file.path(p, files))
     }
-    if(length(available) == 0)
+    if(length(available) == 0L)
 	stop(gettextf("No demo found for topic '%s'", topic), domain = NA)
-    if(length(available) > 1) {
-	available <- available[1]
+    if(length(available) > 1L) {
+	available <- available[1L]
 	warning(gettextf("Demo for topic '%s' found more than once,\nusing the one found in '%s'",
-                topic, dirname(available[1])), domain = NA)
+                topic, dirname(available[1L])), domain = NA)
     }
-    cat("\n\n",
-	"\tdemo(", topic, ")\n",
-	"\t---- ", rep.int("~", nchar(topic, type="w")), "\n",
-	sep="")
-    if(interactive()) {
-	cat("\nType  <Return>	 to start : ")
-	readline()
+    
+    if(ask == "default")
+        ask <- echo && grDevices::dev.interactive(orNone = TRUE)    
+    
+    if(.Device != "null device") {
+	oldask <- grDevices::devAskNewPage(ask = ask)
+        on.exit(grDevices::devAskNewPage(oldask), add = TRUE)
     }
-    source(available, echo = TRUE, max.deparse.length = 250, keep.source=TRUE)
+
+    op <- options(device.ask.default = ask)
+    on.exit(options(op), add = TRUE)
+    
+    if (echo) {
+	cat("\n\n",
+	    "\tdemo(", topic, ")\n",
+	    "\t---- ", rep.int("~", nchar(topic, type="w")), "\n",
+	    sep="")
+	if(ask) {
+	    cat("\nType  <Return>	 to start : ")
+	    readline()
+	}
+    }
+    source(available, echo = echo, max.deparse.length = Inf, keep.source=TRUE)
 }

@@ -1,6 +1,6 @@
 % File src/library/utils/man/demo.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{demo}
@@ -12,7 +12,8 @@
 }
 \usage{
 demo(topic, package = NULL, lib.loc = NULL,
-     character.only = FALSE, verbose = getOption("verbose"))
+     character.only = FALSE, verbose = getOption("verbose"),
+     echo = TRUE, ask = getOption("demo.ask"))
 }
 \arguments{
   \item{topic}{the topic which should be demonstrated, given as a
@@ -31,6 +32,14 @@ demo(topic, package = NULL, lib.loc = NULL,
     character string.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
+  \item{echo}{a logical.  If \code{TRUE}, show the \R input when sourcing.}
+    \item{ask}{a logical (or \code{"default"}) indicating if
+    \code{\link[grDevices]{devAskNewPage}(ask=TRUE)} should be called before
+    graphical output happens from the demo code.  The value
+    \code{"default"} (the factory-fresh default) means to ask if
+    \code{echo == TRUE} and the graphics device appears to be
+    interactive.  This parameter applies both to any currently opened
+    device and to any devices opened by the demo code.}
 }
 \details{
   If no topics are given, \code{demo} lists the available demos.  The
@@ -39,17 +48,30 @@ demo(topic, package = NULL, lib.loc = NULL,
   earlier versions of R, an empty character vector was returned along
   with listing available demos.
 }
-\seealso{\code{\link{source}} which is called by \code{demo}.}
+\seealso{
+  \code{\link{source}} and \code{\link[grDevices]{devAskNewPage}} which 
+are called by \code{demo}.
+}
+
 \examples{
 demo() # for attached packages
 
 ## All available demos:
 demo(package = .packages(all.available = TRUE))
 
-demo(lm.glm, package="stats")
+## Display a demo, pausing between pages
+demo(lm.glm, package="stats", ask=TRUE)
+
+## Display it without pausing
+demo(lm.glm, package="stats", ask=FALSE)
+
 \dontrun{
  ch <- "scoping"
  demo(ch, character = TRUE)
-}}
+}
+
+## Find the location of a demo
+system.file("demo", "lm.glm.R", package="stats")
+}
 \keyword{documentation}
 \keyword{utilities}

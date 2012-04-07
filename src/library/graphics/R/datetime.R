@@ -18,10 +18,11 @@ axis.POSIXct <- function(side, x, at, format, labels = TRUE, ...)
 {
     mat <- missing(at) || is.null(at)
     if(!mat) x <- as.POSIXct(at) else x <- as.POSIXct(x)
-    range <- par("usr")[if(side %%2) 1:2 else 3:4]
+    range <- par("usr")[if(side %%2) 1L:2 else 3:4]
     ## find out the scale involved
-    d <- range[2] - range[1]
+    d <- range[2L] - range[1L]
     z <- c(range, x[is.finite(x)])
+    attr(z, "tzone") <- attr(x, "tzone")
     if(d < 1.1*60) { # seconds
         sc <- 1
         if(missing(format)) format <- "%S"
@@ -48,19 +49,22 @@ axis.POSIXct <- function(side, x, at, format, labels = TRUE, ...)
         if(missing(format)) format <- "%b %d"
     } else if(d < 1.1*60*60*24*365) { # months
         class(z) <- c("POSIXt", "POSIXct")
+        attr(z, "tzone") <- attr(x, "tzone")
         zz <- as.POSIXlt(z)
         zz$mday <- zz$wday <- zz$yday <- 1
         zz$isdst <- -1; zz$hour <- zz$min <- zz$sec <- 0
         zz$mon <- pretty(zz$mon)
         m <- length(zz$mon); M <- 2*m
-        m <- rep.int(zz$year[1], m)
+        m <- rep.int(zz$year[1L], m)
         zz$year <- c(m, m+1)
         zz <- lapply(zz, function(x) rep(x, length.out = M))
         class(zz) <- c("POSIXt", "POSIXlt")
+        attr(z, "tzone") <- attr(x, "tzone")
         z <- as.POSIXct(zz)
         if(missing(format)) format <- "%b"
     } else { # years
         class(z) <- c("POSIXt", "POSIXct")
+        attr(z, "tzone") <- attr(x, "tzone")
         zz <- as.POSIXlt(z)
         zz$mday <- zz$wday <- zz$yday <- 1
         zz$isdst <- -1; zz$mon <- zz$hour <- zz$min <- zz$sec <- 0
@@ -71,7 +75,7 @@ axis.POSIXct <- function(side, x, at, format, labels = TRUE, ...)
         if(missing(format)) format <- "%Y"
     }
     if(!mat) z <- x[is.finite(x)] # override changes
-    keep <- z >= range[1] & z <= range[2]
+    keep <- z >= range[1L] & z <= range[2L]
     z <- z[keep]
     if (!is.logical(labels)) labels <- labels[keep]
     else if (identical(labels, TRUE))
@@ -90,7 +94,7 @@ plot.POSIXct <- function(x, y, xlab = "", ...)
 
     dots <- list(...)
     Call <- match.call()
-    Call[[1]] <- as.name("plot.default")
+    Call[[1L]] <- as.name("plot.default")
     Call$xaxt <- "n"
     Call$xlab <- xlab
     eval.parent(Call)
@@ -107,7 +111,7 @@ plot.POSIXlt <- function(x, y, xlab = "", ...)
         axis.POSIXct(1, x, ...)
     dots <- list(...)
     Call <- match.call()
-    Call[[1]] <- as.name("plot.default")
+    Call[[1L]] <- as.name("plot.default")
     Call$x <- as.POSIXct(x)
     Call$xaxt <- "n"
     Call$xlab <- xlab
@@ -184,7 +188,7 @@ hist.POSIXt <- function(x, breaks, ..., xlab = deparse(substitute(x)),
             } else {
                 maxx <- max(x, na.rm = TRUE)
                 breaks <- seq.int(start, maxx + incr, breaks)
-                breaks <- breaks[1:(1+max(which(breaks < maxx)))]
+                breaks <- breaks[1L:(1+max(which(breaks < maxx)))]
             }
         }
         else stop("invalid specification of 'breaks'")
@@ -222,11 +226,11 @@ axis.Date <- function(side, x, at, format, labels = TRUE, ...)
 {
     mat <- missing(at) || is.null(at)
     if(!mat) x <- as.Date(at) else x <- as.Date(x)
-    range <- par("usr")[if(side %%2) 1:2 else 3:4]
-    range[1] <- ceiling(range[1])
-    range[2] <- floor(range[2])
+    range <- par("usr")[if(side %%2) 1L:2 else 3:4]
+    range[1L] <- ceiling(range[1L])
+    range[2L] <- floor(range[2L])
     ## find out the scale involved
-    d <- range[2] - range[1]
+    d <- range[2L] - range[1L]
     z <- c(range, x[is.finite(x)])
     class(z) <- "Date"
     if (d < 7) # days of a week
@@ -239,19 +243,19 @@ axis.Date <- function(side, x, at, format, labels = TRUE, ...)
         zz$mday <- 1
         zz$mon <- pretty(zz$mon)
         m <- length(zz$mon)
-        m <- rep.int(zz$year[1], m)
+        m <- rep.int(zz$year[1L], m)
         zz$year <- c(m, m+1)
-        z <- .Internal(POSIXlt2Date(zz))
+        z <- as.Date(zz)
         if(missing(format)) format <- "%b"
     } else { # years
         zz <- as.POSIXlt(z)
         zz$mday <- 1; zz$mon <- 0
         zz$year <- pretty(zz$year)
-        z <- .Internal(POSIXlt2Date(zz))
+        z <- as.Date(zz)
         if(missing(format)) format <- "%Y"
     }
     if(!mat) z <- x[is.finite(x)] # override changes
-    keep <- z >= range[1] & z <= range[2]
+    keep <- z >= range[1L] & z <= range[2L]
     z <- z[keep]
     z <- sort(unique(z)); class(z) <- "Date"
     if (!is.logical(labels)) labels <- labels[keep]
@@ -271,7 +275,7 @@ plot.Date <- function(x, y, xlab = "", ...)
 
     dots <- list(...)
     Call <- match.call()
-    Call[[1]] <- as.name("plot.default")
+    Call[[1L]] <- as.name("plot.default")
     Call$xaxt <- "n"
     Call$xlab <- xlab
     eval.parent(Call)
@@ -338,10 +342,10 @@ hist.Date <- function(x, breaks, ..., xlab = deparse(substitute(x)),
                 end$mday <- 1
                 breaks <- as.Date(seq(start, end, "3 months")) - 1
             } else {
-                start <- .Internal(POSIXlt2Date(start))
+                start <- as.Date(start)
                 maxx <- max(x, na.rm = TRUE)
                 breaks <- seq.int(start, maxx + incr, breaks)
-                breaks <- breaks[1:(1+max(which(breaks < maxx)))]
+                breaks <- breaks[1L:(1+max(which(breaks < maxx)))]
             }
         } else stop("invalid specification of 'breaks'")
     }

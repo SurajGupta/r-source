@@ -10,9 +10,8 @@
   Function to do wildcard expansion (also known as \sQuote{globbing}) on
   file paths.
 
-#ifdef unix
-  Not all platforms support this.
-#endif
+  Platforms are not required to support this, but all knoen current \R
+  platforms do.
 }
 \usage{
 Sys.glob(paths, dirmark = FALSE)
@@ -33,14 +32,14 @@ Sys.glob(paths, dirmark = FALSE)
   system's documentation on the \code{glob} system call.  There is a
   POSIX 1003.2 standard (see
   \url{http://www.opengroup.org/onlinepubs/009695399/functions/glob.html})
-  but some OSes will go beyond this (in particular some BSD-based OSes also
-  do tilde expansion, see \code{\link{path.expand}}).
+  but some OSes will go beyond this.  The \R implementation will always
+  do tilde-expansion (see \code{\link{path.expand}}).
 
   All systems should interpret \code{*} (match zero or more characters),
-  \code{?} (match a single character) and \code{[} (begin a character
-  class or range).  If a filename starts with \code{.} this must be
-  matched explicitly.  By default paths ending in \code{/} will be
-  accepted and matched only to directories.
+  \code{?} (match a single character) and (probably) \code{[} (begin a
+  character class or range).  If a filename starts with \code{.} this
+  must be matched explicitly.  By default paths ending in \code{/} will
+  be accepted and matched only to directories.
 
   The rest of these details are indicative (and based on the POSIX
   standard).
@@ -106,8 +105,8 @@ Sys.glob(paths, dirmark = FALSE)
   accessible file paths (but not necessarily accessible files).
 #ifdef unix
   
-  On platforms which do not have the \code{glob} system call (nor, as for
-  \R under Windows, an emulation), \code{paths} is returned unchanged.
+  On platforms which do not have the \code{glob} system call,
+  \code{paths} is returned unchanged.
 #endif
 }
 \seealso{

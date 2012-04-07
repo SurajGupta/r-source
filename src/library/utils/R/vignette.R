@@ -15,7 +15,7 @@
 #  http://www.r-project.org/Licenses/
 
 vignette <-
-function(topic, package = NULL, lib.loc = NULL, all = TRUE)
+    function(topic, package = NULL, lib.loc = NULL, all = TRUE)
 {
     if(is.null(package))
         package <- .packages(all.available = all, lib.loc)
@@ -34,7 +34,7 @@ function(topic, package = NULL, lib.loc = NULL, all = TRUE)
                })
 
     if(!missing(topic)) {
-        topic <- topic[1]               # Just making sure ...
+        topic <- topic[1L]               # Just making sure ...
         vignettes <- as.character(unlist(vignettes))
         vidx <- (tools::file_path_sans_ext(basename(vignettes)) == topic)
         if(any(vidx)) {
@@ -56,7 +56,7 @@ function(topic, package = NULL, lib.loc = NULL, all = TRUE)
                 z <- list(file=vignettes[idx], pdf=pdf[idx])
             }
             else{
-                z <- list(file=vignettes[vidx][1], pdf=character(0))
+                z <- list(file=vignettes[vidx][1L], pdf=character(0L))
             }
             z$topic <- topic
             class(z) <- "vignette"
@@ -70,11 +70,11 @@ function(topic, package = NULL, lib.loc = NULL, all = TRUE)
     if(missing(topic)) {
         ## List all possible vignettes.
 
-        vDB <- matrix(character(0), nrow = 0, ncol = 4)
+        vDB <- matrix(character(0L), nrow = 0L, ncol = 4L)
         colnames(vDB) <- c("Dir", "File", "Title", "PDF")
 
-        for(db in vignettes[sapply(vignettes, length) > 0]) {
-            dir <- dirname(dirname(db[1]))
+        for(db in vignettes[sapply(vignettes, length) > 0L]) {
+            dir <- dirname(dirname(db[1L]))
             entries <- NULL
             ## Check for new-style 'Meta/vignette.rds' ...
             if(file.exists(INDEX <-
@@ -89,7 +89,7 @@ function(topic, package = NULL, lib.loc = NULL, all = TRUE)
         }
 
         ## Now compute info on available PDFs ...
-        title <- if(NROW(vDB) > 0) {
+        title <- if(NROW(vDB)) {
             paste(vDB[, "Title"],
                   paste(rep.int("(source", NROW(vDB)),
                         ifelse(vDB[, "PDF"] != "", ", pdf", ""),
@@ -136,7 +136,8 @@ print.vignette <- function(x, ...){
     invisible(x)
 }
 
-edit.vignette <- function(name, ...){
+edit.vignette <- function(name, ...)
+{
 
     f <- paste(tempfile(name$topic), ".R", sep="")
     Stangle(name$file, output=f, quiet=TRUE)

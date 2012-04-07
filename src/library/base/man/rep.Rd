@@ -26,18 +26,19 @@ rep.int(x, times)
 \arguments{
   \item{x}{a vector (of any mode including a list) or a pairlist or a
     factor or (except for \code{rep.int}) a \code{POSIXct} or
-    \code{POSIXlt} or \code{date} object.}
+    \code{POSIXlt} or \code{date} object; or also, an S4 object containing
+    a vector of the above kind.}
   \item{\dots}{further arguments to be passed to or from other methods.
     For the internal default method these can include:
     \describe{
       \item{\code{times}}{A vector giving the number of
-	times to repeat each element if of length \code{length(x)}, or to
-	repeat the whole vector if of length 1.}
+        times to repeat each element if of length \code{length(x)}, or to
+        repeat the whole vector if of length 1.}
       \item{\code{length.out}}{non-negative integer. The desired length of the
-	output vector.  Ignored if \code{NA} or invalid.}
+        output vector.  Ignored if \code{NA} or invalid.}
       \item{\code{each}}{non-negative integer.  Each element of \code{x} is
-	repeated \code{each} times.  Treated as \code{1} if \code{NA} or
-	invalid.}
+        repeated \code{each} times.  Treated as \code{1} if \code{NA} or
+        invalid.}
     }
   }
   \item{times}{see \code{\dots}.}
@@ -68,7 +69,7 @@ rep.int(x, times)
   If \code{x} has length zero and \code{length.out} is supplied and is
   positive, the values are filled in using the extraction rules, that is
   by an \code{NA} of the appropriate class for an atomic vector
-  (\code{0} for raw vectors) and \code{NULL} for a list.  
+  (\code{0} for raw vectors) and \code{NULL} for a list.
 }
 \value{
   An object of the same type as \code{x} (except that \code{rep} will
@@ -91,7 +92,7 @@ rep.int(x, times)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{seq}}, \code{\link{sequence}}, \code{\link{replicate}}.

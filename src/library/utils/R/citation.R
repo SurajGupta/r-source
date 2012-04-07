@@ -55,7 +55,7 @@ readCitationFile <- function(file, meta = NULL)
     on.exit(close(con))
     pcf <- parse(con)
     z <- list()
-    k <- 0
+    k <- 0L
     envir <- new.env()
     ## Make the package metadata available to the citation entries.
     assign("meta", meta, envir = envir)
@@ -63,7 +63,7 @@ readCitationFile <- function(file, meta = NULL)
     for(expr in pcf) {
         x <- eval(expr, envir = envir)
         if(class(x) == "citation")
-            z[[k <- k+1]] <- x
+            z[[k <- k+1L]] <- x
         else if(class(x) == "citationHeader")
             attr(z, "header") <- c(attr(z, "header"), x)
         else if(class(x) == "citationFooter")
@@ -137,7 +137,7 @@ as.person.default <- function(x)
 
     x <- as.character(x)
 
-    if(length(grep("<.*>", x))>0)
+    if(length(grep("<.*>", x)))
         email <- sub(".*<([^>]*)>.*", "\\1", x)
     else
         email <- NULL
@@ -146,18 +146,19 @@ as.person.default <- function(x)
     name = unlist(strsplit(name, "[[:space:]]"))
 
     ## fix for email address only
-    if(length(name)==0) name = ""
+    if(length(name) == 0L) name = ""
 
     ## and now create appropriate person objects
-    if(length(name)==1)
-        z <- person(last=name, email=email)
-    else if(length(name)==2)
-        z <- person(first=name[1], last=name[2], email=email)
+    if(length(name) == 1L)
+        z <- person(last = name, email = email)
+    else if(length(name) == 2L)
+        z <- person(first = name[1L], last = name[2L], email = email)
     else
-        z <- person(first=name[1],
-                    last=name[length(name)],
-                    middle=paste(name[-c(1, length(name))], collapse=" "),
-                    email=email)
+        z <- person(first = name[1L],
+                    last = name[length(name)],
+                    middle = paste(name[-c(1L, length(name))],
+                    collapse = " "),
+                    email = email)
     z
 }
 
@@ -255,7 +256,7 @@ function(package = "base", lib.loc = NULL)
     }
 
     ## Auto-generate citation info.
-    
+
     ## Base packages without a CITATION file use the base citation.
     if((!is.null(meta$Priority)) && (meta$Priority == "base")) {
     	cit <- citation("base")
@@ -265,23 +266,31 @@ function(package = "base", lib.loc = NULL)
     	return(cit)
     }
 
+    year <- sub("-.*", "", meta$`Date/Publication`)
+    if(!length(year)) {
+        year <- sub(".*((19|20)[[:digit:]]{2}).*", "\\1", meta$Date)
+        if(is.null(meta$Date)){
+            warning(gettextf("no date field in DESCRIPTION file of package '%s'",
+                             package),
+                    domain = NA)
+        }
+        else if(!length(year)) {
+            warning(gettextf("could not determine year for '%s' from package DESCRIPTION file",
+                             package),
+                    domain = NA)
+        }
+    }
+        
     z <- list(title = paste(package, ": ", meta$Title, sep=""),
               author = as.personList(meta$Author),
-              year = sub(".*((19|20)[[:digit:]]{2}).*", "\\1", meta$Date),
+              year = year,
               note = paste("R package version", meta$Version)
               )
 
-    if(is.null(meta$Date)){
-        warning(gettextf("no date field in DESCRIPTION file of package '%s'",
-                         package), domain = NA)
-    }
-    else if(!length(z$year)) {
-        warning(gettextf("could not determine year for '%s' from package DESCRIPTION file",
-                         package),
-                domain = NA)
-    }
-
-    z$url <- meta$URL
+    z$url <- if(identical(meta$Repository, "CRAN"))
+        sprintf("http://CRAN.R-project.org/package=%s", package)
+    else
+        meta$URL
 
     class(z) <- "citation"
     attr(z, "entry") <- "Manual"
@@ -298,7 +307,7 @@ function(package = "base", lib.loc = NULL)
 
     author <- as.character(z$author)
     if(length(author) > 1L)
-        author <- paste(paste(author[1:(length(author)-1)], collapse=", "),
+        author <- paste(paste(author[1L:(length(author)-1L)], collapse=", "),
                         author[length(author)], sep=" and ")
 
     attr(z, "textVersion") <-

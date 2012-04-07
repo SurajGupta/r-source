@@ -52,13 +52,13 @@ debugger <- function(dump = last.dump)
     calls <- names(dump)
     repeat {
         cat(gettext("Available environments had calls:\n"))
-        cat(paste(1:n, ": ", calls,  sep=""), sep="\n")
+        cat(paste(1L:n, ": ", calls,  sep=""), sep="\n")
         cat(gettext("\nEnter an environment number, or 0 to exit  "))
         repeat {
             ind <- .Internal(menu(as.character(calls)))
             if(ind <= n) break
         }
-        if(ind == 0) return(invisible())
+        if(ind == 0L) return(invisible())
         debugger.look(ind)
     }
 }
@@ -82,36 +82,36 @@ recover <-
     }
     ## find an interesting environment to start from
     calls <- sys.calls()
-    from <- 0
+    from <- 0L
     n <- length(calls)
     if(identical(sys.function(n), recover))
         ## options(error=recover) produces a call to this function as an object
-        n <- n - 1
+        n <- n - 1L
     ## look for a call inserted by trace() (and don't show frames below)
     ## this level.
     for(i in rev(seq_len(n))) {
         calli <- calls[[i]]
-        fname <- calli[[1]]
+        fname <- calli[[1L]]
         ## deparse can use more than one line
-        if(!is.na(match(deparse(fname)[1],
+        if(!is.na(match(deparse(fname)[1L],
                         c("methods::.doTrace", ".doTrace")))) {
-            from <- i-1
+            from <- i-1L
             break
         }
     }
   ## if no trace, look for the first frame from the bottom that is not
     ## stop or recover
-    if(from == 0)
+    if(from == 0L)
       for(i in rev(seq_len(n))) {
         calli <- calls[[i]]
-        fname <- calli[[1]]
+        fname <- calli[[1L]]
         if(!is.name(fname) ||
            is.na(match(as.character(fname), c("recover", "stop", "Stop")))) {
             from <- i
             break
         }
     }
-    if(from > 0) {
+    if(from > 0L) {
         if(!interactive()) {
             try(dump.frames())
             cat(gettext("recover called non-interactively; frames dumped, use debugger() to view\n"))
@@ -119,11 +119,11 @@ recover <-
         }
         else if(identical(getOption("show.error.messages"), FALSE)) # from try(silent=TRUE)?
             return(NULL)
-        calls <- limitedLabels(calls[1:from])
+        calls <- limitedLabels(calls[1L:from])
         repeat {
             which <- menu(calls,
                           title="\nEnter a frame number, or 0 to exit  ")
-            if(which > 0)
+            if(which)
                 eval(quote(browser()), envir = sys.frame(which))
             else
                 break

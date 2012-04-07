@@ -1,10 +1,9 @@
-#!/bin/sh
 ##
 ## Rd2txt -- Convert man pages (*.Rd help files) to plain text.
 
-revision='$Rev: 42192 $'
+revision='$Rev: 47589 $'
 version=`set - ${revision}; echo ${2}`
-version="Rd2txt ${version}
+version="Rd2txt: ${R_VERSION} (r${version})
 
 Copyright (C) 2000 The R Core Development Team.
 This is free software; see the GNU General Public License version 2
@@ -16,7 +15,7 @@ Generate plain text output from the Rd source specified by file.
 
 Options:
   -h, --help		print short help message and exit
-  -v, --version		print Rd2txt version info and exit  
+  -v, --version		print version info and exit  
 
 Report bugs to <r-bugs@r-project.org>."  
 
@@ -27,7 +26,7 @@ case "${1}" in
     echo "${version}"; exit 0 ;;
 esac
 
-exec ${R_HOME}/bin/Rdconv -t txt ${1}
+exec ${R_HOME}/bin/Rdconv -t txt "${1}"
 
 ### Local Variables: ***
 ### mode: sh ***

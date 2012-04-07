@@ -1,9 +1,10 @@
 % File src/library/base/man/options.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{options}
+\Rdversion{1.1}
 \alias{options}
 \alias{.Options}
 \alias{getOption}
@@ -67,10 +68,10 @@ getOption(x)
 
     \item{\code{defaultPackages}:}{the packages that are attached by
       default when \R starts up.  Initially set from value of the
-      environment variable \env{R\_DEFAULT\_PACKAGES}, or if that is unset
+      environment variable \env{R_DEFAULT_PACKAGES}, or if that is unset
       %%  default is set in ../../profile/Common.R :
       to \code{c("datasets", "utils", "grDevices", "graphics", "stats",
-	"methods")}.  (Set \env{R\_DEFAULT\_PACKAGES} to \code{NULL} or
+        "methods")}.  (Set \env{R_DEFAULT_PACKAGES} to \code{NULL} or
       a comma-separated list of package names.)   A call to
       \code{options} should be in your \file{.Rprofile} file to ensure
       that the change takes effect before the base package is
@@ -83,7 +84,7 @@ getOption(x)
 
     \item{\code{digits}:}{controls the number of digits to print when
       printing numeric values.  It is a suggestion only.  Valid values
-      are 1\dots22 with default 7.  See the warning in
+      are 1\dots{}22 with default 7.  See the warning in
       \code{\link{print.default}} about values greater than 15.}
 
     \item{\code{digits.secs}:}{controls the maximum number of digits to
@@ -136,7 +137,7 @@ getOption(x)
     \item{\code{keep.source.pkgs}:}{As for \code{keep.source}, for
       functions in packages loaded by \code{\link{library}} or
       \code{\link{require}}.  Defaults to \code{FALSE} unless the
-      environment variable \env{R\_KEEP\_PKG\_SOURCE} is set to
+      environment variable \env{R_KEEP_PKG_SOURCE} is set to
       \code{yes}.
 
       Note this does not apply to packages using lazy-loading or saved
@@ -164,7 +165,7 @@ getOption(x)
     \item{\code{pager}:}{the command used for displaying text files by
       \code{\link{file.show}}.
 #ifdef unix
-      Defaults to \file{\var{\link[base:Rhome]{R\_HOME}}/bin/pager}, which selects a pager
+      Defaults to \file{\var{\link[base:Rhome]{R_HOME}}/bin/pager}, which selects a pager
       via the \env{PAGER} environment variable (and that usually
       defaults to \code{less}).
 #endif
@@ -179,18 +180,28 @@ getOption(x)
 
     \item{\code{papersize}:}{the default paper format used by
       \code{\link{postscript}};  set by environment variable
-      \env{R\_PAPERSIZE} when \R is started: if that is unset or invalid
+      \env{R_PAPERSIZE} when \R is started: if that is unset or invalid
       it defaults to
 #ifdef unix
       a value derived from the locale category \code{LC_PAPER}, or
-      if that is unavailable to a default set when \R was built.}
+      if that is unavailable to a default set when \R was built.
 #endif
 #ifdef windows
-      \code{"a4"}, or \code{"letter"} in US and Canadian locales.}
+      \code{"a4"}, or \code{"letter"} in US and Canadian locales.
 #endif
+    }
 
+    \item{\code{pdfviewer}:}{default PDF viewer.
+#ifdef unix
+      The default is set from the environment variable \env{R_PDFVIEWER}.
+#endif
+#ifdef windows
+      Defaults to the full path to \samp{open.exe}, a utility supplied with \R
+#endif
+    }
+    
     \item{\code{printcmd}:}{the command used by \code{\link{postscript}}
-      for printing; set by environment variable \env{R\_PRINTCMD} when
+      for printing; set by environment variable \env{R_PRINTCMD} when
       \R is started.  This should be a command that expects either input
       to be piped to \file{stdin} or to be given a single filename
       argument.}
@@ -236,7 +247,11 @@ getOption(x)
       \code{\link{data.frame}} and \code{\link{read.table}}.}
 
     \item{\code{texi2dvi}:}{used by function
-      \code{\link{texi2dvi}} in package \pkg{tools}.}
+      \code{\link{texi2dvi}} in package \pkg{tools}.
+#ifdef unix
+      Set at startup from the environment variable \env{R_TEXI2DVICMD}.
+#endif
+    }
 
     \item{\code{timeout}:}{integer.  The timeout for some Internet
       operations, in seconds.  Default 60 seconds.  See
@@ -342,7 +357,7 @@ getOption(x)
 
       The default values in interactive and non-interactive sessions are
       configurable via environment variables
-      \env{R\_INTERACTIVE\_DEVICE} and \env{R\_DEFAULT\_DEVICE}
+      \env{R_INTERACTIVE_DEVICE} and \env{R_DEFAULT_DEVICE}
       respectively.
     }
 
@@ -413,6 +428,9 @@ getOption(x)
       If this is unset (the default), 0, negative or \code{NA}, variable
       cell widths are used.}
 
+    \item{\code{demo.ask}:}{default for the \code{ask} argument of
+      \code{\link{demo}}.}      
+
     \item{\code{editor}:}{a non-empty string, or a function that is
       called with a file path as argument.
       Sets the default text editor, e.g., for
@@ -443,16 +461,17 @@ getOption(x)
       and installed -- see \code{\link{install.packages}}.
 #ifdef windows
       Possible values are \code{"win.binary"} (the default) and
-      \code{"source"}.}
+      \code{"source"}.
 #endif
 #ifdef unix
       Possible values are \code{"source"} (the default except under the
       CRAN Mac OS X build) and \code{"mac.binary"}. The latter can
       have a suffix if supported by a special build, such as
       \code{"mac.binary.leopard"} to access the \code{"leopard"} tree
-      of repositories instead of the default \code{"universal"}.}
+      of repositories instead of the default \code{"universal"}.
 #endif
-
+    }
+    
     \item{\code{repos}:}{URLs of the repositories for use by
       \code{\link{update.packages}}.  Defaults to
       \code{c(CRAN="@CRAN@")}, a value that causes some utilities to
@@ -469,14 +488,15 @@ getOption(x)
     \item{\code{unzip}:}{a character string, the path of the command
       used for unzipping help files, or \code{"internal"}.
 #ifdef unix
-      Defaults to the value of \env{R\_UNZIPCMD}, which is set in
+      Defaults to the value of \env{R_UNZIPCMD}, which is set in
       \file{etc/Renviron} if an \code{unzip} command was found during
-      configuration.}
+      configuration.
 #endif
 #ifdef windows
       Defaults to \code{"internal"} when the internal unzip code is
-      used.}
+      used.
 #endif
+    }
   }
 }
 
@@ -486,9 +506,6 @@ getOption(x)
   \describe{
     \item{\code{latexcmd, dvipscmd}:}{character strings giving commands
       to be used in off-line printing of help pages.}
-
-    \item{\code{pdfviewer}:}{default PDF viewer.  Set from the
-      environment variable \env{R\_PDFVIEWER}.}
   }
 }
 #endif
@@ -505,7 +522,7 @@ getOption(x)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \examples{
 op <- options(); utils::str(op) # op() may contain functions.

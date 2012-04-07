@@ -20,15 +20,15 @@ pmax.int <- function(..., na.rm = FALSE) .Internal(pmax(na.rm, ...))
 pmax <- function (..., na.rm = FALSE)
 {
     elts <- list(...)
-    if(length(elts) == 0) stop("no arguments")
+    if(length(elts) == 0L) stop("no arguments")
     if(all(sapply(elts, function(x) is.atomic(x) && !is.object(x)))) {
         ## NB: NULL passes is.atomic
         mmm <- .Internal(pmax(na.rm, ...))
     } else {
-        mmm <- elts[[1]]
+        mmm <- elts[[1L]]
         attr(mmm, "dim") <- NULL  # dim<- would drop names
         has.na <- FALSE
-        for (each in elts[-1]) {
+        for (each in elts[-1L]) {
             attr(each, "dim") <- NULL
             if(length(mmm) < (m <- length(each)))
                 mmm <- rep(mmm, length.out=m)
@@ -36,30 +36,30 @@ pmax <- function (..., na.rm = FALSE)
                 each <- rep(each, length.out=m)
             nas <- cbind(is.na(mmm), is.na(each))
             if(has.na || (has.na <- any(nas))) {
-                mmm[nas[,1]] <- each[nas[,1]]
-                each[nas[,2]] <- mmm[nas[,2]]
+                mmm[nas[, 1L]] <- each[nas[, 1L]]
+                each[nas[, 2L]] <- mmm[nas[, 2L]]
             }
             change <- mmm < each
             change <- change & !is.na(change)
             mmm[change] <- each[change]
-            if (has.na && !na.rm) mmm[nas[,1] | nas[,2]] <- NA
+            if (has.na && !na.rm) mmm[nas[, 1L] | nas[, 2L]] <- NA
         }
     }
-    mostattributes(mmm) <- attributes(elts[[1]])
+    mostattributes(mmm) <- attributes(elts[[1L]])
     mmm
 }
 
 pmin <- function (..., na.rm = FALSE)
 {
     elts <- list(...)
-    if(length(elts) == 0) stop("no arguments")
+    if(length(elts) == 0L) stop("no arguments")
     if(all(sapply(elts, function(x) is.atomic(x) && !is.object(x)))) {
         mmm <- .Internal(pmin(na.rm, ...))
     } else {
-        mmm <- elts[[1]]
+        mmm <- elts[[1L]]
         attr(mmm, "dim") <- NULL  # dim<- would drop names
         has.na <- FALSE
-        for (each in elts[-1]) {
+        for (each in elts[-1L]) {
             attr(each, "dim") <- NULL
             if(length(mmm) < (m <- length(each)))
                 mmm <- rep(mmm, length.out=m)
@@ -67,15 +67,15 @@ pmin <- function (..., na.rm = FALSE)
                 each <- rep(each, length.out=m)
             nas <- cbind(is.na(mmm), is.na(each))
             if(has.na || (has.na <- any(nas))) {
-                mmm[nas[,1]] <- each[nas[,1]]
-                each[nas[,2]] <- mmm[nas[,2]]
+                mmm[nas[, 1L]] <- each[nas[, 1L]]
+                each[nas[, 2L]] <- mmm[nas[, 2L]]
             }
             change <- mmm > each
             change <- change & !is.na(change)
             mmm[change] <- each[change]
-            if (has.na && !na.rm) mmm[nas[,1] | nas[,2]] <- NA
+            if (has.na && !na.rm) mmm[nas[, 1L] | nas[, 2L]] <- NA
         }
     }
-    mostattributes(mmm) <- attributes(elts[[1]])
+    mostattributes(mmm) <- attributes(elts[[1L]])
     mmm
 }

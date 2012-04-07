@@ -45,6 +45,7 @@ function(package, dir, lib.loc = NULL,
         if(!keepfiles) unlink(tmpd, recursive = TRUE)
     })
 
+    file.create(".check.timestamp")
     result <- list(tangle = list(), weave = list(),
                    source = list(), latex = list())
 
@@ -62,15 +63,18 @@ function(package, dir, lib.loc = NULL,
     }
 
     if(tangle) {
-        for(f in list_files_with_exts(getwd(), c("r", "s", "R", "S")))
+        ## Tangling can create several source files if splitting is on.
+        sources <- list_files_with_exts(getwd(), c("r", "s", "R", "S"))
+        sources <- sources[file_test("-nt", sources, ".check.timestamp")]
+        for(f in sources)
             .eval_with_capture(tryCatch(source(f),
                                         error = function(e)
                                         result$source[[f]] <<-
                                         conditionMessage(e)))
     }
-    if(tangle && weave && latex) {
-        if(! "makefile" %in% tolower(list.files(vigns$dir))) {
-            ## <FIXME>
+    if(weave && latex) {
+        if(!("makefile" %in% tolower(list.files(vigns$dir)))) {
+            ## <NOTE>
             ## This used to run texi2dvi on *all* vignettes, including
             ## the ones already known from the above to give trouble.
             ## In addition, texi2dvi errors were not caught, so that in
@@ -83,7 +87,7 @@ function(package, dir, lib.loc = NULL,
             ##   running checkVignettes().
             ## (For the future, maybe keep this output and provide it as
             ## additional diagnostics ...)
-            ## </FIXME>
+            ## </NOTE>
             bad_vignettes <- as.character(names(unlist(result)))
             bad_vignettes <- file_path_sans_ext(basename(bad_vignettes))
             for(f in vigns$docs) {
@@ -100,6 +104,7 @@ function(package, dir, lib.loc = NULL,
         }
     }
 
+    file.remove(".check.timestamp")
     class(result) <- "checkVignettes"
     result
 }
@@ -108,7 +113,7 @@ print.checkVignettes <-
 function(x, ...)
 {
     mycat <- function(y, title) {
-        if(length(y) > 0L){
+        if(length(y)){
             cat("\n", title, "\n\n", sep = "")
             for(k in seq_along(y)) {
                 cat("File", names(y)[k], ":\n")
@@ -244,7 +249,7 @@ function(file)
     ## \VignetteDepends
     depends <- .get_vignette_metadata(lines, "Depends")
     if(length(depends))
-        depends <- unlist(strsplit(depends[1], ", *"))
+        depends <- unlist(strsplit(depends[1L], ", *"))
     ## \VignetteKeyword and old-style \VignetteKeywords
     keywords <- .get_vignette_metadata(lines, "Keywords")
     keywords <- if(!length(keywords)) {
@@ -283,7 +288,7 @@ function(vignetteDir)
         contents[i, ] <- vignetteInfo(vignetteFiles[i])
     colnames(contents) <- c("File", "Title", "Depends", "Keywords")
 
-    ## (Note that paste(character(0), ".pdf") does not do what we want.)
+    ## (Note that paste(character(0L), ".pdf") does not do what we want.)
     vignettePDFs <- sub("$", ".pdf", file_path_sans_ext(vignetteFiles))
 
     vignetteTitles <- unlist(contents[, "Title"])
@@ -341,7 +346,7 @@ function(pkg, con, vignetteIndex = NULL)
               "</head><body>",
               paste("<h2>Vignettes of package", pkg,"</h2>"))
 
-    if(is.null(vignetteIndex) || nrow(vignetteIndex)==0) {
+    if(is.null(vignetteIndex) || nrow(vignetteIndex) == 0L) {
         html <- c(html, "Sorry, the package contains no vignette meta-information or index.",
                   "Please browse the <a href=\".\">directory</a>.")
     }
@@ -363,7 +368,7 @@ vignetteDepends <-
 function(vignette, recursive = TRUE, reduce = TRUE,
          local = TRUE, lib.loc = NULL)
 {
-    if (length(vignette) != 1)
+    if (length(vignette) != 1L)
         stop("argument 'vignette' must be of length 1")
     if (!file.exists(vignette))
         stop(gettextf("file '%s' not found", vignette),
@@ -381,7 +386,7 @@ getVigDepMtrx <-
 function(vigDeps)
 {
     ## Taken almost directly out of 'package.dependencies'
-    if (length(vigDeps) > 0) {
+    if (length(vigDeps)) {
         z <- unlist(strsplit(vigDeps, ",", fixed=TRUE))
         z <- sub("^[[:space:]]*(.*)", "\\1", z)
         z <- sub("(.*)[[:space:]]*$", "\\1", z)
@@ -389,12 +394,12 @@ function(vigDeps)
         depMtrx <- cbind(sub(pat, "\\1", z),
                          sub(pat, "\\2", z),
                          NA)
-        noversion <- depMtrx[, 1] == depMtrx[, 2]
-        depMtrx[noversion, 2] <- NA
+        noversion <- depMtrx[, 1L] == depMtrx[, 2L]
+        depMtrx[noversion, 2L] <- NA
         pat <- "[[:space:]]*([[<>=]+)[[:space:]]+(.*)"
         depMtrx[!noversion, 2:3] <-
-            c(sub(pat, "\\1", depMtrx[!noversion, 2]),
-              sub(pat, "\\2", depMtrx[!noversion, 2]))
+            c(sub(pat, "\\1", depMtrx[!noversion, 2L]),
+              sub(pat, "\\2", depMtrx[!noversion, 2L]))
         depMtrx
     }
     else

@@ -1,17 +1,20 @@
 useDynLib(tools, .registration = TRUE)
 
-export("Rdindex",
+export("Rd2HTML", "Rd2ex", "Rd2latex", "Rd2txt", "Rdindex",
        "checkDocFiles", "checkDocStyle", "checkFF", "checkMD5sums",
-       "checkReplaceFuns", "checkS3methods", "checkTnF", "checkVignettes",
-       "codoc", "codocClasses", "codocData", "md5sum", "undoc",
-       "file_path_as_absolute", "file_path_sans_ext",
-       "list_files_with_exts", "list_files_with_type", "showNonASCII",
-       "delimMatch",
-       "texi2dvi", "buildVignettes", "pkgVignettes", "pkgDepends",
-       "getDepList", "installFoundDepends", "vignetteDepends",
-       "write_PACKAGES", "xgettext", "xgettext2pot", "xngettext",
+       "checkReplaceFuns", "checkS3methods", "checkTnF",
+       "checkVignettes", "codoc", "codocClasses", "codocData",
+       "md5sum", "undoc", "file_path_as_absolute",
+       "file_path_sans_ext", "list_files_with_exts", "findHTMLlinks",
+       "list_files_with_type", "showNonASCII", "delimMatch",
+       "parse_Rd", "checkRd", "texi2dvi", "buildVignettes",
+       "pkgVignettes", "pkgDepends", "getDepList",
+       "installFoundDepends", "vignetteDepends", "write_PACKAGES",
+       "xgettext", "xgettext2pot", "xngettext",
        "encoded_text_to_latex", "charset_to_Unicode", "Adobe_glyphs",
-       "checkNEWS", "readNEWS")
+       "checkNEWS", "readNEWS", "dependsOnPkgs", "Rdiff",
+       "testInstalledBasic", "testInstalledPackage",
+       "testInstalledPackages")
 
 export("Rd_db", "Rd_parse", "package.dependencies", "read.00Index")
 
@@ -25,6 +28,7 @@ S3method("print", "checkVignettes")
 S3method("print", "codoc")
 S3method("print", "codocClasses")
 S3method("print", "codocData")
+S3method("print", "Rd")
 S3method("print", "subdir_tests")
 S3method("print", "undoc")
 S3method("print", "xgettext")
@@ -35,6 +39,7 @@ S3method("print", "check_Rd_xrefs")
 S3method("print", "check_T_and_F")
 S3method("print", "check_code_usage_in_package")
 S3method("print", "check_demo_index")
+S3method("print", "check_dotInternal")
 S3method("print", "check_make_vars")
 S3method("print", "check_package_code_syntax")
 S3method("print", "check_package_depends")
@@ -44,3 +49,5 @@ S3method("print", "check_package_license")
 S3method("print", "check_package_datasets")
 S3method("print", "check_packages_used")
 S3method("print", "check_vignette_index")
+
+S3method("as.character", "Rd")

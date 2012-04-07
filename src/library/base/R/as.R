@@ -28,12 +28,10 @@ as.expression.default <- function(x,...) .Internal(as.vector(x, "expression"))
 
 as.list <- function(x,...) UseMethod("as.list")
 as.list.default <- function (x, ...)
-{
-    if (typeof(x) == "list") return(x)
-    if (is.function(x))
-	return(c(formals(x), list(body(x))))
-    .Internal(as.vector(x, "list"))
-}
+    if (typeof(x) == "list") x else .Internal(as.vector(x, "list"))
+
+as.list.function <- function (x, ...) c(formals(x), list(body(x)))
+
 ## FIXME:  Really the above  as.vector(x, "list")  should work for data.frames!
 as.list.data.frame <- function(x,...) {
     x <- unclass(x)
@@ -49,10 +47,9 @@ as.vector <- function(x, mode = "any") .Internal(as.vector(x, mode))
 
 as.matrix <- function(x, ...) UseMethod("as.matrix")
 as.matrix.default <- function(x, ...) {
-    if (is.matrix(x))
-	x
+    if (is.matrix(x)) x
     else
-	array(x, c(length(x),1),
+	array(x, c(length(x), 1L),
 	      if(!is.null(names(x))) list(names(x), NULL) else NULL)
 }
 as.null <- function(x,...) UseMethod("as.null")
@@ -65,8 +62,7 @@ as.function.default <- function (x, envir = parent.frame(), ...)
 as.array <- function(x, ...) UseMethod("as.array")
 as.array.default <- function(x, ...)
 {
-    if(is.array(x))
-	return(x)
+    if(is.array(x)) return(x)
     n <- names(x)
     dim(x) <- length(x)
     if(length(n)) dimnames(x) <- list(n)

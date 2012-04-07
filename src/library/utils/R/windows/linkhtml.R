@@ -38,20 +38,20 @@ make.packages.html <- function(lib.loc=.libPaths())
     file.append(f.tg, f.hd)
     out <- file(f.tg, open="a")
     rh <- chartr("\\", "/", R.home())
-    drive <- substring(rh, 1, 2)
+    drive <- substring(rh, 1L, 2L)
     for (lib in lib.loc) {
         pg <- sort(.packages(all.available = TRUE, lib.loc = lib))
         ## use relative indexing for .Library
         if(is.na(pmatch(rh, lib))) {
             libname <- chartr("/", "\\", lib)
-            lib0 <- if(substring(lib, 2, 2) != ":")
+            lib0 <- if(substring(lib, 2L, 2L) != ":")
                 paste(drive, lib, sep="") else lib
             lib0 <- paste("file:///", URLencode(lib0), sep="")
         } else {
             lib0 <- "../../library"
             libname <- "the standard library"
         }
-        if(length(lib.loc) > 1)
+        if(length(lib.loc) > 1L)
             cat("<p><h3>Packages in ", libname, "</h3>\n",
                 sep = "", file = out)
         if(libname != "the standard library")
@@ -78,7 +78,7 @@ make.search.html <- function(lib.loc=.libPaths())
 {
     f.tg <- file.path(R.home("doc"), "html", "search", "index.txt")
     ## file.access seems rarely to work as expected.
-    if(file.access(f.tg, mode = 2) == -1) {
+    if(file.access(f.tg, mode = 2) == -1L) {
         # warning("cannot update HTML search index")
         return()
     }
@@ -88,13 +88,14 @@ make.search.html <- function(lib.loc=.libPaths())
         # warning("cannot update HTML search index")
         return()
     }
+    on.exit(close(out))
     for (lib in lib.loc) {
         rh <- chartr("\\", "/", R.home())
-        drive <- substring(rh, 1, 2)
+        drive <- substring(rh, 1L, 2L)
         pg <- sort(.packages(all.available = TRUE, lib.loc = lib))
         ## use relative indexing for .Library
         if(is.na(pmatch(rh, lib))) {
-            lib0 <- if(substring(lib, 2, 2) != ":") paste(drive, lib, sep="")
+            lib0 <- if(substring(lib, 2L, 2L) != ":") paste(drive, lib, sep="")
             else lib
             lib0 <- paste("URL: file:///", URLencode(lib0), sep="")
             sed.it <- TRUE
@@ -114,7 +115,6 @@ make.search.html <- function(lib.loc=.libPaths())
             writeLines(c(contents, ""), out) # space between packages
         }
     }
-    close(out)
 }
 
 fixup.package.URLs <- function(pkg, force = FALSE)
@@ -123,7 +123,7 @@ fixup.package.URLs <- function(pkg, force = FALSE)
     fixedfile <- file.path(pkg, "fixedHTMLlinks")
     if(file.exists(fixedfile)) {
         oldtop <- readLines(fixedfile)
-        if(!force && (length(oldtop) == 1) && top == oldtop) return(TRUE)
+        if(!force && (length(oldtop) == 1L) && top == oldtop) return(TRUE)
         olddoc <- paste(oldtop, "/doc", sep="")
         oldbase <- paste(oldtop, "/library/base", sep="")
         oldutils <- paste(oldtop, "/library/utils", sep="")
@@ -158,6 +158,7 @@ fixup.package.URLs <- function(pkg, force = FALSE)
     meth <- paste(top, "/library/methods", sep="")
     for(f in files) {
         page <- readLines(f)
+	old.page <- page
         page <- gsub(olddoc, doc, page, fixed = TRUE, useBytes=TRUE)
         page <- gsub(oldbase, base, page, fixed = TRUE, useBytes=TRUE)
         page <- gsub(oldutils, utils, page, fixed = TRUE, useBytes=TRUE)
@@ -166,14 +167,16 @@ fixup.package.URLs <- function(pkg, force = FALSE)
         page <- gsub(olddata, datasets, page, fixed = TRUE, useBytes=TRUE)
         page <- gsub(oldgrD, grD, page, fixed = TRUE, useBytes=TRUE)
         page <- gsub(oldmeth, meth, page, fixed = TRUE, useBytes=TRUE)
-        ## only do this if the substitutions worked
-        out <- try(file(f, open = "w"), silent = TRUE)
-        if(inherits(out, "try-error")) {
-            warning(gettextf("cannot update '%s'", f), domain = NA)
-            next
-        }
-        writeLines(page, out)
-        close(out)
+	if(!identical(page, old.page)) {
+	    ## only do this if the substitutions worked
+	    out <- try(file(f, open = "w"), silent = TRUE)
+	    if(inherits(out, "try-error")) {
+		warning(gettextf("cannot update '%s'", f), domain = NA)
+		next
+	    }
+	    writeLines(page, out)
+	    close(out)
+	}
     }
     return(TRUE)
 }

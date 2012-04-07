@@ -34,15 +34,15 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
         if(.isMethodsDispatchOn()) {
             ## <FIXME>: this is wrong-headed: see library().
             these <- objects(db.pos, all.names = TRUE)
-            these <- these[substr(these, 1, 6) == ".__M__"]
+            these <- these[substr(these, 1L, 6L) == ".__M__"]
             gen <- gsub(".__M__(.*):([^:]+)", "\\1", these)
             from <- gsub(".__M__(.*):([^:]+)", "\\2", these)
             gen <- gen[from != ".GlobalEnv"]
             ob <- ob[!(ob %in% gen)]
         }
-        ipos <- seq_along(sp)[-c(db.pos, match(c("Autoloads", "CheckExEnv"), sp, 0))]
+        ipos <- seq_along(sp)[-c(db.pos, match(c("Autoloads", "CheckExEnv"), sp, 0L))]
         for (i in ipos) {
-            obj.same <- match(objects(i, all.names = TRUE), ob, nomatch = 0)
+            obj.same <- match(objects(i, all.names = TRUE), ob, nomatch = 0L)
             if (any(obj.same > 0)) {
                 same <- ob[obj.same]
                 same <- same[!(same %in% dont.mind)]
@@ -60,7 +60,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
                 if(length(same)) {
                     cat("\n\tThe following object(s) are masked",
                         if (i < db.pos) "_by_" else "from", sp[i],
-                        if (sum(sp == sp[i]) > 1) paste("( position", i, ")"),
+                        if (sum(sp == sp[i]) > 1L) paste("( position", i, ")"),
                         ":\n\n\t", same, "\n\n")
                 }
             }
@@ -72,7 +72,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
                 "*** Note that 'pos=1' will give an error in the future")
         pos <- 2
     }
-    if (is.character(what) && (length(what)==1)){
+    if (is.character(what) && (length(what) == 1L)){
         if (!file.exists(what))
             stop(gettextf("file '%s' not found", what), domain = NA)
         name <- paste("file:", what, sep="")
@@ -85,13 +85,13 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
        !exists(".conflicts.OK", envir = value, inherits = FALSE)) {
         checkConflicts(value)
     }
-    if((length(objects(envir = value, all.names = TRUE)) > 0)
+    if( length(objects(envir = value, all.names = TRUE) )
        && .isMethodsDispatchOn())
       methods:::cacheMetaData(value, TRUE)
     invisible(value)
 }
 
-detach <- function(name, pos=2, version, unload=FALSE)
+detach <- function(name, pos=2, unload=FALSE)
 {
     if(!missing(name)) {
         name <- substitute(name)# when a name..
@@ -101,8 +101,6 @@ detach <- function(name, pos=2, version, unload=FALSE)
 	    else {
                 if (!is.character(name))
                     name <- deparse(name)
-                if (!missing(version))
-                    name <- manglePackageName(name, version)
                 match(name, search())
             }
 	if(is.na(pos))
@@ -130,7 +128,7 @@ detach <- function(name, pos=2, version, unload=FALSE)
     ## Check for detaching a  package required by another package (not
     ## by .GlobalEnv because detach() can't currently fix up the
     ## .required there)
-    for(pkgs in search()[-1]) {
+    for(pkgs in search()[-1L]) {
         if(!isNamespace(as.environment(pkgs)) &&
            exists(".required", pkgs, inherits = FALSE) &&
            packageName %in% paste("package:", get(".required", pkgs, inherits = FALSE),sep=""))
@@ -162,13 +160,13 @@ ls <- objects <-
     }
     all.names <- .Internal(ls(envir, all.names))
     if (!missing(pattern)) {
-        if ((ll <- length(grep("[", pattern, fixed=TRUE))) > 0 &&
+        if ((ll <- length(grep("[", pattern, fixed=TRUE))) &&
             ll != length(grep("]", pattern, fixed=TRUE))) {
             if (pattern == "[") {
                 pattern <- "\\["
                 warning("replaced regular expression pattern '[' by  '\\\\['")
             }
-            else if (length(grep("[^\\\\]\\[<-", pattern) > 0)) {
+            else if (length(grep("[^\\\\]\\[<-", pattern))) {
                 pattern <- sub("\\[<-", "\\\\\\[<-", pattern)
                 warning("replaced '[<-' by '\\\\[<-' in regular expression pattern")
             }

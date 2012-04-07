@@ -40,7 +40,7 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
     if(pkgpath == "") {
         libs <- if(is.null(lib.loc)) .libPaths() else lib.loc
         for(lib in libs)
-            if(file.access(file.path(lib, pkg), 5) == 0) {
+            if(file.access(file.path(lib, pkg), 5) == 0L) {
                 pkgpath <- file.path(lib, pkg)
                 break
             }
@@ -65,7 +65,7 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
         desc <- as.list(desc)
     } else if(file.exists(file <- file.path(pkgpath,"DESCRIPTION"))) {
         dcf <- read.dcf(file=file)
-        if(NROW(dcf) < 1)
+        if(NROW(dcf) < 1L)
             stop(gettextf("DESCRIPTION file of package '%s' is corrupt", pkg),
                  domain = NA)
         desc <- as.list(dcf[1,])
@@ -99,8 +99,8 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
         return(NA)
     }
 
-    if(drop & length(fields)==1)
-        return(retval[[1]])
+    if(drop & length(fields) == 1L)
+        return(retval[[1L]])
 
     class(retval) <- "packageDescription"
     if(!is.null(fields)) attr(retval, "fields") <- fields
@@ -113,7 +113,7 @@ print.packageDescription <- function(x, ...)
 {
     xx <- x
     xx[] <- lapply(xx, function(x) if(is.na(x)) "NA" else x)
-    write.dcf(as.data.frame.list(xx))
+    write.dcf(as.data.frame.list(xx, optional = TRUE))
     cat("\n-- File:", attr(x, "file"), "\n")
     if(!is.null(attr(x, "fields"))){
         cat("-- Fields read: ")
@@ -131,7 +131,7 @@ function(x, ...)
 {
     db <- x$results
     ## Split according to Package.
-    out <- if(nrow(db) == 0)
+    out <- if(nrow(db) == 0L)
          NULL
     else
         lapply(split(1 : nrow(db), db[, "Package"]),

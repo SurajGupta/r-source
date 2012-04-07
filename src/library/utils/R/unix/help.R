@@ -27,7 +27,7 @@ function(file, topic)
     lnkfile <-
         file.path(tempdir(), ".R", "library", third_base_name)
     if(any(ex <- file.exists(lnkfile))) {
-        file <- lnkfile[ex][1]          # could be more than one
+        file <- lnkfile[ex][1L]          # could be more than one
     }
     if(file == ofile) {
         msg <- gettext("Using non-linked HTML file: hyperlinks may be incorrect")
@@ -67,25 +67,18 @@ function(file, topic)
     file.append(con, file)
     cat("\\end{document}\n",
         file = con, append = TRUE)
-    ## <FIXME>
-    ## We now have help-print.sh in share/sh but we do not use the
-    ## .Script mechanism because we play with the TEXINPUTS environment
-    ## variable and the code goes back to a time when not all systems
-    ## could be assumed to support Sys.setenv().
-    ## Seems that now we can---rewrite this along the lines of
-    ## tools:::.install_package_vignettes().
-    system(paste(paste("TEXINPUTS=",
-                       file.path(R.home("share"), "texmf"),
-                       ":",
-                       "$TEXINPUTS",
-                       sep = ""),
-                 "/bin/sh",
+    ## FIXME: should we try 'latex' and 'dvips' here?
+    if(!nzchar(getOption("latexcmd")))
+        stop("'latexcmd' is empty")
+    if(!nzchar(getOption("dvipscmd")))
+        stop("'dvipscmd' is empty")
+    Rtexmf <- file.path(R.home("share"), "texmf")
+    system(paste("/bin/sh",
                  shQuote(file.path(R.home("share"), "sh", "help-print.sh")),
                  con,
                  topic,
                  shQuote(getOption("latexcmd")),
-                 shQuote(getOption("dvipscmd"))
-                 ))
-    ## </FIXME>
+                 shQuote(getOption("dvipscmd")),
+                 Rtexmf))
     return(invisible())
 }

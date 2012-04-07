@@ -21,7 +21,7 @@ as.dendrogram.dendrogram <- function(object, ...) object
 as.dendrogram.hclust <- function (object, hang = -1, ...)
 ## hang = 0.1  is default for plot.hclust
 {
-    stopifnot(length(object$order) > 0)
+    stopifnot(length(object$order) > 0L)
     if (is.null(object$labels))
 	object$labels <- 1L:length(object$order)
     z <- list()
@@ -39,23 +39,23 @@ as.dendrogram.hclust <- function (object, hang = -1, ...)
 	    attr(zk, "members") <- two
 	    attr(zk, "midpoint") <- 0.5 # mean( c(0,1) )
 	    objlabels <- object$labels[-x]
-	    attr(zk[[1]], "label") <- objlabels[1]
-	    attr(zk[[2]], "label") <- objlabels[2]
-	    attr(zk[[1]], "members") <- attr(zk[[2]], "members") <- one
-	    attr(zk[[1]], "height") <- attr(zk[[2]], "height") <- h0
-	    attr(zk[[1]], "leaf") <- attr(zk[[2]], "leaf") <- TRUE
+	    attr(zk[[1L]], "label") <- objlabels[1L]
+	    attr(zk[[2L]], "label") <- objlabels[2L]
+	    attr(zk[[1L]], "members") <- attr(zk[[2L]], "members") <- one
+	    attr(zk[[1L]], "height") <- attr(zk[[2L]], "height") <- h0
+	    attr(zk[[1L]], "leaf") <- attr(zk[[2L]], "leaf") <- TRUE
 	}
 	else if (any(neg)) {		# one leaf, one node
 	    X <- as.character(x)
-	    ## Originally had "x <- sort(..) above => leaf always left, x[1];
+	    ## Originally had "x <- sort(..) above => leaf always left, x[1L];
 	    ## don't want to assume this
-	    isL <- x[1] < 0 ## is leaf left?
+	    isL <- x[1L] < 0 ## is leaf left?
 	    zk <-
-		if(isL) list(-x[1], z[[X[2]]])
-		else	list(z[[X[1]]], -x[2])
+		if(isL) list(-x[1L], z[[X[2L]]])
+		else	list(z[[X[1L]]], -x[2L])
 	    attr(zk, "members") <- attr(z[[X[1 + isL]]], "members") + one
 	    attr(zk, "midpoint") <-
-                (.memberDend(zk[[1]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
+                (.memberDend(zk[[1L]]) + attr(z[[X[1 + isL]]], "midpoint"))/2
 	    attr(zk[[2 - isL]], "members") <- one
 	    attr(zk[[2 - isL]], "height") <- h0
 	    attr(zk[[2 - isL]], "label") <- object$labels[-x[2 - isL]]
@@ -63,12 +63,12 @@ as.dendrogram.hclust <- function (object, hang = -1, ...)
 	}
 	else {				# two nodes
 	    x <- as.character(x)
-	    zk <- list(z[[x[1]]], z[[x[2]]])
-	    attr(zk, "members") <- attr(z[[x[1]]], "members") +
-		attr(z[[x[2]]], "members")
-	    attr(zk, "midpoint") <- (attr(z[[x[1]]], "members") +
-				     attr(z[[x[1]]], "midpoint") +
-				     attr(z[[x[2]]], "midpoint"))/2
+	    zk <- list(z[[x[1L]]], z[[x[2L]]])
+	    attr(zk, "members") <- attr(z[[x[1L]]], "members") +
+		attr(z[[x[2L]]], "members")
+	    attr(zk, "midpoint") <- (attr(z[[x[1L]]], "members") +
+				     attr(z[[x[1L]]], "midpoint") +
+				     attr(z[[x[2L]]], "midpoint"))/2
 	}
 	attr(zk, "height") <- oHgt[k]
 	z[[k <- as.character(k)]] <- zk
@@ -121,7 +121,7 @@ midcache.dendrogram <- function (x, type = "hclust")
 	if(type == "hclust" && k != 2)
 	    warning("midcache() of non-binary dendrograms only partly implemented")
 	## compatible to as.dendrogram.hclust() {MM: doubtful if k > 2}
-	attr(r, "midpoint") <- (.memberDend(d[[1]]) + midS) / 2
+	attr(r, "midpoint") <- (.memberDend(d[[1L]]) + midS) / 2
 	r
     }
     setmid(x, type=type)
@@ -211,7 +211,7 @@ function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
 }
 
 
-## FIXME: need larger par("mar")[1] or [4] for longish labels !
+## FIXME: need larger par("mar")[1L] or [4L] for longish labels !
 ## {probably don't change, just print a warning ..}
 plot.dendrogram <-
     function (x, type = c("rectangle", "triangle"), center = FALSE,
@@ -292,7 +292,7 @@ plotNode <-
     i <- if(inner || hasP) 1 else 2 # only 1 node specific par
 
     if(!is.null(nPar)) { ## draw this node
-	pch <- Xtract("pch", nPar, default = 1:2,	 i)
+	pch <- Xtract("pch", nPar, default = 1L:2,	 i)
 	cex <- Xtract("cex", nPar, default = c(1,1),	 i)
 	col <- Xtract("col", nPar, default = par("col"), i)
 	bg <- Xtract("bg", nPar, default = par("bg"), i)
@@ -393,7 +393,7 @@ plotNode <-
 
 		vlm <- strheight(c(edgeText,"h"), cex = t.cex)/2
 		hlm <- strwidth (c(edgeText,"m"), cex = t.cex)/2
-		hl3 <- c(hlm[1], hlm[1] + hlm[2], hlm[1])
+		hl3 <- c(hlm[1L], hlm[1L] + hlm[2L], hlm[1L])
                 if(horiz) {
                     polygon(my+ c(-hl3, hl3), mx + sum(vlm)*c(-1L:1L, 1L:-1L),
                             col = p.col, border= p.border,
@@ -495,8 +495,8 @@ order.dendrogram <- function(x) {
 #    if( !inherits(x, "dendrogram") )
 #	stop("order.dendrogram requires a dendrogram")
 #    ord <- function(x) {
-#      if( is.leaf(x) ) return(x[1])
-#      return(c(ord(x[[1]]), ord(x[[2]])))
+#      if( is.leaf(x) ) return(x[1L])
+#      return(c(ord(x[[1L]]), ord(x[[2L]])))
 #    }
 #   return(ord(x))
 # }
@@ -510,11 +510,11 @@ reorder.dendrogram <- function(x, wts, agglo.FUN = sum, ...)
     agglo.FUN <- match.fun(agglo.FUN)
     oV <- function(x, wts) {
 	if(is.leaf(x)) {
-	    attr(x, "value") <- wts[x[1]]
+	    attr(x, "value") <- wts[x[1L]]
 	    return(x)
 	}
         k <- length(x)
-        if(k == 0) stop("invalid (length 0) node in dendrogram")
+        if(k == 0L) stop("invalid (length 0) node in dendrogram")
         vals <- numeric(k)
         for(j in 1L:k) {
             ## insert/compute 'wts' recursively down the branches:
@@ -586,15 +586,16 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     scale <- if(symm && missing(scale)) "none" else match.arg(scale)
     if(length(di <- dim(x)) != 2 || !is.numeric(x))
 	stop("'x' must be a numeric matrix")
-    nr <- di[1]
-    nc <- di[2]
+    nr <- di[1L]
+    nc <- di[2L]
     if(nr <= 1 || nc <= 1)
 	stop("'x' must have at least 2 rows and 2 columns")
-    if(!is.numeric(margins) || length(margins) != 2)
+    if(!is.numeric(margins) || length(margins) != 2L)
 	stop("'margins' must be a numeric vector of length 2")
 
     doRdend <- !identical(Rowv,NA)
     doCdend <- !identical(Colv,NA)
+    if(!doRdend && identical(Colv, "Rowv")) doCdend <- FALSE
     ## by default order by row/col means
     if(is.null(Rowv)) Rowv <- rowMeans(x, na.rm = na.rm)
     if(is.null(Colv)) Colv <- colMeans(x, na.rm = na.rm)
@@ -647,14 +648,14 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 	else labCol[colInd]
 
     if(scale == "row") {
-	x <- sweep(x, 1, rowMeans(x, na.rm = na.rm), check.margin=FALSE)
-	sx <- apply(x, 1, sd, na.rm = na.rm)
-	x <- sweep(x, 1, sx, "/", check.margin=FALSE)
+	x <- sweep(x, 1L, rowMeans(x, na.rm = na.rm), check.margin=FALSE)
+	sx <- apply(x, 1L, sd, na.rm = na.rm)
+	x <- sweep(x, 1L, sx, "/", check.margin=FALSE)
     }
     else if(scale == "column") {
-	x <- sweep(x, 2, colMeans(x, na.rm = na.rm), check.margin=FALSE)
-	sx <- apply(x, 2, sd, na.rm = na.rm)
-	x <- sweep(x, 2, sx, "/", check.margin=FALSE)
+	x <- sweep(x, 2L, colMeans(x, na.rm = na.rm), check.margin=FALSE)
+	sx <- apply(x, 2L, sd, na.rm = na.rm)
+	x <- sweep(x, 2L, sx, "/", check.margin=FALSE)
     }
 
     ## Calculate the plot layout
@@ -665,13 +666,13 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 	if(!is.character(ColSideColors) || length(ColSideColors) != nc)
 	    stop("'ColSideColors' must be a character vector of length ncol(x)")
 	lmat <- rbind(lmat[1,]+1, c(NA,1), lmat[2,]+1)
-	lhei <- c(lhei[1], 0.2, lhei[2])
+	lhei <- c(lhei[1L], 0.2, lhei[2L])
     }
     if(!missing(RowSideColors)) { ## add middle column to layout
 	if(!is.character(RowSideColors) || length(RowSideColors) != nr)
 	    stop("'RowSideColors' must be a character vector of length nrow(x)")
 	lmat <- cbind(lmat[,1]+1, c(rep(NA, nrow(lmat)-1), 1), lmat[,2]+1)
-	lwid <- c(lwid[1], 0.2, lwid[2])
+	lwid <- c(lwid[1L], 0.2, lwid[2L])
     }
     lmat[is.na(lmat)] <- 0
     if(verbose) {
@@ -686,40 +687,40 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
     layout(lmat, widths = lwid, heights = lhei, respect = TRUE)
     ## draw the side bars
     if(!missing(RowSideColors)) {
-	par(mar = c(margins[1],0, 0,0.5))
+	par(mar = c(margins[1L],0, 0,0.5))
 	image(rbind(1L:nr), col = RowSideColors[rowInd], axes = FALSE)
     }
     if(!missing(ColSideColors)) {
-	par(mar = c(0.5,0, 0,margins[2]))
+	par(mar = c(0.5,0, 0,margins[2L]))
 	image(cbind(1L:nc), col = ColSideColors[colInd], axes = FALSE)
     }
     ## draw the main carpet
-    par(mar = c(margins[1], 0, 0, margins[2]))
+    par(mar = c(margins[1L], 0, 0, margins[2L]))
     if(!symm || scale != "none")
 	x <- t(x)
     if(revC) { # x columns reversed
 	iy <- nr:1
-	ddr <- rev(ddr)
+        if(doRdend) ddr <- rev(ddr)
 	x <- x[,iy]
     } else iy <- 1L:nr
 
     image(1L:nc, 1L:nr, x, xlim = 0.5+ c(0, nc), ylim = 0.5+ c(0, nr),
 	  axes = FALSE, xlab = "", ylab = "", ...)
     axis(1, 1L:nc, labels= labCol, las= 2, line= -0.5, tick= 0, cex.axis= cexCol)
-    if(!is.null(xlab)) mtext(xlab, side = 1, line = margins[1] - 1.25)
+    if(!is.null(xlab)) mtext(xlab, side = 1, line = margins[1L] - 1.25)
     axis(4, iy, labels= labRow, las= 2, line= -0.5, tick= 0, cex.axis= cexRow)
-    if(!is.null(ylab)) mtext(ylab, side = 4, line = margins[2] - 1.25)
+    if(!is.null(ylab)) mtext(ylab, side = 4, line = margins[2L] - 1.25)
 
     if (!missing(add.expr))
 	eval(substitute(add.expr))
 
     ## the two dendrograms :
-    par(mar = c(margins[1], 0, 0, 0))
+    par(mar = c(margins[1L], 0, 0, 0))
     if(doRdend)
 	plot(ddr, horiz = TRUE, axes = FALSE, yaxs = "i", leaflab = "none")
     else frame()
 
-    par(mar = c(0, 0, if(!is.null(main)) 1 else 0, margins[2]))
+    par(mar = c(0, 0, if(!is.null(main)) 1 else 0, margins[2L]))
     if(doCdend)
 	plot(ddc,		axes = FALSE, xaxs = "i", leaflab = "none")
     else if(!is.null(main)) frame()

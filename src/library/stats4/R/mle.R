@@ -58,9 +58,9 @@ mle <- function(minuslogl, start=formals(minuslogl), method="BFGS",
     }
     oout <- if (length(start))
         optim(start, f, method=method, hessian=TRUE, ...)
-    else list(par=numeric(0),value=f(start))
+    else list(par=numeric(0L),value=f(start))
     coef <- oout$par
-    vcov <- if(length(coef)) solve(oout$hessian) else matrix(numeric(0),0,0)
+    vcov <- if(length(coef)) solve(oout$hessian) else matrix(numeric(0L), 0L, 0L)
     min <-  oout$value
     fullcoef[nm] <- coef
     new("mle", call=call, coef=coef, fullcoef=unlist(fullcoef), vcov=vcov,
@@ -93,7 +93,7 @@ setMethod("summary", "mle", function(object, ...){
 })
 
 setMethod("profile", "mle",
-          function (fitted, which = 1:p, maxsteps = 100,
+          function (fitted, which = 1L:p, maxsteps = 100,
                     alpha = 0.01, zmax = sqrt(qchisq(1 - alpha, 1L)),
                     del = zmax/5, trace = FALSE, ...)
 {
@@ -165,10 +165,10 @@ setMethod("profile", "mle",
                     z <- onestep(step - 1 + dstep)
                     if(is.na(z) || abs(z) > zmax) break
                 }
-            } else if(length(zi) < 5) { # try smaller steps
-                mxstep <- step - 1
+            } else if(length(zi) < 5L) { # try smaller steps
+                mxstep <- step - 1L
                 step <- 0.5
-                while ((step <- step + 1) < mxstep) onestep(step)
+                while ((step <- step + 1L) < mxstep) onestep(step)
             }
         }
         si <- order(pvi[, i])
@@ -211,10 +211,10 @@ function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
             bsp <- splines:: backSpline(sp)
             ## </FIXME>
             xlim <- predict(bsp, c(-mlev, mlev))$y
-            if (is.na(xlim[1]))
-                xlim[1] <- min(obj[[i]]$par.vals[, i])
-            if (is.na(xlim[2]))
-                xlim[2] <- max(obj[[i]]$par.vals[, i])
+            if (is.na(xlim[1L]))
+                xlim[1L] <- min(obj[[i]]$par.vals[, i])
+            if (is.na(xlim[2L]))
+                xlim[2L] <- max(obj[[i]]$par.vals[, i])
             plot(abs(z) ~ par.vals[, i], data = obj[[i]], xlab = i,
                 ylim = c(0, mlev), xlim = xlim, ylab = expression(abs(z)),
                 type = "n")
@@ -245,10 +245,10 @@ function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
             ## </FIXME>
             xlim <- predict(bsp, c(-mlev, mlev))$y
             x0 <- predict(bsp, 0)$y
-            if (is.na(xlim[1]))
-                xlim[1] <- min(obj[[i]]$par.vals[, i])
-            if (is.na(xlim[2]))
-                xlim[2] <- max(obj[[i]]$par.vals[, i])
+            if (is.na(xlim[1L]))
+                xlim[1L] <- min(obj[[i]]$par.vals[, i])
+            if (is.na(xlim[2L]))
+                xlim[2L] <- max(obj[[i]]$par.vals[, i])
             plot(z ~ par.vals[, i], data = obj[[i]], xlab = i,
                 ylim = c(-mlev, mlev), xlim = xlim, ylab = expression(z),
                 type = "n")
@@ -258,8 +258,8 @@ function (x, levels, conf = c(99, 95, 90, 80, 50)/100, nseg = 50,
                 pred <- predict(bsp, c(-lev, lev))$y
                 lines(pred, c(-lev, lev), type = "h", col = 6, lty = 2)
                 pred <- ifelse(is.na(pred), xlim, pred)
-                lines(c(x0,pred[2]), rep(lev, 2), type = "l", col = 6, lty = 2)
-                lines(c(pred[1],x0), rep(-lev, 2), type = "l", col = 6, lty = 2)
+                lines(c(x0,pred[2L]), rep(lev, 2), type = "l", col = 6, lty = 2)
+                lines(c(pred[1L],x0), rep(-lev, 2), type = "l", col = 6, lty = 2)
             }
         }
     }
@@ -276,18 +276,18 @@ function (object, parm, level = 0.95, ...)
     if (missing(parm))
         parm <- seq_along(pnames)
     if (is.character(parm))
-        parm <- match(parm, pnames, nomatch = 0)
+        parm <- match(parm, pnames, nomatch = 0L)
     a <- (1 - level)/2
     a <- c(a, 1 - a)
     pct <- paste(round(100 * a, 1), "%")
-    ci <- array(NA, dim = c(length(parm), 2),
+    ci <- array(NA, dim = c(length(parm), 2L),
                 dimnames = list(pnames[parm], pct))
     cutoff <- qnorm(a)
     for (pm in parm) {
         pro <- object@profile[[pnames[pm]]]
-        sp <- if (length(pnames) > 1)
-            spline(x = pro[, "par.vals"][, pm], y = pro[, 1])
-        else spline(x = pro[, "par.vals"], y = pro[, 1])
+        sp <- if (length(pnames) > 1L)
+            spline(x = pro[, "par.vals"][, pm], y = pro[, 1L])
+        else spline(x = pro[, "par.vals"], y = pro[, 1L])
         ci[pnames[pm], ] <- approx(sp$y, sp$x, xout = cutoff)$y
     }
     drop(ci)
@@ -317,7 +317,7 @@ setMethod("update", "mle", function (object, ..., evaluate = TRUE)
 {
     call <- object@call
     extras <- match.call(expand.dots = FALSE)$...
-    if (length(extras) > 0) {
+    if (length(extras) ) {
         existing <- !is.na(match(names(extras), names(call)))
         for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
         if (any(!existing)) {

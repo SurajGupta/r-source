@@ -1,9 +1,10 @@
 % File src/library/base/man/dynload.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{dyn.load}
+\Rdversion{1.1}
 \alias{dyn.load}
 \alias{dyn.unload}
 \alias{is.loaded}
@@ -57,7 +58,7 @@ is.loaded(symbol, PACKAGE = "", type = "")
     same way as in \code{\link{.C}}, \code{\link{.Call}},
     \code{\link{.Fortran}} and \code{\link{.External}} functions}
   \item{type}{The type of symbol to look for: can be any (\code{""}, the
-  default), \code{"Fortran"}, \code{"Call"} or \code{"External"}.}
+    default), \code{"Fortran"}, \code{"Call"} or \code{"External"}.}
 }
 \details{
   The objects \code{dyn.load} loads are called \sQuote{dynamically
@@ -68,11 +69,9 @@ is.loaded(symbol, PACKAGE = "", type = "")
   short.  (The POSIX standards use \sQuote{executable object file}, but
   no one else does.)
 
-  See \sQuote{See Also} and the \emph{Writing R Extensions} and \emph{R
-  Installation and Administration} manuals for how to create and install
-  a suitable DLL.  Note that unlike some versions of S-PLUS,
-  \code{dyn.load} does not load an object (\file{.o}) file but a shared
-  object or DLL.
+  See \sQuote{See Also} and the \sQuote{Writing R Extensions} and
+  \sQuote{R Installation and Administration} manuals for how to create
+  and install a suitable DLL.
 
   Unfortunately a very few platforms (e.g. Compaq Tru64) do not handle
   the \code{PACKAGE} argument correctly, and may incorrectly find
@@ -82,7 +81,7 @@ is.loaded(symbol, PACKAGE = "", type = "")
   aspects of the mode argument to the \code{dlopen()} routine on POSIX
   systems. They are available so that users can exercise greater control
   over the loading process for an individual library.  In general, the
-  defaults values are appropriate and you should override them only if
+  default values are appropriate and you should override them only if
   there is good reason and you understand the implications.
 
 #ifdef unix
@@ -97,11 +96,10 @@ is.loaded(symbol, PACKAGE = "", type = "")
   One should be careful of the potential side-effect of using lazy
   loading via the \code{now} argument as \code{FALSE}.  If a routine is
   called that has a missing symbol, the process will terminate
-  immediately and unsaved session variables will be lost.  The intended
-  use is for library developers to call specify a value \code{TRUE} to
-  check that all symbols are actually resolved and for regular users to
-  all with \code{FALSE} so that missing symbols can be ignored and the
-  available ones can be called.
+  immediately.  The intended use is for library developers to call with
+  value \code{TRUE} to check that all symbols are actually resolved and
+  for regular users to call with \code{FALSE} so that missing symbols
+  can be ignored and the available ones can be called.
 
   The initial motivation for adding these was to avoid such termination
   in the \code{_init()} routines of the Java virtual machine library.
@@ -110,14 +108,12 @@ is.loaded(symbol, PACKAGE = "", type = "")
   other elements of the application and so can be shared across two
   different DLLs.
 
-  Some systems do not provide (explicit) support for local/global and
-  lazy/eager symbol resolution.  This can be the source of subtle bugs.
-  One can arrange to have warning messages emitted when unsupported
-  options are used.  This is done by setting either of the options
-  \code{verbose} or \code{warn} to be non-zero via the
-  \code{\link{options}} function.  Currently, we know of only 2
-  platforms that do not provide a value for local load (RTLD\_LOCAL).
-  These are IRIX6.4 and unpatched versions of Solaris 2.5.1.
+  Some (very old) systems do not provide (explicit) support for
+  local/global and lazy/eager symbol resolution.  This can be the source
+  of subtle bugs.  One can arrange to have warning messages emitted when
+  unsupported options are used.  This is done by setting either of the
+  options \code{verbose} or \code{warn} to be non-zero via the
+  \code{\link{options}} function.
 
   There is a short discussion of these additional arguments with some
   example code available at
@@ -148,7 +144,9 @@ is.loaded(symbol, PACKAGE = "", type = "")
   \code{DLLInfo}.  See \code{\link{getLoadedDLLs}} for information about
   this class.
 
-  The function \code{dyn.unload} unlinks the DLL.
+  The function \code{dyn.unload} unlinks the DLL.  Note that unloading a
+  DLL and then re-loading a DLL of the same name may or may not work: on
+  Solaris it uses the first version loaded.
 
   \code{is.loaded} checks if the symbol name is loaded and hence
   available for use in \code{.C} or \code{.Fortran} or \code{.Call} or
@@ -171,8 +169,7 @@ is.loaded(symbol, PACKAGE = "", type = "")
   standard mechanism (\code{LoadLibrary}) for loading DLLs.
 
   The original code for loading DLLs in Unix-alikes was provided by
-  Heiner Schwarte.  The compatibility code for HP-UX was provided by
-  Luke Tierney.
+  Heiner Schwarte.
 }
 #ifdef windows
 \section{Windows}{
@@ -190,23 +187,20 @@ is.loaded(symbol, PACKAGE = "", type = "")
     \item Along the search path for executables given by the environment
     variable \env{PATH}.
   }
-  This means that for all but embedded uses of \R, \file{iconv.dll} will
-  be found in \file{\var{\link[base:Rhome]{R\_HOME}}/bin}.
 
   Packages often want to supply dependent DLLs in their \file{libs}
   directory, and do this by setting the \env{PATH} variable
   (\code{\link{library.dynam}} does that automatically in recent
   versions of \R), but the DLL search order means that DLLs in the
-  launch directory and in system directories will be preferred.  As from
-  \R 2.7.0 and on Windows XP SP1 and later there is a way to modify the
-  search order.  If argument \code{DLLpath} is supplied to
-  \code{dyn.load}, the latter makes use of the Windows system call
-  \code{SetDllDirectory} to insert the value of \code{DLLpath} in second
-  place, and removes the current directory, for the duration of that
-  \code{dyn.load} call.  (Note that only one directory can be inserted
-  in this way.)  On Windows 2000, the second item in the search order is
-  the current directory, and the current directory is changed
-  temporarily to implement \code{DLLpath}.
+  launch directory and in system directories will be preferred.  On
+  Windows XP SP1 and later there is a way to modify the search order.
+  If argument \code{DLLpath} is supplied to \code{dyn.load}, the latter
+  makes use of the Windows system call \code{SetDllDirectory} to insert
+  the value of \code{DLLpath} in second place, and removes the current
+  directory, for the duration of that \code{dyn.load} call.  (Note that
+  only one directory can be inserted in this way.)  On Windows 2000, the
+  second item in the search order is the current directory, and the
+  current directory is changed temporarily to implement \code{DLLpath}.
 }
 #endif
 \section{Warning}{
@@ -217,7 +211,7 @@ is.loaded(symbol, PACKAGE = "", type = "")
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{library.dynam}} to be used inside a package's

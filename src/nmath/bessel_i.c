@@ -33,10 +33,11 @@
 static void I_bessel(double *x, double *alpha, long *nb,
 		     long *ize, double *bi, long *ncalc);
 
+/* .Internal(besselI(*)) : */
 double bessel_i(double x, double alpha, double expo)
 {
     long nb, ncalc, ize;
-    double *bi;
+    double na, *bi;
 #ifndef MATHLIB_STANDALONE
     char *vmax;
 #endif
@@ -50,14 +51,16 @@ double bessel_i(double x, double alpha, double expo)
 	return ML_NAN;
     }
     ize = (long)expo;
+    na = floor(alpha);
     if (alpha < 0) {
-	/* Using Abramowitz & Stegun  9.6.2
+	/* Using Abramowitz & Stegun  9.6.2 & 9.6.6
 	 * this may not be quite optimal (CPU and accuracy wise) */
 	return(bessel_i(x, -alpha, expo) +
-	       bessel_k(x, -alpha, expo) * ((ize == 1)? 2. : 2.*exp(-2.*x))/M_PI
-	       * sin(-M_PI * alpha));
+	       ((alpha == na) ? 0 :
+		bessel_k(x, -alpha, expo) *
+		((ize == 1)? 2. : 2.*exp(-2.*x))/M_PI * sin(-M_PI * alpha)));
     }
-    nb = 1+ (long)floor(alpha);/* nb-1 <= alpha < nb */
+    nb = 1 + (long)na;/* nb-1 <= alpha < nb */
     alpha -= (nb-1);
 #ifdef MATHLIB_STANDALONE
     bi = (double *) calloc(nb, sizeof(double));
@@ -99,7 +102,8 @@ static void I_bessel(double *x, double *alpha, long *nb,
  X     - Non-negative argument for which
 	 I's or exponentially scaled I's (I*EXP(-X))
 	 are to be calculated.	If I's are to be calculated,
-	 X must be less than EXPARG_BESS (see bessel.h).
+	 X must be less than exparg_BESS (IZE=1) or xlrg_BESS_IJ (IZE=2),
+	 (see bessel.h).
  ALPHA - Fractional part of order for which
 	 I's or exponentially scaled I's (I*EXP(-X)) are
 	 to be calculated.  0 <= ALPHA < 1.0.
@@ -199,16 +203,17 @@ static void I_bessel(double *x, double *alpha, long *nb,
 	(1 <= *ize && *ize <= 2) ) {
 
 	*ncalc = *nb;
-	if((*ize == 1 && *x > exparg_BESS) ||
-	   (*ize == 2 && *x > xlrg_BESS_IJ)) {
-	    /* If a warning, then about precision loss;
-	     * but the limit *is* = Inf :
-	     * was:   ML_ERROR(ME_RANGE, "I_bessel"); */
+	if(*ize == 1 && *x > exparg_BESS) {
 	    for(k=1; k <= *nb; k++)
-		bi[k]=ML_POSINF;
+		bi[k]=ML_POSINF; /* the limit *is* = Inf */
 	    return;
 	}
-	intx = (long) (*x);/* --> we will probably fail when *x > LONG_MAX */
+	if(*ize == 2 && *x > xlrg_BESS_IJ) {
+	    for(k=1; k <= *nb; k++)
+		bi[k]= 0.; /* The limit exp(-x) * I_nu(x) --> 0 : */
+	    return;
+	}
+	intx = (long) (*x);/* fine, since *x <= xlrg_BESS_IJ <<< LONG_MAX */
 	if (*x >= rtnsig_BESS) { /* "non-small" x */
 /* -------------------------------------------------------------------
    Initialize the forward sweep, the P-sequence of Olver
@@ -333,11 +338,21 @@ L120:
 		       Recur backward via difference equation,
 		       calculating (but not storing) BI[N], until N = NB.
 		       --------------------------------------------------- */
+
 		    for (l = 1; l <= nend; ++l) {
 			--n;
 			en -= 2.;
 			cc = bb;
 			bb = aa;
+			/* for x ~= 1500,  sum would overflow to 'inf' here,
+			 * and the final bi[] /= sum would give 0 wrongly;
+			 * RE-normalize (aa, sum) here -- no need to undo */
+			if(nend > 100 && aa > 1e200) {
+			    /* multiply by  2^-900 = 1.18e-271 */
+			    cc	= ldexp(cc, -900);
+			    bb	= ldexp(bb, -900);
+			    sum = ldexp(sum,-900);
+			}
 			aa = en * bb / *x + cc;
 			em -= 1.;
 			emp2al -= 1.;
@@ -470,7 +485,7 @@ L230:
 		}
 	    }
 	}
-    } else {
+    } else { /* argument out of range */
 	*ncalc = imin2(*nb,0) - 1;
     }
 }

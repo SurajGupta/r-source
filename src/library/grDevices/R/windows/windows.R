@@ -213,6 +213,20 @@ bringToTop <- function(which = dev.cur(), stay = FALSE)
     invisible(.Internal(bringToTop(as.integer(which), as.logical(stay))))
 }
 
+msgWindow <-
+    function(type = c("minimize", "restore", "maximize", "hide", "recordOn", "recordOff"),
+             which = dev.cur())
+{
+    type <- match.arg(type)
+    itype <- match(type, c("minimize", "restore", "maximize", "hide", "recordOn", "recordOff"), 0L)
+    if(which == -1 && itype > 3)
+        stop("'type' not applicable to the R console")
+    if(!exists(".Devices")) .Devices <- list("null device")
+    if(which > 0 && .Devices[[which]] != "windows")
+        stop("can only manipulate windows devices")
+    invisible(.Internal(msgWindow(as.integer(which), as.integer(itype))))
+}
+
 savePlot <- function(filename = "Rplot",
                      type = c("wmf", "emf", "png", "jpg", "jpeg", "bmp",
                      "tif", "tiff", "ps", "eps", "pdf"),
@@ -233,21 +247,21 @@ savePlot <- function(filename = "Rplot",
 
 print.SavedPlots <- function(x, ...)
 {
-    if(x[[1]] != 31416) {
+    if(x[[1L]] != 31416) {
         cat("object is not of class `SavedPlots'\n")
         return()
     }
     cat("Saved Plots from R version 1.4.0 or later\n\n")
-    cat("  Contains", x[[2]], "out of a maximum", x[[3]], "plots\n")
-    lens <- sapply(x[[5]], length)[1:x[[2]]]
+    cat("  Contains", x[[2L]], "out of a maximum", x[[3L]], "plots\n")
+    lens <- sapply(x[[5]], length)[1L:x[[2L]]]
     cat("  #plot calls are", paste(lens, collapse=", "), "\n")
-    cat("  Current position is plot", 1 + x[[4]], "\n")
+    cat("  Current position is plot", 1 + x[[4L]], "\n")
     invisible(x)
 }
 
 "[.SavedPlots" <- function(x, i, ...)
 {
-    numplots <- x[[2]]
+    numplots <- x[[2L]]
     if(i > numplots || i < 1) stop("subscript out of range")
     x[[5]][[i]]
 }

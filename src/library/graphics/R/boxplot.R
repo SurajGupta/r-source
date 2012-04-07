@@ -1,4 +1,5 @@
-#  File src/library/graphics/R/boxplot.R
+
+                                        #  File src/library/graphics/R/boxplot.R
 #  Part of the R package, http://www.R-project.org
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -31,7 +32,7 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
 	    rep(FALSE, length.out = length(args))
     ## pars <- c(args[namedargs], pars)
     groups <- if(is.list(x)) x else args[!namedargs]
-    if(0 == (n <- length(groups)))
+    if(0L == (n <- length(groups)))
 	stop("invalid first argument")
     if(length(class(groups)))
 	groups <- unclass(groups)
@@ -39,16 +40,16 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
 	attr(groups, "names") <- names
     else {
 	if(is.null(attr(groups, "names")))
-	    attr(groups, "names") <- 1:n
+	    attr(groups, "names") <- 1L:n
 	names <- attr(groups, "names")
     }
-    cls <- sapply(groups, function(x) class(x)[1])
-    cl <- if(all(cls == cls[1])) cls[1] else NULL
-    for(i in 1:n)
+    cls <- sapply(groups, function(x) class(x)[1L])
+    cl <- if(all(cls == cls[1L])) cls[1L] else NULL
+    for(i in 1L:n)
 	groups[i] <- list(boxplot.stats(unclass(groups[[i]]), range)) # do.conf=notch)
-    stats <- matrix(0, nrow=5, ncol=n)
-    conf  <- matrix(0, nrow=2, ncol=n)
-    ng <- out <- group <- numeric(0)
+    stats <- matrix(0, nrow=5L, ncol=n)
+    conf  <- matrix(0, nrow=2L, ncol=n)
+    ng <- out <- group <- numeric(0L)
     ct <- 1
     for(i in groups) {
 	stats[,ct] <- i$stats
@@ -75,10 +76,23 @@ function(x, ..., range = 1.5, width = NULL, varwidth = FALSE,
     else z
 }
 
+boxplot.matrix <- function(x, use.cols = TRUE, ...)
+{
+  ## Purpose: Boxplot for each column or row [use.cols= TRUE / FALSE] of a matrix
+  ## -------------------------------------------------------------------------
+  ## Arguments: x: a numeric matrix; use.cols: logical, columns (T) or rows (F)
+  groups <- if(use.cols) split(x, rep.int(1L:ncol(x),
+                                          rep.int(nrow(x), ncol(x))))
+  else split(x, seq(nrow(x)))
+  ## Make use of col/row names if present
+  if (length(nam <- dimnames(x)[[1+use.cols]])) names(groups) <- nam
+  invisible(boxplot(groups, ...))
+}
+
 boxplot.formula <-
     function(formula, data = NULL, ..., subset, na.action = NULL)
 {
-    if(missing(formula) || (length(formula) != 3))
+    if(missing(formula) || (length(formula) != 3L))
 	stop("'formula' missing or incorrect")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
@@ -86,7 +100,7 @@ boxplot.formula <-
     m$... <- NULL
     m$na.action <- na.action # force use of default for this method
     require(stats, quietly = TRUE)
-    m[[1]] <- as.name("model.frame")
+    m[[1L]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     response <- attr(attr(mf, "terms"), "response")
     boxplot(split(mf[[response]], mf[-response]), ...)
@@ -115,12 +129,12 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	    wid <- wid/2
 	    if (notch) {
                 ## check for overlap of notches and hinges
-                ok <- stats[2] <= conf[1] && conf[2] <= stats[4]
+                ok <- stats[2L] <= conf[1L] && conf[2L] <= stats[4L]
 
 		xx <- xP(x, wid * c(-1, 1, 1, notch.frac, 1,
 				    1, -1,-1,-notch.frac,-1))
-		yy <- c(stats[c(2, 2)], conf[1], stats[3], conf[2],
-			stats[c(4, 4)], conf[2], stats[3], conf[1])
+		yy <- c(stats[c(2, 2)], conf[1L], stats[3L], conf[2L],
+			stats[c(4, 4)], conf[2L], stats[3L], conf[1L])
 	    }
 	    else {
 		xx <- xP(x, wid * c(-1, 1, 1, -1))
@@ -132,10 +146,11 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	    ## the box filling over which to draw the rest:
 	    xypolygon(xx, yy, lty = "blank", col = boxfill[i])
 	    ## Median
-	    xysegments(xP(x, -wntch), stats[3],
-		       xP(x, +wntch), stats[3],
-		       lty = medlty[i], lwd = medlwd[i], col = medcol[i])
-	    xypoints(x, stats[3],
+	    xysegments(xP(x, -wntch), stats[3L],
+		       xP(x, +wntch), stats[3L],
+		       lty = medlty[i], lwd = medlwd[i], col = medcol[i],
+                       lend = 1) ## avoid oerlap by butt line endings.
+	    xypoints(x, stats[3L],
 		     pch = medpch[i], cex = medcex[i], col= medcol[i], bg = medbg[i])
 	    ## Whiskers
 	    xysegments(rep.int(x, 2), stats[c(1,5)],
@@ -147,7 +162,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	    ## finally the box borders
 	    xypolygon(xx, yy, lty= boxlty[i], lwd= boxlwd[i], border= boxcol[i])
 
-	    if ((nout <- length(out)) > 0) { ## Outliers
+	    if ((nout <- length(out))) { ## Outliers
 		xysegments(rep(x - wid * outwex, nout), out,
 			   rep(x + wid * outwex, nout), out,
 			   lty = outlty[i], lwd = outlwd[i], col = outcol[i])
@@ -167,10 +182,10 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
         return(ok)
     } ## bplt
 
-    if(!is.list(z) || 0 == (n <- length(z$n)))
+    if(!is.list(z) || 0L == (n <- length(z$n)))
 	stop("invalid first argument")
     if(is.null(at))
-	at <- 1:n
+	at <- 1L:n
     else if(length(at) != n)
 	stop("'at' must have same length as 'z$n', i.e. ", n)
     ## just for compatibility with S
@@ -180,9 +195,8 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	z$group <- integer()
     if(is.null(pars$ylim))
 	ylim <- range(z$stats[is.finite(z$stats)],
-		      z$out  [is.finite(z$out)],
-		      if(notch)
-		      z$conf [is.finite(z$conf)])
+		      if(outline) z$out  [is.finite(z$out)],
+		      if(notch) z$conf [is.finite(z$conf)])
     else {
 	ylim <- pars$ylim
 	pars$ylim <- NULL
@@ -195,7 +209,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
 	pars$xlim <- NULL
     }
 
-    if(length(border) == 0) border <- par("fg")
+    if(length(border) == 0L) border <- par("fg")
 
     if (!add) {
 	plot.new()
@@ -264,7 +278,7 @@ bxp <- function(z, notch=FALSE, width=NULL, varwidth=FALSE, outline = TRUE,
     }
 
     ok <- TRUE
-    for(i in 1:n)
+    for(i in 1L:n)
 	ok <- ok & bplt(at[i], wid = width[i],
 			stats= z$stats[,i],
 			out  = z$out[z$group==i],

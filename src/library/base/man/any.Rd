@@ -26,7 +26,7 @@ any(\dots, na.rm = FALSE)
   unnamed, and dispatch is on the first argument.
 
   Coercion of types other than integer (raw, double, complex, character,
-  list) gives a warning as from \R 2.7.0, as this was often unintentional.
+  list) gives a warning as this is often unintentional.
 }
 \value{
   The value is a logical vector of length one.
@@ -50,7 +50,7 @@ any(\dots, na.rm = FALSE)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{all}}, the \sQuote{complement} of \code{any}.

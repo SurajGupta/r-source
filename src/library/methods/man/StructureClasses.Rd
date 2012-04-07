@@ -104,13 +104,31 @@
   \describe{
     \item{coerce}{Methods are defined to coerce arbitrary objects to
       these classes, by calling the corresponding basic function, for
-      example, \code{as(x, "matrix")} calls \code{as.matrix(x)}.}
-    \item{Ops, Math}{Group methods (see, e.g., \code{\link{S4groupGeneric}})
+      example, \code{as(x, "matrix")} calls \code{as.matrix(x)}.
+      If \code{strict = TRUE} in the call to \code{as()}, the method
+      goes on to delete all other slots and attributes other than the
+      \code{dim} and \code{dimnames}.
+    }
+    \item{Ops}{Group methods (see, e.g., \code{\link{S4groupGeneric}})
       are defined for combinations of structures and vectors (including
       special cases for array and matrix), implementing the concept of
-      vector structures as in the reference.
+      vector structures as in the reference.  Essentially, structures
+      combined with vectors retain the structure as long as the
+      resulting object has the same length.  Structures combined with
+      other structures remove the structure, since there is no
+      automatic way to determine what should happen to the slots
+      defining the structure.
+
+      Note that these methods will be activated when a package is loaded
+      containing a class that inherits from any of the structure
+      classes or class \code{"vector"}.
     }
   }
+}
+\seealso{Class \linkS4class{nonStructure}, which enforces the
+  alternative model, in which all slots are dropped if any math
+  transformation or operation is applied to an object from a class extending one of
+  the basic classes.
 }
 \references{
  Chambers, John M. (2008)
@@ -123,7 +141,7 @@
 
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole (for the original vector structures).
+  Wadsworth & Brooks/Cole (for the original vector structures).
 }
 \examples{
 showClass("structure")

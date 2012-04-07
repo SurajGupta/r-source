@@ -439,12 +439,12 @@ SEXP nthcdr(SEXP s, int n)
     if (isList(s) || isLanguage(s) || isFrame(s) || TYPEOF(s) == DOTSXP ) {
 	while( n-- > 0 ) {
 	    if (s == R_NilValue)
-		error(_("\"nthcdr\" list shorter than %d"), n);
+		error(_("'nthcdr' list shorter than %d"), n);
 	    s = CDR(s);
 	}
 	return s;
     }
-    else error(_("\"nthcdr\" needs a list to CDR down"));
+    else error(_("'nthcdr' needs a list to CDR down"));
     return R_NilValue;/* for -Wall */
 }
 
@@ -647,8 +647,9 @@ SEXP static intern_getwd(void)
 	if(res > 0) {
 	    wcstoutf8(buf, wbuf, PATH_MAX+1);
 	    R_UTF8fixslash(buf);
-	    rval = allocVector(STRSXP, 1);
+	    PROTECT(rval = allocVector(STRSXP, 1));
 	    SET_STRING_ELT(rval, 0, mkCharCE(buf, CE_UTF8));
+	    UNPROTECT(1);
 	}
     }
 #elif defined(HAVE_GETCWD)
@@ -1173,54 +1174,6 @@ Rboolean mbcsValid(const char *str)
     return  ((int)mbstowcs(NULL, str, 0) >= 0);
 }
 
-#ifdef UNUSED
-/* We do this conversion ourselves to do our own error recovery */
-void mbcsToLatin1(const char *in, char *out)
-{
-    wchar_t *wbuff;
-    int i;
-    size_t res = mbstowcs(NULL, in, 0), mres;
-
-    if(res == (size_t)(-1)) {
-	/* let's try to print out a readable version */
-	size_t used, n = strlen(in);
-	char *err = alloca(4*n + 1), *q;
-	const char *p;
-	mbstate_t ps;
-	R_CheckStack();
-	for(p = in, q = err; *p; ) {
-	    used = mbrtowc(NULL, p, n, &ps);
-	    if(used == 0) break;
-	    else if((int) used > 0) {
-		memcpy(q, p, used);
-		p += used;
-		q += used;
-		n -= used;
-	    } else {
-		sprintf(q, "<%02x>", (unsigned char) *p++);
-		q += 4;
-		n--;
-	    }
-	}
-	*q = '\0';
-	warning(_("invalid input '%s' in mbcsToLatin1: omitted"), err);
-	*out = '\0';
-	return;
-    }
-    wbuff = (wchar_t *) alloca((res+1) * sizeof(wchar_t));
-    R_CheckStack();
-    if(!wbuff) error(_("allocation failure in '%s'"), "mbcsToLatin1");
-    mres = mbstowcs(wbuff, in, res+1);
-    if(mres == (size_t)-1) /* we checked above, so should not get here */
-	error("invalid input in 'mbcsToLatin1'");
-    for(i = 0; i < res; i++) {
-	/* here we do assume Unicode wchars */
-	if(wbuff[i] > 0xFF) out[i] = '.';
-	else out[i] = (char) wbuff[i];
-    }
-    out[res] = '\0';
-}
-#endif
 
 /* MBCS-aware versions of common comparisons.  Only used for ASCII c */
 char *Rf_strchr(const char *s, int c)
@@ -1258,9 +1211,6 @@ int utf8clen(char c) { return 1;}
 size_t Mbrtowc(wchar_t *wc, const char *s, size_t n, void *ps)
 { return (size_t)(-1);}
 Rboolean mbcsValid(const char *str) { return TRUE; }
-#ifdef UNUSED
-void mbcsToLatin1(char *in, char *out) {}
-#endif
 #undef Rf_strchr
 char *Rf_strchr(const char *s, int c) {return strchr(s, c);}
 #undef Rf_strrchr
@@ -1566,10 +1516,88 @@ double R_atof(const char *str)
 }
 
 #ifdef USE_ICU
+# ifdef HAVE_LOCALE_H
+#  include <locale.h>
+# endif
+#ifdef USE_ICU_APPLE
+/* Mac OS X is missing the headers */
+typedef int UErrorCode; /* really an enum these days */
+struct UCollator;
+typedef struct UCollator UCollator;
+
+typedef enum {
+  UCOL_EQUAL    = 0,
+  UCOL_GREATER    = 1,
+  UCOL_LESS    = -1
+} UCollationResult ;
+
+typedef enum {
+  UCOL_DEFAULT = -1,
+  UCOL_PRIMARY = 0,
+  UCOL_SECONDARY = 1,
+  UCOL_TERTIARY = 2,
+  UCOL_DEFAULT_STRENGTH = UCOL_TERTIARY,
+  UCOL_CE_STRENGTH_LIMIT,
+  UCOL_QUATERNARY=3,
+  UCOL_IDENTICAL=15,
+  UCOL_STRENGTH_LIMIT,
+  UCOL_OFF = 16,
+  UCOL_ON = 17,
+  UCOL_SHIFTED = 20,
+  UCOL_NON_IGNORABLE = 21,
+  UCOL_LOWER_FIRST = 24,
+  UCOL_UPPER_FIRST = 25,
+  UCOL_ATTRIBUTE_VALUE_COUNT
+} UColAttributeValue;
+
+typedef UColAttributeValue UCollationStrength;
+
+typedef enum {
+      UCOL_FRENCH_COLLATION, 
+      UCOL_ALTERNATE_HANDLING, 
+      UCOL_CASE_FIRST, 
+      UCOL_CASE_LEVEL,
+      UCOL_NORMALIZATION_MODE, 
+      UCOL_DECOMPOSITION_MODE = UCOL_NORMALIZATION_MODE,
+      UCOL_STRENGTH,
+      UCOL_HIRAGANA_QUATERNARY_MODE,
+      UCOL_NUMERIC_COLLATION, 
+      UCOL_ATTRIBUTE_COUNT
+} UColAttribute;
+
+/* UCharIterator struct has to be defined sice we use its instances as
+   local variables, but we don't acutally use any of its members. */
+typedef struct UCharIterator {
+  const void *context;
+  int32_t length, start, index, limit, reservedField;
+  void *fns[16]; /* we overshoot here (there is just 10 fns in ICU 3.6),
+		    but we have to make sure that enough stack space
+		    is allocated when used as a local var in future
+		    versions */
+} UCharIterator;
+
+UCollator* ucol_open(const char *loc, UErrorCode *status);
+void ucol_close(UCollator *coll);
+void ucol_setAttribute(UCollator *coll, UColAttribute attr, 
+		       UColAttributeValue value, UErrorCode *status);
+void ucol_setStrength(UCollator *coll, UCollationStrength strength);
+UCollationResult ucol_strcollIter(const UCollator *coll,
+				  UCharIterator *sIter,
+				  UCharIterator *tIter,
+				  UErrorCode *status);
+void uiter_setUTF8(UCharIterator *iter, const char *s, int32_t length);
+
+void uloc_setDefault(const char* localeID, UErrorCode* status);
+
+#define U_ZERO_ERROR 0
+#define U_FAILURE(x) ((x)>U_ZERO_ERROR)
+
+#else
 #include <unicode/utypes.h>
 #include <unicode/ucol.h>
 #include <unicode/uloc.h>
 #include <unicode/uiter.h>
+#endif
 
 static UCollator *collator = NULL;
 

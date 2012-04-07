@@ -119,17 +119,17 @@ set.seed(seed, kind = NULL, normal.kind = NULL)
     }
   }
 
-  \code{normal.kind} can be \code{"Kinderman-Ramage"}, \code{"Buggy
-  Kinderman-Ramage"} (not for \code{set.seed}), \code{"Ahrens-Dieter"},
-  \code{"Box-Muller"}, \code{"Inversion"} (the default), or
-  \code{"user-supplied"}.  (For inversion, see the reference in
-  \code{\link{qnorm}}.)  The Kinderman-Ramage generator used in versions
-  prior to 1.7.1 (now called \code{"Buggy"} had several approximation
-  errors and should only be used for reproduction of older results.
-  The \code{"Box-Muller"} generator is stateful as pairs of normals are
-  generated and returned sequentially.  The state is reset whenever it
-  is selected (even if it is the current normal generator) and when
-  \code{kind} is changed.
+  \code{normal.kind} can be \code{"Kinderman-Ramage"},
+  \code{"Buggy Kinderman-Ramage"} (not for \code{set.seed}),
+  \code{"Ahrens-Dieter"}, \code{"Box-Muller"}, \code{"Inversion"} (the
+  default), or \code{"user-supplied"}.  (For inversion, see the
+  reference in \code{\link{qnorm}}.)  The Kinderman-Ramage generator
+  used in versions prior to 1.7.1 (now called \code{"Buggy"} had several
+  approximation errors and should only be used for reproduction of older
+  results.  The \code{"Box-Muller"} generator is stateful as pairs of
+  normals are generated and returned sequentially.  The state is reset
+  whenever it is selected (even if it is the current normal generator)
+  and when \code{kind} is changed.
 
   \code{set.seed} uses its single integer argument to set as many seeds
   as are required.  It is intended as a simple way to get quite different
@@ -139,12 +139,12 @@ set.seed(seed, kind = NULL, normal.kind = NULL)
 
   The use of \code{kind=NULL} or \code{normal.kind=NULL} in
   \code{RNGkind} or \code{set.seed} selects the currently-used
-  generator (including as from \R 2.8.0 that used in the previous
-  session if the workspace has been restored): if no generator has been
-  used it selects \code{"default"}.
+  generator (including that used in the previous session if the
+  workspace has been restored): if no generator has been used it selects
+  \code{"default"}.
 }
 \note{
-  Initially, there is no seed;	a new one is created from the current
+  Initially, there is no seed;  a new one is created from the current
   time when one is required.  Hence, different sessions started at
   (sufficiently) different times will give different simulation results,
   by default.  However, the seed might be restored from a previous
@@ -197,7 +197,7 @@ set.seed(seed, kind = NULL, normal.kind = NULL)
 
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole. (\code{set.seed}, storing in \code{.Random.seed}.)
+  Wadsworth & Brooks/Cole. (\code{set.seed}, storing in \code{.Random.seed}.)
 
   Box, G. E. P. and Muller, M. E. (1958) A note on the generation of normal
   random deviates. \emph{Annals of Mathmatical Statistics} \bold{29},
@@ -248,7 +248,7 @@ set.seed(seed, kind = NULL, normal.kind = NULL)
 \author{of RNGkind: Martin Maechler. Current implementation, B. D. Ripley}
 
 \seealso{\code{\link{runif}}, \code{\link{rnorm}}, \ldots.}
-%	this is ./Uniform.Rd
+%       this is ./Uniform.Rd
 \examples{
 require(stats)
 

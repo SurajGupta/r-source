@@ -98,7 +98,7 @@ pairs(x, \dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \examples{
 pairs(iris[1:4], main = "Anderson's Iris Data -- 3 species",
@@ -126,7 +126,7 @@ pairs(USJudgeRatings[1:5], panel=panel.smooth,
 
 ## put (absolute) correlations on the upper panels,
 ## with size proportional to the correlations.
-panel.cor <- function(x, y, digits=2, prefix="", cex.cor)
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
 {
     usr <- par("usr"); on.exit(par(usr))
     par(usr = c(0, 1, 0, 1))

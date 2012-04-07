@@ -1,6 +1,6 @@
 #-*- mode: perl; perl-indent-level: 4; cperl-indent-level: 4 -*-
 
-# Copyright (C) 1997-2007 R Development Core Team
+# Copyright (C) 1997-2009 R Development Core Team
 #
 # This document is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,9 @@ use R::Rdlists;
 use R::Utils;
 use R::Dcf;
 
-my $revision = ' $Rev: 47126 $ ';
+fileparse_set_fstype; # Unix, in case one gets anything else.
+
+my $revision = ' $Rev: 47888 $ ';
 my $version;
 my $name;
 
@@ -35,9 +37,8 @@ $version = $1;
 ## write to both STDERR (warnings) and STDOUT.
 $| = 1;
 
-@knownoptions = ("rhome:s", "html", "txt", "latex", "example", "debug|d",
-		 "dosnames", "help|h", "version|v", "os|OS:s", 
-		 "index");
+@knownoptions = ("rhome:s", "html", "txt", "latex", "example", "chm",
+		 "debug|d", "help|h", "version|v", "os|OS:s");
 GetOptions (@knownoptions) || usage();
 &R_version($name, $version) if $opt_version;
 &usage() if $opt_help;
@@ -45,25 +46,23 @@ GetOptions (@knownoptions) || usage();
 $OSdir ="unix";
 $OSdir = $opt_os if $opt_os;
 
-$AQUAdir = "aqua" if($ENV{"R_USE_AQUA_SUBDIRS"} eq "yes");
+$WINDOWS = ($OSdir eq "windows");
 
 $dir_mod = 0755;#- Permission ('mode') of newly created directories.
-
-if($opt_dosnames){ $HTML=".htm"; } else { $HTML=".html"; }
 
 my $current = cwd();
 if($opt_rhome){
     $R_HOME=$opt_rhome;
     print STDERR "R_HOME from --rhome: '$R_HOME'\n" if $opt_debug;
-}
-elsif($ENV{"R_HOME"}){
+} elsif($ENV{"R_HOME"}) {
     $R_HOME=$ENV{"R_HOME"};
     print STDERR "R_HOME from ENV: '$R_HOME'\n" if $opt_debug;
+} else {
+    die "R_HOME is not set\n"
 }
-else{
-    chdir(dirname($0) . "/..");
-    $R_HOME = cwd();
-}
+
+$R_HOME =~ s+\\+/+g; # Unix-style path
+
 chdir($current);
 print STDERR "Current directory (cwd): '$current'\n" if $opt_debug;
 
@@ -71,12 +70,14 @@ my $mainlib = file_path($R_HOME, "library");
 
 
 # default is to build all documentation formats
-if(!$opt_html && !$opt_txt && !$opt_latex && !$opt_example){
+if(!$opt_html && !$opt_txt && !$opt_latex && !$opt_example && !$opt_chm){
     $opt_html = 1;
     $opt_txt = 1;
     $opt_latex = 1;
     $opt_example = 1;
+    $opt_chm = 1;
 }
+$opt_chm = 0 unless $WINDOWS;
 
 ($pkg, $version, $lib, @mandir) = buildinit();
 $dest = $ARGV[2];
@@ -94,10 +95,11 @@ if(-r &file_path($dest, "DESCRIPTION")) {
 	}
 }
 
-
-build_index($lib, $dest, $version, "");
-if($opt_index){
-    exit 0;
+if($opt_chm) {
+    $chmdir = "../chm";
+    if(! -d $chmdir) {
+	mkdir($chmdir, $dir_mod) or die "Could not create $chmdir: $!\n";
+    }
 }
 
 if ($opt_latex) {
@@ -119,21 +121,29 @@ print "text " if $opt_txt;
 print "html " if $opt_html;
 print "latex " if $opt_latex;
 print "example " if $opt_example;
+print "chm " if $opt_chm;
 print "\n";
 
 
-# get %htmlindex and %anindex
-
-%anindex = read_anindex($lib);
-if($opt_html){
+if($opt_html || $opt_chm){
     %htmlindex = read_htmlindex($lib);
     if ($lib ne $mainlib) {
+	# ensure mainlib is read
 	%basehtmlindex = read_htmlindex($mainlib);
 	foreach $topic (keys %htmlindex) {
 	    $basehtmlindex{$topic} = $htmlindex{$topic};
 	}
 	%htmlindex = %basehtmlindex;
     }
+    # give priority to standard packages
+    foreach $pkg ("base", "utils", "graphics", "grDevices", "stats", 
+		  "datasets", "methods") {
+	my %pkghtmlindex = read_htmlpkgindex($mainlib, $pkg);
+	foreach $topic (keys %pkghtmlindex) {
+	    $basehtmlindex{$topic} = $pkghtmlindex{$topic};
+	}
+    }
+
     # make sure that references are resolved first to this package
     my %thishtmlindex = read_htmlpkgindex($lib, $pkg);
     foreach $topic (keys %thishtmlindex) {
@@ -142,8 +152,8 @@ if($opt_html){
 }
 
 format STDOUT =
-  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<< @<<<<<< @<<<<<< @<<<<<<
-  $manfilebase, $textflag, $htmlflag, $latexflag, $exampleflag
+  @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<< @<<<<<< @<<<<<< @<<<<<< @<<<<<<
+  $manfilebase, $textflag, $htmlflag, $latexflag, $exampleflag, $chmflag
 .
 
 foreach $manfile (@mandir) {
@@ -155,12 +165,12 @@ foreach $manfile (@mandir) {
 	$manage = (-M $manfile);
 	$manfiles{$manfilebase} = $manfile;
 
-	$textflag = $htmlflag = $latexflag = $exampleflag = "";
+	$textflag = $htmlflag = $latexflag = $exampleflag = $chmflag = "";
 	$types = "";
 	undef $do_example;
 
 	if($opt_txt){
-	    my $targetfile = $filenm{$manfilebase};
+	    my $targetfile = $manfilebase;
 	    $destfile = file_path($dest, "help", $targetfile);
 	    if(fileolder($destfile, $manage)) {
 		$textflag = "text";
@@ -169,9 +179,9 @@ foreach $manfile (@mandir) {
 	}
 
 	if($opt_html){
-	    my $targetfile = $filenm{$manfilebase};
+	    my $targetfile = $manfilebase;
 	    $misslink = "";
-	    $destfile = file_path($dest, "html", $targetfile.$HTML);
+	    $destfile = file_path($dest, "html", $targetfile.".html");
 	    if(fileolder($destfile, $manage)) {
 		$htmlflag = "html";
 		print "\t$destfile" if $opt_debug;
@@ -180,7 +190,7 @@ foreach $manfile (@mandir) {
 	}
 
 	if($opt_latex){
-	    my $targetfile = $filenm{$manfilebase};
+	    my $targetfile = $manfilebase;
 	    $destfile = file_path($dest, "latex", $targetfile.".tex");
 	    if(fileolder($destfile, $manage)) {
 		$latexflag = "latex";
@@ -189,7 +199,7 @@ foreach $manfile (@mandir) {
 	}
 
 	if($opt_example){
-	    my $targetfile = $filenm{$manfilebase};
+	    my $targetfile = $manfilebase;
 	    $destfile = file_path($dest, "R-ex", $targetfile.".R");
 	    if(fileolder($destfile, $manage)) {
 		if(-f $destfile) {unlink $destfile;}
@@ -201,8 +211,22 @@ foreach $manfile (@mandir) {
 	Rdconv($manfile, $types, "", "$dest", $pkg, $version, 
 	       $def_encoding) if $types ne "";
 	if($do_example && -f $destfile) {$exampleflag = "example";}
-	write if ($textflag || $htmlflag || $latexflag || $exampleflag);
-	print "     missing link(s): $misslink\n"
+
+	if($opt_chm){
+	    my $targetfile = $manfilebase;
+	    $misslink = "";
+	    $destfile = "../chm/$targetfile.html";
+	    if(fileolder($destfile,$manage)) {
+		$chmflag = "chm";
+		print "\t$destfile" if $opt_debug;
+		Rdconv($manfile, "chm", "", "$destfile", $pkg, $version, 
+		       $def_encoding);
+	    }
+	}
+
+	write if ($textflag || $htmlflag || $latexflag || 
+		  $exampleflag || $chmflag);
+	print "     missing link(s): $misslink\n" 
 	    if $htmlflag && length($misslink);
     }
 }
@@ -257,6 +281,18 @@ if($opt_example){
 	    unless defined $manfiles{$destfilebase};
     }
 }
+if($opt_chm){
+    my @destdir;
+    opendir dest,  "../chm";
+    @destdir = sort(readdir(dest));
+    closedir dest;
+    foreach $destfile (@destdir) {
+	$destfilebase = basename($destfile, (".html"));
+	next unless $destfile =~ /\.html$/;
+	next if $destfile eq "00Index.html";
+	unlink "../chm/$destfile" unless defined $manfiles{$destfilebase};
+    }
+}
 
 sub usage {
   print STDERR <<END;
@@ -274,8 +310,7 @@ Options:
   --txt                 build text files    (default is all)
   --latex               build LaTeX files   (default is all)
   --example             build example files (default is all)
-  --dosnames            use 8.3 filenames
-  --index               build index file only
+  --chm                 build CHM files     (only on Windows, default there)
 
 
 Email bug reports to <r-bugs\@r-project.org>.

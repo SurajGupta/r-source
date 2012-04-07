@@ -1,0 +1,39 @@
+#-*- Makefile -*-
+#
+# ${R_HOME}/src/library/datasets/Makefile.win
+
+srcdir = .
+top_srcdir = ../../..
+
+top_builddir = ../../..
+
+pkg = datasets
+
+RSRC = $(srcdir)/R/zzz.R
+RdSRC = $(srcdir)/man/*.Rd
+
+R_EXE = $(top_builddir)/bin/Rterm.exe --vanilla --slave
+
+ECHO = echo
+MKINSTALLDIRS = mkdir -p
+INSTALL_DATA = cp
+SHELL = sh
+R_GZIPCMD = gzip
+USE_NLS =yes
+
+all:
+	@$(ECHO) "building package '$(pkg)'"
+	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
+	@$(MAKE) -f Makefile.win mkR mkdesc mkman
+	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)/data
+	@for f in $(srcdir)/data/*; do \
+	  $(INSTALL_DATA) $${f} $(top_builddir)/library/$(pkg)/data; \
+	done
+	@rm -f $(top_builddir)/library/$(pkg)/data/Rdata.*
+	@$(ECHO) "tools:::data2LazyLoadDB(\"$(pkg)\")" | \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) > /dev/null
+	@$(INSTALL_DATA) $(srcdir)/data/morley.tab \
+	  $(top_builddir)/library/$(pkg)/data
+
+
+include $(top_srcdir)/share/make/basepkg.mk

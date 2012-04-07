@@ -4,6 +4,7 @@
 % Distributed under GPL 2 or later
 
 \name{RdUtils}
+\Rdversion{1.1}
 \alias{Rdconv}
 \alias{Rd2txt}
 \alias{Rd2dvi}
@@ -31,36 +32,28 @@
 }
 \details{
   \code{Rdconv} converts Rd format to other formats.  Currently,
-  plain text, HTML, LaTeX, S version 3 (Sd), and S version 4 (.sgml)
-  formats are supported.  It can also extract the examples for
-  run-time testing.
+  plain text, HTML and LaTeX formats are supported.  It can also extract
+  the examples for run-time testing.
 
   \code{Rd2dvi} and \code{Rd2txt} are user-level programs
   for producing DVI/PDF output or pretty text output from Rd sources.
   \code{Rd2dvi} will make use of environment variables
 #ifdef unix
-  \env{R\_PAPERSIZE} (set by \code{R CMD}, with a default set when \R was
+  \env{R_PAPERSIZE} (set by \code{R CMD}, with a default set when \R was
   installed) and \env{xdvi} (the DVI previewer, default \code{xdvi}),
 #endif
 #ifdef windows
-  \env{R\_PAPERSIZE} (default \code{a4}, ) and \env{xdvi} (the DVI
-  previewer, default \code{open} (use file associations) as from \R 2.8.0),
+  \env{R_PAPERSIZE} (default \code{a4}, ) and \env{xdvi} (the DVI
+  previewer, default \code{open} (use file associations)),
 #endif
-  and \env{R\_PDFVIEWER} (the PDF previwer).  (Valid values for
-  \env{R\_PAPERSIZE} are \code{a4}, \code{letter}, \code{legal} and
+  and \env{R_PDFVIEWER} (the PDF previwer).  (Valid values for
+  \env{R_PAPERSIZE} are \code{a4}, \code{letter}, \code{legal} and
   \code{executive}.)
 
   \code{Sd2Rd} converts S (version 3 or 4) documentation formats to Rd
-  format.
+  format: it is no longer much used and the results may need hand-tuning.
 
-  Use
-  \code{R CMD foo --help}
-  to obtain usage information on utility \code{foo}.
-}
-\note{
-  Conversion to S version 3/4 formats is rough: there are some
-  \file{.Rd} constructs for which there is no natural analogue.
-  They are intended as a starting point for hand-tuning.
+  Use \code{R CMD foo --help} to obtain usage information on utility \code{foo}.
 }
 \seealso{
   The chapter \dQuote{Processing Rd format} in the \dQuote{Writing \R

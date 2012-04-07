@@ -64,6 +64,7 @@ InitBrowseCallbackProc( HWND hwnd, UINT uMsg, LPARAM lp, LPARAM lpData )
 
 #define BUFSIZE _MAX_PATH
 static char strbuf[BUFSIZE];
+static wchar_t wcsbuf[65536];
 
 static const char *filter[] = {
     "All Files (*.*)",	"*.*",
@@ -75,12 +76,29 @@ static const char *filter[] = {
     ""
 };
 
+static const wchar_t *wfilter[] = {
+    L"All Files (*.*)",	L"*.*",
+    L"Text Files (*.TXT)",	L"*.txt",
+    L"HTML Files (*.HTM)",	L"*.htm",
+    L"PNG Files (*.PNG)",	L"*.png",
+    L"JPEG Files (*.JPG)",	L"*.jpg",
+    L"BMP Files (*.BMP)",	L"*.bmp",
+    L""
+};
+
 unsigned int TopmostDialogs = 0; /* May be MB_TOPMOST */
 
 static const char *userfilter;
+static const wchar_t *userfilterW;
+
 void setuserfilter(const char *uf)
 {
     userfilter=uf;
+}
+
+void setuserfilterW(const wchar_t *uf)
+{
+    userfilterW=uf;
 }
 
 static HWND hModelessDlg = NULL;
@@ -168,6 +186,7 @@ int askyesnocancel(const char *question)
     return result;
 }
 
+/* This should always have a native encoded name, so don't need Unicode here */
 static char cod[MAX_PATH]=""; /*current open directory*/
 
 void askchangedir()
@@ -253,6 +272,77 @@ char *askfilenames(const char *title, const char *default_name, int multi,
     return strbuf;
 }
 
+wchar_t *askfilenameW(const char *title, const char *default_name)
+{
+    wchar_t wtitle[1000], wdef_name[MAX_PATH];
+
+    mbstowcs(wtitle, title, 1000);
+    if (!default_name) wcscpy(wdef_name, L"");
+    else mbstowcs(wdef_name, default_name, MAX_PATH);
+    if (*askfilenamesW(wtitle, wdef_name, 0, 
+		       userfilterW ? userfilterW : wfilter[0], 0,
+		       NULL)) return wcsbuf;
+    else return NULL;
+}
+
+wchar_t *askfilenamesW(const wchar_t *title, const wchar_t *default_name,
+		       int multi,
+		       const wchar_t *filters, int filterindex,
+		       const wchar_t *dir)
+{
+    int i;
+    OPENFILENAMEW ofn;
+    char cwd[MAX_PATH];
+    wchar_t wcod[MAX_PATH];
+    HWND prev = GetFocus();
+
+    if (!default_name) default_name = L"";
+    wcscpy(wcsbuf, default_name);
+    GetCurrentDirectory(MAX_PATH, cwd);
+    if (!strcmp(cod, "")) {
+	if (!dir) GetCurrentDirectoryW(MAX_PATH, wcod); else wcscpy(wcod, dir);
+    } else
+	mbstowcs(wcod, cod, MAX_PATH);
+
+    ofn.lStructSize     = sizeof(OPENFILENAME);
+    ofn.hwndOwner       = current_window ? current_window->handle : 0;
+    ofn.hInstance       = 0;
+    ofn.lpstrFilter     = filters;
+    ofn.lpstrCustomFilter = NULL;
+    ofn.nMaxCustFilter  = 0;
+    ofn.nFilterIndex    = filterindex;
+    ofn.lpstrFile       = wcsbuf;
+    ofn.nMaxFile        = 65520; /* precaution against overflow */
+    ofn.lpstrFileTitle  = NULL;
+    ofn.nMaxFileTitle   = _MAX_FNAME + _MAX_EXT;
+    ofn.lpstrInitialDir = wcod;
+    ofn.lpstrTitle      = title;
+    ofn.Flags           = OFN_CREATEPROMPT | OFN_HIDEREADONLY | OFN_EXPLORER;
+    if (multi) ofn.Flags |= OFN_ALLOWMULTISELECT;
+    ofn.nFileOffset     = 0;
+    ofn.nFileExtension  = 0;
+    ofn.lpstrDefExt     = L"*";
+    ofn.lCustData       = 0L;
+    ofn.lpfnHook        = NULL;
+    ofn.lpTemplateName  = NULL;
+
+    if (GetOpenFileNameW(&ofn) == 0) {
+	/* This could fail if the Unicode name is not a native name */
+	DWORD res = GetCurrentDirectory(MAX_PATH, cod);
+	if(res) strcpy(cod, cwd);
+	SetCurrentDirectory(cwd);
+	wcsbuf[0] = 0;
+	wcsbuf[1] = 0;
+    } else {
+	DWORD res = GetCurrentDirectory(MAX_PATH, cod);
+	if(res) strcpy(cod, cwd);
+	SetCurrentDirectory(cwd);
+	for (i = 0; i <  10; i++) if (peekevent()) doevent();
+    }
+    SetFocus(prev);
+    return wcsbuf;
+}
+
 int countFilenames(const char *list)
 {
     const char *temp;
@@ -267,7 +357,51 @@ char *askfilesave(const char *title, const char *default_name)
     return askfilesavewithdir(title, default_name, NULL);
 }
 
-char *askfilesavewithdir(const char *title, const char *default_name, 
+wchar_t *askfilesaveW(const char *title, const char *default_name) 
+{
+    int i;
+    OPENFILENAMEW ofn;
+    wchar_t cwd[MAX_PATH], wdef_name[MAX_PATH], wtitle[1000];
+
+    if (!default_name) wcscpy(wdef_name, L"");
+    else mbstowcs(wdef_name, default_name, MAX_PATH);
+    wcscpy(wcsbuf, wdef_name);
+    mbstowcs(wtitle, title, 1000);
+
+    ofn.lStructSize     = sizeof(OPENFILENAME);
+    ofn.hwndOwner       = current_window ? current_window->handle : 0;
+    ofn.hInstance       = 0;
+    ofn.lpstrFilter     = userfilterW ? userfilterW : wfilter[0];
+    ofn.lpstrCustomFilter = NULL;
+    ofn.nMaxCustFilter  = 0;
+    ofn.nFilterIndex    = 0;
+    ofn.lpstrFile       = wcsbuf;
+    ofn.nMaxFile        = BUFSIZE;
+    ofn.lpstrFileTitle  = NULL;
+    ofn.nMaxFileTitle   = _MAX_FNAME + _MAX_EXT;
+    if (GetCurrentDirectoryW(MAX_PATH, cwd))
+	ofn.lpstrInitialDir = cwd;
+    else
+	ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle      = wtitle;
+    ofn.Flags           = OFN_OVERWRITEPROMPT |
+	OFN_NOCHANGEDIR | OFN_HIDEREADONLY;
+    ofn.nFileOffset     = 0;
+    ofn.nFileExtension  = 0;
+    ofn.lpstrDefExt     = NULL;
+    ofn.lCustData       = 0L;
+    ofn.lpfnHook        = NULL;
+    ofn.lpTemplateName  = NULL;
+
+    if (GetSaveFileNameW(&ofn) == 0)
+	return NULL;
+    else {
+	for (i = 0; i < 10; i++) if (peekevent()) doevent();
+	return wcsbuf;
+    }
+}
+
+char *askfilesavewithdir(const char *title, const char *default_name,
 			 const char *dir)
 {
     int i;

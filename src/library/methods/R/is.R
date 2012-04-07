@@ -21,9 +21,9 @@ is <-
 function(object, class2)
 {
     cl <- class(object)
-    S3Case <- length(cl) > 1
+    S3Case <- length(cl) > 1L
     if(S3Case)
-      cl <- cl[[1]]
+      cl <- cl[[1L]]
     if(missing(class2))
         return(extends(cl))
     class1Def <- getClassDef(cl)
@@ -59,8 +59,8 @@ extends <-
   function(class1, class2, maybe = TRUE, fullInfo = FALSE)
 {
     if(is.character(class1)) {
-        if(length(class1)>1)
-            class1 <- class1[[1]]
+        if(length(class1) > 1L)
+            class1 <- class1[[1L]]
 	classDef1 <- getClassDef(class1)
     } else if(is(class1, "classRepresentation")) {
 	classDef1 <- class1
@@ -85,13 +85,13 @@ extends <-
             return(c(class1,names(ext)))
     }
     value <- NULL
-    if(is.character(class2) && length(class2) == 1) { ## fast first checks
-	## the [[1]] below handles old-style classes & throws away package attributes
-	if(.identC(class1[[1]], class2) || .identC(class2, "ANY"))
+    if(is.character(class2) && length(class2) == 1L) { ## fast first checks
+	## the [[1L]] below handles old-style classes & throws away package attributes
+	if(.identC(class1[[1L]], class2) || .identC(class2, "ANY"))
           return(TRUE)
         if(!is.null(classDef1) && class2 %in% names(classDef1@contains))
 	    value <- classDef1@contains[[class2]]
-        else 
+        else
           classDef2 <- getClassDef(class2)
     }
     else if(is(class2, "classRepresentation")) {
@@ -156,7 +156,9 @@ setIs <-
     else
         obj <- extensionObject
     ## revise the superclass/subclass info in the stored class definition
-    .validExtends(class1, class2, classDef,  classDef2, obj@simple)
+    ok <- .validExtends(class1, class2, classDef,  classDef2, obj@simple)
+    if(!identical(ok, TRUE))
+      stop(ok)
     where2 <- .findOrCopyClass(class2, classDef2, where, "subclass")
         elNamed(classDef2@subclasses, class1) <- obj
         if(doComplete)
@@ -164,8 +166,8 @@ setIs <-
         assignClassDef(class2, classDef2, where2, TRUE)
         .removePreviousCoerce(class1, class2, where, prevIs)
     where1 <- .findOrCopyClass(class1, classDef, where, "superClass")
-    ## the direct contains information
-    elNamed(classDef@contains, class2) <- obj
+    ## insert the direct contains information in a valid spot
+    .newDirectSuperclass(classDef@contains, class2, names(classDef2@contains)) <- obj
     if(doComplete) {
       classDef@contains <- completeExtends(classDef, class2, obj, where = where)
       if(!is(classDef, "ClassUnionRepresentation")) #unions are handled in assignClassDef
@@ -177,47 +179,58 @@ setIs <-
 
 .findOrCopyClass <- function(class, classDef, where, purpose) {
     whereIs <- findClass(classDef, where)
-    if(length(whereIs) > 0)
-      whereIs[[1]]
+    if(length(whereIs))
+      whereIs[[1L]]
     else {
         warning(gettextf("Class \"%s\" is defined (with package slot \"%s\") but no metadata object found to revise %s information---not exported?  Making a copy in package \"%s\"",
                  class, classDef@package, purpose, getPackageName(where, FALSE)), domain = NA)
         where
     }
 }
-       
+
 
 .validExtends <- function(class1, class2, classDef1,  classDef2, slotTests) {
     .msg <- function(class1, class2) gettextf("class \"%s\" cannot extend class \"%s\"", class1, class2)
     if((is.null(classDef1) || is.null(classDef2)) &&
        !(isVirtualClass(class1) && isVirtualClass(class2)))
-        stop(.msg(class1, class2), ": ",
-             gettext("Both classes must be defined"),
-             domain = NA)
+        return(c(.msg(class1, class2), ": ",
+             gettext("Both classes must be defined")))
     if(slotTests) {
         slots2 <- classDef2@slots
-        if(length(slots2) > 0) {
+        if(length(slots2)) {
             n2 <- names(slots2)
             slots1 <- classDef1@slots
             n1 <- names(slots1)
             if(any(is.na(match(n2, n1))))
-                stop(.msg(class1, class2), ": ",
+                return(c(.msg(class1, class2), ": ",
                      gettextf("class \"%s\" is missing slots from class \"%s\" (%s), and no coerce method was supplied",
                               class1, class2,
-                              paste(n2[is.na(match(n2, n1))], collapse = ", ")),
-                     domain = NA)
+                              paste(n2[is.na(match(n2, n1))], collapse = ", "))))
             bad <- character()
             for(what in n2)
                 if(!extends(elNamed(slots1, what), elNamed(slots2, what)))
                     bad <- c(bad, what)
-            if(length(bad)>0)
-                stop(.msg(class1, class2), ": ",
+            if(length(bad))
+                return(c(.msg(class1, class2), ": ",
                      gettextf("slots in class \"%s\" must extend corresponding slots in class \"%s\": fails for %s",
-                              class1, class2, paste(bad, collapse = ", ")),
-                     domain = NA)
+                              class1, class2, paste(bad, collapse = ", "))))
         }
     }
     TRUE
 }
 
-
+".newDirectSuperclass<-" <- function(contains, class2, superclasses2, value) {
+    superclasses <-names(contains)
+    if(length(superclasses2) == 0 || length(superclasses) == 0 ||
+       all(is.na(match(superclasses2, superclasses))))
+      elNamed(contains, class2) <- value
+    else {
+        sq <- seq_along(superclasses)
+        before <- (sq[match(superclasses, superclasses2,0)>0])[[1]]
+        contains <- c(contains[sq < before], value, contains[sq >= before])
+        superclasses <- c(superclasses[sq < before], class2, superclasses[sq >= before])
+        names(contains) <- superclasses
+    }
+    contains
+}
+        

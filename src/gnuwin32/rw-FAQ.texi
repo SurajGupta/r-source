@@ -124,7 +124,7 @@ The information here applies only to recent versions of R for Windows,
 Go to any CRAN site (see @uref{http://cran.r-project.org/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win32.exe} of about 30Mb.  This contains all the
+installer @samp{@RWVER@-win32.exe} of about 34Mb.  This contains all the
 components and allows as complete as installation as you choose.
 
 There are also links on that page to the @samp{r-patched} and
@@ -147,7 +147,7 @@ XP SP3, Vista x64 and Windows Server 2003.
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A full installation
-takes up about 60Mb of disk space and a minimal one less than 20Mb.
+takes up about 75Mb of disk space and a minimal one about 25Mb.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
@@ -220,7 +220,7 @@ set the initial list of components: Components are named @samp{main},
 @samp{chtml}, @samp{html}, @samp{html/help}, @samp{latex},
 @samp{manuals}, @samp{manuals/basic}, @samp{manuals/technical},
 @samp{manuals/refman}, @samp{libdocs}, @samp{devel}, @samp{tcl},
-@samp{tcl/chm}, @samp{Rd}, @samp{latex} and @samp{trans}.
+@samp{tcl/chm}, @samp{Rd}, @samp{latex}, @samp{trans} and @code{tests}.
 @end table
 
 @noindent
@@ -906,8 +906,8 @@ Mincho or MS Gothic as the console font to ensure that single- and
 double-width characters are handled correctly.  The default graphics
 fonts for the @code{windows()} graphics device can handle most common
 Japanese characters, but more specialized fonts may need to be set.
-(See Q3.5 for how to set fonts: the console font can also be set from
-the `GUI preferences' meny item.)  The help for @code{windowsFonts} has
+(See Q5.2 for how to set fonts: the console font can also be set from
+the `GUI preferences' menu item.)  The help for @code{windowsFonts} has
 examples of selecting Japanese fonts for the @code{windows()} family of
 devices.
 
@@ -921,7 +921,7 @@ see its help page (which also applies to @code{pdf}).
 @node I don't see characters with accents at the R console, The dialog buttons are not translated, I would like to be able to use Japanese fonts, Languages and Internationalization
 @section I don't see characters with accents at the R console, for example in ?text.
 
-You need to specify a font in @file{Rconsole} (see Q3.5) that supports
+You need to specify a font in @file{Rconsole} (see Q5.2) that supports
 the encoding in use, in Western European languages Latin-1.  This used
 to be a problem in earlier versions of Windows, but now it is hard to
 find a font which does not.
@@ -1696,7 +1696,7 @@ call @code{R_ProcessEvents()} periodically from your compiled code.
 If you want output to be updated on the console, call
 @code{R_FlushConsole()} and then @code{R_ProcessEvents()}.
 
-@set LASTEDIT 2008-03-19
+@set LASTEDIT 2009-02-04
 @ifhtml
 @html
 <hr WIDTH="100%">

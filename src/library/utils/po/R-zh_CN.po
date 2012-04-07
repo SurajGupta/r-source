@@ -2,13 +2,13 @@
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
 # 陈斐 <feic@avaya.com>, 2006.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-10-06 07:30\n"
-"PO-Revision-Date: 2008-10-08 18:28+0100\n"
+"POT-Creation-Date: 2009-03-17 19:28\n"
+"PO-Revision-Date: 2008-10-08 18:27+0100\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
 "MIME-Version: 1.0\n"
@@ -518,6 +518,9 @@ msgstr "包袱'%s'没有完全被装好"
 msgid "bundle '%s' has extra contents %s"
 msgstr "包袱'%s'里有多余的内容%s"
 
+msgid "read.dcf() error on file '%s'"
+msgstr ""
+
 msgid "'priority' must be character or NULL"
 msgstr "'priority'的值要么是字符要么为NULL"
 
@@ -563,6 +566,13 @@ msgstr "每个程序包至少依赖其他另外一个程序字"
 msgid "packages %s are mutually dependent"
 msgstr "程序包%s相互依赖"
 
+msgid ""
+"Do not know which element of 'lib' to install dependencies into\n"
+"skipping dependencies"
+msgstr ""
+"不知道'lib'元素里如何安装依赖程序\n"
+"因此略过不装"
+
 msgid "no packages were specified"
 msgstr "没有设定程序包"
 
@@ -587,6 +597,9 @@ msgstr "无法安装程序包"
 msgid "unable to create"
 msgstr "无法建立"
 
+msgid "inferring 'repos = NULL' from the file name"
+msgstr ""
+
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "无法在Windows下安装MacOS X二元程序包"
 
@@ -610,11 +623,9 @@ msgid "unable to create temporary directory '%s'"
 msgstr "无法建立临时目录'%s'"
 
 msgid ""
-"Do not know which element of 'lib' to install dependencies into\n"
-"skipping dependencies"
+"installation of one of more packages failed,\n"
+"  probably %s"
 msgstr ""
-"不知道'lib'元素里如何安装依赖程序\n"
-"因此略过不装"
 
 msgid ""
 "The downloaded packages are in\n"
@@ -764,6 +775,12 @@ msgstr "无法将'x'转变成罗马数"
 msgid "Invalid roman numeral(s): %s"
 msgstr "罗马数字不对：%S"
 
+msgid "length mismatch: bug in code!"
+msgstr ""
+
+msgid "Processing file"
+msgstr ""
+
 msgid "no valid packages were specified"
 msgstr "没有设定程序包"
 
@@ -864,6 +881,12 @@ msgstr "用非联接文件：超联结有可能出错"
 msgid "options(\"browser\") not set"
 msgstr "options(\"browser\")没有设好"
 
+msgid "'latexcmd' is empty"
+msgstr ""
+
+msgid "'dvipscmd' is empty"
+msgstr ""
+
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "浏览器的名字不对，请检查options(\"browser\")的设置。"
 
@@ -901,6 +924,24 @@ msgstr "无法建立HTML搜索索引"
 msgid "Updating HTML index of packages in '.Library'"
 msgstr "更新'.Library'里的HTML程序包列表"
 
+msgid "'tar' returned non-zero exit code %d"
+msgstr "'tar'退出码为%d"
+
+msgid "package '%s' successfully unpacked and MD5 sums checked"
+msgstr "程序包'%s'打开成功，MD5和检查也通过"
+
+msgid "malformed bundle DESCRIPTION file, no Contains field"
+msgstr "包袱DESCRIPTION文件格式不对，没有Contains这一域"
+
+msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+msgstr "成功地打开了包袱'%s'，MD5和检查也通过"
+
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr "无法将临时安装'%s'搬到'%s'"
+
+msgid "cannot remove prior installation of package"
+msgstr "无法拆除原来安装的程序包"
+
 msgid "'memory.size()' is Windows-specific"
 msgstr "'memory.size()'只在Windows上有用"
 
@@ -919,20 +960,8 @@ msgstr "修理非标准的图书馆里的URL"
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr "如果什么都不发生的话，你应该自己打开'%s'"
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr "程序包'%s'打开成功，MD5和检查也通过"
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr "包袱DESCRIPTION文件格式不对，没有Contains这一域"
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr "成功地打开了包袱'%s'，MD5和检查也通过"
-
 msgid "failed to create '%s'"
 msgstr "无法建立'%s'"
-
-msgid "unable to move temporary installation '%s' to '%s'"
-msgstr "无法将临时安装'%s'搬到'%s'"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "无法将拆除原来安装的程序包 '%s'"
@@ -955,15 +984,6 @@ msgstr "winDialogString()不能在非互交形式下使用"
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr "'pb'不属于\"winProgressBar\"这一类别"
 
-msgid "this function is intended to work with the Aqua GUI"
-msgstr "此函数只能在Aqua GUI下有用"
-
-msgid "'tar' returned non-zero exit code %d"
-msgstr "'tar'退出码为%d"
-
-msgid "cannot remove prior installation of package"
-msgstr "无法拆除原来安装的程序包"
-
 msgid "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0] "放弃不用列%s的类别"
@@ -971,10 +991,6 @@ msgstr[0] "放弃不用列%s的类别"
 msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] "找不到'%s'这个对象"
-
-msgid "'lib' element '%s'  is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
-msgstr[0] "'lib'元素'%s'不是可写的目录"
 
 msgid "package %s is not available"
 msgid_plural "packages %s are not available"
@@ -988,9 +1004,16 @@ msgid "also installing the dependency %s"
 msgid_plural "also installing the dependencies %s"
 msgstr[0] "还安装相依关系%s"
 
+msgid "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
+msgstr[0] "'lib'元素'%s'不是可写的目录"
+
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "正在使用'%s'这个程序包，因此不会被安装"
+
+#~ msgid "this function is intended to work with the Aqua GUI"
+#~ msgstr "此函数只能在Aqua GUI下有用"
 
 #~ msgid "Maintainer:"
 #~ msgstr "维修人:"
@@ -1058,4 +1081,3 @@ msgstr[0] "正在使用'%s'这个程序包，因此不会被安装"
 
 #~ msgid "Optionally other keywords from doc/KEYWORDS, one per line"
 #~ msgstr "可以从其他文件/KEYWORDS中任选其他关键字，每行一个"
-

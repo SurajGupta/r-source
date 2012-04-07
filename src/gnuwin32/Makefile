@@ -7,21 +7,16 @@ all:
 	  cp ../../SVN-REVISION ../../SVN-REVISION.bak ; \
 	fi
 	@$(MAKE) --no-print-directory rbuild
-	@$(MAKE) --no-print-directory rpackage
+	@$(MAKE) --no-print-directory -C ../library -f Makefile.win all
+	@$(MAKE) --no-print-directory -C ../library -f Makefile.win rpackagehelp
 	@$(MAKE) --no-print-directory htmldocs
 	@$(MAKE) --no-print-directory  -C ../../po -f Makefile.win
 
-## must be absolute and space-free paths
-ifneq ($(strip $(BUILD)),CROSS)
+## must be absolute and space-free.  
+## NB: will not be set correctly first time through.
 RHOME = $(shell ./Rpwd.exe ../..)
-PKGD = $(shell ./Rpwd.exe "$(PKGDIR)")
-R_EXE = $(RHOME)/bin/rterm.exe
-else
-RHOME = $(shell $(PERL) pwd.pl ../..)
-PKGD = $(shell $(PERL) pwd.pl $(PKGDIR))
-endif
 
-REXE = $(R_EXE) --vanilla --slave
+REXE = $(RHOME)/bin/rterm.exe --vanilla --slave
 
 RPREFIX = $(shell $(PERL) fixed/rwver.pl ../../VERSION)
 
@@ -32,7 +27,6 @@ DATE = $(shell date +%F)
 SVNREVISION=`sed -e 1s/Revision:.// -e q <$(RHOME)/SVN-REVISION`
 
 RLIB = $(RHOME)/library
-PKGDIR = $(RHOME)/src/library
 
 OPTFLAGS=-O3 -Wall -pedantic
 FOPTFLAGS=-O3
@@ -55,7 +49,7 @@ ifeq ($(strip $(USE_ICU)),YES)
 LIBEXTRAS+=-licuin38 -licuuc38
 endif
 
-R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lRzlib -lRgraphapp -liconv -lcomctl32 -lversion $(LIBEXTRAS)
+R-DLLLIBS =-L. $(FLIBS) -lRblas -L../../$(IMPDIR) -lRzlib -lRgraphapp -lRiconv -lcomctl32 -lversion $(LIBEXTRAS)
 dllversion-RESFLAGS =-I../include
 SOURCES = \
   console.c dataentry.c dynload.c edit.c editor.c embeddedR.c extra.c \
@@ -70,9 +64,6 @@ EXTRALIBS = getline/gl.a ../extra/xdr/libxdr.a \
    ../extra/pcre/libpcre.a ../extra/bzip2/libbz2.a \
    ../extra/intl/libintl.a ../extra/trio/libtrio.a ../extra/tzone/libtz.a
 
-R_PKGS0 = $(filter-out base tools, $(R_PKGS_BASE))
-PKGCLEAN = $(foreach i,$(R_PKGS_BASE),pkgclean-$i)
-
 # flags to ensure that Doug Lea's malloc is used:
 ifdef LEA_MALLOC
 extra-CFLAGS+=-DLEA_MALLOC
@@ -80,7 +71,7 @@ OBJS-EXTRA=malloc.o
 OPTFLAGS_M+=-DLEA_MALLOC
 endif
 
-.PHONY:  clean veryclean  rlibs fixfiles front-ends rmodules
+.PHONY:  clean veryclean rlibs fixfiles front-ends rmodules
 
 
 CPPFLAGS = -I../include -I. -I../extra -DHAVE_CONFIG_H -DR_DLL_BUILD
@@ -108,75 +99,7 @@ ifeq ($(strip $(USE_IMPLIBS)),YES)
 	@$(MAKE) --no-print-directory implibs
 endif
 	@$(MAKE) --no-print-directory Rblas CHTML
-	@$(MAKE) --no-print-directory front-ends COPYRIGHTS rmodules Rcode
-
-## used to build skeletal versions of packages, enough to run
-## package tools to install them properly
-INITPACKAGES = base tools
-Rcode: fixed/fixdesc
-	@$(ECHO) "  making bootstrap versions of packages ..."
-	@for pkg in $(INITPACKAGES); do \
-	  if ! test -f $(RHOME)/library/$${pkg}/DESCRIPTION ; then \
-	  $(ECHO) "  --" $$pkg; \
-	  $(MAKE) --no-print-directory -C $(PKGDIR)/$${pkg} PKG=$${pkg} \
-	    RHOME=$(RHOME) -f $(RHOME)/src/gnuwin32/MakePkg BUILD=$(BUILD) Rcode  || exit 1; \
-	  fi; \
-	done
-	@$(ECHO) "  ... done"
-
-# methods-LAZY is done directly
-graphics-LAZY=true
-grDevices-LAZY=true
-grid-LAZY=true
-splines-LAZY=true
-stats-LAZY=true
-tcltk-LAZY=true
-utils-LAZY=true
-datasets-LAZYDATA=true
-
-rpackage: ../../library/R.css rpackageindices
-	@R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-base
-ifneq ($(strip $(BUILD)),CROSS)
-	@if ! test -f ../../library/base/R/base.rdb ; then \
-	  echo "  preparing package base for lazy loading" ; \
-	  (echo ".libPaths('../../library')"; \
-	    cat ../library/base/makebasedb.R) | \
-	    R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(REXE) > /dev/null; \
-          cp ../library/base/baseloader.R ../../library/base/R/base; \
-	fi
-else
-	@if ! test -f ../../library/base/R/base.rdb ; then \
-	  echo "  preparing package base for lazy loading" ; \
-	  (echo ".libPaths('../../library')"; \
-	    cat ../library/base/cross-makebasedb.R) | \
-	    R_CROSS_BUILD=yes R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(REXE); \
-          cp ../library/base/baseloader.R ../../library/base/R/base; \
-	fi
-endif
-	@R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-tools
-	@if ! test -f ../../library/tools/R/tools.rdb ; then \
-	  echo "preparing package tools for lazy loading" ; \
-	  (cat ../library/tools/R/makeLazyLoad.R; \
-	    echo "makeLazyLoading(\"tools\", lib.loc=\"$(RLIB)\")") | \
-	    R_CROSS_BUILD=yes R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) --vanilla --slave > /dev/null ; \
-	fi
-	@$(ECHO)
-	@for pkg in $(R_PKGS0); do \
-	  R_START_PACKAGES=NULL $(MAKE) --no-print-directory pkg-$${pkg} || exit 1; \
-	done
-	@gzip -9f ../../library/grDevices/afm/*.afm
-	@$(CP) ../library/datasets/data/morley.tab ../../library/datasets/data
-
-rpackageindices:
-ifeq ($(strip $(HELP)),YES)
-	@$(ECHO)
-	@$(ECHO) -n "writing help indices for package:"
-	@for pkg in $(R_PKGS_BASE); do \
-	  $(ECHO) -n " $${pkg}" ; \
-	  $(MAKE) --no-print-directory  -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(RLIB)/$${pkg} index-$${pkg} || exit 1; \
-	done
-	@$(ECHO)
-endif
+	@$(MAKE) --no-print-directory front-ends COPYRIGHTS rmodules fixed/fixdesc
 
 
 rlibs:
@@ -185,7 +108,7 @@ rlibs:
 	$(MAKE) --no-print-directory -C ../nmath OPTFLAGS='$(OPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ../main RHOME=$(RHOME) OPTFLAGS='$(OPTFLAGS_M)' FFLAGS='$(FOPTFLAGS)' -f Makefile.win
 	$(MAKE) --no-print-directory -C ./getline OPTFLAGS='$(OPTFLAGS)'
-	@for ex in graphapp pcre bzip2 zlib xdr trio tzone; do \
+	@for ex in graphapp pcre bzip2 zlib xdr trio tzone win_iconv; do \
 	  $(MAKE) --no-print-directory -C ../extra/$${ex} OPTFLAGS='$(OPTFLAGS)' -f Makefile.win || exit 1; \
 	done
 
@@ -200,7 +123,7 @@ COPYRIGHTS: ../../doc/COPYRIGHTS COPYRIGHTS.win
 
 fixfiles: docfiles 
 	@$(MKDIR) -p ../../bin
-	@$(MAKE) --no-print-directory -C ./fixed BUILD=$(BUILD)
+	@$(MAKE) --no-print-directory -C ./fixed
 
 fixed/fixdesc:
 	@sh fixed/GETDESC $(R_PKGS_BASE)
@@ -252,9 +175,6 @@ libiconv.dll.a: unicode/iconv.def
 front-ends:
 	$(MAKE) --no-print-directory -C front-ends
 
-../../library/R.css: ../../doc/html/R.css
-	$(CP) $< $@
-
 ../extra/zlib/libz.a:
 	$(MAKE) --no-print-directory -C ../extra/zlib -f Makefile.win
 
@@ -270,7 +190,7 @@ front-ends:
 htmldocs:
 	@$(ECHO)
 	@$(ECHO) "------ Making HTML documentation ------"
-	@$(MAKE) --no-print-directory -C ../../doc/manual -f Makefile.win html BUILD=$(BUILD)
+	@$(MAKE) --no-print-directory -C ../../doc/manual -f Makefile.win html
 
 
 #                          ===== BLAS ======
@@ -290,134 +210,22 @@ libRblas.dll.a:  ../extra/blas/Rblas.def
 #                          ===== Packages ======
 
 CHTML:
-ifeq ($(strip $(HELP)),YES)
-ifeq ($(strip $(WINHELP)),CHM)
+ifeq ($(strip $(USE_CHM)),TRUE)
 	$(MAKE) --no-print-directory -C ./help -f MkChmDll
 endif
-endif
-
-base-HELP = ziponly
-datasets-HELP = ziponly
-graphics-HELP = ziponly
-grDevices-HELP = ziponly
-grid-HELP = ziponly
-methods-HELP = ziponly
-splines-HELP = ziponly
-stats-HELP = ziponly
-stats4-HELP = ziponly
-tcltk-HELP = ziponly
-tools-HELP = ziponly
-utils-HELP = ziponly
-stats4-LAZY = true
-
-KernSmooth-HELP = ziponly
-MASS-HELP = ziponly
-class-HELP = ziponly
-nnet-HELP = ziponly
-spatial-HELP = ziponly
-boot-HELP = ziponly
-cluster-HELP = ziponly
-foreign-HELP = ziponly
-lattice-HELP = ziponly
-mgcv-HELP = ziponly
-nlme-HELP = ziponly
-rpart-HELP = ziponly
-survival-HELP = ziponly
-
-pkg-%:
-	@$(MAKE) --no-print-directory \
-	  SAVE=$($*-SAVE) LAZY=$($*-LAZY) LAZYDATA=$($*-LAZYDATA) \
-          DLLNM=$($*-DLLNM) FLIBS="$(FLIBS)" BUILD=$(BUILD) \
-	  PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) RVER=$(RVER) \
-	  -C $(PKGD)/$* -f $(RHOME)/src/gnuwin32/MakePkg
-	@if test -d $(RLIB)/$*/data ; then \
-	  $(MAKE) --no-print-directory $($*-ZIPDATA)data-$* ; \
-	fi
-ifeq ($(strip $(HELP)),YES)
-	@$(ECHO) "  installing help"
-  ifeq ($(strip $(DPKG)),)
-    ifeq ($(strip $(WINHELP)),CHM)
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(RLIB)/$* HELPTYPES='$(HELPTYPES) -chm' $($*-HELP)help-$*
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(RLIB)/$* chm-$*
-    else
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(RLIB)/$* HELPTYPES='$(HELPTYPES)' $($*-HELP)help-$*
-    endif
-  else
-    ifeq ($(strip $(WINHELP)),CHM)
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) HELPTYPES='$(HELPTYPES) -chm' $($*-HELP)help-$*
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) chm-$*
-    else
-	@$(MAKE) --no-print-directory -C ./help -s RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) HELPTYPES='$(HELPTYPES)' $($*-HELP)help-$*
-    endif
-  endif
-endif
-
-pkgfake-%:
-	@$(MAKE) --no-print-directory DLLNM=$($*-DLLNM)  FLIBS="$(FLIBS)" BUILD=$(BUILD) \
-	  -C $(PKGD)/$* PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) RVER=$(RVER) \
-	  -f $(RHOME)/src/gnuwin32/MakePkg fake
-	@$(ECHO) "  installing help"
-	@$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) pkgfake-$*
-
-
-pkgclean-%:
-	@$(MAKE) --no-print-directory DLLNM=$($*-DLLNM) RHOME=$(RHOME) BUILD=$(BUILD) \
-	  -C $(PKGD)/$* PKG=$* -f $(RHOME)/src/gnuwin32/MakePkg clean
-
-pkgcheck-%:
-	@$(ECHO) -------- Testing package $* --------
-	-@$(MKDIR) -p $(PKGD)/$*/check
-	@$(MAKE) --no-print-directory -C $(PKGD)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
-	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
-	@if test -d $(PKGD)/$*/tests ; then \
-	  $(MAKE) --no-print-directory -C $(PKGD)/$*/tests PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
-	    -f $(RHOME)/src/gnuwin32/check/PkgCheck tests;\
-	fi
-
-## used for standard packages whose tests are run in make check-devel, 
-## not make check
-pkgcheck2-%:
-	@$(ECHO) -------- Testing package $* --------
-	-@$(MKDIR) -p $(PKGD)/$*/check
-	@$(MAKE) --no-print-directory -C $(PKGD)/$*/check PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) \
-	  -f $(RHOME)/src/gnuwin32/check/PkgCheck
-
-lazyload-%:
-	@$(MAKE) --no-print-directory PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) BUILD=$(BUILD) -C $(PKGD)/$* SPKG=$(PKGD)/$* -f $(RHOME)/src/gnuwin32/MakePkg lazyload
-
-lazydata-%:
-	@$(MAKE) --no-print-directory PKG=$* RHOME=$(RHOME) RLIB=$(RLIB) BUILD=$(BUILD) -f $(RHOME)/src/gnuwin32/MakePkg lazydata
-
-ziphelp-%:
-	$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) ziphelp-$*
-
-ziponly-%:
-	$(MAKE) --no-print-directory -C ./help RHOME=$(RHOME) PKGDIR=$(PKGD) RLIB=$(RLIB) DPKG=$(DPKG) ziponlyhelp-$*
-
-## must be careful not to zip up a dir setup for lazy-data
-zipdata-%:
-	@if ! test -f $(RLIB)/$*/data/Rdata.rdb ; then \
-	  $(ECHO) "  zipping data" ; \
-	  (cd $(RLIB)/$*/data; \
-	    if test -f Rdata.zip ; then \
-	      unzip -qou Rdata; \
-	    fi; \
-	    $(RM) Rdata.zip filelist ; \
-	    ls -1 > filelist; \
-	    zip -rmq9X Rdata * -x filelist 00Index) ;\
-	fi
-
-data-%:
-	@if ! test -f $(RLIB)/$*/data/Rdata.rdb ; then \
-	  $(ECHO) "  not zipping data" ; \
-	fi
-
 
 #                          ===== cleaning ======
 
-EXTRA_DIRS = blas bzip2 graphapp intl pcre trio tzone xdr zlib
+## used in installer/Makefile
+PKGDIR=../library
+pkgclean-%:
+	@(cd $(PKGDIR)/$*/src; rm -f *.d *.o *.dll *_res.rc Makedeps)
+	@rm -rf $(PKGDIR)/$*/chm
 
-clean: cleanwin $(PKGCLEAN)
+EXTRA_DIRS = blas bzip2 graphapp intl pcre trio tzone xdr win_iconv zlib
+
+clean: cleanwin
+	@$(MAKE) -C ../library -f Makefile.win clean
 	$(RM) -f ../*/*.o ../*/*.a *.a ../*/*.d ../*/Makedeps fixed/fixdesc
 	@for d in $(EXTRA_DIRS); do \
 	  $(MAKE) -C ../extra/$${d} -f Makefile.win clean; \
@@ -426,15 +234,18 @@ clean: cleanwin $(PKGCLEAN)
 	-$(MAKE) --no-print-directory -C ../nmath/standalone -f Makefile.win distclean
 	-$(MAKE) --no-print-directory -C ../modules -f Makefile.win clean
 	-$(MAKE) --no-print-directory -C ../../tests -f Makefile.win clean
+	-$(MAKE) --no-print-directory -C ../library/Recommended -f Makefile.win clean
 	$(RM) -f ../library/methods/all.R
 	for p in $(R_PKGS_RECOMMENDED); do \
 	  $(RM) -rf ../library/$$p; \
 	done
 
-distclean: clean clean-recommended
+distclean: clean
+	$(RM) -r ../library/*/chm
 	@for d in $(EXTRA_DIRS); do \
 	  $(MAKE) -C ../extra/$${d} -f Makefile.win distclean; \
 	done
+	@$(MAKE) -C ../../tests -f Makefile.win distclean RHOME=$(RHOME)
 	$(RM) -r ../../bin ../../include ../../lib ../../library ../../modules
 	$(RM) ../include/config.h ../include/iconv.h ../include/psignal.h \
 	../include/Rconfig.h ../include/Rversion.h ../include/Rmath.h \
@@ -452,7 +263,6 @@ distclean: clean clean-recommended
 	../../doc/html/rw-FAQ.html ../../doc/html/search/SearchEngine.html
 	$(RM) ../../etc/Makeconf ../../etc/Rconsole ../../etc/Rdevga \
 	../../etc/Rprofile.site ../../etc/rgb.txt ../../etc/Rcmd_environ \
-	../../share/make/wintests.mk \
 	../../tests/*.Rout ../../tests/*.Rout.fail
 	$(RM) -r ../../share/zoneinfo
 	$(MAKE) -C fixed distclean
@@ -467,7 +277,6 @@ distclean: clean clean-recommended
 		cran/md5sum.txt cran/*.$(RPREFIX) 
 	$(RM) -r .vignettes # it gets left behind if there is an error
 	$(RM) -r ../../share/locale
-	$(RM) XINSTALL # from cross-building
 	$(RM) Rpwd.exe # do this last of all
 
 veryclean: distclean
@@ -487,31 +296,15 @@ cleanwin:
 
 #                          ===== testing ======
 
-# tests
-check test: pkgtests test-Basic
-
-test-Basic:
-	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win clean
-	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win
-
-
-PKGS-CHK = $(foreach i, $(R_PKGS_BASE), pkgcheck2-$i)
-pkgtests: $(PKGS-CHK)
-
-check-devel: check
-	-@$(MAKE) --no-print-directory -C $(RHOME)/tests -f Makefile.win $@
-
-check-all fullcheck: check-devel check-recommended
-
-check-recommended: $(foreach i, $(R_PKGS_RECOMMENDED), pkgcheck-$i)
-
+check check-devel check-all:
+	@$(MAKE) --no-print-directory -C ../../tests \
+	  -f Makefile.win RHOME=$(RHOME) $@
 
 #                          ===== documentation ======
 
 pdfdocs manuals:
-	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win clean BUILD=$(BUILD)
-	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win BUILD=$(BUILD)
-#	@$(MAKE) --no-print-directory ziponly-base
+	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win clean
+	@$(MAKE) --no-print-directory -C $(RHOME)/doc/manual -f Makefile.win
 
 vignettes:
 	@for pkg in $(R_PKGS_BASE); do \
@@ -550,47 +343,20 @@ CRANREC = cran.r-project.org::CRAN/src/contrib/$(RVER-PAT)/Recommended
 ## Use -c here to avoid re-downloading the same versions of files
 rsync-recommended:
 	@(cd ../library; \
-	rsync --timeout=60 -rcvC --delete --exclude=Makefile.in --exclude=.cvsignore \
-	  --include=*.tar.gz --exclude=*.tgz --exclude=".svn" $(CRANREC) . ); \
-	$(RM) ../library/Recommended/*.tgz; \
-	(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
+	  rsync --timeout=60 -rcvC --delete \
+	    --exclude=Makefile.in --exclude=Makefile.win --exclude=.cvsignore \
+	    --include=*.tar.gz --exclude=*.tgz --exclude=".svn" $(CRANREC) . )
+	@$(RM) ../library/Recommended/*.tgz
+	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES}; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
 
 link-recommended:
 	@$(RM) ../library/Recommended/*.tgz
 	@(cd ../library/Recommended; for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do cp -p $${i}*.tar.gz $${i}.tgz ; done)
 
-../library/%/DESCRIPTION: ../library/Recommended/%.tgz
-	@$(ECHO) "---- $*"
-	(cd ../library; rm -rf $*; tar zxf Recommended/$*.tgz; touch $@)
 
-unpack-recommended:
-	@$(ECHO) "--- Unpacking recommended packages"
-	@for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do $(MAKE) -s --no-print-directory ../library/$$i/DESCRIPTION || exit 1; done
-
-clean-recommended:
-	@for i in ${R_PKGS_RECOMMENDED_SOURCES} ; do $(RM) -r ../library/$${i} ; done
-
-ifeq ($(strip $(HELP)),YES)
-ifeq ($(strip $(WINHELP)),CHM)
-DOCSTYPE=all
-else
-DOCSTYPE=normal
-endif
-else
-DOCSTYPE=none
-endif
-
-recommended: unpack-recommended
+recommended:
 	@$(ECHO) "--- Making recommended packages"
-ifeq ($(strip $(BUILD)),CROSS)
-	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-          $(R_EXE) CMD $(PERL) XINSTALL --unsafe -l $(RHOME)/library --docs=normal ../library/$${p} || exit 1; \
-        done
-else
-	@for p in $(R_PKGS_RECOMMENDED_SOURCES); do \
-	  $(RHOME)/bin/rcmd.exe INSTALL --unsafe -l $(RHOME)/library ../library/$${p} --docs=$(DOCSTYPE) || exit 1; \
-	done
-endif
+	@$(MAKE) --no-print-directory -C ../library/Recommended -f Makefile.win RHOME=$(RHOME)
 
 EXTRA_PKGS=
 rinstaller:
@@ -603,7 +369,7 @@ crandir:
 	$(CP) ../../NEWS cran/NEWS.$(RPREFIX)
 	(cd cran;\
 	 $(ECHO) 'cat(md5sum("$(RPREFIX)-win32.exe"),"*$(RPREFIX)-win32.exe")' \
-         | $(RHOME)/bin/rterm --vanilla --slave R_DEFAULT_PACKAGES=tools >md5sum.txt)
+         | $(REXE) R_DEFAULT_PACKAGES=tools >md5sum.txt)
 	$(CP) ../../doc/html/rw-FAQ.html cran
 	$(SED) -e s/@RWVER@/$(RPREFIX)/g \
 	  -e s/@RVER@/$(RVER)/g \
@@ -638,18 +404,13 @@ crandir:
 	 $(RM) dosfiles.zip)
 
 distribution:
-	@$(MAKE) Rpwd.exe
-	-mv ../../SVN-REVISION ../../SVN-REVISION.bak 2> /dev/null
-	@$(MAKE) rbuild
-	@$(MAKE) rpackage
-	@$(MAKE) htmldocs
-	@$(MAKE) -C ../../po -f Makefile.win
-	$(MAKE) bitmapdll
-	$(MAKE) recommended
-	$(MAKE) vignettes
-	$(MAKE) manuals
-	$(MAKE) rinstaller
-	$(MAKE) crandir
+	@$(MAKE) --no-print-directory all
+	@$(MAKE) --no-print-directory bitmapdll
+	@$(MAKE) --no-print-directory recommended
+	@$(MAKE) --no-print-directory vignettes
+	@$(MAKE) --no-print-directory manuals
+	@$(MAKE) --no-print-directory rinstaller
+	@$(MAKE) --no-print-directory crandir
 	@$(RM) -f $(RHOME)/SVN-REVISION.bak
 
 

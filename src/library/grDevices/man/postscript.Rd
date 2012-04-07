@@ -4,6 +4,7 @@
 % Distributed under GPL 2 or later
 
 \name{postscript}
+\Rdversion{1.1}
 \alias{postscript}
 \alias{.ps.prolog}
 \concept{encoding}
@@ -18,7 +19,8 @@
 postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
            onefile, family, title, fonts, encoding, bg, fg,
            width, height, horizontal, pointsize,
-           paper, pagecentre, print.it, command, colormodel)
+           paper, pagecentre, print.it, command,
+           colormodel, useKerning)
 }
 \arguments{
   \item{file}{a character string giving the name of the file.  If it is
@@ -53,7 +55,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     \code{"default"}.  The latter is interpreted as
 #ifdef unix
     \file{"ISOLatin1.enc"} unless the locale is recognized as
-    corresponding to a language using ISO 8859-{5,7,13,15} or KOI8-{R,U}.
+    corresponding to a language using ISO 8859-\{5,7,13,15\} or KOI8-\{R,U\}.
 #endif
 #ifdef windows
     \file{"CP1250.enc"} (Central European), \code{"CP1251.enc"} (Cyrillic),
@@ -61,7 +63,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
     of those codepages is in use, otherwise \file{"WinAnsi.enc"}
     (codepage 1252).
 #endif
-    The file is looked forin the \file{enc} directory of package
+    The file is looked for in the \file{enc} directory of package
     \pkg{grDevices} if the path does not contain a path separator.  An
     extension \code{".enc"} can be omitted.
   }
@@ -109,6 +111,8 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   \item{colormodel}{a character string describing the color model:
     currently allowed values as \code{"rgb"}, \code{"rgb-nogray"},
     \code{"gray"} and \code{"cmyk"}.  Defaults to \code{"rgb"}.}
+  \item{useKerning}{logical.  Should kerning corrections be included in
+    setting text and calculating string widths?  Defaults to \code{TRUE}.}
 }
 \details{
   All arguments except \code{file} default to values given by
@@ -127,7 +131,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 
   The postscript produced for a single \R plot is EPS (\emph{Encapsulated
     PostScript}) compatible, and can be included into other documents,
-  e.g., into LaTeX, using \code{\includegraphics{<filename>}}.  For use
+  e.g., into LaTeX, using \code{\\includegraphics{<filename>}}.  For use
   in this way you will probably want to use \code{\link{setEPS}()} to
   set the defaults as \code{horizontal = FALSE, onefile = FALSE, paper =
     "special"}.  Note that the bounding box is for the \emph{device}
@@ -203,6 +207,12 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
 
   Note that \R does not embed the font(s) used in the PostScript output:
   see \code{\link{embedFonts}} for a utility to help do so.
+
+  Viewers and embedding applications frequently substitute fonts for
+  those specified in the family, and the substitute will often have
+  slightly different font metrics. \code{useKerning=TRUE} spaces the
+  letters in the string using kerning corrections for the intended
+  family: this may look uglier than \code{useKerning=FALSE}.
 }
 
 \section{Encodings}{
@@ -223,7 +233,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   accented and special characters do not come out as you expect, you may
   need to change the encoding.  Some other encodings are supplied with
   \R: \code{"WinAnsi.enc"} and \code{"MacRoman.enc"} correspond to the
-  encodings normally used on Windows and Classic MacOS (at least by
+  encodings normally used on Windows and Classic Mac OS (at least by
   Adobe), and \code{"PDFDoc.enc"} is the first 256 characters of the
   Unicode encoding, the standard for PDF.  There are also encodings
   \code{"ISOLatin2.enc"}, \code{"CP1250.enc"}, \code{"ISOLatin7.enc"}
@@ -276,7 +286,7 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   comprehensive but incomplete coverage of the glyphs covered by the
   Adobe symbol font in other families.  This is achieved by
   special-casing the postscript code generated from the supplied
-  \file{CM\_symbol\_10.afm}.
+  \file{CM_symbol_10.afm}.
 }
 \section{Color models}{
   The default color model is RGB, with pure gray colors expressed as
@@ -327,16 +337,28 @@ postscript(file = ifelse(onefile, "Rplots.ps", "Rplot\%03d.ps"),
   }
 }
 
+\note{
+  If you see problems with postscript output, so remember that the
+  problem is much more likely to be in your viewer as in \R.  Try
+  another viewer if possible.  Symptoms for which the viewer has been at
+  fault are apparent grids on image plots (turn off graphics
+  anti-aliasing in your viewer if you) and missing or incorrect glyphs
+  in text (viewers silently doing font substitution).
+
+  Unfortunately the default viewers on most Linux and Mac OS X systems
+  have these problems, and no obvious way to turn off graphics anti-aliasing.
+}
+
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{postscriptFonts}},
   \code{\link{Devices}},
-  {\code{\link{check.options}} which is called from both
-    \code{\link{ps.options}} and \code{postscript}}.
+  and \code{\link{check.options}} which is called from both
+  \code{\link{ps.options}} and \code{postscript}.
 #ifdef unix
   \code{\link{cairo_ps}} for another device that can produce PostScript.
 #endif
@@ -392,9 +414,9 @@ TestChars <- function(encoding="ISOLatin1", family="URWHelvetica")
     title(paste("Centred chars in encoding", encoding))
     grid(17, 17, lty=1)
     for(i in c(32:255)) {
-	x <- i \%\% 16
-	y <- i \%/\% 16
-	points(x, y, pch=i)
+        x <- i \%\% 16
+        y <- i \%/\% 16
+        points(x, y, pch=i)
     }
     dev.off()
 }

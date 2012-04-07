@@ -3,12 +3,12 @@
 @setfilename R-FAQ.info
 @settitle R FAQ
 @setchapternewpage on
-@set FAQ_YEAR 2008
-@set FAQ_DATE @value{FAQ_YEAR}-12-19
-@set REL_YEAR 2008
+@set FAQ_YEAR 2009
+@set FAQ_DATE @value{FAQ_YEAR}-04-15
+@set REL_YEAR 2009
 @set REL_MAJOR 2
-@set REL_MINOR 8
-@set REL_PATCHLEVEL 1
+@set REL_MINOR 9
+@set REL_PATCHLEVEL 0
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 
@@ -297,7 +297,12 @@ powerpc-apple-darwin, mips-sgi-irix,
 @c <FIXME>
 @c Not sure anymore ...
 @c alpha-dec-osf4,
-@c i386-freebsd,
+@c <COMMENT>
+@c i386-freebsd reported by B. Gian James" <gian.james@gmail.com> on
+@c 2009-01-11
+@c (Architecture: i386, OS: FreeBSD 7.1-PRERELEASE, Vendor: PC-BSD)
+i386-freebsd,
+@c </COMMENT>
 @c i386-sun-solaris,
 @c hppa-hp-hpux, 
 @c </FIXME>
@@ -500,46 +505,45 @@ to Mac OS 9.2.2.  This port of R for Macintosh is no longer supported.
 @node Are there Unix binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix binaries for R?
 
-@c Linux binaries as of 2008-06-24:
+@c Linux binaries as of 2009-04-15:
 @c
 @c debian
-@c   sarge
-@c           i386   2.4.1  Johannes Ranke
-@c           amd64  2.4.1  Johannes Ranke
 @c   etch-cran
-@c           i386   2.8.0  Johannes Ranke
-@c           amd64  2.8.0  Johannes Ranke
+@c            i386   2.8.1  Johannes Ranke
+@c            amd64  2.8.1  Johannes Ranke
+@c   lenny-cran
+@c            i386   2.8.1  Johannes Ranke
 @c redhat
-@c   el4     i386   2.8.0  Bob Kinney <rhel_cran@hmdc.harvard.edu>
-@c           x86_64 2.8.0  Bob Kinney <rhel_cran@hmdc.harvard.edu>
-@c   el5     i386   2.8.0  Bob Kinney <rhel_cran@hmdc.harvard.edu>
-@c           x86_64 2.8.0  Bob Kinney <rhel_cran@hmdc.harvard.edu>
-@c   fedora7 i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
-@c           x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
-@c   fedora8 i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
-@c           x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
-@c   fedora9 i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
-@c           x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c   el4      i386   2.8.1  Bob Kinney <rhel_cran@hmdc.harvard.edu>
+@c            x86_64 2.8.1  Bob Kinney <rhel_cran@hmdc.harvard.edu>
+@c   el5      i386   2.8.1  Bob Kinney <rhel_cran@hmdc.harvard.edu>
+@c            x86_64 2.8.1  Bob Kinney <rhel_cran@hmdc.harvard.edu>
+@c   fedora8  i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c            x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c   fedora9  i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c            x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c   fedora10 i386   2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
+@c            x86_64 2.8.0  Martyn Plummer <Martyn.Plummer@R-project.org>
 @c suse
-@c   10.2    i586   2.8.0  Detlef Steuer <steuer@hsu-hh.de>
-@c           x86_64 2.8.0  Detlef Steuer <steuer@hsu-hh.de>
-@c   10.3    i586   2.8.0  Detlef Steuer <steuer@hsu-hh.de>
-@c           x86_64 2.8.0  Detlef Steuer <steuer@hsu-hh.de>
-@c   11.0    i586   2.8.0  Detlef Steuer <steuer@hsu-hh.de>
-@c           x86_64 2.8.0  Detlef Steuer <steuer@hsu-hh.de>
+@c   10.3     i586   2.8.1  Detlef Steuer <steuer@hsu-hh.de>
+@c            x86_64 2.8.1  Detlef Steuer <steuer@hsu-hh.de>
+@c   11.0     i586   2.8.1  Detlef Steuer <steuer@hsu-hh.de>
+@c            x86_64 2.8.1  Detlef Steuer <steuer@hsu-hh.de>
+@c   11.1     i586   2.8.1  Detlef Steuer <steuer@hsu-hh.de>
+@c            x86_64 2.8.1  Detlef Steuer <steuer@hsu-hh.de>
 @c ubuntu
 @c   intrepid [Intrepid Ibex, 8.10]
-@c           i386   2.8.0  Vincent Goulet
-@c           amd64  2.8.0  Michael Rutter
+@c           i386   2.8.1  Vincent Goulet
+@c           amd64  2.8.1  Michael Rutter
 @c   hardy [Hardy Heron, 8.04]
-@c           i386   2.8.0  Vincent Goulet
-@c           amd64  2.8.0  Michael Rutter
+@c           i386   2.8.1  Vincent Goulet
+@c           amd64  2.8.1  Michael Rutter
 @c   gutsy [Gutsy Gibbon, 7.10]
-@c           i386   2.8.0  Vincent Goulet
-@c           amd64  2.8.0  Michael Rutter
+@c           i386   2.8.1  Vincent Goulet
+@c           amd64  2.8.1  Michael Rutter
 @c   dapper [Dapper Drake, 6.06]
-@c           i386   2.8.0  Vincent Goulet
-@c           amd64  2.8.0  Michael Rutter
+@c           i386   2.8.1  Vincent Goulet
+@c           amd64  2.8.1  Michael Rutter
 
 The @file{bin/linux} directory of a @CRAN{} site contains the following
 packages.
@@ -547,14 +551,11 @@ packages.
 @quotation
 @multitable {Red Hat} {i386/x86_64} {dapper/gutsy/hardy/intrepid} {Martyn Plummer}
 @headitem @tab CPU @tab Versions @tab Provider
-@item Debian   @tab i386/amd64 @tab etch-cran/sarge @tab Johannes Ranke
-@c @item          @tab amd64 @tab stable/oldstable @tab Johannes Ranke
-@item Red Hat  @tab i386/x86_64 @tab fedora7/fedora8/fedora9@tab Martyn Plummer
-@c @item          @tab x86_86 @tab fc5/fc6/fedora7/fedora8 @tab Martyn Plummer
+@item Debian   @tab i386/amd64 @tab etch-cran @tab Johannes Ranke
+@item          @tab i386       @tab lenny-cran @tab Johannes Ranke
+@item Red Hat  @tab i386/x86_64 @tab fedora8/fedora9/fedora10 @tab Martyn Plummer
 @item          @tab i386/x86_64 @tab el4/el5 @tab Bob Kinney
-@c @item          @tab x86_64 @tab Enterprise Linux @tab Matthew P. Cox
-@item SuSE     @tab i586/x86_64 @tab 10.2/10.3/11.0 @tab Detlef Steuer
-@c @item          @tab x86_64 @tab 10.0/10.1/10.2/10.3 @tab Detlef Steuer
+@item SuSE     @tab i586/x86_64 @tab 10.3/11.0/11.1 @tab Detlef Steuer
 @item Ubuntu   @tab i386   @tab dapper/gutsy/hardy/intrepid @tab Vincent Goulet
 @item          @tab amd64  @tab dapper/gutsy/hardy/intrepid @tab Michael Rutter
 @end multitable
@@ -1580,17 +1581,22 @@ For a very long time, there was no such thing.
 currently beta testing a commercially supported version of R named R+
 (read R plus).
 
-In addition, @url{http://www.revolution-computing.com/, REvolution
-Computing} has released
-@url{http://www.revolution-computing.com/rpro.html, RPro}, an
-enterprise-class statistical analysis system based on R, suitable for
-deployment in professional, commercial and regulated environments.
+@url{http://www.revolution-computing.com/, REvolution Computing} has
+released
+@url{http://www.revolution-computing.com/products/revolution-r.php,
+REvolution R}, an enterprise-class statistical analysis system based on
+R, suitable for deployment in professional, commercial and regulated
+environments.
 
 @url{http://www.random-technologies-llc.com/, Random Technologies}
 offers @url{http://random-technologies-llc.com/products/RStat/rstat,
 RStat}, an enterprise-strength statistical computing environment which
 combines R with enterprise-level validation, documentation, software
 support, and consulting services, as well as related R-based products.
+
+See also
+@url{http://en.wikipedia.org/wiki/R_programming_language#Commercialized_versions_of_R}
+for pointers to commercialized versions of R.
 
 @node R Web Interfaces, R Add-On Packages, R and S, Top
 @chapter R Web Interfaces
@@ -1773,6 +1779,8 @@ Analysis of data from aCGH experiments.
 Functions, data sets, examples and vignettes for the book ``Applied
 Econometrics with R'' by Christian Kleiber and Achim Zeileis, 2008,
 Springer-Verlag, New York.
+@item AIGIS
+Areal Interpolation for GIS data.
 @item AIS
 Tools to look at the data (``Ad Inidicia Spectata'').
 @item ALS
@@ -1796,6 +1804,11 @@ Amelia II: a program for missing data.
 @item AnalyzeFMRI
 Functions for I/O, visualisation and analysis of functional Magnetic
 Resonance Imaging (fMRI) datasets stored in the ANALYZE format.
+@item Animal
+Analyze time-coded animal behavior data.
+@item AquaEnv
+An integrated development toolbox for aquatic chemical model
+generation.
 @item ArDec
 Time series autoregressive decomposition.
 @item BACCO
@@ -1805,6 +1818,8 @@ Bayesian prediction of complex computer codes, calibration of computer
 models, and emulation of computer programs, respectively.
 @item BARD
 Better Automated ReDistricting.
+@item BAS
+Bayesian model averaging using Bayesian Adaptive Sampling.
 @item BAYSTAR
 Bayesian analysis of threshold autoregressive models.
 @item BB
@@ -1814,6 +1829,8 @@ simple constraints.
 @item BCE
 Bayesian Composition Estimator for sample (taxonomic) composition from
 biomarker data.
+@item BGSIMD
+Block Gibbs Sampler with Incomplete Multinomial Distribution.
 @item BHH2
 Functions and data sets reproducing some examples in ``Statistics for
 Experimenters II'' by G. E. P. Box, J. S. Hunter, and W. C. Hunter,
@@ -1823,6 +1840,8 @@ Black-Litterman and copula-opinion pooling frameworks.
 @item BMA
 Bayesian Model Averaging for linear models, generalizable linear models
 and survival models (Cox regression).
+@item BMN
+Approximate and exact methods for pairwise binary markov networks.
 @item BPHO
 Bayesian Prediction with High-order Interactions.
 @c <COMMENT>
@@ -1836,10 +1855,17 @@ Functions and datasets for ``Bayesian Methods: A Social and Behavioral
 Sciences Approach'' (2nd edition) by Jeff Gill, 2007, CRC Press.
 @item BayHaz
 Functions for Bayesian Hazard rate estimation.
+@item BayesDA
+Functions and data sets for the book ``Bayesian Data Analysis'' by
+A. Gelman, J. B. Carlin, H. S. Stern and D. B. Rubin, 2003, Chapman &
+Hall/CRC.
 @item BayesTree
 Bayesian methods for tree based models.
 @item BayesValidate
 Bayesian software validation using posterior quantiles.
+@item BayesX
+Utilities accompanying the BayesX software for Bayesian Inference in
+structured additive regression models. 
 @item Bchron
 Create chronologies based on radiocarbon and non-radiocarbon dated
 depths.
@@ -1873,6 +1899,8 @@ L. J. Kitchens, 2003, Duxbury.
 Statistical methods for safety assessment in agricultural field trials.
 @item BsMD
 Bayes screening and model discrimination follow-up designs.
+@item CADFtest
+Hansen's Covariate-Augmented Dickey-Fuller (CADF) test.
 @item CADStat
 A @acronym{GUI} to several statistical methods for biological
 inferences.
@@ -1932,12 +1960,16 @@ Competing risk model with frailties for right censored survival data.
 @item Containers
 Object-oriented data structures including stack, queue, and binary
 search tree.
+@item ConvCalendar
+Converts dates between calendars.
 @item ConvergenceConcepts
 Seeing convergence concepts in action.
 @item CoxBoost
 Cox survival models by likelihood based boosting.
 @item CreditMetrics
 Functions for calculating the CreditMetrics risk model.
+@item CvM2SL1Test
+Cramer-von Mises two sample tests, @math{L1} version.
 @item CvM2SL2Test
 Cramer-von Mises two sample tests.
 @item DAAG
@@ -1947,6 +1979,8 @@ Graphics Using R'' by John H. Maindonald and W. John Brown, 2003.
 Data sets and functions, for demonstrations with expression arrays.
 @item DAAGxtras
 Data sets and functions additional to @strong{DAAG}.
+@item DAKS
+Data Analysis and Knowledge Spaces.
 @item DBI
 A common database interface (DBI) class and method definitions.  All
 classes in this package are virtual and need to be extended by the
@@ -1965,11 +1999,16 @@ Import and manipulate medical imaging data using the Digital Imaging and
 Communications in Medicine (DICOM) Standard.
 @item DPpackage
 Semiparametric Bayesian analysis using Dirichlet process priors.
+@item DTK
+Dunnett-Tukey-Kramer: pairwise multiple comparison test adjusted for
+unequal variances and unequal sample sizes.
 @item Davies
 Functions for the Davies quantile function and the Generalized Lambda
 distribution.
 @item Defaults
 Create global function defaults.
+@item Depela
+Semiparametric estimation of copula models.
 @item DescribeDisplay
 R interface to the DescribeDisplay GGobi plugin.
 @item Design
@@ -2006,9 +2045,12 @@ Evolutionary Monte Carlo (EMC) algorithm.
 Evolutionary Monte Carlo (EMC) methods for clustering.
 @item EMD
 Empirical mode decomposition and Hilbert spectral analysis.
-@item EMV
-Estimation of missing values in a matrix by a @math{k}-th nearest
-neighboors algorithm.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 as requested by the maintainer.
+@c @item EMV
+@c Estimation of missing values in a matrix by a @math{k}-th nearest
+@c neighboors algorithm.
+@c </COMMENT>
 @item ETC
 Tests and simultaneous confidence intervals for equivalence to control.
 @item EVER
@@ -2024,6 +2066,10 @@ nonparametric techniques.
 Data sets, functions and examples from the book ``The Elements of
 Statistical Learning: Data Mining, Inference, and Prediction'' by Trevor
 Hastie, Robert Tibshirani and Jerome Friedman (2001), Springer.
+@item EngrExpt
+Data sets from the book ``Introductory Statistics for Engineering
+Experimentation'' by Peter Nelson, Marie Coffin and Karen Copeland
+(2003), Elsevier, with sample code.
 @item Epi
 Statistical analysis in epidemiology, with functions for demographic and
 epidemiological analysis in the Lexis diagram.
@@ -2035,6 +2081,8 @@ Fractional Gaussian Noise model fitting.
 FITS (Flexible Image Transport System) utilities.
 @item FKBL
 Fuzzy Knowledge Base Learning.
+@item FKF
+Fast Kalman Filter.
 @c <COMMENT>
 @c Moved to the Archive on 2007-11-17 as it fails R CMD check.
 @c @item FLCore
@@ -2071,6 +2119,8 @@ Bernard Flury (1997), Springer.
 @c @item FortranCallsR
 @c Simple Fortran/C/R interface example.
 @c </COMMENT>
+@item Formula
+Infrastructure for extended formulas.
 @item FrF2
 Analysis of fractional factorial designs with 2-level factors.
 @item FracSim
@@ -2093,6 +2143,8 @@ Topographic and geologic mapping.
 @item GExMap
 Functions for the analysis of genomic distribution of genes lists
 produced by transcriptomic studies.
+@item GFMaps
+Visualization of high-throughput genetic or proteomic experiments.
 @item GLDEX
 Fit RS and FMKL generalised lambda distributions using discretized and
 maximum likelihood methods.
@@ -2101,6 +2153,8 @@ Computation of functional similarities between GO terms and gene
 products.
 @item GPArotation
 Gradient Projection Algorithm rotation for factor analysis.
+@item GRRGI
+Gauge R and R Confidence Intervals.
 @item GRASS
 An interface between the GRASS geographical information system and R,
 based on starting R from within the GRASS environment and chosen
@@ -2128,10 +2182,13 @@ Generalized @math{F}-statistics.
 Relevance or Dependency network and signaling pathway discovery.
 @item GeneNet
 Modeling and inferring gene networks.
-@item GeneTS
-A package for analysing multiple gene expression time series data.
-Currently, implements methods for cell cycle analysis and for inferring
-large sparse graphical Gaussian models.
+@c <COMMENT>
+@c Moved to the Archive on 2009-01-26 as requested by the maintainer.
+@c @item GeneTS
+@c A package for analysing multiple gene expression time series data.
+@c Currently, implements methods for cell cycle analysis and for inferring
+@c large sparse graphical Gaussian models.
+@c </COMMENT>
 @item Geneland
 MCMC inference from individual genetic data based on a spatial
 statistical model.
@@ -2160,6 +2217,10 @@ generated by @strong{R2HTML}.
 @item HFWutils
 Utilities by H. Felix Wittmann: Excel connections, string matching, and
 passing by reference.
+@item HadoopStreaming
+Utilities for using R scripts in Hadoop streaming.
+@item HaploSim
+Simulate haplotypes through meioses.
 @item HardyWeinberg
 Graphical tests for Hardy-Weinberg equilibrium.
 @item HiddenMarkov
@@ -2272,8 +2333,12 @@ Learning with latent networks.
 @item LMGene
 Date transformation and identification of differentially expressed genes
 in gene expression arrays.
+@item LambertW
+Lambert @math{W} parameter estimation.
 @item LearnBayes
 Functions for Learning Bayesian Inference.
+@item LearnEDA
+Functions for Learning Exploratory Data Analysis.
 @item Lmoments
 Estimation of L-moments and the parameters of normal and Cauchy
 polynomial quantile mixtures.
@@ -2292,6 +2357,8 @@ Functions and datasets from the main package of Venables and Ripley,
 bundle.  @emph{Recommended}.
 @item MAclinical
 Class prediction based on microarray data and clinical parameters.
+@item MAMSE
+Calculation of Minimum Averaged Mean Squared Error (MAMSE) weights.
 @item MBA
 Multilevel @math{B}-spline Approximation.
 @item MBESS
@@ -2302,6 +2369,8 @@ from the Medicare Air Pollution Study (MCAPS) of 204 U.S. counties,
 1999--2002.
 @item MCE
 Tools for evaluating Monte Carlo Error.
+@item MCMCglmm
+MCMC Generalized Linear Mixed Models.
 @item MCMCpack
 Markov chain Monte Carlo (MCMC) package: functions for posterior
 simulation for a number of statistical models.
@@ -2365,11 +2434,14 @@ similar covariate distributions.
 @item Matching
 Multivariate and propensity score matching with formal tests of balance.
 @item Matrix
-A Matrix package.
+A Matrix package.  @emph{Recommended} for R 2.9.0 or later.
 @item Metabonomic
 @acronym{GUI} for metabonomic analysis.
 @item MiscPsycho
 Miscellaneous Psychometrics.
+@item ModelMap
+Random forest and stochastic gradient boosting models for building
+detailed prediction maps.
 @item MultEq
 Equivalence tests and simultaneous confidence intervals for multiple
 endpoints.
@@ -2382,6 +2454,8 @@ A set of test nonlinear least squares examples from @acronym{NIST}, the
 U.S. National Institute for Standards and Technology.
 @item NMMAPSlite
 U.S. National Morbidity, Mortality, and Air Pollution Study data lite.
+@item NMRS
+NMR spectroscopy.
 @item NORMT3
 Evaluates complex erf, erfc and density of sum of Gaussian and Student's 
 @math{t}.
@@ -2392,6 +2466,9 @@ Applications'' by Doug Bates and Donald Watts, 1988, Wiley.
 Survival analysis for cohorts with missing covariate information.
 @item NetIndices
 Estimates network indices, including trophic structure of foodwebs.
+@item OAIHarvester
+Harvest metadata using the Open Archives Initiative Protocol for
+Metadata Harvesting (OAI-PMH) version 2.0.
 @item OPE
 Fit an outer-product emlator to the multivariate evaluations of a
 computer model.
@@ -2400,6 +2477,11 @@ Odds ratio based multivactor-dimensionality reduction method for
 detecting gene-gene interactions.
 @item Oarray
 Arrays with arbitrary offsets.
+@item Oncotree
+Estimation of oncogenetic trees.
+@item OrdMonReg
+Compute least squares estimates of one bounded or two ordered antitonic
+regression curves.
 @item PASWR
 Data and functions for the book ``Probability and Statistics with R'' by
 M. D. Ugarte, A. F. Militino and A. T. Arnholt, 2008, Chapman &
@@ -2424,8 +2506,10 @@ Estimation of pharmacokinetic parameters.
 @item PKfit
 A nonlinear regression (including a genetic algorithm) program designed
 to deal with curve fitting for pharmacokinetics.
-@item
+@item PKtools
 Unified computational interfaces for pop PK.
+@item PMA
+Penalized Multivariate Analysis.
 @item POT
 Generalized Pareto distribution and Peaks Over Threshold.
 @item PSAgraphics
@@ -2447,6 +2531,9 @@ Independent component analysis using score functions from the Pearson
 system.
 @item PerformanceAnalytics
 Econometric tools for performance and risk analysis.
+@item PhViD
+Pharmacovigilance signal detection methods extended to the multiple
+comparison setting.
 @item PhySim
 Phylogenetic tree simulation.
 @item PolynomF
@@ -2457,11 +2544,17 @@ Pattern oriented modeling information criterion.
 Prediction intervals for three basic statistical models.
 @item PresenceAbsence
 Presence-absence model evaluation.
-@item ProbForecastGOP
-Probabilistic weather field forecasts using the Geostatistical Output
-Perturbation method introduced by Gel, Raftery and Gneiting (2004).
-@item ProbeR
-Reliability for gene expression from Affymetrix chip.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 (Orphaned).
+@c @item ProbForecastGOP
+@c Probabilistic weather field forecasts using the Geostatistical Output
+@c Perturbation method introduced by Gel, Raftery and Gneiting (2004).
+@c </COMMENT>
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-01 (Orphaned and license issues.)
+@c @item ProbeR
+@c Reliability for gene expression from Affymetrix chip.
+@c </COMMENT>
 @item ProfessR
 Programs to determine student grades and create examinations from
 question banks.
@@ -2570,6 +2663,8 @@ Visualizing the performance of scoring classifiers.
 An @acronym{ODBC} database interface.
 @item ROptEst
 Optimally robust estimation.
+@item ROptEstOld
+Optimally robust estimation, old version.
 @item ROptEstTS
 Optimally robust estimation for regression-type models.
 @item ROracle
@@ -2580,6 +2675,8 @@ Poor Man's Gui: create interactive R analysis sessions.
 R interface to the PostgreSQL database system.
 @item RPyGeo
 ArcGIS Geoprocessing in R via Python.
+@item RQDA
+Qualitative Data Analysis.
 @item RQuantLib
 Provides access to (some) of the QuantLib functions from within R;
 currently limited to some Option pricing and analysis functions.  The
@@ -2598,6 +2695,8 @@ An interface to ScaLAPACK functions from R.
 An R @acronym{SVG} graphics device with dynamic tips and hyperlinks.
 @item RSeqMeth
 analysis of Sequenom EpiTYPER data.
+@item RSurvey
+Analysis of spatially distributed data.
 @item RSvgDevice
 A graphics device for R that uses the new w3.org @XML{} standard for
 Scalable Vector Graphics.
@@ -2650,6 +2749,10 @@ Rcmdr Teaching Demos plug-in.
 Rcmdr epack demos plug-in.
 @item RcmdrPlugin.orloca
 Rcmdr orloca plug-in.
+@item RcmdrPlugin.qcc
+Rcmdr qcc plug-in.
+@item RcmdrPlugin.survival
+Rcmdr plugin for the @strong{survival} package.
 @item Rcplex
 R interface to CPLEX solvers for linear, quadratic, and (linear and
 quadratic) mixed integer programs.
@@ -2660,6 +2763,8 @@ quadratic) mixed integer programs.
 @c </COMMENT>
 @item Rcpp
 R/C++ interface library and package template.
+@item Rcsdp
+R interface to the CSDP semidefinite programming library.
 @item Read.isi
 Access old data saved in fixed-width format based on ISI-formatted
 codebooks.
@@ -2688,8 +2793,11 @@ Interface to the LSF queuing system.
 @c @item RmSQL
 @c An interface between R and the mSQL database system.
 @c </COMMENT>
-@item Rmdr
-R-Multifactor Dimensionality Reduction.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 (Orphaned).
+@c @item Rmdr
+@c R-Multifactor Dimensionality Reduction.
+@c </COMMENT>
 @c <COMMENT>
 @c Moved to the Archive on 2008-10-27 as requested by the maintainer.
 @c @item Rmetrics
@@ -2752,11 +2860,13 @@ examples in ``SAS System for Mixed Models'' by R. C. Littell,
 G. A. Milliken, W. W. Stroup and R. D. Wolfinger, 1996, SAS Institute.
 @item SASxport
 Read and write SAS XPORT files.
+@item SDDA
+Stepwise Diagonal Discriminant Analysis.
 @item SDaA
 Functions and data sets from ``Sampling: Design and Analysis'' by
 S. Lohr, 1999, Duxbury.
-@item SDDA
-Stepwise Diagonal Discriminant Analysis.
+@item SGCS
+Spatial Graph based Clustering Summaries for spatial point patterns.
 @item SGP
 Student growth percentile and percentile growth projection/trajectory
 functions.
@@ -2790,14 +2900,21 @@ Stores data frames and matrices in SQLite tables.
 Shared Reproducibility Package Management.
 @item STAR
 Spike Train Analysis with R.
-@item SciViews
-A bundle of packages to implement a full reusable @acronym{GUI} API for
-R.  Contains @strong{svGUI} with the main @acronym{GUI} features,
-@strong{svDialogs} for the dialog boxes, @strong{svIO} for data
-import/export, @strong{svMisc} with miscellaneous supporting functions,
-and @strong{svViews} providing views and report features (views are
-@acronym{HTML} presentations of the content of R objects, combining
-text, tables and graphs in the same document).
+@c <COMMENT>
+@c Moved to the Archive on 2009-01-22 (replaced by its unbundled
+@c packages).
+@c @item SciViews
+@c A bundle of packages to implement a full reusable @acronym{GUI} API for
+@c R.  Contains @strong{svGUI} with the main @acronym{GUI} features,
+@c @strong{svDialogs} for the dialog boxes, @strong{svIO} for data
+@c import/export, @strong{svMisc} with miscellaneous supporting functions,
+@c and @strong{svViews} providing views and report features (views are
+@c @acronym{HTML} presentations of the content of R objects, combining
+@c text, tables and graphs in the same document).
+@c </COMMENT>
+@item ScottKnott
+Multiple comparison test of means using the clustering method of Scott &
+Knott.
 @item SemiPar
 Functions for semiparametric regression analysis, to complement the
 book ``Semiparametric Regression'' by R. Ruppert, M. P. Wand, and
@@ -2832,14 +2949,19 @@ Programming with R'' by John Chambers, Springer, 2008.
 @item SoPhy
 Soil Physics Tools: simulation of water flux and solute transport in
 soil.
-@item SparseLogReg
-Sparse logistic regression.
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-01 (Orphaned and license issues.)
+@c @item SparseLogReg
+@c Sparse logistic regression.
+@c </COMMENT>
 @item SparseM
 Basic linear algebra for sparse matrices.
 @item SpatialExtremes
 Modeling spatial extremes.
 @item SpatialNP
 Multivariate nonparametric methods based on spatial signs and ranks.
+@item SpectralGEM
+Discovering genetic ancestry using spectral graph theory.
 @item SpherWave
 Spherical Wavelets and SW-based spatially adaptive methods.
 @item StatDA
@@ -2853,6 +2975,8 @@ Read and write StatDataML.
 Processing and statistical analysis of molecular fingerprint profiles.
 @item StatMatch
 Functions to perform statistical matching between two data sources.
+@item Stem
+Spatio-temporal models in R.
 @c <COMMENT>
 @c Removed on 2007-11-17 due to license problems.
 @c @item StoppingRules
@@ -2881,6 +3005,8 @@ A problem solving environment for fitting superposition models.
 @item TRAMPR
 Terminal Restriction Fragment Length Polymorphism (TRFLP) Analysis and
 Matching Package for R.
+@item TRIANG
+Discrete triangular distributions.
 @item TSA
 Functions and datasets detailed in the book ``Time Series Analysis
 With Applications in R'' (3rd edition) by Jonathan Cryer and Kung-Sik
@@ -2915,6 +3041,8 @@ Trees WIth eXtra splits.
 A set of demonstration functions that can be used in a classroom to
 demonstrate statistical concepts, or on your own to better understand
 the concepts or the programming.
+@item TeachingSampling
+Sampling designs and parameter estimation in finite populations.
 @item TinnR
 Resources for the Tinn-R GUI/Editor for R.
 @item TraMineR
@@ -2961,12 +3089,18 @@ Wavelet changepoint detection for array CGH.
 Map of weed intensity.
 @item WhatIf
 Software for evaluating counterfactuals.
+@item WilcoxCV
+Wilcoxon-based variable selection in cross-validation.
+@item WriteXLS
+Cross-platform Perl based R function to create Excel 2003 (XLS) files.
 @item XML
 Tools for reading @XML{} documents and DTDs.
 @item XReg
 Extreme regression.
 @item YaleToolkit
 Data exploration tools from Yale University.
+@item YourCast
+YourCast: time series cross-sectional forecasts.
 @item ZIGP
 Zero Inflated Generalized Poisson (ZIGP) regression models.
 @item Zelig
@@ -3008,6 +3142,9 @@ Anderson-Darling @math{K}-sample test and combinations of such tests.
 Adaptive Wavelet transforms for signal denoising.
 @item ads
 Spatial point patterns analysis.
+@item afc
+Calculate the Generalized Discrimination Score (also known as Two
+Alternatives Forced Choice Score, 2AFC).
 @item agce
 Analysis of growth curve experiments.
 @item agreement
@@ -3020,6 +3157,8 @@ Miscellaneous plotting and utility functions.
 Linear or cubic spline interpolation for irregularly gridded data.
 @item allelic
 A fast, unbiased and exact allelic exact test.
+@item alphahull
+Generalization of the convex hull of a sample of points in the plane.
 @item alr3
 Methods and data to accompany the textbook ``Applied Linear Regression''
 by S. Weisberg, 2005, Wiley.
@@ -3068,13 +3207,19 @@ Exploratory analysis of missing patterns for microarray data.
 Adaptive Rejection Sampling.
 @item arules
 Mining association rules and frequent itemsets with R.
+@item arulesNBMiner
+Mining NB-frequent itemsets and NB-precise rules.
 @item arulesSequences
 Mining frequent sequences.
+@item ascii
+Export R objects to asciidoc or txt2tags.
 @item ash
 David Scott's ASH routines for 1D and 2D density estimation.
 @item aspace
 Estimating centrographic statistics and computational geometries from
 spatial point patterns.
+@item aspect
+Aspects of multivariables.
 @item assist
 A suite of functions implementing smoothing splines.
 @item aster
@@ -3088,6 +3233,8 @@ A set of routines that calculate power and related quantities utilizing
 asymptotic likelihood ratio methods.
 @item audio
 Audio interface for R.
+@item automap
+Automatic interpolation.
 @item asuR
 Functions and data sets for a lecture in ``Advanced Statistics using
 R''.
@@ -3101,12 +3248,16 @@ Backfitted independent values of Richards curves.
 Exploring portfolio-based hypotheses about financial instruments.
 @item bark
 Bayesian Additive Regression Kernels.
+@item bayesCGH
+Bayesian analysis of array CGH data.
 @item bayesGARCH
 Bayesian estimation of the GARCH(1,1) model with Student's @math{t}
 innovations.
 @item bayesSurv
 Bayesian survival regression with flexible error and (later on also
 random effects) distributions.
+@item bayesclust
+Tests/searches for significant clusters in genetic data.
 @item bayescount
 Bayesian analysis of count distributions with JAGS.
 @item bayesm
@@ -3137,6 +3288,8 @@ Distance decay of similarity among biological inventories in the face of
 taxonomic uncertainty.
 @item betareg
 Beta regression for modeling rates and proportions.
+@item bethel
+Sample size according to Bethel's procedure.
 @item bs
 Utilities for the Birnbaum-Saunders distribution.
 @item biOps
@@ -3209,6 +3362,8 @@ Methods and Their Applications'' by A. C. Davison and D. V. Hinkley,
 1997, Cambridge University Press.  @emph{Recommended}.
 @item bootStepAIC
 Model selection by bootstrapping the @code{stepAIC()} procedure.
+@item bootspecdens
+Bootstrap for testing equality of spectral densities.
 @item bootstrap
 Software (bootstrap, cross-validation, jackknife), data and errata for
 the book ``An Introduction to the Bootstrap'' by B. Efron and
@@ -3259,6 +3414,8 @@ Statistical tool for calibration of plate based bioassays.
 Calibration of biplot axes.
 @item candisc
 Generalized canonical discriminant analysis.
+@item canvas
+R graphics device targeting the @HTML{} canvas element.
 @item car
 Companion to Applied Regression, containing functions for applied
 regession, linear models, and generalized linear models, with an
@@ -3286,6 +3443,11 @@ Convex clustering methods, including @math{k}-means algorithm, on-line
 update algorithm (Hard Competitive Learning) and Neural Gas algorithm
 (Soft Competitive Learning) and calculation of several indexes for
 finding the number of clusters in a data set.
+@item ccems
+Combinatorially Complex Equilibrium Model Selection.
+@item cellVolumeDist
+Functions to fit cell volume distributions and thereby estimate cell
+growth rates and division times.
 @item celsius
 Retrieve Affymetrix microarray measurements and metadata from Celsius.
 @item cem
@@ -3336,8 +3498,11 @@ Construct graph of S4 class hierarchies.
 @item classInt
 Choose univariate class intervals for mapping or other graphics
 purposes.
-@item classPP
-Projection Pursuit for supervised classification.
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-01 (Orphaned and license issues.)
+@c @item classPP
+@c Projection Pursuit for supervised classification.
+@c </COMMENT>
 @item classifly
 Explore classification models in high dimensions.
 @item clim.pact
@@ -3353,8 +3518,12 @@ Walter&Lieth diagrams.
 @c </COMMENT>
 @item clinfun
 Utilities for clinical study design and data analyses.
+@item clinsig
+Functions for calculating clinical significance.
 @item clue
 CLUster Ensembles.
+@item clues
+Clustering method based on local shrinking.
 @item clustTool
 @acronym{GUI} for clustering data with spatial information.
 @item cluster
@@ -3613,8 +3782,12 @@ DTI (Diffusion Tensor Image) analysis.
 Discrete Trigonometric Transforms.
 @item dtw
 Dynamic Time Warping algorithms.
+@item dyad
+Analysis of dyadic observational data.
 @item dyn
 Time series regression.
+@item dynCorr
+Dynamic correlation.
 @item dynamicGraph
 Interactive graphical tool for manipulating graphs.
 @item dynamicTreeCut
@@ -3796,6 +3969,8 @@ Interface for FAME time series database.
 Modelization for Functional AutoRegressive processes.
 @item faraway
 Functions and datasets for books by Julian Faraway.
+@item fast
+Implementation of the Fourier Amplitute Sensitivity Test (FAST).
 @item fastICA
 Implementation of FastICA algorithm to perform Independent Component
 Analysis (ICA) and Projection Pursuit.
@@ -3810,8 +3985,14 @@ Functions for calculating fractal dimension.
 Estimation and control of (local) False Discovery Rates.
 @item feature
 Feature significance for multivariate kernel density estimation.
-@item femmeR
-Output analysis of FEMME model results.
+@item fechner
+Fechnerian scaling of discrete object sets.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-20 as requested by the maintainer:
+@c Henrik Andersson <JAN@dhigroup.com>.
+@c @item femmeR
+@c Output analysis of FEMME model results.
+@c </COMMENT>
 @item ff
 Flat file database designed for large vectors and multi-dimensional
 arrays.
@@ -3835,6 +4016,14 @@ Simple key-value database using SQLite as the backend.
 Solving financial problems in R.
 @item fingerprint
 Functions to operate on binary fingerprint data.
+@item fishmethods
+Fisheries methods and models.
+@item fit4NM
+Platform for NONMEM.
+@item fitdistrplus
+Fit parametric distributions to non-censored or censored data.
+@item flashClust
+Implementation of optimal hierarchical clustering.
 @item flexclust
 Flexible cluster algorithms.
 @item flexmix
@@ -3870,6 +4059,9 @@ Palaeoecological and palaeogeographical analysis tools.
 Fixed point clusters, clusterwise regression and discriminant plots.
 @item fpca
 Restricted MLE for Functional Principal Components Analysis.
+@item fpow
+Compute the non-centrality parameter of the non-central @math{F}
+distribution.
 @item fracdiff
 Maximum likelihood estimation of the parameters of a fractionally
 differenced ARIMA(@math{p,d,q}) model (Haslett and Raftery, Applied
@@ -3889,6 +4081,8 @@ Features and strings for nonparametric regression.
 @item fts
 Fast operations for time series objects via an interface to tslib (a
 C++ time series library).
+@item futile
+A collection of utility functions to expedite software development.
 @item fuzzyFDR
 Exact calculation of fuzzy decision rules for multiple testing.
 @item fuzzyOP
@@ -3963,6 +4157,8 @@ logistic, Poisson, Cox proportional hazards partial likelihood, and
 AdaBoost exponential loss.
 @item gbs
 Generalized Birnbaum-Saunders distributions.
+@item gcExplorer
+Graphical cluster explorer.
 @item gcl
 Compute a fuzzy rules or tree classifier from data.
 @item gclus
@@ -4030,9 +4226,13 @@ Naive Gibbs sampling with Metropolis steps.
 Graphical lasso.
 @item gld
 Basic functions for the generalised (Tukey) lambda distribution.
-@item gllm
-Routines for log-linear models of incomplete contingency tables,
-including some latent class models via EM and Fisher scoring approaches.
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-01 (Orphaned and license issues.)
+@c @item gllm
+@c Routines for log-linear models of incomplete contingency tables,
+@c including some latent class models via EM and Fisher scoring
+@c approaches.
+@c </COMMENT>
 @item glmc
 Fitting Generalized Linear Models subject to Constraints.
 @item glmmAK
@@ -4066,6 +4266,10 @@ models with multiplicative interaction terms such as the UNIDIFF model
 from sociology and the AMMI model from crop science.
 @item goalprog
 Weighted and lexicographical goal programming and optimization.
+@item gof
+Model-diagnostics based on cumulative residuals.
+@item gogarch
+Generalized Orthogonal GARCH (GO-GARCH) models.
 @item gpclib
 General polygon clipping routines for R based on Alan Murta's C
 library.
@@ -4128,6 +4332,8 @@ Various functions to help manipulate data.
 Functions for the Gumbel-Hougaard copula.
 @item gvlma
 Global Validation of Linear Models Assumptions.
+@item hacks
+Some convenience functions.
 @item hapassoc
 Likelihood inference of trait associations with SNP haplotypes and other 
 attributes using the EM Algorithm.
@@ -4144,6 +4350,8 @@ Statistical analysis of haplotypes with traits and covariates when
 linkage phase is ambiguous.
 @item hapsim
 Haplotype data simulation.
+@item hash
+Implements hash/associated arrays/dictionaries.
 @item hbim
 Hill/Bliss Independence Model for combination vaccines.
 @item hddplot
@@ -4253,6 +4461,8 @@ Inequality, concentration and poverty measures, and Lorenz curves
 (empirical and theoretic).
 @item inetwork
 Network analysis and plotting.
+@item influence.ME
+Tools for recognizing influential data in mixed models.
 @item inline
 Inline C/C++ function calls from R.
 @item intcox
@@ -4262,6 +4472,9 @@ proportional hazard model for interval censored event data.
 @c  Adaptive quadrature in up to 20 dimensions.
 @item intervals
 Tools for working with points and intervals.
+@item introgress
+Analysis of introgression of genotypes between divergent, hybridizing
+lineages.
 @item iplots
 Interactive graphics for R.
 @item ipptoolbox
@@ -4274,6 +4487,9 @@ of prediction error.
 @item irr
 Coefficients of Interrater Reliability and Agreement for quantitative,
 ordinal and nominal data.
+@item irtProb
+Utilities and probability distributions related to multidimensional
+person Item Response Models (IRT).
 @item irtoys
 Simple interface to the estimation and plotting of IRT models.
 @item ismev
@@ -4281,12 +4497,16 @@ Functions to support the computations carried out in ``An Introduction
 to Statistical Modeling of Extreme Values;' by S. Coles, 2001, Springer.
 The functions may be divided into the following groups; maxima/minima,
 order statistics, peaks over thresholds and point processes.
+@item isotone
+Active set and generalized PAVA for isotone optimization.
 @item its
 An S4 class for handling irregular time series.
 @item ivivc
 In vitro in vivo correlation (IVIVC) modeling.
 @item jit
 Just-in-time compiler.
+@item jointDiag
+Joint approximate diagonalization of a set of square matrices.
 @item kappalab
 The ``laboratory for capacities'', an S4 tool box for capacity (or
 non-additive measure, fuzzy measure) and integral manipulation on a
@@ -4316,8 +4536,11 @@ Linear equations with Kronecker structure.
 @c </COMMENT>
 @item kml
 @math{K}-Means for Longitudinal data.
-@item knnFinder
-Fast nearest neighbor search.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 (Orphaned).
+@c @item knnFinder
+@c Fast nearest neighbor search.
+@c </COMMENT>
 @item knnTree
 Construct or predict with @math{k}-nearest-neighbor classifiers, using
 cross-validation to select @math{k}, choose variables (by forward or
@@ -4336,6 +4559,10 @@ Supervised and unsupervised self-organising maps.
 @item ks
 Kernel smoothing: bandwidth matrices for kernel density estimators and
 kernel discriminant analysis for bivariate data.
+@item kst
+Knowledge Space Theory: a set-theoretical framework which proposes
+mathematical formalisms to operationalize knowledge structures in a
+particular domain.
 @item kza
 Kolmogorov-Zurbenko Adpative filter for locating change points in a time
 series.
@@ -4345,6 +4572,8 @@ Kolmogorov-Zurbenko Fourier Transform and application.
 Kolmogorov-Zurbenko Spline.
 @item labdsv
 Laboratory for Dynamic Synthetic Vegephenomenology.
+@item labeltodendro
+Convert labels or tables to a dendrogram.
 @item labstatR
 Functions for the book ``Laboratorio di statistica con R'' by
 S. M. Iacus and G. Masarotto, 2002, McGraw-Hill.  Function names and
@@ -4387,7 +4616,11 @@ law.
 @item lazy
 Lazy learning for local regression.
 @item ldDesign
-Design of experiments for detection of linkage disequilibrium,
+Design of experiments for detection of linkage disequilibrium.
+@item lcd
+Learn Chain graphs via Decomposition.
+@item lcda
+Latent Class Discriminant Analysis.
 @item lda.cv
 Cross-validation for linear discriminant analysis.
 @item ldbounds
@@ -4417,6 +4650,8 @@ simplex algorithm.
 Logistic Joinpoint Regression.
 @item lme4
 Fit linear and generalized linear mixed-effects models.
+@item lmec
+Linear mixed-effects models with censored responses.
 @item lmeSplines
 Fit smoothing spline terms in Gaussian linear and nonlinear
 mixed-effects models.
@@ -4426,6 +4661,8 @@ Linear mixed models.
 Model II simple linear regression.
 @item lmom
 @math{L}-moments.
+@item lmomRFA
+Regional Frequency Analysis using @math{L}-moments.
 @item lmomco
 @math{L}-moments and @math{L}-comoments.
 @item lmtest
@@ -4544,6 +4781,8 @@ medians.
 @item mboost
 Gradient boosting for fitting generalized linear, additive and
 interaction models.
+@item mc2d
+Tools for two-dimensional Monte-Carlo simulations.
 @item mcgibbsit
 Warnes and Raftery's MCGibbsit MCMC diagnostic.
 @item mclust
@@ -4585,12 +4824,19 @@ Accuracy and precision of measurements.
 @item meta
 Fixed and random effects meta-analysis, with functions for tests of
 bias, forest and funnel plot.
+@item metacor
+Meta-analysis of correlation coefficients.
+@item metaMA
+Meta-analysis for MicroArrays.
 @item mfp
 Multiple Fractional Polynomials.
 @item mgcv
 Routines for GAMs and other genralized ridge regression problems with
 multiple smoothing parameter selection by GCV or UBRE.
 @emph{Recommended}.
+@item mhsmm
+Parameter estimation and prediction for multiple hidden Markov and
+semi-Markov models.
 @item mi
 Missing-data imputation and model checking.
 @c <COMMENT>
@@ -4625,6 +4871,8 @@ Estimation/multiple imputation programs for mixed categorical and
 continuous data.
 @item mixPHM
 Mixtures of proportional hazard models.
+@item mixRasch
+Estimation of mixture Rasch models.
 @item mixdist
 Finite mixture distribution models.
 @item mixer
@@ -4654,12 +4902,17 @@ Maximum Likelihood Estimates of Gaussian Processes.
 Independent Component Analysis using Maximum Likelihood.
 @item mlmRev
 Examples from Multilevel Modelling Software Review.
-@item mlmmm
-Maximum likelihood estimation under multivariate linear mixed models
-with missing values.
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-01 (Orphaned and license issues.)
+@c @item mlmmm
+@c Maximum likelihood estimation under multivariate linear mixed models
+@c with missing values.
+@c </COMMENT>
 @item mlogit
 Estimation of the multinomial logit model with choice specific
 variables.
+@item mmcm
+Modified Maximum Contrast Method.
 @item mmlcr
 Mixed-mode latent class regression (also known as mixed-mode mixture
 model regression or mixed-mode mixture regression models) which can
@@ -4749,6 +5002,8 @@ Visualizations of paired comparisons.
 @item multic
 Quantitative linkage analysis tools using the variance components
 approach.
+@item multicore
+Parallel processing of R code on machines with multiple cores or CPUs.
 @item multilevel
 Analysis of multilevel data by organizational and social psychologists.
 @item multinomRob
@@ -4770,22 +5025,27 @@ Multi-stage Convex Relaxation.
 Utilities by Mark V. Bravington for project organization, editing and
 backup, sourcing, documentation (formal and informal), package
 preparation, macro functions, and more.
+@item mvgraph
+Multivariate interactive visualization.
 @item mvna
 Nelson-Aalen estimator of the cumulative hazard in multistate models.
 @item mvnmle
 ML estimation for multivariate normal data with missing values.
 @item mvnormtest
 Generalization of the Shapiro-Wilk test for multivariate variables.
-@item mvtnormpcs
-Multivariate Normal and @math{T} Distribution functions of Dunnett
-(1989).
 @item mvoutlier
 Multivariate outlier detection based on robust estimates of location and
 covariance structure.
 @item mvpart
 Multivariate partitioning.
+@item mvtBinaryEP
+Generate correlated binary data based on the method of Emrich and
+Piedmonte.
 @item mvtnorm
 Multivariate normal and @math{t} distributions.
+@item mvtnormpcs
+Multivariate Normal and @math{T} Distribution functions of Dunnett
+(1989).
 @item nFDR
 Nonparametric Estimate of FDR Based on Bernstein polynomials.
 @item nFactors
@@ -4832,6 +5092,8 @@ Training of neural networks.
 @c </COMMENT>
 @item nice
 Get or set UNIX priority (niceness) of running R process.
+@item nleqslv
+Solve systems of non-linear equations.
 @item nlme
 Fit and compare Gaussian linear and nonlinear mixed-effects models.
 @emph{Recommended}.
@@ -4937,6 +5199,8 @@ Maxent} Java package for training and using maximum entropy models.
 English and spanish models for @strong{openNLP}.
 @item opentick
 Interface to opentick real time and historical market data.
+@item operators
+Additional binary operators for R.
 @item optmatch
 Functions to perform optimal matching, particularly full matching.
 @item orientlib
@@ -4947,6 +5211,8 @@ Operations Research LOCational Analysis models.
 Spanish version of @strong{orloca} package.
 @item orth
 Multivariate logistic regressions using orthogonalized residuals.
+@item orthogonalsplinebasis
+Orthogonal @math{B}-spline basis functions.
 @item orthopolynom
 Functions for orthogonal and orthonormal polynomials.
 @item ouch
@@ -4957,9 +5223,12 @@ A collection of some tests commonly used for identifying outliers.
 Functions for plotting Australia's coastline and state boundaries.
 @item pARccs
 Estimation of partial attributable risks from case-control data.
-@item pARtial
-(Partial) attributable risk estimates, corresponding variance estimates
-and confidence intervals.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 (Orphaned).
+@c @item pARtial
+@c (Partial) attributable risk estimates, corresponding variance estimates
+@c and confidence intervals.
+@c </COMMENT>
 @item pack
 Create and manipulate raw vectors.
 @item packClassic
@@ -5014,8 +5283,12 @@ principal component analyses.
 Periodic Autoregression Analysis.
 @item pec
 Prediction Error Curves for survival models.
+@item pedigree
+Pedigree functions.
 @item penalized
 Penalized estimation in generalized linear models.
+@item penalizedSVM
+Feature selection SVM using penalty functions.
 @item peperr
 Parallelised Estimation of Prediction ERRor.
 @item permax
@@ -5039,6 +5312,8 @@ Phylogenetic analysis in R.
 @item pheno
 Some easy-to-use functions for time series analyses of (plant-)
 phenological data sets.
+@item phmm
+Proportional Hazards with Mixed Model.
 @item phpSerialize
 Serialize R to PHP associative array.
 @c <COMMENT>
@@ -5069,6 +5344,8 @@ Linear models for panel data.
 @c </COMMENT>
 @item plotSEMM
 Graphing nonlinear latent variable interactions in SEMM.
+@item plotpc
+Plot principal component histograms around a scatter plot.
 @item plotrix
 Various useful functions for enhancing plots.
 @item plugdensity
@@ -5084,6 +5361,8 @@ Regression (PCR).
 @c </COMMENT>
 @item plsgenomics
 PLS analyses for genomics.
+@item plspm
+Partial Least Squares Path Modeling.
 @item plyr
 Tools for splitting, applying and combining data.
 @item pmg
@@ -5095,13 +5374,6 @@ models.
 POlytomous variable Latent Class Analysis.
 @item poilog
 Poisson lognormal and bivariate Poisson lognormal distribution.
-@c <COMMENT>
-@c Outdated on CRAN along with 1.5.0 release as we do not have an active
-@c maintainer to fix outstanding quality problems.
-@c @item polymars
-@c Polychotomous regression based on Multivariate Adaptive Regression
-@c Splines.
-@c </COMMENT>
 @item polspline
 Routines for the polynomial spline fitting routines hazard regression,
 hazard estimation with flexible tails, logspline, lspec, polyclass, and
@@ -5110,6 +5382,16 @@ polymars, by C. Kooperberg and co-authors.
 Simulating from the Polya posterior.
 @item polycor
 Polychoric and polyserial correlations.
+@item polydect
+One-dimension jump position detection using one-sided polynomial
+kernels.
+@c <COMMENT>
+@c Outdated on CRAN along with 1.5.0 release as we do not have an active
+@c maintainer to fix outstanding quality problems.
+@c @item polymars
+@c Polychotomous regression based on Multivariate Adaptive Regression
+@c Splines.
+@c </COMMENT>
 @item polynom
 A collection of functions to implement a class for univariate polynomial
 manipulations.
@@ -5158,6 +5440,9 @@ Utilities to fit paired comparison models for preferences.
 Pretty descriptive stats.
 @item prim
 Patient Rule Induction Method (PRIM).
+@item primer
+Functions and data for the book ``A Primer of Ecology with R'' by
+M. H. H. Stevens, 2009, Springer.
 @item princurve
 Fits a principal curve to a matrix of points in arbitrary dimension.
 @item prob
@@ -5184,6 +5469,8 @@ R in the Political Science Computational Laboratory, Stanford
 University.
 @item pseudo
 Pseudo-observations.
+@item pspearman
+Spearman's rank correlation test.
 @item pspline
 Smoothing splines with penalties on order @math{m} derivatives.
 @item psy
@@ -5228,6 +5515,9 @@ Analysis of experimental crosses to identify QTLs.
 Tools for the design of QTL experiments.
 @item qtlbim
 QTL Bayesian Interval Mapping.
+@item qtlbook
+Datasets for the book ``A guide to QTL Mapping with R/qtl'' by by Karl
+W. Broman and Saunak Sen, 2009, Springer.
 @item quadprog
 For solving quadratic programming problems.
 @item qualV
@@ -5255,6 +5545,8 @@ methods and accessing fields.
 @item rPorta
 An R interface to PORTA, a collection of routines for analyzing
 polytopes and polyhedra.
+@item rSymPy
+R interface to SymPy computer algebra system.
 @item race
 Implementation of some racing methods for the empirical selection of the
 best.
@@ -5284,6 +5576,8 @@ Exact rate ratio test.
 @c @strong{date}), for use with @strong{survival4}.
 @item rattle
 A graphical user interface for data mining in R using GTK.
+@item rbenchmark
+Benchmarking of arbitrary R code.
 @item rbounds
 Perform Rosenbaum bounds sensitivity tests for matched data.
 @item rbugs
@@ -5294,6 +5588,8 @@ C Double Description for R, an interface to the CDD computational
 geometry library.
 @item rcdk
 Interface to the CDK libraries, a Java framework for cheminformatics.
+@item rcdklibs
+CDK libraries packaged for R.
 @item rcom
 R COM Client Interface and internal COM Server.
 @item rcompgen
@@ -5324,6 +5620,8 @@ models.
 Detect and test regular sequences and subsequences.
 @item regtest
 Regression testing.
+@item rela
+Item analysis with standard errors.
 @item relaimpo
 RELAtive IMPOrtance of regressors in linear models.
 @item relations
@@ -5343,6 +5641,8 @@ Functions to facilitate inference on the relative importance of
 predictors in a linear or generalized linear model.
 @item relsurv
 Various functions for regression in relative survival.
+@item remMap
+Regularized multivariate regression for identifying master predictors.
 @item repolr
 Repeated measures proportional odds logistic regression.
 @item reporttools
@@ -5360,14 +5660,20 @@ Provides bindings to Frank Warmerdam's Geospatial Data Abstraction
 Library (GDAL).
 @item rgenoud
 R version of GENetic Optimization Using Derivatives.
-@item rggm
-Robustified methods for Gaussian Graphical Models.
+@c <COMMENT>
+@c Moved to the Archive on 2009-02-23 (Orphaned).
+@c @item rggm
+@c Robustified methods for Gaussian Graphical Models.
+@c </COMMENT>
 @item rggobi
 Interface between R and GGobi.
 @item rgl
 3D visualization device system (OpenGL).
 @item rgr
 The GSC (Geological Survey of Canada) applied geochemistry EDA package.
+@item rgrs
+Functions to make R usage in social sciences easier (documentation in
+french).
 @item rhosp
 Side effect risks in hospital: simulation and estimation.
 @item richards
@@ -5400,6 +5706,10 @@ two-sample comparison of binary outcomes.
 An interface between R and the metasim simulation engine.  Facilitates
 the use of the metasim engine to build and run individual based
 population genetics simulations.
+@item rngwell19937
+WELL19937a random number generator.
+@item robCompositions
+Robust estimation for compositional data.
 @item robfilter
 Robust time series filters.
 @c <COMMENT>
@@ -5455,6 +5765,8 @@ Unified object oriented interface for multiple independent streams of
 random numbers from different sources.
 @item rtiff
 Read TIFF format images and return them as pixmap objects.
+@item rtv
+Random Time Variable objects.
 @item runjags
 Run Bayesian MCMC models in the BUGS syntax using JAGS.
 @item rv
@@ -5466,6 +5778,9 @@ Rice Wavelet Toolbox wrapper, providing a set of functions for
 performing digital signal processing.
 @item s20x
 Stats 20x functions.
+@item sabreR
+Provide SABRE functionality (analysis of multi-process random effect
+response data) from within R.
 @item sac
 Semiparametric empirical likelihood ratio based test of changepoint with
 one-change or epidemic alternatives with data-based model diagnostic.
@@ -5508,8 +5823,11 @@ Plots a three dimensional (3D) point cloud perspectively.
 Functions and datasets for math used in school.
 @item sciplot
 Scientific graphing functions for factorial designs.
-@item scope
-Data manipulation using arbitrary row and column criteria.
+@c <COMMENT>
+@c Moved to the Archive on 2009-04-15 as requested by the maintainer.
+@c @item scope
+@c Data manipulation using arbitrary row and column criteria.
+@c </COMMENT>
 @item scout
 Scout method for covariance-regularized regression.
 @item scrime
@@ -5523,10 +5841,14 @@ Shrinkage Discriminant Analysis.
 @item sdcMicro
 Statistical Disclosure Control methods for the generation of public and
 scientific use files.
+@item sdcTable
+Statistical Disclosure Control for tabular data.
 @item sde
 Simulation and inference for Stochastic Differential Equations.
 @item sdtalt
 Signal Detection Theory measures and ALTernatives.
+@item sdtoolkit
+Scenario discovery tools to support robust decision making.
 @item seacarb
 Calculates parameters of the seawater carbonate system.
 @c <COMMENT>
@@ -5618,6 +5940,8 @@ Statistical Inference for MOdular NEtworks (SIMoNe).
 Simple bootstrap routines.
 @item singlecase
 Tests for single case studies in neuropsychology.
+@item sisus
+Stable Isotope Sourcing Using Sampling.
 @item skewt
 Density, distribution function, quantile function and random generation
 for the skewed @math{t} distribution of Fernandez and Steel.
@@ -5677,6 +6001,9 @@ structures by Markov chain Monte Carlo (MCMC).
 Sparse PArtial Correlation Estimation.
 @item spam
 SPArse Matrix algebra.
+@item sparseLDA
+Sparse Linear Discriminant Analysis for gaussians and mixture of
+gaussians models.
 @item spatclus
 Arbitrarily shaped multiple spatial cluster detection for case event
 data.
@@ -5692,6 +6019,8 @@ one dimensional numerical integration and analytic results.
 @item spatialkernel
 Nonparameteric estimation of spatial segregation in a multivariate point
 process.
+@item spatialsegregation
+Segregation measures for multitype spatial point patterns.
 @item spatstat
 Data analysis and modelling of two-dimensional point patterns, including
 multitype points and spatial covariates.
@@ -5700,6 +6029,8 @@ Statistical Process Control: evaluation of control charts by means of
 the zero-state, steady-state ARL (Average Run Length), setting up
 control charts for given in-control ARL, and plotting of the related
 figures.
+@item spcosa
+SPatial COverage SAmpling.
 @item spdep
 A collection of functions to create spatial weights matrix objects from
 polygon contiguities, from point patterns by distance and tesselations,
@@ -5744,6 +6075,10 @@ Insightful package providing missing S-PLUS functionality in R.
 Read SPSS system files and produce valid DDI version 3.0 documents.
 @item spsurvey
 Spatial survey design and analysis.
+@item spuRs
+Functions and datasets from the book ``An Introduction to Scientific
+Programming and Simulation Using R'' by O. Jones, R. Maillardet and
+A. Robinson, 2009, CRC Press.
 @item sqldf
 Perform @acronym{SQL} selects on R data frames.
 @item ssanv
@@ -5811,6 +6146,8 @@ Two-sample tests for survival analysis.
 @item survBayes
 Fits a proportional hazards model to time to event data by a Bayesian
 approach.
+@item survcomp
+Performance assessment and comparison for survival analysis.
 @item surveillance
 Outbreak detection algorithms for surveillance data.
 @item survey
@@ -5829,6 +6166,16 @@ Functions for survival analysis, including penalised likelihood.
 Time-dependent ROC curve estimation from censored survival data.
 @item survrec
 Survival analysis for recurrent event data.
+@item svGUI
+SciViews @acronym{GUI} @acronym{API}: functions to manage @acronym{GUI}
+clients.
+@item svIDE
+SciViews @acronym{GUI} @acronym{API}: functions to interact with
+external IDE/code editors.
+@item svMisc
+SciViews @acronym{GUI} @acronym{API}: miscellaneous functions.
+@item svSocket
+SciViews @acronym{GUI} @acronym{API} socket server.
 @item svcR
 A support vector machine technique for clustering.
 @item svcm
@@ -5847,6 +6194,9 @@ Three-Stage Least Squares (3SLS).
 @c </COMMENT>
 @item taskPR
 Task-Parallel R package.
+@item tawny
+Various portfolio optimization strategies, including random matrix
+theory and shrinkage estimators.
 @item tcltk2
 A series of widgets and functions to supplement @strong{tcltk}.
 @item tdist
@@ -5870,6 +6220,8 @@ Time Frame coding kernel extensions.
 @item tgp
 Bayesian regression and adaptive sampling with Treed Gaussian Process
 models.
+@item tiger
+TIme series of Grouped ERrors.
 @item tileHMM
 Hidden Markov Models for ChIP-on-Chip analysis.
 @item time
@@ -5894,10 +6246,15 @@ TIme-To-Event Continual Reassessment Method and calibration tools.
 TK widget tools for @strong{rgl} package.
 @item tkrplot
 Simple mechanism for placing R graphics in a Tk widget.
+@item tlemix
+Trimmed maximum likelihood estimation for robust fitting of finite
+mixture models.
 @item tlnise
 Two-level normal independent sampling estimation.
 @item tm
 A framework for text mining applications within R.
+@item tmvtnorm
+Truncated multivariate normal distribution.
 @item topmodel
 An R implementation of TOPMODEL.
 @c <COMMENT>
@@ -5940,6 +6297,8 @@ A constrained two-dimensional Delaunay triangulation package.
 Goodness-of-fit tests allowing for left truncated data.
 @item truncnorm
 Truncated normal distribution.
+@item truncreg
+Truncated regression models.
 @item trust
 Local optimization using two derivatives and trust regions.
 @item tsDyn
@@ -5952,6 +6311,8 @@ Package for time series analysis with emphasis on non-linear modelling.
 Routines for the analysis of non-linear time series.
 @item tsfa
 Time Series Factor Analysis.
+@item tslars
+Least angle regression for time series analysis.
 @item tuneR
 Collection of tools to analyze music, handle wave files, transcription,
 etc.
@@ -5970,6 +6331,8 @@ Maximum likelihood computations for Tweedie exponential family models.
 @item twslm
 A two-way semilinear model for normalization and analysis of cDNA
 microarray data.
+@item ucminf
+Unconstrained nonlinear optimization via UCMINF.
 @item udunits
 Interface to Unidata's routines to convert units.
 @item ump
@@ -6015,6 +6378,11 @@ Construction of test suites using verify objects.
 @item vioplot
 Violin plots, which are a combination of a box plot and a kernel density
 plot.
+@item vowels
+Vowel manipulation, normalization, and plotting.
+@item vrmlgen
+Create plots, charts and graphs for 3D data visualization as VRML
+files.
 @item vrtest
 Variance ratio tests for weak-form market efficiency.
 @item wasim
@@ -6051,10 +6419,15 @@ WordNet interface.
 @item write.snns
 Function for exporting data to SNNS (Stuttgart Neural Network Simulator)
 pattern files.
+@item x12
+A wrapper function and @acronym{GUI} for the X12 binaries under windows.
 @item xgobi
 Interface to the XGobi and XGvis programs for graphical data analysis.
-@item xlsReadWrite
-Natively read and write Excel files.
+@c <COMMENT>
+@c Moved to the Archive on 2009-03-10 (Orphaned).
+@c @item xlsReadWrite
+@c Natively read and write Excel files.
+@c </COMMENT>
 @item xtable
 Export data to @LaTeX{} and @HTML{} tables.
 @item xts
@@ -6081,6 +6454,8 @@ seismic waves when they interact at an interface between two layers.
 @item zoo
 A class with methods for totally ordered indexed observations such as
 irregular time series.
+@item zyp
+Zhang & Yue-Pilon approach to determining trends in climate data.
 @end table
 
 @noindent
@@ -6264,9 +6639,13 @@ and the gtkDevice using @strong{RGtk}.
 @item RGtkViewers
 A collection of tools for viewing different S objects, databases, class
 and widget hierarchies, S source file contents, etc.
+@item RJSONIO
+Serialize R objects to JSON (JavaScript Object Notation).
 @item RJavaDevice
 A graphics device for R that uses Java components and graphics.
 @acronym{API}s.
+@item RKML
+Simple tools for creating KML displays from R.
 @item RMatlab
 A bi-directional interface between R and Matlab.
 @item RObjectTables
@@ -6317,6 +6696,8 @@ Plugin for Netscape and JavaScript.
 @item SSOAP
 A client interface to SOAP (Simple Object Access Protocol) servers from
 within S.
+@item SVGAnnotation
+Tools for post-processing SVG plots created in R.
 @item SWinRegistry
 Provides access from within R to read and write the Windows registry.
 @item SWinTypeLibs
@@ -6336,6 +6717,8 @@ An extension module for libxslt, the @XML{}-@XSL{} document translator,
 that allows @XSL{} functions to be implemented via R functions.
 @item XML
 Tools for reading @XML{} documents and DTDs.
+@item XMLRPC
+RPC via XML.
 @item Zillow
 Simple interface to Zillow.com's house price estimate API.
 @end table
@@ -7088,6 +7471,7 @@ Packages in `/usr/local/lib/R/library':
 
 KernSmooth    Functions for kernel smoothing for Wand & Jones (1995)
 MASS          Main Package of Venables and Ripley's MASS
+Matrix        Sparse and Dense Matrix Classes and Methods
 base          The R Base package
 boot          Bootstrap R (S-Plus) Functions (Canty)
 class         Functions for Classification
@@ -7101,7 +7485,8 @@ graphics      The R Graphics Package
 grid          The Grid Graphics Package
 lattice       Lattice Graphics
 methods       Formal Methods and Classes
-mgcv          GAMs with GCV smoothness estimation and GAMMs by REML/PQ
+mgcv          GAMs with GCV/AIC/REML smoothness estimation and GAMMs
+              by PQL
 nlme          Linear and Nonlinear Mixed Effects Models
 nnet          Feed-forward Neural Networks and Multinomial Log-Linear
               Models
@@ -7372,7 +7757,7 @@ dir /opt/R/src/unix
 * Why are powers of negative numbers wrong?::  
 * How can I save the result of each iteration in a loop into a separate file?::  
 * Why are p-values not displayed when using lmer()?::  
-* Why are there unwanted lines between polygons in PDF output viewed in Adobe Reader?::  
+* Why are there unwanted borders::  
 * Why does backslash behave strangely inside strings?::  
 @end menu
 
@@ -8261,34 +8646,57 @@ for(i in 1:100) @{
 @}
 @end example
 
-@node Why are p-values not displayed when using lmer()?, Why are there unwanted lines between polygons in PDF output viewed in Adobe Reader?, How can I save the result of each iteration in a loop into a separate file?, R Miscellanea
+@node Why are p-values not displayed when using lmer()?, Why are there unwanted borders, How can I save the result of each iteration in a loop into a separate file?, R Miscellanea
 @section Why are @math{p}-values not displayed when using lmer()?
 
 Doug Bates has kindly provided an extensive response in a post to the 
 r-help list, which can be reviewed at
 @uref{https://stat.ethz.ch/pipermail/r-help/2006-May/094765.html}.
 
-@node Why are there unwanted lines between polygons in PDF output viewed in Adobe Reader?, Why does backslash behave strangely inside strings?, Why are p-values not displayed when using lmer()?, R Miscellanea
-@section Why are there unwanted lines between polygons in PDF output viewed in Adobe Reader?
+@node Why are there unwanted borders, Why does backslash behave strangely inside strings?, Why are p-values not displayed when using lmer()?, R Miscellanea
+@section Why are there unwanted borders, lines or grid-like artifacts when viewing a plot saved to a PS or PDF file?
 
-Output from @code{polygon()} (and other functions calling
-@code{polygon()}) with the argument @code{border=NA} or
-@code{border="transparent"} should suppress border lines between
-polygons for all graphics devices.
+This can occur when using functions such as @code{polygon()},
+@code{filled.contour()}, @code{image()} or other functions which may
+call these internally.  In the case of @code{polygon()}, you may observe
+unwanted borders between the polygons even when setting the
+@code{border} argument to @code{NA} or @code{"transparent"}.
 
-PDF output from R can be made in many ways, both directly, and through
-for example Postscript or Windows Metafiles converted to PDF in external
-software. In Adobe Reader, the default setting for line art, such as
-polygons, is to smooth, which produces the impression of thin borders.
-Adobe Reader does this both for PDF files written by R or through other
-software.
+The source of the problem is the PS/PDF viewer when the plot is
+anti-aliased.  The details for the solution will be different depending
+upon the viewer used, the operating system and may change over time.
+For some common viewers, consider the following:
 
-This is irritating, especially when using Adobe Reader for presentation.
-The unwanted effect can be removed by turning off smoothing for line
-art: use the `Edit | Preferences | Page Display | Smooth line art' menu
-in Adobe Reader 7.0.
+@ftable @asis
+@item Acrobat Reader (cross platform)
+There are options in Preferences to enable/disable text smoothing, image
+smoothing and line art smoothing.
+Disable line art smoothing.
+@item Preview (Mac OS X)
+There is an option in Preferences to enable/disable anti-aliasing of
+text and line art.
+Disable this option. 
+@item GSview (cross platform)
+There are settings for Text Alpha and Graphics Alpha.
+Change Graphics Alpha from 4 bits to 1 bit to disable graphic
+anti-aliasing.
+@item gv (Linux/Unix X)
+There is an option to enable/disable anti-aliasing.
+Disable this option.
+@item Evince (Linux/GNOME)
+There is not an option to disable anti-aliasing in this viewer.
+@item Okular (Linux/KDE)
+There is not an option in the GUI to enable/disable anti-aliasing.
+From a console command line, use:
+@smallexample
+$ kwriteconfig --file okularpartrc --group 'Dlg Performance' \
+               --key TextAntialias Disabled
+@end smallexample
+Then restart Okular.  Change the final word to @samp{Enabled} to restore
+the original setting.
+@end ftable
 
-@node Why does backslash behave strangely inside strings?,  , Why are there unwanted lines between polygons in PDF output viewed in Adobe Reader?, R Miscellanea
+@node Why does backslash behave strangely inside strings?,  , Why are there unwanted borders, R Miscellanea
 @section Why does backslash behave strangely inside strings?
 
 This question most often comes up in relation to file names (see
@@ -8540,7 +8948,8 @@ that might be expected to produce the bug but actually do not.  If you
 want to debug the problem and find exactly what caused it, that is
 wonderful.  You should still report the facts as well as any
 explanations or solutions.  Please include an example that reproduces
-the problem, preferably the simplest one you have found.
+(e.g., @url{http://en.wikipedia.org/wiki/Reproducibility}) the problem,
+preferably the simplest one you have found.
 
 Invoking R with the @option{--vanilla} option may help in isolating a
 bug.  This ensures that the site profile and saved data files are not

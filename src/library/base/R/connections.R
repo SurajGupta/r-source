@@ -18,7 +18,7 @@ stdin <- function() .Internal(stdin())
 stdout <- function() .Internal(stdout())
 stderr <- function() .Internal(stderr())
 
-readLines <- function(con = stdin(), n = -1, ok = TRUE, warn = TRUE,
+readLines <- function(con = stdin(), n = -1L, ok = TRUE, warn = TRUE,
                       encoding = "unknown")
 {
     if(is.character(con)) {
@@ -48,7 +48,7 @@ open.connection <- function(con, open = "r", blocking = TRUE, ...)
 
 isOpen <- function(con, rw = "")
 {
-    rw <- pmatch(rw, c("read", "write"), 0)
+    rw <- pmatch(rw, c("read", "write"), 0L)
     .Internal(isOpen(con, rw))
 }
 
@@ -119,7 +119,7 @@ seek <- function(con, ...)
 seek.connection <- function(con, where = NA, origin = "start", rw = "", ...)
 {
     origin <- pmatch(origin, c("start", "current", "end"))
-    rw <- pmatch(rw, c("read", "write"), 0)
+    rw <- pmatch(rw, c("read", "write"), 0L)
     if(is.na(origin))
         stop("'origin' must be one of 'start', 'current' or 'end'")
     .Internal(seek(con, as.double(where), origin, rw))
@@ -152,13 +152,13 @@ summary.connection <- function(object, ...)
 showConnections <- function(all = FALSE)
 {
     set <- getAllConnections()
-    if(!all) set <- set[set > 2]
-    ans <- matrix("", length(set), 7)
+    if(!all) set <- set[set > 2L]
+    ans <- matrix("", length(set), 7L)
     for(i in seq_along(set)) ans[i, ] <- unlist(summary.connection(set[i]))
     rownames(ans) <- set
     colnames(ans) <- c("description", "class", "mode", "text", "isopen",
                        "can read", "can write")
-    if(!all) ans[ans[, 5] == "opened", , drop = FALSE]
+    if(!all) ans[ans[, 5L] == "opened", , drop = FALSE]
     else ans[, , drop = FALSE]
 }
 
@@ -171,19 +171,19 @@ closeAllConnections <- function()
 {
     # first re-divert any diversion of stderr.
     i <- sink.number(type = "message")
-    if(i > 0) sink(stderr(), type = "message")
+    if(i > 0L) sink(stderr(), type = "message")
     # now unwind the sink diversion stack.
     n <- sink.number()
-    if(n > 0) for(i in 1:n) sink()
+    if(n > 0L) for(i in 1L:n) sink()
     # get all the open connections.
     set <- getAllConnections()
-    set <- set[set > 2]
+    set <- set[set > 2L]
     # and close all user connections.
     for(i in seq_along(set)) close(getConnection(set[i]))
     invisible()
 }
 
-readBin <- function(con, what, n = 1, size = NA_integer_, signed = TRUE,
+readBin <- function(con, what, n = 1L, size = NA_integer_, signed = TRUE,
                     endian = .Platform$endian)
 {
     if(is.character(con)) {
@@ -191,7 +191,7 @@ readBin <- function(con, what, n = 1, size = NA_integer_, signed = TRUE,
         on.exit(close(con))
     }
     swap <- endian != .Platform$endian
-    if(!is.character(what) || length(what) != 1
+    if(!is.character(what) || length(what) != 1L
     	|| !(what %in% c("numeric", "double", "integer", "int", "logical",
                          "complex", "character", "raw")))
         what <- typeof(what)

@@ -1,4 +1,4 @@
-### configure.ac					-*- Autoconf -*-
+	### configure.ac					-*- Autoconf -*-
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
@@ -415,9 +415,9 @@ AC_ARG_WITH([iconv],
 
 ## ICU
 AC_ARG_WITH([ICU],
-[AS_HELP_STRING([--with-ICU],[use ICU library @<:@no@:>@])],
+[AS_HELP_STRING([--with-ICU],[use ICU library @<:@yes@:>@])],
 [R_ARG_USE(ICU)],
-[use_ICU=no])
+[use_ICU=yes])
 
 
 ### ** Precious variables.
@@ -491,6 +491,8 @@ AC_ARG_VAR([r_arch],
 AC_ARG_VAR([DEFS], [C defines for use when compiling R])
 AC_ARG_VAR([JAVA_HOME],
            [Path to the root of the Java environment])
+AC_ARG_VAR([R_SHELL],
+           [shell to be used for shell scripts, including 'R'])
 
 if test -z "${r_arch}"; then
   R_ARCH=
@@ -561,6 +563,8 @@ AC_PROG_CC
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_CPP
 R_PROG_CPP_CPPFLAGS
+## see if the user set FFLAGS
+userFFLAGS=${FFLAGS}
 R_PROG_F77
 AC_PROG_CXX
 AC_PROG_CXXCPP
@@ -763,7 +767,7 @@ AC_CHECK_TYPES([intptr_t, uintptr_t], , , [#ifdef HAVE_INTTYPES_H
 
 ### *** C compiler.
 
-AC_C_BIGENDIAN
+R_BIGENDIAN
 AC_C_CONST
 R_C_INLINE
 AC_CHECK_SIZEOF(int)
@@ -805,7 +809,11 @@ R_PROG_CXX_MAKEFRAG
 
 R_PROG_OBJC_MAKEFRAG
 R_PROG_OBJC_RUNTIME
-R_OBJC_FOUNDATION
+case "${host_os}" in
+  darwin*)
+    R_OBJC_FOUNDATION
+  ;;
+esac
 
 ### ** Platform-specific overrides for the C, Fortran 77 and C++ compilers.
 
@@ -950,9 +958,31 @@ case "${host_os}" in
         ;;
     esac
     case  "${F77}" in
+      ## gfortran: At least for 4.3.x -O2 gives faulty code
+      gfortran*)
+ 	if test "x$userFFLAGS" = x; then
+          if test $ac_cv_prog_f77_g = yes; then
+	    case "${host_cpu}" in
+	      x86_64)
+	        FFLAGS="-g -O"
+		;;
+	      *)
+		;;
+	    esac
+          else
+	    case "${host_cpu}" in
+	      x86_64)
+	        FFLAGS="-O"
+		;;
+	      *)
+		;;
+	    esac
+          fi
+        fi
+        ;;
       ## Intel compilers
       *ifc|*ifort)
-	if test "$ac_test_FFLAGS" != set; then
+	if test "x$userFFLAGS" = x; then
           if test $ac_cv_prog_f77_g = yes; then
 	    case "${host_cpu}" in
 	      x86_64)
@@ -1176,10 +1206,7 @@ case "${host_os}" in
     AC_MSG_ERROR([AIX prior to 4.2 is not supported])
     ;;
   aix*)
-    ## now use run-time linking
-    if test "${want_R_shlib}" != yes; then
-      use_exportfiles=yes
-    fi
+    use_exportfiles=yes
     ## All AIX code is PIC.
     cpicflags=
     cxxpicflags=
@@ -1198,18 +1225,14 @@ case "${host_os}" in
       main_ldflags="${wl}-brtl ${wl}-bexpall -lc"
     fi
     shlib_ldflags="${wl}-brtl ${wl}-G ${wl}-bexpall ${wl}-bnoentry -lc"
-    if test "${want_R_shlib}" != yes; then
-      ## symbol of an archive(RLIBS and EXTRA_LIBS) is thrown away
-      ## unless export it in a main link when unused.
-      R_SH_VAR_ADD(main_ldflags, [-Wl,-bE:\$(top_builddir)/etc/R.exp])
-      ## Import symbol is IMPid = '.'
-      ## no import symbol is IMPid = '..' (run-time link style)
-      ## R_SH_VAR_ADD(LIBR, [-Wl,-bI:\$(R_HOME)/etc/R.exp])
-    fi
-#    main_ldflags="${wl}-bdynamic ${wl}-bE:\$(top_builddir)/etc/R.exp ${wl}-bM:SRE"
-#    shlib_ldflags="${wl}-bM:SRE ${wl}-H512 ${wl}-T512 ${wl}-bnoentry ${wl}-bexpall ${wl}-bI:\$(R_HOME)/etc/R.exp"
     SHLIB_LIBADD="\$(LIBM)"
     shlib_cxxldflags="${shlib_ldflags}"
+    if test "${GCC}" = yes; then
+      shlib_ldflags="-shared ${shlib_ldflags}"
+    fi
+    if test "${GXX}" = yes; then
+      shlib_cxxldflags="-shared ${shlib_cxxldflags}"
+    fi 
     ;;
   cygwin*)
     ## All Windows code is PIC
@@ -1952,28 +1975,22 @@ R_MBCS
 
 ## support for ICU
 if test "$use_ICU" = yes ; then
-  ## FIXME: later, warn not error
-  AC_CHECK_LIB(icui18n, ucol_open_3_8, [], [
-    AC_CHECK_LIB(icui18n, ucol_open_3_6, [], [
-      AC_CHECK_LIB(icui18n, ucol_open_3_4, [], 
-        [AC_MSG_ERROR([library 'icui18n' is required for ICU])])
-    ])
-  ])
-  AC_CHECK_LIB(icuuc, ucnv_fromUChars_3_8, [], [
-    AC_CHECK_LIB(icuuc, ucnv_fromUChars_3_6, [], [
-      AC_CHECK_LIB(icuuc, ucnv_fromUChars_3_4, [], 
-        [AC_MSG_ERROR([library 'icuuc' is required for ICU])])
-    ])
-  ])
-  if test "$use_ICU" = yes ; then
-    AC_CHECK_HEADER(unicode/utypes.h, [], 
-      [AC_MSG_ERROR([header file <unicode/utypes.h> is required for ICU])])
+  R_ICU
+  if test "$use_ICU" = no ; then
+    case "${host_os}" in
+      ## darwin has ICU 3.2 in 10.4, 3.6 in 10.5
+      darwin*)
+        AC_CHECK_LIB(icucore, ucol_open, [],
+            [AC_MSG_ERROR([library 'icucore' is required for ICU])])
+        AC_DEFINE(USE_ICU_APPLE, 1, [Define to use Apple's ICU.])
+        AC_DEFINE(USE_ICU, 1, [Define to use ICU for collation.])
+	use_ICU=yes
+      ;;
+    esac
   fi
 fi
-if test "$use_ICU" = yes ; then
-  AC_DEFINE_UNQUOTED([USE_ICU], 1, [Define to use ICU for collation.])
-fi
 AC_SUBST(USE_ICU)
+AC_SUBST(USE_ICU_APPLE)
 
 
 ## X11.
@@ -1992,12 +2009,21 @@ if test "x${want_cairo}" = "xyes"; then
 R_PANGO_CAIRO
 fi
 
-## check for CoreFoundation framework (chances are much higher
-## that we can build AQUA if this one is present)
-R_CHECK_FRAMEWORK(CFStringGetSystemEncoding, CoreFoundation)
 
 ## Aqua
-R_AQUA
+case "${host_os}" in
+  darwin*)
+    ## check for CoreFoundation framework (chances are much higher
+    ## that we can build AQUA if this one is present)
+    R_CHECK_FRAMEWORK(CFStringGetSystemEncoding, CoreFoundation)
+    R_AQUA
+  ;;
+  *)
+    use_aqua=no
+  ;;
+esac
+## Now used only in etc/Renviron to set the personal library,
+## and in grDevices to select building quartz()
 AM_CONDITIONAL(BUILD_AQUA, [test "x${use_aqua}" = xyes])
 AC_SUBST(use_aqua)
 
@@ -2113,6 +2139,7 @@ AC_SUBST(R_BATCHSAVE)
 R_JAVA
 
 ## F90/F95 support
+userFCFLAGS=${FCFLAGS}
 AC_PROG_FC()
 AC_LANG_PUSH(Fortran)
 AC_FC_SRCEXT(f90, [dummy=1], [dummy=0])
@@ -2122,6 +2149,7 @@ AC_LANG_POP()
 : ${SHLIB_FCLDFLAGS="${SHLIB_LDFLAGS}"}
 AC_SUBST(SHLIB_FCLD)
 AC_SUBST(SHLIB_FCLDFLAGS)
+
 
 ## Look for FCPICFLAGS
 ## Debian in their wisdom have f95 as a link to gfortran, so
@@ -2149,6 +2177,27 @@ case "${host_os}" in
     ;;
   linux*)
     case  "${FC}" in
+      gfortran)
+ 	if test "x$userFCFLAGS" = x; then
+          if test $ac_cv_prog_fc_g = yes; then
+	    case "${host_cpu}" in
+	      x86_64)
+	        FCFLAGS="-g -O"
+		;;
+	      *)
+		;;
+	    esac
+          else
+	    case "${host_cpu}" in
+	      x86_64)
+	        FCFLAGS="-O"
+		;;
+	      *)
+		;;
+	    esac
+          fi
+        fi
+        ;;
       ## Intel compilers: probably get identified as GNU, but make sure.
       *ifc|*ifort)
         fcpicflags="-fpic"
@@ -2319,24 +2368,35 @@ case "${host_os}" in
 esac
 AC_SUBST(OSF_SH_BUG)
 
+### shell for use in scripts: we allow R_SHELL to set the script,
+### since some AIX systems have zsh as sh.
+: ${R_SHELL=${SHELL}}
+AC_SUBST(R_SHELL)
+AC_MSG_RESULT([using as R_SHELL for scripts ... ${R_SHELL}])
+
 
 ### * Win32 overrides
 case "${host_os}" in
   mingw*)
-    AC_DEFINE(HAVE_ICONV, 1)
-    AC_DEFINE(HAVE_ICONVLIST, 1)
-    AC_DEFINE(HAVE_ICONV_H, 1)
-    AC_DEFINE(HAVE_INTERNET, 1)
-    AC_DEFINE(HAVE_JPEG, 1)
-    AC_DEFINE(HAVE_PNG, 1)
-    AC_DEFINE(HAVE_POSIX_SETJMP, 1)
-    AC_DEFINE(HAVE_SOCKETS, 1)
-    AC_DEFINE(HAVE_TCLTK, 1)
-    AC_DEFINE(HAVE_TIMES, 1)
-    AC_DEFINE(ICONV_LATIN1, 1)
+    AC_DEFINE(HAVE_ICONV, 1, [Define if you have the iconv() function.])
+    AC_DEFINE(HAVE_ICONVLIST, 1, [Define if you have the `iconvlist' function.])
+    AC_DEFINE(HAVE_ICONV_H, 1, [Define to 1 if you have the <iconv.h> header file.])
+    AC_DEFINE(HAVE_INTERNET, 1, [Define if you have support for ftp/http
+                                 access.])
+    AC_DEFINE(HAVE_JPEG, 1,[Define if you have the JPEG headers and libraries.])
+    AC_DEFINE(HAVE_PNG, 1, [Define if you have the PNG headers and libraries.])
+    AC_DEFINE(HAVE_POSIX_SETJMP, 1, [Define if you have POSIX.1 compatible
+                                     sigsetjmp/siglongjmp.])
+    AC_DEFINE(HAVE_SOCKETS, 1, [Define if you have support for sockets.])
+    AC_DEFINE(HAVE_TCLTK, 1, [Define if you have the Tcl/Tk headers and 
+                              libraries and want Tcl/Tk support to be built.] )
+    AC_DEFINE(HAVE_TIMES, 1, [Define to 1 if you have the `times' function.])
+    AC_DEFINE(ICONV_LATIN1, 1, [Define if `iconv' accepts "UTF-8", "latin1" 
+                                and "UCS-*".])
     want_R_profiling=yes
-    AC_DEFINE(R_PROFILING, 1)
-    AC_DEFINE(SUPPORT_LIBXML, 1)
+    AC_DEFINE(R_PROFILING, 1, [Define this to enable R-level profiling.])
+    AC_DEFINE(SUPPORT_LIBXML, 1, [Define if you provide support for the libxml
+                                  ftp/http functions.])
     ;;
 esac
 
@@ -2412,16 +2472,17 @@ AC_CONFIG_FILES(
   src/nmath/Makefile
   src/nmath/standalone/Makefile
   src/scripts/Makefile
-  src/scripts/COMPILE
-  src/scripts/INSTALL
-  src/scripts/REMOVE
   src/scripts/R.sh
+  src/scripts/Rcmd
   src/scripts/Rdconv
+  src/scripts/Rdiff
   src/scripts/Rprof
-  src/scripts/SHLIB
   src/scripts/Sd2Rd
   src/scripts/build
   src/scripts/check
+  src/scripts/f77_f2c
+  src/scripts/mkinstalldirs
+  src/scripts/pager
   src/unix/Makefile
   tests/Makefile
   tests/Embedding/Makefile
@@ -2594,14 +2655,20 @@ fi
 if test -n "${warn_perl5}"; then
   AC_MSG_WARN([${warn_perl5}])
 fi
-if test -n "${warn_dvi}"; then
-  AC_MSG_WARN([${warn_dvi}])
+if test -n "${warn_dvi1}"; then
+  AC_MSG_WARN([${warn_dvi1}])
+fi
+if test -n "${warn_dvi2}"; then
+  AC_MSG_WARN([${warn_dvi2}])
 fi
 if test -n "${warn_info}"; then
   AC_MSG_WARN([${warn_info}])
 fi
-if test -n "${warn_pdf}"; then
-  AC_MSG_WARN([${warn_pdf}])
+if test -n "${warn_pdf1}"; then
+  AC_MSG_WARN([${warn_pdf1}])
+fi
+if test -n "${warn_pdf2}"; then
+  AC_MSG_WARN([${warn_pdf2}])
 fi
 if test -n "${warn_pager}"; then
   AC_MSG_WARN([${warn_pager}])

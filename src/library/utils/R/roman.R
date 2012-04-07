@@ -22,7 +22,7 @@ function(x)
     else if(is.character(x)) {
         ## Let's be nice: either strings that are *all* arabics, or
         ## (hopefully, for the time being) all romans.
-        x <- if(all(regexpr("^[[:digit:]]+$", x) > -1L))
+        x <- if(all(grepl("^[[:digit:]]+$", x)))
             as.integer(x)
         else
             .roman2numeric(x)
@@ -60,7 +60,7 @@ function(x) {
     romans <- c("M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX",
                 "V", "IV", "I")
     numbers <- c(1000L, 900L, 500L, 400L, 100L, 90L, 50L, 40L, 10L, 9L,
-                 5L, 4L, 1L) 
+                 5L, 4L, 1L)
     n2r <- function(z) {
         y <- character()
         for(i in seq_along(romans)) {
@@ -104,7 +104,7 @@ function(x)
         y <- gsub("XL", "XXXX", y)
         y <- gsub("IX", "VIIII", y)
         y <- gsub("IV", "IIII", y)
-        ok <- (regexpr("^M{,3}D?C{,4}L?X{,4}V?I{,4}$", y) > -1L)
+        ok <- grepl("^M{,3}D?C{,4}L?X{,4}V?I{,4}$", y)
         if(any(!ok)) {
             warning(gettextf("Invalid roman numeral(s): %s",
                              paste(x[!ind][!ok], collapse = " ")))

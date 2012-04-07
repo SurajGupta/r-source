@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-06-05 19:48\n"
-"PO-Revision-Date: 2008-09-30 18:56+0100\n"
+"POT-Creation-Date: 2009-03-28 17:26\n"
+"PO-Revision-Date: 2009-03-29 21:34+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -265,9 +265,6 @@ msgstr "arguments incorrects dans quartzFonts (il faut des noms de police)"
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "arguments incorrects dans quartzFonts (les arguments doivent être nommés)"
 
-msgid "invalid value for 'antialias'"
-msgstr "valeur incorrecte pour 'antialias'"
-
 msgid "invalid 'filename'"
 msgstr "argument 'filename' incorrect"
 
@@ -288,6 +285,12 @@ msgstr "valeur incorrecte pour 'rescale'"
 
 msgid "can only bring windows devices to the front"
 msgstr "seules les fenêtres des périphériques graphiques peuvent être amenées au premier plan"
+
+msgid "'type' not applicable to the R console"
+msgstr "'type' pas d'application dans la console R"
+
+msgid "can only manipulate windows devices"
+msgstr "il n'est possible de manipuler que des périphériques 'windows'"
 
 msgid "can only copy from 'windows' devices"
 msgstr "il n'est possible de copier qu'à partir d'un périphérique 'windows'"
@@ -328,4 +331,7 @@ msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "%d valeur z <= 0 est ignorée pour le graphe logarithmique"
 msgstr[1] "%d valeurs z <= 0 sont ignorées pour le graphe logarithmique"
+
+#~ msgid "invalid value for 'antialias'"
+#~ msgstr "valeur incorrecte pour 'antialias'"
 

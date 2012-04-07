@@ -1,70 +1,41 @@
-# default target builds indices
-DOS=# -dosnames   # for file-name mapping
-PERL=R_OSTYPE=windows perl
-CAT=cat
-CP=cp
-RM=rm
-MKDIR=mkdir
+## Only ever called from src/library/Makefile
 
-R_HOME = ../../..
-RHOME=$(shell perl ../pwd.pl ../../..)
-PKGDIR=../../library
-RLIB=$(RHOME)/library
-CHM=
+PERL = PERL5LIB=$(RHOME)/share/perl R_OSTYPE=windows perl
+CAT = cat
+CP = cp
+RM = rm
+MKDIR = mkdir
 
-index-%:
+## We pass RHOME in
+PKGDIR = ../../library
+RLIB = $(RHOME)/library
+
+BUILD_HELP=R_HOME=$(RHOME) $(PERL) $(RHOME)/share/perl/build-help.pl -os=windows
+
+## HELPTYPES is set in src/library/Makefile
+help-%:
 	@if test -d $(PKGDIR)/$*/man ; then \
-	  PERL5LIB=$(RHOME)/share/perl $(PERL) \
-	    $(R_HOME)/share/perl/build-help-windows.pl ${DOS} \
-	    -index $(PKGDIR)/$* $(RLIB) '$(DPKG)' $* ; \
+	   $(BUILD_HELP) $(HELPTYPES) $(PKGDIR)/$* $(RLIB) $(RLIB)/$* $* ; \
 	fi
 
-pkg-% help-%:
-	@if test -d $(PKGDIR)/$*/man ; then \
-	  PERL5LIB=$(RHOME)/share/perl $(PERL) \
-	    $(R_HOME)/share/perl/build-help-windows.pl ${DOS} \
-	    $(HELPTYPES) $(PKGDIR)/$* $(RLIB) '$(DPKG)' $* ; \
-	fi
-
-pkgfake-%:
-	@if test -d $(PKGDIR)/$*/man ; then \
-	  PERL5LIB=$(RHOME)/share/perl $(PERL) \
-	    $(R_HOME)/share/perl/build-help-windows.pl ${DOS} \
-	    -txt -latex $(PKGDIR)/$* $(RLIB) '$(DPKG)' $* ; \
-	fi
-
-chm-%:
+chm-%: ziponlyhelp-%
 	@if test -d $(PKGDIR)/$*/man ; then \
 	  if ! test -d $(PKGDIR)/$*/chm ; then \
-	    PERL5LIB=$(RHOME)/share/perl $(PERL) \
-	    $(R_HOME)/share/perl/build-help-windows.pl ${DOS} \
-	    -chm $(PKGDIR)/$* $(RLIB) '$(DPKG)' $* ; \
+	    $(BUILD_HELP) -chm $(PKGDIR)/$* $(RLIB) '$(DPKG)' $* ; \
 	  fi; \
-	  $(MAKE)  --no-print-directory -C $(PKGDIR)/$*/chm \
+	  $(MAKE) --no-print-directory -C $(PKGDIR)/$*/chm \
 	    -f $(RHOME)/src/gnuwin32/help/Makefile $*.chm ; \
 	  if test -f $(PKGDIR)/$*/chm/$*.chm ; then \
-	    $(MKDIR) -p $(DPKG)/chtml ;\
-	    $(CP) $(PKGDIR)/$*/chm/$*.chm $(DPKG)/chtml ; \
+	    $(MKDIR) -p $(RLIB)/$*/chtml ;\
+	    $(CP) $(PKGDIR)/$*/chm/$*.chm $(RLIB)/$*/chtml ; \
 	  else \
 	    echo CHM compile failed:  HTML Help Workshop not installed? ; \
 	  fi; \
 	fi
 
-ziphelp-%:
-	@$(MAKE) --no-print-directory -C $(RLIB)/$* \
-	  -f $(RHOME)/src/gnuwin32/help/Makefile ZIPFLAGS=jqX  PKG=$* zipit
-
 ziponlyhelp-%:
 	@$(MAKE) --no-print-directory -C $(RLIB)/$* \
 	  -f $(RHOME)/src/gnuwin32/help/Makefile ZIPFLAGS=jqmX PKG=$* zipit
-
-
-latex-%:
-	@$(MAKE) --no-print-directory -C $(RLIB)/$* \
-	-f $(RHOME)/src/gnuwin32/help/Makefile PKG=$* unzipit
-	PERL5LIB=$(RHOME)/share/perl $(PERL) \
-	  $(R_HOME)/share/perl/build-help-windows.pl ${DOS} \
-	  -latex $(PKGDIR)/$* $(RLIB)
 
 clean:
 	$(RM) -fr *~ *.o *.obj *.dll *.def *.a
@@ -83,12 +54,10 @@ logo.jpg: $(RHOME)/doc/html/logo.jpg
 
 # following are designed to be run from the library/pkg directory:
 
+## FIXME combine these?
 zipit: 
 	-@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/help/Makefile help/Rhelp.zip
 	-@$(MAKE) --no-print-directory -f $(RHOME)/src/gnuwin32/help/Makefile zipup
-unzipit:
-	-@$(MAKE) --no-print-directory -C latex \
-	  -f $(RHOME)/src/gnuwin32/help/Makefile uz-Rhelp
 
 help/Rhelp.zip: $(wildcard ../../src/library/$(PKG)/man/*.Rd \
 ../../src/library/$(PKG)/man/windows/*.Rd)

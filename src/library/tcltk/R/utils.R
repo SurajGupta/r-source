@@ -75,7 +75,7 @@ tk_select.list <-
         tkpack(box, side="left", fill="both")
     }
     preselect <- match(preselect, list)
-    ans.select_list <- character(0) # avoid name conflicts
+    ans.select_list <- character(0L) # avoid name conflicts
     for(i in preselect[preselect > 0])
         tkselection.set(box, i - 1) # 0-based
 
@@ -165,4 +165,43 @@ close.tkProgressBar <- function(con, ...)
 {
     con$kill()
     invisible(NULL)
+}
+
+tk_choose.files <-
+    function(default = '', caption = 'Select files', multi = TRUE,
+             filters = NULL, index = 1)
+{
+    args <- list("tk_getOpenFile", title = caption, multiple = multi)
+    if(nzchar(default)) args <- c(args, initialdir = dirname(default),
+                                   initialfile = basename(default))
+    if(!is.null(filters)) {
+        if(!is.character(filters) || length(dim(filters)) != 2 || ncol(filters) != 2)
+            stop("'filters' must be a 2-column character matrix")
+        f <- filters
+        f[] <- paste("{", filters, "}", sep="")
+        ff <- apply(f, 1, paste, collapse = " ")
+        fff <- paste("{", ff, "}", sep="")
+        args <- c(args, filetypes = paste(fff, collapse = " "))
+    }
+    res <- tclvalue(do.call(tcl, args))
+    if(nzchar(res)) strsplit(res, " ", fixed = TRUE)[[1]] else character()
+}
+
+
+tk_choose.dir <- function(default = '', caption = 'Select directory')
+{
+    res <- tclvalue(tcl("tk_chooseDirectory", initialdir = default, title = caption))
+    if(nzchar(res)) res else NA_character_
+}
+
+tk_messageBox <-
+    function(type = c("ok", "okcancel", "yesno", "yesnocancel",
+                      "retrycancel", "aburtretrycancel"),
+             message, caption = "", default = "", ...)
+{
+    type <- match.arg(type)
+    args <- list("tk_messageBox", type=type, message=message,
+                 title=caption, ...)
+    if(nzchar(default)) args <- c(args, default=default)
+    tclvalue(do.call("tcl", args))
 }

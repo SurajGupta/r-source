@@ -20,22 +20,22 @@ menu <- function(choices, graphics = FALSE, title = "")
     if(graphics) {
         if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA") {
             res <- select.list(choices, multiple=FALSE, title=title)
-            return(match(res, choices, nomatch = 0))
+            return(match(res, choices, nomatch = 0L))
         } else if(.Platform$OS.type == "unix"
                 && capabilities("tcltk") && capabilities("X11")
                 && nzchar(Sys.getenv("DISPLAY"))) {
             res <- tcltk::tk_select.list(choices, multiple=FALSE, title=title)
-            return(match(res, choices, nomatch = 0))
+            return(match(res, choices, nomatch = 0L))
         }
     }
     nc <- length(choices)
-    if(length(title) && nzchar(title[1])) cat(title[1], "\n")
+    if(length(title) && nzchar(title[1L])) cat(title[1L], "\n")
     op <- paste(format(seq_len(nc)), ": ", choices, sep="")
-    if(nc > 10) {
+    if(nc > 10L) {
         fop <- format(op)
-        nw <- nchar(fop[1], "w") + 2
+        nw <- nchar(fop[1L], "w") + 2
         ncol <- getOption("width") %/% nw  # might be 0
-        if(ncol > 1)
+        if(ncol > 1L)
             op <- paste(fop, c(rep("  ", ncol - 1), "\n"), sep="", collapse="")
         cat("", op, "", sep="\n")
     } else cat("", op, "", sep="\n")

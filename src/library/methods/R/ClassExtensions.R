@@ -23,7 +23,11 @@
 			    simple = "logical", by = "character",
 			    dataPart = "logical", distance = "numeric"),
 	     where = where)
-    assign(".SealedClasses", c(get(".SealedClasses", where), "SClassExtension"),
+    ## a class for conditional extensions, so they will not break the hierarchical
+    ## structure.
+    setClass("conditionalExtension", contains = "SClassExtension")
+    assign(".SealedClasses", c(get(".SealedClasses", where), "SClassExtension",
+                               "conditionalExtension"),
 	   where)
 }
 
@@ -74,7 +78,7 @@ S3Part <- function(object, strictS3 = FALSE, S3Class) {
     if(oldClassCase) {
         if(defltS3Class)
             S3Class <- .S3Class(object)
-        keepSlots <- slotNames(S3Class[[1]])
+        keepSlots <- slotNames(S3Class[[1L]])
      }
     else {
         if(all(is.na(match(extends(classDef), .BasicClasses))))
@@ -86,7 +90,7 @@ S3Part <- function(object, strictS3 = FALSE, S3Class) {
             keepSlots <- character()
         }
         else
-          keepSlots <- slotNames(S3Class[[1]])
+          keepSlots <- slotNames(S3Class[[1L]])
     }
     if(!(defltS3Class || extends(classDef, S3Class)))
       stop(gettextf("The S3Class argument must be a superclass of \"%s\":  not true of class \"%s\"", class(object), S3Class), domain = NA)
@@ -101,15 +105,15 @@ S3Part <- function(object, strictS3 = FALSE, S3Class) {
         class(object) <- S3Class
     }
     else
-      class(object) <- S3Class[[1]]
+      class(object) <- S3Class[[1L]]
     object
 }
 
 "S3Part<-" <- function(object, strictS3 = FALSE, needClass = .S3Class(object) , value) {
     S3Class <- .S3Class(value)
-    def <- getClassDef(S3Class[[1]])
-    if(is.null(def) || !extends(def, needClass[[1]]))
-      stop(gettextf("Replacement value must extend class \"%s\", got  \"%s\"", needClass, S3Class[[1]]), domain = NA)
+    def <- getClassDef(S3Class[[1L]])
+    if(is.null(def) || !extends(def, needClass[[1L]]))
+      stop(gettextf("Replacement value must extend class \"%s\", got  \"%s\"", needClass, S3Class[[1L]]), domain = NA)
     slots <- slotNames(class(object))
     if(!strictS3) {
         fromValue <- names(attributes(value))
@@ -137,7 +141,7 @@ S3Part <- function(object, strictS3 = FALSE, S3Class) {
         from
     }
     else
-      stop("Replacement value must be of class \"", CLASS, "\", got one of class \"", class(value)[[1]], "\"")
+      stop("Replacement value must be of class \"", CLASS, "\", got one of class \"", class(value)[[1L]], "\"")
 }
 
 .S3coerce <- function(from, to) {
@@ -154,7 +158,7 @@ S3Part <- function(object, strictS3 = FALSE, S3Class) {
     if(is.null(value)) ## not possible with methods package?
         character()
     else
-        value[-match("class", value, 0)]
+        value[-match("class", value, 0L)]
 }
 
 makeExtends <- function(Class, to,
@@ -192,7 +196,7 @@ makeExtends <- function(Class, to,
                 substitute({
                     if(strict) S3Part(from, S3Class = S3CLASS)
                     else from
-                }, list(S3CLASS =  to)) 
+                }, list(S3CLASS =  to))
         }
         else if(!isVirtualClass(classDef2))
             body(coerce, envir = packageEnv) <-
@@ -213,10 +217,14 @@ makeExtends <- function(Class, to,
     }
     else stop(gettextf("the 'coerce' argument to 'setIs' should be a function of one argument, got an object of class \"%s\"",
                        class(coerce)), domain = NA)
-    if(is.null(test))
+    if(is.null(test)) {
         test <- .simpleExtTest
-    else
+        extClass <- "SClassExtension"
+    }
+    else {
         test <- .ChangeFormals(test, .simpleExtTest, "'test' argument to setIs ")
+        extClass <- "conditionalExtension"
+    }
     if(is.null(replace)) {
         if(dataPart) {
             extn <- elNamed(classDef2@contains, dataPartClass)
@@ -301,7 +309,7 @@ makeExtends <- function(Class, to,
         stop(gettextf("the 'replace' argument to setIs() should be a function of 2 or 3 arguments, got an object of class \"%s\"",
                       class(replace)), domain = NA)
 
-    new("SClassExtension", subClass = Class, superClass = to, package = package,
+    new(extClass, subClass = Class, superClass = to, package = package,
 	coerce = coerce, test = test, replace = replace, simple = simple,
 	by = by, dataPart = dataPart, distance = distance)
 }
@@ -337,7 +345,7 @@ makeExtends <- function(Class, to,
 .S4inherits <- function(x, what, which) {
     superClasses <- extends(getClass(class(x)))
     if(which)
-       match(what, superClasses, 0)
+       match(what, superClasses, 0L)
     else
       what %in% superClasses
 }
@@ -347,7 +355,7 @@ makeExtends <- function(Class, to,
 .S3Extends <- function(ClassDef, exts, where) {
     superClasses <- names(exts)
     S3Class <- attr(ClassDef@prototype, ".S3Class")
-    need <- S3Class[[1]]
+    need <- S3Class[[1L]]
     for(i in seq_along(exts)) {
         exti <- exts[[i]]
         if(exti@distance == 1)
@@ -361,7 +369,7 @@ makeExtends <- function(Class, to,
         body(coerce, environment(coerce))<- body(.S3coerce)
         exti@coerce <- coerce
         replace <- exti@replace
-        pos <- match(what, S3Class, 0)
+        pos <- match(what, S3Class, 0L)
         if(pos > 1) # not the complete S3 class, probably an error
           body(replace, environment(replace)) <-
             substituteDirect(body(.S3replace2), list(CLASS = what, NEED = need))

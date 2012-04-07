@@ -1,9 +1,10 @@
 % File src/library/grDevices/man/unix/x11.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{x11}
+\Rdversion{1.1}
 \alias{x11}
 \alias{X11}
 \alias{X11.options}
@@ -13,7 +14,7 @@
   \code{X11} starts a graphics device driver for the X Window System
   (version 11).  This can only be done on machines/accounts that have
   access to an X server.
-  
+
   \code{x11} is recognized as a synonym for \code{X11}.
 }
 \usage{
@@ -71,7 +72,7 @@ X11.options(\dots, reset = FALSE)
   The defaults for all of the arguments of \code{X11} are set by
   \code{X11.options}: the \sQuote{Arguments} section gives the
   \sQuote{factory-fresh} defaults.
-  
+
   The initial size and position are only hints, and may not be acted on
   by the window manager.  Also, some systems (especially laptops) are
   set up to appear to have a screen of a different size to the physical
@@ -118,7 +119,7 @@ X11.options(\dots, reset = FALSE)
   that it will choose a font in the wrong encoding or which does not
   contain glyphs for your language (particularly common in
   \code{iso10646-1} fonts).
-  
+
   The \code{fonts} argument is a two-element character vector, and the
   first element will be crucial in successfully using
   non-Western-European fonts.  Settings that have proved useful include
@@ -144,7 +145,7 @@ X11.options(\dots, reset = FALSE)
   \code{cairo} (on Mac OS X and perhaps elsewhere).  Both make use of
   \code{fontconfig} (\url{http://wwww.fontconfig.org}) to select fonts
   and so the results depend on the fonts installed on the system running
-  \R -- setting the environmnent variable \env{FC\_DEBUG} to 1 allows
+  \R -- setting the environmnent variable \env{FC_DEBUG} to 1 allows
   some tracing of the selection process.
 
   This works best when high-quality scalable fonts are installed,

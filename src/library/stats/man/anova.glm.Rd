@@ -67,7 +67,7 @@
   Hastie, T. J. and Pregibon, D. (1992)
   \emph{Generalized linear models.}
   Chapter 6 of \emph{Statistical Models in S}
-  eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
+  eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{glm}}, \code{\link{anova}}.
@@ -77,7 +77,7 @@
   time respecting their hierarchy.
 }
 \examples{
-## --- Continuing the Example from  '?glm':%\code{\link{glm}}:
+## --- Continuing the Example from  '?glm':
 \dontshow{require(utils)
 example("glm", echo = FALSE)}
 anova(glm.D93)

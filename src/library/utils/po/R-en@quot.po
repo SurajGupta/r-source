@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-10-06 07:30\n"
-"PO-Revision-Date: 2008-10-06 07:30\n"
+"POT-Creation-Date: 2009-03-17 19:28\n"
+"PO-Revision-Date: 2009-03-17 19:28\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -541,6 +541,9 @@ msgstr "bundle ‘%s’ is incompletely installed"
 msgid "bundle '%s' has extra contents %s"
 msgstr "bundle ‘%s’ has extra contents %s"
 
+msgid "read.dcf() error on file '%s'"
+msgstr "read.dcf() error on file ‘%s’"
+
 msgid "'priority' must be character or NULL"
 msgstr "‘priority’ must be character or NULL"
 
@@ -586,6 +589,13 @@ msgstr "every package depends on at least one other"
 msgid "packages %s are mutually dependent"
 msgstr "packages %s are mutually dependent"
 
+msgid ""
+"Do not know which element of 'lib' to install dependencies into\n"
+"skipping dependencies"
+msgstr ""
+"Do not know which element of ‘lib’ to install dependencies into\n"
+"skipping dependencies"
+
 msgid "no packages were specified"
 msgstr "no packages were specified"
 
@@ -610,6 +620,9 @@ msgstr "unable to install packages"
 msgid "unable to create"
 msgstr "unable to create"
 
+msgid "inferring 'repos = NULL' from the file name"
+msgstr "inferring ‘repos = NULL’ from the file name"
+
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "cannot install MacOS X binary packages on Windows"
 
@@ -633,11 +646,11 @@ msgid "unable to create temporary directory '%s'"
 msgstr "unable to create temporary directory ‘%s’"
 
 msgid ""
-"Do not know which element of 'lib' to install dependencies into\n"
-"skipping dependencies"
+"installation of one of more packages failed,\n"
+"  probably %s"
 msgstr ""
-"Do not know which element of ‘lib’ to install dependencies into\n"
-"skipping dependencies"
+"installation of one of more packages failed,\n"
+"  probably %s"
 
 msgid ""
 "The downloaded packages are in\n"
@@ -791,6 +804,12 @@ msgstr "cannot coerce ‘x’ to roman"
 msgid "Invalid roman numeral(s): %s"
 msgstr "Invalid roman numeral(s): %s"
 
+msgid "length mismatch: bug in code!"
+msgstr "length mismatch: bug in code!"
+
+msgid "Processing file"
+msgstr "Processing file"
+
 msgid "no valid packages were specified"
 msgstr "no valid packages were specified"
 
@@ -891,6 +910,12 @@ msgstr "Using non-linked HTML file: hyperlinks may be incorrect"
 msgid "options(\"browser\") not set"
 msgstr "options(“browser”) not set"
 
+msgid "'latexcmd' is empty"
+msgstr "‘latexcmd’ is empty"
+
+msgid "'dvipscmd' is empty"
+msgstr "‘dvipscmd’ is empty"
+
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "invalid browser name, check options(“browser”)."
 
@@ -929,6 +954,24 @@ msgstr "cannot create HTML search index"
 msgid "Updating HTML index of packages in '.Library'"
 msgstr "Updating HTML index of packages in ‘.Library’"
 
+msgid "'tar' returned non-zero exit code %d"
+msgstr "‘tar’ returned non-zero exit code %d"
+
+msgid "package '%s' successfully unpacked and MD5 sums checked"
+msgstr "package ‘%s’ successfully unpacked and MD5 sums checked"
+
+msgid "malformed bundle DESCRIPTION file, no Contains field"
+msgstr "malformed bundle DESCRIPTION file, no Contains field"
+
+msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+msgstr "bundle ‘%s’ successfully unpacked and MD5 sums checked"
+
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr "unable to move temporary installation ‘%s’ to ‘%s’"
+
+msgid "cannot remove prior installation of package"
+msgstr "cannot remove prior installation of package"
+
 msgid "'memory.size()' is Windows-specific"
 msgstr "‘memory.size()’ is Windows-specific"
 
@@ -947,20 +990,8 @@ msgstr "fixing URLs in non-standard libraries"
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr "If nothing happens, you should open ‘%s’ yourself"
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr "package ‘%s’ successfully unpacked and MD5 sums checked"
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr "malformed bundle DESCRIPTION file, no Contains field"
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr "bundle ‘%s’ successfully unpacked and MD5 sums checked"
-
 msgid "failed to create '%s'"
 msgstr "failed to create ‘%s’"
-
-msgid "unable to move temporary installation '%s' to '%s'"
-msgstr "unable to move temporary installation ‘%s’ to ‘%s’"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "cannot remove prior installation of package ‘%s’"
@@ -983,15 +1014,6 @@ msgstr "winDialogString() cannot be used non-interactively"
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr "‘pb’ is not from class “winProgressBar”"
 
-msgid "this function is intended to work with the Aqua GUI"
-msgstr "this function is intended to work with the Aqua GUI"
-
-msgid "'tar' returned non-zero exit code %d"
-msgstr "‘tar’ returned non-zero exit code %d"
-
-msgid "cannot remove prior installation of package"
-msgstr "cannot remove prior installation of package"
-
 msgid "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0] "class discarded from column %s"
@@ -1001,11 +1023,6 @@ msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] "object ‘%s’ not found"
 msgstr[1] "objects ‘%s’ not found"
-
-msgid "'lib' element '%s'  is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
-msgstr[0] "‘lib’ element ‘%s’  is not a writable directory"
-msgstr[1] "‘lib’ elements ‘%s’ are not writable directories"
 
 msgid "package %s is not available"
 msgid_plural "packages %s are not available"
@@ -1021,6 +1038,11 @@ msgid "also installing the dependency %s"
 msgid_plural "also installing the dependencies %s"
 msgstr[0] "also installing the dependency %s"
 msgstr[1] "also installing the dependencies %s"
+
+msgid "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
+msgstr[0] "‘lib’ element ‘%s’  is not a writable directory"
+msgstr[1] "‘lib’ elements ‘%s’ are not writable directories"
 
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"

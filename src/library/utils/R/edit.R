@@ -62,14 +62,14 @@ edit.default <-
 
 edit.data.frame <-
     function(name, factor.mode = c("character", "numeric"),
-             edit.row.names =  any(row.names(name) != 1:nrow(name)), ...)
+             edit.row.names =  any(row.names(name) != 1L:nrow(name)), ...)
 {
     if (.Platform$OS.type == "unix"  && .Platform$GUI != "AQUA")
         if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY") == "" )
             return (edit.default(name, ...))
 
     is.vector.unclass <- function(x) is.vector(unclass(x))
-    if (length(name) > 0 && !all(sapply(name, is.vector.unclass)
+    if (length(name) && !all(sapply(name, is.vector.unclass)
                                  | sapply(name, is.factor)))
         stop("can only handle vector and factor elements")
 
@@ -84,17 +84,17 @@ edit.data.frame <-
 
     attrlist <- lapply(name, attributes)
     datalist <- lapply(name, as.num.or.char)
-    factors <- if (length(name) > 0)
+    factors <- if (length(name))
         which(sapply(name, is.factor))
     else
-        numeric(0)
+        numeric(0L)
 
-    logicals <- if (length(name) > 0)
+    logicals <- if (length(name))
     	which(sapply(name, is.logical))
     else
-    	numeric(0)
+    	numeric(0L)
 
-    if(length(name) > 0) {
+    if(length(name)) {
         has_class <-
             sapply(name, function(x) (is.object(x) || isS4(x)) && !is.factor(x))
         if(any(has_class))
@@ -114,17 +114,17 @@ edit.data.frame <-
     rn <- attr(name, "row.names")
 
     out <- .Internal(dataentry(datalist, modes))
-    if(length(out) == 0) {
+    if(length(out) == 0L) {
         ## e.g. started with 0-col data frame or NULL, and created no cols
         return (name)
     }
     lengths <- sapply(out, length)
     maxlength <- max(lengths)
-    if (edit.row.names) rn <- out[[1]]
+    if (edit.row.names) rn <- out[[1L]]
     for (i in which(lengths != maxlength))
          out[[i]] <- c(out[[i]], rep.int(NA, maxlength - lengths[i]))
     if (edit.row.names) {
-        out <- out[-1]
+        out <- out[-1L]
         if((ln <- length(rn)) < maxlength)
             rn <- c(rn, paste("row", (ln+1):maxlength, sep=""))
     } else if(length(rn) != maxlength) rn <- seq_len(maxlength)
@@ -142,7 +142,7 @@ edit.data.frame <-
 	    attributes(o) <- a
         } else {
             o <- out[[i]]
-            if (any(new <- is.na(match(o, c(a$levels, NA))))) {
+            if (any(new <- is.na(match(o, c(a$levels, NA_integer_))))) {
                 new <- unique(o[new])
                 warning(gettextf("added factor levels in '%s'", names(out)[i]),
                         domain = NA)
@@ -169,7 +169,7 @@ edit.data.frame <-
 }
 
 edit.matrix <-
-    function(name, edit.row.names = !is.null(dn[[1]]), ...)
+    function(name, edit.row.names = !is.null(dn[[1L]]), ...)
 {
     if (.Platform$OS.type == "unix" && .Platform$GUI != "AQUA")
         if(.Platform$GUI == "unknown" || Sys.getenv("DISPLAY")=="" )
@@ -187,14 +187,14 @@ edit.matrix <-
 
     dn <- dimnames(name)
     datalist <- split(name, col(name))
-    if(!is.null(dn[[2]])) names(datalist) <- dn[[2]]
-    else names(datalist) <- paste("col", 1:ncol(name), sep = "")
+    if(!is.null(dn[[2L]])) names(datalist) <- dn[[2L]]
+    else names(datalist) <- paste("col", 1L:ncol(name), sep = "")
     modes <- as.list(rep.int(mode(name), ncol(name)))
     ## guard aginst user error (PR#10500)
-    if(edit.row.names && is.null(dn[[1]]))
+    if(edit.row.names && is.null(dn[[1L]]))
         stop("cannot edit NULL row names")
     if (edit.row.names) {
-        datalist <- c(list(row.names = dn[[1]]), datalist)
+        datalist <- c(list(row.names = dn[[1L]]), datalist)
         modes <- c(list(row.names = "character"), modes)
     }
 
@@ -202,19 +202,19 @@ edit.matrix <-
 
     lengths <- sapply(out, length)
     maxlength <- max(lengths)
-    if (edit.row.names) rn <- out[[1]]
+    if (edit.row.names) rn <- out[[1L]]
     for (i in which(lengths != maxlength))
          out[[i]] <- c(out[[i]], rep.int(NA, maxlength - lengths[i]))
     if (edit.row.names) {
-        out <- out[-1]
+        out <- out[-1L]
         if((ln <- length(rn)) < maxlength)
-            rn <- c(rn, paste("row", (ln+1):maxlength, sep=""))
+            rn <- c(rn, paste("row", (ln+1L):maxlength, sep=""))
     }
     out <- do.call("cbind", out)
     if (edit.row.names)
         rownames(out) <- rn
-    else if(!is.null(dn[[1]]) && length(dn[[1]]) == maxlength)
-        rownames(out) <- dn[[1]]
+    else if(!is.null(dn[[1L]]) && length(dn[[1L]]) == maxlength)
+        rownames(out) <- dn[[1L]]
     if (logicals) mode(out) <- "logical"
     out
 }

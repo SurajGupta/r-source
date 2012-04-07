@@ -19,8 +19,8 @@ svd <- function(x, nu = min(n,p), nv = min(n,p), LINPACK = FALSE)
     x <- as.matrix(x)
     if (any(!is.finite(x))) stop("infinite or missing values in 'x'")
     dx <- dim(x)
-    n <- dx[1]
-    p <- dx[2]
+    n <- dx[1L]
+    p <- dx[2L]
     if(!n || !p) stop("0 extent dimensions")
     if (is.complex(x)) {
         res <- La.svd(x, nu, nv)
@@ -33,29 +33,29 @@ svd <- function(x, nu = min(n,p), nv = min(n,p), LINPACK = FALSE)
     if(!is.numeric(x))
 	stop("argument to 'svd' must be numeric")
 
-    if(nu == 0) {
-	job <- 0
-	u <- double(0)
+    if(nu == 0L) {
+	job <- 0L
+	u <- double(0L)
     }
     else if(nu == n) {
-	job <- 10
+	job <- 10L
 	u <- matrix(0, n, n)
     }
     else if(nu == p) {
-	job <- 20
+	job <- 20L
 	u <- matrix(0, n, p)
     }
     else
 	stop("'nu' must be 0, nrow(x) or ncol(x)")
 
     job <- job +
-	if(nv == 0) 0 else if(nv == p || nv == n) 1 else
+	if(nv == 0L) 0L else if(nv == p || nv == n) 1L else
     stop("'nv' must be 0 or ncol(x)")
 
-    v <- if(job == 0) double(0) else matrix(0, p, p)
+    v <- if(job == 0L) double(0L) else matrix(0, p, p)
 
     mn <- min(n,p)
-    mm <- min(n+1,p)
+    mm <- min(n+1L,p)
     z <- .Fortran("dsvdc",
 		  as.double(x),
 		  n,
@@ -69,11 +69,11 @@ svd <- function(x, nu = min(n,p), nv = min(n,p), LINPACK = FALSE)
 		  p,
 		  double(n),
 		  as.integer(job),
-		  info=integer(1),
+		  info=integer(1L),
 		  DUP=FALSE, PACKAGE="base")[c("d","u","v","info")]
     if(z$info)
 	stop(gettextf("error %d in 'dsvdc'", z$info), domain = NA)
-    z$d <- z$d[1:mn]
-    if(nv && nv < p) z$v <- z$v[, 1:nv, drop = FALSE]
+    z$d <- z$d[1L:mn]
+    if(nv && nv < p) z$v <- z$v[, 1L:nv, drop = FALSE]
     z[c("d", if(nu) "u", if(nv) "v")]
 }

@@ -43,8 +43,7 @@ lm <- function (formula, data, subset, weights, na.action,
         stop("'weights' must be a numeric vector")
     offset <- as.vector(model.offset(mf))
     if(!is.null(offset)) {
-        if(length(offset) == 1) offset <- rep(offset, NROW(y))
-        else if(length(offset) != NROW(y))
+        if(length(offset) != NROW(y))
             stop(gettextf("number of offsets is %d, should equal %d (number of observations)",
                           length(offset), NROW(y)), domain = NA)
     }
@@ -52,7 +51,7 @@ lm <- function (formula, data, subset, weights, na.action,
     if (is.empty.model(mt)) {
 	x <- NULL
 	z <- list(coefficients = if (is.matrix(y))
-                    matrix(,0,3) else numeric(0), residuals = y,
+                    matrix(,0,3) else numeric(0L), residuals = y,
 		  fitted.values = 0 * y, weights = w, rank = 0L,
 		  df.residual = if (is.matrix(y)) nrow(y) else length(y))
         if(!is.null(offset)) {
@@ -92,7 +91,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     p <- ncol(x)
     if (p == 0L) {
         ## oops, null model
-        return(list(coefficients = numeric(0), residuals = y,
+        return(list(coefficients = numeric(0L), residuals = y,
                     fitted.values = 0 * y, rank = 0,
                     df.residual = length(y)))
     }
@@ -117,8 +116,8 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
 		  y = y, ny = ny,
 		  tol = as.double(tol),
 		  coefficients = mat.or.vec(p, ny),
-		  residuals = y, effects = y, rank = integer(1),
-		  pivot = 1:p, qraux = double(p), work = double(2*p),
+		  residuals = y, effects = y, rank = integer(1L),
+		  pivot = 1L:p, qraux = double(p), work = double(2*p),
                   PACKAGE="base")
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
     coef <- z$coefficients
@@ -188,7 +187,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     p <- ncol(x)
     if (p == 0) {
         ## oops, null model
-        return(list(coefficients = numeric(0), residuals = y,
+        return(list(coefficients = numeric(0L), residuals = y,
                     fitted.values = 0 * y, weights = w, rank = 0L,
                     df.residual = length(y)))
     }
@@ -200,7 +199,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
 		  tol = as.double(tol),
 		  coefficients = mat.or.vec(p, ny), residuals = y,
 		  effects = mat.or.vec(n, ny),
-		  rank = integer(1), pivot = 1:p, qraux = double(p),
+		  rank = integer(1L), pivot = 1L:p, qraux = double(p),
 		  work = double(2 * p),
                   PACKAGE="base")
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
@@ -209,7 +208,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     r1 <- seq_len(z$rank)
     dn <- colnames(x); if(is.null(dn)) dn <- paste("x", 1L:p, sep="")
     nmeffects <- c(dn[pivot[r1]], rep.int("", n - z$rank))
-    r2 <- if(z$rank < p) (z$rank+1L):p else integer(0)
+    r2 <- if(z$rank < p) (z$rank+1L):p else integer(0L)
     if (is.matrix(y)) {
 	coef[r2, ] <- NA
 	coef[pivot, ] <- coef
@@ -301,7 +300,7 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
     rdf <- n - p
     if(is.na(z$df.residual) || rdf != z$df.residual)
         warning("residual degrees of freedom in object suggest this is not an \"lm\" fit")
-    p1 <- 1:p
+    p1 <- 1L:p
     ## do not want missing values substituted here
     r <- z$residuals
     f <- z$fitted.values
@@ -367,15 +366,15 @@ print.summary.lm <-
     if (rdf > 5L) {
 	nam <- c("Min", "1Q", "Median", "3Q", "Max")
 	rq <- if (length(dim(resid)) == 2)
-	    structure(apply(t(resid), 1, quantile),
-		      dimnames = list(nam, dimnames(resid)[[2]]))
+	    structure(apply(t(resid), 1L, quantile),
+		      dimnames = list(nam, dimnames(resid)[[2L]]))
 	else  structure(quantile(resid), names = nam)
 	print(rq, digits = digits, ...)
     }
     else if (rdf > 0L) {
 	print(resid, digits = digits, ...)
     } else { # rdf == 0 : perfect fit!
-	cat("ALL", df[1], "residuals are 0: no residual degrees of freedom!\n")
+	cat("ALL", df[1L], "residuals are 0: no residual degrees of freedom!\n")
     }
     if (length(x$aliased) == 0L) {
         cat("\nNo Coefficients\n")
@@ -400,9 +399,9 @@ print.summary.lm <-
     if (!is.null(x$fstatistic)) {
 	cat("Multiple R-squared:", formatC(x$r.squared, digits=digits))
 	cat(",\tAdjusted R-squared:",formatC(x$adj.r.squared,digits=digits),
-	    "\nF-statistic:", formatC(x$fstatistic[1], digits=digits),
-	    "on", x$fstatistic[2], "and",
-	    x$fstatistic[3], "DF,  p-value:",
+	    "\nF-statistic:", formatC(x$fstatistic[1L], digits=digits),
+	    "on", x$fstatistic[2L], "and",
+	    x$fstatistic[3L], "DF,  p-value:",
 	    format.pval(pf(x$fstatistic[1L], x$fstatistic[2L],
                            x$fstatistic[3L], lower.tail = FALSE), digits=digits),
 	    "\n")
@@ -438,16 +437,17 @@ residuals.lm <-
                   if(is.null(object$weights)) r else r * sqrt(object$weights),
                   partial = r
            )
-    res<-naresid(object$na.action, res)
+    res <- naresid(object$na.action, res)
     if (type=="partial") ## predict already does naresid
-      res<-res+predict(object,type="terms")
+      res <- res + predict(object,type="terms")
     res
 }
 
+## The lm method includes objects of class "glm"
 simulate.lm <- function(object, nsim = 1, seed = NULL, ...)
 {
     if(!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-        runif(1)                       # initialize the RNG if necessary
+        runif(1)                     # initialize the RNG if necessary
     if(is.null(seed))
         RNGstate <- get(".Random.seed", envir = .GlobalEnv)
     else {
@@ -456,16 +456,30 @@ simulate.lm <- function(object, nsim = 1, seed = NULL, ...)
         RNGstate <- structure(seed, kind = as.list(RNGkind()))
         on.exit(assign(".Random.seed", R.seed, envir = .GlobalEnv))
     }
-    ftd <- fitted(object)
-    ans <-
-        as.data.frame(ftd +
-                      matrix(rnorm(length(ftd) * nsim,
-                                   sd = sqrt(deviance(object)/
-                                   df.residual(object))),
-                             nrow = length(ftd)))
+    ftd <- fitted(object)             # == napredict(*, object$fitted)
+    nm <- names(ftd)
+    n <- length(ftd)
+    ntot <- n * nsim
+    fam <- if(inherits(object, "glm")) object$family$family else "gaussian"
+    val <- switch(fam,
+                  "gaussian" = {
+                      vars <- deviance(object)/ df.residual(object)
+                      if (!is.null(object$weights)) vars <- vars/object$weights
+                      ftd + rnorm(ntot, sd = sqrt(vars))
+                  },
+                  if(!is.null(object$family$simulate))
+                      object$family$simulate(object, nsim)
+                  else stop("family '", fam, "' not implemented"))
 
-    attr(ans, "seed") <- RNGstate
-    ans
+    if(!is.list(val)) {
+        dim(val) <- c(n, nsim)
+        val <- as.data.frame(val)
+    } else
+        class(val) <- "data.frame"
+    names(val) <- paste("sim", seq_len(nsim), sep="_")
+    if (!is.null(nm)) row.names(val) <- nm
+    attr(val, "seed") <- RNGstate
+    val
 }
 
 #fitted.lm <- function(object, ...)
@@ -500,7 +514,7 @@ model.frame.lm <- function(formula, ...)
     if (length(nargs) || is.null(formula$model)) {
         fcall <- formula$call
         fcall$method <- "model.frame"
-        fcall[[1]] <- as.name("lm")
+        fcall[[1L]] <- as.name("lm")
         fcall[names(nargs)] <- nargs
 #	env <- environment(fcall$formula)  # always NULL
         env <- environment(formula$terms)
@@ -512,9 +526,9 @@ model.frame.lm <- function(formula, ...)
 
 variable.names.lm <- function(object, full = FALSE, ...)
 {
-    if(full)	dimnames(object$qr$qr)[[2]]
-    else if(object$rank) dimnames(object$qr$qr)[[2]][seq_len(object$rank)]
-    else character(0)
+    if(full)	dimnames(object$qr$qr)[[2L]]
+    else if(object$rank) dimnames(object$qr$qr)[[2L]][seq_len(object$rank)]
+    else character(0L)
 }
 
 case.names.lm <- function(object, full = FALSE, ...)
@@ -546,7 +560,7 @@ anova.lm <- function(object, ...)
     } else {
         ss <- ssr
         df <- dfr
-        tlabels <- character(0)
+        tlabels <- character(0L)
     }
     ms <- ss/df
     f <- ms/(ssr/dfr)
@@ -557,7 +571,7 @@ anova.lm <- function(object, ...)
                             c("Df","Sum Sq", "Mean Sq", "F value", "Pr(>F)"))
     if(attr(object$terms,"intercept")) table <- table[-1, ]
     structure(table, heading = c("Analysis of Variance Table\n",
-		     paste("Response:", deparse(formula(object)[[2]]))),
+		     paste("Response:", deparse(formula(object)[[2L]]))),
 	      class= c("anova", "data.frame"))# was "tabular"
 }
 
@@ -565,8 +579,8 @@ anova.lmlist <- function (object, ..., scale = 0, test = "F")
 {
     objects <- list(object, ...)
     responses <- as.character(lapply(objects,
-				     function(x) deparse(x$terms[[2]])))
-    sameresp <- responses == responses[1]
+				     function(x) deparse(x$terms[[2L]])))
+    sameresp <- responses == responses[1L]
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
 	warning("models with response ",
@@ -594,11 +608,11 @@ anova.lmlist <- function (object, ..., scale = 0, test = "F")
                         c(NA, -diff(resdev)) )
     variables <- lapply(objects, function(x)
                         paste(deparse(formula(x)), collapse="\n") )
-    dimnames(table) <- list(1:nmodels,
+    dimnames(table) <- list(1L:nmodels,
                             c("Res.Df", "RSS", "Df", "Sum of Sq"))
 
     title <- "Analysis of Variance Table\n"
-    topnote <- paste("Model ", format(1:nmodels),": ",
+    topnote <- paste("Model ", format(1L:nmodels),": ",
 		     variables, sep="", collapse="\n")
 
     ## calculate test statistic if needed
@@ -635,10 +649,12 @@ predict.lm <-
                          xlev = object$xlevels)
         if(!is.null(cl <- attr(Terms, "dataClasses"))) .checkMFClasses(cl, m)
         X <- model.matrix(Terms, m, contrasts.arg = object$contrasts)
-	offset <- if (!is.null(off.num <- attr(tt, "offset")))
-	    eval(attr(tt, "variables")[[off.num+1]], newdata)
-	else if (!is.null(object$offset))
-	    eval(object$call$offset, newdata)
+        offset <- rep(0, nrow(X))
+        if (!is.null(off.num <- attr(tt, "offset")))
+            for(i in off.num)
+                offset <- offset + eval(attr(tt, "variables")[[i+1]], newdata)
+	if (!is.null(object$call$offset))
+	    offset <- offset + eval(object$call$offset, newdata)
 	mmDone <- FALSE
     }
     n <- length(object$residuals) # NROW(object$qr$qr)
@@ -759,7 +775,7 @@ predict.lm <-
                     ip <- ip[, terms, drop = FALSE]
             }
         } else { # no terms
-            predictor <- ip <- matrix(0, n,0)
+            predictor <- ip <- matrix(0, n, 0L)
         }
 	attr(predictor, 'constant') <- if (hasintercept) termsconst else 0
     }
@@ -806,10 +822,10 @@ effects.lm <- function(object, set.sign = FALSE, ...)
     if(set.sign) {
 	dd <- coef(object)
 	if(is.matrix(eff)) {
-	    r <- 1:dim(dd)[1L]
+	    r <- 1L:dim(dd)[1L]
 	    eff[r,  ] <- sign(dd) * abs(eff[r,	])
 	} else {
-	    r <- 1:length(dd)
+	    r <- 1L:length(dd)
 	    eff[r] <- sign(dd) * abs(eff[r])
 	}
     }
@@ -861,6 +877,6 @@ predict.mlm <-
 labels.lm <- function(object, ...)
 {
     tl <- attr(object$terms, "term.labels")
-    asgn <- object$assign[object$qr$pivot[1:object$rank]]
+    asgn <- object$assign[object$qr$pivot[1L:object$rank]]
     tl[unique(asgn)]
 }

@@ -17,7 +17,7 @@
 apropos <- function (what, where = FALSE, ignore.case = TRUE, mode = "any")
 {
     stopifnot(is.character(what))
-    x <- character(0)
+    x <- character(0L)
     check.mode <- mode != "any"
     for (i in seq_along(search())) {
 	li <-
@@ -38,9 +38,9 @@ apropos <- function (what, where = FALSE, ignore.case = TRUE, mode = "any")
 find <- function(what, mode = "any", numeric = FALSE, simple.words=TRUE)
 {
     stopifnot(is.character(what))
-    if(length(what) > 1) {
+    if(length(what) > 1L) {
         warning("elements of 'what' after the first will be ignored")
-        what <- what[1]
+        what <- what[1L]
     }
 #   would need to escape at least + * | as well
 #     if(simple.words)
@@ -48,7 +48,7 @@ find <- function(what, mode = "any", numeric = FALSE, simple.words=TRUE)
     len.s <- length(sp <- search())
     ind <- logical(len.s)
     check.mode <- mode != "any"
-    for (i in 1:len.s) {
+    for (i in 1L:len.s) {
         if(simple.words) {
             found <- what %in% ls(pos = i, all.names = TRUE)
             if(found && check.mode)
@@ -65,7 +65,7 @@ find <- function(what, mode = "any", numeric = FALSE, simple.words=TRUE)
                     warning(gettextf("%d occurrences in %s", ll, sp[i]),
                             domain = NA)
             }
-            ind[i] <- ll > 0
+            ind[i] <- ll > 0L
         }
     }
     ## found name in  search()[ ind ]

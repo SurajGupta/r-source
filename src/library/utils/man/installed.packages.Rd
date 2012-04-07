@@ -17,7 +17,8 @@ installed.packages(lib.loc = NULL, priority = NULL,
 \arguments{
   \item{lib.loc}{
     character vector describing the location of \R library trees to
-    search through.
+    search through, or \code{NULL} for all known trees
+    (see \code{\link{.libPaths}}).
   }
   \item{priority}{
     character vector or \code{NULL} (default).  If non-null, used to
@@ -37,9 +38,7 @@ installed.packages(lib.loc = NULL, priority = NULL,
   package found along \code{lib.loc} and returns a matrix of package
   names, library paths and version numbers.
 
-  \strong{Note:} this works with package names, not bundle names, and
-  for versioned installs with the name under which the package is
-  installed, in the style \code{mypkg_1.3-7}.
+  \strong{Note:} this works with package names, not bundle names.
 
   The information found is cached (by library) for the \R session and
   specified \code{fields} argument, and updated only if the top-level

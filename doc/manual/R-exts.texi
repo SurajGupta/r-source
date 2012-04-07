@@ -113,7 +113,7 @@ before reading on.
 A computing environment including a number of tools is assumed; the
 ``R Installation and Administration'' manual describes what is needed.
 Under a Unix-alike most of the tools are likely to be present by
-default, but Microsoft Windows and MacOS X will require careful setup.
+default, but Microsoft Windows and Mac OS X will require careful setup.
 
 Once a source package is created, it must be installed by
 the command @code{R CMD INSTALL}.
@@ -150,6 +150,7 @@ A package consists of a subdirectory containing a file
 package subdirectory may also contain files @file{INDEX},
 @file{NAMESPACE}, @file{configure}, @file{cleanup}, @file{LICENSE},
 @file{LICENCE}, @file{COPYING} and @file{NEWS}.  Other files such as
+@file{INSTALL} (for non-standard installation instructions),
 @file{README} or @file{ChangeLog} will be ignored by @R{}, but may be
 useful to end-users.
 
@@ -163,7 +164,8 @@ name spaces}.
 The optional files @file{configure} and @file{cleanup} are (Bourne
 shell) script files which are executed before and (provided that option
 @option{--clean} was given) after installation on Unix-alikes, see
-@ref{Configure and cleanup}.
+@ref{Configure and cleanup}.  For use on Windows there may be analogues
+@file{configure.win} and @file{cleanup.win}
 
 @cindex LICENSE file
 @cindex LICENCE file
@@ -318,7 +320,8 @@ License: GPL-2 | file LICENCE
 Please note in particular that ``Public domain'' is not a valid license.
 It is very important that you include this information!  Otherwise, it
 may not even be legally correct for others to distribute copies of the
-package.
+package.  Do not use the @samp{License} field for copyright information:
+if needed, use a @samp{Copyright} field.
 
 The @samp{Description} field should give a comprehensive description of
 what the package does.  One can use several (complete) sentences, but
@@ -347,16 +350,17 @@ format conforming to the ISO standard.
 The optional @samp{Depends} field gives a comma-separated list of
 package names which this package depends on.  The package name may be
 optionally followed by a comment in parentheses.  The comment should
-contain a comparison operator (only @samp{>=} and @samp{<=} were
-supported prior to @R{} 2.7.0), whitespace and a valid version number).
-(List @emph{package} names even if they are part of a bundle.)  You can
-also use the special package name @samp{R} if your package depends on a
-certain version of @R{}.  E.g., if the package works only with @R{}
-version 2.4.0 or newer, include @samp{R (>= 2.4.0)} in the
-@samp{Depends} field.  Both @code{library} and the @R{} package checking
-facilities use this field, hence it is an error to use improper syntax
-or misuse the @samp{Depends} field for comments on other software that
-might be needed.  Other dependencies (external to the @R{} system)
+contain a comparison operator@footnote{only @samp{>=} and @samp{<=} were
+supported prior to @R{} 2.7.0, and only @samp{>=} is supported for
+package versions by @code{install.packages}.}, whitespace and a valid
+version number).  (List @emph{package} names even if they are part of a
+bundle.)  You can also use the special package name @samp{R} if your
+package depends on a certain version of @R{}.  E.g., if the package
+works only with @R{} version 2.4.0 or newer, include @samp{R (>= 2.4.0)}
+in the @samp{Depends} field.  Both @code{library} and the @R{} package
+checking facilities use this field, hence it is an error to use improper
+syntax or misuse the @samp{Depends} field for comments on other software
+that might be needed.  Other dependencies (external to the @R{} system)
 should be listed in the @samp{SystemRequirements} field or a separate
 @file{README} file.  The @R{} @command{INSTALL} facilities check if the
 version of @R{} used is recent enough for the package being installed,
@@ -416,10 +420,11 @@ In particular, large packages providing ``only'' data for examples or
 vignettes should be listed in @samp{Suggests} rather than @samp{Depends}
 in order to make lean installations possible.
 
-Currently adding version dependencies for packages only makes sense for
-the @samp{Depends} field, as only @code{library} checks version
-requirements, and only for the packages it loads via the @samp{Depends}
-field.
+Prior to @R{} 2.9.0, adding version dependencies for packages only made
+sense for the @samp{Depends} field, as only @code{library} checks
+version requirements, and only for the packages it loads via the
+@samp{Depends} field.  As from @R{} 2.9.0 other dependencies are used by
+@code{install.packages}.
 
 The optional @samp{URL} field may give a list of @acronym{URL}s
 separated by commas or whitespace, for example the homepage of the
@@ -483,6 +488,25 @@ The optional @samp{Type} field specifies the type of the package:
 There should be no @samp{Built} or @samp{Packaged} fields, as these are
 added by the package management tools.
 @end quotation
+
+One can add subject classifications for the content of the package using
+the optional fields @samp{Classification/ACM} (using the Computing
+Classification System of the Association for Computing Machinery,
+@uref{http://www.acm.org/class/}), @samp{Classification/JEL} (the
+Journal of Economic Literature Classification System,
+@uref{http://www.aeaweb.org/journal/jel_class_system.html}), or
+@samp{Classification/MSC} (the Mathematics Subject Classification of the
+American Mathematical Society, @uref{http://www.ams.org/msc/}).  The
+subject classifications should be comma-separated lists of the
+respective classification codes, e.g., @samp{Classification/ACM: G.4,
+H.2.8, I.5.1}.
+
+Finally, an optional @samp{Language} field can be used to indicate if
+the package documentation is not in English: this should be a
+comma-separated list of 2-letter ISO 639-1
+(@uref{http://en.@/wikipedia.@/org/wiki/ISO_639-1}) or 3-letter ISO
+639-3 (@uref{http://en.@/wikipedia.@/org/wiki/ISO_639-3}) language
+codes.
 
 
 @node The INDEX file, Package subdirectories, The DESCRIPTION file, Package structure
@@ -591,7 +615,7 @@ The @file{R} and @file{man} subdirectories may contain OS-specific
 subdirectories named @file{unix} or @file{windows}.
 
 The sources and headers for the compiled code are in @file{src}, plus
-optionally file @file{Makevars} or @file{Makefile}.  When a package is
+optionally a file @file{Makevars} or @file{Makefile}.  When a package is
 installed using @code{R CMD INSTALL}, Make is used to control
 compilation and linking into a shared object for loading into @R{}.
 There are default variables and rules for this (determined when @R{} is
@@ -603,22 +627,31 @@ FORTRAN-77 (which we write in upper case) is supported on all platforms,
 but most also support Fortran-95 (for which we use title case).  If you
 want to ship Ratfor source files, please do so in a subdirectory of
 @file{src} and not in the main subdirectory.}, Objective C and Objective
-C++ with associated extensions @file{.c}, @file{.cc} or @file{.cpp} or
-@file{.C}, @file{.f}, @file{.f90} or @file{.f95}, @file{.m}, and
-@file{.mm} or @file{.M}, respectively.  We recommend using @file{.h} for
-headers, also for C++@footnote{Using @file{.hpp}, although somewhat
-popular, is not guaranteed to be portable.} or Fortran 9x include files.
+C++@footnote{either or both of which may not be supported on particular
+platforms} with associated extensions @file{.c}, @file{.cc} or
+@file{.cpp} or @file{.C}, @file{.f}, @file{.f90} or @file{.f95},
+@file{.m}, and @file{.mm} or @file{.M}, respectively.  We recommend
+using @file{.h} for headers, also for C++@footnote{Using @file{.hpp},
+although somewhat popular, is not guaranteed to be portable.} or Fortran
+9x include files.
+
+It is not portable (and may not be possible at all) to mix all these
+languages in a single package, and we do not support using both C++ and
+Fortran 9x. Because @R{} itself uses it, we know that C and FORTRAN 77
+can be used together and mixing C and C++ seems to be widely successful.
+
 The default rules can be tweaked by setting macros in a file
 @file{src/Makevars} (@pxref{Using Makevars}).  Note that this mechanism
 should be general enough to eliminate the need for a package-specific
 @file{src/Makefile}.  If such a file is to be distributed, considerable
 care is needed to make it general enough to work on all @R{} platforms.
-It should have an appropriate first target (conventionally called
-@samp{all}) and a (possibly empty) target @samp{clean} which removes all
-files generated by Make (to be used by @samp{R CMD INSTALL --clean} and
-@samp{R CMD INSTALL --preclean}).  There are platform-specific file
-names on Windows: @file{src/Makevars.win} takes precedence over
-@file{src/Makevars} and @file{src/Makefile.win} must be used.
+If it has any targets at all, it should have an appropriate first target
+named @samp{all} and a (possibly empty) target @samp{clean} which
+removes all files generated by Make (to be used by @samp{R CMD INSTALL
+--clean} and @samp{R CMD INSTALL --preclean}).  There are
+platform-specific file names on Windows: @file{src/Makevars.win} takes
+precedence over @file{src/Makevars} and @file{src/Makefile.win} must be
+used.
 
 The @file{data} subdirectory is for additional data files the package
 makes available for loading using @code{data()}.  Currently, data files
@@ -662,7 +695,7 @@ The copying of the @file{inst} happens after @file{src} is built so its
 exceptions of @file{INDEX}, @file{LICENSE}/@file{LICENCE},
 @file{COPYING} and @file{NEWS} (from @R{} 2.7.0), information files at
 the top level of the package will @emph{not} be installed and so not be
-known to users of Windows and MacOS X compiled packages (and not seen by
+known to users of Windows and Mac OS X compiled packages (and not seen by
 those who use @command{R CMD INSTALL} or @command{install.packages} on
 the tarball).  So any information files you wish an end user to see
 should be included in @file{inst}.  
@@ -940,13 +973,14 @@ supplying a file @file{Makevars}: also one of the most common uses of a
 @file{Makevars.in}.
 
 The most common use of a @file{Makevars} file is to set additional
-preprocessor (for example include paths) flags via @code{PKG_CPPFLAGS},
-and additional compiler flags by setting @code{PKG_CFLAGS},
-@code{PKG_CXXFLAGS} and @code{PKG_FFLAGS}, for C, C++, or FORTRAN
-respectively (@pxref{Creating shared objects}).
+preprocessor options (for example include paths) via
+@code{PKG_CPPFLAGS}, and additional compiler flags by setting
+@code{PKG_CFLAGS}, @code{PKG_CXXFLAGS}, @code{PKG_FFLAGS} and
+@code{PKG_FCFLAGS}, for C, C++, FORTRAN or Fortran 9x respectively
+(@pxref{Creating shared objects}).
 
-Also, @file{Makevars} can be used to set flags for the linker, for
-example @samp{-L} and @samp{-l} options.
+@file{Makevars} can also be used to set flags for the linker, for
+example @samp{-L} and @samp{-l} options, via @code{PKG_LIBS}.
 
 When writing a @file{Makevars} file for a package you intend to
 distribute, take care to ensure that it is not specific to your
@@ -954,15 +988,17 @@ compiler: flags such as @option{-O2 -Wall -pedantic} are all specific to
 GCC.
 
 There are some macros which are built whilst configuring the building of
-@R{} itself, are stored on Unix-alikes in
-@file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf} and can be used in
-@file{Makevars}.  These include
+@R{} itself and are stored in
+@file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}.  That makefile is included
+as a @file{Makefile} @emph{before} @file{Makevars[.win]}, and so the
+macros it defines can be used in the latter.  These include
 
 @table @code
 @item FLIBS
 @vindex FLIBS
 A macro containing the set of libraries need to link FORTRAN code.  This
-may need to be included in @code{PKG_LIBS}.
+may need to be included in @code{PKG_LIBS}: it will normally be included
+automatically if the package contains FORTRAN source files.
 
 @item BLAS_LIBS
 @vindex BLAS_LIBS
@@ -971,36 +1007,38 @@ need to be included in @code{PKG_LIBS}.  Beware that if it is empty then
 the @R{} executable will contain all the double-precision and
 double-complex BLAS routines, but no single-precision or complex
 routines.  If @code{BLAS_LIBS} is included, then @code{FLIBS} also needs
-to be@footnote{on Unix-alikes: Windows resolves such dependencies at
-link time.}, as most BLAS libraries are written in FORTRAN.
+to be@footnote{at least on Unix-alikes: the Windows build currently
+resolves such dependencies to a static FORTRAN library when
+@file{Rblas.dll} is built.}, as most BLAS libraries are written at least
+partially in FORTRAN.
 
 @item LAPACK_LIBS
 @vindex LAPACK_LIBS
 A macro containing the LAPACK libraries (and paths where appropriate)
 used when building @R{}.  This may need to be included in
-@code{PKG_LIBS}.  This may point to a dynamic library @code{libRlapack}
+@code{PKG_LIBS}.  It may point to a dynamic library @code{libRlapack}
 which contains all the double-precision LAPACK routines as well as those
-double-complex LAPACK and BLAS routines needed to build @R{}, or it
-may point to an external LAPACK library, or may be empty if an external
-BLAS library also contains LAPACK.
+double-complex LAPACK and BLAS routines needed to build @R{}, or it may
+point to an external LAPACK library, or may be empty if an external BLAS
+library also contains LAPACK.
 
 [There is no guarantee that the LAPACK library will provide more than
 all the double-precision and double-complex routines, and some do not
 provide all the auxiliary routines.]
 
-The macros @code{BLAS_LIBS} and @code{FLIBS} should always be included
-@emph{after} @code{LAPACK_LIBS}.
+For portability, the macros @code{BLAS_LIBS} and @code{FLIBS} should
+always be included @emph{after} @code{LAPACK_LIBS}.
 
 @item SAFE_FFLAGS
 @vindex SAFE_FFLAGS
 A macro containing flags which are needed to circumvent
 over-optimization of FORTRAN code: it is typically @samp{-g -O2
--ffloat-store} on @cputype{ix86} platforms using @command{g77} or
-@command{gfortran}.  Note that this is @strong{not} an additional flag
-to be used as part of @code{PKG_FFLAGS}, but a replacement for
-@code{FFLAGS}, and that it is intended for the FORTRAN-77 compiler
-@samp{F77} and not necessarily for the Fortran 90/95 compiler @samp{FC}.
-See the example later in this section.
+-ffloat-store} on @cputype{ix86} platforms using @command{gfortran}.
+Note that this is @strong{not} an additional flag to be used as part of
+@code{PKG_FFLAGS}, but a replacement for @code{FFLAGS}, and that it is
+intended for the FORTRAN-77 compiler @samp{F77} and not necessarily for
+the Fortran 90/95 compiler @samp{FC}.  See the example later in this
+section.
 @end table
 
 @vindex OBJECTS
@@ -1009,14 +1047,20 @@ SHLIB} setting them: in particular if @file{Makevars} sets
 @samp{OBJECTS} it will not be set on the @command{make} command line.
 This can be useful in conjunction with implicit rules to allow other
 types of source code to be compiled and included in the shared object.
+Also, as from @R{} 2.9.0 setting an empty value for @samp{OBJECTS} will
+prevent the shared object / DLL from being made (possibly useful in
+conjuction with an @code{all} target as described in the next paragraph).
 
 Note that @file{Makevars} should not normally contain targets, as it is
-(except on Windows) included before the default makefile and @command{make}
-is called without an explicit target.  To circumvent that, use a
-suitable phony target before any actual targets: for example
+included before the default makefile and @command{make} is called with
+target @code{all} which is defined in the default makefile.  If you
+really need to circumvent that, use a suitable (phony) target @code{all}
+before any actual targets in @file{Makevars.[win]}: for example package
 @pkg{fastICA} has
 
 @smallexample
+PKG_LIBS = @@BLAS_LIBS@@
+
 SLAMC_FFLAGS=$(R_XTRA_FFLAGS) $(FPICFLAGS) $(SHLIB_FFLAGS) $(SAFE_FFLAGS)
 
 all: $(SHLIB)
@@ -1026,55 +1070,102 @@ slamc.o: slamc.f
 @end smallexample
 
 @noindent
-to ensure that the LAPACK routines find some constants without infinite
-looping.  The Windows equivalent is
+needed to ensure that the LAPACK routines find some constants without
+infinite looping.  The Windows equivalent is
 
 @smallexample
+all: $(SHLIB)
+
 slamc.o: slamc.f
         $(F77) $(SAFE_FFLAGS) -c -o slamc.o slamc.f
 @end smallexample
 
-More generally, on a Unix-alike one could have something like
+@noindent
+(since the other macros are all empty on that platform, and R's internal
+blas is not used).  Note that the first target in @file{Makevars} will
+be called on a Unix-alike, and target @samp{all} on Windows (but the
+latter will change in as from @R 2.10.0).
+
+If you want to create and then link to a library, say using code in a
+subdirectory, use something like
 
 @smallexample
-.PHONY: all
+.PHONY: all mylibs
 
-all: before $(SHLIB) after
+all: $(SHLIB)
+$(SHLIB): mylibs
 
+mylibs:
+        (cd subdir; make)
+@end smallexample
+
+@noindent
+Be careful to create all the necessary dependencies, as there is a no
+guarantee that the dependencies of @code{all} will be run in a
+particular order (and some of the CRAN build machines use multiple CPUs
+and parallel makes).
+
+It is sometimes useful to have a target @samp{clean} in @file{Makevars}
+or @file{Makevars.win}: this will be used by @command{R CMD build}.
+
+If you really want to subvert the mechanisms, use a first target named
+something other than @samp{all}, as the standard makefile (which is
+included after @file{Makevars}) includes the target
+
+@example
+all: $(SHLIB)
+@end example
+
+@noindent
+and hence target @samp{all} in @file{Makevars} adds to that target.
+(This is for Unix-alikes only until @R{} 2.10.0.)
+
+@menu
+* Back-compatibility for Makevars::  
+@end menu
+
+@node Back-compatibility for Makevars,  , Using Makevars, Using Makevars
+@subsubsection Back-compatibility
+
+The description above is for @R{} 2.9.0 and later.  In earlier versions
+of @R{} the mechanisms used on Unix-alikes and Windows were completely
+separate and their operation differed in a number of details.  The
+current version was designed to be as compatible as possible with both.
+
+On a Unix-alike the rules are unchanged.
+
+On Windows prior to @R{} 2.9.0 any file @file{Makevars.win} or
+@file{Makevars} was included in another makefile after its targets, so
+the target made was always
+
+@example
+all:  before $(DLLNAME).dll after
+
+## these targets are just here to allow packages to add to them.
 before:
-        Things that need to be done first like creating libraries
-
 after:
-        Cleanup needed after 'before'
-@end smallexample
+@end example
 
 @noindent
-On Windows, one can add dependencies to the @samp{all} target (which is
-what will get called), e.g.@: (based on package @pkg{rcom})
+This allows packages to set dependencies for targets @code{all},
+@code{before} or @code{after}.  Pretty complete backwards compatibility
+can be obtained by having no targets, or by having the first target in
+@code{Makevars.win} as
 
-@smallexample
-all: ../inst/tst/bin/rcom_test.exe extraclean
-
-../inst/tst/bin/rcom_test.exe: rcom_test.exe
-	$(MKDIR) -p ../inst/tst/bin
-	$(CP) $? $@
-rcom_test.exe: rcom_test.o
-rcom_test-LIBS = -L. -lsupc++ -luuid -lole32 -loleaut32
-
-extraclean:
-        $(RM) rcom_test.exe
-@end smallexample
+@example
+all: before $(SHLIB) after
+@end example
 
 @noindent
-The added dependencies will be built after the DLL: it is also possible
-(but not advisable) to have a target @samp{all} with commands (rather
-than dependencies)
+omitting @code{bwfore} or @code{after} if they are unused.  Note however
+that this is not compatible with the use of a parallel make.
 
-There are two another targets, @samp{before} and @samp{after}, which by
-default have neither dependencies nor commands so can be overridden in a
-@file{Makevars.win}.  See the example in @ref{Linking to other packages}.
+Note that as from @R{} 2.10.0 the first target in @file{Makevars[.win]}
+will be called if there is one, so for future compatibility this should
+be named @samp{all}.
 
-
+Some packages used undocumented macros under Windows, notably
+@samp{DPKG} (use @env{R_PACKAGE_DIR} instead).
 
 @node Configure example, Using F95 code, Using Makevars, Configure and cleanup
 @subsection Configure example
@@ -1214,12 +1305,11 @@ or by setting the environment variables @code{ODBC_INCLUDE} and
 @node Using F95 code,  , Configure example, Configure and cleanup
 @subsection Using F95 code
 
-@R{} currently does not distinguish between FORTRAN 77 and Fortran 90/95
-code, and assumes all FORTRAN comes in source files with extension
-@file{.f}.  Commercial Unix systems typically use a F95 compiler, but
-only since the release of @code{gcc 4.0.0} in April 2005 have Linux and
-other non-commercial OSes had much support for F95.  Only wih @R{} 2.6.0
-did the Windows port adopt a Fortran 90 compiler.
+@R{} assumes that source files with extension @file{.f} are FORTRAN 77,
+and passes them to the compiler specified by @samp{F77}.  On most but
+not all platforms that compiler will accept Fortran 90/95 code, some
+have a separate Fortran 90/95 compiler and a few (typically older)
+platforms have no Fortran 90/95 support.
 
 This means that portable packages need to be written in correct
 FORTRAN 77, which will also be valid Fortran 95.  See
@@ -1232,19 +1322,19 @@ On some systems an alternative F95 compiler is available: from the
 Configuring @R{} will try to find a compiler which (from its name)
 appears to be a Fortran 90/95 compiler, and set it in macro @samp{FC}.
 Note that it does not check that such a compiler is fully (or even
-partially) compliant with Fortran 90/95.  Packages making use of
-Fortran 90/95 features should use file extension @file{.f90} or
-@file{.f95} for the source files: the variable @code{PKG_FCFLAGS}
-specifies any special flags to be used.  There is no guarantee that
-compiled Fortran 90/95 code can be mixed with any other type of code,
-nor that a build of @R{} will have support for such packages.
+partially) compliant with Fortran 90/95.  Packages making use of Fortran
+90/95 features should use file extension @file{.f90} or @file{.f95} for
+the source files: the variable @code{PKG_FCFLAGS} specifies any special
+flags to be used.  There is no guarantee that compiled Fortran 90/95
+code can be mixed with any other type of compiled code, nor that a build
+of @R{} will have support for such packages.
 
 @node Checking and building packages, Writing package vignettes, Configure and cleanup, Creating R packages
 @section Checking and building packages
 
 Before using these tools, please check that your package can be
 installed and loaded.  @code{R CMD check} will @emph{inter alia} do
-this, but you will get more informative error messages doing the checks
+this, but you may get more detailed error messages doing the checks
 directly.
 
 @menu
@@ -1280,22 +1370,22 @@ only).
 
 @item
 The files are checked for binary executables, using a suitable version
-of @command{file} if available.  (There may be rare false positives --
-package @pkg{foreign} has one.)
+of @command{file} if available.  (There may be rare false positives.)
 
 @item
 The @file{DESCRIPTION} file is checked for completeness, and some of its
 entries for correctness.  Unless installation tests are skipped,
 checking is aborted if the package dependencies cannot be resolved at
-run time.  One check is that the package name is not that of a standard
-package, nor of the defunct standard packages (@samp{ctest}, @samp{eda},
-@samp{lqs}, @samp{mle}, @samp{modreg}, @samp{mva}, @samp{nls},
-@samp{stepfun} and @samp{ts}) which are handled specially by
-@code{library}.  Another check is that all packages mentioned in
-@code{library} or @code{require}s or from which the @file{NAMESPACE}
-file imports or are called @emph{via} @code{::} or @code{:::} are listed
-(in @samp{Depends}, @samp{Imports}, @samp{Suggests} or @samp{Contains}):
-this is not an exhaustive check of the actual imports.
+run time.  (You may need to set @env{R_LIBS} if dependent packages are
+in a separate library tree.) One check is that the package name is not
+that of a standard package, nor one of the defunct standard packages
+(@samp{ctest}, @samp{eda}, @samp{lqs}, @samp{mle}, @samp{modreg},
+@samp{mva}, @samp{nls}, @samp{stepfun} and @samp{ts}).  Another check is
+that all packages mentioned in @code{library} or @code{require}s or from
+which the @file{NAMESPACE} file imports or are called @emph{via}
+@code{::} or @code{:::} are listed (in @samp{Depends}, @samp{Imports},
+@samp{Suggests} or @samp{Contains}): this is not an exhaustive check of
+the actual imports.
 
 @item
 Available index information (in particular, for demos and vignettes) is
@@ -1389,11 +1479,16 @@ Introduction to R}.
 If the package sources contain a @file{tests} directory then the tests
 specified in that directory are run.  (Typically they will consist of a
 set of @file{.R} source files and target output files
-@file{.Rout.save}.)
+@file{.Rout.save}.)  Please note that the comparison will be done in the
+end user's locale, so the target output files should be ASCII if at all
+possible -- this may require using@footnote{this is done automatically
+as from @R{} 2.9.0.}  @code{options(useFancyQuotes=FALSE)} in the source
+files.
 
 @item
 The code in package vignettes (@pxref{Writing package vignettes}) is
-executed.
+executed, and the vignettes made from the sources as a check of
+completeness.
 
 @item
 If a working @command{pdflatex} or @command{latex} program is available,
@@ -1423,12 +1518,11 @@ default if logging in remotely or for batch jobs.
 Using @code{R CMD build}, the @R{} package builder, one can build R
 packages from their sources (for example, for subsequent release).
 
-Prior to actually building the package in the common gzipped tar file
+Prior to actually building the package in the standard gzipped tar file
 format, a few diagnostic checks and cleanups are performed.  In
-particular, it is tested whether object indices exist and can be
-assumed to be up-to-date, and C, C++ and FORTRAN source files and
-relvant make files are tested and converted to LF line-endings if
-necessary.
+particular, it is tested whether object indices exist and can be assumed
+to be up-to-date, and C, C++ and FORTRAN source files and relvant make
+files are tested and converted to LF line-endings if necessary.
 
 Run-time checks whether the package works correctly should be performed
 using @code{R CMD check} prior to invoking the build procedure.
@@ -1440,12 +1534,12 @@ matched against the file names relative to the top-level source
 directory.  In addition, directories from source control
 systems@footnote{called @file{CVS} or @file{.svn} or @file{.arch-ids} or
 @file{.bzr} or @file{git}.}, directories with names ending
-@file{.Rcheck} or @file{Old} or @file{old} and files @file{GNUMakefile}
-or with base names starting with @samp{.#}, or starting and ending with
-@samp{#}, or ending in @samp{~}, @samp{.bak} or @samp{.swp}, are
-excluded by default.  In addition, those files in the @file{R},
-@file{demo} and @file{man} directories which are flagged by @code{R CMD
-check} as having invalid names will be excluded.
+@file{.Rcheck} or @file{Old} or @file{old} and files @file{GNUMakefile},
+@file{Read-and-delete-me} or with base names starting with @samp{.#}, or
+starting and ending with @samp{#}, or ending in @samp{~}, @samp{.bak} or
+@samp{.swp}, are excluded by default.  In addition, those files in the
+@file{R}, @file{demo} and @file{man} directories which are flagged by
+@code{R CMD check} as having invalid names will be excluded.
 
 @c <FIXME>
 @c From 1.8.0 on, the build code removes exclude files itself, rather
@@ -1567,7 +1661,8 @@ Future versions of @R{} may enhance this customization mechanism, and
 provide a similar scheme for @code{R CMD build}.
 
 There are other internal settings that can be changed via environment
-variables @w{@env{_R_CHECK_*_}:} see the Perl source code.
+variables @w{@env{_R_CHECK_*_}:}  @xref{Tools, , Tools, R-ints, R
+Internals}, (and the Perl source code).
 
 @node Writing package vignettes, Submitting a package to CRAN, Checking and building packages, Creating R packages
 @section Writing package vignettes
@@ -1593,9 +1688,9 @@ part of the base @R{} distribution, see the @code{Sweave} help page for
 details on the document format.  Package vignettes found in directory
 @file{inst/doc} are tested by @code{R CMD check} by executing all @R{}
 code chunks they contain to ensure consistency between code and
-documentation.  Code chunks with option @code{eval=FALSE} are not
-tested. The @R{} working directory for all vignette tests in @code{R CMD
-check} is the @emph{installed} version of the @file{doc}
+documentation.  (Code chunks with option @code{eval=FALSE} are not
+tested.) The @R{} working directory for all vignette tests in @code{R
+CMD check} is the @emph{installed} version of the @file{doc}
 subdirectory. Make sure all files needed by the vignette (data sets,
 @dots{}) are accessible by either placing them in the @file{inst/doc}
 hierarchy of the source package, or using calls to @code{system.file()}.
@@ -1605,19 +1700,20 @@ vignettes for distribution with the package sources.  By including the
 PDF version in the package sources it is not necessary that the
 vignettes can be compiled at install time, i.e., the package author can
 use private @LaTeX{} extensions which are only available on his machine.
-@footnote{provided the conditions of the licence are met: many would see
-this as incompatible with an Open Source licence.}
+@footnote{provided the conditions of the package's licence are met: many
+would see this as incompatible with an Open Source licence.}
 
 By default @code{R CMD build} will run @code{Sweave} on all files in
 Sweave format.  If no @file{Makefile} is found in directory
 @file{inst/doc}, then @code{texi2dvi --pdf} is run on all vignettes.
 Whenever a @file{Makefile} is found, then @code{R CMD build} will try to
-run @command{make} after the @code{Sweave} step, such that PDF manuals
-can be created from arbitrary source formats (plain @LaTeX{} files,
-@dots{}).  The @file{Makefile} should take care of both creation of PDF
-files and cleaning up afterwards, i.e., delete all files that shall not
-appear in the final package archive.  Note that the @code{make} step is
-executed independently from the presence of any files in Sweave format.
+run @command{make} after the @code{Sweave} step, so PDF manuals can be
+created from arbitrary source formats (plain @LaTeX{} files, @dots{}).
+The first target in the @file{Makefile} should take care of both
+creation of PDF files and cleaning up afterwards, i.e., delete all files
+that shall not appear in the final package archive.  Note that the
+@code{make} step is executed independently from the presence of any
+files in Sweave format.
 
 It is no longer necessary to provide a @file{00Index.dcf} file in the
 @file{inst/doc} directory---the corresponding information is generated
@@ -1625,7 +1721,7 @@ automatically from the @code{\VignetteIndexEntry} statements in all
 Sweave files when installing from source, or when using the package
 builder (@pxref{Checking and building packages}).  The
 @code{\VignetteIndexEntry} statement is best placed in @LaTeX{} comment,
-such that no definition of the command is necessary.
+as then no definition of the command is necessary.
 
 At install time an @HTML{} index for all vignettes is automatically
 created from the @code{\VignetteIndexEntry} statements unless a file
@@ -1658,8 +1754,13 @@ documentation is complete and can be processed.  If the package contains
 code that needs to be compiled, try to enable a reasonable amount of
 diagnostic messaging (``warnings'') when compiling, such as e.g.@:
 @option{-Wall -pedantic} for tools from GCC, the Gnu Compiler
-Collection.  (If @R{} was not configured accordingly, one can achieve
-this e.g.@: via @code{PKG_CFLAGS} and related variables.)
+Collection.  If @R{} was not configured accordingly, one can achieve
+this @emph{via} personal @file{Makevars} files.
+@ifset UseExternalXrefs
+@xref{Customizing package compilation,
+Customizing package compilation, R-admin,
+R Installation and Administration},
+@end ifset
 
 @item
 Look for any problems with help file conversions.  For example, you
@@ -1928,10 +2029,7 @@ rather than
 There are at least two benefits to this approach.  Firstly, the symbol
 lookup is done just once for each symbol rather than each time it the
 routine is invoked. Secondly, this removes any ambiguity in resolving
-symbols that might be present in several compiled libraries.  In
-particular, it allows for correctly resolving routines when different
-versions of the same package are loaded concurrently in the same @R{}
-session.
+symbols that might be present in several compiled DLLs.
 
 In some circumstances, there will already be an @R{} variable in the
 package with the same name as a native symbol. For example, we may have
@@ -2151,9 +2249,10 @@ Replace @code{.First.lib} functions with @code{.onLoad} functions or
 @code{useDynLib} directives.
 @end itemize
 
-@noindent
-Some code analysis tools to aid in this process are currently under
-development.
+@c or were in ca 2003
+@c @noindent
+@c Some code analysis tools to aid in this process are currently under
+@c development.
 
 @node Name spaces with formal classes and methods,  , Summary -- converting an existing package, Package name spaces
 @subsection Name spaces with formal classes and methods
@@ -2163,7 +2262,7 @@ Some additional steps are needed for packages which make use of formal
 internally).  The package should have @code{Depends: methods} in its
 @file{DESCRIPTION} file and any classes and methods which are to be
 exported need to be declared in the @file{NAMESPACE} file.  For example,
-the @pkg{stats} package has
+the @pkg{stats4} package has
 
 @findex exportClasses
 @findex exportMethods
@@ -2181,11 +2280,12 @@ export(AIC)
 
 @noindent
 All formal classes need to be listed in an @code{exportClasses}
-directive.  Generics for which formal methods are defined need to be
-declared in an @code{exportMethods} directive, and where the generics
-are formed by taking over existing functions, those functions need to be
-imported (explicitly unless they are defined in the @code{base} name
-space).
+directive. Alternatively, a pattern can be specified using
+@code{exportClassPattern}. Generics for which formal methods are defined
+need to be declared in an @code{exportMethods} directive, and where the
+generics are formed by taking over existing functions, those functions
+need to be imported (explicitly unless they are defined in the
+@code{base} name space).
 
 Note that exporting methods on a generic in the namespace will also
 export the generic, and exporting a generic in the namespace will also
@@ -2193,8 +2293,9 @@ export its methods.  Where a generic has been created in the package
 solely to add S4 methods to it, it can be declared @emph{via} either or
 both of @code{exports} or @code{exportMethods}, but the latter seems
 clearer (and is used in the @pkg{stats4} example above).  On the other
-hand, where a generic is created in a package without methods (such as
-@code{AIC} in @pkg{stats4}), @code{exports} must be used.
+hand, where a generic is created in a package without setting any
+methods for it (such as @code{AIC} in @pkg{stats4}), @code{exports} must
+be used.
 
 Further, a package using classes and methods defined in another package
 needs to import them, with directives
@@ -2364,30 +2465,30 @@ Windows, for example).  In that case it is likely that text will be
 rendered correctly in the terminal/console used to run @R{}, and files
 written will be readable by other UTF-8-aware applications.  However,
 plotting will be problematic.  On-screen plotting using the @samp{X11()}
-device will use a font that only covers a small proportion of UTF-8, and
-different fonts will likely need to be selected for Polish, Russian and
-Japanese (see @code{help("X11")}).  Using @samp{postscript} or
-@samp{pdf} will choose a default 8-bit encoding depending on the
-language of the UTF-8 locale, and your users would need to be told how
-to select the @samp{encoding} argument.
+device needs to find a font that covers the glyphs used, and
+this will be machine-dependent: you may have Russian or Japanese fonts
+installed but your users may not.  Using @samp{postscript} or @samp{pdf}
+will choose a default 8-bit encoding depending on the language of the
+UTF-8 locale, and your users would need to be told how to select the
+@samp{encoding} argument.
 
 Another fairly common scenario is where a package will only be used in
 one language, e.g.@: French.  It is not very safe to assume that all
 such users would have their computers set to a French locale, but let us
 assume so.  The problem then is that there are several possible
 encodings for French locales, the most common ones being @samp{CP1252}
-(Windows), @samp{ISO 8859-1} (latin-1), @samp{ISO 8859-15} (latin-9 which
-includes the Euro), and @samp{UTF-8}.  For characters in the French
-language the first three agree, but they do not agree with @samp{UTF-8}.
-Further, you (or different users) can run @R{} in different locales in
-different sessions, say @samp{fr_CA.utf8} one day and
-@samp{fr_CH.iso88591} the next.  As from @R{} 2.5.0, declaring the
-encoding as either @samp{latin1} or @samp{UTF-8} in the
-@file{DESCRIPTION} file will enable this to work.  If you have character
-data in @file{.rda} files (for use by @code{data} or LazyData) these
-need to have been prepared and @code{save}d in @R{} 2.5.0 in an
-appropriate locale (or marked via @code{Encoding}).  For example (from
-package @pkg{FactoMineR} version @code{1.02}):
+(Windows), @samp{ISO 8859-1} (latin-1), @samp{ISO 8859-15} (latin-9
+which includes the Euro), and @samp{UTF-8}.  For characters in the
+French language the first three agree, but they do not agree with
+@samp{UTF-8}.  Further, you (or different users of your machine) can run
+@R{} in different locales in different sessions, say @samp{fr_CA.utf8}
+one day and @samp{fr_CH.iso88591} the next.  Declaring the encoding as
+either @samp{latin1} or @samp{UTF-8} in the @file{DESCRIPTION} file will
+enable this to work.  If you have character data in @file{.rda} files
+(for use by @code{data} or LazyData) these need to have been prepared
+and @code{save}d in @R{} 2.5.0 or later in an appropriate locale (or
+marked via @code{Encoding}).  For example (from package @pkg{FactoMineR}
+version @code{1.02}):
 
 @example
 > library(FactoMineR)
@@ -2400,9 +2501,9 @@ package @pkg{FactoMineR} version @code{1.02}):
 @noindent
 was used to update a @file{.rda} file.
 
-If you want to run @command{R CMD check} on a Unix-alike over a
-package that sets the encoding you may need to specify a suitable
-locale via an environment variable.  The default is equivalent setting
+If you want to run @command{R CMD check} on a Unix-alike over a package
+that sets the encoding you may need to specify a suitable locale via an
+environment variable.  The default is equivalent to setting
 @env{R_ENCODING_LOCALES} to
 
 @example
@@ -2625,11 +2726,13 @@ An installed file named @file{CITATION} will be used by the
 @code{citation()} function.  (To be installed, it needed to be in the
 @file{inst} subdirectory of the package sources.)
 
-The @file{CITATION} file is parsed as @R{} code, currently in Latin-1.
-(This will change once there is a means to declare an encoding.)  If no
-such file is present, @code{citation} generates a standard contents, and
-an example of what that would look like as a @file{CITATION} file can be
-seen in recommended package @pkg{nlme} (see below): recommended packages
+The @file{CITATION} file is parsed as @R{} code (in the package's
+declared encoding@footnote{as from @R{} 2.8.0: @R 2.7.x read it in
+latin-1, and earlier versions in th current encoding of the @R{}
+session}, defaulting to latin-1).  If no such file is present,
+@code{citation} generates a standard contents, and an example of what
+that would look like as a @file{CITATION} file can be seen in
+recommended package @pkg{nlme} (see below): recommended packages
 @pkg{boot}, @pkg{cluster} and @pkg{mgcv} have further examples.
 
 A @file{CITATION} file will contain calls to the functions
@@ -2668,12 +2771,6 @@ for further details of the information which can be provided.
 
 The @file{CITATION} should itself produce no output.
 
-As from @R{} 2.8.0, the @file{CITATION} file will be read in Latin-1 unless a
-package encoding is declared in the package's @file{DESCRIPTION} file.
-(@R{} 2.7.0 read the @file{CITATION} file in Latin-1, which covered all
-the examples at the time.  Earlier versions of @R{} read the file in the
-encoding of the session.)
-
 
 @node Package types, Services, CITATION files, Creating R packages
 @section Package types
@@ -2692,11 +2789,12 @@ of which need write permission in the @R{} installation tree.
 @subsection Frontend
 
 This is a rather general mechanism, designed for adding new front-ends
-such as the @pkg{gnomeGUI} package.  If a @file{configure} file is found
-in the top-level directory of the package it is executed, and then if a
-@code{Makefile} is found (often generated by @file{configure}),
-@code{make} is called.  If @code{R CMD INSTALL --clean} is used
-@code{make clean} is called.  No other action is taken.
+such as the former @pkg{gnomeGUI} package (see the @samp{Archve} area on
+CRAN).  If a @file{configure} file is found in the top-level directory
+of the package it is executed, and then if a @code{Makefile} is found
+(often generated by @file{configure}), @code{make} is called.  If
+@code{R CMD INSTALL --clean} is used @code{make clean} is called.  No
+other action is taken.
 
 @code{R CMD build} can package up this type of extension, but @code{R
 CMD check} will check the type and skip it.
@@ -2755,11 +2853,13 @@ R-Forge (@uref{http://R-Forge.r-project.org, R-Forge.r-project.org}) and
 RForge (@uref{http://www.rforge.net, www.rforge.net}) are similar
 services with similar names.  Both provide source-code management
 through SVN, daily building and checking, mailing lists and a repository
-that can be accessed @emph{via} @code{install.packages}.  Package
-developers have the opportunity to present their work on the basis of
-project websites or news announcements.  Mailing lists, forums or wikis
-provide useRs with convenient instruments for discussions and for
-exchanging information between developers and/or interested useRs.
+that can be accessed @emph{via} @code{install.packages} (and as from
+@R{} 2.9.0, R-Forge can be selected by @code{setRepositories} and the
+GUI menus that use it).  Package developers have the opportunity to
+present their work on the basis of project websites or news
+announcements.  Mailing lists, forums or wikis provide useRs with
+convenient instruments for discussions and for exchanging information
+between developers and/or interested useRs.
 
 
 @node Writing R documentation files, Tidying and profiling R code, Creating R packages, Top
@@ -2787,14 +2887,15 @@ exchanging information between developers and/or interested useRs.
 @R{} objects are documented in files written in ``@R{} documentation''
 (Rd) format, a simple markup language closely resembling (La)@TeX{},
 which can be processed into a variety of formats, including @LaTeX{},
-@HTML{} and plain text.  The translation is carried out by the Perl
-script @command{Rdconv} in @file{@var{R_HOME}/bin} and by the
-installation scripts for packages.
+@HTML{} and plain text.  The translation is carried out by the script
+@command{Rdconv} in @file{@var{R_HOME}/bin} and by the installation
+scripts for packages.
 
+@c 1225 just prior to 2.9.0
 The @R{} distribution contains more than 1200 such files which can be
 found in the @file{src/library/@var{pkg}/man} directories of the @R{}
-source tree, where @var{pkg} stands for the standard packages which are
-included in the @R{} distribution.
+source tree, where @var{pkg} stands for one of the standard packages
+which are included in the @R{} distribution.
 
 As an example, let us look at the file
 @file{src/library/base/man/load.Rd} which documents the @R{} function
@@ -2804,6 +2905,7 @@ As an example, let us look at the file
 @cartouche
 @smallexample
 \name@{load@}
+\Rdversion@{1.1@}
 \alias@{load@}
 \title@{Reload Saved Datasets@}
 \description@{
@@ -2842,12 +2944,21 @@ about the name of the file, the topics documented, a title, a short
 textual description and @R{} usage information for the objects
 documented.  The body gives further information (for example, on the
 function's arguments and return value, as in the above example).
-Finally, there is a footer with keyword information.  The header and
-footer are mandatory.
+Finally, there is a footer with keyword information.  The header is
+mandatory.
 
 See the @uref{http://developer.r-project.org/Rds.html, ``Guidelines for Rd
 files''} for guidelines for writing documentation in Rd format which
 should be useful for package writers.
+
+Note that there have been a number of changes to the Rd format over the
+years, which can be important if a package is intended to be used with
+earlier versions of @R{}.  The @code{\Rdversion@{@}} block was
+introduced in @R{} 2.9.0 to allow help files to identify the version
+they follow: files without such a block are implicitly version 1.0.
+New files created by e.g.@: @code{prompt} in @R{} 2.9.0 and later are
+marked as version 1.1.  See @ref{Back-compatibility issues} for notes on
+earlier versions of the Rd format.
 
 @menu
 * Documenting functions::       
@@ -2869,7 +2980,9 @@ particular, functions) are given in this subsection.
 files are not allowed to start with a dot, and have to be uniquely named
 on a case-insensitive file system.} is the basename of the Rd file
 containing the documentation.  It is the ``name'' of the Rd object
-represented by the file and has to be unique in a package.
+represented by the file and has to be unique in a package.  To avoid
+problems with indexing the package manual, it may not contain @samp{!}
+@samp{|} nor @samp{@@}.
 @c and must not contain @LaTeX{}
 @c special characters (@samp{#}, @samp{$}, @samp{%}, @samp{&}, @samp{~},
 @c @samp{_}, @samp{^}, @samp{\}, @samp{@{}, @samp{@}}).
@@ -2880,7 +2993,8 @@ The @code{\alias} entries specify all ``topics'' the file documents.
 This information is collected into index data bases for lookup by the
 on-line (plain text and @HTML{}) help systems.  The @var{topic} can
 contain spaces, but (for historical reasons) leading and trailing spaces
-will be stripped.
+will be stripped.  Percent has always needed to be escaped by backslash,
+and as from @R{} 2.9.0 a left brace should be.
 
 There may be several @code{\alias} entries.  Quite often it is
 convenient to document several @R{} objects in one file.  For example,
@@ -2925,7 +3039,7 @@ shortened, the file probably tries to document too much at once.)
 @findex \usage
 One or more lines showing the synopsis of the function(s) and variables
 documented in the file.  These are set in typewriter font.  This is a
-verbatim-like command, so some characters need to be escaped
+verbatim-like command, and a few characters need to be escaped
 (@pxref{Insertions}).
 
 The usage information specified should match the function definition
@@ -3020,6 +3134,10 @@ Usage:
 @end group
 @end example
 
+@findex \S3method
+Versions of @R{} since at least 2.0.0 accept @code{\S3method} as an
+alternative to @code{\method}.
+
 @item \arguments@{@dots{}@}
 @findex \arguments
 Description of the function's arguments, using an entry of the form
@@ -3052,11 +3170,12 @@ form
 @end example
 
 @noindent
-for each component of the list returned.  Optional text may precede this
-list (see the introductory example for @code{rle}).  Note that
-@code{\value} is implicitly a @code{\itemize} environment, so that
-environment should not be used for listing components, just individual
-@code{\item} entries.
+for each component of the list returned.  Optional text may
+precede@footnote{Text between or after list items will be discarded:
+this may change in future versions of the Rd format.} this list (see for
+example the help for @code{rle}).  Note that @code{\value} is implicitly
+a @code{\describe} environment, so that environment should not be used
+for listing components, just individual @code{\item@{@}@{@}} entries.
 
 @item \references@{@dots{}@}
 @findex \references
@@ -3100,15 +3219,15 @@ Examples of how to use the function.  These are set as formatted in
 typewriter font: see @ref{Insertions} for when characters need to be
 escaped.  (Markup @code{\link} and @code{\var} will be interpreted, but
 no other.)  Code in this section is run by @code{example()} unless
-marked otherswise (see below).
+marked otherwise (see below).
 
 Examples are not only useful for documentation purposes, but also
-provide test code used for diagnostic checking of @R{}.  By default,
-text inside @code{\examples@{@}} will be displayed in the output of the
-help page and run by @code{example()} and by @code{R CMD check}.  You
-can use @code{\dontrun@{@}}
+provide test code used for diagnostic checking of @R{} code.  By
+default, text inside @code{\examples@{@}} will be displayed in the
+output of the help page and run by @code{example()} and by @code{R CMD
+check}.  You can use @code{\dontrun@{@}}
 @findex \dontrun
-for commands that should only be shown, but not run, and
+for text that should only be shown, but not run, and
 @code{\dontshow@{@}}
 @findex \dontshow
 for extra commands for testing that should not be shown to users, but
@@ -3128,18 +3247,24 @@ x <- runif(10)       # @r{Shown and run.}
 Thus, example code not included in @code{\dontrun} must be executable!
 In addition, it should not use any system-specific features or require
 special facilities (such as Internet access or write permission to
-specific directories).  Code included in @code{\dontrun} is indicated by
-comments in the processed help files.
+specific directories).  Text included in @code{\dontrun} is indicated by
+comments in the processed help files: it need not be valid @R{} code but
+the escapes must still be used for @code{%}, @code{\} and unpaired
+braces.
 
 Data needed for making the examples executable can be obtained by random
 number generation (for example, @code{x <- rnorm(100)}), or by using
 standard data sets listed by @code{data()} (see @code{?data} for more
 info).
 
-Finally, there is @code{\donttest}, used to mark code that should be run
-by @code{examples()} but not by @code{R CMD check}.  This should be
-needed only occasionally but can be used for code which might fail, for
-example in some locales.
+Finally, there is @code{\donttest}, used (at the beginning@footnote{@R{}
+2.9.0 and later allow leading whitespace.} of af a
+separate line) to mark code that should be run by @code{examples()} but
+not by @code{R CMD check}.  This should be needed only occasionally but
+can be used for code which might fail in circumstances that are hard to
+test for, for example in some locales.  (Use e.g. @code{capabilities()}
+to test for features needed in the examples wherever possible, and you
+can also use @code{try()} or @code{trycatch()}.)
 
 @findex \keyword
 @item \keyword@{@var{key}@}
@@ -3272,14 +3397,16 @@ explicitly), one can use the special markup
 @noindent
 (e.g., @samp{\S4method@{coerce@}@{ANY,NULL@}(from, to)}).
 
-To allow for making full use of the potential of the on-line
-documentation system, all user-visible S4 classes and methods in a
-package should at least have a suitable @code{\alias} entry in one of
-the package's Rd files.  If a package has methods for a function defined
-originally somewhere else, and does not change the underlying default
-method for the function, the package is responsible for documenting the
-methods it creates, but not for the function itself or the default
-method.
+To make full use of the potential of the on-line documentation system,
+all user-visible S4 classes and methods in a package should at least
+have a suitable @code{\alias} entry in one of the package's Rd files.
+If a package has methods for a function defined originally somewhere
+else, and does not change the underlying default method for the
+function, the package is responsible for documenting the methods it
+creates, but not for the function itself or the default method.
+
+An S4 replacement method is documented in the same way as an S3 one: see
+the description of  @code{\method} in @ref{Documenting functions}.
 
 
 See @kbd{help("Documentation", package = "methods")} for more
@@ -3289,7 +3416,7 @@ methods.
 @node Documenting packages,  , Documenting S4 classes and methods, Rd format
 @subsection Documenting packages
 
-Packages may have an overview man page with an @code{\alias}
+Packages may have an overview help page with an @code{\alias}
 @code{@var{pkgname}-package}, e.g.@: @samp{utils-package} for the
 @pkg{utils} package, when @code{package?@var{pkgname}} will open that
 help page.  If a topic named @code{@var{pkgname}} does not exist in
@@ -3299,17 +3426,19 @@ another Rd file, it is helpful to use this as an additional
 Skeletons of documentation for a package can be generated using the
 function @code{promptPackage()}.  If the @code{final = TRUE} argument
 is used, then the Rd file will be generated in final form, containing
-the information that would be produced by
+the information that would be produced up to
 @code{library(help = @var{pkgname})}.  Otherwise (the default) comments
 will be inserted giving suggestions for content.
 
-The only requirement for this page is that it include a
-@code{\docType@{package@}} statement.  All other content is optional.
-We suggest that it should be a short overview, to give a reader
-unfamiliar with the package enough information to get started.  More
-extensive documentation is better placed into a package vignette
-(@pxref{Writing package vignettes}) and referenced from this page, or
-into individual man pages for the functions, datasets, or classes.
+Apart from the mandatory @code{\name} and @code{\title} and the
+@code{@var{pkgname}-package} alias, the only requirement for the package
+overview page is that it include a @code{\docType@{package@}} statement.
+All other content is optional.  We suggest that it should be a short
+overview, to give a reader unfamiliar with the package enough
+information to get started.  More extensive documentation is better
+placed into a package vignette (@pxref{Writing package vignettes}) and
+referenced from this page, or into individual man pages for the
+functions, datasets, or classes.
 
 @node Sectioning, Marking text, Rd format, Writing R documentation files
 @section Sectioning
@@ -3333,7 +3462,7 @@ For example
 For consistency with the pre-assigned sections, the section name (the
 first argument to @code{\section}) should be capitalized (but not all
 upper case).  Note that there is no whitespace between the first and
-second braced expressions.
+second braced expressions (it is allowed in Rd version 1.1 and later).
 
 Note that additional named sections are always inserted at a fixed
 position in the output (before @code{\note}, @code{\seealso} and the
@@ -3369,29 +3498,29 @@ quotation marks).
 @end table
 
 The following logical markup commands are available for indicating
-specific kinds of text.
+specific kinds of text.  `Literal' is not to be taken as meaning
+`verbatim', and some characters will need to be escaped
+(@pxref{Insertions}).
 
 @table @code
 @item \code@{@var{text}@}
 @findex \code
-Indicate text that is a literal example of a piece of a program, e.g., a
-fragment of @R{} code or the name of an @R{} object, using
-@code{typewriter} font if possible.  Some characters will need to be
-escaped (@pxref{Insertions}).  The only markup interpreted inside
+Indicate text that is a literal example of a piece of an @R{} program,
+e.g., a fragment of @R{} code or the name of an @R{} object, using
+@code{typewriter} font if possible.  The only markup interpreted inside
 @code{\code} is @code{\link} and @code{\var}.
 
 @item \preformatted@{@var{text}@}
 @findex \preformatted
 Indicate text that is a literal example of a piece of a program, using
-@code{typewriter} font if possible.  The same characters need to be
-escaped as for @code{\code}.  All other formatting, e.g.@: line breaks,
-is preserved.  The closing brace should be on a line by itself.
+@code{typewriter} font if possible.  Formatting, e.g.@: line breaks, is
+preserved.  The closing brace should be on a line by itself.
 
 @item \kbd@{@var{keyboard-characters}@}
 @findex \kbd
 Indicate keyboard input, using @kbd{slanted typewriter} font if
 possible, so users can distinguish the characters they are supposed to
-type from those the computer outputs.
+type from computer output.
 
 @item \samp@{@var{text}@}
 @findex \samp
@@ -3403,8 +3532,8 @@ Indicate the name of an @R{} package.
 
 @item \file@{@var{file_name}@}
 @findex \file
-Indicate the name of a file.  Note that special characters do need to be
-escaped.
+Indicate the name of a file.  Note that backlash is one of the
+characters which needs to be escaped.
 @item \email@{@var{email_address}@}
 @findex \email
 Indicate an electronic mail address.
@@ -3461,9 +3590,9 @@ bullet point (@code{\itemize}) or a number (@code{\enumerate}).
 
 @findex \describe
 The @code{\describe} command is similar to @code{\itemize} but allows
-initial labels to be specified.  The @code{\item}s take two arguments,
-the label and the body of the item, in exactly the same way as argument
-and value @code{\item}s.  @code{\describe} commands are mapped to
+initial labels to be specified.  Each @code{\item} takes two arguments,
+the label and the body of the item, in exactly the same way as an
+argument or value @code{\item}.  @code{\describe} commands are mapped to
 @code{<DL>} lists in @HTML{} and @code{\description} lists in @LaTeX{}.
 
 @findex \tabular
@@ -3504,7 +3633,7 @@ The markup @code{\link@{@var{foo}@}} (usually in the combination
 @code{\alias} markup in another Rd file (possibly in another package).
 Hyperlinks are supported in some of the formats to which Rd files are
 converted, for example @HTML{} and PDF, but ignored in others, e.g.@:
-the text and S nroff formats.
+the text format.
 
 One main usage of @code{\link} is in the @code{\seealso} section of the
 help page, @pxref{Rd format}.
@@ -3535,9 +3664,9 @@ that more than one package offers help on a topic@footnote{a common
 example in CRAN packages is @code{\link[mgcv]@{gam@}}.} (in which case
 the present package has precedence so this is only needed to refer to
 other packages).  They are only in used in (C)HTML help (and not for
-hyperlinks in @LaTeX{} nor S sgml conversions of help pages), and link
-to the file rather than the topic (since there is no way to know which
-topics are in which files in an uninstalled package).
+hyperlinks in @LaTeX{} conversions of help pages), and link to the file
+rather than the topic (since there is no way to know which topics are in
+which files in an uninstalled package).
 
 @node Mathematics, Insertions, Cross-references, Writing R documentation files
 @section Mathematics
@@ -3558,7 +3687,7 @@ is used for ``inline'' formulae (corresponding to @TeX{}'s
 Both commands can also be used as @code{\eqn@{@var{latexascii}@}} (only
 @emph{one} argument) which then is used for both @var{latex} and
 @var{ascii}.  No whitespace is allowed between command and the first
-argument, nor between the first and second arguments.
+argument, nor (prior to Rd version 1.1) between the first and second arguments.
 
 The following example is from @file{Poisson.Rd}:
 
@@ -3619,13 +3748,16 @@ with one argument immediately followed by a right brace.
 @section Insertions
 
 @findex \R
-Use @code{\R} for the @R{} system itself (you don't need extra
-@samp{@{@}} or @samp{\}).  Use @code{\dots}
+Use @code{\R} for the @R{} system
+itself.  Use
+@code{\dots}
 @findex \dots
 for the dots in function argument lists @samp{@dots{}}, and
 @code{\ldots}
 @findex \ldots
-for ellipsis dots in ordinary text.
+for ellipsis dots in ordinary text.  In the current Rd version 1.1 these
+can optionally be followed by @code{@{@}}, and it is recommended that
+they are unless followed by whitespace.
 
 After a @samp{%}, you can put your own comments regarding the help text.
 The rest of the line will be completely disregarded, normally.
@@ -3638,28 +3770,18 @@ The ``comment'' character @samp{%} and unpaired braces@footnote{See the
 examples section in the file @file{Paren.Rd} for an example.}
 @emph{always} need to be escaped by @samp{\}, and @samp{\\} can be used
 for backslash and needs to be when there two or more adjacent
-backslashes).  Inside the verbatim-like commands (@code{usage},
+backslashes).  Inside the verbatim-like commands (@code{\usage},
 @code{\code}, @code{\preformatted} and @code{\examples}), no other
-characters are special.  Note that @code{\file} is @strong{not} a
-verbatim-like command.
-
-In ``regular'' text (not verbatim-like, no @code{\eqn}, @dots{}), you
-currently must escape most @LaTeX{} special characters, i.e., besides
-@samp{%}, @samp{@{}, and @samp{@}}, the specials @samp{$}, @samp{#}, and
-@samp{_} are produced by preceding each with a @samp{\}.  (@samp{&} can
-also be escaped, but need not be.)  Further, enter @samp{^} as
-@code{\eqn@{\mbox@{\textasciicircum@}@}@{^@}}, and @samp{~} by
-@code{\eqn@{\mbox@{\textasciitilde@}@}@{~@}} or @code{\eqn@{\sim@}@{~@}}
-(for a short and long tilde respectively).  Also, @samp{<}, @samp{>},
-and @samp{|} must only be used in math mode, i.e., within @code{\eqn} or
-@code{\deqn}.
+characters are special.  As from @R{} 2.9.0, all of @samp{% @{ @} \}
+should be escaped in non-verbatim-like text.
 
 @findex \enc
 Text which might need to be represented differently in different
 encodings should be marked by @code{\enc}, e.g.@:
-@code{\enc@{J@"oreskog@}@{Joreskog@}} where the first argument will be
-used where encodings are allowed and the second should be
-@acronym{ASCII} (and is used for e.g.@: the text conversion).
+@code{\enc@{J@"oreskog@}@{Joreskog@}} (with no whitespace between the
+braces) where the first argument will be used where encodings are
+allowed and the second should be @acronym{ASCII} (and is used for e.g.@:
+the text conversion).
 
 @node Indices, Platform-specific sections, Insertions, Writing R documentation files
 @section Indices
@@ -3726,7 +3848,10 @@ or
 @end example
 
 @noindent
-for OS-specific inclusion or exclusion.
+for OS-specific inclusion or exclusion.  Such blocks should not be
+nested, and should be entirely within a block (that, is between the
+opening and closing brace of a section or item), or at top-level contain
+a complete section.
 
 If the differences between platforms are extensive or the @R{} objects
 documented are only relevant to one platform, platform-specific Rd files
@@ -3760,9 +3885,12 @@ in finding non-@acronym{ASCII} bytes in the files.)
 
 For convenience, encoding names @samp{latin1} and @samp{latin2} are
 always recognized: these and @samp{UTF-8} are likely to work fairly
-widely.  However, this does not mean that all characters in
-@samp{UTF-8} will be recognized, and the coverage of non-Latin
-characters is often low, especially when converting to @LaTeX{}.
+widely.  However, this does not mean that all characters in UTF-8 will
+be recognized, and the coverage of non-Latin characters@footnote{@R{}
+2.9.0 added support for UTF-8 Cyrillic characters in @LaTeX{}, but on
+some OSes this will need Cyrillic support added to @LaTeX{}, so
+environment variable @env{_R_CYRILLIC_TEX_} needs to be set ot a
+non-empty value to enable this.} is low.
 
 The @code{\enc} command (@pxref{Insertions}) can be used to provide
 transliterations which will be used in conversions that do not support
@@ -3786,8 +3914,10 @@ it might for example use
 
 @noindent
 (Use of @code{utf8} as an encoding requires @LaTeX{} dated 2003/12/01 or
-later.  Also, the use of Cyrillic characters in @samp{UTF-8} appears to also
-need @samp{\usepackage[T2A]@{fontenc@}}.)
+later.  Also, the use of Cyrillic characters in @samp{UTF-8} appears to
+also need @samp{\usepackage[T2A]@{fontenc@}}, and @command{R CMD Rd2dvi}
+includes this conditionally on the file @file{t2aenc.def} being present
+and @env{_R_CYRILLIC_TEX_} being set.)
 
 Note that this mechanism works best with Latin letters and for example
 the copyright symbol may be rendered as a subscript and the plus--minus
@@ -3805,8 +3935,8 @@ line.  All of these need Perl to be installed.
 @findex R CMD Rdconv
 Using @code{R CMD Rdconv} one can convert @R{} documentation format to
 other formats, or extract the executable examples for run-time testing.
-Currently, conversions to plain text, @HTML{}, @LaTeX{}, and @Sl{}
-version 3 or 4 documentation formats are supported.
+The currently supported conversions are to plain text, @HTML{} and
+@LaTeX{} as well as extraction of the examples.
 
 In addition to this low-level conversion tool, the @R{} distribution
 provides two user-level programs for processing Rd format.
@@ -3835,11 +3965,10 @@ extension @file{.sgml} or @file{.sgm}.
 documentation files (usually with extension @samp{.Snw} or @samp{.Rnw}):
 @code{R CMD Stangle} is use to extract the @R{} code fragments.
 
-The exact usage and a detailed list of available options for all but the
-last two of the above commands can be obtained by running @code{R CMD
-@var{command} --help}, e.g., @kbd{R CMD Rdconv --help}.  All available
-commands can be listed using @kbd{R --help} (or @kbd{Rcmd --help} under
-Windows).
+The exact usage and a detailed list of available options for all of
+thesw commands can be obtained by running @code{R CMD @var{command}
+--help}, e.g., @kbd{R CMD Rdconv --help}.  All available commands can be
+listed using @kbd{R --help} (or @kbd{Rcmd --help} under Windows).
 
 All of these work under Windows. You will need to have installed the
 files in the @R{} binary Windows distribution for installing source
@@ -3852,6 +3981,69 @@ Rd2dvi} also the tools to build packages from source as described in the
 
 Packages that are intended to work with earlier versions of @R{} need to
 be written in a rather stricter dialect, and some notes follow.
+
+Some package authors have included arbitrary pieces of @LaTeX{}
+mathematical notation into text descriptions, e.g.@: @samp{$\mu$g} and
+@samp{$^\circ$C}.  Whether this works even in latex conversion depends
+on the version of @R{}, and it has always given ugly results in other
+conversions.  If mathematical notation is necessary (and it seems it is
+not in the examples given), use @code{\eqn}.
+
+@menu
+* Changes in version 1.1::      
+* Unnumbered versions::         
+* Planned changes::             
+@end menu
+
+@node Changes in version 1.1, Unnumbered versions, Back-compatibility issues, Back-compatibility issues
+@subsection Changes in version 1.1
+
+Rd version 1.1 was introduced in @R{} 2.9.0.  The main changes were
+
+@itemize
+@item
+@samp{$} is treated literally in text, even for latex conversion.
+
+@item
+@samp{\} is only an escape before @samp{% @{ @} \}, and these should
+always be escaped (although paired braces inside @code{\code} will be
+still be handled if unescaped).  @samp{#}, @samp{_} and @samp{&} must
+not be escaped.
+
+@item
+@samp{\R@{@}} is accepted as an alternative to @samp{\R}.  Similarly for
+@samp{\dots} and @samp{\ldots}.
+
+@item
+Whitespace is allowed between the first and second arguments of
+@code{\item} and @code{\section}.
+
+@item
+Interpretation of @samp{\Alpha} etc is no longer done.
+@end itemize
+
+@node Unnumbered versions, Planned changes, Changes in version 1.1, Back-compatibility issues
+@subsection Unnumbered versions
+
+In version 1.0 @samp{$} needs to be escaped by backslash in ``regular''
+text (not verbatim-like, not in the first argument of @code{\eqn},
+@dots{}), and @samp{#}, @samp{_} and @samp{&} can be.
+
+For historical reasons, the @TeX{}/@LaTeX{} commands @code{\alpha},
+@code{\Alpha}, @code{\beta}, @code{\Gamma}, @code{\epsilon},
+@code{\lambda}, @code{\mu}, @code{\pi}, @code{\sigma}, @code{\Sigma},
+@code{\le}, @code{\ge}, @code{\left(} and @code{\right)} were accepted,
+and interpreted in text and HTML conversions.  The preferred way to
+handle these is as part of @code{\eqn} or @code{\deqn}.
+
+Further, @samp{^}, @samp{~}, @samp{<}, @samp{>} and @samp{|} were not in
+general safe to use in non-code text.  The advice was to enter @samp{^}
+as @code{\eqn@{\mbox@{\textasciicircum@}@}@{^@}}, and @samp{~} by
+@code{\eqn@{\mbox@{\textasciitilde@}@}@{~@}} or @code{\eqn@{\sim@}@{~@}}
+(for a short and long tilde respectively).  Also, @samp{<}, @samp{>},
+and @samp{|} could only be used safely in math mode, i.e., within the
+first argument of @code{\eqn} or @code{\deqn}.
+
 
 Versions of @R{} prior to 2.8.1 failed to process correctly
 constructions such as
@@ -3874,16 +4066,66 @@ two-argument commands, e.g.
 @end example
 
 @noindent
-has always been an error.  However, this error is not looked for and
-results in incorrect output (often by omitting entirely the text for the
-item, sometimes with a warning).  Future versions of @R{} will detect
-and fixup most cases of this error, with a warning.
+had always been an error.  However, prior to @R{} 2.9.0 this error was
+not looked for and resulted in incorrect output (often by omitting
+entirely the text for the item, sometimes with a warning).  
+@R{} 2.9.0 and later detect and fixup most cases of this error, with a
+warning unless the file is declared as version 1.1 or later.
 
 A @code{\value} block is implicitly a @code{\itemize} environment, but
 quite a few package writers have ignored this.  As from @R{} 2.8.1 this
 is detected, and the @code{\itemize} command (but not its contents)
 removed, with a warning.
 
+@node Planned changes,  , Unnumbered versions, Back-compatibility issues
+@subsection Planned changes
+
+It is planned in due course to convert @file{.Rd} files in @R{} (rather
+than in Perl).  As a first step, a parser function @code{parse_Rd} is
+available in package @pkg{tools} as from @R{} 2.9.0, and this can be run
+over a package's help files as part of @command{R CMD check} by setting
+the environment variable @env{_R_CHECK_RD_PARSE_} to @samp{TRUE} (which
+is currently the default).  Sometimes the reported error is actually the
+result of a previous error, and running
+
+@example
+tools::parse_Rd(@var{filename}, verbose = TRUE)
+@end example
+
+@noindent
+will give a more comprehensive view of the problems.
+
+@code{parse_Rd} is still under development, but targets a stricter
+version of the Rd format which will become version 2.  Current
+differences from version 1.1 include
+
+@itemize
+
+@item
+Unmatched right braces are an error, not just a warning.
+
+@item
+No space is allowed bewteen the first and second arguments of a macro
+such as @code{\item}.
+
+@item
+@code{\code} is intended @emph{only} for @R{} code, and as such its
+argument must be syntactically valid once macros such as @code{\link}
+and @code{\var} have been substituted.  This means that quotes must
+balance.  Use @code{\samp} or @code{\kbd} for code snippets and code in
+other languages.
+
+@c @item
+@c @code{\examples} is intended for valid @R{} code even within
+@c @code{\dontrun} sections, which must have @code{%} escaped and balancing
+@c quotes.
+
+@item
+Zero-argument macros such as @samp{\R}, @samp{\dots} and @samp{\ldots}
+should be followed by whitespace or @samp{@{@}}: they are no longer
+recognized if followed by a digit.
+
+@end itemize
 
 @node Tidying and profiling R code, Debugging, Writing R documentation files, Top
 @chapter Tidying and profiling R code
@@ -3992,7 +4234,7 @@ As an example, consider the following code (from Venables & Ripley,
 @group
 library(MASS); library(boot)
 storm.fm <- nls(Time ~ b*Viscosity/(Wt - c), stormer,
-                start = c(b=29.401, c=2.2183))
+                start = c(b=30.401, c=2.2183))
 st <- cbind(stormer, fit=fitted(storm.fm))
 storm.bf <- function(rs, i) @{
     st$Time <-  st$fit + rs[i]
@@ -4154,22 +4396,21 @@ program, but is freed whenever the garbage collector happens to run.
 @findex Rprof
 @findex summaryRprof
 
-The sampling profiler @code{Rprof} described in the previous section
-can be given the option @code{memory.profiling=TRUE}. It then writes
-the total @R{} memory allocation in small vectors, large vectors, and
-cons cells or nodes at each sampling interval. It also writes out the
-number of calls to the internal function @code{duplicate}, which is
-called to copy @R{} objects. @code{summaryRprof} provides summaries of
-this information.  The main reason that this can be misleading is that
-the memory use is attributed to the function running at the end of the
+The sampling profiler @code{Rprof} described in the previous section can
+be given the option @code{memory.profiling=TRUE}. It then writes out the
+total @R{} memory allocation in small vectors, large vectors, and cons
+cells or nodes at each sampling interval. It also writes out the number
+of calls to the internal function @code{duplicate}, which is called to
+copy @R{} objects. @code{summaryRprof} provides summaries of this
+information.  The main reason that this can be misleading is that the
+memory use is attributed to the function running at the end of the
 sampling interval. A second reason is that garbage collection can make
 the amount of memory in use decrease, so a function appears to use
-little memory. Running under @code{gctorture} helps with both
-problems: it slows down the code to effectively increase the sampling
-frequency and it makes each garbage collection release a smaller
-amount of memory.  Changing the memory limits with @code{mem.limits()}
-may also be useful, to see how the code would run under different
-memory conditions.
+little memory. Running under @code{gctorture} helps with both problems:
+it slows down the code to effectively increase the sampling frequency
+and it makes each garbage collection release a smaller amount of memory.
+Changing the memory limits with @code{mem.limits()} may also be useful,
+to see how the code would run under different memory conditions.
 
 @node Tracking memory allocations, Tracing copies of an object, Memory statistics from Rprof, Profiling R code for memory use
 @subsection Tracking memory allocations
@@ -4258,7 +4499,7 @@ profile DLLs on Windows.
 @menu
 * Linux::                       
 * Solaris::                     
-* MacOS X::                     
+* Mac OS X::                     
 @end menu
 
 @node Linux, Solaris, Profiling compiled code, Profiling compiled code
@@ -4346,14 +4587,14 @@ the times spent in each section, if the appropriate source code was
 compiled with debugging support, and @command{opreport -c} to generate a
 callgraph (if collection was enabled and the platform supports this).
 
-@node Solaris, MacOS X, Linux, Profiling compiled code
+@node Solaris, Mac OS X, Linux, Profiling compiled code
 @subsection Solaris
 
 On 64-bit (only) Solaris, the standard profiling tool @command{gprof}
 collects information from shared libraries compiled with @option{-pg}.
 
-@node MacOS X,  , Solaris, Profiling compiled code
-@subsection MacOS X
+@node Mac OS X,  , Solaris, Profiling compiled code
+@subsection Mac OS X
 
 Developers have recommended @command{sample} (or @command{Sampler.app},
 which is a GUI version) and @command{Shark} (see
@@ -5372,7 +5613,7 @@ FORTRAN compilers on each platform.
 @findex dyn.unload
 
 Compiled code to be used with @R{} is loaded as a shared object (Unix
-and MacOS X, @pxref{Creating shared objects} for more information) or
+and Mac OS X, @pxref{Creating shared objects} for more information) or
 DLL (Windows).
 
 The shared object/DLL is loaded by @code{dyn.load} and unloaded by
@@ -5735,16 +5976,13 @@ It is also possible to set such variables in personal @file{Makevars}
 files, which are read after the local @file{Makevars} and the system
 makefiles. 
 @ifset UseExternalXrefs
-@xref{Customizing package compilation under Unix,
-Customizing package compilation under Unix, R-admin,
-R Installation and Administration}, and also
-@ref{Customizing package compilation under Windows,
-Customizing package compilation under Windows, R-admin,
-R Installation and Administration}.
+@xref{Customizing package compilation,
+Customizing package compilation, R-admin,
+R Installation and Administration},
 @end ifset
 
 
-Note that as @code{R CMD SHLIB} uses Make, it will not remake a shared
+Note that as @command{R CMD SHLIB} uses Make, it will not remake a shared
 object just because the flags have changed, and if @file{test.c} and
 @file{test.f} both exist in the current directory
 
@@ -5758,27 +5996,26 @@ will compile @file{test.c}!
 
 If the @file{src} subdirectory of an add-on package contains source code
 with one of the extensions listed above or a file @file{Makevars} but
-@strong{not} a file @code{Makefile}, @code{R CMD INSTALL} creates a
+@strong{not} a file @code{Makefile}, @command{R CMD INSTALL} creates a
 shared object (for loading into @R{} in the @code{.First.lib} or
-@code{.onLoad} function of the package) using the @code{R CMD SHLIB}
+@code{.onLoad} function of the package) using the @command{R CMD SHLIB}
 mechanism.  If file @file{Makevars} exists it is read first, then the
 system makefile and then any personal @file{Makevars} files.
 
 If the @file{src} subdirectory of package contains a file
-@file{Makefile}, this is used in place of the @code{R CMD SHLIB}
-mechanism.  @command{make} is called with makefiles
-@file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}@footnote{or the version
-specific to a sub-architecture}, @file{src/Makefile} and any personal
-@file{Makevars} files (in that order).  The first target found in
-@file{src/Makefile} is used.
+@file{Makefile}, this is used by @command{R CMD INSTALL} in place of the
+@code{R CMD SHLIB} mechanism.  @command{make} is called with makefiles
+@file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}, @file{src/Makefile} and
+any personal @file{Makevars} files (in that order).  The first target
+found in @file{src/Makefile} is used.
 
-It is better to make use of a @code{Makevars}
-file rather than a @code{Makefile}: the latter should be needed only
-exceptionally.
+It is better to make use of a @code{Makevars} file rather than a
+@code{Makefile}: the latter should be needed only exceptionally.
 
-Note that whereas @code{R CMD INSTALL} makes use of a @file{Makefile},
-@code{R CMD SHLIB} does not.  The file must be named @file{Makefile},
-not for example @file{makefile} nor @file{GNUmakefile}.
+@c Not so clearcut on case-insensitive file systems. 
+@c Note that whereas @code{R CMD INSTALL} makes use of a @file{Makefile},
+@c @code{R CMD SHLIB} does not.  The file must be named @file{Makefile},
+@c not for example @file{makefile} nor @file{GNUmakefile}.
 
 Under Windows@footnote{The files in the @R{} binary Windows distribution
 for installing source packages need to be installed.} the same commands
@@ -5789,12 +6026,20 @@ details of building DLLs with a variety of compilers, see file
 @samp{README.packages} and
 @uref{http://@/www.stats.uwo.ca/@/faculty/@/murdoch/@/software/@/compilingDLLs/}
 .
-
-Under Windows you can supply an exports file called
+Under Windows you can supply an exports definitions file called
 @file{@var{dllname}-win.def}: otherwise all entry points in objects (but
 not libraries) supplied to @code{R CMD SHLIB} will be exported from the
-DLL.  An example is @file{stats-win.def} for the @pkg{stats} package.
+DLL.  An example is @file{stats-win.def} for the @pkg{stats} package: a
+CRAN example in package @pkg{fastICA}.
 
+If you feel tempted to read the source code and subvert these
+mechanisms, please resist.  Far too much developer time has been wasted
+in chasing down errors caused by failures to follow this documentation,
+and even more by package authors demanding explanations as to why their
+packages not longer work.
+@c Jasjeet Singh Sekhon: this is your moment of infamy.
+In particular, undocumented environment or make variables are not for
+use by package writers and are subject to change without notice.
 
 @node Interfacing C++ code, Fortran I/O, Creating shared objects, System and foreign language interfaces
 @section Interfacing C++ code
@@ -5918,7 +6163,8 @@ should @strong{not} be included within an @code{extern "C"} block (as
 they include C++ system headers).  It may not be possible to include
 some @R{} headers as they in turn include C header files that may cause
 conflicts---if this happens, define @samp{NO_C_HEADERS} before including
-the @R{} headers, and include the appropriate headers yourself.
+the @R{} headers, and include C++ versions (such as @samp{cmath}) of the
+appropriate headers yourself before the @R{} heders.
 
 @node Fortran I/O, Linking to other packages, Interfacing C++ code, System and foreign language interfaces
 @section Fortran I/O
@@ -6001,7 +6247,7 @@ directory is not in the @command{ld.so}@footnote{@command{dyld} on Mac
 OS X, and @env{DYLD_LIBRARY_PATHS} below.}  search path.  You can
 arrange to put it there @strong{before} @R{} is launched by setting (on
 some platforms) @env{LD_RUN_PATH} or @env{LD_LIBRARY_PATH} or adding to
-the @command{ld.so} cache (see @command{ldconfig}).  On platforms that
+the @command{ld.so} cache (see @command{man ldconfig}).  On platforms that
 support it, the path to the dynamic library can be hardcoded at install
 time (which assumes that the location of package @pkg{packB} will not be
 changed).  On systems with the GNU linker (e.g.@: Linux) and some others
@@ -6019,7 +6265,7 @@ and on some other systems (e.g.@: Solaris with its native linker) use
 
 It may be possible to figure out what is required semi-automatically
 from the result of @command{R CMD libtool --config} (look for
-@samp{hardode}).
+@samp{hardcode}).
 
 Making headers provided by package @pkg{packB} available to the code to
 be compiled in package @pkg{packA} can be done by the @code{LinkingTo}
@@ -6069,13 +6315,15 @@ could contain
 @example
 PKG_LIBS= -L. -lexB
 
+all: $(SHLIB) before
+
 before: libexB.dll.a
 libexB.dll.a: exB.def
 @end example
 
 and then installing package @pkg{packA} will make and use the import
 library for @file{exB.dll}.  (One way to prepare the exports file is to
-use @file{pexports.exe}.
+use @file{pexports.exe}.)
 
 @item loading @file{packA.dll} which depends on @file{exB.dll}.
 
@@ -6757,7 +7005,7 @@ SEXP getvar(SEXP name, SEXP rho)
   if(!isEnvironment(rho))
     error("rho should be an environment");
   ans = findVar(install(CHAR(STRING_ELT(name, 0))), rho);
-  printf("first value is %f\n", REAL(ans)[0]);
+  Rprintf("first value is %f\n", REAL(ans)[0]);
   return(R_NilValue);
 @}
 @end group
@@ -7456,7 +7704,7 @@ numeric.deriv <- function(expr, theta, rho=sys.frame(sys.parent()))
   ans <- eval(substitute(expr), rho)
   grad <- matrix(,length(ans), length(theta),
                  dimnames=list(NULL, theta))
-  for (i in seq(along=theta)) @{
+  for (i in seq_along(theta)) @{
     old <- get(theta[i], envir=rho)
     delta <- eps * min(1, abs(old))
     assign(theta[i], old+delta, envir=rho)
@@ -7771,14 +8019,12 @@ Clearing a pointer sets its value to the C @code{NULL} pointer.
 @cindex finalizer
 An external pointer object can have a @emph{finalizer}, a piece of code
 to be run when the object is garbage collected.  This can be @R{} code
-or C code, and the various interfaces are
+or C code, and the various interfaces are, respectively.
 
 @example
-void R_RegisterFinalizer(SEXP s, SEXP fun);
 void R_RegisterFinalizerEx(SEXP s, SEXP fun, Rboolean onexit);
 
 typedef void (*R_CFinalizer_t)(SEXP);
-void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun);
 void R_RegisterCFinalizerEx(SEXP s, R_CFinalizer_t fun, Rboolean onexit);
 @end example
 
@@ -7834,8 +8080,64 @@ A toy example of the use of weak references can be found at
 @uref{http://www.stat.uiowa.edu/~luke/R/references/weakfinex.html,
 @code{www.@/stat.@/uiowa.@/edu/@/~luke/@/R/references/@/weakfinex.html}},
 but that is used to add finalizers to external pointers which can now be
-done more directly.
+done more directly.  At the time of writing no CRAN or Bioconductor
+package uses weak references.
 
+
+@menu
+* An external pointer example::  
+@end menu
+
+@node An external pointer example,  , External pointers and weak references, External pointers and weak references
+@subsection An example
+
+Package @pkg{RODBC} uses external pointers to maintain its
+@emph{channels}, connections to databases.  There can be several
+connections open at once, and the status information for each is stored
+in a C structure (pointed to by @code{this_handle}) in the code extract
+below) that is returned via an external pointer as part of the RODBC
+`channel' (as the @code{"handle_ptr"} attribute).  The external pointer
+is created by
+
+@example
+    SEXP ans, ptr;
+    PROTECT(ans = allocVector(INTSXP, 1));
+    ptr = R_MakeExternalPtr(thisHandle, install("RODBC_channel"), R_NilValue);
+    PROTECT(ptr);
+    R_RegisterCFinalizerEx(ptr, chanFinalizer, TRUE);
+            ...
+    /* return the channel no */
+    INTEGER(ans)[0] = nChannels;
+    /* and the connection string as an attribute */
+    setAttrib(ans, install("connection.string"), constr);
+    setAttrib(ans, install("handle_ptr"), ptr);
+    UNPROTECT(3);
+    return ans;
+@end example
+
+@noindent
+Note the symbol given to identify the usage of the external pointer, and
+the use of the finalizer.  Since the final argument when registering the
+finalizer is @code{TRUE}, the finalizer will be run at the the of the
+@R{} session (unless it crashes).  This is used to close and clean up
+the connection to the database.  The finalizer code is simply
+
+@example
+static void chanFinalizer(SEXP ptr)
+@{
+    if(!R_ExternalPtrAddr(ptr)) return;
+    inRODBCClose(R_ExternalPtrAddr(ptr));
+    R_ClearExternalPtr(ptr); /* not really needed */
+@}
+@end example
+
+@noindent
+Clearing the pointer and checking for a @code{NULL} pointer avoids any
+possibility of attempting to close an already-closed channel.
+
+@R{}'s connections provide another example of using external pointers,
+in that case purely to be able to use a finalizer to close and destroy the
+connection if it is no longer is use.
 
 @node Vector accessor functions, Character encoding issues, External pointers and weak references, System and foreign language interfaces
 @section Vector accessor functions 
@@ -7847,13 +8149,7 @@ from @code{SET_STRING_ELT} and @code{SET_VECTOR_ELT} which are always
 functions.)
 
 The accessor functions check that they are being used on an appropriate
-type of @code{SEXP}.  By default a certain amount of misuse is allowed
-where the internal representation is the same: for example
-@code{LOGICAL} can be used on a @code{INTSXP} and @code{SET_VECTOR_ELT}
-on a @code{STRSXP}.  Strict checking can be enabled by compiling @R{}
-(specifically @file{src/main/memory.c}) with
-@samp{USE_TYPE_CHECKING_STRICT} defined (e.g. in as the configure
-variable @samp{DEFS} on a Unix-alike).
+type of @code{SEXP}.
 
 If efficiency is essential, the macro versions of the accessors can be 
 obtained by defining @samp{USE_RINTERNALS} before including
@@ -9576,7 +9872,7 @@ part of the @pkg{rJava} package on CRAN).
 @node Embedding R under Unix-alikes, Embedding R under Windows, Linking GUIs and other front-ends to R, Linking GUIs and other front-ends to R
 @section Embedding R under Unix-alikes
 
-@R{} can be built as a shared library@footnote{In the parlance of MacOS
+@R{} can be built as a shared library@footnote{In the parlance of Mac OS
 X this is a @emph{dynamic} library, and is the normal way to build @R{} on
 that platform.} if configured with @option{--enable-R-shlib}.  This
 shared library can be used to run @R{} from alternative front-end
@@ -9586,10 +9882,10 @@ library if configured with @option{--enable-R-static-lib}, and this can
 be used in a very similar way.
 
 The command-line @R{} front-end, @file{@var{R_HOME}/bin/exec/R} is one
-such example, and the unbundled @acronym{GNOME} (see package
-@pkg{gnomeGUI} on CRAN) and MacOS X consoles are others.  The source for
-@file{@var{R_HOME}/bin/exec/R} is in file @file{src/main/Rmain.c} and is
-very simple
+such example, and the former @acronym{GNOME} (see package @pkg{gnomeGUI}
+on CRAN's @samp{Archive} area) and Mac OS X consoles are others.  The
+source for @file{@var{R_HOME}/bin/exec/R} is in file
+@file{src/main/Rmain.c} and is very simple
 
 @example
 int Rf_initialize_R(int ac, char **av); /* in ../unix/system.c */
@@ -10064,7 +10360,7 @@ appropriately.
 These will be set@footnote{at least on platforms where the values are
 available, that is having @code{getrlimit} and on Linux or having
 @code{sysctl} supporting @code{KERN_USRSTACK}, including FreeBSD and
-MacOS X.} when @code{Rf_initialize_R} is called, to values appropriate to
+Mac OS X.} when @code{Rf_initialize_R} is called, to values appropriate to
 the main thread.  Stack-checking can be disabled by seting
 @code{R_CStackLimit = (uintptr_t)-1}, but it is better to if possible
 set appropriate values.  (What these are and how to determine them are

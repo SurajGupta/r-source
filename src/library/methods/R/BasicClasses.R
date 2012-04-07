@@ -58,9 +58,14 @@
     ## NULL is weird in that it has NULL as a prototype, but is not virtual
     tmp <- newClassRepresentation(className="NULL", prototype = NULL, virtual=FALSE, package = "methods")
     assignClassDef("NULL", tmp, where = envir); clList <- c(clList, "NULL")
+    ## the pseudo-NULL used to store NULL as a slot
+    ## must match the C code in attrib.c (would be better to use that
+    ## code to create .pseudoNULL)
+    assign(".pseudoNULL", as.name("\001NULL\001"), envir = envir)
 
 
     setClass("structure", where = envir); clList <- c(clList, "structure")
+    setClass("nonStructure",  where = envir); #NOT a basic class
     stClasses <- c("matrix", "array") # classes that have attributes, but no class attr.
     for(.class in stClasses) {
         .setBaseClass(.class, prototype = newBasic(.class), where = envir)
@@ -122,48 +127,48 @@
 }
 
 .InitS3Classes <- function(envir) {
-    # create a virtual class from which all S3 classes will inherit the .S3Class slot
+    ## create a virtual class from which all S3 classes will inherit the .S3Class slot
     setClass("oldClass", representation(.S3Class = "character"),
              contains = "VIRTUAL", prototype = prototype(.S3Class = character()),
              where = envir)
-      ## call setOldClass on some known old-style classes.  Ideally this would be done
+    ## call setOldClass on some known old-style classes.  Ideally this would be done
     ## in the code that uses the classes, but that code doesn't know about the methods
     ## package.
     ## Two steps; first, those classes with a known prototype.  These
     ## can be non-Virtual
     clList <- get(".SealedClasses", envir = envir)
     for(i in seq_along(.OldClassesPrototypes)) {
-      el <- .OldClassesPrototypes[[i]]
-      if(is.list(el) && length(el) > 1)
-        setOldClass(el[[1]], prototype = el[[2]],  where = envir)
-       else
-        warning("OOPS: something wrong with line ",i, " in .OldClassesPrototypes")
+        el <- .OldClassesPrototypes[[i]]
+        if(is.list(el) && length(el) > 1)
+            setOldClass(el[[1L]], prototype = el[[2L]],  where = envir)
+        else
+            warning("OOPS: something wrong with line ",i, " in .OldClassesPrototypes")
     }
     setGeneric("slotsFromS3", where = envir)
     ## the method for "oldClass" is really a constant, just hard to express that way
-    setMethod("slotsFromS3", "oldClass", function(object)   getClass("oldClass")@slots,
+    setMethod("slotsFromS3", "oldClass", function(object) getClass("oldClass")@slots,
               where = envir)
 
-    setClass("ts", contains = "structure", representation(tsp = "numeric"), prototype(NA, tsp = rep(1,3)), where = envir)
+    setClass("ts", contains = "structure", representation(tsp = "numeric"),
+             prototype = prototype(NA, tsp = rep(1,3)), where = envir)
 
     setOldClass("ts", S4Class = "ts", where = envir)
 
-    setClass("mts", contains=c("matrix", "ts"), prototype = prototype(matrix(NA,1,1), tsp = rep(1,3), .S3Class = c("mts", "ts")))
-    .init_ts <-  function(.Object,  ...) {
-        if(nargs() < 2) # guaranteed to be called with .Object from new
-          return( .Object)
-        args <- list(...)
-        argnames <- names(args)
-        if(is.null(argnames))
-          slotnames <- FALSE
-        else
-          slotnames <- nzchar(argnames) & is.na(match(argnames, .tsArgNames))
-        if(any(slotnames)) {
-            value = do.call(stats::ts, args[!slotnames])
-            .mergeAttrs(value, .Object, args[slotnames])
-        }
-        else
-          .mergeAttrs(stats::ts(...), .Object, list())
+    setClass("mts", contains=c("matrix", "ts"), prototype =
+             prototype(matrix(NA,1,1), tsp = rep(1,3), .S3Class = c("mts", "ts")))
+    .init_ts <-	 function(.Object,  ...) {
+	if(nargs() < 2) # guaranteed to be called with .Object from new
+	    return(.Object)
+	args <- list(...)
+	argnames <- names(args)
+	slotnames <- if(is.null(argnames)) FALSE else {
+            nzchar(argnames) & is.na(match(argnames, .tsArgNames)) }
+	if(any(slotnames)) {
+	    value <- do.call(stats::ts, args[!slotnames])
+	    .mergeAttrs(value, .Object, args[slotnames])
+	}
+	else
+	    .mergeAttrs(stats::ts(...), .Object)
     }
     setMethod("initialize", "ts", .init_ts, where = envir)
     setMethod("initialize", "mts", .init_ts, where = envir) #else, it's ambiguous
@@ -174,13 +179,16 @@
                   value <- as.ts(from)
                   if(strict) {
                       attrs <- attributes(value)
-                      if(length(attrs)>2)
+                      if(length(attrs) > 2)
                         attributes(value) <- attrs[c("class", "tsp")]
                       value <- .asS4(value)
                   }
                   value
               },
               where = envir)
+    setClass("factor", contains = "integer", representation(levels = "character"),
+             where = envir)
+    setOldClass("factor", S4Class = "factor", where = envir)
     setMethod("show", "oldClass", function(object) {
         if(!isS4(object))  {
             print(object)
@@ -188,7 +196,7 @@
         }
         cl <- as.character(class(object))
         S3Class <- object@.S3Class
-        if(length(S3Class)) S3Class <- S3Class[[1]]
+        if(length(S3Class)) S3Class <- S3Class[[1L]]
         else S3Class <- "oldClass" # or error?
         cat("Object of class \"", cl, "\"\n", sep = "")
         print(S3Part(object, strict = TRUE))
@@ -209,7 +217,7 @@
          S3Class <- attr(ClassDef@prototype, ".S3Class")
          if(is.null(S3Class)) # not a class set up by setOldClass()
              return(callNextMethod())
-        S3ClassP <- S3Class[[1]]
+        S3ClassP <- S3Class[[1L]]
          args <- list(...)
         ## separate the slots, superclass objects
         snames <- allNames(args)
@@ -240,7 +248,7 @@
                     .Object <- .mergeAttrs(obj, .Object)
                 }
                 else stop(gettextf("unnamed argument must extend either the S3 class or the class of the data part; not true of class \"%s\"", Classi), domain = NA)
-                    
+
             }
         }
         ## named slots are done as in the default method, which will also call validObject()
@@ -252,7 +260,7 @@
            validObject(.Object)
          .Object
     }
-    setMethod("initialize", "oldClass", .initS3, where = envir)        
+    setMethod("initialize", "oldClass", .initS3, where = envir)
     ## Next, miscellaneous S3 classes.
     for(cl in .OldClassesList)
         setOldClass(cl, where = envir)
@@ -298,7 +306,7 @@
                       pr <- classDef@prototype
                       value <- new(cl)
                       slots <- classDef@slots
-                      if(match(".Data", names(slots), 0) > 0) {
+                      if(match(".Data", names(slots), 0L) > 0L) {
                           data <- unclass(from)
                           if(!is(data, slots[[".Data"]]))
                             stop(gettextf("Object must be a valid data part for class \"%s\"; not true of type \"%s\"", cl, class(data)),
@@ -352,7 +360,7 @@
     ## functions of the same name.
 
     ## These methods are designed to be inherited or extended
-    setMethod("initialize", "matrix",
+    setMethod("initialize", "matrix", where = where,
 	      function(.Object, data = NA, nrow = 1, ncol = 1,
 		       byrow = FALSE, dimnames = NULL, ...) {
 		  if((na <- nargs()) < 2) # guaranteed to be called with .Object from new
@@ -382,7 +390,7 @@
 		  }
 	      })
 
-    setMethod("initialize", "array",
+    setMethod("initialize", "array", where = where,
 	      function(.Object, data = NA, dim = length(data),
 		       dimnames = NULL, ...) {
 		  if((na <- nargs()) < 2) # guaranteed to be called with .Object from new
@@ -407,6 +415,18 @@
 		      .mergeAttrs(value, .Object, dots)
 		  }
 	      })
+    ## following should not be needed if data_class2 returns "array",...
+##     setMethod("[", # a method to avoid invalid objects from an S4 class
+##               signature(x = "array"), where = where,
+##               function (x, i, j, ..., drop = TRUE) 
+##               {
+##                 value <- callNextMethod()
+##                 if(is(value, class(x)))
+##                   value@.Data
+##                 else
+##                   value
+##               })
+
 }
 
 ## .OldClassList is a purely heuristic list of known old-style classes, with emphasis
@@ -465,3 +485,25 @@
                    c("POSIXt", "POSIXlt"),
                    c("aov","mlm")
                    )
+
+.InitSpecialTypes <- function(where) {
+  for(cl in c("environment", "externalptr", "name", "NULL")) {
+      ncl <- paste(".",cl, sep="")
+      setClass(ncl, representation(.xData = cl), where = where)
+      setIs(ncl, cl, coerce = function(from) from@.xData,
+        replace = function(from, value){ from@.xData <- value; from},
+        where = where)
+    }
+  setMethod("$<-", ".environment", function (x, name, value) {
+    call <- sys.call()
+    call[[2]] <- x@.Data
+    eval.parent(call)
+    x
+  })
+  setMethod("[[<-", ".environment", function (x, i, j, ..., value) {
+    call <- sys.call()
+    call[[2]] <- x@.Data
+    eval.parent(call)
+    x
+  })
+}

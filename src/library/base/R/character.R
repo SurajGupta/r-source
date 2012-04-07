@@ -24,19 +24,19 @@ substr <- function(x, start, stop)
     .Internal(substr(x, as.integer(start), as.integer(stop)))
 }
 
-substring <- function(text,first,last=1000000)
+substring <- function(text, first, last=1000000L)
 {
-    if(!is.character(text)) x <- as.character(text)
+    if(!is.character(text)) text <- as.character(text)
     n <- max(lt <- length(text), length(first), length(last))
     if(lt && lt < n) text <- rep(text, length.out = n)
-    substr(text, first, last)
+    .Internal(substr(text, as.integer(first), as.integer(last)))
 }
 
 `substr<-` <- function(x, start, stop, value)
     .Internal(`substr<-`(x, as.integer(start), as.integer(stop), value))
 
-`substring<-` <- function(text, first, last=1000000, value)
-    `substr<-`(text, first, last, value)
+`substring<-` <- function(text, first, last=1000000L, value)
+    .Internal(`substr<-`(text, as.integer(first), as.integer(last), value))
 
 abbreviate <-
     function(names.arg, minlength = 4, use.classes = TRUE, dot = FALSE,
@@ -74,7 +74,7 @@ abbreviate <-
 		if(!any(dup2 <- duplicated(x))) break
 	    }
 	    minlength <- minlength+1
-	    dup2 <- dup2 | match(x, x[dup2], 0)
+	    dup2 <- dup2 | match(x, x[dup2], 0L)
 	    these <- names.arg[dup2]
 	}
     }
@@ -121,15 +121,15 @@ sQuote <- function(x) {
         if(identical(q, TRUE)) {
             li <- l10n_info()
             if(li$"UTF-8") q <- "UTF-8"
-            if(!is.null(li$codepage) && li$codepage > 0) {
+            if(!is.null(li$codepage) && li$codepage > 0L) {
                 ## we can't just use iconv, as that seems to think
                 ## it is in latin1 in CP1252
-                if(li$codepage >= 1250 && li$codepage <= 1258
-                   || li$codepage == 874) {
+                if(li$codepage >= 1250L && li$codepage <= 1258L
+                   || li$codepage == 874L) {
                     before <- "\x91"; after <- "\x92"
                 } else {
                     z <- iconv(c("\xe2\x80\x98", "\xe2\x80\x99"), "UTF-8", "")
-                    before <- z[1]; after <- z[2]
+                    before <- z[1L]; after <- z[2L]
                 }
             }
         }
@@ -139,8 +139,8 @@ sQuote <- function(x) {
         if(identical(q, "UTF-8")) {
             before <- "\xe2\x80\x98"; after <- "\xe2\x80\x99"
         }
-        if(is.character(q) && length(q) >= 4) {
-            before <- q[1]; after <- q[2]
+        if(is.character(q) && length(q) >= 4L) {
+            before <- q[1L]; after <- q[2L]
         }
         ## we do not want these strings marked as in the encoding
         ## R was built under
@@ -156,13 +156,13 @@ dQuote <- function(x) {
         if(identical(q, TRUE)) {
             li <- l10n_info()
             if(li$"UTF-8") q <- "UTF-8"
-            if(!is.null(li$codepage) && li$codepage > 0) {
-                if(li$codepage >= 1250 && li$codepage <= 1258
-                    || li$codepage == 874) {
+            if(!is.null(li$codepage) && li$codepage > 0L) {
+                if(li$codepage >= 1250L && li$codepage <= 1258L
+                    || li$codepage == 874L) {
                     before <- "\x93"; after <- "\x94"
                 } else {
                     z <- iconv(c("\xe2\x80\x9c", "\xe2\x80\x9d"), "UTF-8", "")
-                    before <- z[1]; after <- z[2]
+                    before <- z[1L]; after <- z[2L]
                 }
             }
         }
@@ -172,8 +172,8 @@ dQuote <- function(x) {
         if(identical(q, "UTF-8")) {
             before <- "\xe2\x80\x9c"; after <- "\xe2\x80\x9d"
         }
-        if(is.character(q) && length(q) >= 4) {
-            before <- q[3]; after <- q[4]
+        if(is.character(q) && length(q) >= 4L) {
+            before <- q[3L]; after <- q[4L]
         }
         Encoding(before) <- Encoding(after) <- "unknown"
     }

@@ -1,14 +1,14 @@
 # Translation of /src/library/stats/po/R-stats.pot
-# Copyright (C) 2008 The R Foundation
+# Copyright (C) 2008-2009 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2008.
+# Detlef Steuer <steuer@hsu-hh.de>, 2008-2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-26 08:39\n"
-"PO-Revision-Date: 2008-09-19 10:49+0200\n"
+"POT-Creation-Date: 2009-04-03 13:01\n"
+"PO-Revision-Date: 2009-03-26 11:24+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -25,7 +25,8 @@ msgstr "'acf' muss Länge zwei oder mehr haben"
 msgid "object not interpretable as a factor"
 msgstr "Objekt kann nicht als Faktor interpretiert  werden"
 
-msgid "cannot fit models without level ('alpha' must not be 0)."
+#, fuzzy
+msgid "cannot fit models without level ('alpha' must not be 0 or FALSE)."
 msgstr "kann kein Modell ohne Level anpassen ('alpha' darf nicht 0 sein)"
 
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
@@ -33,7 +34,7 @@ msgstr "'alpha', 'beta' und 'gamma' müssen im Einheitsintervall liegen"
 
 msgid "data must be strictly non-negative for multiplicative Holt-Winters."
 msgstr ""
-"Daten müssen für den multiplikativen Holt-Winters strikt nicht-negative sein"
+"Daten müssen für den multiplikativen Holt-Winters strikt nicht-negativ sein"
 
 msgid "need at least 2 periods to compute seasonal start values."
 msgstr "benötige zumindest 2 Perioden, um saisonale Startwerte zu berechnen"
@@ -139,6 +140,9 @@ msgid ""
 " does not match the length of the margins, %d"
 msgstr "Länge von FUN, %d,\\n entspricht nicht der Länge der Ränder, %d"
 
+msgid "no rows to aggregate"
+msgstr "keine Zeile für die Aggragation"
+
 msgid "'by' must be a list"
 msgstr "'by' muss eine Liste sein"
 
@@ -200,6 +204,10 @@ msgstr "'formula' fehlt oder ist falsch"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "Gruppierender Faktor muss genau zwei Stufen haben"
+
+msgid "weights are not supported in a multistratum aov() fit"
+msgstr ""
+"Gewichte werden in einer multistratum ANOVA-Anpassung nicht unterstützt"
 
 msgid "Error() model is singular"
 msgstr "Error() Modell ist singulär"
@@ -770,6 +778,9 @@ msgstr "Link \"%s\" für die Poisson-Familie nicht verfügbar: verfügbar sind %
 msgid "negative values not allowed for the Poisson family"
 msgstr "negative Wert für die Poisson-Familie nicht zugelassen"
 
+msgid "ignoring prior weights"
+msgstr "ignoriere vorherige Gewichte"
+
 msgid ""
 "link \"%s\" not available for quasipoisson family; available links are %s"
 msgstr ""
@@ -808,6 +819,10 @@ msgstr ""
 "oder eine zweispaltige Matrix mit den Erfolgen in der ersten und den "
 "Misserfolgen in der zweiten Spalte."
 
+msgid "cannot simulate from non-integer prior.weights"
+msgstr ""
+"kann keine Simulationen mit nicht ganzzahligen prior.weights durchführen"
+
 msgid ""
 "link \"%s\" not available for quasibinomial family; available links are %s"
 msgstr ""
@@ -824,6 +839,9 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr "nicht-positive Werte sind für die Gamma-Familie nicht zulässig"
 
+msgid "using weights as shape paraneters"
+msgstr "nutze Gewichte als Gestaltparameter"
+
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
 msgstr ""
@@ -832,6 +850,13 @@ msgstr ""
 
 msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "nur positive Werte sind für die inverse Gauss-Familie zulässig"
+
+msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
+msgstr ""
+"Benötige CRAN Paket 'SuppDists' für die Verteilungsfamilie 'inverse.gaussian'"
+
+msgid "using weights as inverse variances"
+msgstr "nutze Gewichte als inverse Varianzen"
 
 msgid ""
 "'variance' \"%s\" is invalid: possible values are \"mu(1-mu)\", \"mu\", "
@@ -1248,6 +1273,12 @@ msgstr ""
 "Freiheitsgrade der Residuen legt nahe, dass es sich nicht um einen \"lm\" "
 "Fit handelt"
 
+msgid "family '"
+msgstr "Familie '"
+
+msgid "' not implemented"
+msgstr "' nicht implementiert"
+
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
 "ANOVA F-Tests auf einem im Wesentlichen perfekten Fit sind unzuverlässig"
@@ -1442,6 +1473,9 @@ msgstr "'cterms' Argument muss zu den Termen im Modell-Objekt passen"
 msgid "Design is unbalanced - use se.contrast() for se's"
 msgstr "Design ist unbalanciert - nutze se.contrast() für die Standardfehler"
 
+msgid "design is unbalanced so cannot proceed"
+msgstr "Design ist unbalanciert, kann deshalb nicht fortfahren"
+
 msgid ""
 "Standard error information not returned as design is unbalanced. \n"
 "Standard errors can be obtained through 'se.contrast'."
@@ -1564,8 +1598,8 @@ msgstr "Boolesches 'hessian' Argument nicht erlaubt. Siehe Dokumentation'"
 msgid "'params' has wrong length"
 msgstr "'params' hat falsche Länge"
 
-msgid "'varying' must be in 1:length(pars)"
-msgstr "'varying' muss in 1:length(pars) liegen"
+msgid "'varying' must be in 1L:length(pars)"
+msgstr "'varying' muss in 1L:length(pars) liegen"
 
 msgid "'varying' has wrong length"
 msgstr "'varying' hat falsche Länge"
@@ -1683,14 +1717,14 @@ msgstr "'x' und 'n' müssen gleich lang sein"
 msgid "too few groups"
 msgstr "zu wenig Gruppen"
 
+msgid "Not plotting observations with leverage one:"
+msgstr "Kein Plot der Beobachtungen mit Leverage 1:"
+
 msgid "use only with \"lm\" objects"
 msgstr "nur mit \"lm\" Objekten benutzen"
 
-msgid "'which' must be in 1:6"
-msgstr "'which' muss in 1:6 liegen"
-
-msgid "Not plotting observations with leverage one:"
-msgstr "Kein Plot der Beobachtungen mit Leverage 1:"
+msgid "'which' must be in 1L:6"
+msgstr "'which' muss in 1L:6 liegen"
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' muss in {1,...,%d} liegen"
@@ -1700,6 +1734,24 @@ msgstr "Dachwerte (Leverages) sind alle ="
 
 msgid "and there are no factor predictors; no plot no. 5"
 msgstr "und es gibt keine faktoriellen Prediktoren; kein Plot Nr. 5"
+
+msgid "'x' and 'T' have incompatible length"
+msgstr "'x' und 'T' haben inkompatible Längen"
+
+msgid "'x' must be finite, nonnegative, and integer"
+msgstr "'x' muss endlich, nicht-negativ und ganzzahlig sein"
+
+msgid "'T' must be nonnegative"
+msgstr "'T' muss nicht-negativ sein"
+
+msgid "not enough data"
+msgstr "nicht genug Daten"
+
+msgid "The case k > 2 is unimplemented"
+msgstr "Der Fall k > 2 ist nicht implementiert"
+
+msgid "'r' must be a single positive number"
+msgstr "'r' muss eine einzelne positive Zahl sein"
 
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
@@ -1792,9 +1844,6 @@ msgstr "'proj' ist für \"mlm\" Fits nicht implementiert"
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj' ist für multiple Zielgrößen nicht implementiert"
 
-msgid "not enough data"
-msgstr "nicht genug Daten"
-
 msgid "elements of 'n' must be positive"
 msgstr "Elemente von 'n' müsse positiv sein"
 
@@ -1846,8 +1895,8 @@ msgstr "'relevel' nur für Faktoren"
 msgid "'ref' must be an existing level"
 msgstr "'ref' muss eine exisiterende Faktorstufe sein"
 
-msgid "ref = %d must be in 1:%d"
-msgstr "ref = %d muss in 1:%d liegen"
+msgid "ref = %d must be in 1L:%d"
+msgstr "ref = %d muss in 1L:%d liegen"
 
 msgid "Failed to guess time-varying variables from their names"
 msgstr "Konnte die zeit-veränderlichen Variablen nicht aus den Namen raten"
@@ -2001,6 +2050,11 @@ msgstr ""
 msgid "'spline' requires n >= 1"
 msgstr "'spline' erwartet n >= 1"
 
+msgid "spline: first and last y values differ - using y[1L] for both"
+msgstr ""
+"spline: erster und letzter y Wert unterscheiden sich - benutze y[1L] für "
+"beide"
+
 msgid "'deriv' must be between 0 and 3"
 msgstr "'deriv' muss zwischen 0 und 3 liegen"
 
@@ -2008,7 +2062,7 @@ msgid "'deriv' must be between 0 and 2"
 msgstr "'deriv' muss zwischen 0 und 2 liegen"
 
 msgid "'x' must be *strictly* increasing (non - NA)"
-msgstr ""
+msgstr "'x' muss *streng* ansteigend sein (nicht NA)"
 
 msgid "stepfun: 'x' must be ordered increasingly"
 msgstr "stepfun: 'x' muss aufsteigend angeordnet sein"

@@ -26,19 +26,19 @@ which <- function(x, arr.ind = FALSE)
     else { ##-- return a matrix  length(wh) x rank
         m <- length(wh)
         rank <- length(dl)
-        wh1 <- wh - 1
-        wh <- 1 + wh1 %% dl[1]
+        wh1 <- wh - 1L
+        wh <- 1L + wh1 %% dl[1L]
         wh <- matrix(wh, nrow = m, ncol = rank,
                      dimnames =
-                     list(dimnames(x)[[1]][wh],
-                          if(rank == 2) c("row", "col")# for matrices
-                          else paste("dim", 1:rank, sep="")))
-        if(rank >= 2) {
-            denom <- 1
-            for (i in 2:rank) {
+                     list(dimnames(x)[[1L]][wh],
+                          if(rank == 2L) c("row", "col")# for matrices
+                          else paste("dim", 1L:rank, sep="")))
+        if(rank >= 2L) {
+            denom <- 1L
+            for (i in 2L:rank) {
                 denom <- denom * dl[i-1]
                 nextd1 <- wh1 %/% denom# (next dim of elements) - 1
-                wh[,i] <- 1 + nextd1 %% dl[i]
+                wh[,i] <- 1L + nextd1 %% dl[i]
             }
         }
         storage.mode(wh) <- "integer"
@@ -48,4 +48,3 @@ which <- function(x, arr.ind = FALSE)
 
 which.min <- function(x) .Internal(which.min(x))
 which.max <- function(x) .Internal(which.max(x))
-

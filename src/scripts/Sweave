@@ -1,8 +1,9 @@
-#! /bin/sh
+#
+# ${R_HOME}/bin/Sweave
 
-revision='$Rev: 42192 $'
+revision='$Rev: 47522 $'
 version=`set - ${revision}; echo ${2}`
-version="Sweave front-end r${version}
+version="Sweave front-end: ${R_VERSION} (r${version})
 
 Copyright (C) 2006-7 The R Core Development Team.
 This is free software; see the GNU General Public License version 2
@@ -14,7 +15,7 @@ A simple front-end for Sweave()
 
 Options:
   -h, --help		print short help message and exit
-  -v, --version		print Sweave version info and exit
+  -v, --version		print version info and exit
 
 Report bugs to <r-bugs@r-project.org>."
 

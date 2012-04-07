@@ -4,6 +4,7 @@
 % Distributed under GPL 2 or later
 
 \name{texi2dvi}
+\Rdversion{1.1}
 \alias{texi2dvi}
 \title{Compile LaTeX Files}
 \description{
@@ -25,21 +26,21 @@ texi2dvi(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     emulation (see the \code{texi2dvi} argument) is used.}
   \item{texi2dvi}{character (or \code{NULL}).  Script or program used to
     compile a TeX file to dvi or PDF, respectively.
-    The default (selected by \code{NULL}) is to look for an executable
-    on the search path and otherwise emulate the script with
+    The default (selected by \code{""} or \code{NULL}) is to look for an
+    executable on the search path and otherwise emulate the script with
     \code{system} calls.}
   \item{texinputs}{\code{NULL} or a character vector of paths to add to
     the LaTeX and bibtex input search paths.}
 }
 \details{
   Despite the name, this is used in \R to compile LaTeX files,
-  specifically those generated from vignettes.  As from \R 2.7.1 it
-  ensures that the \file{\var{\link{R\_HOME}}/share/texmf} directory is
+  specifically those generated from vignettes.  It
+  ensures that the \file{\var{\link{R_HOME}}/share/texmf} directory is
   in the \env{TEXINPUTS} path, so \R style files such as \file{Sweave}
   and \file{Rd} will be found.  The search path used is first the
   existing \env{TEXINPUTS} setting (or the current directory if unset),
   then elements of \code{texinputs}, then
-  \file{\var{R\_HOME}/share/texmf} and finally the default
+  \file{\var{R_HOME}/share/texmf} and finally the default
   path. Analogous changes are made to \env{BIBINPUTS} and
   \env{BSTINPUTS}settings.
 #ifdef windows

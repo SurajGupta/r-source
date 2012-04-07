@@ -2,12 +2,12 @@
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
 # 陈斐 <feic@avaya.com>, 2006.
-# 
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -171,6 +171,10 @@ msgstr "'x'必需是阵列，而且至少得有两个维度"
 
 msgid "invalid 'dims'"
 msgstr "'dims'不对"
+
+#, fuzzy
+msgid "extra arguments ignored:"
+msgstr "忽略drop变元"
 
 msgid "bad handler specification"
 msgstr "处置器柄规格不对"
@@ -611,6 +615,10 @@ msgstr "拷贝时没有可以写的文件"
 msgid "more 'from' files than 'to' files"
 msgstr "'from'的文件比'to'的文件要多"
 
+#, fuzzy
+msgid "'recursive' will be ignored"
+msgstr "忽略drop变元"
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "不能同时又读又写同一个文件"
 
@@ -644,7 +652,11 @@ msgstr "'vec'内有NA值"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec'的顺序一定得从小到大"
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
+msgid "using the first element of 'value' of type expression"
+msgstr ""
+
+#, fuzzy
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr "'mode'的值必需是\"double\" (\"real\")或者 \"integer\"中的一个"
 
 msgid "coercing argument to \"character\" for format=\"s\""
@@ -744,29 +756,15 @@ msgstr ":"
 msgid "invalid package name"
 msgstr "程辑包名字不对"
 
-msgid "package '%s' has been merged into '%s'"
-msgstr "程辑包'%s'已经被合并到'%s'"
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr "程辑包'lqs'已经被合并到程辑包'MASS'里去了"
-
-msgid "package 'MASS' has now been loaded"
-msgstr "成功载入程辑包'MASS'"
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr "本R安装本里好象没有程辑包'MASS'"
-
-msgid "there is no package called '%s', version %s"
-msgstr "不存在名称为'%s'，版本为%s的程辑包"
-
 msgid "there is no package called '%s'"
 msgstr "不存在叫'%s'这个名字的程辑包"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr "在'lib.loc'里找不到常式庫树"
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr "'%s'不是正当的程辑包--是不是在R版本2.0.0之前装的？"
+#, fuzzy
+msgid "'%s' is not a valid installed package"
+msgstr "%s'不是正当的选择"
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr "在搜索路径上找不到'%s'，用pos=2"
@@ -981,11 +979,15 @@ msgid ""
 "namespace"
 msgstr "追蹤函数需要方法程辑包，但在载入方法名字空间的时候出了错"
 
-msgid "Expected a single logical value for the S4 object state"
+#, fuzzy
+msgid "Expected a single logical value for the S4 state flag"
 msgstr "需要的是一个单独的S4对象逻辑值"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "不能改变因子的存储状态"
+
+msgid "package '%s' has been merged into '%s'"
+msgstr "程辑包'%s'已经被合并到'%s'"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s'不是'namespace:%s'内的出口对象："
@@ -1034,6 +1036,9 @@ msgstr "不能分配NativeSymbolInfo给"
 
 msgid "package '%s' does not have a name space"
 msgstr "程辑包'%s'没有名字空间"
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr ""
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr "用于出口的'%s'类别不存在：%s"
@@ -1461,6 +1466,35 @@ msgstr "无法運行'%s'"
 msgid "'%s' execution failed with error code %d"
 msgstr "'%s'运行失败，错误码为%d"
 
+msgid "-l option without value"
+msgstr ""
+
+#, fuzzy
+msgid "ERROR: no packages specified"
+msgstr "找不到程辑包"
+
+msgid "Removing from library"
+msgstr ""
+
+msgid "ERROR: cannot cd to directory"
+msgstr ""
+
+msgid "ERROR: no permission to remove from directory"
+msgstr ""
+
+msgid "T used instead of TRUE"
+msgstr ""
+
+msgid "F used instead of FALSE"
+msgstr ""
+
+msgid "items"
+msgstr ""
+
+#, fuzzy
+msgid "have been removed from the search path"
+msgstr "'%s'不在搜索路径上"
+
 msgid "cannot find name space environment"
 msgstr "找不到名字空间环境"
 
@@ -1502,6 +1536,21 @@ msgstr[0] "S3方法%s在NAMESPACE里有声明但不存在"
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告信息：\n"
+
+#~ msgid "package 'lqs' has been moved back to package 'MASS'"
+#~ msgstr "程辑包'lqs'已经被合并到程辑包'MASS'里去了"
+
+#~ msgid "package 'MASS' has now been loaded"
+#~ msgstr "成功载入程辑包'MASS'"
+
+#~ msgid "package 'MASS' seems to be missing from this R installation"
+#~ msgstr "本R安装本里好象没有程辑包'MASS'"
+
+#~ msgid "there is no package called '%s', version %s"
+#~ msgstr "不存在名称为'%s'，版本为%s的程辑包"
+
+#~ msgid "'%s' is not a valid package -- installed < 2.0.0?"
+#~ msgstr "'%s'不是正当的程辑包--是不是在R版本2.0.0之前装的？"
 
 #~ msgid "non-numeric data type in frame"
 #~ msgstr "框里有非数值的数据类"
@@ -1616,4 +1665,3 @@ msgstr[0] "警告信息：\n"
 
 #~ msgid "arguments 'r' and 'c' must have the same sums"
 #~ msgstr "变元'r'和'c'各自的和必需相等"
-

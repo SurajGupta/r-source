@@ -264,6 +264,11 @@ LogicalAnswer(SEXP x, struct BindData *data, SEXP call)
 	for (i = 0; i < n; i++)
 	    LOGICAL(data->ans_ptr)[data->ans_length++] = INTEGER(x)[i];
 	break;
+    case RAWSXP:
+	n = LENGTH(x);
+	for (i = 0; i < n; i++)
+	    LOGICAL(data->ans_ptr)[data->ans_length++] = (int)RAW(x)[i];
+	break;
     default:
 	errorcall(call, _("type '%s' is unimplemented in '%s'"),
 		  type2char(TYPEOF(x)), "LogicalAnswer");
@@ -298,6 +303,11 @@ IntegerAnswer(SEXP x, struct BindData *data, SEXP call)
 	n = LENGTH(x);
 	for (i = 0; i < n; i++)
 	    INTEGER(data->ans_ptr)[data->ans_length++] = INTEGER(x)[i];
+	break;
+    case RAWSXP:
+	n = LENGTH(x);
+	for (i = 0; i < n; i++)
+	    INTEGER(data->ans_ptr)[data->ans_length++] = (int)RAW(x)[i];
 	break;
     default:
 	errorcall(call, _("type '%s' is unimplemented in '%s'"),
@@ -346,6 +356,11 @@ RealAnswer(SEXP x, struct BindData *data, SEXP call)
 		REAL(data->ans_ptr)[data->ans_length++] = NA_REAL;
 	    else REAL(data->ans_ptr)[data->ans_length++] = xi;
 	}
+	break;
+    case RAWSXP:
+	n = LENGTH(x);
+	for (i = 0; i < n; i++)
+	    REAL(data->ans_ptr)[data->ans_length++] = (int)RAW(x)[i];
 	break;
     default:
 	errorcall(call, _("type '%s' is unimplemented in '%s'"),
@@ -415,6 +430,16 @@ ComplexAnswer(SEXP x, struct BindData *data, SEXP call)
 	    data->ans_length++;
 	}
 	break;
+
+    case RAWSXP:
+	n = LENGTH(x);
+	for (i = 0; i < n; i++) {
+	    COMPLEX(data->ans_ptr)[data->ans_length].r = (int)RAW(x)[i];
+	    COMPLEX(data->ans_ptr)[data->ans_length].i = 0.0;
+	    data->ans_length++;
+	}
+	break;
+
     default:
 	errorcall(call, _("type '%s' is unimplemented in '%s'"),
 		  type2char(TYPEOF(x)), "ComplexAnswer");
@@ -782,25 +807,13 @@ SEXP attribute_hidden do_c_dflt(SEXP call, SEXP op, SEXP args, SEXP env)
     if (data.ans_nnames && data.ans_length > 0) {
 	PROTECT(data.ans_names = allocVector(STRSXP, data.ans_length));
 	data.ans_nnames = 0;
-#ifdef EXPT
-	if (!recurse) {
-#endif
-	    while (args != R_NilValue) {
-		nameData.seqno = 0;
-		nameData.firstpos = 0;
-		nameData.count = 0;
-		NewExtractNames(CAR(args), R_NilValue, TAG(args), recurse, &data, &nameData);
-		args = CDR(args);
-	    }
-#ifdef EXPT
-	}
-	else {
+	while (args != R_NilValue) {
 	    nameData.seqno = 0;
 	    nameData.firstpos = 0;
 	    nameData.count = 0;
-	    NewExtractNames(args, R_NilValue, TAG(args), recurse);
+	    NewExtractNames(CAR(args), R_NilValue, TAG(args), recurse, &data, &nameData);
+	    args = CDR(args);
 	}
-#endif/*EXPT*/
 	setAttrib(ans, R_NamesSymbol, data.ans_names);
 	UNPROTECT(1);
     }
@@ -956,25 +969,6 @@ SEXP attribute_hidden do_unlist(SEXP call, SEXP op, SEXP args, SEXP env)
 } /* do_unlist */
 
 
-#ifdef UNUSED
-#define LNAMBUF 100
-
-SEXP FetchMethod(char *generic, char *classname, SEXP env)
-{
-    char buf[LNAMBUF];
-    SEXP method;
-    if (strlen(generic) + strlen(classname) + 2 > LNAMBUF)
-	error(_("class name too long in '%s'"), generic);
-    sprintf(buf, "%s.%s", generic, classname);
-    method = findVar(install(buf), env);
-    if (TYPEOF(method)==PROMSXP)
-	method = eval(method, env);
-    if (TYPEOF(method) != CLOSXP)
-	method = R_NilValue;
-    return method;
-}
-#endif
-
 /* cbind(deparse.level, ...) and rbind(deparse.level, ...) : */
 SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1065,10 +1059,6 @@ SEXP attribute_hidden do_bind(SEXP call, SEXP op, SEXP args, SEXP env)
     /* Dispatch based on class membership has failed. */
     /* The default code for rbind/cbind.default follows */
     /* First, extract the evaluated arguments. */
-#ifdef OLD
-    for (a = args; a != R_NilValue; a = CDR(a))
-	CAR(a) = PRVALUE(CAR(a));
-#endif
 
     rho = env;
     data.ans_flags = 0;
@@ -1253,10 +1243,12 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 		case LISTSXP:
 		    PROTECT(u = coerceVector(u, mode));
 		    k = LENGTH(u);
-		    idx = (!isMatrix(u)) ? rows : k;
-		    for (i = 0; i < idx; i++)
-			SET_VECTOR_ELT(result, n++,
-				       duplicate(VECTOR_ELT(u, i % k)));
+		    if (k > 0) {
+			idx = (!isMatrix(u)) ? rows : k;
+			for (i = 0; i < idx; i++)
+			    SET_VECTOR_ELT(result, n++,
+					   duplicate(VECTOR_ELT(u, i % k)));
+		    }
 		    UNPROTECT(1);
 		    break;
 		default:

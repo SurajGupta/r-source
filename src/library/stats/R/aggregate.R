@@ -26,8 +26,9 @@ aggregate.default <- function(x, ...)
 
 aggregate.data.frame <- function(x, by, FUN, ...)
 {
-    if(!is.data.frame(x))
-        x <- as.data.frame(x)
+    if(!is.data.frame(x)) x <- as.data.frame(x)
+    ## do this here to avoid masking by non-function (could happen)
+    FUN <- match.fun(FUN)
     if(NROW(x) == 0) stop("no rows to aggregate")
     if(NCOL(x) == 0) {
         ## fake it
@@ -73,7 +74,9 @@ aggregate.ts <- function(x, nfrequency = 1, FUN = sum, ndeltat = 1,
                          ts.eps = getOption("ts.eps"), ...)
 {
     x <- as.ts(x)
-    ofrequency <- tsp(x)[3]
+    ofrequency <- tsp(x)[3L]
+    ## do this here to avoid masking by non-function (could happen)
+    FUN <- match.fun(FUN)
     ## Set up the new frequency, and make sure it is an integer.
     if(missing(nfrequency))
         nfrequency <- 1 / ndeltat
@@ -94,16 +97,16 @@ aggregate.ts <- function(x, nfrequency = 1, FUN = sum, ndeltat = 1,
     len <- ofrequency %/% nfrequency
     mat <- is.matrix(x)
     if(mat) cn <- colnames(x)
-#    nstart <- ceiling(tsp(x)[1] * nfrequency) / nfrequency
+#    nstart <- ceiling(tsp(x)[1L] * nfrequency) / nfrequency
 #    x <- as.matrix(window(x, start = nstart))
-    nstart <- tsp(x)[1]
+    nstart <- tsp(x)[1L]
     # Can't use nstart <- start(x) as this causes problems if
     # you get a vector of length 2.
     x <- as.matrix(x)
     nend <- floor(nrow(x) / len) * len
     x <- apply(array(c(x[1 : nend, ]),
                      dim = c(len, nend / len, ncol(x))),
-               MARGIN = c(2, 3), FUN = FUN, ...)
+               MARGIN = c(2L, 3L), FUN = FUN, ...)
     if(!mat) x <- as.vector(x)
     else colnames(x) <- cn
     ts(x, start = nstart, frequency = nfrequency)

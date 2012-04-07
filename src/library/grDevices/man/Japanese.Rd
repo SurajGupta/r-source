@@ -4,6 +4,7 @@
 % Distributed under GPL 2 or later
 
 \name{Japanese}
+\Rdversion{1.1}
 \alias{Japanese}
 \title{Japanese characters in R}
 \description{

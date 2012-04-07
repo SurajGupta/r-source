@@ -23,7 +23,7 @@ menu(choices, graphics = FALSE, title = "")
 }
 \details{
   If \code{graphics = TRUE} and a windowing system is available
-  (Windows, MacOS X or X11 \emph{via} Tcl/Tk) a listbox widget is
+  (Windows, Mac OS X or X11 \emph{via} Tcl/Tk) a listbox widget is
   used, otherwise a text menu.
   
   Ten or fewer items will be displayed in a single column, more in
@@ -42,7 +42,7 @@ menu(choices, graphics = FALSE, title = "")
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \examples{
 \dontrun{

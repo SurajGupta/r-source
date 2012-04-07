@@ -8,6 +8,7 @@
 \alias{HOME}
 \alias{LANGUAGE}
 \alias{R_BATCH}
+\alias{R_BROWSER}
 \alias{R_COMPLETION}
 \alias{R_DOC_DIR}
 \alias{R_DVIPSCMD}
@@ -19,6 +20,7 @@
 \alias{R_MAKEINDEXCMD}
 \alias{R_PAPERSIZE}
 \alias{R_PDFLATEXCMD}
+\alias{R_PDFVIEWER}
 \alias{R_PLATFORM}
 \alias{R_RD4DVI}
 \alias{R_RD4PDF}
@@ -36,8 +38,6 @@
 \alias{DISPLAY}
 \alias{EDITOR}
 \alias{PAGER}
-\alias{R_BROWSER}
-\alias{R_PDFVIEWER}
 \alias{R_PRINTCMD}
 #endif
 
@@ -64,6 +64,8 @@
     \item{\code{LC_ALL}:}{(etc) Optional.  Use to set various aspects of
       the locale -- see \code{\link{Sys.getlocale}}.  Consulted at startup.}
     \item{\code{R_BATCH}:}{Optional -- set in a batch session.}
+    \item{\code{R_BROWSER}:}{The path to the default browser.  Used to
+      set the default value of \code{\link{options}("browser")}.}
     \item{\code{R_COMPLETION}:}{Optional.  If set to \code{FALSE},
       comand-line completion is not used.  (Not used by Mac OS GUI.)}
     \item{\code{R_DEFAULT_PACKAGES}:}{A comma-separated list of packages
@@ -100,7 +102,7 @@
 #ifdef windows
       For \code{Rgui} it controls the number of lines saved to the
       history file: the size of the history when in use is controlled by
-      the console customization: see \code{\link{Rconsole}}.
+      the console customization: see \code{\link[utils]{Rconsole}}.
 #endif
     }
     \item{\code{R_HOME}:}{The top-level directory of the \R
@@ -148,6 +150,15 @@
       \code{Rd} files.  Used by \code{R CMD Rd2dvi}.}
     \item{\code{R_SHARE_DIR}:}{The location of the \R \file{share}
       directory.  Set by \R.} 
+    \item{\code{R_TEXI2DVICMD}:}{The path to \code{texi2dvi}. Defaults
+      to the value of \env{TEXI2DVI}, and if that is unset to a value
+      determined when \R was built.
+#ifdef unix
+      Consulted at startup to set the default for
+      \code{\link{options}("texi2dvi")}, used by
+      \code{\link{texi2dvi}} in package \pkg{tools}.
+#endif
+    }
     \item{\code{R_UNZIPCMD}:}{The path to \code{unzip}.  Sets the default
       value for \code{\link{options}("unzip")}.}
     \item{\code{R_ZIPCMD}:}{The path to \code{zip}.}
@@ -171,10 +182,6 @@
       package \pkg{tcltk}), the data editor and various packages.}
     \item{\code{EDITOR}:}{The path to the default editor.}
     \item{\code{PAGER}:}{The path to the default pager.}
-    \item{\code{R_BROWSER}:}{The path to the default browser.  Used to
-      set the default value of \code{\link{options}("browser")}.}
-    \item{\code{R_PDFVIEWER}:}{The path to the default PDF viewer.  Used
-      by \code{R CMD Rd2dvi}.}
     \item{\code{R_PRINTCMD}:}{Sets the default for
       \code{\link{options}("printcmd")}, which sets the default print
       command to be used by \code{\link{postscript}}.}
@@ -187,7 +194,7 @@
   Some Windows-specific variables are
   \describe{
     \item{\code{GSC}:}{Optional: the path to GhostScript, used if
-      \env{R\_GSCMD} is not set.}
+      \env{R_GSCMD} is not set.}
     \item{\code{R_USER}:}{The user's \sQuote{home} directory.  Set by
       \R.  (\env{HOME} will be set to the same value if not already set.)}
     \item{\code{TZDIR}:}{Optional. The top-level directory of the

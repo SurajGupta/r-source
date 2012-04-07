@@ -6,6 +6,7 @@
 \name{grep}
 \title{Pattern Matching and Replacement}
 \alias{grep}
+\alias{grepl}
 \alias{sub}
 \alias{gsub}
 \alias{regexpr}
@@ -13,6 +14,7 @@
 \description{
   \code{grep} searches for matches to \code{pattern} (its first
   argument) within the character vector \code{x} (second argument).
+  \code{grepl} is an alternative way to return the results.
   \code{regexpr} and \code{gregexpr} do too, but return more detail in
   a different format.
 
@@ -21,7 +23,11 @@
 }
 \usage{
 grep(pattern, x, ignore.case = FALSE, extended = TRUE,
-     perl = FALSE, value = FALSE, fixed = FALSE, useBytes = FALSE)
+     perl = FALSE, value = FALSE, fixed = FALSE, useBytes = FALSE,
+     invert = FALSE)
+
+grepl(pattern, x, ignore.case = FALSE, extended = TRUE,
+     perl = FALSE, fixed = FALSE, useBytes = FALSE)
 
 sub(pattern, replacement, x,
     ignore.case = FALSE, extended = TRUE, perl = FALSE,
@@ -57,7 +63,10 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
   \item{fixed}{logical.  If \code{TRUE}, \code{pattern} is a string to be
     matched as is.  Overrides all conflicting arguments.}
   \item{useBytes}{logical.  If \code{TRUE} the matching is done
-    byte-by-byte rather than character-by-character.  See \sQuote{Details}.}
+    byte-by-byte rather than character-by-character.  See
+    \sQuote{Details}.}
+  \item{invert}{logicaL.  If \code{TRUE} return indices or values for
+         elements that do \emph{not} match.}
   \item{replacement}{a replacement for matched pattern in \code{sub} and
     \code{gsub}.  Coerced to character if possible.  For \code{fixed =
       FALSE} this can include backreferences \code{"\\1"} to
@@ -99,7 +108,10 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
   \code{x} that yielded a match or, if \code{value} is \code{TRUE}, the
   matched elements of \code{x} (after coercion, preserving names but no
   other attributes).
-
+  
+  \code{grepl} differs only in that it returns a logical vector (match
+  or no for each element of \code{x}).
+  
   For \code{sub} and \code{gsub} a character vector of the same length
   and with the same attributes as \code{x} (after possible coercion).
   Elements of character vectors \code{x} which are not substituted will
@@ -147,7 +159,7 @@ gregexpr(pattern, text, ignore.case = FALSE, extended = TRUE,
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole (\code{grep})
+  Wadsworth & Brooks/Cole (\code{grep})
 }
 \seealso{
   \link{regular expression} (aka \code{\link{regexp}}) for the details

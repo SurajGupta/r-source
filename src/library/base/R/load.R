@@ -24,9 +24,9 @@ load <-
         con <- gzfile(file)
         on.exit(close(con))
         magic <- readChar(con, 5L, useBytes = TRUE)
-        if (regexpr("RD[AX]2\n", magic) == -1L) {
+        if (!grepl("RD[AX]2\n", magic)) {
             ## a check while we still know the args
-            if(regexpr("RD[ABX][12]\r", magic) == 1L)
+            if(grepl("RD[ABX][12]\r", magic))
                 stop("input has been corrupted, with LF replaced by CR")
             ## Not a version 2 magic number, so try the old way.
             warning(gettextf("file '%s' has magic number '%s'\n   Use of save versions prior to 2 is deprecated",
@@ -41,7 +41,7 @@ load <-
     .Internal(loadFromConn2(con, envir))
 }
 
-save <- function(..., list = character(0),
+save <- function(..., list = character(0L),
                  file = stop("'file' must be specified"),
                  ascii = FALSE, version = NULL, envir = parent.frame(),
                  compress = !ascii, eval.promises = TRUE, precheck = TRUE)
@@ -55,7 +55,7 @@ save <- function(..., list = character(0),
     if (!is.null(version) && version < 2)
         warning("Use of save versions prior to 2 is deprecated")
 
-    names <- as.character( substitute( list(...)))[-1]
+    names <- as.character( substitute( list(...)))[-1L]
     list<- c(list, names)
     if (! is.null(version) && version == 1)
         invisible(.Internal(save(list, file, ascii, version, envir,
@@ -154,7 +154,7 @@ findPackageEnv <- function(info)
     if(info %in% search()) return(as.environment(info))
     message(gettextf("Attempting to load the environment '%s'", info),
             domain = NA)
-    pkg <- substr(info, 9, 1000)
+    pkg <- substr(info, 9L, 1000L)
     if(require(pkg, character.only=TRUE, quietly = TRUE))
         return(as.environment(info))
     message("not found: using .GlobalEnv instead")

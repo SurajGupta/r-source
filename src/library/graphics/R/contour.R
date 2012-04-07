@@ -43,7 +43,7 @@ function (x = seq(0, 1, length.out = nrow(z)),
     }
     if (any(diff(x) <= 0) || any(diff(y) <= 0))
 	stop("increasing 'x' and 'y' values expected")
-    if (!is.matrix(z) || nrow(z) <= 1 || ncol(z) <= 1)
+    if (!is.matrix(z) || nrow(z) <= 1L || ncol(z) <= 1L)
 	stop("no proper 'z' matrix specified")
     if (!add) {
         localPlotWindow <-
@@ -56,12 +56,12 @@ function (x = seq(0, 1, length.out = nrow(z)),
     }
     ##- don't lose  dim(.)
     if (!is.double(z)) storage.mode(z) <- "double"
-    method <- pmatch(method[1], c("simple", "edge", "flattest"))
+    method <- pmatch(method[1L], c("simple", "edge", "flattest"))
     if (missing(vfont))
        vfont <- if(.Call("Rg_contourDef", PACKAGE="base")) NULL else c("sans serif", "plain")
     if (!is.null(vfont))
-        vfont <- c(typeface = pmatch(vfont[1], Hershey$typeface),
-                   fontindex= pmatch(vfont[2], Hershey$fontindex))
+        vfont <- c(typeface = pmatch(vfont[1L], Hershey$typeface),
+                   fontindex= pmatch(vfont[2L], Hershey$fontindex))
     if (!is.null(labels))
         labels <- as.character(labels)
     .Internal(contour(as.double(x), as.double(y), z, as.double(levels),

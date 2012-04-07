@@ -1,10 +1,14 @@
 % File src/library/utils/man/download.file.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{download.file}
+\Rdversion{1.1}
 \alias{download.file}
+\concept{proxy}
+\concept{ftp}
+\concept{http}
 \title{Download File from the Internet}
 \description{
   This function can be used to download a file from the Internet.
@@ -22,8 +26,8 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 
   \item{method}{Method to be used for downloading files.  Currently
     download methods \code{"internal"}, \code{"wget"} and \code{"lynx"}
-    are available, and there is a value \code{"auto"}: see \sQuote{Details}.  The
-    method can also be set through the option
+    are available, and there is a value \code{"auto"}: see
+    \sQuote{Details}.  The method can also be set through the option
     \code{"download.file.method"}: see \code{\link{options}()}.}
 
   \item{quiet}{If \code{TRUE}, suppress status messages (if any), and
@@ -126,28 +130,28 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   This applies to the internal code only.
 
   Proxies can be specified via environment variables.
-  Setting \env{"no\_proxy"} to \code{"*"} stops any proxy being tried.
-  Otherwise the setting of \env{"http\_proxy"} or \env{"ftp\_proxy"}
+  Setting \env{"no_proxy"} to \code{"*"} stops any proxy being tried.
+  Otherwise the setting of \env{"http_proxy"} or \env{"ftp_proxy"}
   (or failing that, the all upper-case version) is consulted and if
   non-empty used as a proxy site.  For FTP transfers, the username
-  and password on the proxy can be specified by \env{"ftp\_proxy\_user"}
-  and \env{"ftp\_proxy\_password"}.  The form of \env{"http\_proxy"}
+  and password on the proxy can be specified by \env{"ftp_proxy_user"}
+  and \env{"ftp_proxy_password"}.  The form of \env{"http_proxy"}
   should be \code{"http://proxy.dom.com/"} or
   \code{"http://proxy.dom.com:8080/"} where the port defaults to
   \code{80} and the trailing slash may be omitted. For
-  \env{"ftp\_proxy"} use the form \code{"ftp://proxy.dom.com:3128/"}
+  \env{"ftp_proxy"} use the form \code{"ftp://proxy.dom.com:3128/"}
   where the default port is \code{21}.  These environment variables
   must be set before the download code is first used: they cannot be
   altered later by calling \code{\link{Sys.setenv}}.
 
   Usernames and passwords can be set for HTTP proxy transfers via
-  environment variable \env{http\_proxy\_user} in the form
-  \code{user:passwd}.  Alternatively, \env{http\_proxy} can be of the
+  environment variable \env{http_proxy_user} in the form
+  \code{user:passwd}.  Alternatively, \env{http_proxy} can be of the
   form \code{"http://user:pass@proxy.dom.com:8080/"} for compatibility
   with \code{wget}.  Only the HTTP/1.0 basic authentication scheme is
   supported.
 #ifdef windows
-  Under Windows, if \env{http\_proxy\_user} is set to \code{"ask"} then
+  Under Windows, if \env{http_proxy_user} is set to \code{"ask"} then
   a dialog box will come up for the user to enter the username and
   password.  \bold{NB:} you will be given only one opportunity to enter this,
   but if proxy authentication is required and fails there will be one
@@ -167,6 +171,6 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   \code{\link{url}} for a finer-grained way to read data from URLs.
 
   \code{\link{url.show}}, \code{\link{available.packages}},
-  \code{\link{download.packages}} for applications
+  \code{\link{download.packages}} for applications.
 }
 \keyword{utilities}

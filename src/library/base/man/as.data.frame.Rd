@@ -33,8 +33,10 @@
 }
 \usage{
 as.data.frame(x, row.names = NULL, optional = FALSE, \dots)
+
 \method{as.data.frame}{character}(x, \dots,
               stringsAsFactors = default.stringsAsFactors())
+
 \method{as.data.frame}{matrix}(x, row.names = NULL, optional = FALSE, \dots, 
               stringsAsFactors = default.stringsAsFactors())
 
@@ -93,7 +95,7 @@ is.data.frame(x)
   Chambers, J. M. (1992)
   \emph{Data for models.}
   Chapter 3 of \emph{Statistical Models in S}
-  eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
+  eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{data.frame}}, \code{\link{as.data.frame.table}} for the

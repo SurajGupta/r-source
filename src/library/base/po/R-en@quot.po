@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-09-08 14:13\n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
+"PO-Revision-Date: 2009-03-17 19:25\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -188,6 +188,9 @@ msgstr "‘x’ must be an array of at least two dimensions"
 
 msgid "invalid 'dims'"
 msgstr "invalid ‘dims’"
+
+msgid "extra arguments ignored:"
+msgstr "extra arguments ignored:"
 
 msgid "bad handler specification"
 msgstr "bad handler specification"
@@ -631,6 +634,9 @@ msgstr "no files to copy to"
 msgid "more 'from' files than 'to' files"
 msgstr "more ‘from’ files than ‘to’ files"
 
+msgid "'recursive' will be ignored"
+msgstr "‘recursive’ will be ignored"
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr "file can not be copied both ‘from’ and ‘to’"
 
@@ -664,8 +670,11 @@ msgstr "‘vec’ contains NAs"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "‘vec’ must be sorted non-decreasingly"
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
-msgstr "‘mode’ must be “double” (“real”) or “integer”"
+msgid "using the first element of 'value' of type expression"
+msgstr "using the first element of ‘value’ of type expression"
+
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
+msgstr "‘mode’ must be “double” (“real”), “integer” or “character”"
 
 msgid "coercing argument to \"character\" for format=\"s\""
 msgstr "coercing argument to “character” for format=“s”"
@@ -763,29 +772,14 @@ msgstr ":"
 msgid "invalid package name"
 msgstr "invalid package name"
 
-msgid "package '%s' has been merged into '%s'"
-msgstr "package ‘%s’ has been merged into ‘%s’"
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr "package ‘lqs’ has been moved back to package ‘MASS’"
-
-msgid "package 'MASS' has now been loaded"
-msgstr "package ‘MASS’ has now been loaded"
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr "package ‘MASS’ seems to be missing from this R installation"
-
-msgid "there is no package called '%s', version %s"
-msgstr "there is no package called '%s', version %s"
-
 msgid "there is no package called '%s'"
 msgstr "there is no package called ‘%s’"
 
 msgid "no library trees found in 'lib.loc'"
 msgstr "no library trees found in ‘lib.loc’"
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr "‘%s’ is not a valid package -- installed < 2.0.0?"
+msgid "'%s' is not a valid installed package"
+msgstr "‘%s’ is not a valid installed package"
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr "‘%s’ not found on search path, using pos = 2"
@@ -1004,11 +998,14 @@ msgstr ""
 "Tracing functions requires the methods package, but unable to load methods "
 "namespace"
 
-msgid "Expected a single logical value for the S4 object state"
-msgstr "Expected a single logical value for the S4 object state"
+msgid "Expected a single logical value for the S4 state flag"
+msgstr "Expected a single logical value for the S4 state flag"
 
 msgid "invalid to change the storage mode of a factor"
 msgstr "invalid to change the storage mode of a factor"
+
+msgid "package '%s' has been merged into '%s'"
+msgstr "package ‘%s’ has been merged into ‘%s’"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "‘%s’ is not an exported object from ‘namespace:%s’"
@@ -1057,6 +1054,9 @@ msgstr "failed to assign NativeSymbolInfo for"
 
 msgid "package '%s' does not have a name space"
 msgstr "package ‘%s’ does not have a name space"
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr "exportClassPattern specified but no matching classes in %s"
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr "in ‘%s’ classes for export not defined: %s"
@@ -1486,6 +1486,33 @@ msgstr "‘%s’ could not be run"
 
 msgid "'%s' execution failed with error code %d"
 msgstr "‘%s’ execution failed with error code %d"
+
+msgid "-l option without value"
+msgstr "-l option without value"
+
+msgid "ERROR: no packages specified"
+msgstr "ERROR: no packages specified"
+
+msgid "Removing from library"
+msgstr "Removing from library"
+
+msgid "ERROR: cannot cd to directory"
+msgstr "ERROR: cannot cd to directory"
+
+msgid "ERROR: no permission to remove from directory"
+msgstr "ERROR: no permission to remove from directory"
+
+msgid "T used instead of TRUE"
+msgstr "T used instead of TRUE"
+
+msgid "F used instead of FALSE"
+msgstr "F used instead of FALSE"
+
+msgid "items"
+msgstr "items"
+
+msgid "have been removed from the search path"
+msgstr "have been removed from the search path"
 
 msgid "cannot find name space environment"
 msgstr "cannot find name space environment"

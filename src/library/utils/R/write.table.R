@@ -20,7 +20,7 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
           col.names = TRUE, qmethod = c("escape", "double"))
 {
     qmethod <- match.arg(qmethod)
-    if(is.logical(quote) && (length(quote) != 1 || is.na(quote)))
+    if(is.logical(quote) && (length(quote) != 1L || is.na(quote)))
         stop("'quote' must be 'TRUE', 'FALSE' or numeric")
     ## quote column names unless quote == FALSE (see help).
     quoteC <- if(is.logical(quote)) quote else TRUE
@@ -36,25 +36,25 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
         p <- ncol(x)
         d <- dimnames(x)
         if(is.null(d)) d <- list(NULL, NULL)
-        if(is.null(d[[1]]) && makeRownames) d[[1]] <- seq_len(nrow(x))
-        if(is.null(d[[2]]) && makeColnames && p > 0)
-            d[[2]] <- paste("V", 1:p, sep="")
+        if(is.null(d[[1L]]) && makeRownames) d[[1L]] <- seq_len(nrow(x))
+        if(is.null(d[[2L]]) && makeColnames && p > 0L)
+            d[[2L]] <- paste("V", 1L:p, sep="")
         if(qset)
-            quote <- if(is.character(x)) seq_len(p) else numeric(0)
+            quote <- if(is.character(x)) seq_len(p) else numeric(0L)
     } else { ## data.frame
         if(qset)
             quote <- if(length(x))
                 which(unlist(lapply(x, function(x)
                                     is.character(x) || is.factor(x))))
-            else numeric(0)
+            else numeric(0L)
         ## fix up embedded matrix columns into separate cols:
-        if(any(sapply(x, function(z) length(dim(z)) == 2 && dim(z)[2] > 1))) {
+        if(any(sapply(x, function(z) length(dim(z)) == 2 && dim(z)[2L] > 1))) {
             c1 <- names(x)
 	    x <- as.matrix(x, rownames.force = makeRownames)
 	    d <- dimnames(x)
 	    if(qset) {
-		ord <- match(c1, d[[2]], 0)
-		quote <- ord[quote]; quote <- quote[quote > 0]
+		ord <- match(c1, d[[2L]], 0L)
+		quote <- ord[quote]; quote <- quote[quote > 0L]
 	    }
         }
         else
@@ -62,12 +62,12 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
                       if(makeColnames) names(x))
         p <- ncol(x)
     }
-    nocols <- p==0
+    nocols <- p == 0L
 
     if(is.logical(quote)) # must be false
 	quote <- NULL
     else if(is.numeric(quote)) {
-	if(any(quote < 1 | quote > p))
+	if(any(quote < 1L | quote > p))
 	    stop("invalid numbers in 'quote'")
     } else
 	stop("invalid 'quote' specification")
@@ -75,7 +75,7 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
     rn <- FALSE
     rnames <- NULL
     if(is.logical(row.names)) {
-	if(row.names) {rnames <- as.character(d[[1]]); rn <- TRUE}
+	if(row.names) {rnames <- as.character(d[[1L]]); rn <- TRUE}
     } else {
 	rnames <- as.character(row.names)
         rn <- TRUE
@@ -88,8 +88,8 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
     if(is.logical(col.names)) {
         if(!rn && is.na(col.names))
             stop("col.names = NA makes no sense when row.names = FALSE")
-        col.names <- if(is.na(col.names) && rn) c("", d[[2]])
-        else if(col.names) d[[2]] else NULL
+        col.names <- if(is.na(col.names) && rn) c("", d[[2L]])
+        else if(col.names) d[[2L]] else NULL
     } else {
 	col.names <- as.character(col.names)
 	if(length(col.names) != p)
@@ -121,7 +121,7 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
         writeLines(paste(col.names, collapse = sep), file, sep = eol)
     }
 
-    if (nrow(x) == 0) return(invisible())
+    if (nrow(x) == 0L) return(invisible())
     if (nocols && !rn) return(cat(rep.int(eol, NROW(x)), file=file, sep=""))
 
     ## convert list matrices to character - maybe not much use?
@@ -149,7 +149,7 @@ write.csv <- function(...)
     Call$sep <- ","
     Call$dec <- "."
     Call$qmethod <- "double"
-    Call[[1]] <- as.name("write.table")
+    Call[[1L]] <- as.name("write.table")
     eval.parent(Call)
 }
 
@@ -165,6 +165,6 @@ write.csv2 <- function(...)
     Call$sep <- ";"
     Call$dec <- ","
     Call$qmethod <- "double"
-    Call[[1]] <- as.name("write.table")
+    Call[[1L]] <- as.name("write.table")
     eval.parent(Call)
 }

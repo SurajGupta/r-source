@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998, 2001-8 The R Development Core Team
+ *  Copyright (C) 1998, 2001-9 The R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -295,7 +295,7 @@ SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
     f = (const char**) R_alloc(n, sizeof(char*));
     h = (const char**) R_alloc(n, sizeof(char*));
     for (i = 0; i < n; i++) {
-	SEXP el = STRING_ELT(fn, 0);
+	SEXP el = STRING_ELT(fn, i);
 	if (!isNull(el))
 #ifdef Win32
 	    f[i] = acopy_string(reEnc(CHAR(el), getCharCE(el), CE_UTF8, 1));
@@ -315,11 +315,7 @@ SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
 	t = "";
     if (length(pg) >= 1 || !isNull(STRING_ELT(pg, 0))) {
 	SEXP pg0 = STRING_ELT(pg, 0);
-#ifdef Win32
-	pager = acopy_string(reEnc(CHAR(pg0), getCharCE(pg0), CE_UTF8, 1));
-#else
 	pager = acopy_string(CHAR(pg0));
-#endif
     } else
 	pager = "";
     R_ShowFiles(n, f, h, t, dl, pager);
@@ -847,7 +843,15 @@ static SEXP filename(const char *dir, const char *file)
     SEXP ans;
     char cbuf[CBUFSIZE];
     if (dir) {
+#ifdef Win32
+	if ((strlen(dir) == 2 && dir[1] == ':') ||
+	    dir[strlen(dir) - 1] == '/' ||  dir[strlen(dir) - 1] == '\\')
+	    snprintf(cbuf, CBUFSIZE, "%s%s", dir, file);
+	else
+	    snprintf(cbuf, CBUFSIZE, "%s%s%s", dir, R_FileSep, file);
+#else
 	snprintf(cbuf, CBUFSIZE, "%s%s%s", dir, R_FileSep, file);
+#endif
 	ans = mkChar(cbuf);
     } else {
 	snprintf(cbuf, CBUFSIZE, "%s", file);
@@ -880,8 +884,14 @@ static void count_files(const char *dnp, int *count,
 	while ((de = readdir(dir))) {
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 		if (recursive) {
-		    snprintf(p, PATH_MAX, "%s%s%s", dnp,
-			     R_FileSep, de->d_name);
+#ifdef Win32
+		    if (strlen(dnp) == 2 && dnp[1] == ':')
+			snprintf(p, PATH_MAX, "%s%s", dnp, de->d_name);
+		    else
+			snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
+#else
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
+#endif		    
 #ifdef Windows
 		    _stati64(p, &sb);
 #else
@@ -921,8 +931,14 @@ static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
 	while ((de = readdir(dir))) {
 	    if (allfiles || !R_HiddenFile(de->d_name)) {
 		if (recursive) {
-		    snprintf(p, PATH_MAX, "%s%s%s", dnp,
-			     R_FileSep, de->d_name);
+#ifdef Win32
+		    if (strlen(dnp) == 2 && dnp[1] == ':')
+			snprintf(p, PATH_MAX, "%s%s", dnp, de->d_name);
+		    else
+			snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
+#else
+		    snprintf(p, PATH_MAX, "%s%s%s", dnp, R_FileSep, de->d_name);
+#endif
 #ifdef Windows
 		    _stati64(p, &sb);
 #else
@@ -931,10 +947,19 @@ static void list_files(const char *dnp, const char *stem, int *count, SEXP ans,
 		    if ((sb.st_mode & S_IFDIR) > 0) {
 			if (strcmp(de->d_name, ".") &&
 			    strcmp(de->d_name, "..")) {
-			    if (stem)
+			    if (stem) {
+#ifdef Win32
+				if(strlen(stem) == 2 && stem[1] == ':')
+				    snprintf(stem2, PATH_MAX, "%s%s", stem,
+					     de->d_name);
+				else
+				    snprintf(stem2, PATH_MAX, "%s%s%s", stem,
+					     R_FileSep, de->d_name);
+#else
 				snprintf(stem2, PATH_MAX, "%s%s%s", stem,
 					 R_FileSep, de->d_name);
-			    else
+#endif
+			    } else
 				strcpy(stem2, de->d_name);
 			    list_files(p, stem2, count, ans, allfiles,
 				       recursive, pattern, reg);
@@ -1138,6 +1163,7 @@ SEXP attribute_hidden do_indexsearch(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #define CHOOSEBUFSIZE 1024
 
+#ifndef Win32
 SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     int _new, len;
@@ -1148,13 +1174,9 @@ SEXP attribute_hidden do_filechoose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("file choice cancelled"));
     if (len >= CHOOSEBUFSIZE - 1)
 	error(_("file name too long"));
-#ifdef WIn32
-    return mkString(reEnc(R_ExpandFileName(buf), CE_NATIVE, CE_UTF8, 1));
-#else
     return mkString(R_ExpandFileName(buf));
-#endif
 }
-
+#endif
 
 /* needed for access, and perhaps for realpath */
 #ifdef HAVE_UNISTD_H
@@ -1275,16 +1297,21 @@ void R_CleanTempDir(void)
 #else
 static int R_unlink(const char *name, int recursive)
 {
+    struct stat sb;
+    int res, res2;
+
     if (streql(name, ".") || streql(name, "..")) return 0;
-    if (!R_FileExists(name)) return 0;
-    if (recursive) {
+    /* We cannot use R_FileExists here since it is false for broken
+       symbolic links 
+       if (!R_FileExists(name)) return 0; */
+    res  = stat(name, &sb);
+
+    if (!res && recursive) {
 	DIR *dir;
 	struct dirent *de;
 	char p[PATH_MAX];
-	struct stat sb;
 	int n, ans = 0;
 
-	stat(name, &sb);
 	if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
 	    if ((dir = opendir(name)) != NULL) {
 		while ((de = readdir(dir))) {
@@ -1311,9 +1338,12 @@ static int R_unlink(const char *name, int recursive)
 	}
 	/* drop through */
     }
-    return unlink(name) == 0 ? 0 : 1;
+    res2 = unlink(name);
+    /* We want to return 0 if either unlink succeeded or 'name' did not exist */
+    return (res2 == 0 || res != 0) ? 0 : 1;
 }
 #endif
+
 
 /* Note that wildcards are allowed in 'names' */
 #ifdef Win32
@@ -1399,6 +1429,59 @@ SEXP attribute_hidden do_unlink(SEXP call, SEXP op, SEXP args, SEXP env)
     return ScalarInteger(failures ? 1 : 0);
 }
 #endif
+
+static void chmod_one(const char *name)
+{
+    DIR *dir;
+    struct dirent *de;
+    char p[PATH_MAX];
+    struct stat sb;
+    int n;
+#ifndef Win32
+    mode_t mask = S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR;
+#endif
+
+    if (streql(name, ".") || streql(name, "..")) return;
+    if (!R_FileExists(name)) return;
+    stat(name, &sb);
+#ifdef Win32
+    chmod(name, _S_IWRITE);
+#else
+    chmod(name, sb.st_mode | mask);
+#endif
+    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
+	if ((dir = opendir(name)) != NULL) {
+	    while ((de = readdir(dir))) {
+		if (streql(de->d_name, ".") || streql(de->d_name, ".."))
+		    continue;
+		n = strlen(name);
+		if (name[n-1] == R_FileSep[0])
+		    snprintf(p, PATH_MAX, "%s%s", name, de->d_name);
+		else
+		    snprintf(p, PATH_MAX, "%s%s%s", name, R_FileSep, de->d_name);
+		chmod_one(p);
+	    }
+	    closedir(dir);
+	} else { 
+	    /* we were unable to read a dir */
+	}
+    }
+}
+
+
+SEXP attribute_hidden do_dirchmod(SEXP call, SEXP op, SEXP args, SEXP env)
+{
+    SEXP dr;
+    checkArity(op, args);
+    dr = CAR(args);
+    if(!isString(dr) || length(dr) != 1)
+	error(_("invalid '%s' argument"), "dir");
+    chmod_one(translateChar(STRING_ELT(dr, 0)));
+
+    return R_NilValue;
+}
+
+
 
 
 SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -1935,6 +2018,137 @@ end:
     return ScalarLogical(res == 0);
 }
 #endif
+
+/* take file/dir 'name' in dir 'from' and copy it to 'to' 
+   'from', 'to' should have trailing path separator if needed.
+
+   NB Windows' mkdir appears to require \ not /.
+*/
+static int do_copy(const char* from, const char* name, const char* to,
+		   int over, int recursive)
+{
+    struct stat sb;
+    int nc, nfail = 0, res;
+    char dest[PATH_MAX], this[PATH_MAX];
+#ifdef Win32
+    const char *filesep = "\\";
+#else
+    const char *filesep = "/";
+#endif
+
+    /* REprintf("from: %s, name: %s, to: %s\n", from, name, to); */
+    snprintf(this, PATH_MAX, "%s%s", from, name);
+    stat(this, &sb);
+    if ((sb.st_mode & S_IFDIR) > 0) { /* a directory */
+	DIR *dir;
+	struct dirent *de;
+	char p[PATH_MAX];
+
+	if (!recursive) return 1;
+	nc = strlen(to);
+	snprintf(dest, PATH_MAX, "%s%s", to, name);
+#ifdef Win32
+	res = mkdir(dest);
+#else
+	res = mkdir(dest, sb.st_mode);
+#endif
+	if (res && errno != EEXIST) return 1;
+	strcat(dest, R_FileSep);
+	if ((dir = opendir(this)) != NULL) {
+	    while ((de = readdir(dir))) {
+		if (streql(de->d_name, ".") || streql(de->d_name, ".."))
+		    continue;
+		snprintf(p, PATH_MAX, "%s%s%s", name, filesep, de->d_name);
+		do_copy(from, p, to, over, recursive);
+	    }
+	    closedir(dir);
+	} else nfail++; /* we were unable to read a dir */
+    } else { /* a file */
+	FILE *fp1 = NULL, *fp2 = NULL;
+	char buf[APPENDBUFSIZE];
+
+	nfail = 1;
+	nc = strlen(to);
+	snprintf(dest, PATH_MAX, "%s%s", to, name);
+	if (over || !R_FileExists(dest)) {
+	    /* REprintf("copying %s to %s\n", this, dest); */
+	    if ((fp1 = R_fopen(this, "rb")) == NULL) goto copy_error;
+	    if ((fp2 = R_fopen(dest, "wb")) == NULL) goto copy_error;
+	    while ((nc = fread(buf, 1, APPENDBUFSIZE, fp1)) == APPENDBUFSIZE)
+		if (fwrite(buf, 1, APPENDBUFSIZE, fp2) != APPENDBUFSIZE) 
+		    goto copy_error;
+	    if (fwrite(buf, 1, nc, fp2) != nc) goto copy_error;
+	    nfail = 0;
+	}
+copy_error:
+	if(fp2) fclose(fp2);
+	if(fp1) fclose(fp1);
+    }
+    return nfail;
+}
+
+/* file.copy(files, dir, recursive), only */
+SEXP attribute_hidden do_filecopy(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP fn, to, ans;
+    char *p, dir[PATH_MAX], from[PATH_MAX], name[PATH_MAX];
+    int i, nfiles, over, recursive, nfail;
+#ifdef Win32
+    const char *filesep = "\\", *cur = ".\\", sep = '\\';
+#else
+    const char *filesep = "/", *cur = "./", sep = '/';
+#endif
+
+    checkArity(op, args);
+    fn = CAR(args);
+    nfiles = length(fn);
+    PROTECT(ans = allocVector(LGLSXP, nfiles));
+    if (nfiles > 0) {
+	if (!isString(fn))
+	    error(_("invalid '%s' argument"), "from");
+	to = CADR(args);
+	if (!isString(to) || LENGTH(to) != 1)
+	    error(_("invalid '%s' argument"), "to");
+	over = asLogical(CADDR(args));
+	if (over == NA_LOGICAL)
+	    error(_("invalid '%s' argument"), "over");
+	recursive = asLogical(CADDDR(args));
+	if (recursive == NA_LOGICAL)
+	    error(_("invalid '%s' argument"), "recursive");
+	strncpy(dir, translateChar(STRING_ELT(to, 0)), PATH_MAX);
+	if (*(dir + (strlen(dir) - 1)) !=  sep)
+	    strncat(dir, filesep, PATH_MAX);
+	for (i = 0; i < nfiles; i++) {
+	    if (STRING_ELT(fn, i) != NA_STRING) {
+		strncpy(from, translateChar(STRING_ELT(fn, i)), PATH_MAX);
+		/* If there is a trailing sep, this is a mistake */
+		p = from + (strlen(from) - 1);
+		if(*p == sep) *p = '\0';
+		p = strrchr(from, sep) ;
+		if (p) {
+		    strncpy(name, p+1, PATH_MAX);
+		    *(p+1) = '\0';
+		} else {
+#ifdef Win32
+		    if(strlen(from) > 2 && from[1] == ':') {
+			strncpy(name, from+2, PATH_MAX);
+			from[2] = '\0';
+		    } else 
+#endif
+		    {
+			strncpy(name, from, PATH_MAX);
+			strncpy(from, cur, PATH_MAX);
+		    }
+		}
+		nfail = do_copy(from, name, dir, over, recursive);
+	    } else nfail = 1;
+	    LOGICAL(ans)[i] = (nfail == 0);
+	}
+    }
+    UNPROTECT(1);
+    return ans;
+}
+
 
 SEXP attribute_hidden do_l10n_info(SEXP call, SEXP op, SEXP args, SEXP env)
 {

@@ -46,93 +46,84 @@ power <- function(lambda = 1)
 ## added valideta(eta) function..
 make.link <- function (link)
 {
-    ## first two deprecated in 2.4.0
-    if (is.character(link) && length(grep("^power", link) > 0)) {
-        ## this seems intended to catch calls like "power(3)"
-        warning('calling make.link("power(z)") is deprecated', domain = NA)
-        return(eval(parse(text = link)))
-    } else if(!is.character(link) && !is.na(lambda <- as.numeric(link))) {
-        warning('calling make.link(number) is deprecated', domain = NA)
-        return(power(lambda))
-    } else
-        switch(link,
-               "logit" = {
-                   linkfun <- function(mu)
-                       .Call("logit_link", mu, PACKAGE="stats")
-                   linkinv <- function(eta)
-                       .Call("logit_linkinv", eta, PACKAGE="stats")
-                   mu.eta <- function(eta)
-                       .Call("logit_mu_eta", eta, PACKAGE="stats")
-                   valideta <- function(eta) TRUE
-               },
-               "probit" = {
-                   linkfun <- function(mu) qnorm(mu)
-                   linkinv <- function(eta) {
-                       thresh <- - qnorm(.Machine$double.eps)
-                       eta <- pmin(pmax(eta, -thresh), thresh)
-                       pnorm(eta)
-                   }
-                   mu.eta <- function(eta)
-                       pmax(dnorm(eta),.Machine$double.eps)
-                   valideta <- function(eta) TRUE
-               },
-               "cauchit" = {
-         	   linkfun <- function(mu) qcauchy(mu)
-         	   linkinv <- function(eta) {
-                       thresh <- -qcauchy(.Machine$double.eps)
-                       eta <- pmin(pmax(eta, -thresh), thresh)
-                       pcauchy(eta)
-         	   }
-         	   mu.eta <- function(eta)
-                       pmax(dcauchy(eta), .Machine$double.eps)
-         	   valideta <- function(eta) TRUE
- 		},
-               "cloglog" = {
-                   linkfun <- function(mu) log(-log(1 - mu))
-                   linkinv <- function(eta)
-                       pmax(pmin(-expm1(-exp(eta)), 1 - .Machine$double.eps),
-                            .Machine$double.eps)
-                   mu.eta <- function(eta) {
-                       eta <- pmin(eta, 700)
-                       pmax(exp(eta) * exp(-exp(eta)), .Machine$double.eps)
-                   }
-                   valideta <- function(eta) TRUE
-               },
-               "identity" = {
-                   linkfun <- function(mu) mu
-                   linkinv <- function(eta) eta
-                   mu.eta <- function(eta) rep.int(1, length(eta))
-                   valideta <- function(eta) TRUE
-               },
-               "log" = {
-                   linkfun <- function(mu) log(mu)
-                   linkinv <- function(eta)
-                       pmax(exp(eta), .Machine$double.eps)
-                   mu.eta <- function(eta)
-                       pmax(exp(eta), .Machine$double.eps)
-                   valideta <- function(eta) TRUE
-               },
-               "sqrt" = {
-                   linkfun <- function(mu) sqrt(mu)
-                   linkinv <- function(eta) eta^2
-                   mu.eta <- function(eta) 2 * eta
-                   valideta <- function(eta) all(eta>0)
-               },
-               "1/mu^2" = {
-                   linkfun <- function(mu) 1/mu^2
-                   linkinv <- function(eta) 1/sqrt(eta)
-                   mu.eta <- function(eta) -1/(2 * eta^1.5)
-                   valideta <- function(eta) all(eta>0)
-               },
-               "inverse" = {
-                   linkfun <- function(mu) 1/mu
-                   linkinv <- function(eta) 1/eta
-                   mu.eta <- function(eta) -1/(eta^2)
-                   valideta <- function(eta) all(eta!=0)
-               },
-               ## else :
-               stop(sQuote(link), " link not recognised")
-               )# end switch(.)
+    switch(link,
+           "logit" = {
+               linkfun <- function(mu)
+                   .Call("logit_link", mu, PACKAGE="stats")
+               linkinv <- function(eta)
+                   .Call("logit_linkinv", eta, PACKAGE="stats")
+               mu.eta <- function(eta)
+                   .Call("logit_mu_eta", eta, PACKAGE="stats")
+               valideta <- function(eta) TRUE
+           },
+           "probit" = {
+               linkfun <- function(mu) qnorm(mu)
+               linkinv <- function(eta) {
+                   thresh <- - qnorm(.Machine$double.eps)
+                   eta <- pmin(pmax(eta, -thresh), thresh)
+                   pnorm(eta)
+               }
+               mu.eta <- function(eta)
+                   pmax(dnorm(eta),.Machine$double.eps)
+               valideta <- function(eta) TRUE
+           },
+           "cauchit" = {
+               linkfun <- function(mu) qcauchy(mu)
+               linkinv <- function(eta) {
+                   thresh <- -qcauchy(.Machine$double.eps)
+                   eta <- pmin(pmax(eta, -thresh), thresh)
+                   pcauchy(eta)
+               }
+               mu.eta <- function(eta)
+                   pmax(dcauchy(eta), .Machine$double.eps)
+               valideta <- function(eta) TRUE
+           },
+           "cloglog" = {
+               linkfun <- function(mu) log(-log(1 - mu))
+               linkinv <- function(eta)
+                   pmax(pmin(-expm1(-exp(eta)), 1 - .Machine$double.eps),
+                        .Machine$double.eps)
+               mu.eta <- function(eta) {
+                   eta <- pmin(eta, 700)
+                   pmax(exp(eta) * exp(-exp(eta)), .Machine$double.eps)
+               }
+               valideta <- function(eta) TRUE
+           },
+           "identity" = {
+               linkfun <- function(mu) mu
+               linkinv <- function(eta) eta
+               mu.eta <- function(eta) rep.int(1, length(eta))
+               valideta <- function(eta) TRUE
+           },
+           "log" = {
+               linkfun <- function(mu) log(mu)
+               linkinv <- function(eta)
+                   pmax(exp(eta), .Machine$double.eps)
+               mu.eta <- function(eta)
+                   pmax(exp(eta), .Machine$double.eps)
+               valideta <- function(eta) TRUE
+           },
+           "sqrt" = {
+               linkfun <- function(mu) sqrt(mu)
+               linkinv <- function(eta) eta^2
+               mu.eta <- function(eta) 2 * eta
+               valideta <- function(eta) all(eta>0)
+           },
+           "1/mu^2" = {
+               linkfun <- function(mu) 1/mu^2
+               linkinv <- function(eta) 1/sqrt(eta)
+               mu.eta <- function(eta) -1/(2 * eta^1.5)
+               valideta <- function(eta) all(eta>0)
+           },
+           "inverse" = {
+               linkfun <- function(mu) 1/mu
+               linkinv <- function(eta) 1/eta
+               mu.eta <- function(eta) -1/(eta^2)
+               valideta <- function(eta) all(eta!=0)
+           },
+           ## else :
+           stop(sQuote(link), " link not recognised")
+           )# end switch(.)
     structure(list(linkfun = linkfun, linkinv = linkinv,
                    mu.eta = mu.eta, valideta = valideta, name = link),
               class="link-glm")
@@ -176,15 +167,22 @@ poisson <- function (link = "log")
     validmu <- function(mu) all(mu>0)
     dev.resids <- function(y, mu, wt)
         2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) - (y - mu))
-    aic <- function(y, n, mu, wt, dev)
-#	2*sum((mu-y*log(mu)+lgamma(y+1))*wt)
-	-2*sum(dpois(y, mu, log=TRUE)*wt)
+    aic <- function(y, n, mu, wt, dev) -2*sum(dpois(y, mu, log=TRUE)*wt)
     initialize <- expression({
 	if (any(y < 0))
 	    stop("negative values not allowed for the Poisson family")
 	n <- rep.int(1, nobs)
 	mustart <- y + 0.1
     })
+    simfun <- function(object, nsim) {
+        ## A Poisson GLM has dispersion fixed at 1, so prior weights
+        ## do not have a simple unambiguous interpretation:
+        ## they might be frequency weights or indicate averages.
+        wts <- object$prior.weights
+        if (any(wts != 1)) warning("ignoring prior weights")
+        ftd <- fitted(object)
+        rpois(nsim*length(ftd), ftd)
+    }
     structure(list(family = "poisson",
 		   link = linktemp,
 		   linkfun = stats$linkfun,
@@ -195,7 +193,8 @@ poisson <- function (link = "log")
 		   mu.eta = stats$mu.eta,
 		   initialize = initialize,
 		   validmu = validmu,
-		   valideta = stats$valideta),
+		   valideta = stats$valideta,
+                   simulate = simfun),
 	      class = "family")
 }
 
@@ -349,10 +348,7 @@ binomial <- function (link = "logit")
     validmu <- function(mu) all(mu>0) && all(mu<1)
     dev.resids <- function(y, mu, wt)
         .Call("binomial_dev_resids", y, mu, wt, PACKAGE="stats")
-#	2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) +
-#		  (1 - y) * log(ifelse(y == 1, 1, (1 - y)/(1 - mu))))
     aic <- function(y, n, mu, wt, dev) {
-#	-2*sum((lchoose(n, n*y) + n*(y*log(mu) + (1-y)*log(1-mu)))*wt/n)
         m <- if(any(n > 1)) n else wt
 	-2*sum(ifelse(m > 0, (wt/m), 0)*
                dbinom(round(m*y), round(m), mu, log=TRUE))
@@ -361,7 +357,7 @@ binomial <- function (link = "logit")
 	if (NCOL(y) == 1) {
 	    ## allow factors as responses
 	    ## added BDR 29/5/98
-	    if (is.factor(y)) y <- y != levels(y)[1]
+	    if (is.factor(y)) y <- y != levels(y)[1L]
 	    n <- rep.int(1, nobs)
             ## anything, e.g. NA/NaN, for cases with zero weight is OK.
             y[weights == 0] <- 0
@@ -383,6 +379,35 @@ binomial <- function (link = "logit")
 	else stop("for the binomial family, y must be a vector of 0 and 1\'s\n",
                   "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures")
     })
+    simfun <- function(object, nsim) {
+        ftd <- fitted(object)
+        n <- length(ftd)
+        ntot <- n*nsim
+        wts <- object$prior.weights
+        if (any(wts %% 1 != 0))
+            stop("cannot simulate from non-integer prior.weights")
+        ## Try to fathom out if the original data were
+        ## proportions, a factor or a two-column matrix
+        if (!is.null(m <- object$model)) {
+            y <- model.response(m)
+            if(is.factor(y)) {
+                ## ignote weights
+                yy <- factor(1+rbinom(ntot, size = 1, prob = ftd),
+                             labels = levels(y))
+                split(yy, rep(seq_len(nsim), each = n))
+            } else if(is.matrix(y) && ncol(y) == 2) {
+                yy <- vector("list", nsim)
+                for (i in seq_len(nsim)) {
+                    Y <- rbinom(n, size = wts, prob = ftd)
+                    YY <- cbind(Y, wts - Y)
+                    colnames(YY) <- colnames(y)
+                    yy[[i]] <- YY
+                }
+                yy
+            } else
+            rbinom(ntot, size = wts, prob = ftd)/wts
+        } else rbinom(ntot, size = wts, prob = ftd)/wts
+    }
     structure(list(family = "binomial",
 		   link = linktemp,
 		   linkfun = stats$linkfun,
@@ -393,7 +418,8 @@ binomial <- function (link = "logit")
 		   mu.eta = stats$mu.eta,
 		   initialize = initialize,
 		   validmu = validmu,
-		   valideta = stats$valideta),
+		   valideta = stats$valideta,
+                   simulate = simfun),
 	      class = "family")
 }
 
@@ -437,7 +463,7 @@ quasibinomial <- function (link = "logit")
     aic <- function(y, n, mu, wt, dev) NA
     initialize <- expression({
 	if (NCOL(y) == 1) {
-	    if (is.factor(y)) y <- y != levels(y)[1]
+	    if (is.factor(y)) y <- y != levels(y)[1L]
 	    n <- rep.int(1, nobs)
 	    if (any(y < 0 | y > 1))
 		stop("y values must be 0 <= y <= 1")
@@ -502,8 +528,6 @@ Gamma <- function (link = "inverse")
     aic <- function(y, n, mu, wt, dev){
 	n <- sum(wt)
 	disp <- dev/n
-#	2*((sum(wt*(y/mu+log(mu)-log(y)))+n*log(disp))/disp+
-#	   n*lgamma(1/disp)+sum(log(y)*wt)+1)
 	-2*sum(dgamma(y, 1/disp, scale=mu*disp, log=TRUE)*wt) + 2
     }
     initialize <- expression({
@@ -512,6 +536,13 @@ Gamma <- function (link = "inverse")
 	n <- rep.int(1, nobs)
 	mustart <- y
     })
+    simfun <- function(object, nsim) {
+        wts <- object$prior.weights
+        if (any(wts != 1)) message("using weights as shape paraneters")
+        ftd <- fitted(object)
+        shape <- MASS::gamma.shape(object)$alpha * wts
+        rgamma(nsim*length(ftd), shape = shape, rate = shape/ftd)
+    }
     structure(list(family = "Gamma",
 		   link = linktemp,
 		   linkfun = stats$linkfun,
@@ -522,7 +553,8 @@ Gamma <- function (link = "inverse")
 		   mu.eta = stats$mu.eta,
 		   initialize = initialize,
 		   validmu = validmu,
-		   valideta = stats$valideta),
+		   valideta = stats$valideta,
+                   simulate = simfun),
 	      class = "family")
 }
 
@@ -569,6 +601,16 @@ inverse.gaussian <- function(link = "1/mu^2")
 	mustart <- y
     })
     validmu <- function(mu) TRUE
+    simfun <- function(object, nsim) {
+        if(is.null(tryCatch(loadNamespace("SuppDists"),
+                            error = function(e) NULL)))
+            stop("Need CRAN package 'SuppDists' for 'inverse.gaussian' family")
+        wts <- object$prior.weights
+        if (any(wts != 1)) message("using weights as inverse variances")
+        ftd <- fitted(object)
+        SuppDists::rinvGauss(nsim * length(ftd), nu = ftd,
+                             lambda = wts/summary(object)$dispersion)
+    }
 
     structure(list(family = "inverse.gaussian",
 		   link = linktemp,
@@ -580,7 +622,8 @@ inverse.gaussian <- function(link = "1/mu^2")
 		   mu.eta = stats$mu.eta,
 		   initialize = initialize,
 		   validmu = validmu,
-		   valideta = stats$valideta),
+		   valideta = stats$valideta,
+                   simulate = simfun),
 	      class = "family")
 }
 

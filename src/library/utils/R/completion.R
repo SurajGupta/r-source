@@ -35,10 +35,10 @@
 
 ### Note: sprintf seems faster than paste based on naive benchmarking:
 
-## > system.time(for (i in 1:100000) sprintf("foo%sbar%d", letters[1:26], 1:26) )
+## > system.time(for (i in 1L:100000) sprintf("foo%sbar%d", letters[1L:26], 1L:26) )
 ##            user          system           total   user.children system.children
 ##           4.796           0.088           4.887           0.000           0.000
-## > system.time(for (i in 1:100000) paste("foo", letters[1:26], "bar", 1:26) )
+## > system.time(for (i in 1L:100000) paste("foo", letters[1L:26], "bar", 1L:26) )
 ##            user          system           total   user.children system.children
 ##           8.300           0.028           8.336           0.000           0.000
 
@@ -53,7 +53,7 @@ rc.settings <- function(ops, ns, args, func, ipck, S3, data, help, argdb, files)
 {
     checkAndChange <- function(what, value)
     {
-        if ((length(value) == 1) &&
+        if ((length(value) == 1L) &&
             is.logical(value) &&
             !is.na(value))
             .CompletionEnv$settings[[what]] <- value
@@ -85,12 +85,12 @@ rc.getOption <- function(name)
 rc.options <- function(...)
 {
     new <- list(...)
-    if (is.null(names(new)) && length(new) == 1 && is.list(new[[1]]))
-        new <- new[[1]]
+    if (is.null(names(new)) && length(new) == 1L && is.list(new[[1L]]))
+        new <- new[[1L]]
     old <- .CompletionEnv$options
 
     ## if no args supplied, returns full options list
-    if (length(new) == 0) return(old)
+    if (length(new) == 0L) return(old)
     ## typically getting options
     nm <- names(new)
     if (is.null(nm)) return(old[unlist(new)])
@@ -141,6 +141,7 @@ rc.status <- function()
 ## linebuffer and end to be already set, and itself sets token and
 ## start.  It returns the token.
 
+## FIXME: should this use getOption("rl_word_breaks")?
 
 .guessTokenFromLine <-
     function(linebuffer = .CompletionEnv[["linebuffer"]],
@@ -155,17 +156,21 @@ rc.status <- function()
     start <-
         if (insideQuotes)
             ## set 'start' to the location of the last quote
-            suppressWarnings(gregexpr("['\"]", substr(linebuffer, 1, end), perl = TRUE))[[1]]
-            ## suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]\\\\/~ ]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
+            suppressWarnings(gregexpr("['\"]",
+                                      substr(linebuffer, 1L, end),
+                                      perl = TRUE))[[1L]]
+            ## suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]\\\\/~ ]+", substr(linebuffer, 1L, end), perl = TRUE))[[1L]]
         else
-            suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
-    ##                                    ^^^^^^^^^^^^^^
-    ##                             things that should not cause breaks
+            ##                    things that should not cause breaks
+            ##                           ______________
+            suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]]+",
+                                      substr(linebuffer, 1L, end),
+                                      perl = TRUE))[[1L]]
     start <- ## 0-indexed
-        if (all(start < 0)) 0
-        else tail(start + attr(start, "match.length"), 1) - 1
+        if (all(start < 0L)) 0L
+        else tail(start + attr(start, "match.length"), 1L) - 1L
     .CompletionEnv[["start"]] <- start
-    .CompletionEnv[["token"]] <- substr(linebuffer, start + 1, end)
+    .CompletionEnv[["token"]] <- substr(linebuffer, start + 1L, end)
     .CompletionEnv[["token"]]
 }
 
@@ -180,12 +185,21 @@ rc.status <- function()
 ## need is to handle ".", so that e.g. "heat." doesn't match
 ## "heatmap".
 
+
 makeRegexpSafe <- function(s)
 {
-    s <- gsub(".", "\\.", s, fixed = TRUE)
+    ## the following can cause errors otherwise
+    s <- gsub("\\", "\\\\", s, fixed = TRUE) ## has to be the first
+    s <- gsub("(", "\\(", s, fixed = TRUE)
+    s <- gsub("*", "\\*", s, fixed = TRUE)
+    s <- gsub("+", "\\+", s, fixed = TRUE)
     s <- gsub("?", "\\?", s, fixed = TRUE)
     s <- gsub("[", "\\[", s, fixed = TRUE)
-    s <- gsub("]", "\\]", s, fixed = TRUE) # necessary?
+    s <- gsub("{", "\\{", s, fixed = TRUE)
+    ## s <- gsub("]", "\\]", s, fixed = TRUE) # necessary?
+    ## these are wildcards that we want to interpret literally
+    s <- gsub(".", "\\.", s, fixed = TRUE)
+    s <- gsub("^", "\\^", s, fixed = TRUE)
     ## what else?
     s
 }
@@ -207,7 +221,7 @@ specialOpLocs <- function(text)
 
     ge <-
         sapply(specialOps,
-               function(s) gregexpr(s, text, fixed = TRUE)[[1]],
+               function(s) gregexpr(s, text, fixed = TRUE)[[1L]],
                simplify = FALSE)
     ## this gets the last ones
     ge <- sapply(ge, tail, 1)
@@ -221,18 +235,18 @@ specialOpLocs <- function(text)
 matchAvailableTopics <-
     function(text)
 {
-    if (length(text) != 1 || text == "") return (character(0))
+    if (length(text) != 1L || text == "") return (character(0L))
     ll <- installed.packages()[.packages(), "LibPath"]
     indexFiles <- file.path(ll, names(ll), "help", "AnIndex")
     unique(unlist(lapply(indexFiles,
                          function(f) {
-                             if (!file.exists(f)) return (character(0))
+                             if (!file.exists(f)) return (character(0L))
                              foo <-
                                  scan(f, what = list("", ""),
                                       sep = "\t",
                                       quote = "",
                                       na.strings = "",
-                                      quiet = TRUE)[[1]]
+                                      quiet = TRUE)[[1L]]
                              grep(sprintf("^%s", makeRegexpSafe(text)),
                                   foo, value = TRUE)
                          })))
@@ -255,8 +269,8 @@ helpCompletions <- function(prefix, suffix)
             matchAvailableTopics(suffix)
         else
             normalCompletions(suffix, check.mode = FALSE)
-    if (length(nc) > 0) sprintf("%s?%s", prefix, nc)
-    else character(0)
+    if (length(nc)) sprintf("%s?%s", prefix, nc)
+    else character(0L)
 }
 
 
@@ -282,13 +296,13 @@ specialCompletions <- function(text, spl)
     opStart <- spl[wm]
     opEnd <- opStart + nchar(op)
 
-    if (opStart < 1) return(character(0)) # shouldn't happen
-    prefix <- substr(text, 1, opStart - 1)
-    suffix <- substr(text, opEnd, 1e6)
+    if (opStart < 1) return(character(0L)) # shouldn't happen
+    prefix <- substr(text, 1L, opStart - 1L)
+    suffix <- substr(text, opEnd, 1000000L)
 
     if (op == "?") return(helpCompletions(prefix, suffix))
 
-    if (opStart <= 1) return(character(0)) # not meaningful
+    if (opStart <= 1) return(character(0L)) # not meaningful
 
     ## ( breaks words, so prefix should not involve function calls,
     ## and thus, hopefully no side-effects.
@@ -366,10 +380,10 @@ specialCompletions <- function(text, spl)
                "[" = ,  # can't think of anything else to do
                "[[" = {
                    comps <- normalCompletions(suffix)
-                   if (length(comps) > 0) comps
+                   if (length(comps)) comps
                    else suffix
                })
-    if (length(comps) == 0) comps <- ""
+    if (length(comps) == 0L) comps <- ""
     sprintf("%s%s%s", prefix, op, comps)
 }
 
@@ -407,14 +421,14 @@ attachedPackageCompletions <- function(text, add = rc.getOption("package.suffix"
         s <- grep("^package", search(), value = TRUE)
         comps <-
             grep(sprintf("^%s", makeRegexpSafe(text)),
-                 substr(s, 9, 1e6),
+                 substr(s, 9L, 1000000L),
                  value = TRUE)
-        if (length(comps) > 0 && !is.null(add))
+        if (length(comps) && !is.null(add))
             sprintf("%s%s", comps, add)
         else
             comps
     }
-    else character(0)
+    else character(0L)
 }
 
 
@@ -498,7 +512,7 @@ inFunction <-
 
     parens <-
         sapply(c("(", ")"),
-               function(s) gregexpr(s, substr(line, 1, cursor), fixed = TRUE)[[1]],
+               function(s) gregexpr(s, substr(line, 1L, cursor), fixed = TRUE)[[1L]],
                simplify = FALSE)
     ## remove -1's
     parens <- lapply(parens, function(x) x[x > 0])
@@ -511,46 +525,46 @@ inFunction <-
     temp <-
         data.frame(i = c(parens[["("]], parens[[")"]]),
                    c = rep(c(1, -1), sapply(parens, length)))
-    if (nrow(temp) == 0) return(character(0))
+    if (nrow(temp) == 0) return(character(0L))
     temp <- temp[order(-temp$i), , drop = FALSE] ## order backwards
     wp <- which(cumsum(temp$c) > 0)
-    if (length(wp) > 0) # inside a function
+    if (length(wp)) # inside a function
     {
         ## return guessed name of function, letting someone else
         ## decide what to do with that name
 
-        index <- temp$i[wp[1]]
-        prefix <- substr(line, 1, index - 1)
-        suffix <- substr(line, index + 1, cursor + 1)
+        index <- temp$i[wp[1L]]
+        prefix <- substr(line, 1L, index - 1L)
+        suffix <- substr(line, index + 1L, cursor + 1L)
 
         ## note in passing whether we are the first argument (no '='
         ## and no ',' in suffix)
 
-        if ((length(grep("=", suffix, fixed = TRUE)) == 0) &&
-            (length(grep(",", suffix, fixed = TRUE)) == 0))
+        if ((length(grep("=", suffix, fixed = TRUE)) == 0L) &&
+            (length(grep(",", suffix, fixed = TRUE)) == 0L))
             setIsFirstArg(TRUE)
 
 
-        if ((length(grep("=", suffix, fixed = TRUE)) > 0) &&
+        if ((length(grep("=", suffix, fixed = TRUE))) &&
             (length(grep(",", substr(suffix,
-                                     tail(gregexpr("=", suffix, fixed = TRUE)[[1]], 1),
-                                     1e6), fixed = TRUE)) == 0))
+                                     tail(gregexpr("=", suffix, fixed = TRUE)[[1L]], 1L),
+                                     1000000L), fixed = TRUE)) == 0L))
         {
             ## we are on the wrong side of a = to be an argument, so
             ## we don't care even if we are inside a function
-            return(character(0))
+            return(character(0L))
         }
         else ## guess function name
         {
-            possible <- suppressWarnings(strsplit(prefix, breakRE, perl = TRUE))[[1]]
+            possible <- suppressWarnings(strsplit(prefix, breakRE, perl = TRUE))[[1L]]
             possible <- possible[possible != ""]
-            if (length(possible) > 0) return(tail(possible, 1))
-            else return(character(0))
+            if (length(possible)) return(tail(possible, 1))
+            else return(character(0L))
         }
     }
     else # not inside function
     {
-        return(character(0))
+        return(character(0L))
     }
 }
 
@@ -563,7 +577,7 @@ argNames <-
     ## else
     args <- do.call(argsAnywhere, list(fname))
     if (is.null(args))
-        character(0)
+        character(0L)
     else if (is.list(args))
         unlist(lapply(args, function(f) names(formals(f))))
     else
@@ -590,7 +604,7 @@ specialFunctionArgs <- function(fun, text)
                    grep(sprintf("^%s", makeRegexpSafe(text)),
                         rownames(installed.packages()), value = TRUE)
                }
-               else character(0)
+               else character(0L)
            },
 
            data = {
@@ -599,11 +613,11 @@ specialFunctionArgs <- function(fun, text)
                    grep(sprintf("^%s", makeRegexpSafe(text)),
                         data()$results[, "Item"], value = TRUE)
                }
-               else character(0)
+               else character(0L)
            },
 
            ## otherwise,
-           character(0))
+           character(0L))
 }
 
 
@@ -614,7 +628,7 @@ functionArgs <-
              S4methods = FALSE,
              add.args = rc.getOption("funarg.suffix"))
 {
-    if (length(fun) < 1 || any(fun == "")) return(character(0))
+    if (length(fun) < 1L || any(fun == "")) return(character(0L))
     specialFunArgs <- specialFunctionArgs(fun, text)
     if (S3methods && exists(fun, mode = "function"))
         fun <-
@@ -628,7 +642,7 @@ functionArgs <-
     ans <-
         grep(sprintf("^%s", makeRegexpSafe(text)),
              allArgs, value = TRUE)
-    if (length(ans) > 0 && !is.null(add.args))
+    if (length(ans) && !is.null(add.args))
         ans <- sprintf("%s%s", ans, add.args)
     c(specialFunArgs, ans)
 }
@@ -727,8 +741,8 @@ fileCompletions <- function(token)
 
         st <- .CompletionEnv[["start"]]
         probablyNotFilename <-
-            (st > 2 &&
-             (substr(.CompletionEnv[["linebuffer"]], st-1, st-1) %in% c("[", ":", "$")))
+            (st > 2L &&
+             (substr(.CompletionEnv[["linebuffer"]], st-1L, st-1L) %in% c("[", ":", "$")))
 
 
         ## If the 'files' setting is FALSE, we will make no attempt to
@@ -749,13 +763,13 @@ fileCompletions <- function(token)
             ## 'foo[[' part.
 
             .CompletionEnv[["comps"]] <-
-                if (probablyNotFilename) character(0)
+                if (probablyNotFilename) character(0L)
                 else fileCompletions(text)
             .setFileComp(FALSE)
         }
         else
         {
-            .CompletionEnv[["comps"]] <- character(0)
+            .CompletionEnv[["comps"]] <- character(0L)
             .setFileComp(TRUE)
         }
 
@@ -773,12 +787,12 @@ fileCompletions <- function(token)
         .CompletionEnv[["fguess"]] <- guessedFunction
 
         ## if this is not "", then we want to add possible arguments
-        ## of that function(s) (methods etc).  Should be character(0)
+        ## of that function(s) (methods etc).  Should be character(0L)
         ## if nothing matches
 
         fargComps <- functionArgs(guessedFunction, text)
 
-        if (getIsFirstArg() && length(guessedFunction) > 0 &&
+        if (getIsFirstArg() && length(guessedFunction) &&
             guessedFunction %in%
             c("library", "require", "data"))
         {
@@ -787,22 +801,23 @@ fileCompletions <- function(token)
             return()
         }
 
-        ## Is there a "/" in there?  If so, work on the part after
-        ## that and append to prefix before returning.  See note in
-        ## rcompletion.c on why / is treated specially while + etc are
-        ## not (hint: filename completion)
+        ## Is there an arithmetic operator in there in there?  If so,
+        ## work on the part after that and append to prefix before
+        ## returning.  It would have been easier if these were
+        ## word-break characters, but that potentially interferes with
+        ## filename completion.
 
-        ## lastArithOp <- tail(gregexpr("/", text, fixed = TRUE)[[1]], 1)
-        lastArithOp <- tail(gregexpr("[/*+-]", text)[[1]], 1)
+        ## lastArithOp <- tail(gregexpr("/", text, fixed = TRUE)[[1L]], 1)
+        lastArithOp <- tail(gregexpr("[\"'^/*+-]", text)[[1L]], 1)
         if (haveArithOp <- (lastArithOp > 0))
         {
-            prefix <- substr(text, 1, lastArithOp)
-            text <- substr(text, lastArithOp + 1, 1e6)
+            prefix <- substr(text, 1L, lastArithOp)
+            text <- substr(text, lastArithOp + 1L, 1000000L)
         }
 
         spl <- specialOpLocs(text)
         comps <-
-            if (length(spl) > 0)
+            if (length(spl))
                 specialCompletions(text, spl)
             else
             {
@@ -821,7 +836,7 @@ fileCompletions <- function(token)
 
                 normalCompletions(text, check.mode = appendFunctionSuffix)
             }
-        if (haveArithOp && length(comps) > 0)
+        if (haveArithOp && length(comps))
         {
             comps <- paste(prefix, comps, sep = "")
         }
@@ -856,7 +871,7 @@ fileCompletions <- function(token)
     .guessTokenFromLine()
     token <- .CompletionEnv[["token"]]
     comps <-
-        if (nchar(token, type = "chars") < minlength) character(0)
+        if (nchar(token, type = "chars") < minlength) character(0L)
         else
         {
             .completeToken()
@@ -865,13 +880,13 @@ fileCompletions <- function(token)
 
     ## FIXME: no idea how much of this is MBCS-safe
 
-    if (length(comps) == 0)
+    if (length(comps) == 0L)
     {
         ## no completions
         addition <- ""
-        possible <- character(0)
+        possible <- character(0L)
     }
-    else if (length(comps) == 1)
+    else if (length(comps) == 1L)
     {
         ## FIXME (maybe): in certain cases the completion may be
         ## shorter than the token (e.g. when trying to complete on an
@@ -884,31 +899,32 @@ fileCompletions <- function(token)
         ## with).  So, in this case, I'll just pretend that no
         ## completion was found.
 
-        addition <- substr(comps, nchar(token, type = "chars") + 1, 100000)
-        possible <- character(0)
+        addition <- substr(comps, nchar(token, type = "chars") + 1L, 100000L)
+        possible <- character(0L)
     }
-    else if (length(comps) > 1)
+    else if (length(comps) > 1L)
     {
         ## more than one completion.  The right thing to is to extend
         ## the line by the unique part if any, and list the multiple
         ## possibilities otherwise.
 
-        additions <- substr(comps, nchar(token, type = "chars") + 1, 100000)
-        if (length(table(substr(additions, 1, 1))) > 1)
+        additions <- substr(comps, nchar(token, type = "chars") + 1L, 100000L)
+        if (length(table(substr(additions, 1L, 1L))) > 1L)
         {
             ## no unique substring
             addition <- ""
             possible <-
                 if (isRepeat) capture.output(cat(format(comps, justify = "left"), fill = TRUE))
-                else character(0)
+                else character(0L)
         }
         else
         {
             ## need to figure out maximal unique substr
             keepUpto <- 1
-            while (length(table(substr(additions, 1, keepUpto))) == 1) keepUpto <- keepUpto + 1
-            addition <- substr(additions[1], 1, keepUpto - 1)
-            possible <- character(0)
+            while (length(table(substr(additions, 1L, keepUpto))) == 1L)
+                keepUpto <- keepUpto + 1L
+            addition <- substr(additions[1L], 1L, keepUpto - 1L)
+            possible <- character(0L)
         }
     }
     list(addition = addition,
@@ -995,20 +1011,18 @@ fileCompletions <- function(token)
           "plt", "ps", "pty", "smo", "srt", "tck", "tcl", "usr",
           "xaxp", "xaxs", "xaxt", "xpd", "yaxp", "yaxs", "yaxt")
 
-    options <-
-        c("add.smooth", "browser", "check.bounds", "continue",
-          "contrasts", "defaultPackages", "device", "digits",
-          "dvipscmd", "echo", "editor", "encoding", "example.ask",
-          "expressions", "help.try.all.packages", "htmlhelp",
-          "HTTPUserAgent", "internet.info", "keep.source",
-          "keep.source.pkgs", "latexcmd", "locatorBell", "mailer",
-          "max.print", "menu.graphics", "na.action", "OutDec",
-          "pager", "papersize", "par.ask.default", "pdfviewer",
-          "pkgType", "printcmd", "prompt", "repos", "scipen",
-          "show.coef.Pvalues", "show.error.messages",
-          "show.signif.stars", "str", "stringsAsFactors", "timeout",
-          "ts.eps", "ts.S.compat", "unzip", "verbose", "warn",
-          "warnings.length", "width")
+    options <- c("add.smooth", "browser", "check.bounds", "continue",
+	"contrasts", "defaultPackages", "demo.ask", "device",
+	"digits", "dvipscmd", "echo", "editor", "encoding",
+	"example.ask", "expressions", "help.try.all.packages",
+	"htmlhelp", "HTTPUserAgent", "internet.info", "keep.source",
+	"keep.source.pkgs", "latexcmd", "locatorBell", "mailer",
+	"max.print", "menu.graphics", "na.action", "OutDec", "pager",
+	"papersize", "par.ask.default", "pdfviewer", "pkgType",
+	"printcmd", "prompt", "repos", "scipen", "show.coef.Pvalues",
+	"show.error.messages", "show.signif.stars", "str",
+	"stringsAsFactors", "timeout", "ts.eps", "ts.S.compat",
+	"unzip", "verbose", "warn", "warnings.length", "width")
 
     .addFunctionInfo(par = par, options = options)
 

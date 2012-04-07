@@ -72,7 +72,7 @@ interaction.plot(x.factor, trace.factor, response, fun = mean,
   Chambers, J. M., Freeny, A and Heiberger, R. M. (1992)
   \emph{Analysis of variance; designed experiments.}
   Chapter 5 of \emph{Statistical Models in S}
-  eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
+  eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
 }
 
 \examples{
@@ -97,14 +97,14 @@ with(OrchardSprays, {
 with(esoph, {
   interaction.plot(agegp, alcgp, ncases/ncontrols, main = "'esoph' Data")
   interaction.plot(agegp, tobgp, ncases/ncontrols, trace.label="tobacco",
-		   fixed=TRUE, xaxt = "n")
+                   fixed=TRUE, xaxt = "n")
 })
 ## deal with NAs:
 esoph[66,] # second to last age group: 65-74
 esophNA <- esoph; esophNA$ncases[66] <- NA
 with(esophNA, {
   interaction.plot(agegp, alcgp, ncases/ncontrols, col= 2:5)
-				# doesn't show *last* group either
+                                # doesn't show *last* group either
   interaction.plot(agegp, alcgp, ncases/ncontrols, col= 2:5, type = "b")
   ## alternative take non-NA's  {"cheating"}
   interaction.plot(agegp, alcgp, ncases/ncontrols, col= 2:5,

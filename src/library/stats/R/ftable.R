@@ -21,13 +21,13 @@ ftable.default <- function(..., exclude = c(NA, NaN),
     args <- list(...)
     if (length(args) == 0)
         stop("nothing to tabulate")
-    x <- args[[1]]
+    x <- args[[1L]]
     if(is.list(x))
         x <- table(x, exclude = exclude)
     else if(inherits(x, "ftable")) {
         x <- as.table(x)
     }
-    else if(!(is.array(x) && (length(dim(x)) > 1))) {
+    else if(!(is.array(x) && (length(dim(x)) > 1L))) {
         x <- table(..., exclude = exclude)
     }
     dn <- dimnames(x)
@@ -143,7 +143,7 @@ ftable.formula <- function(formula, data = NULL, subset, na.action, ...)
                                    paste(c(rvars, cvars),
                                          collapse = "+")),
                                 env = environment(formula))
-        m[[1]] <- as.name("model.frame")
+        m[[1L]] <- as.name("model.frame")
         mf <- eval(m, parent.frame())
         ftable(mf, row.vars = rvars, col.vars = cvars, ...)
     }
@@ -203,8 +203,8 @@ format.ftable <- function(x, quote = TRUE, digits = getOption("digits"), ...)
     DATA <- rbind(if(length(xcv)) t(makeLabels(xcv)),
                   rep("", times = ncol(x)),
                   format(unclass(x), digits = digits))
-    cbind(apply(LABS, 2, format, justify = "left"),
-	  apply(DATA, 2, format, justify = "right"))
+    cbind(apply(LABS, 2L, format, justify = "left"),
+	  apply(DATA, 2L, format, justify = "right"))
 }
 
 write.ftable <- function(x, file = "", quote = TRUE, append = FALSE,
@@ -264,8 +264,8 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
         for(k in seq.int(from = 1, to = n.col.vars)) {
             s <- scan(file, what = "", sep = sep, quote = quote,
                       nlines = 1, quiet = TRUE)
-            col.vars[[k]] <- s[-1]
-            names(col.vars)[k] <- s[1]
+            col.vars[[k]] <- s[-1L]
+            names(col.vars)[k] <- s[1L]
         }
         row.vars <- vector("list", length = n.row.vars)
         names(row.vars) <- scan(file, what = "", sep = sep, quote =
@@ -274,7 +274,7 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
     }
     else {
         ## This is not really an ftable.
-        if((z[1] == 1) && z[2] == max(z)) {
+        if((z[1L] == 1) && z[2L] == max(z)) {
             ## Case A.  File looks like
             ##
             ##                                cvar.nam
@@ -285,12 +285,12 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
             col.vars <- vector("list", length = n.col.vars)
             s <- scan(file, what = "", sep = sep, quote = quote,
                       nlines = 2, quiet = TRUE)
-            names(col.vars) <- s[1]
-            s <- s[-1]
+            names(col.vars) <- s[1L]
+            s <- s[-1L]
             row.vars <- vector("list", length = n.row.vars)
             i <- 1 : n.row.vars
             names(row.vars) <- s[i]
-            col.vars[[1]] <- s[-i]
+            col.vars[[1L]] <- s[-i]
             z <- z[-(1 : 2)]
         }
         else {

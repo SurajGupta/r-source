@@ -16,7 +16,7 @@
 
 reshape <-
     function(data, varying= NULL, v.names= NULL, timevar = "time", idvar = "id",
-             ids = 1:NROW(data), times = seq_along(varying[[1]]),
+             ids = 1L:NROW(data), times = seq_along(varying[[1L]]),
              drop = NULL, direction, new.row.names = NULL,
              sep = ".",
              split = if (sep==""){
@@ -35,8 +35,8 @@ reshape <-
         if (drop)
             nn <- do.call("rbind",strsplit(nms, re, fixed=fixed))
         else
-            nn <- cbind(substr(nms, 1, regexpr(re,nms)),
-                        substr(nms, regexpr(re,nms)+1, 10000))
+            nn <- cbind(substr(nms, 1L, regexpr(re,nms)),
+                        substr(nms, regexpr(re,nms)+1L, 10000L))
 
         if (ncol(nn) != 2)
             stop("Failed to guess time-varying variables from their names")
@@ -53,11 +53,11 @@ reshape <-
 
     reshapeLong <-
         function(data,varying,v.names = NULL,timevar,idvar,
-                 ids = 1:NROW(data), times,drop = NULL,new.row.names = NULL) {
+                 ids = 1L:NROW(data), times,drop = NULL,new.row.names = NULL) {
 
         ll <- unlist(lapply(varying,length))
-        if (any(ll != ll[1])) stop("'varying' arguments must be the same length")
-        if (ll[1] != length(times)) stop("'times' is wrong length")
+        if (any(ll != ll[1L])) stop("'varying' arguments must be the same length")
+        if (ll[1L] != length(times)) stop("'times' is wrong length")
 
         if (!is.null(drop)) {
             if (is.character(drop))
@@ -84,13 +84,13 @@ reshape <-
         d <- data
         all.varying <- unlist(varying)
         d <- d[,!(names(data) %in% all.varying),drop = FALSE]
-        d[,timevar] <- times[1]
+        d[,timevar] <- times[1L]
 
         if (is.null(v.names))
-            v.names <- unlist(lapply(varying,function(x) x[1]))
+            v.names <- unlist(lapply(varying,function(x) x[1L]))
 
-        for(i in 1:length(v.names))
-            d[, v.names[i]] <- data[, varying[[i]][1] ]
+        for(i in 1L:length(v.names))
+            d[, v.names[i]] <- data[, varying[[i]][1L] ]
 
         if (!(idvar %in% names(data)))
             d[,idvar] <- ids
@@ -103,19 +103,19 @@ reshape <-
             return(rval)
         }
         if (is.null(new.row.names))
-            row.names(rval) <- paste(d[,idvar],times[1],sep = ".")
+            row.names(rval) <- paste(d[,idvar],times[1L],sep = ".")
         else
-            row.names(rval) <- new.row.names[1:NROW(rval)]
+            row.names(rval) <- new.row.names[1L:NROW(rval)]
 
         for(i in 2:length(times)) {
             d[,timevar] <- times[i]
-            for(j in 1:length(v.names))
+            for(j in 1L:length(v.names))
                 d[ ,v.names[j]] <- data[ ,varying[[j]][i]]
 
             if (is.null(new.row.names))
                 row.names(d) <- paste(d[,idvar],times[i],sep = ".")
             else
-                row.names(d) <- new.row.names[NROW(rval)+1:NROW(d)]
+                row.names(d) <- new.row.names[NROW(rval)+1L:NROW(d)]
             rval <- rbind(rval,d)  ##inefficient. So sue me.
         }
 

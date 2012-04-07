@@ -6,14 +6,7 @@ achieved by overrides in the configure script.
 
 You will need a copy of sh.exe in /bin.  Then with the R sources in
 /R/R-2.6.0, I used in /TEMP/R (any other directory will do, except the
-sources).  For MinGW 4.2.1 you will need to set
-
-CC=gcc-sjlj
-F77=gfortran-sjlj
-CXX=g++-sjlj
-
-in the environment (or copy the executables to gcc.exe, gfortran.exe
-and g++.exe).
+sources).
 
 To test trio and iconv, set
 
@@ -282,9 +275,33 @@ Also:
 
 BDR 2008-01-06
 
+
 7) Changing the parser
 
 By default the parser in gram.y is only processed in maintainer mode, 
 which isn't supported in Windows builds.  Defining RUN_BISON will 
 cause src/main/Makefile.win to process it (and correct for the erroneous
 line number records caused by our renaming of the output).
+
+
+8) Making iconv.dll
+
+In the past this was done from the libiconv sources using VC++ 6, but
+as from version 1.12 that is no longer supported.  It does not build
+easily with MinGW (due to the overuse of libtool), but we used
+
+setenv INSTALL cp
+setenv INSTALL_DATA cp
+sh configure --build=i386-pc-mingw32 --disable-nls
+cd libcharset; make
+cp include/localcharset.h ../lib
+cd ../lib
+make
+gcc -shared  .libs/iconv.o .libs/localcharset.o .libs/relocatable.o \
+  .libs/iconv-exports.o -export-all-symbols -o Riconv.dll
+
+We now use a modified version of win-iconv, but the libiconv version
+can still be use by replacing bin/Riconv.dll.
+
+
+BDR 2009-02-08

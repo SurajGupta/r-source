@@ -1,9 +1,10 @@
 % File src/library/utils/man/chooseCRANmirror.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-200* R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{chooseCRANmirror}
+\Rdversion{1.1}
 \alias{chooseCRANmirror}
 \alias{getCRANmirrors}
 \title{Select a CRAN Mirror}
@@ -22,7 +23,7 @@ getCRANmirrors(all = FALSE, local.only = FALSE)
 #endif
 #ifdef unix
     If true and \pkg{tcltk} and an X server are available, use a Tk
-    widget, or if under the AQUA interface use a MacOS X widget,
+    widget, or if under the AQUA interface use a Mac OS X widget,
 #endif
     otherwise use \code{\link{menu}}.}
   \item{all}{Logical, get all known mirrors or only the ones flagged as
@@ -32,7 +33,7 @@ getCRANmirrors(all = FALSE, local.only = FALSE)
 }
 \details{
   A list of mirrors is stored in file
-  \file{\var{\link[base:Rhome]{R\_HOME}}/doc/CRAN\_mirrors.csv}, but first an on-line list of
+  \file{\var{\link[base:Rhome]{R_HOME}}/doc/CRAN_mirrors.csv}, but first an on-line list of
   current mirrors is consulted, and the file copy used only if the
   on-line list is inaccessible.
 

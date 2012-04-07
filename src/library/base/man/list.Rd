@@ -12,6 +12,7 @@
 \alias{as.list.data.frame}
 \alias{as.list.environment}
 \alias{as.list.factor}
+\alias{as.list.function}
 \alias{as.pairlist}
 \alias{is.list}
 \alias{is.pairlist}
@@ -86,7 +87,7 @@ alist(\dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{vector}("list", length)} for creation of a list with empty

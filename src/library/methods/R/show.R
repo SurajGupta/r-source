@@ -21,12 +21,13 @@ showDefault <- function(object, oldMethods = TRUE)
     if(!is.null(clDef) && isS4(object) && is.na(match(clDef@className, .BasicClasses)) ) {
         cat("An object of class ", cl, "\n", sep="")
         slots <- slotNames(clDef)
-        if(!is.na(match(".Data", slots))) {
-            dataPart <- object@.Data
+        dataSlot <- .dataSlot(slots)
+        if(length(dataSlot) > 0) {
+            dataPart <- slot(object, dataSlot)
             show(dataPart)
-            slots <- slots[is.na(match(slots, ".Data"))]
+            slots <- slots[is.na(match(slots, dataSlot))]
         }
-        else if(length(slots) == 0)
+        else if(length(slots) == 0L)
             show(unclass(object))
         for(what in slots) {
             if(identical(what, ".Data"))
@@ -104,10 +105,10 @@ show <- function(object)
                   cat(class(object)," for \"", object@generic,
                       "\" defined from package \"", object@package,
                       "\"\n", sep = "")
-                  if(length(object@group) > 0)
+                  if(length(object@group))
                       cat("  belonging to group(s):",
                           paste(unlist(object@group), collapse =", "), "\n")
-                  if(length(object@valueClass) > 0)
+                  if(length(object@valueClass))
                       cat("  defined with value class: \"", object@valueClass,
                           "\"\n", sep="")
                   cat("\n")
@@ -125,7 +126,7 @@ show <- function(object)
                   if(!.identC(class(object), "classRepresentation"))
                     cat("Extended class definition (", classLabel(class(object)),
                         ")\n")
-                  print.classRepresentation(object)
+                  printClassRepresentation(object)
               },
               where = envir)
 
@@ -141,8 +142,8 @@ show <- function(object)
 
 ## an informative string label for a class
 classLabel <- function(Class) {
-    if(is.character(Class) && length(Class) > 0) {
-        className <- Class[[1]]
+    if(is.character(Class) && length(Class)) {
+        className <- Class[[1L]]
         packageName <- attr(Class, "package")
     }
     else {

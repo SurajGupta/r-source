@@ -62,35 +62,39 @@ double qt(double p, double ndf, int lower_tail, int log_p)
 	const static double Eps = 1e-11; /* must be > accu */
 
 	double ux, lx, nx, pp;
+	
+	int iter = 0;
 
-	p = R_D_qIv(p);
-	if(!lower_tail) p = 1-p;
+	p = R_DT_qIv(p);
 
 	/* Invert pt(.) :
 	 * 1. finding an upper and lower bound */
 	if(p > 1 - DBL_EPSILON) return ML_POSINF;
 	pp = fmin2(1 - DBL_EPSILON, p * (1 + Eps));
-	for(ux = 1.0; ux < DBL_MAX && pt(ux, ndf, TRUE, FALSE) < pp; ux *= 2);
+	for(ux = 1.; ux < DBL_MAX && pt(ux, ndf, TRUE, FALSE) < pp; ux *= 2);
 	pp = p * (1 - Eps);
-	for(lx = -1.0; lx > -DBL_MAX && pt(lx, ndf, TRUE, FALSE) > pp; lx *= 2);
+	for(lx =-1.; lx > -DBL_MAX && pt(lx, ndf, TRUE, FALSE) > pp; lx *= 2);
 
-	/* 2. interval (lx,ux)  halving : */
+	/* 2. interval (lx,ux)  halving
+	   regula falsi failed on qt(0.1, 0.1)
+	 */
 	do {
 	    nx = 0.5 * (lx + ux);
 	    if (pt(nx, ndf, TRUE, FALSE) > p) ux = nx; else lx = nx;
-	}
-	while ((ux - lx) / fabs(nx) > accu);
-  
+	} while ((ux - lx) / fabs(nx) > accu && ++iter < 1000);
+
+	if(iter >= 1000) ML_ERROR(ME_PRECISION, "qt");
+
 	return 0.5 * (lx + ux);
     }
 
-    /* Old coment:
-     *  "This test should depend on  ndf  AND p  !!
+    /* Old comment:
+     * FIXME: "This test should depend on  ndf  AND p  !!
      * -----  and in fact should be replaced by
      * something like Abramowitz & Stegun 26.7.5 (p.949)"
      *
      * That would say that if the qnorm value is x then
-     * the result is about x + (x^3+x)/4df + (5x^5+16x^3+3x)/96df^2 
+     * the result is about x + (x^3+x)/4df + (5x^5+16x^3+3x)/96df^2
      * The differences are tiny even if x ~ 1e5, and qnorm is not
      * that accurate in the extreme tails.
      */

@@ -57,9 +57,9 @@ push.vp.vpList <- function(vp, recording) {
     upViewport(depth(vp), recording)
   }
   if (length(vp) == 1)
-    push.vp(vp[[1]], recording)
+    push.vp(vp[[1L]], recording)
   else {
-    lapply(vp[1:(length(vp) - 1)], push.vp.parallel, recording)
+    lapply(vp[1L:(length(vp) - 1)], push.vp.parallel, recording)
     push.vp(vp[[length(vp)]], recording)
   }
 }
@@ -116,7 +116,7 @@ pathMatch <- function(path, pathsofar, strict) {
       pattern <- paste("^", path, "$", sep="")
     else
       pattern <- paste(path, "$", sep="")
-    regexpr(pattern, pathsofar) > 0
+    grepl(pattern, pathsofar)
   }
 }
 
@@ -138,11 +138,14 @@ downViewport.default <- function(name, strict=FALSE, recording=TRUE) {
 }
 
 downViewport.vpPath <- function(name, strict=FALSE, recording=TRUE) {
-  if (name$n == 1)
-    result <- grid.Call.graphics("L_downviewport", name$name, strict)
-  else
-    result <- grid.Call.graphics("L_downvppath", name$path, name$name, strict)
-  if (result) {
+    if (name$n == 1)
+        result <- grid.Call.graphics("L_downviewport", name$name, strict)
+    else
+        result <- grid.Call.graphics("L_downvppath",
+                                     name$path, name$name, strict)
+    # If the downViewport() fails, there is an error in C code
+    # so none of the following code will be run
+
     # Enforce the gpar settings for the viewport
     pvp <- grid.Call("L_currentViewport")
     # Do not call set.gpar because set.gpar accumulates cex
@@ -153,11 +156,7 @@ downViewport.vpPath <- function(name, strict=FALSE, recording=TRUE) {
         attr(name, "depth") <- result
         record(name)
     }
-  } else {
-    stop(gettextf("Viewport '%s' was not found", as.character(name)),
-         domain = NA)
-  }
-  invisible(result)
+    invisible(result)
 }
 
 # Similar to down.viewport() except it starts searching from the
@@ -345,7 +344,7 @@ inc.display.list <- function() {
   if (dl.index > (n - 1)) {
     temp <- display.list
     display.list <- vector("list", n+100)
-    display.list[1:n] <- temp
+    display.list[1L:n] <- temp
   }
   grid.Call("L_setDisplayList", display.list)
   grid.Call("L_setDLindex", as.integer(dl.index))
@@ -358,7 +357,7 @@ grid.display.list <- function(on=TRUE) {
   grid.Call("L_setDLon", as.logical(on))
   if (on) {
     grid.Call("L_setDisplayList", vector("list", 100))
-    grid.Call("L_setDLindex", as.integer(0))
+    grid.Call("L_setDLindex", as.integer(0L))
   }
   else
     grid.Call("L_setDisplayList", NULL)

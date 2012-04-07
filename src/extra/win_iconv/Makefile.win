@@ -1,0 +1,31 @@
+#-*- Makefile -*-
+
+include ../../gnuwin32/MkRules
+
+all: makeMakedeps install
+
+
+install: Riconv.dll
+	@cp Riconv.dll ../../../bin/Riconv.dll
+
+CPPFLAGS=-I../../include
+CFLAGS= $(OPTFLAGS)
+
+CSOURCES= win_iconv.c
+OBJS=$(CSOURCES:.c=.o)
+
+Riconv.dll: $(OBJS)
+
+clean:
+	$(RM) *.o *~ *.d Makedeps
+distclean: clean
+	@$(RM) Riconv.dll
+
+# Dependencies
+DEPS=$(CSOURCES:.c=.d)
+
+makeMakedeps: $(DEPS)
+	@$(RM) Makedeps
+	@cat $(DEPS) >> Makedeps
+
+-include Makedeps

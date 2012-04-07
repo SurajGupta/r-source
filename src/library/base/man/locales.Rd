@@ -1,12 +1,25 @@
 % File src/library/base/man/locales.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{locales}
 \alias{locales}
 \alias{Sys.getlocale}
 \alias{Sys.setlocale}
+\alias{LC_ALL}
+\alias{LC_COLLATE}
+\alias{LC_CTYPE}
+\alias{LC_MONETARY}
+\alias{LC_NUMERIC}
+\alias{LC_TIME}
+
+#ifdef unix
+\alias{LC_MESSAGES}
+\alias{LC_PAPER}
+\alias{LC_MEASUREMENT}
+#endif
+
 \title{Query or Set Aspects of the Locale}
 \description{
   Get details of or set aspects of the locale for the \R process.
@@ -79,7 +92,7 @@ Sys.setlocale(category = "LC_ALL", locale = "")
 % as seems to be the case in glibc.
 \section{Warning}{
   Setting \code{"LC_NUMERIC"} may cause \R to function
-  anomalously, so gives a warning.  As from \R 2.7.0 input conversions
+  anomalously, so gives a warning.  Input conversions
   in \R itself are unaffected, but the reading and writing of ASCII
   \code{\link{save}} files will be, as may packages.
 #ifdef unix
@@ -92,6 +105,14 @@ Sys.setlocale(category = "LC_ALL", locale = "")
   library which is not internationalized.
 #endif
 }
+
+\note{
+  Changing the values of locale categories whilst \R is running ought
+  to be noticed by the OS services, and usually is: one known exception
+  is collation on Mac OS X which always uses the setting from the start
+  of the session.
+}
+
 \seealso{
   \code{\link{strptime}} for uses of \code{category = "LC_TIME"}.
   \code{\link{Sys.localeconv}} for details of numerical and monetary
@@ -104,8 +125,9 @@ Sys.setlocale(category = "LC_ALL", locale = "")
 Sys.getlocale()
 Sys.getlocale("LC_TIME")
 \dontrun{
-Sys.setlocale("LC_TIME", "de")     # Solaris 7: details are OS-dependent
+Sys.setlocale("LC_TIME", "de")     # Solaris: details are OS-dependent
 Sys.setlocale("LC_TIME", "de_DE.utf8")  # Modern Linux etc.
+Sys.setlocale("LC_TIME", "de_DE")  # Mac OS X
 Sys.setlocale("LC_TIME", "German") # Windows
 }
 Sys.getlocale("LC_PAPER")          # may or may not be set

@@ -6,10 +6,10 @@
 \name{remove}
 \title{Remove Objects from a Specified Environment}
 \usage{
-remove(\dots, list = character(0), pos = -1,
+remove(\dots, list = character(0L), pos = -1,
        envir = as.environment(pos), inherits = FALSE)
 
-rm    (\dots, list = character(0), pos = -1,
+rm    (\dots, list = character(0L), pos = -1,
        envir = as.environment(pos), inherits = FALSE)
 }
 \alias{rm}
@@ -60,7 +60,7 @@ rm    (\dots, list = character(0), pos = -1,
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{ls}}, \code{\link{objects}}

@@ -41,13 +41,13 @@ function(file, fields = NULL, all = FALSE)
         cnts <- table(nums, tf)
         out <- array(NA_character_, dim = dim(cnts),
                      dimnames = list(NULL, levels(tf)))
-        if(all(cnts <= 1)) {
+        if(all(cnts <= 1L)) {
             ## No repeated tags ...
             out[cbind(nums, tf)] <- vals
             out <- as.data.frame(out, stringsAsFactors = FALSE)
         }
         else {
-            levs <- colSums(cnts > 1) == 0
+            levs <- colSums(cnts > 1L) == 0
             if(any(levs)) {
                 inds <- tf %in% levels(tf)[levs]
                 out[cbind(nums[inds], tf[inds])] <- vals[inds]
@@ -78,7 +78,7 @@ function(file, fields = NULL, all = FALSE)
              domain = NA)
     }
 
-    line_is_not_empty <- regexpr("^[[:space:]]*$", lines) < 0L
+    line_is_not_empty <- !grepl("^[[:space:]]*$", lines)
     nums <- cumsum(diff(c(FALSE, line_is_not_empty) > 0L) > 0L)
     ## Remove the empty ones so that nums knows which record each line
     ## belongs to.
@@ -87,12 +87,11 @@ function(file, fields = NULL, all = FALSE)
 
     ## Deal with escaped blank lines (used by Debian at least for the
     ## Description: values, see man 5 deb-control):
-    line_is_escaped_blank <-
-        regexpr("^[[:space:]]+\\.[[:space:]]*$", lines) > -1L
+    line_is_escaped_blank <- grepl("^[[:space:]]+\\.[[:space:]]*$", lines)
     if(any(line_is_escaped_blank))
         lines[line_is_escaped_blank] <- ""
 
-    line_has_tag <- regexpr("^[^[:blank:]][^:]*:", lines) > -1L
+    line_has_tag <- grepl("^[^[:blank:]][^:]*:", lines)
 
     ## Check that records start with tag lines.
     ind <- which(!line_has_tag[which(diff(nums) > 0L) + 1L])
@@ -163,7 +162,7 @@ function(x, file = "", append = FALSE,
         else {
             ## Should be a list ...
             nmxj <- nmx[j]
-            i <- !sapply(xj, function(s) (length(s) == 1) && is.na(s))
+            i <- !sapply(xj, function(s) (length(s) == 1L) && is.na(s))
             out[i, j] <-
                 sapply(xj[i],
                        function(s) {
@@ -174,7 +173,6 @@ function(x, file = "", append = FALSE,
                        })
         }
     }
-
     out <- t(out)
     is_not_empty <- c(out != "")
     eor <- character(sum(is_not_empty))

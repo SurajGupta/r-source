@@ -15,7 +15,7 @@
 #  http://www.r-project.org/Licenses/
 
 rm <-
-    function (..., list = character(0), pos = -1, envir = as.environment(pos),
+    function (..., list = character(0L), pos = -1, envir = as.environment(pos),
               inherits = FALSE)
 {
     dots <- match.call(expand.dots=FALSE)$...
@@ -23,7 +23,7 @@ rm <-
        !all(sapply(dots, function(x) is.symbol(x) || is.character(x))))
        stop("... must contain names or character strings")
     names <- sapply(dots, as.character)
-    if (length(names) == 0) names <- character(0)
+    if (length(names) == 0L) names <- character(0L)
     list <- .Primitive("c")(list, names)
     .Internal(remove(list, envir, inherits))
 }

@@ -320,7 +320,8 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 		warning(_("invalid char string in output conversion"));
 	    *ob = '\0';
 	    con->write(outbuf, 1, strlen(outbuf), con);
-	} while(again);
+	} while(again && inb > 0);  /* it seems some iconv signal -1 on
+				       zero-length input */
     } else
 #endif /* HAVE_VA_COPY */
 	con->write(b, 1, res, con);
@@ -1067,12 +1068,16 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
     if(length(scmd) > 1)
 	warning(_("only first element of 'description' argument used"));
 #ifdef Win32
-    ienc = getCharCE(STRING_ELT(scmd, 0));
-    if(ienc == CE_UTF8)
-	file = CHAR(STRING_ELT(scmd, 0));
-    else
-#endif
+    if( !strIsASCII(CHAR(STRING_ELT(scmd, 0))) ) {
+	ienc = CE_UTF8;
+	file = translateCharUTF8(STRING_ELT(scmd, 0));
+    } else {
+	ienc = CE_NATIVE;
 	file = translateChar(STRING_ELT(scmd, 0));
+    }
+#else
+    file = translateChar(STRING_ELT(scmd, 0));
+#endif
     sopen = CADR(args);
     if(!isString(sopen) || length(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
@@ -4223,12 +4228,19 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	warning(_("only first element of 'description' argument used"));
     url = CHAR(STRING_ELT(scmd, 0)); /* ASCII */
 #ifdef Win32
-    ienc = getCharCE(STRING_ELT(scmd, 0));
-    if(ienc == CE_UTF8)
-	url = CHAR(STRING_ELT(scmd, 0));
-    else
-#endif
+    if(PRIMVAL(op) && !strIsASCII(CHAR(STRING_ELT(scmd, 0))) ) {
+	ienc = CE_UTF8;
+	url = translateCharUTF8(STRING_ELT(scmd, 0));
+    } else {
+	ienc = getCharCE(STRING_ELT(scmd, 0));
+	if(ienc == CE_UTF8)
+	    url = CHAR(STRING_ELT(scmd, 0));
+	else
+	    url = translateChar(STRING_ELT(scmd, 0));
+    }
+#else
 	url = translateChar(STRING_ELT(scmd, 0));
+#endif
 #ifdef HAVE_INTERNET
     if (strncmp(url, "http://", 7) == 0) type = HTTPsh;
     else if (strncmp(url, "ftp://", 6) == 0) type = FTPsh;

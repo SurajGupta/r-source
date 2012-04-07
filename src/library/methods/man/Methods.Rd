@@ -80,6 +80,53 @@
   concatenation of the class names for the active arguments in the method signature.
 
 }
+
+\section{S3 Methods}{
+
+The functions for which S4 methods will be written often include some
+for which S3 methods exist, corresponding to S3 classes for the first
+formal argument or, for the primitive binary operators either of the
+operands.  These methods should continue to work in the presence of S4
+methods.  In the case of operators and other primitive functions, the
+underlying C evaluator will attempt to dispatch S3 methods if no S4
+methods are found; in particular, if the relevant actual arguments are
+not S4 objects.
+
+In the general case of true functions, S3 methods will be dispatched
+by the original version of the function.  The usual and recommended
+way this happens in most cases is by the function becoming the default
+method for the S4 generic, simply from the call
+
+  \code{setGeneric("f")}
+
+where the original \code{f()} contained the call
+\code{UseMethod("f")}.
+Existing S3 methods for \code{f()} for S3 classes will then
+potentially be dispatched by the default S4 method, if no S4 methods
+match the call. 
+
+\emph{S3 METHODS FOR S4 CLASSES.}
+
+Writing S3 methods for an ordinary S4 class is generally discouraged.
+S3 methods for an S3 class that is extended by an S4 class are quite
+sensible and the preferred mechanism for sharing the two class and
+method mechanisms.  There are two potential problems with S3 methods
+for S4 classes, however.
+
+Through version 2.9.0 of \R, S3 dispatch is not aware of S4 inheritance,
+but instead expects class attributes with multiple strings.
+This is expected to be fixed in version 2.9.1.
+At the same time, S4 dispatch has no knowledge of S3 methods. Each of these
+can lead to  errors.  The example section shows the first type of
+error.  The second, somewhat less likely, arises when the class with
+the S3 method, \code{"classA"} in the example, also inherits from another S4
+class.  If that class inherits a method for a function, no matter how
+indirectly, the method will be selected for an object from
+\code{"classA"}, even though there is a directly defined S3 method.
+The S3 method can only be accessed through the default S4 method.
+
+
+}
 \section{Method Selection and Dispatch}{
 
 When a call to a generic function is evaluated, a method is selected corresponding
@@ -122,7 +169,7 @@ Each element of the list describes the nature of the relationship (see
 \code{\linkS4class{SClassExtension}} for details).
 Included in the element is a \code{distance} slot giving a numeric
 distance between the two classes.
-The distance currently is the path length for the relationship:
+The distance is the path length for the relationship:
 \code{1} for direct superclasses (regardless of which mechanism
 defined them), then \code{2} for the direct superclasses of those
 classes, and so on.
@@ -132,6 +179,15 @@ actual class.
 The special class \code{"missing"} corresponding to missing arguments
 has only \code{"ANY"} as a superclass, while \code{"ANY"} has no
 superclasses.
+
+When a class definition is created or modified, the superclasses
+are ordered, first by a stable sort of the all superclasses by
+distance.
+If the set of superclasses has duplicates (that is, if some class is
+inherited through more than one relationship), these are removed, if
+possible, so that the list of superclasses is consistent with the
+superclasses of all direct superclasses.
+See the reference on inheritance for details.
 
 The information about superclasses is summarized when a class
 definition is printed.
@@ -155,40 +211,21 @@ argument (think of the function \code{outer} generating an array of
 all possible combinations).
 The search now finds all the methods matching any of this combination
 of classes.
-The computation of distances also has to combine distances for the
-individual arguments.
-There are many ways to combine the distances; the current
-implementation simply adds them.
-The result of the search is then a list of zero, one, or more methods,
-and a parallel vector of distances between the target signature and
-the available methods.
+For each argument, the position in the list of superclasses of that
+argument's class defines which method or methods (if the same class
+appears more than once) match best.
+When there is only one argument, the best match is unambiguous.
+With more than one argument, there may be zero or one match that is
+among the best matches for \emph{all} arguments.
 
-If the list has more than one matching method,  only those corresponding to
-the minimum distance are considered.
-There may still be multiple best methods.
-The dispatch software considers this an ambiguous case and warns the
-user (only on the first call for this selection).
-The method occurring first in the list of superclasses is selected.  By the mechanism of producing
-the extension information, this orders the direct superclasses by the
-order they appeared in the original call to \code{\link{setClass}}.
-Classes specified in \code{\link{setIs}} and
-\code{\link{setClassUnion}}  calls, and by
-the superclasses of these classes. (Note that only
-the ordering of classes within a particular generation of superclasses
-counts, because only these will have the same distance).
-It is generally a very bad idea to  count on any observed ordering,
-other than of the simple superclasses, since both circumstances and
-future changes to the computations could alter such orderings.
-
-All this detail about selection is less important than the realization
-that having ambiguous method selection usually means that you need to
-be more specific about intentions.
-It is likely that some consideration other than the ordering of
-superclasses in the class definition is more important in determining
-which method \emph{should}  be selected, and the preference may well
-be different for different generic functions.  Where ambiguities
-arise, the best approach is usually to provide a specific method for
-the subclass.
+If there is no best match, the selection is ambiguous and a message is
+printed noting which method was selected (the first method
+lexicographicaly in the ordering) and what other methods could have
+been selected.
+Since the ambiguity is usually nothing the end user could control,
+this is not a warning.
+Package authors should examine their package for possible ambiguous
+inheritance by calling \code{\link{testInheritedMethods}}.
 
 When the inherited method has been selected, the selection is cached
 in the generic function so that future calls with the same class will
@@ -361,6 +398,30 @@ The  \code{"target"} slot starts off equal to the \code{"defined"}
   rematch arguments, for reasons of both efficiency and consistency.
 }
 
+\examples{
+## an example of the errors from S3 methods for S4 classes
+## DO NOT DEFINE S3 METHODS FOR AN S4 CLASS
+
+setClass("classA", contains = "numeric", 
+   representation(realData = "numeric"))
+
+Math.classA <- function(x) {x <- x@realData; NextMethod()}
+
+x <- new("classA", log(1:10), realData = 1:10)
+
+abs(x) # 1:10, as intended
+
+setClass("classB", contains = "classA")
+
+y <- new("classB", x)
+
+abs(y) #WRONG ANSWER
+
+\dontshow{
+removeClass("classA"); removeClass("classB"); rm(x,y)
+}
+
+}
 
 
 \references{
@@ -368,6 +429,11 @@ The  \code{"target"} slot starts off equal to the \code{"defined"}
  \emph{Software for Data Analysis: Programming with R}
   Springer.  (For the R version: see section 10.6 for method
   selection and section 10.5 for generic functions).
+
+ Chambers, John M.(2009)
+ \emph{Class Inheritance in R}
+ \url{http://stat.stanford.edu/~jmc4/classInheritance.pdf} (to be
+ submitted to the R Journal).
 
  Chambers, John M. (1998)
  \emph{Programming with Data}

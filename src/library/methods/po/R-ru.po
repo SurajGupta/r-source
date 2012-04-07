@@ -10,9 +10,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.8.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-10-06 07:30\n"
-"PO-Revision-Date: 2008-10-06 17:49-0500\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
+"POT-Creation-Date: 2009-03-28 17:22\n"
+"PO-Revision-Date: 2009-03-28 23:15-0500\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
@@ -323,18 +323,11 @@ msgstr "Не найдено метода для идентификатора %s"
 msgid "\"%s\" has no methods defined"
 msgstr "\"%s\" не содержит определенных методов"
 
-msgid "signature must be a vector of classes or an environment"
-msgstr "идентификатор должен быть вектором классов или окружением"
+msgid "selectMethod(): mlist is not an environment or NULL :"
+msgstr "selectMethod(): mlist не является окружением или NULL :"
 
-msgid "selectMethod(): .SelectMethodOn - old stuff - please report"
-msgstr "selectMethod(): .SelectMethodOn - это старье - пожалуйста, сообщите"
-
-msgid "no unique method corresponding to this signature"
-msgstr ""
-"не существует единственного метода соответствующего данному идентификатору"
-
-msgid "unable to match signature to methods"
-msgstr "невозможно сопоставить идентификатор к методам"
+msgid "** should no longer happen!"
+msgstr "** больше не должно случаться!"
 
 msgid ""
 "bad class specified for element %d (should be a single character string)"
@@ -414,6 +407,9 @@ msgstr "не общая функция '%s' отдана findMethods()"
 msgid "Only FALSE is meaningful for 'inherited', when 'where' is supplied (got"
 msgstr ""
 "Только FALSE имеет значение для 'inherited', когда указано 'where' (получен"
+
+msgid "argument \"f\" must be a generic function or %s"
+msgstr "аргумент \"f\" должен быть общей функцией или %s"
 
 msgid "'%s' is not a generic function in '%s' {and 'package' not specified}"
 msgstr "'%s' не общая функция в '%s' {и 'package' не указан}"
@@ -525,6 +521,18 @@ msgstr ""
 "инициализированный метод возвратил объект класса \"%s\" вместо необходимого "
 "класса \"%s\""
 
+msgid "Reported %d ambiguous selections out of %d for function %s"
+msgstr "Сообщено %d сомнительных выборов из %d для функции %s"
+
+msgid "%d: target \"%s\": chose \"%s\" (others: %s)"
+msgstr "%d: цель \"%s\": выбрано \"%s\" (другие: %s)"
+
+msgid ","
+msgstr ","
+
+msgid "Notes: %s."
+msgstr "Замечания: %s."
+
 msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr ""
 "имена в идентификаторе для метода (%s) не совпадают с %s аргументами функции "
@@ -588,6 +596,10 @@ msgstr ""
 msgid "class \"%s\" extends an undefined class, \"%s\""
 msgstr "класс \"%s\" расширяет неопределенный класс, \"%s\""
 
+#, fuzzy
+msgid "'Class' must be a valid class definition or class"
+msgstr "'class1' должен быть именем класса либо определением класса"
+
 msgid ""
 "trying to assign an object of class \"%s\" as the definition of class \"%s"
 "\": must supply a \"classRepresentation\" object"
@@ -622,9 +634,6 @@ msgid ""
 "No definition was found for superclass \"%s\" in the specification of class "
 "\"%s\""
 msgstr "В спецификации класса \"%s\" нет определения для суперкласса \"%s\""
-
-msgid "class \"%s\" cannot be used as the data part of another class"
-msgstr "класс \"%s\" не может быть использован как часть данных другого класса"
 
 msgid ""
 "more than one possible class for the data part: using \"%s\" rather than \"%s"
@@ -684,16 +693,31 @@ msgstr "именованные элементы прототипа не соответствуют именам слотов: %s"
 msgid "the \"%s\" list for class \"%s\", includes an undefined class \"%s\""
 msgstr "список \"%s\" для класса \"%s\", включает неопределенный класс \"%s\""
 
+msgid ""
+"None of the orderings of the superclasses of class \"%s\" is consistent with "
+"the superclass ordering of  its direct superclasses; using an ordering which "
+"conflicts with %s"
+msgstr ""
+"Ни одно из упорядочений суперклассов класса \"%s\" не соответствует "
+"упорядочиванию суперкласса его прямых суперклассов; использую "
+"упорядочивание, которое конфликтует с %s"
+
 msgid "\"class\" is a reserved slot name and cannot be redefined"
 msgstr ""
 "\"class\" является зарезервированным названием слота и не может быть "
 "переопределено"
+
+msgid "Data part is undefined for general S4 object"
+msgstr "У общего S4 объекта не определена компонента данных"
 
 msgid "no '.Data' slot defined for class \"%s\""
 msgstr "не определен слот '.Data' для класса \"%s\""
 
 msgid "class \"%s\" does not have a data part (a .Data slot) defined"
 msgstr "класс \"%s\" не имеет определенного раздела данных (слот.Data)"
+
+msgid "Class cannot have both an ordinary and hidden data type"
+msgstr "У класса не может быть одновременно обычного и скрытого типа данных"
 
 msgid ""
 "a validity method must be a function of one argument, got an object of class "
@@ -735,6 +759,65 @@ msgstr ""
 
 msgid "No class \"%s\" found as expected in removing subclass \"%s\""
 msgstr "Не найдено класса \"%s\", ожидаемого при удалении подкласса \"%s\""
+
+msgid ""
+"argument includeSubclasses must be a logical, either one value or a vector "
+"of the same length as argument classes"
+msgstr ""
+"аргумент includeSubclasses должен быть логическим, либо иметь одно значение "
+"или быть вектором той же длины, что и классы аргумента"
+
+msgid "Argument abbreviate must be 0, 1, 2, or 3"
+msgstr "Сокращенный аргумент должен быть 0, 1, 2, или 3"
+
+msgid "Needed the supplied labels vector of length %n, got %n"
+msgstr "Нужны добавочные метки вектора длины %n, а получено %n"
+
+msgid ""
+"S3 methods written for S4 classes will fail inheritance!\n"
+"Package"
+msgstr ""
+"S3 методы, написанные для S4 классов, не смогут наследоваться!\n"
+"Пакет"
+
+msgid "apparently has"
+msgstr "очевидно имеет"
+
+msgid "such methods  for the functions"
+msgstr "такие методы для функций"
+
+msgid "functions"
+msgstr "функции"
+
+msgid "Possible dangerous methods:"
+msgstr "Возможные опасные методы:"
+
+msgid "(Warnings generated once per package per session)"
+msgstr "(Предупреждения выдаются одно на пакет на сессию)"
+
+msgid "There are apparent S3 methods for class \""
+msgstr "Есть очевидные S3 методы для класса \""
+
+msgid ""
+"\"\n"
+"DANGER: any subclasses of this class will not inherit the methods"
+msgstr ""
+"\"\n"
+"ОПАСНО: любой субкласс этого класса не будет наследовать методы"
+
+msgid "Some of the superclasses in the definition of class \""
+msgstr "Некоторые суперклассы в определении класса \""
+
+msgid ""
+"\" have apparent S3 methods.\n"
+"\n"
+"DANGER: the new class will not inherit these methods.\n"
+"Complain to the author of the superclass definitions."
+msgstr ""
+"\" имеет очевидные S3 методы.\n"
+"\n"
+"ОПАСНО: новый класс на будет наследовать эти методы.\n"
+"Пожалуйтесь автору определений суперкласса."
 
 msgid ""
 "the function being used as %s in making a generic function for \"%s\" is "
@@ -801,9 +884,6 @@ msgstr ""
 msgid "= \"missing\""
 msgstr "= \"отсутствует\""
 
-msgid ","
-msgstr ","
-
 msgid ""
 "methods can add arguments to the generic only if '...' is an argument to the "
 "generic"
@@ -848,9 +928,6 @@ msgid ""
 "no methods found for \"%s\"; cacheGenericsMetaData() will have no effect"
 msgstr ""
 "не найдено методов для \"%s\"; cacheGenericsMetaData() не будет иметь эффекта"
-
-msgid "internal error: bad code for 'setPrimitiveMethods': %s"
-msgstr "внутренняя ошибка: плохой код для 'setPrimitiveMethods': %s"
 
 msgid "invalid value from generic function \"%s\", class \"%s\", expected %s"
 msgstr "неверное значение из общей функции \"%s\", класс \"%s\", ожидалось %s"
@@ -948,6 +1025,9 @@ msgstr "; использую первый из них"
 msgid "multiple equivalent inherited matches:"
 msgstr "множественные эквивалентные унаследованные соответствия:"
 
+msgid "single string; got an object of class \"%s\""
+msgstr "простая строка; получен объект класса \"%s\""
+
 msgid "\"%s\" has a sealed class definition and cannot be redefined"
 msgstr ""
 "\"%s\" имеет запечатанное определение класса и не может быть переопределено"
@@ -986,6 +1066,9 @@ msgid ""
 msgstr ""
 "ошибка в содержащихся классах (%s) для класса \"%s\"; предыдущее определение "
 "восстановлено к \"%s\""
+
+msgid "Internal error: definiition of class \"%s\" not properly assigned"
+msgstr "Внутренняя ошибка: определение класса \"%s\" не присвоено как следует"
 
 msgid "element %d of the representation was not a single character string"
 msgstr "элемент %d представления не был одиночной символьной строкой"
@@ -1058,6 +1141,20 @@ msgstr ""
 
 msgid "no definition of \"%s\" to use for %s"
 msgstr "не определения \"%s\" для использования с %s"
+
+msgid "Class definition cannot extend more than one of these data types: %s"
+msgstr ""
+"Определение класса на может расширить более чем один из этих типов данных: %s"
+
+msgid ""
+"Sorry, abnormal type \"%s\" is not supported as a superclass of a class "
+"definition"
+msgstr ""
+"Простите, ненормальный тип \"%s\" не боддерживается как суперкласс или "
+"определение класса"
+
+msgid "Defining type \"%s\" as a superclass via class \"%s\""
+msgstr "Определяю тип \"%s\" как суперкласс через класс \"%s\""
 
 msgid ""
 "'traceOn' is deprecated: use the function 'trace' in the 'methods' package "
@@ -1263,15 +1360,12 @@ msgstr "неверная или неустановленная таблица методов в общей функции \""
 msgid "Trying to find a methods table in a non-generic function"
 msgstr "Пытаюсь найти таблицу методов в не-общей функции"
 
-msgid "Ambiguous method selection for \"%s\", target \"%s\""
-msgstr "Неочевидный выбор метода для \"%s\", цель \"%s\""
-
 msgid ""
-"(the first of the signatures shown will be used)\n"
-"%s"
+"The \"ambiguousMethodSelection\" option should be a function to be called as "
+"the condition action; got an object of class \"%s\""
 msgstr ""
-"(будет использован первый из показанных идентификаторов)\n"
-"%s"
+"Опция \"ambiguousMethodSelection\" должна быть функцией для вызова в "
+"качестве условного события; получен объект класса \"%s\""
 
 msgid ""
 "No simply inherited methods found for function \"%s\"; using non-simple "
@@ -1279,6 +1373,15 @@ msgid ""
 msgstr ""
 "Не найдено просто унаследованного метода для функции \"%s\"; использую "
 "непростой метод"
+
+msgid ""
+"Note: Method with signature \"%s\" chosen for function \"%s\",\n"
+" target signature \"%s\".\n"
+" %s would also be valid"
+msgstr ""
+"Замечание: Метод с подписью \"%s\" выбран для функции \"%s\",\n"
+" целевая подпись\"%s\".\n"
+" %s должна также быть правильной"
 
 msgid "found"
 msgstr "найдено"
@@ -1298,10 +1401,17 @@ msgstr ""
 "Внутренняя ошибка при поиске наследованных методов; не возвращен уникальный "
 "метод"
 
-msgid ""
-"Couldn't find methods table for \"%s\", package \"%s\" may be out of date"
-msgstr ""
-"Не могу найти таблицу методов для \"%s\", пакет \"%s\" может быть устаревшим"
+msgid "Selecting %d methods of min. distance"
+msgstr "Выбираю %d методов минимальной дистанции"
+
+msgid "Selecting %d non-group methods"
+msgstr "Выбираю %d негрупповых методов"
+
+msgid "Selecting %d partially exact-matching method(s)"
+msgstr "Выбираю %d частично полностью соответствующих метод(ов)"
+
+msgid "Choosing method %s from %d ambiguous possibilities"
+msgstr "Выбран метод %s из %d сомнительных возможностей"
 
 msgid "Failed to find expected group generic function:"
 msgstr "Не могу найти ожидаемую групповую общую функцию:"
@@ -1345,6 +1455,19 @@ msgstr ""
 "Не могу найти таблицу методов для общего \"%s\" из пакета \"%s\" в пакете \"%"
 "s\""
 
+msgid "Undefined classes ("
+msgstr "Неопределенные классы ("
+
+msgid ") will be ignored, for argument"
+msgstr ") будет проигнорирован, для аргумента"
+
+msgid ""
+"Argument \"signatures\" must be a character matrix whose rows are method "
+"signatures"
+msgstr ""
+"Аргумент \"signatures\" должен быть символьной матрицей, чьи строки -- "
+"подписи метода"
+
 msgid "not allowed to have test==TRUE and an S4Class definition"
 msgstr "не разрешается иметь test==TRUE и S4Class-определение"
 
@@ -1354,9 +1477,10 @@ msgstr ""
 "аргумент S4Class должен быть определением класса; получен объект класса \"%s"
 "\""
 
+#, fuzzy
 msgid ""
-"inconsistent old-style class information for \"%s\" (maybe mixing old and "
-"new classes?)"
+"inconsistent old-style class information for \"%s\"; the class is defined "
+"but does not extend \"%s\""
 msgstr ""
 "противоречивая, в старом стиле информация для класса \"%s\" (возможно имеет "
 "место смешение старых и новых классов?)"
@@ -1367,6 +1491,19 @@ msgid ""
 msgstr ""
 "S3-класс прототипа, \"%s\", не определен; разрешается только если это S3-"
 "класс в процессе регистрации (\"%s\")"
+
+msgid "Restoring definition of class \"%s\""
+msgstr "Восстанавливаю определение класса \"%s\""
+
+msgid "Slot \"%s\": class \"%s\" should extend class \"%s\""
+msgstr "Слот \"%s\": класс \"%s\" должен расширить класс \"%s\""
+
+msgid ""
+"invalid S4 class corresponding to S3 class: slots in  S4 version must extend "
+"corresponding slots in S3 version: fails for %s"
+msgstr ""
+"неправильный S4 класс соответствует S3 классу: слоты в S4 версии должны "
+"расширять соответствсующие слоты в S3 версии: не удается для %s"
 
 msgid "explicit coercion of old-style class (%s) is not defined"
 msgstr "не определено четкого приведения для устаревшего класса (%s)"
@@ -1384,6 +1521,13 @@ msgid ""
 msgstr ""
 "аргумент 'Classes' должен быть вектором двух классов; получен аргумент длины "
 "%d"
+
+msgid ""
+"inconsistent old-style class information for \"%s\" (maybe mixing old and "
+"new classes?)"
+msgstr ""
+"противоречивая, в старом стиле информация для класса \"%s\" (возможно имеет "
+"место смешение старых и новых классов?)"
 
 msgid ""
 "S3Class only defined for extensions of \"oldClass\" or classes with a data "
@@ -1516,6 +1660,42 @@ msgstr[1] ""
 "в идентификаторе метода для функции \"%s\" нет определения для классов: %s"
 msgstr[2] ""
 "в идентификаторе метода для функции \"%s\" нет определения для классов: %s"
+
+#~ msgid "signature must be a vector of classes or an environment"
+#~ msgstr "идентификатор должен быть вектором классов или окружением"
+
+#~ msgid "selectMethod(): .SelectMethodOn - old stuff - please report"
+#~ msgstr "selectMethod(): .SelectMethodOn - это старье - пожалуйста, сообщите"
+
+#~ msgid "no unique method corresponding to this signature"
+#~ msgstr ""
+#~ "не существует единственного метода соответствующего данному идентификатору"
+
+#~ msgid "unable to match signature to methods"
+#~ msgstr "невозможно сопоставить идентификатор к методам"
+
+#~ msgid "class \"%s\" cannot be used as the data part of another class"
+#~ msgstr ""
+#~ "класс \"%s\" не может быть использован как часть данных другого класса"
+
+#~ msgid "internal error: bad code for 'setPrimitiveMethods': %s"
+#~ msgstr "внутренняя ошибка: плохой код для 'setPrimitiveMethods': %s"
+
+#~ msgid "Ambiguous method selection for \"%s\", target \"%s\""
+#~ msgstr "Неочевидный выбор метода для \"%s\", цель \"%s\""
+
+#~ msgid ""
+#~ "(the first of the signatures shown will be used)\n"
+#~ "%s"
+#~ msgstr ""
+#~ "(будет использован первый из показанных идентификаторов)\n"
+#~ "%s"
+
+#~ msgid ""
+#~ "Couldn't find methods table for \"%s\", package \"%s\" may be out of date"
+#~ msgstr ""
+#~ "Не могу найти таблицу методов для \"%s\", пакет \"%s\" может быть "
+#~ "устаревшим"
 
 #~ msgid "The class to be removed  (\""
 #~ msgstr "Данный класс будет удален  (\""

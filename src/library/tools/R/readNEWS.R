@@ -23,31 +23,31 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
     ## ----------------------------------------------------------------------
     ## Author: Martin Maechler, Date: 26 Jun 2006, 15:34
 
-    p0 <- function(...) paste(..., sep='')
+    p0 <- function(...) paste(..., sep="")
 
-    rmIniTABs	   <- function(ch) sub("^\t+", '', ch)
-    rmTABs	   <- function(ch) gsub("\t+", '', ch)
+    rmIniTABs	   <- function(ch) sub("^\t+", "", ch)
+    rmTABs	   <- function(ch) gsub("\t+", "", ch)
     collapseWSpace <- function(ch) gsub("[\t ]+", " ", ch)
     "%nIN%" <- function(x,table) is.na(match(x, table))
 
     chop1st <- function(cvec) {
 	## The first non-empty line
-	n <- length(cvec); if(n <= 1) return(cvec)
+	n <- length(cvec); if(n <= 1L) return(cvec)
 	## else	 n >= 2
 	empty <- grep("^[\t ]*$", cvec)
-	cvec[if(any(!empty)) which(!empty)[1] else 1]
+	cvec[if(any(!empty)) which(!empty)[1L] else 1]
     }
 
     chopPara <- function(cvec) {
-	n <- length(cvec); if(n <= 1) return(cvec)
+	n <- length(cvec); if(n <= 1L) return(cvec)
 	## else	 n >= 2
 	empty <- grep("^[\t ]*$", cvec)
 	## the first non-empty ``from the right''
-	nm <- 1:n %nIN% (n + 1 - rev(empty))
+	nm <- 1L:n %nIN% (n + 1 - rev(empty))
 	if(any(nm))
-	    cvec[1:(n - (which(nm)[1] - 1))]
+	    cvec[1L:(n - (which(nm)[1L] - 1))]
 	else ## all are empty; return just one
-	    cvec[1]
+	    cvec[1L]
     }
 
 ### FIXME: default for 'chop' should be (something like) "dropEmptyTrail"
@@ -57,7 +57,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
     chop <- match.arg(chop)
     chopFun <- switch(chop,
 		      "first" = chop1st,
-		      "1" = function(x) x[1],
+		      "1" = function(x) x[1L],
 		      "par1" = chopPara,
 		      "keepAll" = function(x)x)
 
@@ -66,7 +66,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	## Purpose: parse a single NEWS entry
 	## Arguments: ll: lines of text (character vector)
 	nl <- length(ll)
-	ll[1] <- sub(E.prefix, '', ll[1])
+	ll[1L] <- sub(E.prefix, "", ll[1L])
 
 	##cat("	    entry with",nl, " lines of text")
 	chv <- collapseWSpace(ll)
@@ -78,10 +78,10 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	## Purpose: parse one section (e.g., "BUG FIXES") of NEWS
 	## Arguments: ll: lines of text (character vector)
 	nl <- length(ll)
-	if(trace) cat("	    section '", kind,"' : ", nl, " lines", sep='')
+	if(trace) cat("	    section '", kind,"' : ", nl, " lines", sep="")
 
-	## if(trace) cat(head(ll, min(3, nl)), if(nl > 5) ".............", '', sep="\n")
-	## if (nl > 3) if(trace) cat(tail(ll, min(2, nl-3)), '', sep="\n")
+	## if(trace) cat(head(ll, min(3, nl)), if(nl > 5) ".............", "", sep="\n")
+	## if (nl > 3) if(trace) cat(tail(ll, min(2, nl-3)), "", sep="\n")
 
 	iS <- grep(E.prefix, ll)
 	if(trace) cat("	 with ", length(iS), "entries\n")
@@ -121,7 +121,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	s.pre <- "^[\t ]*CHANGES IN R VERSION "
 	iC <- grep(s.pre, ll)
 	versions <- as.list(iC)
-	names(versions) <- sub(s.pre, '', ll[iC])
+	names(versions) <- sub(s.pre, "", ll[iC])
 
 	iC <- c(iC, length(ll)+1L) # such that	 iC[i] : (iC[i+1]-1)  makes sense
 	for(i in seq_along(versions))
@@ -158,8 +158,8 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 
     iS <- grep(p0(s.pre, "[1-9]\\.[0-9]", s.post), ll)
     series <- as.list(iS)
-    names(series) <- sub(p0(s.post,"[\t ]*\\*$"), '',
-			 sub(s.pre, '', ll[iS]))
+    names(series) <- sub(p0(s.post,"[\t ]*\\*$"), "",
+			 sub(s.pre, "", ll[iS]))
     if(trace) {
         cat(s.post, ":\n")
         print(unlist(series))
@@ -180,13 +180,13 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 checkNEWS <- function(file = file.path(R.home(), "NEWS")) {
     check <- function(item) {
 	if (is.list(item)) return(all(unlist(lapply(item, check))))
-	
+
 	if (length(grep("^ o[[:blank:]]", item))) {
 	    cat("Item marker found within item:\n", paste(item, collapse="\n"), "\n\n")
 	    return(FALSE)
 	}
 	return(TRUE)
     }
-              
+
     check(readNEWS(file, chop="keepAll") )
 }

@@ -121,7 +121,7 @@ function(x, y=NULL, use="everything", method = c("pearson", "kendall", "spearman
 	## Rank transform
 	Rank <- function(u) {
 	    if(length(u) == 0) u else
-	    if(is.matrix(u)) apply(u, 2, rank, na.last="keep")
+	    if(is.matrix(u)) apply(u, 2L, rank, na.last="keep")
 	    else rank(u, na.last="keep")
 	}
 
@@ -150,8 +150,8 @@ cov2cor <- function(V)
     ## ----------------------------------------------------------------------
     ## Arguments: V: a covariance matrix (i.e. symmetric and positive definite)
     ## ----------------------------------------------------------------------
-    ## Author: Martin Maechler, Date: 12 Jun 2003, 11:50
-    p <- (d <- dim(V))[1]
+    ## Author: Martin Maechler, Date: 12 Jun 2003, 11L:50
+    p <- (d <- dim(V))[1L]
     if(!is.numeric(V) || length(d) != 2L || p != d[2L])
 	stop("'V' is not a square numeric matrix")
     Is <- sqrt(1/diag(V)) # diag( 1/sigma_i )

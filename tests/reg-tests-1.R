@@ -2448,7 +2448,6 @@ options(op)# reset to previous
 ## Didn't work before 1.8.0
 
 
-library(stats)
 ## cmdscale
 ## failed in versions <= 1.4.0 :
 cm1 <- cmdscale(eurodist, k=1, add=TRUE, x.ret = TRUE)
@@ -2495,7 +2494,6 @@ try(smooth.spline(y18, spar = 50)) #>> error : spar 'way too large'
 ## end of moved from smooth.spline.Rd
 
 
-library(ts)
 ## arima{0}
 (fit <- arima(lh, c(1,0,0)))
 tsdiag(fit)
@@ -3259,9 +3257,9 @@ unlink(tf)
 
 ## seq() should be more consistent in returning "integer"
 stopifnot(typeof(seq(length=0)) == "integer",
-          identical(seq(length=0), seq(along=0[0])),
+          identical(seq(length=0), seq(along.with=0[0])),
           identical(seq(length=3), 1:3),
-          identical(seq(length=3), seq(along=1:3)))
+          identical(seq(length=3), seq(along.with=1:3)))
 
 
 ## labels.lm was broken (PR#7417)
@@ -5383,10 +5381,13 @@ stopifnot(substring(foo[-1], 1,1) == " ", length(foo) == 4,
 ## was " .haha" (not according to DCF standard)
 
 
-## Pdf() with CIDfonts active
+## Pdf() with CIDfonts active -- they need MBCS to be supported
 pdf(family="Japan1") # << for CIDfonts, pd->fonts is NULL
-plot(1,1,pch="", axes=FALSE)
-text(1,1,"F.1", family="Helvetica"); dev.off()
+try({
+    plot(1,1,pch="", axes=FALSE)
+    text(1,1,"F.1", family="Helvetica")
+})
+dev.off()
 ## text() seg.faulted up to 2.7.2 (and early 2.8.0-alpha)
 
 ## PS mixing CIDfonts and Type1 - reverse case
@@ -5421,3 +5422,187 @@ cut(d, "weeks")
 
 
 ### end of tests added for 2.8.x
+
+
+## (Deliberate) overshot in seq(from, to, by) because of fuzz
+stopifnot(seq(0, 1, 0.00025+5e-16) <= 1, seq.int(0, 1, 0.00025+5e-16) <= 1)
+stopifnot(rev(seq(0, 1, 0.00025+5e-16))[1] == 1,
+          rev(seq.int(0, 1, 0.00025+5e-16))[1] == 1)
+# overshot by about 2e-12 in 2.8.x
+
+
+## str() with an "invalid object"
+ob <- structure(1, class = "test") # this is fine
+is.object(ob)# TRUE
+ob <- 1 + ob # << this is "broken"
+is.object(ob)# FALSE - hmm..
+identical(ob, unclass(ob)) # TRUE !
+stopifnot(grep("num 2", capture.output(str(ob))) == 1)
+## str(ob) lead to infinite recursion in R <= 2.8.0
+
+
+## getPackageName()  for "package:foo":
+require('methods')
+library(tools)
+oo <- options(warn=2)
+detach("package:tools", unload=TRUE); options(oo)
+## gave warning (-> Error) about creating package name
+
+
+## row.names(data.frame(matrixWithDimnames)) (PR#13230)
+rn0 <- c("","Row 2","Row 3")
+A <- matrix(1:6, nrow=3, ncol=2, dimnames=list(rn0, paste("Col",1:2)))
+rn <- row.names(data.frame(A))
+stopifnot(identical(rn, rn0))
+# was 1:3 in R 2.8.0, whereas
+rn0 <- c("Row 1","","Row 3")
+A <- matrix(1:6, nrow=3, ncol=2, dimnames=list(rn0, paste("Col",1:2)))
+rn <- row.names(data.frame(A))
+stopifnot(identical(rn, rn0))
+## used the names.
+
+
+## rounding error in windowing a time series (PR#13272)
+x <- ts(1:290, start=c(1984,10), freq=12)
+window(x, start=c(2008,9), end=c(2008,9), extend=FALSE)
+window(x, start=c(2008,9), end=c(2008,9), extend=TRUE)
+## second failed in 2.8.0
+
+
+## deparse(nlines=) should shrink the result (PR#13299)
+stopifnot(length(deparse(quote(foo(1,2,3)), width.cutoff = 20, nlines=7)) ==1)
+## was 7.
+
+
+## legend did not reset xpd correctly (PR#12756)
+par(xpd = FALSE)
+plot(1)
+legend("top", legend="Tops", xpd=NA, inset=-0.1)
+stopifnot(identical(par("xpd"), FALSE))
+## left xpd as NA
+
+
+## lines.formula with 'subset' and no 'data' needed a tweak
+## (R-help, John Field, 20008-11-14)
+x <- 1:5
+y <- c(1,3,NA,2,5)
+plot(y ~ x, type="n")
+lines(y ~ x, subset = !is.na(y), col="red")
+## error in 2.8.0
+
+
+## prettyNum(*, drop0trailing) erronously dropped 0 in '1e10':
+cn <- c("1.107", "2.3120", "3.14e+0", "4.2305400", "120.0",
+        "5.31e-01", "6.3333e-20", "8.1e100", "9.9e+00", "10.1e-0")
+d <- cn != (pcn <- prettyNum(cn, drop0trailing=TRUE))
+stopifnot(identical(pcn[d],
+		    c("2.312", "3.14", "4.23054","120","9.9","10.1")),
+	  identical("-3", prettyNum("-3.0",drop0trailing=TRUE)) )
+## first failed, e.g. for 8.1e100
+
+
+## (R-help, 2008-12-01)
+transform(mtcars, t1=3, t2=4)
+## failed in 2.8.0 since extra columns were passed as a list.
+
+
+## deparsing transform failed
+parse(text = deparse(transform))
+## failed in 2.8.0
+
+
+## crashed on some systems (PR#13361)
+matrix(1:4, nrow=2, dimnames=list())
+##
+
+
+## col(as.factor=TRUE) failed
+col(matrix(0, 5, 5), as.factor=TRUE)
+## failed in 2.8.0
+
+
+## qt failure in R-devel in early Dec 2008
+stopifnot(!is.nan(qt(0.1, 0.1)))
+##
+
+
+## formals<- gave wrong result for list body
+f <- f0 <- function(x) list(pi)
+formals(f) <- formals(f)
+stopifnot(identical(body(f), body(f)))
+## had body 'pi' < 2.8.1
+
+
+## body<- failed on a function with no arguments.
+f <- function() {pi}
+body(f) <- 2
+f
+## Failed < 2.8.1
+
+
+## body<- with value a list
+f <- function(x) NULL
+body(f) <- list(pi)
+stopifnot(is.list(body(f))) # was 'pi'
+body(f) <- b0 <- list(a=1, b=2)
+stopifnot(identical(body(f), b0)) # 'a' became an argument
+f <- function(x) NULL
+body(f) <- list(1, 2, 3) # was error
+## pre-2.9.0 behaviour was erratic.
+
+
+## PR#13305
+qr.solve(cbind(as.complex(1:11), as.complex(1)),
+         as.complex(2*(20:30)))
+## failed in 2.8.1
+
+
+## PR#13433: is ....\nEOF an empty last line?
+aa <- "field1\tfield2\n 1\ta\n 2\tb"
+zz <- textConnection(aa)
+res <- read.table(zz, blank.lines.skip = FALSE)
+close(zz)
+stopifnot(nrow(res) == 3)
+## was 4 in 2.8.1
+
+
+## segfault from cbind() reported by Hadley Wickham
+## https://stat.ethz.ch/pipermail/r-devel/2009-January/051853.html
+e <- environment()
+a <- matrix(list(e), ncol = 1, nrow = 2)
+b <- matrix(ncol = 0, nrow = 2) # zero-length
+cbind(a, b)
+cbind(a, b)
+## crashed in 2.9.0
+
+
+## besselI(x, -n) == besselI(x, +n)  when n is an integer
+set.seed(7) ; x <- rlnorm(216) ; nu <- c(1,44,111)
+## precision lost warnings {may be gone in the future}:
+suppressWarnings(r <- outer(x, c(-nu, nu), besselI))
+stopifnot(identical(r[,1:3], r[,4:6]))
+## suffered from sin(n * pi) imprecision in R <= 2.8.1
+
+
+## Large sanples in mood.test
+## https://stat.ethz.ch/pipermail/r-help/2009-March/190479.html
+set.seed(123)
+x <- rnorm(50, 10, 5)
+y <- rnorm(50, 2 ,5)
+(z <- mood.test(x, y))
+stopifnot(!is.na(z$p.value))
+## gave warning and incorrect result in 2.8.x
+
+
+## heatmap without dendrogram (PR#13512)
+X <- matrix(rnorm(200),20,10)
+XX <- crossprod(X)
+heatmap(XX, Rowv =  NA, revC = TRUE)
+heatmap(XX, Rowv = NA, symm = TRUE)
+## both failed in 2.8.1
+
+
+## sprintf with 0-length args
+stopifnot(identical(sprintf("%d", integer(0L)), character(0L)))
+stopifnot(identical(sprintf(character(0L), pi), character(0L)))
+## new feature in 2.9.0

@@ -21,7 +21,7 @@ duplicated(x, incomparables = FALSE, \dots)
 \method{duplicated}{default}(x, incomparables = FALSE,
            fromLast = FALSE, \dots)
 
-\method{duplicated}{array}(x, incomparables = FALSE, MARGIN = 1,
+\method{duplicated}{array}(x, incomparables = FALSE, MARGIN = 1L,
            fromLast = FALSE, \dots)
 }
 \arguments{
@@ -77,7 +77,7 @@ duplicated(x, incomparables = FALSE, \dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{\code{\link{unique}}.}
 \examples{

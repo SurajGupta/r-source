@@ -27,7 +27,7 @@ formula.default <- function (x, env = parent.frame(), ...)
     else {
         form <- switch(mode(x),
                        NULL = structure(NULL, class = "formula"),
-                       character = formula(eval(parse(text = x)[[1]])),
+                       character = formula(eval(parse(text = x)[[1L]])),
                        call = eval(x), stop("invalid formula"))
         environment(form) <- env
         form
@@ -47,11 +47,11 @@ formula.terms <- function(x, ...) {
 formula.data.frame <- function (x, ...)
 {
     nm <- sapply(names(x), as.name)
-    if (length(nm) > 1) {
-        rhs <- nm[-1]
-        lhs <- nm[1]
-    } else if (length(nm) == 1) {
-        rhs <- nm[1]
+    if (length(nm) > 1L) {
+        rhs <- nm[-1L]
+        lhs <- nm[1L]
+    } else if (length(nm) == 1L) {
+        rhs <- nm[1L]
         lhs <- NULL
     } else stop("cannot create a formula from a zero-column data frame")
     ff <- parse(text = paste(lhs, paste(rhs, collapse = "+"), sep = "~"))
@@ -62,7 +62,7 @@ formula.data.frame <- function (x, ...)
 
 formula.character <- function(x, env = parent.frame(), ...)
 {
-    ff <- formula(eval(parse(text=x)[[1]]))
+    ff <- formula(eval(parse(text=x)[[1L]]))
     environment(ff) <- env
     ff
 }
@@ -76,7 +76,7 @@ print.formula <- function(x, ...) {
 "[.formula" <- function(x,i) {
     ans <- NextMethod("[")
     ## as.character gives a vector.
-    if(as.character(ans[[1]])[1] == "~") {
+    if(as.character(ans[[1L]])[1L] == "~") {
 	class(ans) <- "formula"
         environment(ans)<-environment(x)
     }
@@ -104,7 +104,7 @@ terms.default <- function(x, ...) {
 }
 
 terms.terms <- function(x, ...) x
-print.terms <- function(x, ...) { 
+print.terms <- function(x, ...) {
     print.default(unclass(x))
     invisible(x)
 }
@@ -118,7 +118,7 @@ delete.response <- function (termobj)
     a <- attributes(termobj)
     y <- a$response
     if(!is.null(y) && y) {
-        termobj[[2]] <- NULL
+        termobj[[2L]] <- NULL
         a$response <- 0
         a$variables <- a$variables[-(1+y)]
         a$predvars <- a$predvars[-(1+y)]
@@ -127,7 +127,7 @@ delete.response <- function (termobj)
         if(length(a$offset))
             a$offset <- ifelse(a$offset > y, a$offset-1, a$offset)
         if(length(a$specials))
-            for(i in 1:length(a$specials)) {
+            for(i in 1L:length(a$specials)) {
                 b <- a$specials[[i]]
                 a$specials[[i]] <- ifelse(b > y, b-1, b)
             }
@@ -144,8 +144,8 @@ reformulate <- function (termlabels, response=NULL)
     termtext <- paste(if(has.resp) "response", "~",
 		      paste(termlabels, collapse = "+"),
 		      collapse = "")
-    rval <- eval(parse(text = termtext)[[1]])
-    if(has.resp) rval[[2]] <-
+    rval <- eval(parse(text = termtext)[[1L]])
+    if(has.resp) rval[[2L]] <-
         if(is.character(response)) as.symbol(response) else response
     ## response can be a symbol or call as  Surv(ftime, case)
     environment(rval) <- parent.frame()
@@ -160,7 +160,7 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
         if(!inherits(termobj, "terms"))
             stop("'termobj' must be a object of class \"terms\"")
 	newformula <- reformulate(attr(termobj, "term.labels")[-dropx],
-				  if (keep.response) termobj[[2]] else NULL)
+				  if (keep.response) termobj[[2L]] else NULL)
         environment(newformula) <- environment(termobj)
 	terms(newformula, specials=names(attr(termobj, "specials")))
     }
@@ -169,9 +169,9 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
 
 "[.terms" <-function (termobj, i)
 {
-    resp <- if (attr(termobj, "response")) termobj[[2]] else NULL
+    resp <- if (attr(termobj, "response")) termobj[[2L]] else NULL
     newformula <- attr(termobj, "term.labels")[i]
-    if (length(newformula) == 0) newformula <- "1"
+    if (length(newformula) == 0L) newformula <- "1"
     newformula <- reformulate(newformula, resp)
     environment(newformula)<-environment(termobj)
     terms(newformula, specials = names(attr(termobj, "specials")))
@@ -192,12 +192,12 @@ terms.formula <- function(x, specials = NULL, abb = NULL, data = NULL,
         ## need to add back any offsets
         if(length(ind <- attr(Terms, "offset"))) {
             ## can't look at rownames of factors, as not there y ~ offset(x)
-            tmp2 <- as.character(attr(Terms, "variables"))[-1]
+            tmp2 <- as.character(attr(Terms, "variables"))[-1L]
             tmp <- c(tmp, tmp2[ind])
         }
 	form <- formula(object)
-	lhs <- if(length(form) == 2) NULL else
-          paste(deparse(form[[2]]), collapse="")
+	lhs <- if(length(form) == 2L) NULL else
+          paste(deparse(form[[2L]]), collapse="")
 	rhs <- if(length(tmp)) paste(tmp, collapse = " + ") else "1"
 	if(!attr(terms(object), "intercept")) rhs <- paste(rhs, "- 1")
 	formula(paste(lhs, "~", rhs))
@@ -265,7 +265,7 @@ offset <- function(object) object
     ## when called from predict.nls, vars not match.
     new <- sapply(m, .MFclass)
     new <- new[names(new) %in% names(cl)]
-     if(length(new) == 0) return()
+     if(length(new) == 0L) return()
     old <- cl[names(new)]
     if(!ordNotOK) {
         old[old == "ordered"] <- "factor"
@@ -329,14 +329,14 @@ model.frame.default <-
         m <- match(c("formula", "data", "subset", "weights", "na.action"),
                    names(fcall), 0)
         fcall <- fcall[c(1, m)]
-        fcall[[1]] <- as.name("model.frame")
+        fcall[[1L]] <- as.name("model.frame")
         env <- environment(formula$terms)
 	if (is.null(env)) env <- parent.frame()
         return(eval(fcall, env, parent.frame()))
     }
     if(missing(formula)) {
 	if(!missing(data) && inherits(data, "data.frame") &&
-	   length(attr(data, "terms")) > 0)
+	   length(attr(data, "terms")))
 	    return(data)
 	formula <- as.formula(data)
     }
@@ -367,9 +367,9 @@ model.frame.default <-
     vars <- attr(formula, "variables")
     predvars <- attr(formula, "predvars")
     if(is.null(predvars)) predvars <- vars
-    varnames <- sapply(vars, deparse, width.cutoff=500)[-1]
+    varnames <- sapply(vars, deparse, width.cutoff=500)[-1L]
     variables <- eval(predvars, data, env)
-    if(is.null(rownames) && (resp <- attr(formula, "response")) > 0) {
+    if(is.null(rownames) && (resp <- attr(formula, "response")) > 0L) {
         ## see if we can get rownames from the response
         lhs <- variables[[resp]]
         rownames <- if(is.matrix(lhs)) rownames(lhs) else names(lhs)
@@ -388,13 +388,13 @@ model.frame.default <-
         attr(formula, "predvars") <- predvars
     }
     extras <- substitute(list(...))
-    extranames <- names(extras[-1])
+    extranames <- names(extras[-1L])
     extras <- eval(extras, data, env)
     subset <- eval(substitute(subset), data, env)
     data <- .Internal(model.frame(formula, rownames, variables, varnames,
 				  extras, extranames, subset, na.action))
     ## fix up the levels
-    if(length(xlev) > 0) {
+    if(length(xlev)) {
 	for(nm in names(xlev))
 	    if(!is.null(xl <- xlev[[nm]])) {
 		xi <- data[[nm]]
@@ -431,7 +431,7 @@ model.weights <- function(x) x$"(weights)"
 ## we do check that offsets are numeric.
 model.offset <- function(x) {
     offsets <- attr(attr(x, "terms"),"offset")
-    if(length(offsets) > 0) {
+    if(length(offsets)) {
 	ans <- x$"(offset)"
         if (is.null(ans)) ans <- 0
 	for(i in offsets) ans <- ans+x[[i]]
@@ -444,8 +444,6 @@ model.offset <- function(x) {
 
 model.matrix <- function(object, ...) UseMethod("model.matrix")
 
-fitted.default <- function(object, ...)
-    napredict(object$na.action, object$fitted)
 model.matrix.default <- function(object, data = environment(object),
 				 contrasts.arg = NULL, xlev = NULL, ...)
 {
@@ -454,7 +452,7 @@ model.matrix.default <- function(object, data = environment(object),
 	data <- model.frame(object, data, xlev=xlev)
     else {
 	reorder <- match(sapply(attr(t,"variables"),deparse,
-                                width.cutoff=500)[-1],
+                                width.cutoff=500)[-1L],
                          names(data))
 	if (any(is.na(reorder)))
 	    stop("model frame and formula mismatch in model.matrix()")
@@ -510,19 +508,19 @@ model.response <- function (data, type = "any")
 {
     if (attr(attr(data, "terms"), "response")) {
 	if (is.list(data) | is.data.frame(data)) {
-	    v <- data[[1]]
+	    v <- data[[1L]]
 	    if (type == "numeric" && is.factor(v)) {
 		warning('using type="numeric" with a factor response will be ignored')
 	    } else if (type == "numeric" | type == "double")
 		storage.mode(v) <- "double"
 	    else if (type != "any") stop("invalid response type")
-	    if (is.matrix(v) && ncol(v) == 1) dim(v) <- NULL
+	    if (is.matrix(v) && ncol(v) == 1L) dim(v) <- NULL
 	    rows <- attr(data, "row.names")
 	    if (nrows <- length(rows)) {
 		if (length(v) == nrows) names(v) <- rows
-		else if (length(dd <- dim(v)) == 2)
-		    if (dd[1] == nrows && !length((dn <- dimnames(v))[[1]]))
-			dimnames(v) <- list(rows, dn[[2]])
+		else if (length(dd <- dim(v)) == 2L)
+		    if (dd[1L] == nrows && !length((dn <- dimnames(v))[[1L]]))
+			dimnames(v) <- list(rows, dn[[2L]])
 	    }
 	    return(v)
 	} else stop("invalid 'data' argument")
@@ -542,7 +540,7 @@ model.extract <- function (frame, component)
 	    names(rval) <- attr(frame, "row.names")
 	else if (is.matrix(rval) && nrow(rval) == nrow(frame)) {
 	    t1 <- dimnames(rval)
-	    dimnames(rval) <- list(attr(frame, "row.names"), t1[[2]])
+	    dimnames(rval) <- list(attr(frame, "row.names"), t1[[2L]])
 	}
     }
     return(rval)
@@ -554,14 +552,14 @@ update <- function(object, ...) UseMethod("update")
 is.empty.model <- function (x)
 {
     tt <- terms(x)
-    (length(attr(tt, "factors")) == 0) & (attr(tt, "intercept")==0)
+    (length(attr(tt, "factors")) == 0L) & (attr(tt, "intercept") == 0L)
 }
 
 makepredictcall <- function(var, call) UseMethod("makepredictcall")
 
 makepredictcall.default  <- function(var, call)
 {
-    if(as.character(call)[1] != "scale") return(call)
+    if(as.character(call)[1L] != "scale") return(call)
     if(!is.null(z <- attr(var, "scaled:center"))) call$center <- z
     if(!is.null(z <- attr(var, "scaled:scale"))) call$scale <- z
     call
@@ -569,9 +567,9 @@ makepredictcall.default  <- function(var, call)
 
 .getXlevels <- function(Terms, m)
 {
-    xvars <- sapply(attr(Terms, "variables"), deparse, width.cutoff=500)[-1]
+    xvars <- sapply(attr(Terms, "variables"), deparse, width.cutoff=500)[-1L]
     if((yvar <- attr(Terms, "response")) > 0) xvars <- xvars[-yvar]
-    if(length(xvars) > 0) {
+    if(length(xvars)) {
         xlev <- lapply(m[xvars], function(x) if(is.factor(x)) levels(x) else NULL)
         xlev[!sapply(xlev, is.null)]
     } else NULL
@@ -581,7 +579,7 @@ get_all_vars <- function(formula, data = NULL, ...)
 {
     if(missing(formula)) {
 	if(!missing(data) && inherits(data, "data.frame") &&
-	   length(attr(data, "terms")) > 0)
+	   length(attr(data, "terms")) )
 	    return(data)
 	formula <- as.formula(data)
     }
@@ -612,7 +610,7 @@ get_all_vars <- function(formula, data = NULL, ...)
         rownames <- if(is.matrix(lhs)) rownames(lhs) else names(lhs)
     }
     extras <- substitute(list(...))
-    extranames <- names(extras[-1])
+    extranames <- names(extras[-1L])
     extras <- eval(extras, data, env)
     x <- as.data.frame(c(variables, extras), optional=TRUE)
     names(x) <- c(varnames, extranames)

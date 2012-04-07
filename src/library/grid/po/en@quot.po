@@ -1,7 +1,7 @@
 # English translations for R package.
-# Copyright (C) 2008 The R Foundation
+# Copyright (C) 2009 The R Foundation
 # This file is distributed under the same license as the R package.
-# Automatically generated, 2008.
+# Automatically generated, 2009.
 #
 # All this catalog "translates" are quotation characters.
 # The msgids must be ASCII and therefore cannot contain real quotation
@@ -27,10 +27,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2008-08-01 09:16+0100\n"
-"PO-Revision-Date: 2008-08-01 09:16+0100\n"
+"POT-Creation-Date: 2009-03-17 19:26+0000\n"
+"PO-Revision-Date: 2009-03-17 19:26+0000\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -42,39 +42,39 @@ msgstr ""
 msgid "Cannot clip to rotated viewport"
 msgstr "Cannot clip to rotated viewport"
 
-#: grid.c:653 grid.c:658 grid.c:747 grid.c:752
+#: grid.c:674 grid.c:679 grid.c:768 grid.c:773
 msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
 msgstr "Cannot pop the top-level viewport (grid and graphics output mixed?)"
 
-#: grid.c:932
+#: grid.c:953
 msgid "attempt to plot on null device"
 msgstr "attempt to plot on null device"
 
-#: grid.c:1212
+#: grid.c:1233
 msgid "There is no layout defined"
 msgstr "There is no layout defined"
 
-#: grid.c:1432
+#: grid.c:1453
 msgid "Polygon edge not found (zero-width or zero-height?)"
 msgstr "Polygon edge not found (zero-width or zero-height?)"
 
-#: grid.c:1441
+#: grid.c:1462
 msgid "Polygon edge not found"
 msgstr "Polygon edge not found"
 
-#: grid.c:1581
+#: grid.c:1602
 msgid "Require at least two points to draw arrow"
 msgstr "Require at least two points to draw arrow"
 
-#: grid.c:1895
+#: grid.c:1916
 msgid "Non-finite control point in Xspline"
 msgstr "Non-finite control point in Xspline"
 
-#: grid.c:2995
+#: grid.c:3016
 msgid "invalid plotting symbol"
 msgstr "invalid plotting symbol"
 
-#: grid.c:3081
+#: grid.c:3102
 msgid "Unable to clip to rotated rectangle"
 msgstr "Unable to clip to rotated rectangle"
 
@@ -102,15 +102,15 @@ msgstr "Unimplemented unit function"
 msgid "Illegal unit or unit not yet implemented"
 msgstr "Illegal unit or unit not yet implemented"
 
-#: unit.c:1710
+#: unit.c:1732
 msgid "Invalid unit"
 msgstr "Invalid unit"
 
-#: unit.c:1726
+#: unit.c:1748
 msgid "Units must be character"
 msgstr "Units must be character"
 
-#: unit.c:1729
+#: unit.c:1751
 msgid "Units must be of length > 0"
 msgstr "Units must be of length > 0"
 

@@ -1,12 +1,12 @@
 % File src/library/base/man/Paren.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Paren}
 \alias{Paren}
 \alias{(}
-\alias{{}
+\alias{\{}
 \title{Parentheses and Braces}
 \usage{
 ( \dots )
@@ -31,7 +31,7 @@
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{if}}, \code{\link{return}}, etc for other objects used in

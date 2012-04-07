@@ -110,7 +110,7 @@ lfactorial(x)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole. (For \code{gamma} and \code{lgamma}.)
+  Wadsworth & Brooks/Cole. (For \code{gamma} and \code{lgamma}.)
 
   Abramowitz, M. and Stegun, I. A. (1972)
   \emph{Handbook of Mathematical Functions.} New York: Dover.
@@ -119,9 +119,7 @@ lfactorial(x)
 \seealso{
   \code{\link{Arithmetic}} for simple, \code{\link{sqrt}} for
   miscellaneous mathematical functions and \code{\link{Bessel}} for the
-  real Bessel functions.  Note that \code{\link{gammaCody}(x)} is
-  considerably faster than \code{gamma(x)} but slightly less accurate
-  and (potentially) less reliable.
+  real Bessel functions.
 
   For the incomplete gamma function see \code{\link{pgamma}}.
 }

@@ -1,6 +1,6 @@
 % File src/library/methods/man/LanguageClasses.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2008 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{language-class}
@@ -14,7 +14,7 @@
 \alias{repeat-class}
 \alias{while-class}
 \alias{name-class}
-\alias{{-class}
+\alias{\{-class}
 
 \title{Classes to Represent Unevaluated Language Objects }
 \description{  The virtual class \code{"language"} and the specific
@@ -38,11 +38,7 @@
 "\{"
 
 ### Each of the classes above extends the virtual class
-
 "language"
-
-
-
 }
 \section{Objects from the Class}{
   \code{"language"} is a virtual class; no objects may be created from

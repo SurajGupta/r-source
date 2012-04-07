@@ -25,13 +25,13 @@ by.default <- function(data, INDICES, FUN, ..., simplify = TRUE)
         by(dd, INDICES, FUN, ..., simplify = simplify)
     else {
         if(!is.list(INDICES)) {        # record the names for print.by
-            IND <- vector("list", 1)
-            IND[[1]] <- INDICES
-            names(IND) <- deparse(substitute(INDICES))[1]
+            IND <- vector("list", 1L)
+            IND[[1L]] <- INDICES
+            names(IND) <- deparse(substitute(INDICES))[1L]
         } else IND <- INDICES
         FUNx <- function(x) FUN(dd[x,], ...)
         nd <- nrow(dd)
-        ans <- eval(substitute(tapply(1:nd, IND, FUNx, simplify = simplify)),
+        ans <- eval(substitute(tapply(1L:nd, IND, FUNx, simplify = simplify)),
                     dd)
         attr(ans, "call") <- match.call()
         class(ans) <- "by"
@@ -42,13 +42,13 @@ by.default <- function(data, INDICES, FUN, ..., simplify = TRUE)
 by.data.frame <- function(data, INDICES, FUN, ..., simplify = TRUE)
 {
     if(!is.list(INDICES)) { # record the names for print.by
-        IND <- vector("list", 1)
-        IND[[1]] <- INDICES
-        names(IND) <- deparse(substitute(INDICES))[1]
+        IND <- vector("list", 1L)
+        IND[[1L]] <- INDICES
+        names(IND) <- deparse(substitute(INDICES))[1L]
     } else IND <- INDICES
     FUNx <- function(x) FUN(data[x,, drop=FALSE], ...) # (PR#10506)
     nd <- nrow(data)
-    ans <- eval(substitute(tapply(1:nd, IND, FUNx, simplify = simplify)), data)
+    ans <- eval(substitute(tapply(1L:nd, IND, FUNx, simplify = simplify)), data)
     attr(ans, "call") <- match.call()
     class(ans) <- "by"
     ans
@@ -62,10 +62,10 @@ print.by <- function(x, ..., vsep)
     if(missing(vsep))
         vsep <- paste(rep("-", 0.75*getOption("width")), collapse = "")
     lapply(seq_along(x), function(i, x, vsep, ...) {
-        if(i != 1 && !is.null(vsep)) cat(vsep, "\n")
-        ii <- i - 1
+        if(i != 1L && !is.null(vsep)) cat(vsep, "\n")
+        ii <- i - 1L
         for(j in seq_along(dn)) {
-            iii <- ii %% d[j] + 1; ii <- ii %/% d[j]
+            iii <- ii %% d[j] + 1L; ii <- ii %/% d[j]
             cat(dnn[j], ": ", dn[[j]][iii], "\n", sep = "")
         }
         print(x[[i]], ...)

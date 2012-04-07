@@ -48,7 +48,7 @@ cbind <- function(..., deparse.level = 1)
     ## else :  na >= 2
 
     if(deparse.level) {
-	symarg <- as.list(sys.call()[-1])[1:na] # the unevaluated arguments
+	symarg <- as.list(sys.call()[-1L])[1L:na] # the unevaluated arguments
 	## For default 'deparse.level = 1', cbind(a, b) has to give *names*!
 	Nms <- function(i) { # possibly 'deparsed' names of argument  i
 	    if(is.null(r <- names(symarg[i])) || r == "") {
@@ -80,7 +80,7 @@ cbind <- function(..., deparse.level = 1)
 	    if(fix.na)
 		fix.na <- !is.null(Nna <- Nms(na))
 	    if(!is.null(nmi <- names(argl))) iV <- iV & (nmi == "")
-	    ## attach `symbols' to argl[-1] for 'vectors'[iV]
+	    ## attach `symbols' to argl[-1L] for 'vectors'[iV]
 	    ii <- if(fix.na) # need to fix later ([na] is 'matrix')
 		2:(na-1) else 2:na
 	    if(any(iV[ii])) {
@@ -88,22 +88,22 @@ cbind <- function(..., deparse.level = 1)
 		    if (!is.null(nmi <- Nms(i))) names(argl)[i] <- nmi
 	    }
 	}
-	r <- do.call(cbind, c(argl[-1], list(deparse.level=deparse.level)))
+	r <- do.call(cbind, c(argl[-1L], list(deparse.level=deparse.level)))
     }
 
     d2 <- dim(r)
     r <- cbind2(..1, r)
     if(deparse.level == 0)
 	return(r)
-    ism1 <- !is.null(d1 <- dim(..1)) && length(d1) == 2
-    ism2 <- !is.null(d2)	     && length(d2) == 2 && !fix.na
+    ism1 <- !is.null(d1 <- dim(..1)) && length(d1) == 2L
+    ism2 <- !is.null(d2)	     && length(d2) == 2L && !fix.na
     if(ism1 && ism2) ## two matrices
 	return(r)
 
     ## else -- Setting colnames correctly
     ##	       when one was not a matrix [needs some diligence!]
     Ncol <- function(x) {
-	d <- dim(x); if(length(d) == 2) d[2] else as.integer(length(x) > 0) }
+	d <- dim(x); if(length(d) == 2L) d[2L] else as.integer(length(x) > 0L) }
     nn1 <- !is.null(N1 <- if((l1 <- Ncol(..1)) && !ism1) Nms(1)) # else NULL
     nn2 <- !is.null(N2 <- if(na == 2 && Ncol(..2) && !ism2) Nms(2))
     if(nn1 || nn2 || fix.na) {

@@ -123,8 +123,8 @@ all.equal.character <-
     }
     ne <- !nas & (target != current)
     if(!any(ne) && is.null(msg)) TRUE
-    else if(sum(ne) == 1) c(msg, paste("1 string mismatch"))
-    else if(sum(ne) > 1) c(msg, paste(sum(ne), "string mismatches"))
+    else if(sum(ne) == 1L) c(msg, paste("1 string mismatch"))
+    else if(sum(ne) > 1L) c(msg, paste(sum(ne), "string mismatches"))
     else msg
 }
 
@@ -137,9 +137,9 @@ all.equal.factor <- function(target, current, check.attributes = TRUE, ...)
     nax <- is.na(target)
     nay <- is.na(current)
     n <- sum(nax != nay)
-    if(n > 1)
+    if(n > 1L)
 	msg <- c(msg, paste(n, "NA mismatches"))
-    else if (n == 1)
+    else if (n == 1L)
         msg <- c(msg, paste("1, NA mismatch"))
     else {
 	target <- levels(target)[target[!nax]]
@@ -155,7 +155,8 @@ all.equal.formula <- function(target, current, ...)
 {
     if(length(target) != length(current))
 	return(paste("target, current differ in having response: ",
-		     length(target) == 3, ", ", length(current) == 3, sep=""))
+		     length(target) == 3L, ", ",
+                     length(current) == 3L, sep=""))
     if(all(deparse(target) != deparse(current)))
 	"formulas differ in contents"
     else TRUE
@@ -172,9 +173,9 @@ all.equal.language <- function(target, current, ...)
     msg <- c(if(mt != mc)
 	     paste("Modes of target, current: ", mt, ", ", mc, sep = ""),
 	     if(ttxt != ctxt) {
-		 if(pmatch(ttxt, ctxt, FALSE))
+		 if(pmatch(ttxt, ctxt, 0L))
 		     "target is a subset of current"
-		 else if(pmatch(ctxt, ttxt, FALSE))
+		 else if(pmatch(ctxt, ttxt, 0L))
 		     "current is a subset of target"
 		 else "target, current do not match when deparsed"
 	     })
@@ -192,10 +193,10 @@ all.equal.list <- function(target, current, check.attributes = TRUE, ...)
 	## regarded as generic vectors, so that they are equal iff they
 	## have identical names attributes and all components are equal.
 	## if(length(nt) && length(nc)) {
-	##     if(any(not.in <- (c.in.t <- match(nc, nt, 0)) == 0))
+	##     if(any(not.in <- (c.in.t <- match(nc, nt, 0L)) == 0L))
 	##	msg <- c(msg, paste("Components not in target:",
 	##			    paste(nc[not.in], collapse = ", ")))
-	##     if(any(not.in <- match(nt, nc, 0) == 0))
+	##     if(any(not.in <- match(nt, nc, 0L) == 0L))
 	##	msg <- c(msg, paste("Components not in current:",
 	##			    paste(nt[not.in], collapse = ", ")))
 	##     nt[c.in.t]
@@ -247,8 +248,8 @@ all.equal.raw <-
     }
     ne <- !nas & (target != current)
     if(!any(ne) && is.null(msg)) TRUE
-    else if(sum(ne) == 1) c(msg, paste("1 element mismatch"))
-    else if(sum(ne) > 1) c(msg, paste(sum(ne), "element mismatches"))
+    else if(sum(ne) == 1L) c(msg, paste("1 element mismatch"))
+    else if(sum(ne) > 1L) c(msg, paste(sum(ne), "element mismatches"))
     else msg
 }
 
@@ -291,4 +292,3 @@ attr.all.equal <- function(target, current,
     }
     msg # NULL or character
 }
-

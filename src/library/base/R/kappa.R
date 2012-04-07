@@ -20,8 +20,8 @@ kappa <- function(z, ...) UseMethod("kappa")
 rcond <- function(x, norm = c("O","I","1"), triangular = FALSE, ...) {
     norm <- match.arg(norm)
     stopifnot(is.matrix(x))
-    if({d <- dim(x); d[1] != d[2]})## non-square matrix -- use QR
-        return(rcond(qr.R(qr(if(d[1] < d[2]) t(x) else x)), norm=norm, ...))
+    if({d <- dim(x); d[1L] != d[2L]})## non-square matrix -- use QR
+        return(rcond(qr.R(qr(if(d[1L] < d[2L]) t(x) else x)), norm=norm, ...))
 
     ## x = square matrix :
     if(is.complex(x)) {
@@ -49,8 +49,8 @@ kappa.default <- function(z, exact = FALSE,
     }
     else { ## exact = FALSE or norm in "1", "O", "I"
         d <- dim(z)
-        if(method == "qr" || d[1] != d[2])
-            kappa.qr(qr(if(d[1] < d[2]) t(z) else z), norm=norm, ...)
+        if(method == "qr" || d[1L] != d[2L])
+            kappa.qr(qr(if(d[1L] < d[2L]) t(z) else z), norm=norm, ...)
         else kappa.tri(z, exact=FALSE, norm=norm, ...)
     }
 }
@@ -60,7 +60,7 @@ kappa.lm <- function(z, ...) kappa.qr(z$qr, ...)
 kappa.qr <- function(z, ...)
 {
     qr <- z$qr
-    R <- qr[1:min(dim(qr)), , drop = FALSE]
+    R <- qr[1L:min(dim(qr)), , drop = FALSE]
     R[lower.tri(R)] <- 0
     kappa.tri(R, ...)
 }
@@ -89,7 +89,7 @@ kappa.tri <- function(z, exact = FALSE, LINPACK = TRUE, norm=NULL, ...)
 			 p,
 			 k = double(1),
 			 double(p),
-			 as.integer(1),
+			 1L,
 			 PACKAGE="base")$k
 	}
 	else { ## Lapack

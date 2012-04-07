@@ -150,7 +150,7 @@
 
 
 /* Copy the first part of user declarations.  */
-
+#line 1 "gram.y"
 
 /*
  *  R : A Computer Langage for Statistical Data Analysis
@@ -195,12 +195,35 @@ typedef struct yyltype
 {
   int first_line;
   int first_column;
+  int first_byte;
 
   int last_line;
   int last_column;
+  int last_byte;
 } yyltype;
 
 # define YYLTYPE yyltype
+# define YYLLOC_DEFAULT(Current, Rhs, N)				\
+    do									\
+      if (YYID (N))							\
+	{								\
+	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
+	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
+	  (Current).first_byte   = YYRHSLOC (Rhs, 1).first_byte;	\
+	  (Current).last_line    = YYRHSLOC (Rhs, N).last_line;		\
+	  (Current).last_column  = YYRHSLOC (Rhs, N).last_column;	\
+	  (Current).last_byte    = YYRHSLOC (Rhs, N).last_byte;		\
+	}								\
+      else								\
+	{								\
+	  (Current).first_line   = (Current).last_line   =		\
+	    YYRHSLOC (Rhs, 0).last_line;				\
+	  (Current).first_column = (Current).last_column =		\
+	    YYRHSLOC (Rhs, 0).last_column;				\
+	  (Current).first_byte   = (Current).last_byte =		\
+	    YYRHSLOC (Rhs, 0).last_byte;				\
+	}								\
+    while (YYID (0))
 
 /* Useful defines so editors don't get confused ... */
 
@@ -234,9 +257,8 @@ static int	GenerateCode = 0;
 static int	EndOfFile = 0;
 static int	xxgetc();
 static int	xxungetc(int);
-static int 	xxcharcount, xxcharsave;
-static int	xxlineno, xxcolno, xxlinesave, xxcolsave;
-static int	xxlastlinelen;
+static int	xxcharcount, xxcharsave;
+static int	xxlineno, xxbyteno, xxcolno,  xxlinesave, xxbytesave, xxcolsave;
 
 static SEXP     SrcFile = NULL;
 static SEXP	SrcRefs = NULL;
@@ -276,7 +298,7 @@ static int mbcs_get_next(int c, wchar_t *wc)
 	    mbs_init(&mb_st);
 	    res = mbrtowc(wc, s, clen, &mb_st);
 	    if(res >= 0) break;
-	    if(res == -1) 
+	    if(res == -1)
 		error(_("invalid multibyte character in parser at line %d"), xxlineno);
 	    /* so res == -2 */
 	    c = xxgetc();
@@ -388,7 +410,7 @@ typedef struct YYLTYPE
 
 
 /* Line 216 of yacc.c.  */
-
+#line 414 "gram.c"
 
 #ifdef short
 # undef short
@@ -715,16 +737,16 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   227,   227,   228,   229,   230,   231,   234,   235,   238,
-     241,   242,   243,   244,   246,   247,   249,   250,   251,   252,
-     253,   255,   256,   257,   258,   259,   260,   261,   262,   263,
-     264,   265,   266,   267,   268,   269,   270,   271,   272,   273,
-     274,   276,   277,   278,   280,   281,   282,   283,   284,   285,
-     286,   287,   288,   289,   290,   291,   292,   293,   294,   295,
-     296,   297,   298,   299,   300,   301,   305,   308,   311,   315,
-     316,   317,   318,   319,   320,   323,   324,   327,   328,   329,
-     330,   331,   332,   333,   334,   337,   338,   339,   340,   341,
-     344
+       0,   250,   250,   251,   252,   253,   254,   257,   258,   261,
+     264,   265,   266,   267,   269,   270,   272,   273,   274,   275,
+     276,   278,   279,   280,   281,   282,   283,   284,   285,   286,
+     287,   288,   289,   290,   291,   292,   293,   294,   295,   296,
+     297,   299,   300,   301,   303,   304,   305,   306,   307,   308,
+     309,   310,   311,   312,   313,   314,   315,   316,   317,   318,
+     319,   320,   321,   322,   323,   324,   328,   331,   334,   338,
+     339,   340,   341,   342,   343,   346,   347,   350,   351,   352,
+     353,   354,   355,   356,   357,   360,   361,   362,   363,   364,
+     367
 };
 #endif
 
@@ -1865,453 +1887,453 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-
-    { return 0; }
+#line 250 "gram.y"
+    { return 0; ;}
     break;
 
   case 3:
-
-    { return xxvalue(NULL,2,NULL); }
+#line 251 "gram.y"
+    { return xxvalue(NULL,2,NULL); ;}
     break;
 
   case 4:
-
-    { return xxvalue((yyvsp[(1) - (2)]),3,&(yylsp[(1) - (2)])); }
+#line 252 "gram.y"
+    { return xxvalue((yyvsp[(1) - (2)]),3,&(yylsp[(1) - (2)])); ;}
     break;
 
   case 5:
-
-    { return xxvalue((yyvsp[(1) - (2)]),4,&(yylsp[(1) - (2)])); }
+#line 253 "gram.y"
+    { return xxvalue((yyvsp[(1) - (2)]),4,&(yylsp[(1) - (2)])); ;}
     break;
 
   case 6:
-
-    { YYABORT; }
+#line 254 "gram.y"
+    { YYABORT; ;}
     break;
 
   case 7:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 257 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 8:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 258 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 9:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 261 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 10:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 264 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 11:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 265 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 12:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 266 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 13:
-
-    { (yyval) = (yyvsp[(1) - (1)]); }
+#line 267 "gram.y"
+    { (yyval) = (yyvsp[(1) - (1)]); ;}
     break;
 
   case 14:
-
-    { (yyval) = xxexprlist((yyvsp[(1) - (3)]),&(yylsp[(1) - (3)]),(yyvsp[(2) - (3)])); }
+#line 269 "gram.y"
+    { (yyval) = xxexprlist((yyvsp[(1) - (3)]),&(yylsp[(1) - (3)]),(yyvsp[(2) - (3)])); ;}
     break;
 
   case 15:
-
-    { (yyval) = xxparen((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)])); }
+#line 270 "gram.y"
+    { (yyval) = xxparen((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)])); ;}
     break;
 
   case 16:
-
-    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 272 "gram.y"
+    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 17:
-
-    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 273 "gram.y"
+    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 18:
-
-    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 274 "gram.y"
+    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 19:
-
-    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 275 "gram.y"
+    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 20:
-
-    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 276 "gram.y"
+    { (yyval) = xxunary((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 21:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 278 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 22:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 279 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 23:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 280 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 24:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 281 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 25:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 282 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 26:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 283 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 27:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 284 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 28:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 285 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 29:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 286 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 30:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 287 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 31:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 288 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 32:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 289 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 33:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 290 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 34:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 291 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 35:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 292 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 36:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 293 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 37:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 294 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 38:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 295 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 39:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 296 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 40:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 297 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 41:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 299 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 42:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),(yyvsp[(1) - (3)])); }
+#line 300 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(3) - (3)]),(yyvsp[(1) - (3)])); ;}
     break;
 
   case 43:
-
-    { (yyval) = xxdefun((yyvsp[(1) - (6)]),(yyvsp[(3) - (6)]),(yyvsp[(6) - (6)])); }
+#line 302 "gram.y"
+    { (yyval) = xxdefun((yyvsp[(1) - (6)]),(yyvsp[(3) - (6)]),(yyvsp[(6) - (6)])); ;}
     break;
 
   case 44:
-
-    { (yyval) = xxfuncall((yyvsp[(1) - (4)]),(yyvsp[(3) - (4)])); }
+#line 303 "gram.y"
+    { (yyval) = xxfuncall((yyvsp[(1) - (4)]),(yyvsp[(3) - (4)])); ;}
     break;
 
   case 45:
-
-    { (yyval) = xxif((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); }
+#line 304 "gram.y"
+    { (yyval) = xxif((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 46:
-
-    { (yyval) = xxifelse((yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(5) - (5)])); }
+#line 305 "gram.y"
+    { (yyval) = xxifelse((yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(5) - (5)])); ;}
     break;
 
   case 47:
-
-    { (yyval) = xxfor((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); }
+#line 306 "gram.y"
+    { (yyval) = xxfor((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 48:
-
-    { (yyval) = xxwhile((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); }
+#line 307 "gram.y"
+    { (yyval) = xxwhile((yyvsp[(1) - (3)]),(yyvsp[(2) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 49:
-
-    { (yyval) = xxrepeat((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); }
+#line 308 "gram.y"
+    { (yyval) = xxrepeat((yyvsp[(1) - (2)]),(yyvsp[(2) - (2)])); ;}
     break;
 
   case 50:
-
-    { (yyval) = xxsubscript((yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)])); }
+#line 309 "gram.y"
+    { (yyval) = xxsubscript((yyvsp[(1) - (5)]),(yyvsp[(2) - (5)]),(yyvsp[(3) - (5)])); ;}
     break;
 
   case 51:
-
-    { (yyval) = xxsubscript((yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)])); }
+#line 310 "gram.y"
+    { (yyval) = xxsubscript((yyvsp[(1) - (4)]),(yyvsp[(2) - (4)]),(yyvsp[(3) - (4)])); ;}
     break;
 
   case 52:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 311 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 53:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 312 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 54:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 313 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 55:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 314 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 56:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 315 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 57:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 316 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 58:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 317 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 59:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 318 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 60:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 319 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 61:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 320 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 62:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 321 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 63:
-
-    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 322 "gram.y"
+    { (yyval) = xxbinary((yyvsp[(2) - (3)]),(yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 64:
-
-    { (yyval) = xxnxtbrk((yyvsp[(1) - (1)])); }
+#line 323 "gram.y"
+    { (yyval) = xxnxtbrk((yyvsp[(1) - (1)])); ;}
     break;
 
   case 65:
-
-    { (yyval) = xxnxtbrk((yyvsp[(1) - (1)])); }
+#line 324 "gram.y"
+    { (yyval) = xxnxtbrk((yyvsp[(1) - (1)])); ;}
     break;
 
   case 66:
-
-    { (yyval) = xxcond((yyvsp[(2) - (3)])); }
+#line 328 "gram.y"
+    { (yyval) = xxcond((yyvsp[(2) - (3)])); ;}
     break;
 
   case 67:
-
-    { (yyval) = xxifcond((yyvsp[(2) - (3)])); }
+#line 331 "gram.y"
+    { (yyval) = xxifcond((yyvsp[(2) - (3)])); ;}
     break;
 
   case 68:
-
-    { (yyval) = xxforcond((yyvsp[(2) - (5)]),(yyvsp[(4) - (5)])); }
+#line 334 "gram.y"
+    { (yyval) = xxforcond((yyvsp[(2) - (5)]),(yyvsp[(4) - (5)])); ;}
     break;
 
   case 69:
-
-    { (yyval) = xxexprlist0(); }
+#line 338 "gram.y"
+    { (yyval) = xxexprlist0(); ;}
     break;
 
   case 70:
-
-    { (yyval) = xxexprlist1((yyvsp[(1) - (1)]), &(yylsp[(1) - (1)])); }
+#line 339 "gram.y"
+    { (yyval) = xxexprlist1((yyvsp[(1) - (1)]), &(yylsp[(1) - (1)])); ;}
     break;
 
   case 71:
-
-    { (yyval) = xxexprlist2((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); }
+#line 340 "gram.y"
+    { (yyval) = xxexprlist2((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); ;}
     break;
 
   case 72:
-
-    { (yyval) = (yyvsp[(1) - (2)]); }
+#line 341 "gram.y"
+    { (yyval) = (yyvsp[(1) - (2)]); ;}
     break;
 
   case 73:
-
-    { (yyval) = xxexprlist2((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); }
+#line 342 "gram.y"
+    { (yyval) = xxexprlist2((yyvsp[(1) - (3)]), (yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); ;}
     break;
 
   case 74:
-
-    { (yyval) = (yyvsp[(1) - (2)]);}
+#line 343 "gram.y"
+    { (yyval) = (yyvsp[(1) - (2)]);;}
     break;
 
   case 75:
-
-    { (yyval) = xxsublist1((yyvsp[(1) - (1)])); }
+#line 346 "gram.y"
+    { (yyval) = xxsublist1((yyvsp[(1) - (1)])); ;}
     break;
 
   case 76:
-
-    { (yyval) = xxsublist2((yyvsp[(1) - (4)]),(yyvsp[(4) - (4)])); }
+#line 347 "gram.y"
+    { (yyval) = xxsublist2((yyvsp[(1) - (4)]),(yyvsp[(4) - (4)])); ;}
     break;
 
   case 77:
-
-    { (yyval) = xxsub0(); }
+#line 350 "gram.y"
+    { (yyval) = xxsub0(); ;}
     break;
 
   case 78:
-
-    { (yyval) = xxsub1((yyvsp[(1) - (1)]), &(yylsp[(1) - (1)])); }
+#line 351 "gram.y"
+    { (yyval) = xxsub1((yyvsp[(1) - (1)]), &(yylsp[(1) - (1)])); ;}
     break;
 
   case 79:
-
-    { (yyval) = xxsymsub0((yyvsp[(1) - (2)]), &(yylsp[(1) - (2)])); }
+#line 352 "gram.y"
+    { (yyval) = xxsymsub0((yyvsp[(1) - (2)]), &(yylsp[(1) - (2)])); ;}
     break;
 
   case 80:
-
-    { (yyval) = xxsymsub1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); }
+#line 353 "gram.y"
+    { (yyval) = xxsymsub1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); ;}
     break;
 
   case 81:
-
-    { (yyval) = xxsymsub0((yyvsp[(1) - (2)]), &(yylsp[(1) - (2)])); }
+#line 354 "gram.y"
+    { (yyval) = xxsymsub0((yyvsp[(1) - (2)]), &(yylsp[(1) - (2)])); ;}
     break;
 
   case 82:
-
-    { (yyval) = xxsymsub1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); }
+#line 355 "gram.y"
+    { (yyval) = xxsymsub1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); ;}
     break;
 
   case 83:
-
-    { (yyval) = xxnullsub0(&(yylsp[(1) - (2)])); }
+#line 356 "gram.y"
+    { (yyval) = xxnullsub0(&(yylsp[(1) - (2)])); ;}
     break;
 
   case 84:
-
-    { (yyval) = xxnullsub1((yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); }
+#line 357 "gram.y"
+    { (yyval) = xxnullsub1((yyvsp[(3) - (3)]), &(yylsp[(1) - (3)])); ;}
     break;
 
   case 85:
-
-    { (yyval) = xxnullformal(); }
+#line 360 "gram.y"
+    { (yyval) = xxnullformal(); ;}
     break;
 
   case 86:
-
-    { (yyval) = xxfirstformal0((yyvsp[(1) - (1)])); }
+#line 361 "gram.y"
+    { (yyval) = xxfirstformal0((yyvsp[(1) - (1)])); ;}
     break;
 
   case 87:
-
-    { (yyval) = xxfirstformal1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); }
+#line 362 "gram.y"
+    { (yyval) = xxfirstformal1((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)])); ;}
     break;
 
   case 88:
-
-    { (yyval) = xxaddformal0((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); }
+#line 363 "gram.y"
+    { (yyval) = xxaddformal0((yyvsp[(1) - (3)]),(yyvsp[(3) - (3)]), &(yylsp[(3) - (3)])); ;}
     break;
 
   case 89:
-
-    { (yyval) = xxaddformal1((yyvsp[(1) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(5) - (5)]),&(yylsp[(3) - (5)])); }
+#line 364 "gram.y"
+    { (yyval) = xxaddformal1((yyvsp[(1) - (5)]),(yyvsp[(3) - (5)]),(yyvsp[(5) - (5)]),&(yylsp[(3) - (5)])); ;}
     break;
 
   case 90:
-
-    { EatLines = 1; }
+#line 367 "gram.y"
+    { EatLines = 1; ;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-
+#line 2337 "gram.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2531,7 +2553,7 @@ yyreturn:
 }
 
 
-
+#line 369 "gram.y"
 
 
 
@@ -2542,27 +2564,49 @@ static int (*ptr_getc)(void);
 /* Private pushback, since file ungetc only guarantees one byte.
    We need up to one MBCS-worth */
 
-static int pushback[16];
+#define PUSHBACK_BUFSIZE 16
+static int pushback[PUSHBACK_BUFSIZE];
 static unsigned int npush = 0;
+
+static int prevpos = 0;
+static int prevlines[PUSHBACK_BUFSIZE];
+static int prevcols[PUSHBACK_BUFSIZE];
+static int prevbytes[PUSHBACK_BUFSIZE];
 
 static int xxgetc(void)
 {
     int c;
 
     if(npush) c = pushback[--npush]; else  c = ptr_getc();
+
+    prevpos = (prevpos + 1) % PUSHBACK_BUFSIZE;
+    prevcols[prevpos] = xxcolno;
+    prevbytes[prevpos] = xxbyteno;
+    prevlines[prevpos] = xxlineno;    
+    
     if (c == EOF) {
-        EndOfFile = 1;
-        return R_EOF;
+	EndOfFile = 1;
+	return R_EOF;
     }
     R_ParseContextLast = (R_ParseContextLast + 1) % PARSE_CONTEXT_SIZE;
     R_ParseContext[R_ParseContextLast] = c;
-    
+
     if (c == '\n') {
-    	xxlineno += 1;
-    	xxlastlinelen = xxcolno; 
-    	xxcolno = 0;
-    } else xxcolno++;
+	xxlineno += 1;
+	xxcolno = 0;
+    	xxbyteno = 0;
+    } else {
+        xxcolno++;
+    	xxbyteno++;
+    }
+    /* only advance column for 1st byte in UTF-8 */
+    if (0x80 <= (unsigned char)c && (unsigned char)c <= 0xBF && known_to_be_utf8) 
+    	xxcolno--;
+
+    if (c == '\t') xxcolno = ((xxcolno + 7) & ~7);
     
+    R_ParseContextLine = xxlineno;    
+
     if ( KeepSource && GenerateCode && FunctionLevel > 0 ) {
 	if(SourcePtr <  FunctionSource + MAXFUNSIZE)
 	    *SourcePtr++ = c;
@@ -2574,18 +2618,20 @@ static int xxgetc(void)
 
 static int xxungetc(int c)
 {
-    if (c == '\n') {
-    	xxlineno -= 1;
-    	xxcolno = xxlastlinelen; /* FIXME:  could we push back more than one line? */
-    	xxlastlinelen = 0;
-    } else xxcolno--;
-    
+    /* this assumes that c was the result of xxgetc; if not, some edits will be needed */
+    xxlineno = prevlines[prevpos];
+    xxbyteno = prevbytes[prevpos];
+    xxcolno  = prevcols[prevpos];
+    prevpos = (prevpos + PUSHBACK_BUFSIZE - 1) % PUSHBACK_BUFSIZE;
+
+    R_ParseContextLine = xxlineno;
     if ( KeepSource && GenerateCode && FunctionLevel > 0 )
 	SourcePtr--;
     xxcharcount--;
-    R_ParseContext[R_ParseContextLast--] = '\0';
-    R_ParseContextLast = R_ParseContextLast % PARSE_CONTEXT_SIZE;
-    if(npush >= 16) return EOF;
+    R_ParseContext[R_ParseContextLast] = '\0';
+    /* precaution as to how % is implemented for < 0 numbers */
+    R_ParseContextLast = (R_ParseContextLast + PARSE_CONTEXT_SIZE -1) % PARSE_CONTEXT_SIZE;
+    if(npush >= PUSHBACK_BUFSIZE) return EOF;
     pushback[npush++] = c;
     return c;
 }
@@ -2593,12 +2639,14 @@ static int xxungetc(int c)
 static SEXP makeSrcref(YYLTYPE *lloc, SEXP srcfile)
 {
     SEXP val;
-    
-    PROTECT(val = allocVector(INTSXP, 4));
+
+    PROTECT(val = allocVector(INTSXP, 6));
     INTEGER(val)[0] = lloc->first_line;
-    INTEGER(val)[1] = lloc->first_column;
+    INTEGER(val)[1] = lloc->first_byte;
     INTEGER(val)[2] = lloc->last_line;
-    INTEGER(val)[3] = lloc->last_column;
+    INTEGER(val)[3] = lloc->last_byte;
+    INTEGER(val)[4] = lloc->first_column;
+    INTEGER(val)[5] = lloc->last_column;
     setAttrib(val, R_SrcfileSymbol, srcfile);
     setAttrib(val, R_ClassSymbol, mkString("srcref"));
     UNPROTECT(1);
@@ -2609,12 +2657,12 @@ static SEXP attachSrcrefs(SEXP val, SEXP srcfile)
 {
     SEXP t, srval;
     int n;
-    
+
     PROTECT(val);
     t = CDR(SrcRefs);
     srval = allocVector(VECSXP, length(t));
     for (n = 0 ; n < LENGTH(srval) ; n++, t = CDR(t))
-    	SET_VECTOR_ELT(srval, n, CAR(t));
+	SET_VECTOR_ELT(srval, n, CAR(t));
     setAttrib(val, R_SrcrefSymbol, srval);
     setAttrib(val, R_SrcfileSymbol, srcfile);
     UNPROTECT(1);
@@ -2625,9 +2673,9 @@ static SEXP attachSrcrefs(SEXP val, SEXP srcfile)
 static int xxvalue(SEXP v, int k, YYLTYPE *lloc)
 {
     if (k > 2) {
-    	if (SrcFile)
-    	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
-    	UNPROTECT_PTR(v);
+	if (SrcFile)
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
+	UNPROTECT_PTR(v);
     }
     R_CurrentExpr = v;
     return k;
@@ -2699,9 +2747,9 @@ static SEXP xxexprlist0(void)
 	PROTECT(ans = NewList());
 	if (SrcFile) {
 	    setAttrib(ans, R_SrcrefSymbol, SrcRefs);
-    	    REPROTECT(SrcRefs = NewList(), srindex);
-    	}
-    } 
+	    REPROTECT(SrcRefs = NewList(), srindex);
+	}
+    }
     else
 	PROTECT(ans = R_NilValue);
     return ans;
@@ -2714,9 +2762,9 @@ static SEXP xxexprlist1(SEXP expr, YYLTYPE *lloc)
 	PROTECT(tmp = NewList());
 	if (SrcFile) {
 	    setAttrib(tmp, R_SrcrefSymbol, SrcRefs);
-    	    REPROTECT(SrcRefs = NewList(), srindex);
-    	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
-    	}	
+	    REPROTECT(SrcRefs = NewList(), srindex);
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
+	}
 	PROTECT(ans = GrowList(tmp, expr));
 	UNPROTECT_PTR(tmp);
     }
@@ -2730,8 +2778,8 @@ static SEXP xxexprlist2(SEXP exprlist, SEXP expr, YYLTYPE *lloc)
 {
     SEXP ans;
     if (GenerateCode) {
-	if (SrcFile) 
-    	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);   
+	if (SrcFile)
+	    REPROTECT(SrcRefs = GrowList(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
 	PROTECT(ans = GrowList(exprlist, expr));
     }
     else
@@ -2978,7 +3026,7 @@ static SEXP xxdefun(SEXP fname, SEXP formals, SEXP body)
 	    /*  If the function ends with an endline comment,  e.g.
 
 		function()
-	            print("Hey") # This comment
+		    print("Hey") # This comment
 
 		we need some special handling to keep it from getting
 		chopped off. Normally, we will have read one token too
@@ -3081,7 +3129,7 @@ static SEXP xxexprlist(SEXP a1, YYLTYPE *lloc, SEXP a2)
 {
     SEXP ans;
     SEXP prevSrcrefs;
-    
+
     EatLines = 0;
     if (GenerateCode) {
 	SET_TYPEOF(a2, LANGSXP);
@@ -3089,14 +3137,14 @@ static SEXP xxexprlist(SEXP a1, YYLTYPE *lloc, SEXP a2)
 	if (SrcFile) {
 	    PROTECT(prevSrcrefs = getAttrib(a2, R_SrcrefSymbol));
 	    REPROTECT(SrcRefs = Insert(SrcRefs, makeSrcref(lloc, SrcFile)), srindex);
-	    PROTECT(ans = attachSrcrefs(a2, SrcFile));	    
+	    PROTECT(ans = attachSrcrefs(a2, SrcFile));
 	    REPROTECT(SrcRefs = prevSrcrefs, srindex);
 	    /* SrcRefs got NAMED by being an attribute... */
 	    SET_NAMED(SrcRefs, 0);
 	    UNPROTECT_PTR(prevSrcrefs);
-	} 
+	}
 	else
-	    PROTECT(ans = a2);	
+	    PROTECT(ans = a2);
     }
     else
 	PROTECT(ans = R_NilValue);
@@ -3110,7 +3158,7 @@ static SEXP TagArg(SEXP arg, SEXP tag, YYLTYPE *lloc)
 {
     switch (TYPEOF(tag)) {
     case STRSXP:
-    	tag = install(translateChar(STRING_ELT(tag, 0)));
+	tag = install(translateChar(STRING_ELT(tag, 0)));
     case NILSXP:
     case SYMSXP:
 	return lang2(arg, tag);
@@ -3261,20 +3309,20 @@ static SEXP R_Parse1(ParseStatus *status)
 {
     switch(yyparse()) {
     case 0:                     /* End of file */
-        *status = PARSE_EOF;
-        if (EndOfFile == 2) *status = PARSE_INCOMPLETE;
-        break;
+	*status = PARSE_EOF;
+	if (EndOfFile == 2) *status = PARSE_INCOMPLETE;
+	break;
     case 1:                     /* Syntax error / incomplete */
-        *status = PARSE_ERROR;
-        if (EndOfFile) *status = PARSE_INCOMPLETE;
-        break;
+	*status = PARSE_ERROR;
+	if (EndOfFile) *status = PARSE_INCOMPLETE;
+	break;
     case 2:                     /* Empty Line */
-        *status = PARSE_NULL;
-        break;
+	*status = PARSE_NULL;
+	break;
     case 3:                     /* Valid expr '\n' terminated */
     case 4:                     /* Valid expr ';' terminated */
-        *status = PARSE_OK;
-        break;
+	*status = PARSE_OK;
+	break;
     }
     return R_CurrentExpr;
 }
@@ -3337,15 +3385,16 @@ static SEXP R_Parse(int n, ParseStatus *status, SEXP srcfile)
     ParseContextInit();
     savestack = R_PPStackTop;
     PROTECT(t = NewList());
-    
+
     xxlineno = 1;
-    xxcolno = 0;    
+    xxcolno = 0;
+    xxbyteno = 0;
     if (!isNull(srcfile)) {
 	SrcFile = srcfile;
 	PROTECT_WITH_INDEX(SrcRefs = NewList(), &srindex);
-    } 
+    }
     else SrcFile = NULL;
-    
+
     for(i = 0; ; ) {
 	if(n >= 0 && i >= n) break;
 	ParseInit();
@@ -3376,8 +3425,8 @@ finish:
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
     if (SrcFile) {
-    	rval = attachSrcrefs(rval, SrcFile);
-        SrcFile = NULL;    
+	rval = attachSrcrefs(rval, SrcFile);
+	SrcFile = NULL;
     }
     R_PPStackTop = savestack;
     *status = PARSE_OK;
@@ -3402,7 +3451,7 @@ static int con_getc(void)
 {
     int c;
     static int last=-1000;
-    
+
     c = Rconn_fgetc(con_parse);
     if (c == EOF && last != '\n') c = '\n';
     return (last = c);
@@ -3462,19 +3511,20 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
     bufp = buf;
     savestack = R_PPStackTop;
     PROTECT(t = NewList());
-    
+
     xxlineno = 1;
-    xxcolno = 0;      
+    xxcolno = 0;
+    xxbyteno = 0;
     GenerateCode = 1;
     iob = buffer;
-    ptr_getc = buffer_getc;    
+    ptr_getc = buffer_getc;
 
     if (!isNull(srcfile)) {
 	SrcFile = srcfile;
 	PROTECT_WITH_INDEX(SrcRefs = NewList(), &srindex);
-    }      
+    }
     else SrcFile = NULL;
-    
+
     for(i = 0; ; ) {
 	if(n >= 0 && i >= n) break;
 	if (!*bufp) {
@@ -3492,8 +3542,8 @@ SEXP R_ParseBuffer(IoBuffer *buffer, int n, ParseStatus *status, SEXP prompt, SE
 	ParseInit();
 	ParseContextInit();
 	R_Parse1(status);
-        rval = R_CurrentExpr;
-    
+	rval = R_CurrentExpr;
+
 	switch(*status) {
 	case PARSE_NULL:
 	    break;
@@ -3520,9 +3570,9 @@ finish:
     for (n = 0 ; n < LENGTH(rval) ; n++, t = CDR(t))
 	SET_VECTOR_ELT(rval, n, CAR(t));
     if (SrcFile) {
-    	rval = attachSrcrefs(rval, SrcFile);
-        SrcFile = NULL;    
-    }	
+	rval = attachSrcrefs(rval, SrcFile);
+	SrcFile = NULL;
+    }
     R_PPStackTop = savestack;
     *status = PARSE_OK;
     return rval;
@@ -3558,11 +3608,11 @@ static void IfPush(void)
 	*contextp=='['    ||
 	*contextp=='('    ||
 	*contextp == 'i') {
-	if(contextp - contextstack >= CONTEXTSTACK_SIZE) 
+	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
 	    error(_("contextstack overflow"));
 	*++contextp = 'i';
     }
-    
+
 }
 
 static void ifpop(void)
@@ -3571,7 +3621,7 @@ static void ifpop(void)
 	*contextp-- = 0;
 }
 
-/* This is only called following ., so we only care if it is 
+/* This is only called following ., so we only care if it is
    an ANSI digit or not */
 static int typeofnext(void)
 {
@@ -3753,16 +3803,16 @@ static void yyerror(char *s)
        The first YYENGLISH from the right column are English to be translated,
        the rest are to be copied literally.  The #if 0 block below allows xgettext
        to see these.
-    */    
+    */
 #define YYENGLISH 8
-	"$undefined",	"input", 	
+	"$undefined",	"input",
 	"END_OF_INPUT",	"end of input",
-	"ERROR",	"input", 	
+	"ERROR",	"input",
 	"STR_CONST",	"string constant",
 	"NUM_CONST",	"numeric constant",
-	"SYMBOL",	"symbol",	
-	"LEFT_ASSIGN",	"assignment",	
-	"'\\n'",	"end of line",	
+	"SYMBOL",	"symbol",
+	"LEFT_ASSIGN",	"assignment",
+	"'\\n'",	"end of line",
 	"NULL_CONST",	"'NULL'",
 	"FUNCTION",	"'function'",
 	"EQ_ASSIGN",	"'='",
@@ -3795,43 +3845,44 @@ static void yyerror(char *s)
     char *expecting;
  #if 0
  /* these are just here to trigger the internationalization */
-    _("input"); 	
+    _("input");
     _("end of input");
     _("string constant");
     _("numeric constant");
-    _("symbol");	
+    _("symbol");
     _("assignment");
     _("end of line");
-#endif 
-   
-    R_ParseError = xxlineno;
+#endif
+
+    R_ParseError     = yylloc.first_line;
+    R_ParseErrorCol  = yylloc.first_column;
     R_ParseErrorFile = SrcFile;
-    
+
     if (!strncmp(s, yyunexpected, sizeof yyunexpected -1)) {
 	int i;
-    	/* Edit the error message */    
-    	expecting = strstr(s + sizeof yyunexpected -1, yyexpecting);
-    	if (expecting) *expecting = '\0';
-    	for (i = 0; yytname_translations[i]; i += 2) {
-    	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
-    	    	sprintf(R_ParseErrorMsg, _("unexpected %s"), 
-    	    	    i/2 < YYENGLISH ? _(yytname_translations[i+1])
-    	    	                    : yytname_translations[i+1]);
-    	    	return;
-    	    }
-    	}
-    	sprintf(R_ParseErrorMsg, _("unexpected %s"), s + sizeof yyunexpected - 1);
+	/* Edit the error message */
+	expecting = strstr(s + sizeof yyunexpected -1, yyexpecting);
+	if (expecting) *expecting = '\0';
+	for (i = 0; yytname_translations[i]; i += 2) {
+	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
+		sprintf(R_ParseErrorMsg, _("unexpected %s"),
+		    i/2 < YYENGLISH ? _(yytname_translations[i+1])
+				    : yytname_translations[i+1]);
+		return;
+	    }
+	}
+	sprintf(R_ParseErrorMsg, _("unexpected %s"), s + sizeof yyunexpected - 1);
     } else {
-    	strncpy(R_ParseErrorMsg, s, PARSE_ERROR_SIZE - 1);
-    }	
+	strncpy(R_ParseErrorMsg, s, PARSE_ERROR_SIZE - 1);
+    }
 }
 
 static void CheckFormalArgs(SEXP formlist, SEXP _new, YYLTYPE *lloc)
 {
     while (formlist != R_NilValue) {
 	if (TAG(formlist) == _new) {
-	    error(_("Repeated formal argument '%s' on line %d"), CHAR(PRINTNAME(_new)), 
-	                                                         lloc->first_line);
+	    error(_("Repeated formal argument '%s' on line %d"), CHAR(PRINTNAME(_new)),
+								 lloc->first_line);
 	}
 	formlist = CDR(formlist);
     }
@@ -3848,7 +3899,7 @@ static char yytext[MAXELTSIZE];
 #define DECLARE_YYTEXT_BUFP(bp) char *bp = yytext
 #define YYTEXT_PUSH(c, bp) do { \
     if ((bp) - yytext >= sizeof(yytext) - 1) \
-        error(_("input buffer overflow at line %d"), xxlineno); \
+	error(_("input buffer overflow at line %d"), xxlineno); \
 	*(bp)++ = (c); \
 } while(0)
 
@@ -3858,7 +3909,7 @@ static int SkipSpace(void)
 
 #ifdef Win32
     if(!mbcslocale) { /* 0xa0 is NBSP in all 8-bit Windows locales */
-	while ((c = xxgetc()) == ' ' || c == '\t' || c == '\f' || 
+	while ((c = xxgetc()) == ' ' || c == '\t' || c == '\f' ||
 	       (unsigned int) c == 0xa0) ;
 	return c;
     } else {
@@ -3920,8 +3971,8 @@ static int NumericValue(int c)
     DECLARE_YYTEXT_BUFP(yyp);
     YYTEXT_PUSH(c, yyp);
     /* We don't care about other than ASCII digits */
-    while (isdigit(c = xxgetc()) || c == '.' || c == 'e' || c == 'E' 
-	   || c == 'x' || c == 'X' || c == 'L') 
+    while (isdigit(c = xxgetc()) || c == '.' || c == 'e' || c == 'E'
+	   || c == 'x' || c == 'X' || c == 'L')
     {
 	if (c == 'L') /* must be at the end.  Won't allow 1Le3 (at present). */
 	    break;
@@ -3943,7 +3994,7 @@ static int NumericValue(int c)
 		    YYTEXT_PUSH(c, yyp);
 		    c = xxgetc();
 		}
-		for(nd = 0; isdigit(c); c = xxgetc(), nd++) 
+		for(nd = 0; isdigit(c); c = xxgetc(), nd++)
 		    YYTEXT_PUSH(c, yyp);
 		if (nd == 0) return ERROR;
 	    }
@@ -3975,8 +4026,8 @@ static int NumericValue(int c)
     /* Make certain that things are okay. */
     if(c == 'L') {
 	double a = R_atof(yytext);
-	int b = (int) a; 
-	/* We are asked to create an integer via the L, so we check that the 
+	int b = (int) a;
+	/* We are asked to create an integer via the L, so we check that the
 	   double and int values are the same. If not, this is a problem and we
 	   will not lose information and so use the numeric value.
 	*/
@@ -3984,20 +4035,29 @@ static int NumericValue(int c)
 	    if(GenerateCode) {
 		if(seendot == 1 && seenexp == 0)
 		    warning(_("integer literal %sL contains decimal; using numeric value"), yytext);
-		else 
+		else
 		    warning(_("non-integer value %s qualified with L; using numeric value"), yytext);
 	    }
 	    asNumeric = 1;
 	    seenexp = 1;
 	}
     }
-    
+
     if(c == 'i') {
 	yylval = GenerateCode ? mkComplex(yytext) : R_NilValue;
     } else if(c == 'L' && asNumeric == 0) {
-	if(GenerateCode && seendot == 1 && seenexp == 0) 
+	if(GenerateCode && seendot == 1 && seenexp == 0)
 	    warning(_("integer literal %sL contains unnecessary decimal point"), yytext);
 	yylval = GenerateCode ? mkInt(yytext) : R_NilValue;
+#if 0  /* do this to make 123 integer not double */
+    } else if(!(seendot || seenexp)) {
+	if(c != 'L') xxungetc(c);
+	if (GenerateCode) {
+	    double a = R_atof(yytext);
+	    int b = (int) a;
+	    yylval = (a != (double) b) ? mkFloat(yytext) : mkInt(yytext);
+	} else yylval = R_NilValue;
+#endif
     } else {
 	if(c != 'L')
 	    xxungetc(c);
@@ -4017,7 +4077,7 @@ static int NumericValue(int c)
 	unsigned int nc = bp - stext;       \
 	if (nc >= nstext - 1) {             \
 	    char *old = stext;              \
-            nstext *= 2;                    \
+	    nstext *= 2;                    \
 	    stext = malloc(nstext);         \
 	    if(!stext) error(_("unable to allocate buffer for long string at line %d"), xxlineno);\
 	    memmove(stext, old, nc);        \
@@ -4045,7 +4105,7 @@ static SEXP mkStringUTF8(const wchar_t *wcs, int cnt)
     SEXP t;
     char *s;
     int nb;
-    
+
 /* NB: cnt includes the terminator */
 #ifdef Win32
     nb = cnt*4; /* UCS-2/UTF-16 so max 4 bytes per wchar_t */
@@ -4092,9 +4152,9 @@ static int StringValue(int c, Rboolean forSymbol)
 	if (c == '\n') {
 	    xxungetc(c);
 	    /* Fix by Mark Bravington to allow multiline strings
-             * by pretending we've seen a backslash. Was:
+	     * by pretending we've seen a backslash. Was:
 	     * return ERROR;
-             */
+	     */
 	    c = '\\';
 	}
 	if (c == '\\') {
@@ -4125,7 +4185,7 @@ static int StringValue(int c, Rboolean forSymbol)
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
 		    else {
-			xxungetc(c); 
+			xxungetc(c);
 			CTEXT_POP();
 			if (i == 0) { /* was just \x */
 			    if(GenerateCode && R_WarnEscapes) {
@@ -4145,10 +4205,10 @@ static int StringValue(int c, Rboolean forSymbol)
 		error(_("\\uxxxx sequences not supported (line %d)"), xxlineno);
 #else
 		unsigned int val = 0; int i, ext; size_t res;
-		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */ 
+		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */
 		Rboolean delim = FALSE;
 		if((c = xxgetc()) == '{') {
-		    delim = TRUE; 
+		    delim = TRUE;
 		    CTEXT_PUSH(c);
 		} else xxungetc(c);
 		for(i = 0; i < 4; i++) {
@@ -4157,7 +4217,7 @@ static int StringValue(int c, Rboolean forSymbol)
 		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
 		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
 		    else {
-			xxungetc(c); 
+			xxungetc(c);
 			CTEXT_POP();
 			if (i == 0) { /* was just \x */
 			    if(GenerateCode && R_WarnEscapes) {
@@ -4198,49 +4258,47 @@ static int StringValue(int c, Rboolean forSymbol)
 #ifndef SUPPORT_MBCS
 		error(_("\\Uxxxxxxxx sequences not supported (line %d)"), xxlineno);
 #else
-		{
-		    unsigned int val = 0; int i, ext; size_t res;
-		    char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */ 
-		    Rboolean delim = FALSE;
-		    if((c = xxgetc()) == '{') {
-			delim = TRUE;
-			CTEXT_PUSH(c);
-		    } else xxungetc(c);
-		    for(i = 0; i < 8; i++) {
-			c = xxgetc(); CTEXT_PUSH(c);
-			if(c >= '0' && c <= '9') ext = c - '0';
-			else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
-			else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
-			else {
-			    xxungetc(c); 
-			    CTEXT_POP();
-			    if (i == 0) { /* was just \x */
-				if(GenerateCode && R_WarnEscapes) {
-				    have_warned++;
-				    warningcall(R_NilValue, _("\\U used without hex digits"));
-				}
-				val = 'U';
+		unsigned int val = 0; int i, ext; size_t res;
+		char buff[MB_CUR_MAX+1]; /* could be variable, and hence not legal C90 */
+		Rboolean delim = FALSE;
+		if((c = xxgetc()) == '{') {
+		    delim = TRUE;
+		    CTEXT_PUSH(c);
+		} else xxungetc(c);
+		for(i = 0; i < 8; i++) {
+		    c = xxgetc(); CTEXT_PUSH(c);
+		    if(c >= '0' && c <= '9') ext = c - '0';
+		    else if (c >= 'A' && c <= 'F') ext = c - 'A' + 10;
+		    else if (c >= 'a' && c <= 'f') ext = c - 'a' + 10;
+		    else {
+			xxungetc(c);
+			CTEXT_POP();
+			if (i == 0) { /* was just \x */
+			    if(GenerateCode && R_WarnEscapes) {
+				have_warned++;
+				warningcall(R_NilValue, _("\\U used without hex digits"));
 			    }
-			    break;
+			    val = 'U';
 			}
-			val = 16*val + ext;
+			break;
 		    }
-		    if(delim) {
-			if((c = xxgetc()) != '}')
-			    error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
-			else CTEXT_PUSH(c);
-		    }
-		    res = ucstomb(buff, val);
-		    if((int)res <= 0) {
-			if(delim)
-			    error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
-			else
-			    error(_("invalid \\Uxxxxxxxx sequence (line %d)"), xxlineno);
-		    }
-		    for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
-		    WTEXT_PUSH(val);
-		    continue;
+		    val = 16*val + ext;
 		}
+		if(delim) {
+		    if((c = xxgetc()) != '}')
+			error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
+		    else CTEXT_PUSH(c);
+		}
+		res = ucstomb(buff, val);
+		if((int)res <= 0) {
+		    if(delim)
+			error(_("invalid \\U{xxxxxxxx} sequence (line %d)"), xxlineno);
+		    else
+			error(_("invalid \\Uxxxxxxxx sequence (line %d)"), xxlineno);
+		}
+		for(i = 0; i <  res; i++) STEXT_PUSH(buff[i]);
+		WTEXT_PUSH(val);
+		continue;
 #endif
 	    }
 	    else {
@@ -4285,22 +4343,22 @@ static int StringValue(int c, Rboolean forSymbol)
 	}
 #if defined(SUPPORT_MBCS)
        else if(mbcslocale) {
-           int i, clen;
-           wchar_t wc = L'\0';
+	   int i, clen;
+	   wchar_t wc = L'\0';
 	   /* We can't assume this is valid UTF-8 */
-           clen = /* utf8locale ? utf8clen(c):*/ mbcs_get_next(c, &wc);
+	   clen = /* utf8locale ? utf8clen(c):*/ mbcs_get_next(c, &wc);
 	   WTEXT_PUSH(wc);
-           for(i = 0; i < clen - 1; i++){
-               STEXT_PUSH(c);
-               c = xxgetc();
-               if (c == R_EOF) break;
+	   for(i = 0; i < clen - 1; i++){
+	       STEXT_PUSH(c);
+	       c = xxgetc();
+	       if (c == R_EOF) break;
 	       CTEXT_PUSH(c);
-               if (c == '\n') {
-                   xxungetc(c); CTEXT_POP();
-                   c = '\\';
-               }
-           }
-           if (c == R_EOF) break;
+	       if (c == '\n') {
+		   xxungetc(c); CTEXT_POP();
+		   c = '\\';
+	       }
+	   }
+	   if (c == R_EOF) break;
 	   STEXT_PUSH(c);
 	   continue;
        }
@@ -4407,7 +4465,7 @@ int isValidName(const char *name)
     if (strcmp(name, "...") == 0) return 1;
 
     for (i = 0; keywords[i].name != NULL; i++)
-        if (strcmp(keywords[i].name, name) == 0) return 0;
+	if (strcmp(keywords[i].name, name) == 0) return 0;
 
     return 1;
 }
@@ -4423,12 +4481,12 @@ static int SymbolValue(int c)
 	   /* We can't assume this is valid UTF-8 */
 	clen = /* utf8locale ? utf8clen(c) :*/ mbcs_get_next(c, &wc);
 	while(1) {
-	    /* at this point we have seen one char, so push its bytes 
+	    /* at this point we have seen one char, so push its bytes
 	       and get one more */
 	    for(i = 0; i < clen; i++) {
-	        YYTEXT_PUSH(c, yyp);
-	        c = xxgetc();
-            }
+		YYTEXT_PUSH(c, yyp);
+		c = xxgetc();
+	    }
 	    if(c == R_EOF) break;
 	    if(c == '.' || c == '_') {
 		clen = 1;
@@ -4441,7 +4499,7 @@ static int SymbolValue(int c)
 #endif
 	do {
 	    YYTEXT_PUSH(c, yyp);
-	} while ((c = xxgetc()) != R_EOF && 
+	} while ((c = xxgetc()) != R_EOF &&
 		 (isalnum(c) || c == '.' || c == '_'));
     xxungetc(c);
     YYTEXT_PUSH('\0', yyp);
@@ -4480,16 +4538,18 @@ static int token(void)
 	SavedLval = R_NilValue;
 	SavedToken = 0;
 	yylloc.first_line = xxlinesave;
-	yylloc.first_column = xxcolsave;	
+	yylloc.first_column = xxcolsave;
+	yylloc.first_byte = xxbytesave;
 	return c;
     }
     xxcharsave = xxcharcount; /* want to be able to go back one token */
 
     c = SkipSpace();
     if (c == '#') c = SkipComment();
-    
+
     yylloc.first_line = xxlineno;
-    yylloc.first_column = xxcolno;    
+    yylloc.first_column = xxcolno;
+    yylloc.first_byte = xxbyteno;
 
     if (c == R_EOF) return END_OF_INPUT;
 
@@ -4529,7 +4589,7 @@ static int token(void)
     } else
 #endif
 	if (isalpha(c)) return SymbolValue(c);
- 
+
     /* compound tokens */
 
     switch (c) {
@@ -4588,7 +4648,7 @@ static int token(void)
 	return EQ_ASSIGN;
     case ':':
 	if (nextchar(':')) {
-            if (nextchar(':')) {
+	    if (nextchar(':')) {
 		yylval = install(":::");
 		return NS_GET_INT;
 	    }
@@ -4671,6 +4731,7 @@ static void setlastloc(void)
 {
     yylloc.last_line = xxlineno;
     yylloc.last_column = xxcolno;
+    yylloc.last_byte = xxbyteno;
 }
 
 static int yylex(void)
@@ -4678,7 +4739,7 @@ static int yylex(void)
     int tok;
 
  again:
-    
+
     tok = token();
 
     /* Newlines must be handled in a context */
@@ -4703,7 +4764,7 @@ static int yylex(void)
 	    while(tok == '\n')
 		tok = token();
 
-	    /* If we enounter "}", ")" or "]" then */
+	    /* If we encounter "}", ")" or "]" then */
 	    /* we know that all immediately preceding */
 	    /* "if" bodies have been terminated. */
 	    /* The corresponding "i" values are */
@@ -4724,7 +4785,7 @@ static int yylex(void)
 
 	    if (tok == ',') {
 		ifpop();
-		setlastloc();		
+		setlastloc();
 		return tok;
 	    }
 
@@ -4740,16 +4801,17 @@ static int yylex(void)
 	    if(tok == ELSE) {
 		EatLines = 1;
 		ifpop();
-		setlastloc();		
+		setlastloc();
 		return ELSE;
 	    }
 	    else {
 		ifpop();
 		SavedToken = tok;
 		xxlinesave = yylloc.first_line;
-		xxcolsave  = yylloc.first_column;	
+		xxcolsave  = yylloc.first_column;
+		xxbytesave = yylloc.first_byte;
 		SavedLval = yylval;
-		setlastloc();		
+		setlastloc();
 		return '\n';
 	    }
 	}
@@ -4861,7 +4923,7 @@ static int yylex(void)
 	break;
 
     case '(':
-	if(contextp - contextstack >= CONTEXTSTACK_SIZE) 
+	if(contextp - contextstack >= CONTEXTSTACK_SIZE)
 	    error(_("contextstack overflow at line %d"), xxlineno);
 	*++contextp = tok;
 	break;

@@ -1575,6 +1575,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    /* A line is empty only if it contains nothing before
 	       EOL, EOF or a comment char.
 	       A line containing just white space is not empty if sep=","
+	       However foo\nEOF does not have a final empty line.
 	    */
 	    if(empty && !skip)
 		if(c != '\n' && c != data.comchar) empty = FALSE;
@@ -1583,7 +1584,7 @@ SEXP attribute_hidden do_readtablehead(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	buf[nbuf] = '\0';
 	if(data.ttyflag && empty) goto no_more_lines;
-	if(!empty || !blskip) {
+	if(!empty || (c != R_EOF && !blskip)) { /* see previous comment */
 	    SET_STRING_ELT(ans, nread, mkChar(buf));
 	    nread++;
 	}
@@ -1649,21 +1650,6 @@ static Rboolean isna(SEXP x, int indx)
     }
     return FALSE;
 }
-
-#ifdef UNUSED
-static void change_dec(char *tmp, char cdec, SEXPTYPE t)
-{
-    char *p;
-    switch(t) {
-    case REALSXP:
-    case CPLXSXP:
-	for(p = tmp; *p; p++) if(*p == '.') *p = cdec;
-	break;
-    default:
-	break;
-    }
-}
-#endif
 
 /* a version of EncodeElement with different escaping of char strings */
 static const char

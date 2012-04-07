@@ -18,16 +18,15 @@
 # .install.winbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
 #                    method = method, available = available,
 #                    destdir = destdir,
-#                    installWithVers = installWithVers,
 #                    dependencies = dependencies)
 
 .install.winbinary <-
     function(pkgs, lib, repos = getOption("repos"),
              contriburl = contrib.url(repos),
              method, available = NULL, destdir = NULL,
-             installWithVers = FALSE, dependencies = FALSE, ...)
+             dependencies = FALSE, ...)
 {
-    unpackPkg <- function(pkg, pkgname, lib, installWithVers = FALSE)
+    unpackPkg <- function(pkg, pkgname, lib)
     {
         ## Create a temporary directory and unpack the zip to it
         ## then get the real package & version name, copying the
@@ -56,7 +55,7 @@
             if (is.na(conts))
                 stop("malformed bundle DESCRIPTION file, no Contains field")
             else
-                pkgs <- strsplit(conts," ")[[1]]
+                pkgs <- strsplit(conts," ")[[1L]]
             ## now check the MD5 sums
             res <- TRUE
             for (curPkg in pkgs) res <- res &
@@ -115,11 +114,7 @@
                     }
                 }
              } else {
-                if (installWithVers) {
-                    instPath <- file.path(lib,
-                                          paste(desc[1,1], desc[1,2], sep="_"))
-                }
-                else instPath <- file.path(lib, desc[1,1])
+                instPath <- file.path(lib, desc[1,1])
 
                 ## If the package is already installed w/ this
                 ## instName, remove it.  If it isn't there, the unlink call will
@@ -146,8 +141,6 @@
     }
 
     if(!length(pkgs)) return(invisible())
-    oneLib <- length(lib) == 1
-
 
     ## look for packages/bundles in use.
     pkgnames <- basename(pkgs)
@@ -179,7 +172,7 @@
 
     if(is.null(contriburl)) {
         for(i in seq_along(pkgs))
-            unpackPkg(pkgs[i], pkgnames[i], lib, installWithVers)
+            unpackPkg(pkgs[i], pkgnames[i], lib)
         link.html.help(verbose=TRUE)
         return(invisible())
     }
@@ -193,76 +186,12 @@
                  domain = NA)
     }
 
-    depends <- is.character(dependencies) ||
-    (is.logical(dependencies) && dependencies)
-    if(depends && is.logical(dependencies))
-        dependencies <-  c("Depends", "Imports", "Suggests")
-    if(depends && !oneLib) {
-        warning("Do not know which element of 'lib' to install dependencies into\nskipping dependencies")
-        depends <- FALSE
-    }
     if(is.null(available))
         available <- available.packages(contriburl = contriburl,
                                         method = method)
-    bundles <- .find_bundles(available)
-    for(bundle in names(bundles))
-        pkgs[ pkgs %in% bundles[[bundle]] ] <- bundle
-    p0 <- unique(pkgs)
-    miss <-  !p0 %in% row.names(available)
-    if(sum(miss)) {
-        warning(sprintf(ngettext(sum(miss),
-                                 "package %s is not available",
-                                 "packages %s are not available"),
-                        paste(sQuote(p0[miss]), collapse=", ")),
-                domain = NA, call. = FALSE)
-        flush.console()
-    }
-    p0 <- p0[!miss]
+    pkgs <- getDependencies(pkgs, dependencies, available, lib)
 
-    if(depends) { # check for dependencies, recursively
-        p1 <- p0 # this is ok, as 1 lib only
-        have <- .packages(all.available = TRUE)
-        not_avail <- character(0)
-	repeat {
-	    if(any(miss <- ! p1 %in% row.names(available))) {
-                not_avail <- c(not_avail, p1[miss])
-                p1 <- p1[!miss]
-	    }
-	    deps <- as.vector(available[p1, dependencies])
-	    deps <- .clean_up_dependencies(deps, available)
-	    if(!length(deps)) break
-	    toadd <- deps[! deps %in% c("R", have, pkgs)]
-	    if(length(toadd) == 0) break
-	    pkgs <- c(toadd, pkgs)
-	    p1 <- toadd
-	}
-        if(length(not_avail)) {
-            warning(sprintf(ngettext(length(not_avail),
-                                     "dependency %s is not available",
-                                     "dependencies %s are not available"),
-                            paste(sQuote(not_avail), collapse=", ")),
-                    domain = NA, call. = FALSE)
-            flush.console()
-        }
-
-        for(bundle in names(bundles))
-            pkgs[ pkgs %in% bundles[[bundle]] ] <- bundle
-        pkgs <- unique(pkgs)
-        pkgs <- pkgs[pkgs %in% row.names(available)]
-        if(length(pkgs) > length(p0)) {
-            added <- setdiff(pkgs, p0)
-            message(sprintf(ngettext(length(added),
-                                     "also installing the dependency %s",
-                                     "also installing the dependencies %s"),
-                            paste(sQuote(added), collapse=", ")),
-                    "\n", domain = NA)
-            flush.console()
-            pkgnames <- pkgs # not zips, now
-        }
-        p0 <- pkgs
-    }
-
-    foundpkgs <- download.packages(p0, destdir = tmpd, available = available,
+    foundpkgs <- download.packages(pkgs, destdir = tmpd, available = available,
                                    contriburl = contriburl, method = method,
                                    type = "win.binary", ...)
 
@@ -273,10 +202,9 @@
             oklib <- lib==update[,"LibPath"]
             for(p in update[oklib, "Package"])
             {
-                okp <- p == foundpkgs[, 1]
+                okp <- p == foundpkgs[, 1L]
                 if(any(okp))
-                    unpackPkg(foundpkgs[okp, 2], foundpkgs[okp, 1], lib,
-                              installWithVers)
+                    unpackPkg(foundpkgs[okp, 2L], foundpkgs[okp, 1L], lib)
             }
         }
         if(!is.null(tmpd) && is.null(destdir))
@@ -291,13 +219,13 @@
 
 menuInstallPkgs <- function(type = getOption("pkgType"))
 {
-    install.packages(NULL, .libPaths()[1], dependencies=NA, type = type)
+    install.packages(NULL, .libPaths()[1L], dependencies=NA, type = type)
 }
 
 menuInstallLocal <- function()
 {
     install.packages(choose.files('',filters=Filters[c('zip','All'),]),
-                     .libPaths()[1], repos = NULL)
+                     .libPaths()[1L], repos = NULL)
 }
 
 ### the following function supports .install.winbinaries()
@@ -308,9 +236,7 @@ zip.unpack <- function(zipname, dest)
         if((unzip <- getOption("unzip")) != "internal") {
             system(paste(unzip, "-oq", zipname, "-d", dest),
                    show = FALSE, invisible = TRUE)
-        } else {
-            .Internal(int.unzip(zipname, NULL, dest))
-        }
+        } else unzip(zipname, exdir = dest)
     } else stop(gettextf("zipfile '%s' not found", zipname),
                 domain = NA)
 }

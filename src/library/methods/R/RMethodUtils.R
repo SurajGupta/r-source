@@ -56,7 +56,7 @@
       packageSlot(f) <- package
       assign(".Generic", f, envir = ev)
       fdef <- checkTrace(fdef)
-      if(length(valueClass)>0)
+      if(length(valueClass))
           fdef <- .ValidateValueClass(fdef, f, valueClass)
       group <- .asGroupArgument(group)
       if(is.null(genericFunction))
@@ -80,14 +80,14 @@
                            collapse = ", ")), domain = NA)
       dots <- match("...", signature)
       if(!is.na(dots)) { # remove "..." unless it is the only element of the signature
-          if(length(signature) > 1)
+          if(length(signature) > 1L)
             signature <- signature[-dots]
       }
-      if(length(signature) == 0)
+      if(length(signature) == 0L)
           stop("no suitable arguments to dispatch methods in this function")
       attr(signature, "simpleOnly") <- simpleInheritanceOnly # usually NULL
       value@signature <- signature
-      name <- signature[[1]]
+      name <- signature[[1L]]
       if(is.null(fdefault))
           methods <- MethodsList(name)
       else {
@@ -114,12 +114,12 @@
 ## namespace is available)
 .asS4 <- function (object)
 {
-    .Call("R_setS4Object", object, TRUE, PACKAGE = "base")
+    .Call("R_setS4Object", object, TRUE, 0L, PACKAGE = "base")
 }
 
 .notS4 <- function (object)
 {
-    .Call("R_setS4Object", object, FALSE, PACKAGE = "base")
+    .Call("R_setS4Object", object, FALSE, 0L, PACKAGE = "base")
 }
 
 
@@ -135,7 +135,7 @@ makeGeneric <-
       environment(fdef) <- ev
       packageSlot(f) <- package
       assign(".Generic", f, envir = ev)
-      if(length(valueClass)>0)
+      if(length(valueClass))
           fdef <- .ValidateValueClass(fdef, f, valueClass)
       group <- .asGroupArgument(group)
 ###--------
@@ -160,12 +160,12 @@ makeGeneric <-
       dots <- match("...", signature)
       if(!is.na(dots)) ## ... is not currently supported in method signatures
           signature <- signature[-dots]
-      if(length(signature) == 0)
+      if(length(signature) == 0L)
           stop("no suitable arguments to dispatch methods in this function")
 ###--------
       slot(value, "signature", FALSE) <- signature
 ###--------
-      name <- signature[[1]]
+      name <- signature[[1L]]
       if(is.null(fdefault))
           methods <- MethodsList(name)
       else
@@ -217,7 +217,7 @@ generic.skeleton <-
     ## any arguments after "..." have to be named
     dots <- match("...", anames)
     if(!is.na(dots) && dots < length(anames)) {
-      anames[1:dots] <- ""
+      anames[1L:dots] <- ""
       names(skeleton) <- c("", anames)
     }
     if(is.null(fdefault)) {
@@ -226,7 +226,7 @@ generic.skeleton <-
           gettextf("invalid call in method dispatch to \"%s\" (no default method)", name)))
       environment(fdefault) <- baseenv()
     }
-    skeleton[[1]] <- fdefault
+    skeleton[[1L]] <- fdefault
     as.call(skeleton)
  }
 
@@ -245,7 +245,7 @@ mergeMethods <-
     ## merge the methods in the second MethodsList object into the first,
     ## and return the merged result.
     function(m1, m2, genericLabel = character()) {
-        if(length(genericLabel) > 0 && is(m2, "MethodsList"))
+        if(length(genericLabel) && is(m2, "MethodsList"))
             m2 <- .GenericInPrimitiveMethods(m2, genericLabel)
         if(is.null(m1) || is(m1, "EmptyMethodsList"))
             return(m2)
@@ -315,7 +315,7 @@ conformMethod <- function(signature, mnames, fnames,
     else if(!all(signature[omitted] == "missing")) {
         .message(label, gettextf("expanding the signature to include omitted arguments in definition: %s",
                                  paste(fnames[omitted], "= \"missing\"",collapse = ", ")))
-        omitted <- seq(along = omitted)[omitted] # logical index will extend signature!
+        omitted <- seq_along(omitted)[omitted] # logical index will extend signature!
         signature[omitted] <- "missing"
     }
     ## remove trailing "ANY"'s
@@ -384,11 +384,11 @@ unRematchDefinition <- function(definition) {
     ## If we considered the rematching part of the API, a cleaner solution
     ## would be to include the "as given to setMethod" definition as a slot
     bdy <- body(definition)
-    if(.identC(class(bdy),"{") && length(bdy) > 1) {
-        bdy <- bdy[[2]]
+    if(.identC(class(bdy),"{") && length(bdy) > 1L) {
+        bdy <- bdy[[2L]]
         if(.identC(class(bdy), "<-") &&
-           identical(bdy[[2]], as.name(".local")))
-            definition <- bdy[[3]]
+           identical(bdy[[2L]], as.name(".local")))
+            definition <- bdy[[3L]]
     }
     definition
 }
@@ -408,7 +408,9 @@ getGeneric <-
         else
             stop("Argument f must be a string, generic function, or primitive: got an ordinary function")
     }
-    value <- if(missing(where)) .getGeneric(f, ,package) else .getGeneric( f, where, package)
+    value <- if(missing(where))
+	.getGeneric(f, , package) else
+	.getGeneric(f, where, package)
     if(is.null(value) && exists(f, envir = baseenv(), inherits = FALSE)) {
         ## check for primitives
         baseDef <- get(f, envir = baseenv())
@@ -523,10 +525,10 @@ getGeneric <-
            prev[[i]] <- NULL
         else # we might warn about unchaching more than once
           return()
-        if(length(prev) == 0)
+        if(length(prev) == 0L)
           return(remove(list = name, envir = table))
-        else if(length(prev) == 1)
-          prev <- prev[[1]]
+        else if(length(prev) == 1L)
+          prev <- prev[[1L]]
         assign(name, prev, envir  = table)
     }
 }
@@ -554,14 +556,14 @@ getGeneric <-
                 }
             }
             pkgs <- names(value)
-            i <- match(pkg, pkgs,0)
-            if(i > 0)
+            i <- match(pkg, pkgs, 0L)
+            if(i > 0L)
               return(value[[i]])
-            i <- match("methods", pkgs,0)
-            if(i > 0)
+            i <- match("methods", pkgs, 0L)
+            if(i > 0L)
                return(value[[i]])
-             i <- match("base", pkgs,0)
-            if(i > 0)
+            i <- match("base", pkgs, 0L)
+            if(i > 0L)
                return(value[[i]])
            else
               return(NULL)
@@ -629,14 +631,14 @@ getGroup <-
         group <- fdef@group
     else
         group <- list()
-    if(recursive && length(group) > 0) {
+    if(recursive && length(group)) {
         allGroups <- group
         for(gp in group) {
             fgp <- getGeneric(gp, where = where)
             if(is(fgp, "groupGenericFunction"))
                 allGroups <- c(allGroups, Recall(fgp, TRUE, where))
         }
-        if(length(allGroups)>1) {
+        if(length(allGroups) > 1L) {
             ids <- sapply(allGroups, function(x) {
                 pkg <- packageSlot(x)
                 if(is.null(pkg)) x
@@ -715,13 +717,6 @@ getGenerics <- function(where, searchForm = FALSE)
     }
 }
 
-
-allGenerics <- function(...) {
-    .Deprecated("getGenerics")
-    ## this is used nowhere, and we already have too many functions
-    getGenerics(...)
-}
-
 ## Find the pattern for methods lists or tables
 ## Currently driven by mlists, but eventually these will go away
 ## in favor of tables.
@@ -734,15 +729,15 @@ allGenerics <- function(...) {
     these <- character()
     for(i in where) these <- c(these, objects(i, all.names=TRUE))
     these <- allThese <- unique(these)
-    these <- these[substr(these, 1, 6) == ".__T__"]
-    if(length(these) == 0)
+    these <- these[substr(these, 1L, 6L) == ".__T__"]
+    if(length(these) == 0L)
       return(character())
     funNames <- gsub(".__T__(.*):([^:]+)", "\\1", these)
-    if(length(funNames)==0 &&
-       length(these[substr(these, 1, 6) == ".__M__"])>0)
+    if(length(funNames) == 0L &&
+       length(these[substr(these, 1L, 6L) == ".__M__"]))
       warning(gettextf(
       "Package \"%s\" seems to have out-of-date methods; need to reinstall from source",
-                       getPackageName(where[[1]])))
+                       getPackageName(where[[1L]])))
     packageNames <- gsub(".__T__(.*):([^:]+(.*))", "\\2", these)
     attr(funNames, "package") <- packageNames
     ## Would prefer following, but may be trouble bootstrapping methods
@@ -764,6 +759,14 @@ cacheMetaData <- function(where, attach = TRUE, searchWhere = as.environment(whe
     packages <- attr(generics, "package")
     if(length(packages) <  length(generics))
       packages <- rep(packages, length.out = length(generics))
+    if(attach && exists(".requireCachedGenerics", where, inherits = FALSE)) {
+      others <- get(".requireCachedGenerics", where)
+      generics <- c(generics, others)
+      packages <- c(packages, attr(others, "package"))
+    }
+    ## check for duplicates
+    dups <- duplicated(generics) & duplicated(packages)
+    generics <- generics[!dups]
     pkg <- getPackageName(where)
     for(i in seq_along(generics)) {
         f <- generics[[i]]
@@ -820,29 +823,27 @@ cacheMetaData <- function(where, attach = TRUE, searchWhere = as.environment(whe
   }
 
 
-cacheGenericsMetaData <- function(f, fdef, attach = TRUE, where = topenv(parent.frame()),
-                                  package, methods) {
+cacheGenericsMetaData <- function(f, fdef, attach = TRUE,
+                                  where = topenv(parent.frame()),
+                                  package, methods)
+{
     if(!is(fdef, "genericFunction")) {
-        warning(gettextf("no methods found for \"%s\"; cacheGenericsMetaData() will have no effect", f), domain = NA)
-        return(FALSE)
+	warning(gettextf(
+		"no methods found for \"%s\"; cacheGenericsMetaData() will have no effect",
+			 f),
+		domain = NA)
+	return(FALSE)
     }
     if(missing(package))
         package <- fdef@package
-### Assetion: methods argument unused except for primitives
+### Assertion: methods argument unused except for primitives
 ### and then only for the old non-table case.
     deflt <- finalDefaultMethod(fdef@default) #only to detect primitives
     if(is.primitive(deflt)) {
-             if(missing(methods))
-                code <- "reset"
-            else
-                code <- "set"
-         switch(code,
-               reset = setPrimitiveMethods(f, deflt, code, fdef, NULL),
-               set = setPrimitiveMethods(f, deflt, code, fdef, methods),
-##               clear = setPrimitiveMethods(f, deflt, code, NULL, NULL),
-	       stop(gettextf("internal error: bad code for 'setPrimitiveMethods': %s",
-			     code), domain = NA)
-	       )
+	if(missing(methods)) ## "reset"
+	    setPrimitiveMethods(f, deflt, "reset", fdef, NULL)
+	else ## "set"
+	    setPrimitiveMethods(f, deflt, "set", fdef, methods)
     }
     else if(isGroup(f, fdef = fdef)) {
 	members <- fdef@groupMembers
@@ -851,7 +852,8 @@ cacheGenericsMetaData <- function(f, fdef, attach = TRUE, where = topenv(parent.
 	for(ff in members) {
 	    ffdef <- getGeneric(ff, where = where)
 	    if(is(ffdef, "genericFunction"))
-		Recall(ff,ffdef, attach, where, methods = .getMethodsTable(ffdef))
+		Recall(ff, ffdef, attach, where,
+                       methods = .getMethodsTable(ffdef))
 	}
     }
     TRUE
@@ -866,7 +868,7 @@ setPrimitiveMethods <-
 findUnique <- function(what, message, where = topenv(parent.frame()))
 {
     where <- .findAll(what, where = where)
-    if(length(where) > 1) {
+    if(length(where) > 1L) {
         if(missing(message))
             message <- sQuote(what)
         if(is.list(where))
@@ -877,7 +879,7 @@ findUnique <- function(what, message, where = topenv(parent.frame()))
                 sprintf(" found on: %s; using the first one",
                         paste(sQuote(where), collapse = ", ")),
                 domain = NA)
-            where <- where[1]
+            where <- where[1L]
     }
     where
 }
@@ -914,21 +916,21 @@ missingArg <- function(symbol, envir = parent.frame(), eval = FALSE)
     .Call("R_missingArg", if(eval) symbol else substitute(symbol), envir, PACKAGE = "methods")
 
 balanceMethodsList <- function(mlist, args, check = TRUE) {
-    moreArgs <- args[-1]
-    if(length(moreArgs) == 0)
+    moreArgs <- args[-1L]
+    if(length(moreArgs) == 0L)
         return(mlist)
     methods <- mlist@methods
-    if(check && length(methods) > 0) {
+    if(check && length(methods)) {
         ## check whether the current depth is enough (i.e.,
         ## whether a method with this no. of args or more was set before
         depth <- 0
-        el <- methods[[1]]
+        el <- methods[[1L]]
         while(is(el, "MethodsList")) {
             mm <- el@methods
-            if(length(mm) == 0)
+            if(length(mm) == 0L)
                 break
-            depth <- depth+1
-            el <- mm[[1]]
+            depth <- depth+1L
+            el <- mm[[1L]]
         }
         if(depth >= length(args))
             ## already balanced to this length: An assertion
@@ -977,18 +979,18 @@ sigToEnv <- function(signature, generic) {
 }
 
 methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
-    if(length(sigSlots)>0) {
+    if(length(sigSlots)) {
         allSlots <- lapply(sigSlots, slot, object = object)
         mm <- unlist(allSlots)
         mm <- matrix(mm, nrow = length(allSlots), byrow = TRUE)
-        dimnames(mm) <- list(sigSlots, names(allSlots[[1]]))
+        dimnames(mm) <- list(sigSlots, names(allSlots[[1L]]))
         mm
     }
-    else matrix(character(), 0, 0)
+    else matrix(character(), 0L, 0L)
 }
 
 .valueClassTest <- function(object, classes, fname) {
-    if(length(classes) > 0) {
+    if(length(classes)) {
         for(Cl in classes)
             if(is(object, Cl))
                return(object)
@@ -1002,7 +1004,7 @@ methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
 .getOrMakeMethodsList <- function(f, where, genericFun) {
     allMethods <- getMethodsMetaData(f, where = where)
     if(is.null(allMethods)) {
-        argName <- genericFun@signature[[1]]
+        argName <- genericFun@signature[[1L]]
         allMethods <- new("MethodsList", argument = as.name(argName))
 #         other <- getMethodsMetaData(f)
 #         if(is.null(other))
@@ -1059,34 +1061,34 @@ methodSignatureMatrix <- function(object, sigSlots = c("target", "defined")) {
 metaNameUndo <- function(strings, prefix, searchForm = FALSE) {
     pattern <- methodsPackageMetaName(prefix, "")
     n <- nchar(pattern, "c")
-    matched <- substr(strings, 1, n) == pattern
-    value <- substring(strings[matched], n+1)
+    matched <- substr(strings, 1L, n) == pattern
+    value <- substring(strings[matched], n+1L)
     pkg <- sub("^[^:]*", "", value) # will be "" if no : in the name
     if(searchForm) {
         global <- grep(".GlobalEnv", value)
         if(length(global)) {
             pkg[-global] <- paste("package", pkg[-global], sep="")
-            pkg[global] <- substring(pkg[global],2)
+            pkg[global] <- substring(pkg[global], 2L)
         }
     }
     else
-        pkg <- substring(pkg, 2)
+        pkg <- substring(pkg, 2L)
     value <- sub(":.*","", value)
     new("ObjectsWithPackage", value, package = pkg)
 }
 
 .recursiveCallTest <- function(x, fname) {
     if(is(x, "call")) {
-        if(identical(x[[1]], quote(standardGeneric))) {
-            if(!identical(x[[2]], fname))
+        if(identical(x[[1L]], quote(standardGeneric))) {
+            if(!identical(x[[2L]], fname))
                 warning(gettextf("the body of the generic function for \"%s\" calls 'standardGeneric' to dispatch on a different name (\"%s\")!",
                                  fname,
-                                 paste(as.character(x[[2]]), collapse = "\n")),
+                                 paste(as.character(x[[2L]]), collapse = "\n")),
                         domain = NA)
             TRUE
         }
         else {
-            for(i in seq.int(from=2, length.out = length(x)-1)) {
+            for(i in seq.int(from=2L, length.out = length(x)-1L)) {
                 if(Recall(x[[i]], fname))
                     return(TRUE)
             }
@@ -1094,7 +1096,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE) {
         }
     }
     else if(is(x, "language")) {
-        for(i in seq.int(from=2, length.out = length(x)-1)) {
+        for(i in seq.int(from=2L, length.out = length(x)-1L)) {
             if(Recall(x[[i]], fname))
                 return(TRUE)
         }
@@ -1139,7 +1141,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE) {
         if(is(fdef, "genericFunction")) {
             snames <- fdef@signature
             signature <- matchSignature(signature, fdef)
-            if(length(snames)>length(signature))
+            if(length(snames) > length(signature))
                 length(snames) <- length(signature)
         }
         else # shouldn't happen,...
@@ -1385,8 +1387,8 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
     mgn <- names(mg)
     changed <- FALSE
     for(what in names(fg)) {
-        i <- match(what, mgn, 0)
-        if(i> 0) {
+        i <- match(what, mgn, 0L)
+        if(i > 0L) {
             deflt <- mg[[i]]
             if(!(emptyDefault(deflt) || identical(deflt, fg[[what]]))) {
                 fg[[what]] <- deflt
@@ -1461,7 +1463,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
               value <- as.environment(where)
         }
     }
-    else if(is.numeric(where) && where %in% seq(along = search()))
+    else if(is.numeric(where) && where %in% seq_along(search()))
       value <- as.environment(where)
     value
 }
@@ -1502,7 +1504,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
 .quoteCall <- quote(.Method(...))
 .makeDotsCall <- function(formals) {
     call <- methods:::.quoteCall
-    if(length(formals)  > 1) {
+    if(length(formals)  > 1L) {
         idots <- match("...", formals)
         for(what in formals[-idots]) {
             ## the following nonsense is required to get the names in the call
@@ -1519,19 +1521,19 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
     found <- character()
     distances <- numeric()
     methods <- objects(mtable, all=TRUE)
-    direct <- match(classes, methods, 0) > 0
+    direct <- match(classes, methods, 0L) > 0L
     if(all(direct)) {
-        if(length(classes) > 1) {
+        if(length(classes) > 1L) {
             warning("multiple direct matches: ", .pasteC(classes), "; using the first of these")
-            classes <- classes[1]
+            classes <- classes[1L]
         }
-        else if(length(classes) == 0)
+        else if(length(classes) == 0L)
           return( if(is.na(match("ANY", methods))) NULL else get("ANY", envir = mtable))
         return(get(classes,envir = mtable))
     }
     if(is.null(allmtable))
       return(NULL)
-    
+
     ## Else, look for an acceptable inherited method, which must match or be a superclass
     ## of the class of each of the arguments.
     classes <- sort(classes) # make slection depend only on the set of classes
@@ -1545,12 +1547,12 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
         if(is.null(defi)) next
         extendsi <- defi@contains
         namesi <- c(classi, names(extendsi))
-        if(i == 1) 
-          namesi <- namesi[match(namesi, methods, 0) > 0]
+        if(i == 1)
+          namesi <- namesi[match(namesi, methods, 0L) > 0L]
         else { # only the superclass methods matching all arguments are kept
-            namesi <- namesi[match(namesi, found, 0) > 0]
+            namesi <- namesi[match(namesi, found, 0L) > 0L]
             found <- namesi
-            if(length(found) == 0) break  # no possible non-default match
+            if(length(found) == 0L) break  # no possible non-default match
         }
         for(namei in namesi) {
             disti <- if(identical(namei, classi)) 0 else extendsi[[namei]]@distance
@@ -1563,13 +1565,13 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
               distances[[prev]] <- disti
         }
     }
-    if(length(found) == 0)
+    if(length(found) == 0L)
       method <-  if(is.na(match("ANY", methods))) NULL else get("ANY", envir = mtable)
     else {
         classes <- found[which.min(distances)]
-        if(length(classes) > 1) {
+        if(length(classes) > 1L) {
             warning("multiple equivalent inherited matches: ", .pasteC(classes), "; using the first of these")
-            classes <- classes[1]
+            classes <- classes[1L]
         }
         method <- get(classes,envir = mtable)
     }
@@ -1577,4 +1579,16 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE) {
       method@target <- new("signature", ... = label) # ?? not a legal class name if > 1 classes
     assign(label, method, allmtable)
     method
+}
+
+.isSingleString <- function(what)
+  is.character(what) && identical(nzchar(what), TRUE)
+
+.notSingleString <- function(what) {
+  if(identical(what, ""))
+    "non-empty string; got \"\""
+  else if(is.character(what))
+    paste("single string; got a character vector of length", length(what))
+  else
+    gettextf("single string; got an object of class \"%s\"", class(what)[[1]])
 }

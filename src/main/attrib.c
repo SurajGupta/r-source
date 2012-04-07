@@ -156,6 +156,8 @@ SEXP attribute_hidden getAttrib0(SEXP vec, SEXP name)
 
 SEXP getAttrib(SEXP vec, SEXP name)
 {
+    if(TYPEOF(vec) == CHARSXP)
+	error("cannot have attributes on a CHARSXP");
     /* pre-test to avoid expensive operations if clearly not needed -- LT */
     if (ATTRIB(vec) == R_NilValue &&
 	! (TYPEOF(vec) == LISTSXP || TYPEOF(vec) == LANGSXP))
@@ -318,6 +320,8 @@ static SEXP installAttrib(SEXP vec, SEXP name, SEXP val)
 {
     SEXP s, t;
 
+    if(TYPEOF(vec) == CHARSXP)
+	error("cannot set attribute on a CHARSXP");
     PROTECT(vec);
     PROTECT(name);
     PROTECT(val);
@@ -344,6 +348,8 @@ static SEXP installAttrib(SEXP vec, SEXP name, SEXP val)
 static SEXP removeAttrib(SEXP vec, SEXP name)
 {
     SEXP t;
+    if(TYPEOF(vec) == CHARSXP)
+	error("cannot set attribute on a CHARSXP");
     if (name == R_NamesSymbol && isList(vec)) {
 	for (t = vec; t != R_NilValue; t = CDR(t))
 	    SET_TAG(t, R_NilValue);
@@ -511,6 +517,8 @@ SEXP attribute_hidden do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (NAMED(CAR(args)) == 2) SETCAR(args, duplicate(CAR(args)));
     if (length(CADR(args)) == 0) SETCADR(args, R_NilValue);
+    if(IS_S4_OBJECT(CAR(args)))
+      UNSET_S4_OBJECT(CAR(args));
     setAttrib(CAR(args), R_ClassSymbol, CADR(args));
     return CAR(args);
 }
@@ -518,7 +526,13 @@ SEXP attribute_hidden do_classgets(SEXP call, SEXP op, SEXP args, SEXP env)
 SEXP attribute_hidden do_class(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     checkArity(op, args);
-    return getAttrib(CAR(args), R_ClassSymbol);
+    SEXP x = CAR(args), s3class;
+    if(IS_S4_OBJECT(x)) {
+      if((s3class = S3Class(x)) != R_NilValue) {
+	return s3class;
+      }
+    } /* else */
+    return getAttrib(x, R_ClassSymbol);
 }
 
 /* character elements corresponding to the syntactic types in the
@@ -597,15 +611,48 @@ SEXP R_data_class(SEXP obj, Rboolean singleString)
 }
 
 static SEXP s_dot_S3Class;
+
+SEXP S3Class(SEXP obj)
+{
+    return getAttrib(obj, s_dot_S3Class);
+}
+
 /* Version for S3-dispatch */
 SEXP attribute_hidden R_data_class2 (SEXP obj)
 {
     SEXP klass = getAttrib(obj, R_ClassSymbol);
       if(length(klass) > 0) {
-	if(IS_S4_OBJECT(obj)) {  /* try for an S4 object with an S3Class slot */
-  	    SEXP S3Class = getAttrib(obj, s_dot_S3Class);
-	    if(S3Class != R_NilValue)
-       	        klass = S3Class;
+	if(IS_S4_OBJECT(obj) && TYPEOF(obj) != S4SXP) { 
+	    /* try to return an S3Class slot, or matrix/array */
+	    /* The S4 class is included for compatibility with
+	       the deprecated practice of defining S3 methods 
+	       for S4 classes.  Someday this should be disallowed. 
+	       JMC iii.9.09 */
+  	    SEXP s3class = S3Class(obj);
+	    if(s3class != R_NilValue) {
+	        SEXP value; int i, n = length(s3class);
+		PROTECT(value =  allocVector(STRSXP, n+1));
+		SET_STRING_ELT(value, 0, STRING_ELT(klass, 0));
+		for(i=0; i<n; i++)
+		  SET_STRING_ELT(value, i+1, STRING_ELT(s3class, i));
+		UNPROTECT(1);
+		return value;
+	    }
+	    else {
+	        SEXP dim = getAttrib(obj, R_DimSymbol), value, class0;
+	        int nd = length(dim);
+		if(nd > 0) {
+		  PROTECT(value =  allocVector(STRSXP, 2));
+		  if(nd == 2)
+		    class0 = mkChar("matrix");
+		  else
+		    class0 = mkChar("array");
+		  SET_STRING_ELT(value, 0, STRING_ELT(klass, 0));
+		  SET_STRING_ELT(value, 1, class0);
+		  UNPROTECT(1);
+		  return value;
+		}
+	    }
 	}
 	return(klass);
     }
@@ -802,19 +849,10 @@ static SEXP dimnamesgets1(SEXP val1)
     if (LENGTH(val1) == 0) return R_NilValue;
     /* if (isObject(val1)) dispatch on as.character.foo, but we don't
        have the context at this point to do so */
-    if (inherits(val1, "factor")) { /* mimic as.character.factor */
-	int i, n = LENGTH(val1);
-	SEXP labels = getAttrib(val1, install("levels"));
-	PROTECT(this2 = allocVector(STRSXP, n));
-	for(i = 0; i < n; i++) {
-	    int ii = INTEGER(val1)[i];
-	    SET_STRING_ELT(this2, i,
-			   (ii == NA_INTEGER) ? NA_STRING
-			   : STRING_ELT(labels, ii - 1));
-	}
-	UNPROTECT(1);
-	return this2;
-    }
+
+    if (inherits(val1, "factor"))  /* mimic as.character.factor */
+        return asCharacterFactor(val1);
+
     if (!isString(val1)) { /* mimic as.character.default */
 	PROTECT(this2 = coerceVector(val1, STRSXP));
 	SET_ATTRIB(this2, R_NilValue);
@@ -1342,7 +1380,7 @@ int R_has_slot(SEXP obj, SEXP name) {
     if(isString(name)) name = install(CHAR(STRING_ELT(name, 0)))
 
     R_SLOT_INIT;
-    if(name == s_dot_Data)
+    if(name == s_dot_Data && TYPEOF(obj) != S4SXP)
 	return(1);
     /* else */
     return(getAttrib(obj, name) != R_NilValue);
@@ -1385,6 +1423,11 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 }
 #undef R_SLOT_INIT
 
+
+/* the @ operator, and its assignment form.  Processed much like $
+   (see do_subset3) but without S3-style methods.
+*/
+
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     PROTECT(obj); PROTECT(value);
 				/* Ensure that name is a symbol */
@@ -1411,18 +1454,6 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     return obj;
 }
 
-#ifdef UNUSED
-SEXP R_pseudo_null() {
-    if(pseudo_NULL == 0)
-	init_slot_handling();
-    return pseudo_NULL;
-}
-#endif
-
-
-/* the @ operator, and its assignment form.  Processed much like $
-   (see do_subset3) but without S3-style methods.
-*/
 SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  nlist, object, ans, klass;
@@ -1452,4 +1483,40 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
     ans = R_do_slot(object, nlist);
     UNPROTECT(1);
     return ans;
+}
+
+/* the mechanism for extending abnormal types.  In the future, would b
+   good to consolidate under the ".Data" slot, but this has
+   been used to mean S4 objects with non-S4 type, so for now
+   a secondary slot name, ".xData" is used to avoid confusion
+*/
+SEXP attribute_hidden
+R_getS4DataSlot(SEXP obj, SEXPTYPE type)
+{
+  static SEXP s_xData, s_dotData; SEXP value = R_NilValue;
+  if(!s_xData) {
+    s_xData = install(".xData");
+    s_dotData = install(".Data");
+  }
+  if(TYPEOF(obj) != S4SXP) { /* does not validate type against S4 class def */
+    SEXP s3class = S3Class(obj);
+    if(NAMED(obj)) obj = duplicate(obj);
+    if(s3class != R_NilValue) {/* replace class with S3 class */
+      setAttrib(obj, R_ClassSymbol, s3class);
+    }
+    else { /* to avoid inf. recursion, must unset class attribute */
+      setAttrib(obj, R_ClassSymbol, R_NilValue);
+    }
+    UNSET_S4_OBJECT(obj);
+    value = obj;
+  }  
+  else
+      value = getAttrib(obj, s_dotData);
+  if(value == R_NilValue)
+      value = getAttrib(obj, s_xData);
+  if(value != R_NilValue &&
+     (type == ANYSXP || type == TYPEOF(value)))
+     return value;
+  else
+     return R_NilValue;
 }

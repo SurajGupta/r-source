@@ -41,7 +41,7 @@ cancor(x, y, xcenter = TRUE, ycenter = TRUE)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 
   Hotelling H. (1936).
   Relations between two sets of variables.
@@ -52,7 +52,8 @@ cancor(x, y, xcenter = TRUE, ycenter = TRUE)
   New York: Wiley, p. 506f.
 }
 \seealso{
-  \code{\link{qr}}, \code{\link{svd}}.
+  % Avoid Matrix's grab of qr.
+  \code{\link[base]{qr}}, \code{\link{svd}}.
 }
 \examples{
 pop <- LifeCycleSavings[, 2:3]

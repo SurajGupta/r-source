@@ -30,7 +30,7 @@ print.htest <- function(x, digits = 4, quote = TRUE, prefix = "", ...)
     if(!is.null(x$p.value)) {
 	fp <- format.pval(x$p.value, digits = digits)
 	out <- c(out, paste("p-value",
-			    if(substr(fp,1,1) == "<") fp else paste("=",fp)))
+			    if(substr(fp, 1L, 1L) == "<") fp else paste("=",fp)))
     }
     cat(strwrap(paste(out, collapse = ", ")), sep="\n")
     if(!is.null(x$alternative)) {
@@ -55,7 +55,7 @@ print.htest <- function(x, digits = 4, quote = TRUE, prefix = "", ...)
     if(!is.null(x$conf.int)) {
 	cat(format(100 * attr(x$conf.int, "conf.level")),
 	    "percent confidence interval:\n",
-	    format(c(x$conf.int[1], x$conf.int[2])), "\n")
+	    format(c(x$conf.int[1L], x$conf.int[2L])), "\n")
     }
     if(!is.null(x$estimate)) {
 	cat("sample estimates:\n")

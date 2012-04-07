@@ -47,16 +47,17 @@ download.packages(pkgs, destdir, available = NULL,
 install.packages(pkgs, lib, repos = getOption("repos"),
                  contriburl = contrib.url(repos, type),
                  method, available = NULL, destdir = NULL,
-		 installWithVers = FALSE, dependencies = NA,
-                 type = getOption("pkgType"),
-                 configure.args = character(0),
-                 clean = FALSE, \dots)
+                 dependencies = NA, type = getOption("pkgType"),
+                 configure.args = getOption("configure.args"),
+                 configure.vars = getOption("configure.vars"),
+                 clean = FALSE, Ncpus = getOption("Ncpus"), \dots)
 
 contrib.url(repos, type = getOption("pkgType"))
 }
 \arguments{
   \item{lib.loc}{character vector describing the location of R
-    library trees to search through (and update packages therein).}
+    library trees to search through (and update packages therein), or
+    \code{NULL} for all known trees (see \code{\link{.libPaths}}).}
   \item{repos}{character vector, the base URL(s) of the repositories
     to use, i.e., the URL of the CRAN master such as
     \code{"http://cran.r-project.org"} or its Statlib mirror,
@@ -102,8 +103,6 @@ contrib.url(repos, type = getOption("pkgType"))
     \code{\link{select.list}}, and is otherwise equivalent to \code{ask
       = TRUE}.
   }
-  \item{installWithVers}{If \code{TRUE}, will invoke the install of the
-    package such that it can be referenced by package version.}
   \item{checkBuilt}{If \code{TRUE}, a package built under an earlier
     minor version of \R is considered to be \sQuote{old}.}
   \item{instlib}{character string giving the library directory where to
@@ -112,9 +111,7 @@ contrib.url(repos, type = getOption("pkgType"))
     packages on which these packages depend/suggest/import
     (and so on recursively).  Not used if \code{repos = NULL}.
     Can also be a character vector, a subset of
-    \code{c("Depends", "Imports", "Suggests")}.  Note that only if the
-    dependent package is \emph{installed} is checked, not if it meets
-    the version requirements.
+    \code{c("Depends", "Imports", "Suggests", "Enhances")}.
 
     Only supported if \code{lib} is of length one (or missing),
     so it is unambiguous where to install the dependent packages.
@@ -122,21 +119,25 @@ contrib.url(repos, type = getOption("pkgType"))
     The default, \code{NA}, means \code{c("Depends", "Imports")} if
     \code{lib} is unambiguous, and \code{FALSE} otherwise.
   }
-  \item{configure.args}{a character vector or a named list.
+  \item{configure.args}{(not Windows) a character vector or a named list.
     If a character vector with no names is supplied, the elements are
     concatenated into a single string (separated by a space) and used
     as the value for the \code{--configure-args}
-    flag in the call to \code{R CMD INSTALL}.
-    If the character vector has names, these are assumed to identify
+    flag in the call to \command{R CMD INSTALL}.
+    If the character vector has names these are assumed to identify
     values for \code{--configure-args} for individual packages.
     This allows one to specify settings for an entire collection of packages
-    which will be used if any of those packages are installed.
-    These settings can therefore be reused and act as default settings.
+    which will be used if any of those packages are to be installed.
+    (These settings can therefore be reused and act as default settings.)
+    
     A named list can be used also to the same effect, and that
     allows multi-element character strings for each package
     which are concatenated to a single string to be used as the
     value for \code{--configure-args}.
   }
+  \item{configure.vars}{(not Windows) similar, for
+    \code{--configure-vars}, which is used to set environment variables
+    for the \command{configure} run.}
   \item{oldPkgs}{
     if specified as non-NULL, \code{update.packages()} only considers
     these packages for updating. 
@@ -177,6 +178,12 @@ contrib.url(repos, type = getOption("pkgType"))
     This is sometimes used to perform additional operations at the end
     of the package installation in addition to removing intermediate files.
   }
+  \item{Ncpus}{The number of parallel processes to use for a parellel
+    install of source packages.  Values geater than one are supported
+    only if GNU \command{make} is in use (more precisely, if
+    \command{make -j \var{Ncpus}} works).  Defaults to \code{1} is the
+    option is unset.
+  }
   \item{fields}{a character vector giving the fields to extract from
     the \code{PACKAGES} file(s) in addition to the default ones, or
     \code{NULL} (default).  Unavailable fields result in \code{NA}
@@ -208,13 +215,11 @@ contrib.url(repos, type = getOption("pkgType"))
 #endif
 
   \code{new.packages} does the same comparison but reports uninstalled
-  packages/bundles that are available at the repositories.  (It checks
-  the front-end package \pkg{gnomeGUI} separately.)  It will
+  packages/bundles that are available at the repositories.  It will
   give warnings about incompletely installed bundles (provided the
   information is available) and bundles whose contents has changed.
   If \code{ask != FALSE} it asks which packages should be installed
-  in the first element of \code{lib.loc}.  NB: versioned installs are
-  not installs of a named package.
+  in the first element of \code{lib.loc}.
 
   \code{download.packages} takes a list of package/bundle names and a
   destination directory, downloads the newest versions and saves them in

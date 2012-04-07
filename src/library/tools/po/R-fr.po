@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-09-30 19:30+0100\n"
+"POT-Creation-Date: 2009-03-17 19:27\n"
+"PO-Revision-Date: 2009-03-29 22:45+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -169,6 +169,9 @@ msgstr "le nom du package '%s' semble incorrect ; utilisation du nom de répertoi
 
 msgid "Packages required but not available:"
 msgstr "Packages requis mais non disponibles :"
+
+msgid "Packages required and available but unsuitable version:"
+msgstr "Packages requis et disponibles mais de version incompatible :"
 
 msgid "Former standard packages required but now defunct:"
 msgstr "Packages standard requis, mais maintenant obsolètes :"
@@ -336,8 +339,11 @@ msgstr "Spécification de licence non standard :"
 msgid "Invalid license file pointers: %s"
 msgstr "Pointeur de fichier licence incorrect : %s"
 
-msgid "Verifiable as open source: %s"
-msgstr "Vérifiable comme Open Source : %s"
+msgid "Standardizable: %s"
+msgstr "Standardisable : %s"
+
+msgid "Standardized license specification:"
+msgstr "Spécification de licence standard :"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "Indicateur non portable dans la variable '%s' :"
@@ -359,6 +365,9 @@ msgstr "importations '::' ou ':::' non déclarées depuis :"
 
 msgid "'library' or 'require' calls not declared from:"
 msgstr "appels 'library' ou 'require' non déclarés depuis :"
+
+msgid "*** error on file"
+msgstr "*** erreur dans le fichier"
 
 msgid "Generics g in env ="
 msgstr "Les génériques g dans env ="
@@ -468,6 +477,15 @@ msgstr ""
 "champ \\n"
 "ame manquant ou vide dans le(s) fichier(s) Rd"
 
+msgid "should not get here"
+msgstr "ne devrait pas être là"
+
+msgid "Rd2HTML is designed for Rd version 2 or higher."
+msgstr "Rd2HTML est conçu pour des Rd version 2 ou plus."
+
+msgid "more than one \\examples section, using the first"
+msgstr "plus d'une section \\example, utilisation de la première"
+
 msgid "unable to create temp directory"
 msgstr "impossible de créer le répertoire temporaire"
 
@@ -573,6 +591,199 @@ msgstr "ERREUR : cette version de R est %s, requis R %s %s "
 msgid "cannot read index information in file '%s'"
 msgstr "impossible de lire l'indice de l'information dans le fichier '%s'"
 
+msgid "ERROR:"
+msgstr "ERREUR :"
+
+msgid "for package"
+msgstr "pour le package"
+
+msgid "incorrect Contains metadata for bundle"
+msgstr "métadonnées Contains incorrectes pour le bundle"
+
+msgid ": there is no package '"
+msgstr " : pas de package '"
+
+msgid "skipping installation of bundle"
+msgstr "installation du bundle interrompue"
+
+msgid "problem installing per-package DESCRIPTION files"
+msgstr "problème lors de l'installation des fichiers DESCRIPTION par package"
+
+msgid "ERROR unable to create"
+msgstr "ERREUR : impossible de créer"
+
+msgid "packaged installation of"
+msgstr "installation packagée de"
+
+msgid "as"
+msgstr "comme"
+
+msgid ".gz"
+msgstr ".gz"
+
+msgid "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
+msgstr "'cleanup' existe mais n'est pas exécutable -- voyez le manuel d'installation et d'administration de R"
+
+msgid "about to run"
+msgstr "prêt à s'exécuter"
+
+msgid "R CMD SHLIB"
+msgstr "R CMD SHLIB"
+
+msgid "Using auto-selected zip options '"
+msgstr "Utilisation des options zip auto-sélectionnées '"
+
+msgid "--use-zip-data"
+msgstr "--use-zip-data"
+
+msgid "--use-zip-help"
+msgstr "--use-zip-help"
+
+msgid "**********************************************"
+msgstr "**********************************************"
+
+msgid "WARNING: this package has a configure script"
+msgstr "AVIS : ce package a un script de configuration"
+
+msgid "It probably needs manual configuration"
+msgstr "Il requiert probablement une configuration manuelle"
+
+msgid "configure command:"
+msgstr "commande de configuration :"
+
+msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
+msgstr "le répertoire include de R est vide -- il faut peut-être installer R-devel.rpm ou similaire"
+
+msgid "running src/Makefile.win ..."
+msgstr "exécution de src/Makefile.win ..."
+
+msgid "making DLL ..."
+msgstr "création de la DLL ..."
+
+msgid "... done"
+msgstr "... fini"
+
+msgid "no source files found"
+msgstr "aucun fichier source n'est trouvé"
+
+msgid "empty 'data' directory"
+msgstr "répertoire 'data' vide"
+
+msgid "use of file 'install.R' is no longer supported"
+msgstr "l'utilisation du fichier 'install.R' n'est plus supportée"
+
+msgid "use of file 'R_PROFILE.R' is no longer supported"
+msgstr "l'utilisation du fichier 'R_PROFILE.R' n'est plus supportée"
+
+msgid "field 'SaveImage' is defunct: please remove it"
+msgstr "le champ 'SaveImage' est obsolète : veuillez l'enlever"
+
+msgid "cannot create temporary directory"
+msgstr "impossible de créer un répertoire temporaire"
+
+msgid "Use of --with-package-versions is defunct"
+msgstr "L'utilisation de --with-package-versions est obsolète"
+
+msgid "--auto-zip' is for Windows only"
+msgstr "--auto-zip'  est pour Windows seulement"
+
+msgid "-l option without value"
+msgstr "option -l sans valeur"
+
+msgid "Warning: unknown option"
+msgstr "Avis : option inconnue"
+
+msgid "processing"
+msgstr "traitement en cours"
+
+msgid "a file"
+msgstr "un fichier"
+
+msgid "unknown package layout"
+msgstr "schéma de package inconnu"
+
+msgid "a directory"
+msgstr "un répertoire"
+
+msgid "invalid package"
+msgstr "package incorrect"
+
+msgid "--pkglock applies only to a single bundle/package"
+msgstr "--pkglock est utilisé seulement pour un seul bundle/package"
+
+msgid "ERROR: no packages specified"
+msgstr "ERREUR : aucun package spécifié"
+
+msgid "ERROR: cannot cd to directory"
+msgstr "ERREUR : impossible d'activer le répertoire"
+
+msgid "ERROR: no permission to install to directory"
+msgstr "ERREUR : pas de permission pour installer dans le répertoire"
+
+msgid "ERROR: failed to lock directory"
+msgstr "ERREUR : impossible de verrouiller le répertoire"
+
+msgid ""
+"for modifying\n"
+"Try removing"
+msgstr ""
+"pour modification\n"
+"Essayez d'éliminer"
+
+msgid "ERROR: failed to create lock directory"
+msgstr "ERREUR : impossible de créer le répertoire verrouillé"
+
+msgid "building a fake installation is disallowed"
+msgstr "construire une installation fantôme n'est pas permise"
+
+msgid "*** 'hhc.exe' not found: not building CHM help"
+msgstr "*** 'hhc.exe' introuvable : l'aide CHM ne peut être générée"
+
+msgid "-o option without value"
+msgstr "option -o sans valeur"
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr "Conversion des fichiers Rd en LaTeX ..."
+
+msgid "this package does not have either a"
+msgstr "ce package n'a pas soit un"
+
+msgid "latex"
+msgstr "latex"
+
+msgid "or a"
+msgstr "ou un"
+
+msgid "man"
+msgstr "man"
+
+msgid "directory"
+msgstr "répertoire"
+
+msgid "no validly-named files in the"
+msgstr "Fichiers nommés de manière erronée dans le"
+
+msgid "file"
+msgstr "fichier"
+
+msgid "lacks a header: skipping"
+msgstr "sans entête : ignoré"
+
+msgid "there are no help pages in this package"
+msgstr "il n'y a pas de pages d'aide dans ce package"
+
+msgid "skipping repeated alias(es)"
+msgstr "alias(es) répétitifs ignorés"
+
+msgid "in file"
+msgstr "dans le fichier"
+
+msgid "problem in converting"
+msgstr "problème lors de la conversion"
+
+msgid "Bundle package:"
+msgstr "Package du bundle :"
+
 msgid "there is no package called '%s'"
 msgstr "aucun package nommé '%s' n'existe"
 
@@ -612,6 +823,15 @@ msgstr "'DESCRIPTION' a un champ 'Encoding' et le réencodage n'est pas possible"
 msgid "cannot create HTML package index"
 msgstr "impossible de créer l'index HTML du package"
 
+msgid "multiple \\encoding lines in file"
+msgstr "lignes \\encoding multiples dans le fichier "
+
+msgid "found encoding"
+msgstr "encodage trouvé"
+
+msgid "non-UTF-8 multibyte locales are not supported -- reencoding to UTF-8"
+msgstr "localisations multi-octets non UTF-8 non supportées -- réencodage en UTF-8"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "l'argument 'pkg' doit être de longueur 1"
 
@@ -632,6 +852,96 @@ msgstr "'file' doit être une chaîne de caractères ou une connexion"
 
 msgid "unimplemented encoding"
 msgstr "encodage non implémenté"
+
+msgid "cannot be opened"
+msgstr "ne peut être ouvert"
+
+msgid "testing '%s' failed"
+msgstr "le test '%s' a échoué"
+
+msgid "Collecting examples for package"
+msgstr "Récupération des exemples du package"
+
+msgid "Running examples in package"
+msgstr "Exécution des examples du package"
+
+msgid "Comparing"
+msgstr "Comparaison"
+
+msgid "to"
+msgstr "à"
+
+msgid "..."
+msgstr "..."
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Running specific tests for package"
+msgstr "Exécution des tests spécifiques au package"
+
+msgid "Running"
+msgstr "Exécution"
+
+msgid "Running vignettes for package"
+msgstr "Exécution des vignettes du package"
+
+msgid "Creating"
+msgstr "Création"
+
+msgid "creation of"
+msgstr "la création de"
+
+msgid "failed"
+msgstr "a échoué"
+
+msgid "creating"
+msgstr "création"
+
+msgid "running code in"
+msgstr "exécution du code dans"
+
+msgid "FAILED"
+msgstr "ECHEC"
+
+msgid "comparing"
+msgstr "comparaison"
+
+msgid "running strict specific tests"
+msgstr "exécution stricte des tests spécifiques"
+
+msgid "running sloppy specific tests"
+msgstr "exécution non stricte des tests spécifiques"
+
+msgid "running regression tests"
+msgstr "exécution des tests de régression"
+
+msgid "comparing 'reg-plot.ps' to 'reg-plot.ps.save' ..."
+msgstr "comparaison de 'reg-plot.ps' à 'reg-plot.ps.save' ..."
+
+msgid "running tests of plotting Latin-1"
+msgstr "exécution des tests de graphiques Latin-1"
+
+msgid "expect failure or some differences if not in a Latin or UTF-8 locale"
+msgstr "s'attendre à un échec ou à quelques différences si pas dans une localisation 'Latin' ou 'UTF-8'"
+
+msgid "comparing 'reg-plot-latin1.ps' to 'reg-plot-latin1.ps.save' ..."
+msgstr "comparaison de 'reg-plot-latin1.ps' à 'reg-plot-latin1.ps.save' ... "
+
+msgid "running tests of consistency of as/is.*"
+msgstr "exécution des tests d'adéquation de as/is.*"
+
+msgid "running tests of random deviate generation -- fails occasionally"
+msgstr "exécution des tests de génération de déviance aléatoire -- peut échouer de temps en temps"
+
+msgid "running tests of primitives"
+msgstr "exécution des tests de primitives"
+
+msgid "running regexp regression tests"
+msgstr "exécution des tests de régression regexp"
+
+msgid "running tests to possibly trigger segfaults"
+msgstr "exécution de tests pour générer éventuellement des 'segfaults'"
 
 msgid "test '%s' is not available"
 msgstr "le test '%s' n'est pas disponible"
@@ -702,6 +1012,13 @@ msgid_plural "Found possibly global 'T' or 'F' in the following Rd example files
 msgstr[0] "L'utilisation globale possible de 'T' ou 'F' est trouvées dans l'exemple du fichier Rd suivant :"
 msgstr[1] "Des utilisations globales possibles de 'T' ou 'F' sont trouvées dans les exemples des fichiers Rd suivants :"
 
+msgid "Found .Internal call in the following function:"
+msgid_plural "Found .Internal calls in the following functions:"
+msgstr[0] "Appel .Internal trouvé dans la fonction suivante :"
+msgstr[1] "Appels .Internal trouvés dans les fonctions suivantes :"
+
+#~ msgid "Verifiable as open source: %s"
+#~ msgstr "Vérifiable comme Open Source : %s"
 #~ msgid "--- running texi2dvi on vignettes"
 #~ msgstr "--- exécution de texi2dvi sur les vignettes"
 

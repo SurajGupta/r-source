@@ -1,14 +1,14 @@
 # German translation of src/library/utils/po/R-utils.pot
-# Copyright (C) 2008 The R Foundation
+# Copyright (C) 2008-2009 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2008.
+# Detlef Steuer <steuer@hsu-hh.de>, 2008-2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-12-16 10:07\n"
-"PO-Revision-Date: 2008-12-16 09:49+0100\n"
+"POT-Creation-Date: 2009-03-17 19:28\n"
+"PO-Revision-Date: 2009-03-26 11:28+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "MIME-Version: 1.0\n"
@@ -533,6 +533,9 @@ msgstr "Bundel '%s' ist nicht vollständig installiert"
 msgid "bundle '%s' has extra contents %s"
 msgstr "Bundel '%s'hat zusätzlichen Inhalt %s"
 
+msgid "read.dcf() error on file '%s'"
+msgstr "Fehler in read.dcf() bei Datei '%s'"
+
 msgid "'priority' must be character or NULL"
 msgstr "'priority' muss ein Zeichen oder NULL sein"
 
@@ -578,6 +581,13 @@ msgstr "jedes Paket hängt von mindestens einem weiteren ab"
 msgid "packages %s are mutually dependent"
 msgstr "Pakete %s sind gegenseitig abhängig"
 
+msgid ""
+"Do not know which element of 'lib' to install dependencies into\n"
+"skipping dependencies"
+msgstr ""
+"Weiß nicht in welches Element von 'lib' die Abhängigkeiten installiert "
+"werden sollen; überspringe Abhängigkeiten"
+
 msgid "no packages were specified"
 msgstr "keine Pakete angegeben"
 
@@ -602,6 +612,9 @@ msgstr "kann keinee Pakete installieren"
 msgid "unable to create"
 msgstr "kann nicht erzeugen"
 
+msgid "inferring 'repos = NULL' from the file name"
+msgstr "leite 'repos = NULL' aus dem Dateinamen ab"
+
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "kann keine MacOS X Binaries auf Windows installieren"
 
@@ -625,11 +638,11 @@ msgid "unable to create temporary directory '%s'"
 msgstr "kann temporäres Verzeichnis '%s' nicht erzeugen"
 
 msgid ""
-"Do not know which element of 'lib' to install dependencies into\n"
-"skipping dependencies"
+"installation of one of more packages failed,\n"
+"  probably %s"
 msgstr ""
-"Weiß nicht in welches Element von 'lib' die Abhängigkeiten installiert "
-"werden sollen; überspringe Abhängigkeiten"
+"Installation eines oder mehrer Pakete schlug fehl,\n"
+" vermutlich %s"
 
 msgid ""
 "The downloaded packages are in\n"
@@ -783,6 +796,12 @@ msgstr "kann 'x' nicht nach Roman unwandeln"
 msgid "Invalid roman numeral(s): %s"
 msgstr "Ungültige römische Zahl(en): %s"
 
+msgid "length mismatch: bug in code!"
+msgstr "Längen passen nicht: Fehler im Code!"
+
+msgid "Processing file"
+msgstr "Verarbeite Datei"
+
 msgid "no valid packages were specified"
 msgstr "keine gültigen Pakete angegeben"
 
@@ -884,6 +903,12 @@ msgstr "Nutze ungelinktes HTML Datei: Hyperlinks evtl. falsch"
 msgid "options(\"browser\") not set"
 msgstr "options(\"browser\") nicht gesetzt"
 
+msgid "'latexcmd' is empty"
+msgstr "'latexcmd' ist leer"
+
+msgid "'dvipscmd' is empty"
+msgstr "'dvipscmd'ist leer"
+
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "ungültiger Browsername, überprüfen Sie options(\"browser\")."
 
@@ -922,6 +947,24 @@ msgstr "kann HTML Suchindex nicht erzeugen"
 msgid "Updating HTML index of packages in '.Library'"
 msgstr "Aktualisiere HTML Index der Pakete in '.Library'"
 
+msgid "'tar' returned non-zero exit code %d"
+msgstr "'tar' hatte Exit-Status ungleich 0"
+
+msgid "package '%s' successfully unpacked and MD5 sums checked"
+msgstr "Paket '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
+
+msgid "malformed bundle DESCRIPTION file, no Contains field"
+msgstr "kein Contains Feld in der Bundel DESCRIPTION Datei"
+
+msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+msgstr "Bundel '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
+
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr "kann temporäre Installation '%s' nicht nach '%s' verschieben"
+
+msgid "cannot remove prior installation of package"
+msgstr "kann alte Installation des Pakets nicht entfernen"
+
 msgid "'memory.size()' is Windows-specific"
 msgstr "'memory.size()' ist spezifisch für Windows"
 
@@ -940,20 +983,8 @@ msgstr "korrigiere URLs in nicht-standard Bibliotheken"
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr "Wenn nichts passiert, sollten Sie '%s' selbst öffnen"
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr "Paket '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr "kein Contains Feld in der Bundel DESCRIPTION Datei"
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr "Bundel '%s' erfolgreich ausgepackt und MD5 Summen abgeglichen"
-
 msgid "failed to create '%s'"
 msgstr "Erzeugen von '%s' fehlgeschlagen"
-
-msgid "unable to move temporary installation '%s' to '%s'"
-msgstr "kann temporäre Installation '%s' nicht nach '%s' verschieben"
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr "kann alte Installation von Paket '%s' nicht entfernen"
@@ -976,15 +1007,6 @@ msgstr "winDialogString() kann nicht nicht-interaktiv genutzt werden"
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr "'pb' ist nicht aus der Klasse \"winProgressBar\""
 
-msgid "this function is intended to work with the Aqua GUI"
-msgstr "diese Funktion soll mit dem Aqua GUI arbeiten"
-
-msgid "'tar' returned non-zero exit code %d"
-msgstr "'tar' hatte Exit-Status ungleich 0"
-
-msgid "cannot remove prior installation of package"
-msgstr "kann alte Installation des Pakets nicht entfernen"
-
 msgid "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0] "Klasse verworfen von Spalte %s"
@@ -994,11 +1016,6 @@ msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] "Objekt '%s' nicht gefunden"
 msgstr[1] "Objekte '%s' nicht gefunden"
-
-msgid "'lib' element '%s'  is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
-msgstr[0] "'lib' Element '%s' ist keine schreibbares Verzeichnis"
-msgstr[1] "'lib' Elemente '%s' sind keine schreibbaren Verzeichnisse"
 
 msgid "package %s is not available"
 msgid_plural "packages %s are not available"
@@ -1015,10 +1032,18 @@ msgid_plural "also installing the dependencies %s"
 msgstr[0] "installiere auch Abhängigkeit %s"
 msgstr[1] "installiere auch Abhängigkeiten %s"
 
+msgid "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
+msgstr[0] "'lib' Element '%s' ist keine schreibbares Verzeichnis"
+msgstr[1] "'lib' Elemente '%s' sind keine schreibbaren Verzeichnisse"
+
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] "Paket '%s' wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete '%s' werden gerade bennutzt und deshalb nicht installiert"
+
+#~ msgid "this function is intended to work with the Aqua GUI"
+#~ msgstr "diese Funktion soll mit dem Aqua GUI arbeiten"
 
 #~ msgid "Maintainer:"
 #~ msgstr "Maintainer:"

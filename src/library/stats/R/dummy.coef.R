@@ -32,13 +32,13 @@ dummy.coef.lm <- function(object, use.na=FALSE, ...)
     names(nxl) <- vars
     tmp <- unlist(lapply(xl, length))
     nxl[names(tmp)] <- tmp
-    lterms <- apply(facs, 2, function(x) prod(nxl[x > 0]))
+    lterms <- apply(facs, 2L, function(x) prod(nxl[x > 0]))
     nl <- sum(lterms)
     args <- vector("list", length(vars))
     names(args) <- vars
     for(i in vars)
 	args[[i]] <- if(nxl[[i]] == 1) rep.int(1, nl)
-	else factor(rep.int(xl[[i]][1], nl), levels = xl[[i]])
+	else factor(rep.int(xl[[i]][1L], nl), levels = xl[[i]])
     dummy <- do.call("data.frame", args)
     pos <- 0
     rn <- rep.int(tl, lterms)
@@ -49,13 +49,13 @@ dummy.coef.lm <- function(object, use.na=FALSE, ...)
 	if(length(ifac) == 0) {		# quantitative factor
 	    rnn[pos+1] <- j
 	} else if(length(ifac) == 1) {	# main effect
-	    dummy[ pos+1:lterms[j], ifac ] <- xl[[ifac]]
-	    rnn[ pos+1:lterms[j] ] <- as.character(xl[[ifac]])
+	    dummy[ pos+1L:lterms[j], ifac ] <- xl[[ifac]]
+	    rnn[ pos+1L:lterms[j] ] <- as.character(xl[[ifac]])
 	} else {			# interaction
 	    tmp <- expand.grid(xl[ifac])
-	    dummy[ pos+1:lterms[j], ifac ] <- tmp
-	    rnn[ pos+1:lterms[j] ] <-
-		apply(as.matrix(tmp), 1, function(x) paste(x, collapse=":"))
+	    dummy[ pos+1L:lterms[j], ifac ] <- tmp
+	    rnn[ pos+1L:lterms[j] ] <-
+		apply(as.matrix(tmp), 1L, function(x) paste(x, collapse=":"))
 	}
 	pos <- pos + lterms[j]
     }
@@ -80,7 +80,7 @@ dummy.coef.lm <- function(object, use.na=FALSE, ...)
     }
     if(int > 0) {
 	res <- c(list(coef[int]), res)
-	names(res)[1] <- "(Intercept)"
+	names(res)[1L] <- "(Intercept)"
     }
     class(res) <- "dummy_coef"
     res
@@ -102,13 +102,13 @@ dummy.coef.aovlist <- function(object, use.na = FALSE, ...)
     names(nxl) <- vars
     tmp <- unlist(lapply(xl, length))
     nxl[names(tmp)] <- tmp
-    lterms <- apply(facs, 2, function(x) prod(nxl[x > 0]))
+    lterms <- apply(facs, 2L, function(x) prod(nxl[x > 0]))
     nl <- sum(lterms)
     args <- vector("list", length(vars))
     names(args) <- vars
     for(i in vars)
 	args[[i]] <- if(nxl[[i]] == 1) rep.int(1, nl)
-	else factor(rep.int(xl[[i]][1], nl), levels = xl[[i]])
+	else factor(rep.int(xl[[i]][1L], nl), levels = xl[[i]])
     dummy <- do.call("data.frame", args)
     pos <- 0
     rn <- rep.int(tl, lterms)
@@ -119,13 +119,13 @@ dummy.coef.aovlist <- function(object, use.na = FALSE, ...)
 	if(length(ifac) == 0) {		# quantitative factor
 	    rnn[pos + 1] <- j
 	} else if(length(ifac) == 1) {	# main effect
-	    dummy[ pos+1:lterms[j], ifac ] <- xl[[ifac]]
-	    rnn[ pos+1:lterms[j] ] <- as.character(xl[[ifac]])
+	    dummy[ pos+1L:lterms[j], ifac ] <- xl[[ifac]]
+	    rnn[ pos+1L:lterms[j] ] <- as.character(xl[[ifac]])
 	} else {			# interaction
 	    tmp <- expand.grid(xl[ifac])
-	    dummy[ pos+1:lterms[j], ifac ] <- tmp
-	    rnn[ pos+1:lterms[j] ] <-
-		apply(as.matrix(tmp), 1, function(x) paste(x, collapse=":"))
+	    dummy[ pos+1L:lterms[j], ifac ] <- tmp
+	    rnn[ pos+1L:lterms[j] ] <-
+		apply(as.matrix(tmp), 1L, function(x) paste(x, collapse=":"))
 	}
 	pos <- pos + lterms[j]
     }
@@ -166,27 +166,27 @@ print.dummy_coef <- function(x, ..., title)
     terms <- names(x)
     n <- length(x)
     nm <- max(sapply(x, length))
-    ans <- matrix("", 2*n, nm)
-    rn <- rep.int("", 2*n)
+    ans <- matrix("", 2L*n, nm)
+    rn <- rep.int("", 2L*n)
     line <- 0
     for (j in seq(n)) {
 	this <- x[[j]]
 	n1 <- length(this)
 	if(n1 > 1) {
 	    line <- line + 2
-	    ans[line-1, 1:n1] <- names(this)
-	    ans[line, 1:n1] <- format(this, ...)
+	    ans[line-1, 1L:n1] <- names(this)
+	    ans[line, 1L:n1] <- format(this, ...)
 	    rn[line-1] <- paste(terms[j], ":   ", sep="")
 	} else {
 	    line <- line + 1
-	    ans[line, 1:n1] <- format(this, ...)
+	    ans[line, 1L:n1] <- format(this, ...)
 	    rn[line] <- paste(terms[j], ":   ", sep="")
 	}
     }
     rownames(ans) <- rn
     colnames(ans) <- rep.int("", nm)
     cat(if(missing(title)) "Full coefficients are" else title, "\n")
-    print(ans[1:line, , drop=FALSE], quote=FALSE, right=TRUE)
+    print(ans[1L:line, , drop=FALSE], quote=FALSE, right=TRUE)
     invisible(x)
 }
 

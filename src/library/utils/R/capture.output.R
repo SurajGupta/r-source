@@ -16,7 +16,7 @@
 
 capture.output <- function(..., file=NULL, append=FALSE)
 {
-    args <- substitute(list(...))[-1]
+    args <- substitute(list(...))[-1L]
 
     rval <- NULL; closeit <- TRUE
     if (is.null(file))
@@ -35,7 +35,7 @@ capture.output <- function(..., file=NULL, append=FALSE)
 
     pf <- parent.frame()
     evalVis <- function(expr)
-        .Internal(eval.with.vis(expr, pf, baseenv()))
+        withVisible(eval(expr, pf))
 
     for(i in seq_along(args)) {
         expr <- args[[i]]

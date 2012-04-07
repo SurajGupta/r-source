@@ -7,6 +7,7 @@
 \alias{getNativeSymbolInfo}
 \alias{NativeSymbolInfo} % the class
 \alias{NativeSymbol} % the class
+\alias{RegisteredNativeSymbol} % the class
 \title{
   Obtain a Description of one or more Native (C/Fortran) Symbols
 }
@@ -88,12 +89,12 @@ getNativeSymbolInfo(name, PACKAGE, unlist = TRUE,
   \item{package}{a list containing 3 elements:
     \describe{
       \item{name}{the short form of the library name which can be used
-	as the value of the \code{PACKAGE} argument in
-	the different native interface functions.}
+        as the value of the \code{PACKAGE} argument in
+        the different native interface functions.}
       \item{path}{the fully qualified name of the DLL.}
       \item{dynamicLookup}{a logical value indicating whether dynamic
-	resolution is used when looking for symbols in this library,
-	or only registered routines can be located.}
+        resolution is used when looking for symbols in this library,
+        or only registered routines can be located.}
     }    
   }
   If the routine was explicitly registered by the dynamically loaded
@@ -113,8 +114,8 @@ getNativeSymbolInfo(name, PACKAGE, unlist = TRUE,
 }
 \references{
   For information about registering native routines,
-  see \dQuote{In Search of {C/C++} \& {FORTRAN} Routines},
-  R News, volume 1, number 3, 2001, p20--23
+  see \dQuote{In Search of C/C++ & FORTRAN Routines},
+  R-News, volume 1, number 3, 2001, p20--23
   (\url{http://CRAN.R-project.org/doc/Rnews/}).  
 }
 \author{Duncan Temple Lang}

@@ -27,32 +27,32 @@ summary.default <-
     value <- if(is.logical(object))# scalar or array!
 	c(Mode = "logical",
           {tb <- table(object, exclude=NULL)# incl. NA s
-           if(!is.null(n <- dimnames(tb)[[1]]) && any(iN <- is.na(n)))
-               dimnames(tb)[[1]][iN] <- "NA's"
+           if(!is.null(n <- dimnames(tb)[[1L]]) && any(iN <- is.na(n)))
+               dimnames(tb)[[1L]][iN] <- "NA's"
            tb
            })
     else if(is.numeric(object)) {
 	nas <- is.na(object)
 	object <- object[!nas]
 	qq <- stats::quantile(object)
-	qq <- signif(c(qq[1:3], mean(object), qq[4:5]), digits)
+	qq <- signif(c(qq[1L:3L], mean(object), qq[4L:5L]), digits)
 	names(qq) <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.")
 	if(any(nas))
 	    c(qq, "NA's" = sum(nas))
 	else qq
     } else if(is.recursive(object) && !is.language(object) &&
 	      (n <- length(object))) {
-	sumry <- array("", c(n, 3), list(names(object),
+	sumry <- array("", c(n, 3L), list(names(object),
 					 c("Length", "Class", "Mode")))
 	ll <- numeric(n)
-	for(i in 1:n) {
+	for(i in 1L:n) {
 	    ii <- object[[i]]
 	    ll[i] <- length(ii)
 	    cls <- oldClass(ii)
-	    sumry[i, 2] <- if(length(cls)>0) cls[1] else "-none-"
-	    sumry[i, 3] <- mode(ii)
+	    sumry[i, 2L] <- if(length(cls)) cls[1L] else "-none-"
+	    sumry[i, 3L] <- mode(ii)
 	}
-	sumry[, 1] <- format(as.integer(ll))
+	sumry[, 1L] <- format(as.integer(ll))
 	sumry
     }
     else c(Length= length(object), Class= class(object), Mode= mode(object))
@@ -67,7 +67,7 @@ summary.factor <- function(object, maxsum = 100, ...)
     if(any(nas)) maxsum <- maxsum - 1
     tbl <- table(object)
     tt <- c(tbl) # names dropped ...
-    names(tt) <- dimnames(tbl)[[1]]
+    names(tt) <- dimnames(tbl)[[1L]]
     if(length(ll) > maxsum) {
 	drop <- maxsum:length(ll)
 	o <- sort.list(tt, decreasing = TRUE)
@@ -91,7 +91,7 @@ summary.data.frame <-
     nm <- names(object)
     lw <- numeric(nv)
     nr <- max(unlist(lapply(z, NROW)))
-    for(i in 1:nv) {
+    for(i in 1L:nv) {
         sms <- z[[i]]
         if(is.matrix(sms)) {
             ## need to produce a single column, so collapse matrix
@@ -100,28 +100,28 @@ summary.data.frame <-
             tmp <- format(sms)
             if(nrow(sms) < nr)
                 tmp <- rbind(tmp, matrix("", nr - nrow(sms), ncol(sms)))
-            sms <- apply(tmp, 1, function(x) paste(x, collapse="  "))
+            sms <- apply(tmp, 1L, function(x) paste(x, collapse="  "))
             ## produce a suitable colname: undoing padding
-            wid <- sapply(tmp[1,], nchar, type="w")
+            wid <- sapply(tmp[1L, ], nchar, type="w")
             blanks <- paste(character(max(wid)), collapse = " ")
             pad0 <- floor((wid-nchar(cn, type="w"))/2)
             pad1 <- wid - nchar(cn, type="w") - pad0
-            cn <- paste(substring(blanks, 1, pad0), cn,
-                        substring(blanks, 1, pad1), sep = "")
+            cn <- paste(substring(blanks, 1L, pad0), cn,
+                        substring(blanks, 1L, pad1), sep = "")
             nm[i] <- paste(cn, collapse="  ")
             z[[i]] <- sms
         } else {
             lbs <- format(names(sms))
             sms <- paste(lbs, ":", format(sms, digits = digits), "  ",
                          sep = "")
-            lw[i] <- nchar(lbs[1], type="w")
+            lw[i] <- nchar(lbs[1L], type="w")
             length(sms) <- nr
             z[[i]] <- sms
         }
     }
     z <- unlist(z, use.names=TRUE)
     dim(z) <- c(nr, nv)
-    blanks <- paste(character(max(lw) + 2), collapse = " ")
+    blanks <- paste(character(max(lw) + 2L), collapse = " ")
     pad <- floor(lw-nchar(nm, type="w")/2)
     nm <- paste(substring(blanks, 1, pad), nm, sep = "")
     dimnames(z) <- list(rep.int("", nr), nm)

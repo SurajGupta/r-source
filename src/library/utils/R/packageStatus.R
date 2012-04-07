@@ -20,9 +20,9 @@ packageStatus <- function(lib.loc = NULL, repositories = NULL, method,
     newestVersion <- function(x)
     {
         vers <- package_version(x)
-	max <- vers[1]
+	max <- vers[1L]
         for (i in seq_along(vers)) if (max < vers[i]) max <- vers[i]
-	which(vers == max)[1]
+	which(vers == max)[1L]
     }
 
     if(is.null(lib.loc))
@@ -34,9 +34,9 @@ packageStatus <- function(lib.loc = NULL, repositories = NULL, method,
     char2df <- function(x)
     {
         y <- list()
-        for(k in 1:ncol(x)) y[[k]] <- x[,k]
+        for(k in 1L:ncol(x)) y[[k]] <- x[,k]
         attr(y, "names") <- colnames(x)
-        attr(y, "row.names") <- y[[1]]
+        attr(y, "row.names") <- y[[1L]]
         class(y) <- "data.frame"
         y
     }
@@ -61,7 +61,7 @@ packageStatus <- function(lib.loc = NULL, repositories = NULL, method,
     bundles <- which(!is.na(z[,"Bundle"]))
     for(bundle in bundles) {
         contains <- z[bundle, "Contains"]
-        contains <- strsplit(contains, "[[:space:]]+")[[1]]
+        contains <- strsplit(contains, "[[:space:]]+")[[1L]]
         if(all(contains %in% y$Package)) z[bundle, "Status"] <- "installed"
     }
 
@@ -69,7 +69,7 @@ packageStatus <- function(lib.loc = NULL, repositories = NULL, method,
     z$Package <- ifelse(is.na(z$Bundle), z$Package, z$Bundle)
     attr(z, "row.names") <- z$Package
 
-    for(k in 1:nrow(y)){
+    for(k in 1L:nrow(y)){
         pkg <- ifelse(is.na(y$Bundle[k]), y[k, "Package"], y[k, "Bundle"])
         if(pkg %in% z$Package) {
             if(package_version(y[k, "Version"]) <
@@ -146,7 +146,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
 {
     update <- NULL
     old <- which(object$inst$Status == "upgrade")
-    if(length(old) == 0) {
+    if(length(old) == 0L) {
         cat("Nothing to do!\n")
         return(invisible())
     }
@@ -155,7 +155,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
         write.table(x, row.names=FALSE, col.names=FALSE, quote=FALSE,
                     sep=" at ")
 
-    haveasked <- character(0)
+    haveasked <- character(0L)
     if(ask) {
         for(k in old) {
             pkg <- ifelse(is.na(object$inst[k, "Bundle"]),
@@ -168,7 +168,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
             cat(pkg, ":\n")
             askprint(object$inst[k,c("Version", "LibPath")])
             askprint(object$avail[pkg, c("Version", "Repository")])
-            answer <- substr(readline("Update (y/N/x)?  "), 1, 1)
+            answer <- substr(readline("Update (y/N/x)?  "), 1L, 1L)
             if(answer == "c" | answer == "c") {
                 cat("cancelled by user\n")
                 return(invisible())
@@ -187,7 +187,7 @@ upgrade.packageStatus <- function(object, ask=TRUE, ...)
         update <- update[old, , drop=FALSE]
     }
 
-    if(length(update) > 0) {
+    if(length(update)) {
         for(repo in unique(update[,3])) {
             ok <- update[, 3] == repo
             install.packages(update[ok, 1], update[ok, 2], contriburl = repo)

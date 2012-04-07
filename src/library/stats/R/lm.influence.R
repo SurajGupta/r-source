@@ -65,7 +65,7 @@ lm.influence <- function (model, do.coef = TRUE)
                         model$qr$qraux,
                         wt.res = e,
                         hat = double(n),
-                        coefficients= if(do.coef) matrix(0, n, k) else double(0),
+                        coefficients= if(do.coef) matrix(0, n, k) else double(0L),
                         sigma = double(n),
                         tol = 10 * .Machine$double.eps,
                         DUP = FALSE, PACKAGE="stats"
@@ -229,7 +229,7 @@ influence.measures <- function(model)
 	if(n <= k)
 	    stop("too few cases, n < k")
 	absmat <- abs(infmat)
-	result <- cbind(absmat[, 1:k] > 1, # |dfbetas| > 1
+	result <- cbind(absmat[, 1L:k] > 1, # |dfbetas| > 1
 			absmat[, k + 1] > 3 * sqrt(k/(n - k)), # |dffit| > ..
 			abs(1 - infmat[, k + 2]) > (3*k)/(n - k),# |1-cov.r| >..
 			pf(infmat[, k + 3], k, n - k) > 0.5,# "P[cook.d..]" > .5
@@ -270,7 +270,7 @@ print.infl <- function(x, digits = max(3, getOption("digits") - 4), ...)
 {
     ## `x' : as the result of  influence.measures(.)
     cat("Influence measures of\n\t", deparse(x$call),":\n\n")
-    is.star <- apply(x$is.inf, 1, any, na.rm = TRUE)
+    is.star <- apply(x$is.inf, 1L, any, na.rm = TRUE)
     print(data.frame(x$infmat,
 		     inf = ifelse(is.star, "*", " ")),
 	  digits = digits, ...)
@@ -283,15 +283,15 @@ summary.infl <- function(object, digits = max(2, getOption("digits") - 5), ...)
     is.inf <- object$is.inf
     ## will have NaN values from any hat=1 rows.
     is.inf[is.na(is.inf)] <- FALSE
-     is.star <- apply(is.inf, 1, any)
+     is.star <- apply(is.inf, 1L, any)
     is.inf <- is.inf[is.star,]
     cat("Potentially influential observations of\n\t",
 	deparse(object$call),":\n")
     if(any(is.star)) {
 	imat <- object $ infmat[is.star,, drop = FALSE]
-	if(is.null(rownam <- dimnames(object $ infmat)[[1]]))
+	if(is.null(rownam <- dimnames(object $ infmat)[[1L]]))
 	    rownam <- format(seq(is.star))
-	dimnames(imat)[[1]] <- rownam[is.star]
+	dimnames(imat)[[1L]] <- rownam[is.star]
 	chmat <- format(round(imat, digits = digits))
 	cat("\n")
 	print(array(paste(chmat,c("","_*")[1+is.inf], sep=''),
@@ -300,6 +300,6 @@ summary.infl <- function(object, digits = max(2, getOption("digits") - 5), ...)
 	invisible(imat)
     } else {
 	cat("NONE\n")
-	numeric(0)
+	numeric(0L)
     }
 }

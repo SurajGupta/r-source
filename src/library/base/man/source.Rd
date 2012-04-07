@@ -72,7 +72,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
 
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows)
-  or CR (as used on classic MacOS).  The final line can be incomplete, that
+  or CR (as used on classic Mac OS).  The final line can be incomplete, that
   is missing the final end-of-line marker.
 
   If \code{\link{options}}("keep.source") is true (the default in
@@ -87,7 +87,10 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   guess the encoding.  The result of \code{\link{localeToCharset}()} is
   used as a guide.  If \code{encoding} has two or more elements, they
   are tried in turn until the file/URL can be read without error in the
-  trial encoding.
+  trial encoding.  If an actual \code{encoding} is specified (rather than the
+  default or \code{"unknown"}) then character strings in the result will be
+  translated to the current encoding and marked as such (see
+  \code{\link{Encoding}}) in Latin-1 and UTF-8 locales.
   
   If \code{file} is a connection (including one specified by \code{""},
   it is not possible to re-encode the input inside \code{source}, and so
@@ -109,7 +112,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{demo}} which uses \code{source};

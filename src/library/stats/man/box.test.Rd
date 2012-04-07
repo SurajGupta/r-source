@@ -1,6 +1,6 @@
 % File src/library/stats/man/box.test.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{Box.test}
@@ -36,7 +36,7 @@ Box.test(x, lag = 1, type = c("Box-Pierce", "Ljung-Box"), fitdf = 0)
   A list with class \code{"htest"} containing the following components:
   \item{statistic}{the value of the test statistic.}
   \item{parameter}{the degrees of freedom of the approximate chi-squared
-    distribution of the test statistic.}
+    distribution of the test statistic (taking \code{fitdf} into account.}
   \item{p.value}{the p-value of the test.}
   \item{method}{a character string indicating which type of test was
     performed.}
@@ -51,7 +51,7 @@ Box.test(x, lag = 1, type = c("Box-Pierce", "Ljung-Box"), fitdf = 0)
 
   Ljung, G. M. and Box, G. E. P. (1978),
   On a measure of lack of fit in time series models.
-  \emph{Biometrika} \bold{65}, 553--564.
+  \emph{Biometrika} \bold{65}, 297--303.
 
   Harvey, A. C. (1993)
   \emph{Time Series Models}.

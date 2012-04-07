@@ -1,0 +1,40 @@
+#-*- Makefile -*-
+#
+# ${R_HOME}/src/library/stats4/Makefile.win
+
+srcdir = .
+top_srcdir = ../../..
+
+top_builddir = ../../..
+
+RHOME = ../../../..
+
+pkg = stats4
+
+RdSRC = $(srcdir)/man/*.Rd
+
+R_EXE = $(top_builddir)/bin/Rterm.exe --vanilla --slave
+
+ECHO = echo
+MKINSTALLDIRS = mkdir -p
+INSTALL_DATA = cp
+SHELL = sh
+R_GZIPCMD = gzip
+USE_NLS =yes
+
+all:
+	@$(ECHO) "building package '$(pkg)'"
+	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
+	@$(MAKE) -f Makefile.win mkR2 mkdesc mkpo mkman
+	@$(MAKE) -f Makefile.win Rfiles
+
+
+Rfiles: $(top_builddir)/library/$(pkg)/R/$(pkg).rdb
+
+$(top_builddir)/library/$(pkg)/R/$(pkg).rdb: all.R
+	@$(INSTALL_DATA) all.R $(top_builddir)/library/$(pkg)/R/$(pkg)
+	@$(ECHO) "tools:::makeLazyLoading(\"$(pkg)\")" | \
+	  R_DEFAULT_PACKAGES="methods,graphics,stats" LC_ALL=C $(R_EXE) > /dev/null
+
+
+include $(top_srcdir)/share/make/basepkg.mk

@@ -25,12 +25,12 @@ function (clName, filename = NULL, type = "class",
 	if(is.null(mlist))
 	    return(NULL)
 	tmp <- listFromMlist(mlist)
-	if ((lt <- length(tmp[[1]])) == 0)
+	if ((lt <- length(tmp[[1L]])) == 0L)
 	    NULL
 	else if (lt == 1)
-	    unlist(tmp[[1]])
+	    unlist(tmp[[1L]])
 	else { ## lt >= 2
-	    lapply(tmp[[1]], unlist)
+	    lapply(tmp[[1L]], unlist)
 	}
     }
     genWithClass <- function(cl, where) {
@@ -52,7 +52,7 @@ function (clName, filename = NULL, type = "class",
     ## given a generic g, obtain list with one element per signature
     {
 	tmp <- listFromMlist(getMethods(g, where)) # TODO: change this to findMethods()
-	if (length(tmp[[1]])) tmp[[1]] # else NULL
+	if (length(tmp[[1L]])) tmp[[1L]] # else NULL
     }
     slotClassWithSource <- function(clname) {
 	clDef <- getClassDef(clname)
@@ -61,12 +61,12 @@ function (clName, filename = NULL, type = "class",
 	for(j in rev(seq_along(extds))) {
 	    i <- extds[[j]]
 	    slotsi <- getSlots(getClass(i))
-	    if(length(slotsi) > 0)
+	    if(length(slotsi))
 		allslots[names(slotsi)] <- paste0("\"", as.character(slotsi),
 						  "\", from class \"", i, "\"")
 	}
 	slotsi <- getSlots(clDef)
-	if(length(slotsi) > 0)
+	if(length(slotsi))
 	    allslots[names(slotsi)] <- paste0("\"", as.character(slotsi),"\"")
 	allslots
     }
@@ -85,12 +85,12 @@ function (clName, filename = NULL, type = "class",
       whereClass <- where
     else {
         whereClass <- find(classMetaName(clName))
-        if(length(whereClass) == 0)
+        if(length(whereClass) == 0L)
           stop(gettextf("no definition of class \"%s\" found", clName),
                domain = NA)
-        else if(length(whereClass) > 1) {
+        else if(length(whereClass) > 1L) {
             if(identical(where, topenv(parent.frame()))) {
-                whereClass <- whereClass[[1]]
+                whereClass <- whereClass[[1L]]
                 warning(gettextf("multiple definitions of \"%s\" found; using the one on %s",
                                  clName, whereClass), domain = NA)
             }
@@ -126,7 +126,7 @@ function (clName, filename = NULL, type = "class",
 	initMethod <- unRematchDefinition(selectMethod("initialize", clName))
 	argNames <- formalArgs(initMethod)
 	## but for new() the first argument is the class name
-	argNames[[1]] <- clNameQ
+	argNames[[1L]] <- clNameQ
 	.usage <- c(paste0(.usage,"{"),
 		    paste0("Objects can be created by calls of the form \\code{",
                            .makeCallString(initMethod, "new", argNames), "}."),
@@ -144,7 +144,7 @@ function (clName, filename = NULL, type = "class",
     else
 	.slots <- character()
     .extends <- clDef@contains
-    if(length(.extends) > 0) {
+    if(length(.extends)) {
 	.extends <- showExtends(.extends, printTo = FALSE)
 	.extends <-
 	    c("\\section{Extends}{",
@@ -164,7 +164,7 @@ function (clName, filename = NULL, type = "class",
     .methAliases <- ""
     if (nmeths > 0) {
 	.meths.body <- "  \\describe{"
-	for (i in 1:nmeths) {
+	for (i in 1L:nmeths) {
 	    .sig <- sigsList(methnms[i], where = whereClass)
 	    for (j in seq_along(.sig)) {
 		if (!all(is.na(match(.sig[[j]],clName)))) {
@@ -193,6 +193,7 @@ function (clName, filename = NULL, type = "class",
 
     Rdtxt <-
 	list(name = .name,
+             version = "\\Rdversion{1.1}",
 	     type = .type,
 	     aliases = .alias,
 	     methAliases = .methAliases,

@@ -1,9 +1,650 @@
 			Dear Emacs, please make this -*-Text-*- mode!
 	**************************************************
 	*						 *
+	*	       2.9 SERIES NEWS			 *
+	*						 *
+	**************************************************
+
+
+		CHANGES IN R VERSION 2.9.0
+
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o	expand.grid() by default no longer coerces strings into factors.
+
+
+NEW FEATURES
+
+    o	Package 'Matrix' is now a recommended package contained in the
+	basic R distribution.  It provides S4 classes and methods for
+	dense and sparse matrices, often by using the numerical
+	libraries Lapack and from the SuiteSparse collection CHOLMOD,
+	CSparse, and SPQR among others.
+
+    o	pdf() and postscript() gain a 'useKerning' argument to place
+	strings using kerning (which had previously been ignored in
+	display but not in strwidth), based in part on an idea and
+	code from Ei-ji Nakama. The default is TRUE.
+
+	Kerning involving spaces is now ignored (it was previously
+	only used in the computation of string widths).
+
+    o	seq.default() and seq.int() ensure that the result is within the
+	interval [from, to] even when the last value would previously
+	have been slightly out of range because of the allowance for
+	rounding error in computing the number of elements.
+
+    o	boxplot() gains a simple 'matrix' method, enabling boxplot(mat)
+	instead of boxplot(data.frame(mat)).
+
+    o	zip.file.extract() gains an optional 'dir' argument (but use
+	unzip() instead).
+
+    o	source() with 'encoding' specified (and not as "unknown") marks
+	the encoding of character strings in Latin-1 and UTF-8
+	locales.
+
+    o	parse(text=z) now marks the encoding of character strings in
+	Latin-1 and UTF-8 locales if 'z' is of known encoding (that is
+	all elements are either ASCII or marked as Latin-1 or UTF-8).
+
+    o	sprintf() does stricter error checking on input formats to
+	avoid passing invalid formats to the OS (which have a tendency
+	to crash under such inputs).
+
+    o	expand.grid() gains a 'stringsAsFactor' argument to ask for
+	automatic conversion of character vectors to factors (which
+	happened for many years but was not previously documented, and
+	is no longer the default).
+
+    o	bxp() now coputes the 'ylim' including the outliers only if
+	'outline = TRUE'.  (Wish of PR#13196)
+
+    o	barplot() gains a 'args.legend' argument.  (Wish of PR#13265).
+
+    o	RweaveLatexSetup() now accepts all (and not just some) options
+	passed through from Sweave()
+
+    o	cumsum(x) and cumprod(x) for double precision x now use a long
+	double accumulator where available and so more closely match
+	sum() and prod() in potentially being more accurate.
+
+    o	plot() methods for "stepfun" (and hence "ecdf") gain an 'col'
+	argument, allowing to set all three colors simultaneously.
+
+    o	Iterating over a factor in a for loop now coerces to a character
+	vector (rather than using the integer codes).
+
+    o	data.frame() now recycles columns of list arguments, not just
+	vectors and factors.
+
+    o	plot.ts(plot.type="multiple") now makes use of *.lab and
+	*.axis graphical parameters (wish of PR#13134 and 13135).
+
+    o	Classes can be exported from a name space using the NAMESPACE
+	file directive 'exportClassPattern' which has the same syntax
+	as 'exportPattern'.
+
+    o	strftime() now converts its first argument with as.POSIXlt()
+	and so is no longer an alias for format.POSIXLt.
+
+    o	body<-() now treats list values consistently with other
+	types: they no longer need to be wrapped in a list() call.
+
+    o	option("pdfbrowser") is now set on Windows as well as on Unix-alikes.
+
+    o	object.size() now returns an object of class "object_size" and
+    	has a print() method.
+
+    o	[col/row]Sums(), *Means() now have an additional '...' argument,
+	so that they can more easily be turned into generic functions.
+
+    o	Package 'tools' contains dependsOnPkgs() to compute reverse
+	dependencies.
+
+    o	Strict type checking is now turned on: this catches more
+	internal corruptions, and some badly written contributed code.
+
+    o	There are new functions in package 'tcltk', tk_choose.files(),
+	tk_choose.dir() and tk_messageBox(), analogues of functions
+	available on Windows (the last is an analogue of winDialog).
+
+    o	Sys.glob() now does tilde expansion on all platforms.
+
+    o	read.table() and friends gain a 'fileEncoding' argument to
+	make re-encoding of input just a little bit simpler.
+
+    o	grep() gains an 'invert' argument mimicking 'grep -v/--invert'.
+
+    o 	strwrap() now allows a separate prefix for the first line.
+
+    o	grep() has a more efficient sibling grepl() that returns a
+	logical vector.
+
+    o	xfig() has new arguments 'defaultFont' and 'textSpecial'
+	contributed by Sebastian Fischmeister.
+
+    o	parse() and parse_Rd() now point to syntax errors in the
+	reported error context, and include the filename and line and
+	column numbers so smart text editors can jump to the error
+	location.
+
+    o	str(<1d-array>) now writes "[1:n(1d)]" instead of the previous
+	less clear "[, 1:n]".
+
+    o	New function testInstalledPackage() in package 'tools' allows
+	the examples (and if they were installed) any package-specific
+	tests to be run on an installed package.
+
+	testInstalledPackages() can run all the examples and tests in
+	the standard and/or recommended packages.  Also
+	testInstalledBasic() can run the basic tests (if installed).
+
+    o	file.copy() now has a 'recursive' argument.
+
+    o	Errors in setOldClass() will cause a previous definition to be restored.
+
+    o	Ambiguities in class inheritance and method selection resulting
+	from duplicates in superclasses are now resolved by requiring
+	(if possible) consistency with all the superclass inheritance. The
+	rules for method selection have been revised to take advantage of
+	the improved ordering.
+	See ?Methods and the reference there related to inheritance.
+
+    o	New function unzip() in package 'utils' to expand or list zip
+	archives.
+
+    o	Replacement functions for class() and oldClass()  will unset
+        the S4 bit when the replacement can't be an S4 object;
+        oldClass() will return the S3 class for S4 objects with slot
+        .S3Class.
+
+    o	clip() takes extra steps to avoid the next graphics call
+	resetting the clip region.
+
+    o	New function sample.int() to provide documented access to the
+	internal part of sample() (sampling from seq_len(n)).
+
+    o	New version of withVisible() for better handling of cases like
+	withVisible(eval.parent(....)). Moved to package 'base' with a
+        view to replace .Internal(eval.with.vis) in source() later.
+
+    o	showClass() which is also used to auto-print class definitions, now
+	mentions the package where the class comes from, if there is one.
+
+    o	simulate(obj) now also works for "glm" objects and for weighted
+	fits, thanks in part to contributions from Ben Bolker and
+	Heather Turner.  There is now a means to extend the methods
+	available for "glm" objects, as glm families can have an
+	optional 'simulate' component.
+
+    o	S4 classes that inherit from any of the "structure" classes or
+        from "vector" will turn on methods for all the "Ops" group of
+        functions when the package containing the classes is
+        loaded. See class?structure.
+
+    o	A mechanism now allows S4 classes to inherit from object types
+        "environment", "externalptr" and symbol ("name").  See ?setClass.
+
+    o	demo() gains 'echo' and 'ask' arguments, with defaults similar
+	to example().
+
+    o	library() no longer checks for the packages merged during the
+	re-organization of 1.9.0.
+
+    o	New function poisson.test() in package 'stats' for exact test
+	of rates and rate ratios.
+
+    o	New function isdebugged() indicates whether its argument has the
+	debug flag set or not.
+
+    o	ls.str() [via print method] now also works when some objects in
+	the environment are missing().
+
+    o	Subsetting S4-objects (without an explicit "[" method) no longer
+	preserves the class in cases like setClass("C",
+	contains="list"); This reverts a "bug fix" activated in  R 2.8.0.
+
+    o	.packages() and .find.packages() no longer check the package
+    	info for installed packages with dumped metadata, since this
+    	was checked when the package was installed.  .packages() only
+    	considers such packages to be validly installed (any others
+    	were installed in a long-obsolete version of R).  Both changes
+    	speed up searches in libraries of thousands of packages().
+
+    o	boxplot() uses butt line endings for its median line
+	(suggestion of Uwe Ligges, PR#13553).
+
+    o	S4 objects passed to a non-default S3 method will be converted
+ 	to a valid S3 object with the S3 class.  See the section on
+ 	inheriting from non-S4 classes in ?Classes.
+
+    o	A new class "nonStructure" has been defined; classes that extend
+	a vector class but that should lose their slots under Math or
+	Ops functions should extend this class.  See class?nonStructure.
+
+    o	axis.POSIXct() now plots in the timezone marked for its inputs
+	(if any) rather than in the local time.  The latter was a
+	deliberate choice, but is easy to select by removing the
+	'tzone' attribute.  (Suggestion of Dan Kelley.)
+
+    o	A new function classesToAM() returns an adjacency matrix
+	representing the inheritance of the classes specified.  Allows
+	better human examination of the patterns, e.g. by using the
+	matrix as input to one of the graph packages (see the
+	documentation).
+
+    o	X11options(antialias = "none") now works, for consistency with
+	X11().
+
+    o	sprintf() now allows zero-length arguments (with a zero-length
+	result).  (Suggestion of Bill Dunlap.)
+
+    o	unlink() is now able to remove broken symbolic links on
+	Unix-alikes.
+
+    o	New selectSuperClasses() utility.
+
+    o	HoltWinters() now allows parameters alpha and beta to be fixed
+	at 0 and hence beta = FALSE and gamma = FALSE are used to
+	specify restricted models.
+
+    o	A new function smoothScatter has been added to package
+	'graphics'.  It is appropriate for very dense scatter plots
+	and uses density estimation and color to reflect density of
+	plotting.
+
+
+DEPRECATED & DEFUNCT
+
+    o	allGenerics() is defunct.
+
+    o	Use of allocVector(CHARSXP ...) is defunct and gives an error.
+
+    o	The compatibility define for graphics structure NewDevDesc in
+	GraphicsDevice.h has been removed.
+
+    o	Support for versioned installs (R CMD INSTALL --with-package-versions
+	and install.packages(installWithVers = TRUE)) has been removed.
+	Packages installed with versioned names will be ignored.
+
+    o	The numeric and power(0.5) forms of argument to make.link()
+	which were deprecated in 2.4.0 are now defunct: use power()
+	directly.
+
+    o	Conversion to Sd and Ssgm by R CMD Rdconv is now defunct.
+
+    o	Support for R --gui=gnome is now defunct (and package
+	gnomeGUI has been withdrwan as it used a long-obsolete version
+	of GNOME).
+
+    o	R CMD SHLIB on Windows will call the first target (not 'all') in
+	Makevars[.win] in future versions: so make 'all' the first
+	target if you have any.
+
+
+UTILITIES
+
+    o	R CMD build now also uses a Makevars[.win] file for cleaning
+	up src/.
+
+    o	R CMD Rd2dvi and R CMD check are now able to cope with Cyrillic
+	characters in UTF-8 if environment variable _R_CYRILLIC_TEX_
+	is set to a non-empty value and the latex system has suitable
+	fonts (thanks to a hint from Alexey Shipunov).
+
+    o	New function rtags() in package 'utils' that provides etags-like
+	indexing capabilities for R code files.
+
+	New front-end script R CMD rtags provides an interface to the
+	rtags() function (see R CMD rtags --help for details).
+
+    o	New environment variable R_TEXI2DVICMD to hold the path (if any)
+	to 'texi2dvi' found at configure time: this now provides the
+	default to option("texi2dvi").
+
+    o	massage-Examples.pl has been replaced by the R function
+	tools:::massageExamples().
+
+    o	R CMD REMOVE now uses remove.packages() and hence removes all
+	members of a bundle.
+
+    o	R CMD SHLIB is now an R script and has a new option -n aka
+	--dry-run to show what commands would be run.  The same code
+	is used on Unix and Windows.
+
+    o	R CMD Rdconv has new options --package and --version to set the
+	corresponding fields in HTML conversion.
+
+    o	R CMD check runs the package tests with a custom startup file,
+	currently containing 'options(useFancyQuotes = FALSE)'.
+
+	Those tests are run by an R script: using a tests/Makefile
+	(undocumented) no longer works.
+
+    o	R CMD config now knows about DYLIB_EXT and SHLIB_EXT, for use
+	in configure files.
+
+    o	R CMD BATCH has a new option --no-timing to suppress printing
+	out the session timing.
+
+    o	R CMD Rd2dvi can now work on an installed package.
+
+    o	R CMD check no longer loads package 'tcltk' when checking for
+	code problems, so more problems may be reported.
+
+    o	For R CMD SHLIB on Windows the default 'all' target only makes
+	the DLL, and no longer call targets 'before' and 'after'.
+
+
+Rd CONVERSION
+
+    o	Rd files have an optional \Rdversion{} section, which if
+	missing defaults to 1.0.  There is support for version 1.1, a
+	slightly modified version with the following changes:
+
+	- The warnings for \code{} inside example are suppressed.
+
+	- Whitespace between arguments in \item and \section is
+          accepted without a warning (see below).
+
+	- $ is treated literally in text, even for latex conversions.
+
+	- \ is only an escape before % { } \ .
+
+	- \R, \dots and \ldots can be followed by {}, and it is
+          recommended that they when not followed by whitespace.
+
+	- The obsolete interpretation of \Alpha etc is no longer done.
+
+    o	Rd conversion now handles ^ ~ < > | correctly in non-code
+	environments (such as \samp), and # and _ even in latex
+	conversion (but $ still needs to be escaped in version 1.0).
+
+    o	Whitespace between first and second arguments is now accepted
+	for \item and \section, e.g.  \item{foo} {some value}.
+	Previously arguments after whitespace were silently ignored,
+	and a warning is given for version 1.0 files.
+
+    o	The Rd files created by prompt() and friends are declared to be
+	version 1.1.
+
+    o	\alias now supports the escaping of { as well as of %, and this
+	is recommended.
+
+    o	parse_Rd(), an experimental parser for Rd files, and Rd2txt(),
+	Rd2HTML(), Rd2latex() and Rd2ex(), even more experimental
+	converters, have been added to package 'tools'.
+
+    o	R CMD check runs the package's Rd files through parse_Rd() for a
+	stricter syntax check.  This can be suppressed by setting
+	_R_CHECK_RD_PARSE_ to FALSE.
+
+    o	Added markup \verb, which displays like \code, but parses as
+	verbatim text.  Currently only supported by parse_Rd() and
+	Rd2HTML().
+
+
+INSTALLATION
+
+    o	The shell used by the 'R' script and other shell scripts
+	intended to be run directly can be specified at installation
+	time by setting the (precious) configure variable R_SHELL.
+
+    o	libtool has been updated to 2.2.6a.
+
+    o	--with-ICU is now the default: this means that ICU will be
+	used for collation on Mac OS >= 10.4.
+
+    o	make install-tests can be used to install the test files,
+	to allowed an installed version of R to be tested -- see the
+	R-admin manual.  This is also supported by the function
+	testInstalledPackages() in package 'tools'.
+
+    o	'make install' using a parallel make should now work.
+
+    o	'make check' now always re-makes and re-runs the package
+	examples, which are now collated in the locale's order (and
+	not ASCII order).
+
+    o	configure will now set the default optimization level for
+	gfortran on x86_64 Linux to -O as -O2 has caused problems with
+	gfortran 4.3.x.
+
+
+PACKAGE INSTALLATION
+
+    o	install.packages() is able to infer that repos=NULL was
+	intended from the extension on the file name specified as 'pkgs'.
+
+	On Mac OS X it now supports local binary packages with .tar.gz
+	extension. Nonetheless .tgz remains the preferred extension
+	and is expected in repositories.
+
+	It now checks >= version dependencies for dependent packages,
+	and so will install a newer version of a dependency if needed
+	and available on the repositories.
+
+	The library being installed into is considered when looking
+	for installed packages if it is not already part of
+	.libPaths() (as INSTALL already does).
+
+ 	It has a new argument 'Ncpus' to support parallel installs of
+	source packages.
+
+    o	HTML links will be resolved first to the standard packages: this
+	avoids other installed packages diverting help on e.g. qr()
+	and plot() to themselves. The HTML files are only "touched" if
+	they have changed.
+
+    o	A check is done that the R files can be parsed: this both
+	prevents a broken package without lazy-loading from being
+	installed and gives better diagnostics.
+
+    o	install.packages() gains a 'configure.vars' argument, and both
+	this and 'configure.args' get their defaults from options().
+
+    o	There is a unified R script for INSTALL on both Unix-alike and
+	Windows that takes option names used by either in the past.
+
+	It adds --no-multiarch to disable building other than the main
+	sub-architecture, and allows multiple instances of
+	--configure-args and --configure-vars (which will be
+	concatenated).
+
+	New option --install-tests will install any package-specific
+	tests.
+
+    o	Times in the Packaged: and Built: fields are now recorded in
+	UTC, and in most cases in ISO 8601 format.
+
+
+C-LEVEL FACILITIES
+
+    o	A helper function, asCharacterFactor, converts from factors to
+	character vectors.
+
+
+BUG FIXES
+
+    o	The postscript() output for setting text is faster and smaller.
+
+    o	Subsetting a data frame with duplicate column names without
+	selecting columns (e.g. z[i,]) no longer makes the column
+	names unique.  This was never documented, but some packages
+	have assumed it.
+
+    o	data.frame() no longer ignores row names on objects if the
+	first name is empty.  (PR#13230: this has been the behaviour
+	for a long time, but apparently undocumented.)
+
+    o	deparse(control="S_compatible") now never uses backticks.
+
+    o   X-spline drawing is improved for cases where the control
+        points are located well off the edges of the device.
+
+        The symptom of this problem is the error "reached MAXNUMPTS".
+
+    o   exists() with mode= "any" will no longer run an active binding's
+        function.
+
+    o	format(c(1 + 2i, NA)) no longer has extraneous space in "  NA".
+
+    o	mood.test() could fail in 2.8.x on large samples because of
+	integer overflow.
+
+    o	heatmap() without a dendrogram could fail. (PR#13512)
+
+    o	Checks for missing values will no longer occasionally result in
+	an infinite loop or stack overflow error, depending on the
+	compiler.  Active bindings are now always considered to be
+	non-missing.
+
+    o	Rd conversion was not accepting \p (as in \pkg} or (when using
+	Perl 5.10.x) \k (as in \kbd) in any preamble text in a
+	\value{} section, since those are nowadays interpreted by
+	Perl.  (PR#13575)
+
+    o	if(as.raw(1)) TRUE  now works as expected. (PR#13630)
+	Also,  c(as.raw(12), TRUE) or c(raw(3), pi) do.
+
+    o	duplicated(<data frame>, incomparables = NA) now gives the
+	intended error message.
+
+    o   name handling of as.data.frame() has been sanitized somewhat
+
+    o   Evaluating an assignment expression with a string on the left
+	hand side no longer destructively changes the string to a symbol
+	in the expression.
+
+
+
+	**************************************************
+	*						 *
 	*	       2.8 SERIES NEWS			 *
 	*						 *
 	**************************************************
+
+
+		CHANGES IN R VERSION 2.8.1 patched
+
+
+NEW FEATURES
+
+    o	R CMD check has a new argument '--install-args' to pass
+	command-line arguments to INSTALL.
+	E.g. --install-args="--docs=normal" on Windows if the HTML
+	Help Workshop is not installed.
+
+    o	R-Forge has been added to R_HOME/etc/repositories, so it will
+    	be available interactively in setRepositories().
+
+    o	The compiled loess() code has been updated to the current
+	version of dloess from Netlib.  This includes patches from Ben
+	Tyner which correct some errors when degree = 0 and hence
+	solve PR#13570.
+
+
+INSTALLATION
+
+    o	--with-ICU is now supported (and recommended) on Mac OS X using
+	Apple's supplied port.  Note however that the locale category
+	LC_COLLATE cannot be changed whilst R is running on Apple's
+	version of ICU.
+
+	Configure supports a wider range of ICU versions on other
+	OSes: version 3.0 should suffice, and 3.2, 3.8 and 4.0 have
+	been tested.
+
+
+BUG FIXES
+
+    o	grid-based plots no longer reset the base text size to the
+	default 96dpi in cairo-based bitmap devices.
+
+    o	Rd conversion was incorrectly parsing \\\* and \\\{ (and other
+	cases with an odd number of backslashes greater than one).
+
+	Text conversion of \code{\ etc} was incorrect (a single
+	backslash stands for itself inside \code).
+
+	\code{} inside \examples{} is now fixed up (but the warning
+	remains, since it will be handled incorrectly in earlier
+	versions of R).
+
+    o	as.matrix.data.frame() could fail if coercion changed the
+	dimension of one of the columns (as e.g. the coercion of a "Surv"
+	object to a character vector does).
+
+    o	When extracting part of a complex list structure using [[]]
+    	with a vector index, the extracted part was not marked for
+    	duplication on change. (PR#13411)
+
+    o	Assigning an additional element to a pairlist/language element
+ 	by x[["foo"]] <- value did not name the additional element.
+
+    o	.Call() and .External() were not accepting "NativeSymbolInfo"
+	and "NativeSymbol" objects as claimed.  (Patch from Olaf
+	Mersmann.)
+
+    o	codoc() was missing some default value mismatches with
+	unescaped backslashes, e.g. final="\\" needs to be written as
+	final="\\\\" in the Rd file.
+
+	The reports on values now give strings in the original quoted
+	format (with \ and " escaped).
+
+    o	The $<- method for pairlists (including language objects)
+	failed to duplicate if NAMED was 2.
+
+    o	read.table(blank.lines.skip = FALSE) gave a final empty row on
+	files with less than 5 lines (PR#13433).
+
+    o	Workaround for a bug in some versions of iconv that was seen
+	with output lines of more than 10,000 bytes and with
+	re-encoding requested on an output connection.
+
+    o	The fullrefman.{dvi,pdf} duplicated part I in part II (at
+	least on some systems).
+
+    o	cbind() could crash with a zero-length input and a list result.
+
+    o	pdf(colormodel = "gray") was setting the stroke colour for fills.
+
+    o	file.show() with multiple files would only show multiple
+	copies of the first one. (PR#13469)
+
+    o	formatC(mode = "character") was documented to work, but
+	did not. (PR#13474)
+
+    o	besselI(x,.., expon.scaled=TRUE) now gives accurate results for
+	x < 1e5 whereas it previously underflowed for x >~= 1500.
+	Further, besselJ(x,..) also computes up to 1e5 (instead of 1e4).
+
+    o	str() was incorrectly warning about its option component
+	'formatNum' set by strOptions().
+
+    o	nls(algorithm = "port") did not accept the [factor] notation.
+    	(PR#13650)
+
+    o	The relational (aka "comparison") operators are now binary, also in
+	a lower level sense, and an expression as  "<"(1)  is now erronous.
+
+    o	The 'offset' argument for lm() and glm() is not longer
+	documented to be allowed to be of length 1: this has not been
+	true for a long time.
+
+    o	format.info(x) is now also correct when x has no finite content.
+
+    o	predict.lm() now works correctly when the fit had more than
+	one offset (possibly specified both in the formula and as an
+	argument).  This function is called by predict.glm(), so the
+	same isses are corrected there.
+
+    o	besselI(x, nu) with nu a negative integer (a singular case) is now
+	correct. (PR#13556)
+
 
 
 		CHANGES IN R VERSION 2.8.1
@@ -213,6 +854,7 @@ BUG FIXES
 
     o	In setClass("C", contains="list"); x <- new("C", 1:3), x[2:3] now
         remains of class "C".  So does rep(x, 2) or rep.int(x, 3).
+	[NOTE: This "feature" has been reverted for R 2.9.0, see above]
 
     o	median.default() now also works for "numeric"-like vectors.
 
@@ -864,9 +1506,9 @@ NEW FEATURES
     o	stripchart() now passes '...' to title() (as well as to
 	plot.default() and axis()). (Wish of PR#12202)
 
-    o	help.search() has new argument 'searchEngine' to go
-	directly to the search form: this is needed by users of
-	Firefox 3 to workaround a bug in interpreting the search
+    o	help.search() has new argument 'searchEngine' to go directly
+	to the search form: this is needed by users of Firefox 3.0.x,
+	for x <= 6, to workaround a bug in interpreting the search
 	results pages.
 
 
@@ -1765,7 +2407,7 @@ UTILITIES
     o	R CMD check now warns if spaces or non-ASCII characters are
 	used in file paths, since these are not in general portable.
 
-    o	R CMD check (via massage-examples.pl) now checks all examples
+    o	R CMD check (via massage-Examples.pl) now checks all examples
 	with a 7 inch square device region on A4 paper, for
 	locale-independence and to be similar to viewing examples on
 	an on-screen device.

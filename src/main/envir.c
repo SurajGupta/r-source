@@ -102,6 +102,7 @@
 #define BINDING_VALUE(b) ((IS_ACTIVE_BINDING(b) ? getActiveValue(CAR(b)) : CAR(b)))
 
 #define SYMBOL_BINDING_VALUE(s) ((IS_ACTIVE_BINDING(s) ? getActiveValue(SYMVALUE(s)) : SYMVALUE(s)))
+#define SYMBOL_HAS_BINDING(s) (IS_ACTIVE_BINDING(s) || (SYMVALUE(s) != R_UnboundValue))
 
 #define SET_BINDING_VALUE(b,val) do { \
   SEXP __b__ = (b); \
@@ -257,6 +258,19 @@ static SEXP R_HashGet(int hashcode, SEXP symbol, SEXP table)
 	if (TAG(chain) == symbol) return BINDING_VALUE(chain);
     /* If not found */
     return R_UnboundValue;
+}
+
+static Rboolean R_HashExists(int hashcode, SEXP symbol, SEXP table)
+{
+    SEXP chain;
+
+    /* Grab the chain from the hashtable */
+    chain = VECTOR_ELT(table, hashcode);
+    /* Find the binding in the chain */
+    for (; chain != R_NilValue ; chain = CDR(chain))
+	if (TAG(chain) == symbol) return TRUE;
+    /* If not found */
+    return FALSE;
 }
 
 
@@ -558,7 +572,7 @@ static SEXP R_HashProfile(SEXP table)
 */
 
 #define USE_GLOBAL_CACHE
-#ifdef USE_GLOBAL_CACHE
+#ifdef USE_GLOBAL_CACHE  /* NB leave in place: see below */
 /* Global variable caching.  A cache is maintained in a hash table,
    R_GlobalCache.  The entry values are either R_UnboundValue (a
    flushed cache entry), the binding LISTSXP cell from the environment
@@ -610,7 +624,7 @@ void attribute_hidden InitBaseEnv()
 void attribute_hidden InitGlobalEnv()
 {
     R_GlobalEnv = NewEnvironment(R_NilValue, R_NilValue, R_BaseEnv);
-#ifdef NEW_CODE
+#ifdef NEW_CODE /* Not used */
     HASHTAB(R_GlobalEnv) = R_NewHashTable(100);
 #endif
 #ifdef USE_GLOBAL_CACHE
@@ -950,6 +964,55 @@ SEXP findVarInFrame3(SEXP rho, SEXP symbol, Rboolean doGet)
     return R_UnboundValue;
 }
 
+/* This variant of findVarinFrame3 is needed to avoid running active
+   binding functions in calls to exists() with mode = "any" */
+static Rboolean existsVarInFrame(SEXP rho, SEXP symbol)
+{
+    int hashcode;
+    SEXP frame, c;
+
+    if (TYPEOF(rho) == NILSXP)
+	error(_("use of NULL environment is defunct"));
+
+    if (rho == R_BaseNamespace || rho == R_BaseEnv)
+	return SYMBOL_HAS_BINDING(symbol);
+
+    if (rho == R_EmptyEnv)
+	return FALSE;
+
+    if(IS_USER_DATABASE(rho)) {
+	/* Use the objects function pointer for this symbol. */
+	R_ObjectTable *table;
+	Rboolean val = FALSE;
+	table = (R_ObjectTable *) R_ExternalPtrAddr(HASHTAB(rho));
+	if(table->active) {
+	    if(table->exists(CHAR(PRINTNAME(symbol)), NULL, table))
+		val = TRUE;
+	    else
+		val = FALSE;
+	}
+	return(val);
+    } else if (HASHTAB(rho) == R_NilValue) {
+	frame = FRAME(rho);
+	while (frame != R_NilValue) {
+	    if (TAG(frame) == symbol)
+		return TRUE;
+	    frame = CDR(frame);
+	}
+    }
+    else {
+	c = PRINTNAME(symbol);
+	if( !HASHASH(c) ) {
+	    SET_HASHVALUE(c, R_Newhashpjw(CHAR(c)));
+	    SET_HASHASH(c, 1);
+	}
+	hashcode = HASHVALUE(c) % HASHSIZE(HASHTAB(rho));
+	/* Will return 'R_UnboundValue' if not found */
+	return R_HashExists(hashcode, symbol, HASHTAB(rho));
+    }
+    return FALSE;
+}
+
 SEXP findVarInFrame(SEXP rho, SEXP symbol)
 {
     return findVarInFrame3(rho, symbol, TRUE);
@@ -1079,7 +1142,10 @@ findVar1mode(SEXP symbol, SEXP rho, SEXPTYPE mode, int inherits,
     if (mode == FUNSXP || mode ==  BUILTINSXP || mode == SPECIALSXP)
 	mode = CLOSXP;
     while (rho != R_EmptyEnv) {
-	vl = findVarInFrame3(rho, symbol, doGet);
+	if (! doGet && mode == ANYSXP)
+	    vl = existsVarInFrame(rho, symbol) ? R_NilValue : R_UnboundValue;
+	else
+	    vl = findVarInFrame3(rho, symbol, doGet);
 
 	if (vl != R_UnboundValue) {
 	    if (mode == ANYSXP) return vl;
@@ -1574,7 +1640,7 @@ SEXP attribute_hidden do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    tenv = CDR(tenv);
 	}
 	if (!done)
-	    warning(_("variable \"%s\" was not found"),
+	    warning(_("object '%s' not found"),
 		    CHAR(PRINTNAME(tsym)));
     }
     return R_NilValue;
@@ -1656,10 +1722,10 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 		  CHAR(PRINTNAME(t1)));
 	if (rval == R_UnboundValue) {
 	    if (gmode == ANYSXP)
-		error(_("variable \"%s\" was not found"),
+		error(_("object '%s' not found"),
 		      CHAR(PRINTNAME(t1)));
 	    else
-		error(_("variable \"%s\" of mode \"%s\" was not found"),
+		error(_("object '%s' of mode '%s' was not found"),
 		      CHAR(PRINTNAME(t1)),
 		      CHAR(STRING_ELT(CAR(CDDR(args)), 0))); /* ASCII */
 	}
@@ -1843,10 +1909,30 @@ R_isMissing(SEXP symbol, SEXP rho)
 	}
 	if (MISSING(vl) == 1 || CAR(vl) == R_MissingArg)
 	    return 1;
+	if (IS_ACTIVE_BINDING(vl))
+	    return 0;
 	if (TYPEOF(CAR(vl)) == PROMSXP &&
 	    PRVALUE(CAR(vl)) == R_UnboundValue &&
-	    TYPEOF(PREXPR(CAR(vl))) == SYMSXP)
-	    return R_isMissing(PREXPR(CAR(vl)), PRENV(CAR(vl)));
+	    TYPEOF(PREXPR(CAR(vl))) == SYMSXP) {
+	    /* This code uses the PRSEEN bit to detect cycles.  If a
+	       cycle occurs then a missing argument was encountered,
+	       so the return value is TRUE.  It would be a little
+	       safer to use the promise stack to ensure unsetting of
+	       the bits in the event of a longjump, but doing so would
+	       require distinguishing between evaluating promises and
+	       checking for missingness.  Because of the test above
+	       for an active binding a longjmp should only happen if
+	       the stack check fails.  LT */
+	    if (PRSEEN(CAR(vl)))
+		return 1;
+	    else {
+		int val;
+		SET_PRSEEN(CAR(vl), 1);
+		val = R_isMissing(PREXPR(CAR(vl)), PRENV(CAR(vl)));
+		SET_PRSEEN(CAR(vl), 0);
+		return val;
+	    }
+	}
 	else
 	    return 0;
     }
@@ -2384,8 +2470,14 @@ SEXP attribute_hidden do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
     env = CAR(args);
     if (ISNULL(env))
 	error(_("use of NULL environment is defunct"));
-    if( !isEnvironment(env) )
-	error(_("argument must be an environment"));
+    if( !isEnvironment(env) ) {
+        SEXP xdata;
+	if( IS_S4_OBJECT(env) && TYPEOF(env) == S4SXP &&
+	    (xdata = R_getS4DataSlot(env, ENVSXP)) != R_NilValue)
+	    env = xdata;
+	else
+	    error(_("argument must be an environment"));
+    }
 
     all = asLogical(CADR(args));
     if (all == NA_LOGICAL) all = 0;
@@ -2672,6 +2764,13 @@ do_as_environment(SEXP call, SEXP op, SEXP args, SEXP rho)
     case NILSXP:
 	errorcall(call,_("using 'as.environment(NULL)' is defunct"));
 	return R_BaseEnv;	/* -Wall */
+    case S4SXP: {
+        SEXP dot_xData = R_getS4DataSlot(arg, ENVSXP);
+        if(arg == R_NilValue)
+	    errorcall(call, _("S4 object does not extend class \"environment\""));
+	else
+	    return(dot_xData);
+    }
     default:
 	errorcall(call, _("invalid object for 'as.environment'"));
 	return R_NilValue;	/* -Wall */

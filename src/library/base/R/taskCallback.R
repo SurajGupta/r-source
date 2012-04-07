@@ -14,14 +14,13 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-addTaskCallback <- function(f, data = NULL, name = character(0))
+addTaskCallback <- function(f, data = NULL, name = character(0L))
 {
     if(!is.function(f))
         stop("handler must be a function")
     val <- .Call("R_addTaskCallback", f, data, !missing(data),
                  as.character(name), PACKAGE="base")
-
-    val + 1
+    val + 1L
 }
 
 removeTaskCallback <- function(id)
@@ -72,7 +71,7 @@ function(handlers = list(), registered = FALSE, verbose = FALSE)
 
       # generate default name if none supplied
             if(is.null(name))
-                name <- as.character(length(handlers) + 1)
+                name <- as.character(length(handlers) + 1L)
 
       # Add to handlers, replacing any element with that name
       # if needed.
@@ -97,7 +96,7 @@ function(handlers = list(), registered = FALSE, verbose = FALSE)
     remove <- function(which)
     {
         if(is.character(which)) {
-            tmp <- (1:length(handlers))[!is.na(match(which, names(handlers)))]
+            tmp <- (1L:length(handlers))[!is.na(match(which, names(handlers)))]
             if(length(tmp))
                 stop(gettextf("no such element '%s'", which), domain = NA)
             which <- tmp
@@ -125,10 +124,10 @@ function(handlers = list(), registered = FALSE, verbose = FALSE)
         {
             if(suspended)
                 return(TRUE)
-            discard <- character(0)
+            discard <- character(0L)
             for(i in names(handlers)) {
                 h <- handlers[[i]]
-                if(length(h) > 1) {
+                if(length(h) > 1L) {
                     val <- h[["f"]](expr, value, ok, visible, i[["data"]])
                 } else {
                     val <- h[["f"]](expr, value, ok, visible)
@@ -137,7 +136,7 @@ function(handlers = list(), registered = FALSE, verbose = FALSE)
                     discard <- c(discard, i)
                 }
             }
-            if(length(discard) > 0) {
+            if(length(discard)) {
                 if(.verbose)
                     cat(gettext("Removing"), paste(discard, collapse=", "), "\n")
                 idx <- is.na(match(names(handlers), discard))
@@ -173,4 +172,3 @@ function(handlers = list(), registered = FALSE, verbose = FALSE)
          handlers
          )
 }
-

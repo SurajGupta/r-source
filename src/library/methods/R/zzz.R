@@ -64,9 +64,11 @@
         assign(".isPrototype", ..isPrototype, envir = where)
         .InitClassUnion(where)
         .InitS3Classes(where)
+        .InitSpecialTypes(where)
         ## now seal the classes defined in the package
         for(cl in get(".SealedClasses", where))
             sealClass(cl, where)
+        assign("isSealedMethod", .isSealedMethod, envir = where)
         assign(".requirePackage", ..requirePackage, envir = where)
         ## initialize implicit generics for base package
         ## Note that this is done before making a non-vacuous implicitGeneric()
@@ -74,6 +76,7 @@
         .initImplicitGenerics(where)
         assign("implicitGeneric", .implicitGeneric, envir = where)
         cacheMetaData(where, TRUE, searchWhere = .GlobalEnv, FALSE)
+        assign(".checkRequiredGenerics", ..checkRequiredGenerics,envir = where)
         ## unlock some bindings that must be modifiable
         unlockBinding(".BasicFunsList", where)
          assign(".saveImage", TRUE, envir = where)

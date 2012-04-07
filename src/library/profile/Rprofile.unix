@@ -15,13 +15,14 @@ papersize <- Sys.getenv("R_PAPERSIZE_USER")
 if(!nchar(papersize)) {
     lcpaper <- Sys.getlocale("LC_PAPER") # might be null: OK as nchar is 0
     papersize <- if(nchar(lcpaper))
-        if(length(grep("(_US|_CA)", lcpaper)) > 0) "letter" else "a4"
+        if(length(grep("(_US|_CA)", lcpaper))) "letter" else "a4"
     else Sys.getenv("R_PAPERSIZE")
 }
 options(papersize = as.vector(papersize),
         printcmd = as.vector(Sys.getenv("R_PRINTCMD")),
         latexcmd = as.vector(Sys.getenv("R_LATEXCMD")),
         dvipscmd = as.vector(Sys.getenv("R_DVIPSCMD")),
+        texi2dvi = as.vector(Sys.getenv("R_TEXI2DVICMD")),
         browser = as.vector(Sys.getenv("R_BROWSER")),
         pager = file.path(R.home(), "bin", "pager"),
         pdfviewer = as.vector(Sys.getenv("R_PDFVIEWER")),
@@ -38,3 +39,8 @@ if(.Platform$GUI == "AQUA") {
     ## this is to allow g77 compiler to work
     Sys.setenv("PATH" = paste(Sys.getenv("PATH"),":/usr/local/bin",sep = ""))
 }## end "Aqua"
+
+local({
+    tests_startup <- Sys.getenv("R_TESTS")
+    if(nzchar(tests_startup)) source(tests_startup)
+})

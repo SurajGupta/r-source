@@ -1,29 +1,22 @@
 #-*- Makefile -*-
-## This files contains tabs: make sure your editor leaves them unchanged.
+## This file contains tabs: make sure your editor leaves them unchanged.
+## As from R 2.9.0 it is only used when building R itself.
 
-## ===== configuration macros for building packages or R  ===============
+## ===== configuration macros for building R  ===============
 
-# Alternatives GCC4 (MinGW gcc4) or CROSS (e.g. Linux)
-# or F2C (use suitable f2c rather than a Fortran compiler).
+# Alternatives GCC4 or F2C (use suitable f2c rather than a Fortran compiler).
 
 BUILD=GCC4
-
-## These are overridden by R CMD INSTALL: they only apply to
-## standard packages when building R and when using 'make pkg-foo'
-HELP = YES
-HELPTYPES = -txt -html -latex -example
-ifeq ($(strip $(BUILD)),CROSS)
-WINHELP = NO
-else
-WINHELP = CHM # NO or CHM
-endif
 
 # an alternative is to use -gstabs here, if the debugger supports only stabs.
 G_FLAG=-gdwarf-2
 
 ## ============== configuration macros for building R ===================
 
-# Comment out if the msvcrt.dll malloc/free is required.
+# Should CHM help be built?  Any value other than TRUE disables this
+USE_CHM = TRUE
+
+# Comment out if the msvcrt.dll malloc/free is required (not tested recently)
 LEA_MALLOC=YES
 
 # Set to YES and specify the path if you want to use the ATLAS BLAS.
@@ -33,7 +26,8 @@ ATLAS_PATH=/R/ATLAS/lib/WinNT_P4SSE2
 # Support for the ACML and Goto BLASes has been withdrawn: see R-admin.html
 
 # Where does 'HTML Help Workshop' live? (unused if compiled HTML help is
-# not requested. Spaces allowed.)
+# not selectred by USE_CHM = TRUE). Spaces allowed.
+# Used to build Rchtml.dll: hhc.exe must also be in the path.
 HHWDIR=C:/Program Files/HTML Help Workshop
 
 # Define this to enable memory profiling.
@@ -48,19 +42,31 @@ TCL_VERSION = 85
 # USE_SVNVERSION = YES
 
 # We normally link against DLLs, but this macro forces the use of import libs
-# Needed if using other compilers, and currently on Win64
+# Needed if using other compilers, including Mingw64
 # USE_IMPLIBS = YES
 
-# 32- or 64-bit Windows?
+# Some of the Mingw64 compilers are in fact cross-compilers and have prefixes
+BINPREF=
+
+# 32- or 64-bit Windows?  For experminets with Mingw64.
 WIN=32
 ifeq ($(strip $(WIN)),64)
 USE_IMPLIBS = YES
+DEFINES=-DW64
+BINPREF=x86_64-pc-mingw32-
+USE_CHM = FALSE
 endif
 
 # use ICU
 USE_ICU=NO
 # path to parent of ICU headers
 ICU_PATH=/sources/icu
+
+# optional overrides for making bitmapdll: names of source directories
+# JPEGDIR = jpeg-6b
+# PNGDIR = libpng-1.2.35
+# TIFFDIR = libtiff
+
 
 ## ====== configuration macros for building installer ===========
 
@@ -72,51 +78,13 @@ ISDIR=C:/packages/Inno
 # location where WiX was installed. Spaces allowed, slashes required.
 WIXDIR=C:/packages/WiX
 
-## ====== configuration macros for building packages ================
-
-## For a package using F90/95 set the name or path of gfortran.exe 
-## or g95.exe.  Spaces allowed.
-ifeq ($(strip $(BUILD)),GCC4)
-FC=gfortran$(GCC4_SUFF)
-else
-# needs to be set by user
-FC=
-endif
-FCFLAGS=-O3
-
-## =================== cross-compilation settings  =================
-
-ifeq ($(strip $(BUILD)),CROSS)
-# Next might be i586-mingw32- or x86_64-pc-mingw32- or ...
-# depending on the cross-compiler.
-ifeq ($(strip $(WIN)),64)
-BINPREF=x86_64-pc-mingw32-
-else
-BINPREF=i586-mingw32-
-endif
-# Optional, if compiler has been relocated
-# Set this to full path to dir where the mingw32 include files are.
-# It should contain fcntl.h and windows.h
-HEADER=
-# path (possibly full path) to same version of R on the host system
-R_EXE='I failed to read the instructions to set R_EXE in MkRules'
-
-## SHLIB extension on host: 'so' or 'dll'
-CROSS_EXT=so
-endif
-
 ## =============== end of user-customizable parts  ===================
 
-DEPARG=-MM
-MINGW32LDFLAG=
 C99FLAG=-std=gnu99
 
 ifeq ($(strip $(BUILD)),GCC4)
-BINPREF=
-MINGW32CFLAG=
-F77=gfortran$(GCC4_SUFF)
+F77=$(BINPREF)gfortran$(GCC4_SUFF)
 FLIBS=-lgfortran
-AWK=gawk
 ## for mingw-runtime <= 3.11
 # C99FLAG=-std=gnu99 -fgnu89-inline
 ## earlier Rtools needs -sjlj
@@ -124,21 +92,9 @@ AWK=gawk
 GCC4_SUFF=
 endif
 
-ifeq ($(strip $(BUILD)),CROSS)
-ifneq ($(strip $(HEADER)),)
-MINGW32CFLAG=-isystem $(HEADER)
-endif
-F77=$(BINPREF)gfortran
-FLIBS=-lgfortran
-AWK=awk
-endif
-
 ifeq ($(strip $(BUILD)),F2C)
-BINPREF=
-MINGW32CFLAG=
 F77=sh $(RHOME)/src/scripts/f77_f2c
 FLIBS=-lf2c
-AWK=gawk
 endif
 
 ifeq ($(strip $(USE_IMPLIBS)),YES)
@@ -147,87 +103,58 @@ else
 IMPDIR=bin
 endif
 
-BLAS_LIBS=-L$(RHOME)/$(IMPDIR) -lRblas
-LAPACK_LIBS=-L$(RHOME)/$(IMPDIR) -lRlapack
+## use in front-ends and internet module
 GRAPHAPP_LIB=-lRgraphapp
-ZLIB_LIBS=-lRzlib
+## used in stats/src/Makevars.win
+BLAS_LIBS=-L$(RHOME)/$(IMPDIR) -lRblas
+## these were for packages
+# LAPACK_LIBS=-L$(RHOME)/$(IMPDIR) -lRlapack
+# ZLIB_LIBS=-lRzlib
 
 AR=$(BINPREF)ar
 AS=$(BINPREF)as
+# AWK=gawk
 CAT=cat
-CC=$(BINPREF)gcc$(GCC4_SUFF) $(MINGW32CFLAG) $(C99FLAG)
+CC=$(BINPREF)gcc$(GCC4_SUFF) $(C99FLAG)
 CP=cp
 # as set by make
 CPP=$(CC) -E
-CXX=$(BINPREF)g++$(GCC4_SUFF) $(MINGW32CFLAG)
-## overridden in some packages
-DLL_LDMAIN=$(CC)
-DLL=$(DLL_LDMAIN) $(MINGW32LDFLAG)
-## formerly used version without -k for front-ends/libproxy.a
+DLL=$(CC)
 DLLTOOL=$(BINPREF)dlltool
 ## some versions have trouble with paths, so we always need this
 ## even for native builds
 DLLTOOLFLAGS=--as $(AS) -k
 ECHO=echo
 FIND=find
-LINKER=$(MAIN_LD) $(MINGW32LDFLAG)
+LINKER=$(MAIN_LD)
 MAIN_LD=$(CC)
 MKDIR=mkdir
 NM=$(BINPREF)nm
-OBJC=$(BINPREF)gcc$(GCC4_SUFF) $(MINGW32CFLAG)
 PERL=perl
 RANLIB=$(BINPREF)ranlib
-RESCOMP=$(BINPREF)windres --preprocessor="$(BINPREF)gcc$(GCC4_SUFF) -E -xc -DRC_INVOKED"
+RESCOMP=$(BINPREF)windres
 # as set by make
 RM=rm -f
 SED=sed
 SORT=sort
 
 ## from etc/Renviron.site on Unix
-EGREP=grep -e
-LN_S=cp -p
-TAR=tar
+# EGREP=grep -e
+# LN_S=cp -p
+# TAR=tar
 
 .SUFFIXES:
 .SUFFIXES: .c .cc .cpp .C .f .o .a .def .exp .dll .exe .d .f90 .f95 .m .S
 
 .c.d:
 	@echo "making $@ from $<"
-	@$(CC) $(DEPARG) $(CPPFLAGS) $($*-CPPFLAGS) $< -o $@
-
-.cc.d:
-	@echo "making $@ from $<"
-	@$(CXX) $(DEPARG) $(CPPFLAGS) $($*-CPPFLAGS) $< -o $@
-
-.cpp.d:
-	@echo "making $@ from $<"
-	@$(CXX) $(DEPARG) $(CPPFLAGS) $($*-CPPFLAGS) $< -o $@
-
-.C.d:
-	@echo "making $@ from $<"
-	@$(CXX) $(DEPARG) $(CPPFLAGS) $($*-CPPFLAGS) $< -o $@
-
-.m.d:
-	@echo "making $@ from $<"
-	@$(OBJC) $(DEPARG) $(CPPFLAGS) $($*-CPPFLAGS) $< -o $@
+	@$(CC) -MM $(CPPFLAGS) $($*-CPPFLAGS) $(DEFINES) $< -o $@
 
 .c.o:
-	$(CC) $(CPPFLAGS) $($*-CPPFLAGS) $(CFLAGS) $($*-CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $($*-CPPFLAGS) $(CFLAGS) $($*-CFLAGS) $(DEFINES) -c $< -o $@
 
 .f.o:
 	$(F77) $(FFLAGS) $($*-FFLAGS) -c $< -o $@
-
-.cc.o:
-	$(CXX) $(CPPFLAGS) $($*-CPPFLAGS) $(CXXFLAGS) $($*-CXXFLAGS) -c $< -o $@
-
-.cpp.o:
-	$(CXX) $(CPPFLAGS) $($*-CPPFLAGS) $(CXXFLAGS) $($*-CXXFLAGS) -c $< -o $@
-
-.C.o:
-	$(CXX) $(CPPFLAGS) $($*-CPPFLAGS) $(CXXFLAGS) $($*-CXXFLAGS) -c $< -o $@
-
-.m.o:
-	$(OBJC) $(CPPFLAGS) $($*-CPPFLAGS) $(OBJCFLAGS) $($*-OBJCFLAGS) -c $< -o $@
 
 %.exe:
 	$(LINKER) $(LINKFLAGS) $($*-LINKFLAGS) -o $@ $^ $($*-LIBS) $(LIBS)
@@ -246,15 +173,6 @@ lib%.dll.a: %.def
 	@$(RM) $@
 	$(AR) crs $@ $^
 
-ifeq ($(strip $(BUILD)),CROSS)
-%.o: %.rc
-	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -I $(HEADER) -i $< -o $@
-else
+## Mingw64 at one time needed --use-temp-file
 %.o: %.rc
 	$(RESCOMP) $(RESFLAGS) $($*-RESFLAGS) -i $< -o $@
-endif
-
-.f90.o:
-	"$(FC)" $(PKG_FCFLAGS) $(FCFLAGS) -c $< -o $@
-.f95.o:
-	"$(FC)" $(PKG_FCFLAGS) $(FCFLAGS) -c $< -o $@

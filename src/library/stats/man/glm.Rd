@@ -50,8 +50,8 @@ glm.fit(x, y, weights = rep(1, nobs),
     variables are taken from \code{environment(formula)},
     typically the environment from which \code{glm} is called.}
 
-  \item{weights}{an optional vector of weights to be used in the fitting
-    process.  Should be \code{NULL} or a numeric vector.}
+  \item{weights}{an optional vector of \sQuote{prior weights} to be used
+    in the fitting process.  Should be \code{NULL} or a numeric vector.}
 
   \item{subset}{an optional vector specifying a subset of observations
     to be used in the fitting process.}
@@ -69,13 +69,12 @@ glm.fit(x, y, weights = rep(1, nobs),
 
   \item{mustart}{starting values for the vector of means.}
 
-  \item{offset}{this can be used to specify an \emph{a priori}
-    known component to be included in the linear predictor
-    during fitting.  This should be \code{NULL} or a numeric vector of
-    length either one or equal to the number of cases.
-    One or more \code{\link{offset}} terms can be included in the
-    formula instead or as well, and if both are specified their sum is
-    used.  See \code{\link{model.offset}}.}
+  \item{offset}{this can be used to specify an \emph{a priori} known
+    component to be included in the linear predictor during fitting.
+    This should be \code{NULL} or a numeric vector of length equal to
+    the number of cases.  One or more \code{\link{offset}} terms can be
+    included in the formula instead or as well, and if more than one is
+    specified their sum is used.  See \code{\link{model.offset}}.}
 
   \item{control}{a list of parameters for controlling the fitting
     process.  See the documentation for \code{\link{glm.control}}
@@ -119,26 +118,39 @@ glm.fit(x, y, weights = rep(1, nobs),
 \details{
   A typical predictor has the form \code{response ~ terms} where
   \code{response} is the (numeric) response vector and \code{terms} is a
-  series of terms which specifies a linear predictor for \code{response}.
-  For \code{binomial} and \code{quasibinomial} families the response can
-  also be specified as a \code{\link{factor}} (when the first level
-  denotes failure and all
-  others success) or as a two-column matrix with the columns giving the
-  numbers of successes and failures.  A terms specification of the form
-  \code{first + second} indicates all the terms in \code{first} together
-  with all the terms in \code{second} with duplicates removed.  The terms in
-  the formula will be re-ordered so that main effects come first,
-  followed by the interactions, all second-order, all third-order and so
-  on: to avoid this pass a \code{terms} object as the formula.
+  series of terms which specifies a linear predictor for
+  \code{response}.  For \code{binomial} and \code{quasibinomial}
+  families the response can also be specified as a \code{\link{factor}}
+  (when the first level denotes failure and all others success) or as a
+  two-column matrix with the columns giving the numbers of successes and
+  failures.  A terms specification of the form \code{first + second}
+  indicates all the terms in \code{first} together with all the terms in
+  \code{second} with any duplicates removed.
 
-  A specification of the form \code{first:second} indicates the
-  the set of terms obtained by taking the interactions of
-  all terms in \code{first} with all terms in \code{second}.
-  The specification \code{first*second} indicates the \emph{cross}
-  of \code{first} and \code{second}.
-  This is the same as \code{first + second + first:second}.
+  A specification of the form \code{first:second} indicates the the set
+  of terms obtained by taking the interactions of all terms in
+  \code{first} with all terms in \code{second}.  The specification
+  \code{first*second} indicates the \emph{cross} of \code{first} and
+  \code{second}.  This is the same as \code{first + second +
+  first:second}.
 
-  \code{glm.fit} is the workhorse function.
+  The terms in the formula will be re-ordered so that main effects come
+  first, followed by the interactions, all second-order, all third-order
+  and so on: to avoid this pass a \code{terms} object as the formula.
+
+  Non-\code{NULL} \code{weights} can be used to indicate that different
+  observations have different dispersions (with the values in
+  \code{weights} being inversely proportional to the dispersions); or
+  equivalently, when the elements of \code{weights} are positive
+  integers \eqn{w_i}, that each response \eqn{y_i} is the mean of
+  \eqn{w_i} unit-weight observations.  For a binomial GLM prior weights
+  are used to give the number of trials when the response is the
+  proportion of successes: they would rarely be used for a Poisson GLM.
+
+
+  \code{glm.fit} is the workhorse function: it is not normally called
+  directly but can be more efficient where the response vector and
+  design mattrix have already been calculated.
 
   If more than one of \code{etastart}, \code{start} and \code{mustart}
   is specified, the first in the list will be used.  It is often
@@ -197,13 +209,14 @@ glm.fit(x, y, weights = rep(1, nobs),
   \item{iter}{the number of iterations of IWLS used.}
   \item{weights}{the \emph{working} weights, that is the weights
     in the final iteration of the IWLS fit.}
-  \item{prior.weights}{the case weights initially supplied.}
+  \item{prior.weights}{the weights initially supplied, a vector of
+    \code{1}s if none were.}
   \item{df.residual}{the residual degrees of freedom.}
   \item{df.null}{the residual degrees of freedom for the null model.}
   \item{y}{if requested (the default) the \code{y} vector
     used. (It is a vector even for a binomial model.)}
-  \item{x}{(if requested, the model matrix.}
-  \item{model}{(if requested (the default), the model frame.}
+  \item{x}{if requested, the model matrix.}
+  \item{model}{if requested (the default), the model frame.}
   \item{converged}{logical. Was the IWLS algorithm judged to have converged?}
   \item{boundary}{logical. Is the fitted value on the boundary of the
     attainable values?}
@@ -263,7 +276,7 @@ glm.fit(x, y, weights = rep(1, nobs),
   since been extensively re-written by members of the R Core team.
 
   The design was inspired by the S function of the same name described
-  in Hastie \& Pregibon (1992).
+  in Hastie & Pregibon (1992).
 }
 \references{
   Dobson, A. J. (1990)
@@ -273,7 +286,7 @@ glm.fit(x, y, weights = rep(1, nobs),
   Hastie, T. J. and Pregibon, D. (1992)
   \emph{Generalized linear models.}
   Chapter 6 of \emph{Statistical Models in S}
-  eds J. M. Chambers and T. J. Hastie, Wadsworth \& Brooks/Cole.
+  eds J. M. Chambers and T. J. Hastie, Wadsworth & Brooks/Cole.
 
   McCullagh P. and Nelder, J. A. (1989)
   \emph{Generalized Linear Models.}

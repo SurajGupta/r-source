@@ -22,7 +22,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
 {
     alternative <- match.arg(alternative)
     if(conf.int) {
-        if(!((length(conf.level) == 1)
+        if(!((length(conf.level) == 1L)
              && is.finite(conf.level)
              && (conf.level > 0)
              && (conf.level < 1)))
@@ -92,7 +92,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
               ## Check if the statistic exceeds both quantiles first.
               uci <- NULL
               lci <- NULL
-              if(length(u[u >= 0]) == 0 || length(l[l > 0]) == 0) {
+              if(length(u[u >= 0]) == 0L || length(l[l > 0]) == 0L) {
                   warning("samples differ in location: cannot compute confidence set, returning NA")
                   return(c(NA, NA))
               }
@@ -117,7 +117,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                c(uci, lci)
             }
 
-            cint <- if(length(sigma) < 1) {
+            cint <- if(length(sigma) < 1L) {
                 warning("cannot compute confidence set, returning NA")
                 c(NA, NA)
             }
@@ -130,18 +130,18 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                 switch(alternative, two.sided = {
                     cci(alpha)
                 }, greater= {
-                    c(cci(alpha*2)[1], Inf)
+                    c(cci(alpha*2)[1L], Inf)
                 }, less= {
-                    c(0, cci(alpha*2)[2])
+                    c(0, cci(alpha*2)[2L])
                 })
             }
             attr(cint, "conf.level") <- conf.level
             u <- absigma - qansari(0.5, m, n)
             sgr <- sigma[u <= 0]
-            if (length(sgr) == 0) sgr <- NA
+            if (length(sgr) == 0L) sgr <- NA
             else sgr <- max(sgr)
             sle <- sigma[u > 0]
-            if (length(sle) == 0) sle <- NA
+            if (length(sle) == 0L) sle <- NA
             else sle <- min(sle)
             ESTIMATE <- mean(c(sle, sgr))
         }
@@ -205,8 +205,8 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                 ccia <- function(alpha) {
                     ## Check if the statistic exceeds both quantiles
                     ## first.
-                    statu <- ab2(srange[1], zq=qnorm(alpha/2))
-                    statl <- ab2(srange[2], zq=qnorm(alpha/2, lower.tail=FALSE))
+                    statu <- ab2(srange[1L], zq=qnorm(alpha/2))
+                    statl <- ab2(srange[2L], zq=qnorm(alpha/2, lower.tail=FALSE))
                     if (statu > 0 || statl < 0) {
                         warning("samples differ in location: cannot compute confidence set, returning NA")
                         return(c(NA, NA))
@@ -223,14 +223,14 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                 cint <- switch(alternative, two.sided = {
                     ccia(alpha)
                 }, greater= {
-                    c(ccia(alpha*2)[1], Inf)
+                    c(ccia(alpha*2)[1L], Inf)
                 }, less= {
-                    c(0, ccia(alpha*2)[2])
+                    c(0, ccia(alpha*2)[2L])
                 })
                 attr(cint, "conf.level") <- conf.level
                 ## Check if the statistic exceeds both quantiles first.
-                statu <- ab2(srange[1], zq=0)
-                statl <- ab2(srange[2], zq=0)
+                statu <- ab2(srange[1L], zq=0)
+                statl <- ab2(srange[2L], zq=0)
                 if (statu > 0 || statl < 0) {
                     ESTIMATE <- NA
                     warning("cannot compute estimate, returning NA")
@@ -264,13 +264,13 @@ ansari.test.formula <-
 function(formula, data, subset, na.action, ...)
 {
     if(missing(formula)
-       || (length(formula) != 3)
-       || (length(attr(terms(formula[-2]), "term.labels")) != 1))
+       || (length(formula) != 3L)
+       || (length(attr(terms(formula[-2L]), "term.labels")) != 1L))
         stop("'formula' missing or incorrect")
     m <- match.call(expand.dots = FALSE)
     if(is.matrix(eval(m$data, parent.frame())))
         m$data <- as.data.frame(data)
-    m[[1]] <- as.name("model.frame")
+    m[[1L]] <- as.name("model.frame")
     m$... <- NULL
     mf <- eval(m, parent.frame())
     DNAME <- paste(names(mf), collapse = " by ")

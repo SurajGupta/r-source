@@ -2,15 +2,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-06-05 19:48\n"
-"PO-Revision-Date: 2008-09-30 10:49+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2009-03-20 09:02\n"
+"PO-Revision-Date: 2009-03-31 20:50+0900 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
 "Plural-Forms: nplurals=1; plural=0; \n"
-"X-Generator: Pootle 0.10.1 \n"
+"X-Generator: Pootle 1.1.0 \n"
 
 msgid "'coef' must not be negative"
 msgstr " 'coef' は負にはなれません "
@@ -265,9 +265,6 @@ msgstr " quartzFonts 中の不正な引数です（フォント名が必要で�
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr " quartzFonts 中の不正な引数です（名前がついた引数が必要です） "
 
-msgid "invalid value for 'antialias'"
-msgstr " 'antialias'の値が不正です "
-
 msgid "invalid 'filename'"
 msgstr " 不正な 'filename' 引数です "
 
@@ -288,6 +285,12 @@ msgstr " 'rescale' の値が不正です "
 
 msgid "can only bring windows devices to the front"
 msgstr " windows デバイスしか正面にもってくることが出来ません "
+
+msgid "'type' not applicable to the R console"
+msgstr " 'type' は R コンソールに対して適用できません "
+
+msgid "can only manipulate windows devices"
+msgstr " windows デバイスだけを操作できます "
 
 msgid "can only copy from 'windows' devices"
 msgstr " 'windows' デバイスからしかコピーできません "
@@ -324,6 +327,9 @@ msgstr[0] " %d 個の正でない y の値が対数プロットから除かれ�
 msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] " %d 個の正でない x の値が対数プロットから除かれました "
+
+#~ msgid "invalid value for 'antialias'"
+#~ msgstr " 'antialias'の値が不正です "
 
 #~ msgid "quartz() device interactivity reduced without an event loop manager"
 #~ msgstr ""

@@ -417,7 +417,7 @@ SEXP eval(SEXP e, SEXP rho)
 	else
 		tmp = findVar(e, rho);
 	if (tmp == R_UnboundValue)
-	    error(_("object \"%s\" not found"), CHAR(PRINTNAME(e)));
+	    error(_("object '%s' not found"), CHAR(PRINTNAME(e)));
 	/* if ..d is missing then ddfindVar will signal */
 	else if (tmp == R_MissingArg && !DDVAL(e) ) {
 	    const char *n = CHAR(PRINTNAME(e));
@@ -873,7 +873,7 @@ static SEXP EnsureLocal(SEXP symbol, SEXP rho)
 
     vl = eval(symbol, ENCLOS(rho));
     if (vl == R_UnboundValue)
-	error(_("object \"%s\" not found"), CHAR(PRINTNAME(symbol)));
+	error(_("object '%s' not found"), CHAR(PRINTNAME(symbol)));
 
     PROTECT(vl = duplicate(vl));
     defineVar(symbol, vl, rho);
@@ -1001,6 +1001,17 @@ SEXP attribute_hidden do_for(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(rho);
     PROTECT(val = eval(val, rho));
     defineVar(sym, R_NilValue, rho);
+
+    /* deal with the case where we are iterating over a factor
+       we need to coerce to character - then iterate */
+
+    if( inherits(val, "factor") ) {
+        PROTECT(ans = asCharacterFactor(val));
+	val = ans;
+	UNPROTECT(2);  /* ans and val from above */
+        PROTECT(val);
+    }
+
     if (isList(val) || isNull(val)) {
 	n = length(val);
 	PROTECT_WITH_INDEX(v = R_NilValue, &vpi);
@@ -1386,7 +1397,7 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
     UNPROTECT(5);
     endcontext(&cntxt); /* which does not run the remove */
     unbindVar(R_TmpvalSymbol, rho);
-#ifdef CONSERVATIVE_COPYING
+#ifdef CONSERVATIVE_COPYING /* not default */
     return duplicate(saverhs);
 #else
     /* we do not duplicate the value, so to be conservative mark the
@@ -1413,14 +1424,21 @@ SEXP attribute_hidden do_set(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP s;
     if (length(args) != 2)
 	WrongArgCount(asym[PRIMVAL(op)]);
-    if (isString(CAR(args)))
+    if (isString(CAR(args))) {
+	/* fix up a duplicate or args and recursively call do_set */
+	SEXP val;
+	PROTECT(args = duplicate(args));
 	SETCAR(args, install(translateChar(STRING_ELT(CAR(args), 0))));
+	val = do_set(call, op, args, rho);
+	UNPROTECT(1);
+	return val;
+    }
 
     switch (PRIMVAL(op)) {
     case 1: case 3:					/* <-, = */
 	if (isSymbol(CAR(args))) {
 	    s = eval(CADR(args), rho);
-#ifdef CONSERVATIVE_COPYING
+#ifdef CONSERVATIVE_COPYING /* not default */
 	    if (NAMED(s))
 	    {
 		SEXP t;
@@ -1510,14 +1528,8 @@ SEXP attribute_hidden evalList(SEXP el, SEXP rho, SEXP op)
 	    }
 	    else if (h != R_MissingArg)
 		error(_("'...' used in an incorrect context"));
-/* Uncomment the following to restore old behavior */
-/* #define OLDMISSING */
-#ifdef OLDMISSING
-	} else if (CAR(el) != R_MissingArg) {
-#else
 	} else if (!(CAR(el) == R_MissingArg ||
                  (isSymbol(CAR(el)) && R_isMissing(CAR(el), rho)))) {
-#endif
 	    SETCDR(tail, CONS(eval(CAR(el), rho), R_NilValue));
 	    tail = CDR(tail);
 	    SET_TAG(tail, CreateTag(TAG(el)));
@@ -1579,12 +1591,8 @@ SEXP attribute_hidden evalListKeepMissing(SEXP el, SEXP rho)
 	    else if(h != R_MissingArg)
 		error(_("'...' used in an incorrect context"));
 	}
-#ifdef OLDMISSING
-	else if (CAR(el) == R_MissingArg) {
-#else
 	else if (CAR(el) == R_MissingArg ||
                  (isSymbol(CAR(el)) && R_isMissing(CAR(el), rho))) {
-#endif
 	    SETCDR(tail, CONS(R_MissingArg, R_NilValue));
 	    tail = CDR(tail);
 	    SET_TAG(tail, CreateTag(TAG(el)));
@@ -1780,6 +1788,24 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     return expr;
 }
 
+SEXP attribute_hidden do_withVisible(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP x, nm, ret;
+
+    checkArity(op, args);
+    x = CAR(args);
+    x = eval(x, rho);
+    PROTECT(x);
+    PROTECT(ret = allocVector(VECSXP, 2));
+    PROTECT(nm = allocVector(STRSXP, 2));
+    SET_STRING_ELT(nm, 0, mkChar("value"));
+    SET_STRING_ELT(nm, 1, mkChar("visible"));
+    SET_VECTOR_ELT(ret, 0, x);
+    SET_VECTOR_ELT(ret, 1, ScalarLogical(R_Visible));
+    setAttrib(ret, R_NamesSymbol, nm);
+    UNPROTECT(3);
+    return ret;
+}
 
 SEXP attribute_hidden do_recall(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -2006,13 +2032,39 @@ static void findmethod(SEXP Class, const char *group, const char *generic,
     *which = whichclass;
 }
 
+/* a portion of the logic of R_data_class2, but not producing
+   "matrix", "array" classes or vector types as classes  */
+static SEXP data_class_group(SEXP obj) {
+    SEXP klass = getAttrib(obj, R_ClassSymbol);
+      if(length(klass) > 0) {
+	if(IS_S4_OBJECT(obj) && TYPEOF(obj) != S4SXP) { 
+	    /* try to return an S3Class slot, but NOT matrix/array */
+	    /* The S4 class is included for compatibility with
+	       the deprecated practice of defining S3 methods 
+	       for S4 classes.  Someday this should be disallowed. 
+	       JMC iii.9.09 */
+  	    SEXP s3class = S3Class(obj);
+	    if(s3class != R_NilValue) {
+	        SEXP value; int i, n = length(s3class);
+		PROTECT(value =  allocVector(STRSXP, n+1));
+		SET_STRING_ELT(value, 0, STRING_ELT(klass, 0));
+		for(i=0; i<n; i++)
+		  SET_STRING_ELT(value, i+1, STRING_ELT(s3class, i));
+		UNPROTECT(1);
+		return value;
+	    }
+	}
+      }
+      return(klass);
+}
+
 attribute_hidden
 int DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 		  SEXP *ans)
 {
     int i, j, nargs, lwhich, rwhich, set;
     SEXP lclass, s, t, m, lmeth, lsxp, lgr, newrho;
-    SEXP rclass, rmeth, rgr, rsxp;
+    SEXP rclass, rmeth, rgr, rsxp, value;
     char lbuf[512], rbuf[512], generic[128], *pt;
     Rboolean useS4 = TRUE, isOps = FALSE;
 
@@ -2032,16 +2084,14 @@ int DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
     if(length(args) == 1 && !IS_S4_OBJECT(CAR(args))) useS4 = FALSE;
     if(length(args) == 2 &&
        !IS_S4_OBJECT(CAR(args)) && !IS_S4_OBJECT(CADR(args))) useS4 = FALSE;
-    if(useS4 && R_has_methods(op)) {
-	SEXP value;
+    if(useS4) {
 	/* Remove argument names to ensure positional matching */
 	if(isOps)
 	    for(s = args; s != R_NilValue; s = CDR(s)) SET_TAG(s, R_NilValue);
-
-	value = R_possible_dispatch(call, op, args, rho, FALSE);
-	if(value) {
-	    *ans = value;
-	    return 1;
+	if(R_has_methods(op) && 
+	   (value = R_possible_dispatch(call, op, args, rho, FALSE))) {
+	       *ans = value;
+	       return 1;
 	}
 	/* else go on to look for S3 methods */
     }
@@ -2073,10 +2123,12 @@ int DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
 	error(_("generic name too long in '%s'"), PRIMNAME(op));
     sprintf(generic, "%s", PRIMNAME(op) );
 
-    lclass = getAttrib(CAR(args), R_ClassSymbol);
+    lclass = IS_S4_OBJECT(CAR(args)) ? data_class_group(CAR(args))
+      : getAttrib(CAR(args), R_ClassSymbol);
 
     if( nargs == 2 )
-	rclass = getAttrib(CADR(args), R_ClassSymbol);
+	rclass = IS_S4_OBJECT(CADR(args)) ? data_class_group(CADR(args))
+      : getAttrib(CADR(args), R_ClassSymbol);
     else
 	rclass = R_NilValue;
 
@@ -2086,12 +2138,42 @@ int DispatchGroup(const char* group, SEXP call, SEXP op, SEXP args, SEXP rho,
     findmethod(lclass, group, generic, &lsxp, &lgr, &lmeth, &lwhich,
 	       lbuf, rho);
     PROTECT(lgr);
+    if(isFunction(lsxp) && IS_S4_OBJECT(CAR(args))) {
+      if(lwhich > 0) {
+        value = CAR(args);
+	if(NAMED(value)) SET_NAMED(value, 2);
+	value = asS4(value, 0, 2);
+	/* This and the similar test below are not possible when people
+	   insist on writing S3 methods for S4 classes & so NOT getting
+	   S4 inheritance JMC 8.iii.09 */
+/* 	if(TYPEOF(value) == S4SXP) */
+/* 	  error(_("Non-vector S4 object as first argument to operator")); */
+	SETCAR(args, value);
+      }
+      else { /* Design error: S3 method written for S4 class */
+	/*TODO: should warn here? */
+      }
+    }
 
     if( nargs == 2 )
 	findmethod(rclass, group, generic, &rsxp, &rgr, &rmeth,
 		   &rwhich, rbuf, rho);
     else
 	rwhich = 0;
+
+    if(isFunction(rsxp) && IS_S4_OBJECT(CADR(args))) {
+      if(rwhich > 0) {
+        value = CADR(args);
+	if(NAMED(value)) SET_NAMED(value, 2);
+	value = asS4(value, 0, 2);
+/* 	if(TYPEOF(value) == S4SXP) */
+/* 	  error(_("Non-vector S4 object as second argument to binary operator")); */
+	SETCADR(args, value);
+      }
+      else {
+	/*TODO: should warn here ? */
+      }
+    }
 
     PROTECT(rgr);
 
@@ -2618,7 +2700,7 @@ typedef int BCODE;
   value = (dd) ? ddfindVar(symbol, rho) : findVar(symbol, rho); \
   R_Visible = TRUE; \
   if (value == R_UnboundValue) \
-    error(_("Object \"%s\" not found"), CHAR(PRINTNAME(symbol))); \
+    error(_("object '%s' not found"), CHAR(PRINTNAME(symbol))); \
   else if (value == R_MissingArg) { \
     const char *n = CHAR(PRINTNAME(symbol)); \
     if(*n) error(_("argument \"%s\" is missing, with no default"), n); \

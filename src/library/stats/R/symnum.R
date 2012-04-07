@@ -28,8 +28,8 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
     ## Martin Maechler, 21 Jan 1994; Dedicated to Benjamin Schaad, born that day
 
     ##--------------- Argument checking -----------------------------
-    if(length(x) == 0)
-	return(noquote(if(is.null(d <- dim(x)))character(0) else array("", dim=d)))
+    if(length(x) == 0L)
+	return(noquote(if(is.null(d <- dim(x)))character(0L) else array("", dim=d)))
     has.na <- any(nax <- is.na(x))
     if(numeric.x) {
 	force(corr) # missingness..
@@ -41,7 +41,7 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
                  else gettext("'cutpoints' must be unique, but are = "),
                  paste(format(cutpoints), collapse="|"), domain = NA)
 	nc <- length(cutpoints)
-	minc <- cutpoints[1]
+	minc <- cutpoints[1L]
 	maxc <- cutpoints[nc]
 	range.msg <- if(corr) gettext("'x' must be between -1 and 1")
         else gettextf("'x' must be between %s and %s",
@@ -65,13 +65,13 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
 	iS <- cut(x, breaks=cutpoints, include.lowest=TRUE, labels= FALSE)
 	if(any(ii <- is.na(iS))) {
 	    ##-- can get 0, if x[i]== minc  --- only case ?
-	    iS[which(ii)[!is.na(x[ii]) & (abs(x[ii] - minc) < eps)]] <- 1#-> symbol[1]
+	    iS[which(ii)[!is.na(x[ii]) & (abs(x[ii] - minc) < eps)]] <- 1#-> symbol[1L]
 	}
     }
 ##     else if(!is.logical(x))
 ## 	stop("'x' must be numeric or logical")
     else  { ## assume logical x : no need for cut(points)
-	if(!missing(symbols) && length(symbols) != 2)
+	if(!missing(symbols) && length(symbols) != 2L)
 	    stop("must have 2 'symbols' for logical 'x' argument")
 	iS <- x + 1 # F = 1,  T = 2
     }
@@ -90,21 +90,21 @@ symnum <- function(x, cutpoints = c(  .3,  .6,	 .8,  .9, .95),
     if(lower.triangular && is.matrix(x))
 	ans[!lower.tri(x, diag = diag.lower.tri)] <- ""
     attributes(ans) <- attributes(x)
-    if(is.array(ans)&& (rank <- length(dim(x))) >= 2) { # `fix' column names
+    if(is.array(ans)&& (rank <- length(dim(x))) >= 2L) { # `fix' column names
 	has.colnames <- !is.null(dimnames(ans))
 	if(!has.colnames) {
 	    dimnames(ans) <- vector("list",rank)
 	} else {
-	    has.colnames <- length(dimnames(ans)[[2]]) > 0
+	    has.colnames <- length(dimnames(ans)[[2L]]) > 0L
 	}
 	if((is.logical(abbr.colnames) || is.numeric(abbr.colnames))
 	   && abbr.colnames) {
-	    dimnames(ans)[[2]] <-
-		abbreviate(dimnames(ans)[[2]], minlength= abbr.colnames)
+	    dimnames(ans)[[2L]] <-
+		abbreviate(dimnames(ans)[[2L]], minlength= abbr.colnames)
 	    ## dropped further abbrev. depending on getOption("width")
 	}
-	else if(is.null(abbr.colnames) || is.null(dimnames(ans)[[2]]))
-	    dimnames(ans)[[2]] <- rep("", dim(ans)[2])
+	else if(is.null(abbr.colnames) || is.null(dimnames(ans)[[2L]]))
+	    dimnames(ans)[[2L]] <- rep("", dim(ans)[2L])
 	else if(!is.logical(abbr.colnames)) stop("invalid 'abbr.colnames'")
     }
     if(legend) {

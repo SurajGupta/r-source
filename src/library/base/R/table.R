@@ -19,14 +19,14 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
 		   dnn = list.names(...), deparse.level = 1)
 {
     list.names <- function(...) {
-	l <- as.list(substitute(list(...)))[-1]
+	l <- as.list(substitute(list(...)))[-1L]
 	nm <- names(l)
 	fixup <- if (is.null(nm)) seq_along(l) else nm == ""
 	dep <- sapply(l[fixup], function(x)
 	    switch (deparse.level + 1,
 		    "", ## 0
 		    if (is.symbol(x)) as.character(x) else "", ## 1
-		    deparse(x, nlines=1)[1]) ## 2
+		    deparse(x, nlines=1)[1L]) ## 2
 		      )
 	if (is.null(nm))
 	    dep
@@ -40,20 +40,20 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
 
     useNA <- match.arg(useNA)
     args <- list(...)
-    if (length(args) == 0)
+    if (length(args) == 0L)
 	stop("nothing to tabulate")
-    if (length(args) == 1 && is.list(args[[1]])) {
-	args <- args[[1]]
+    if (length(args) == 1L && is.list(args[[1L]])) {
+	args <- args[[1L]]
 	if (length(dnn) != length(args))
 	    dnn <- if (!is.null(argn <- names(args)))
 		 argn
 	    else
-		 paste(dnn[1], 1:length(args), sep = '.')
+		 paste(dnn[1L], 1L:length(args), sep = ".")
     }
     # 0L, 1L, etc: keep 'bin' and 'pd' integer - as long as tabulate() requires it
     bin <- 0L
     lens <- NULL
-    dims <- integer(0)
+    dims <- integer(0L)
     pd <- 1L
     dn <- NULL
     for (a in args) {
@@ -94,7 +94,7 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
 	nl <- length(ll <- levels(cat))
 	dims <- c(dims, nl)
 	dn <- c(dn, list(ll))
-	## requiring   all(unique(as.integer(cat)) == 1:nlevels(cat))  :
+	## requiring   all(unique(as.integer(cat)) == 1L:nlevels(cat))  :
 	bin <- bin + pd * (as.integer(cat) - 1L)
 	pd <- pd * nl
     }
@@ -150,12 +150,12 @@ summary.table <- function(object, ...)
     if(n.vars > 1) {
 	m <- vector("list", length = n.vars)
 	relFreqs <- object / n.cases
-	for(k in 1:n.vars)
+	for(k in 1L:n.vars)
 	    m[[k]] <- apply(relFreqs, k, sum)
-	expected <- apply(do.call("expand.grid", m), 1, prod) * n.cases
+	expected <- apply(do.call("expand.grid", m), 1L, prod) * n.cases
 	statistic <- sum((c(object) - expected)^2 / expected)
 	parameter <-
-	    prod(sapply(m, length)) - 1 - sum(sapply(m, length) - 1)
+	    prod(sapply(m, length)) - 1L - sum(sapply(m, length) - 1L)
 	y <- c(y, list(statistic = statistic,
 		       parameter = parameter,
 		       approx.ok = all(expected >= 5),
@@ -196,7 +196,7 @@ as.data.frame.table <-
     ex <- quote(data.frame(do.call("expand.grid", dimnames(x)),
                            Freq = c(x),
                            row.names = row.names))
-    names(ex)[3] <- responseName
+    names(ex)[3L] <- responseName
     eval(ex)
 }
 

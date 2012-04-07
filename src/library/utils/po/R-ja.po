@@ -2,15 +2,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-10-06 07:30\n"
-"PO-Revision-Date: 2008-10-02 13:51+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2009-03-17 19:28\n"
+"PO-Revision-Date: 2009-03-31 21:07+0900 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
 "Plural-Forms: nplurals=1; plural=0; \n"
-"X-Generator: Pootle 0.10.1 \n"
+"X-Generator: Pootle 1.1.0 \n"
 
 msgid ""
 "RShowDoc() should be used with a character string argument specifying\n"
@@ -520,9 +520,10 @@ msgstr " リポジトリー %s に対する索引にアクセスできません 
 
 msgid "invalid 'oldPkgs'; must be as result from old.packages()"
 msgstr ""
+" 不正な 'oldPkgs'; old.packages() からの結果のようでなければなりません "
 
 msgid "illformed 'instPkgs' matrix"
-msgstr ""
+msgstr " 不正な 'instPkgs' 行列 "
 
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr ""
@@ -533,6 +534,9 @@ msgstr " バンドル '%s' のインストールが不完全です "
 
 msgid "bundle '%s' has extra contents %s"
 msgstr " バンドル '%s' は余計な内容 %s を持ちます "
+
+msgid "read.dcf() error on file '%s'"
+msgstr "ファイル '%s' に対する read.dcf() エラー"
 
 msgid "'priority' must be character or NULL"
 msgstr " 'priority' は文字か NULL で無ければなりません "
@@ -580,6 +584,13 @@ msgstr " どのパッケージも少なくとも1つの他のパッケージに�
 msgid "packages %s are mutually dependent"
 msgstr " パッケージ %s は相互に依存します "
 
+msgid ""
+"Do not know which element of 'lib' to install dependencies into\n"
+"skipping dependencies"
+msgstr ""
+" 'lib' のどの要素を依存関係のインストールに使うかわかりません \n"
+" 依存関係のインストールをスキップします "
+
 msgid "no packages were specified"
 msgstr " 如何なるパッケージも指定されませんでした "
 
@@ -603,6 +614,9 @@ msgstr " パッケージをインストール出来ませんでした "
 
 msgid "unable to create"
 msgstr " 生成できませんでした "
+
+msgid "inferring 'repos = NULL' from the file name"
+msgstr "ファイル名から 'repos = NULL' を推測"
 
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr ""
@@ -633,11 +647,11 @@ msgid "unable to create temporary directory '%s'"
 msgstr " 一時的ディレクトリ '%s' を作ることが出来ません "
 
 msgid ""
-"Do not know which element of 'lib' to install dependencies into\n"
-"skipping dependencies"
+"installation of one of more packages failed,\n"
+"  probably %s"
 msgstr ""
-" 'lib' のどの要素を依存関係のインストールに使うかわかりません \n"
-" 依存関係のインストールをスキップします "
+" 一つもしくは複数のパッケージのインストールが失敗しました \n"
+"恐らく %s "
 
 msgid ""
 "The downloaded packages are in\n"
@@ -801,6 +815,12 @@ msgstr " 'x' をローマンに変換できません "
 msgid "Invalid roman numeral(s): %s"
 msgstr " 不正なローマ数字です: %s "
 
+msgid "length mismatch: bug in code!"
+msgstr "長さが一致しません：コードにバグ！ "
+
+msgid "Processing file"
+msgstr "ファイルを処理中"
+
 msgid "no valid packages were specified"
 msgstr " 有効なパッケージが指定されませんでした "
 
@@ -903,6 +923,12 @@ msgstr " リンクなしHTMLを使います: ハイパーリンクは壊れて�
 msgid "options(\"browser\") not set"
 msgstr " options(\"browser\") が設定されていません "
 
+msgid "'latexcmd' is empty"
+msgstr " 'latexcmd' が空です "
+
+msgid "'dvipscmd' is empty"
+msgstr " 'dvipsscmd' が空です "
+
 msgid "invalid browser name, check options(\"browser\")."
 msgstr " 不正なブラウザー名です、 options(\"browser\") をチェックして下さい "
 
@@ -941,6 +967,24 @@ msgstr " HTML 検索索引を生成できません "
 msgid "Updating HTML index of packages in '.Library'"
 msgstr " '.Library' 中のパッケージの HTML 索引を更新します "
 
+msgid "'tar' returned non-zero exit code %d"
+msgstr " 'tar' がゼロでない終了コード %d を返しました "
+
+msgid "package '%s' successfully unpacked and MD5 sums checked"
+msgstr " パッケージ '%s' は無事に開封され、MD5 サムもチェックされました "
+
+msgid "malformed bundle DESCRIPTION file, no Contains field"
+msgstr " 不備なバンドルの DESCRIPTION ファイルです、Contains 欄がありません "
+
+msgid "bundle '%s' successfully unpacked and MD5 sums checked"
+msgstr " バンドル '%s' は無事に開封され、MD5 サムもチェックされました "
+
+msgid "unable to move temporary installation '%s' to '%s'"
+msgstr " 一時的なインストール '%s' を '%s' へ移動できませんでした "
+
+msgid "cannot remove prior installation of package"
+msgstr " パッケージの以前のインストールを取り除けません "
+
 msgid "'memory.size()' is Windows-specific"
 msgstr " 'memory.size()' は Windows 固有の関数です "
 
@@ -959,20 +1003,8 @@ msgstr " 非標準的なライブラリ中の URL を補修します "
 msgid "If nothing happens, you should open '%s' yourself"
 msgstr " もし何も起きなければ、自分で '%s' をオープンして下さい "
 
-msgid "package '%s' successfully unpacked and MD5 sums checked"
-msgstr " パッケージ '%s' は無事に開封され、MD5 サムもチェックされました "
-
-msgid "malformed bundle DESCRIPTION file, no Contains field"
-msgstr " 不備なバンドルの DESCRIPTION ファイルです、Contains 欄がありません "
-
-msgid "bundle '%s' successfully unpacked and MD5 sums checked"
-msgstr " バンドル '%s' は無事に開封され、MD5 サムもチェックされました "
-
 msgid "failed to create '%s'"
 msgstr " '%s' を生成できませんでした "
-
-msgid "unable to move temporary installation '%s' to '%s'"
-msgstr " 一時的なインストール '%s' を '%s' へ移動できませんでした "
 
 msgid "cannot remove prior installation of package '%s'"
 msgstr " パッケージ '%s' の前のインストールを取り除くことが出来ませんでした "
@@ -995,15 +1027,6 @@ msgstr " winDialogString() は対話的にしか使用できません "
 msgid "'pb' is not from class \"winProgressBar\""
 msgstr " 'pb'は\"winProgressBar\"クラスを継承していません "
 
-msgid "this function is intended to work with the Aqua GUI"
-msgstr " この関数は Aqua GUI で使うことを意図しています "
-
-msgid "'tar' returned non-zero exit code %d"
-msgstr " 'tar' がゼロでない終了コード %d を返しました "
-
-msgid "cannot remove prior installation of package"
-msgstr " パッケージの以前のインストールを取り除けません "
-
 msgid "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0] " 列 %s からクラスが切り捨てられたクラス "
@@ -1011,10 +1034,6 @@ msgstr[0] " 列 %s からクラスが切り捨てられたクラス "
 msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] " オブジェクト '%s' が見付かりません "
-
-msgid "'lib' element '%s'  is not a writable directory"
-msgid_plural "'lib' elements '%s' are not writable directories"
-msgstr[0] " 'lib' の要素 '%s'' は書き込み可能なディレクトリではありません "
 
 msgid "package %s is not available"
 msgid_plural "packages %s are not available"
@@ -1028,9 +1047,16 @@ msgid "also installing the dependency %s"
 msgid_plural "also installing the dependencies %s"
 msgstr[0] " 依存対象(dependency)　%s もインストールします "
 
+msgid "'lib' element '%s'  is not a writable directory"
+msgid_plural "'lib' elements '%s' are not writable directories"
+msgstr[0] " 'lib' の要素 '%s'' は書き込み可能なディレクトリではありません "
+
 msgid "package '%s' is in use and will not be installed"
 msgid_plural "packages '%s' are in use and will not be installed"
 msgstr[0] " パッケージ '%s' は使用中ですから、インストールされません "
+
+#~ msgid "this function is intended to work with the Aqua GUI"
+#~ msgstr " この関数は Aqua GUI で使うことを意図しています "
 
 #~ msgid "Maintainer:"
 #~ msgstr " 管理者: "

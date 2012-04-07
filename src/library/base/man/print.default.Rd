@@ -1,6 +1,6 @@
 % File src/library/base/man/print.default.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2009 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{print.default}
@@ -47,7 +47,7 @@
 \details{
   The default for printing \code{NA}s is to print \code{NA} (without
   quotes) unless this is a character \code{NA} \emph{and} \code{quote =
-    FALSE}, when \code{<NA>} is printed.
+    FALSE}, when \samp{<NA>} is printed.
 
   The same number of decimal places is used throughout a vector.  This
   means that \code{digits} specifies the minimum number of significant
@@ -77,11 +77,11 @@
 }
 \section{Single-byte locales}{
   If a non-printable character is encountered during output, it is
-  represented as one of the ANSI escape sequences (\code{\a}, \code{\b},
-  \code{\f}, \code{\n}, \code{\r}, \code{\t}, \code{\v}, \code{\\\\} and
-  \code{\0}: see \link{Quotes}), or failing that as a 3-digit octal
+  represented as one of the ANSI escape sequences (\samp{\\a}, \samp{\\b},
+  \samp{\\f}, \samp{\\n}, \samp{\\r}, \samp{\\t}, \samp{\\v}, \samp{\\\\} and
+  \samp{\\0}: see \link{Quotes}), or failing that as a 3-digit octal
   code: for example the UK currency pound sign in the C locale (if
-  implemented correctly) is printed as \code{\243}.  Which characters
+  implemented correctly) is printed as \samp{\\243}.  Which characters
   are non-printable depends on the locale.
 #ifdef windows
   (Because some versions of Windows get this wrong, all bytes with the
@@ -89,43 +89,49 @@
   locale.)
 #endif
 }
+
 #ifdef unix
 \section{Unicode and other multi-byte locales}{
-#endif
-#ifdef windows
-\section{Multi-byte locales}{
-#endif
-  In all locales, the characters in the ASCII range (\code{0x00} to
-  \code{0x7f}) are printed in the same way, as-is if printable, otherwise
+  In all locales, the characters in the ASCII range (\samp{0x00} to
+  \samp{0x7f}) are printed in the same way, as-is if printable, otherwise
   via ANSI escape sequences or 3-digit octal escapes as described for
   single-byte locales.
 
   Multi-byte non-printing characters are printed as an escape sequence
-  of the form \code{\uxxxx}
-#ifndef windows
-  or \code{\Uxxxxxxxx}
-#endif
-  (in hexadecimal).
-#ifdef windows
-  This is the Unicode point of the character.
-#endif
-#ifdef unix
+  of the form \samp{\\uxxxx} or \samp{\\Uxxxxxxxx} (in hexadecimal).
   This is the internal code for the wide-character representation of the
   character.  If this is not known to be the Unicode point, a warning is
   issued.  The only known exceptions are certain Japanese ISO2022
   locales on commercial Unixes, which use a concatenation of the bytes:
   it is unlikely that \R compiles on such a system.
 % http://www.cl.cam.ac.uk/~mgk25/ucs/iso2022-wc.html
-#endif
 
   It is possible to have a character string in a character vector that
   is not valid in the current locale.  If a byte is encountered that is
   not part of a valid character it is printed in hex in the form
-  \code{\xab} and this is repeated until the start of a valid character.
-#ifdef unix
+  \samp{\\xab} and this is repeated until the start of a valid character.
   (This will rapidly recover from minor errors in UTF-8.)
-#endif
 }
+#endif
+
+#ifdef windows
+\section{Multi-byte locales}{
+  In all locales, the characters in the ASCII range (\samp{0x00} to
+  \samp{0x7f}) are printed in the same way, as-is if printable, otherwise
+  via ANSI escape sequences or 3-digit octal escapes as described for
+  single-byte locales.
+
+  Multi-byte non-printing characters are printed as an escape sequence
+ of the form \samp{\\uxxxx} (in hexadecimal). This is the Unicode point
+ of the character.
+
+  It is possible to have a character string in a character vector that
+  is not valid in the current locale.  If a byte is encountered that is
+  not part of a valid character it is printed in hex in the form
+  \samp{\\xab} and this is repeated until the start of a valid character.
+}
+#endif
+
 \seealso{
   The generic \code{\link{print}}, \code{\link{options}}.
   The \code{"\link{noquote}"} class and print method.

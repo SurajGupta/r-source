@@ -34,7 +34,7 @@ RNGkind <- function(kind = NULL, normal.kind = NULL)
 	if(is.na(i.knd <- pmatch(kind, kinds) - 1L))
 	    stop(gettextf("'%s' is not a valid abbreviation of an RNG", kind),
                  domain = NA)
-        if(i.knd == length(kinds) - 1) i.knd <- -1L
+        if(i.knd == length(kinds) - 1L) i.knd <- -1L
     } else i.knd <- NULL
 
     if(!is.null(normal.kind)) {
@@ -46,10 +46,10 @@ RNGkind <- function(kind = NULL, normal.kind = NULL)
                  domain = NA)
 	if (normal.kind == 0L)
             warning("Buggy version of Kinderman-Ramage generator used")
-         if(normal.kind == length(n.kinds) - 1) normal.kind <- -1L
+         if(normal.kind == length(n.kinds) - 1L) normal.kind <- -1L
     }
-    r <- 1 + .Internal(RNGkind(i.knd, normal.kind))
-    r <- c(kinds[r[1]], n.kinds[r[2]])
+    r <- 1L + .Internal(RNGkind(i.knd, normal.kind))
+    r <- c(kinds[r[1L]], n.kinds[r[2L]])
     if(do.set || !is.null(normal.kind)) invisible(r) else r
 }
 
@@ -61,13 +61,13 @@ set.seed <- function(seed, kind = NULL, normal.kind = NULL)
     n.kinds <- c("Buggy Kinderman-Ramage", "Ahrens-Dieter", "Box-Muller",
                  "user-supplied", "Inversion", "Kinderman-Ramage",
 		 "default")
-    if(length(kind) > 0L) {
+    if(length(kind) ) {
 	if(!is.character(kind) || length(kind) > 1L)
 	    stop("'kind' must be a character string of length 1 (RNG to be used).")
 	if(is.na(i.knd <- pmatch(kind, kinds) - 1L))
 	    stop(gettextf("'%s' is not a valid abbreviation of an RNG", kind),
                  domain = NA)
-        if(i.knd == length(kinds) - 1) i.knd <- -1L
+        if(i.knd == length(kinds) - 1L) i.knd <- -1L
     } else i.knd <- NULL
 
     if(!is.null(normal.kind)) {
@@ -77,7 +77,7 @@ set.seed <- function(seed, kind = NULL, normal.kind = NULL)
         if(is.na(normal.kind))
 	    stop(gettextf("'%s' is not a valid choice", normal.kind),
                  domain = NA)
-	if (normal.kind == 0)
+	if (normal.kind == 0L)
             stop("Buggy version of Kinderman-Ramage generator is not allowed")
          if(normal.kind == length(n.kinds) - 1L) normal.kind <- -1L
     }
@@ -88,12 +88,12 @@ set.seed <- function(seed, kind = NULL, normal.kind = NULL)
 
 RNGversion <- function(vstr)
 {
-    vnum <- as.numeric(strsplit(vstr,".", fixed=TRUE)[[1]])
-    if (length(vnum) < 2)
+    vnum <- as.numeric(strsplit(vstr,".", fixed=TRUE)[[1L]])
+    if (length(vnum) < 2L)
 	stop("malformed version string")
-    if (vnum[1] == 0 && vnum[2] < 99)
+    if (vnum[1L] == 0 && vnum[2L] < 99)
         RNGkind("Wichmann-Hill", "Buggy Kinderman-Ramage")
-    else if (vnum[1] == 0 || vnum[1] == 1 && vnum[2] <= 6)
+    else if (vnum[1L] == 0 || vnum[1L] == 1 && vnum[2L] <= 6)
 	RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage")
     else
 	RNGkind("Mersenne-Twister", "Inversion")

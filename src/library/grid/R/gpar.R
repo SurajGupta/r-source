@@ -141,7 +141,7 @@ validGP <- function(gpars) {
       else {
         temp.char <- as.character(gpars$fontface)
         temp.num <- integer(length(temp.char))
-        for (i in 1:length(temp.char))
+        for (i in 1L:length(temp.char))
           temp.num[i] <- switch(temp.char[i],
                                 plain=1,
                                 italic=3,
@@ -192,17 +192,17 @@ set.gpar <- function(gp) {
       gp$gamma <- NULL
   }
   # Special case "cex" (make it cumulative)
-  if (match("cex", names(gp), nomatch=0))
+  if (match("cex", names(gp), nomatch=0L))
     tempcex <- temp$cex * gp$cex
   else
     tempcex <- temp$cex
   # Special case "alpha" (make it cumulative)
-  if (match("alpha", names(gp), nomatch=0))
+  if (match("alpha", names(gp), nomatch=0L))
     tempalpha <- temp$alpha * gp$alpha
   else
     tempalpha <- temp$alpha
   # Special case "lex" (make it cumulative)
-  if (match("lex", names(gp), nomatch=0))
+  if (match("lex", names(gp), nomatch=0L))
     templex <- temp$lex * gp$lex
   else
     templex <- temp$lex

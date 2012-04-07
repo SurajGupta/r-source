@@ -1,4 +1,4 @@
-#!/bin/sh
+#!@R_SHELL@
 # Shell wrapper for R executable.
 
 R_HOME_DIR=
@@ -82,7 +82,7 @@ Options:
   -d, --debugger=NAME   Run R through debugger NAME
   --debugger-args=ARGS  Pass ARGS as arguments to the debugger
   -g, --gui=TYPE	Use TYPE as GUI; possible values are 'X11'
-			(default), 'Tk' and (with package gnomeGUI) 'gnome'
+			(default) and 'Tk'.
   --arch=NAME		Specify a sub-architecture
   --args                Skip the rest of the command line
   -f, --file=FILE       Take input from 'FILE'
@@ -106,6 +106,7 @@ Commands:
   Rdiff			Diff R output ignoring headers etc
   config		Obtain configuration information about R
   javareconf		Update the Java configuration variables
+  rtags                 Create Emacs-style tag files from C, R, and Rd files
 
 Please use 'R CMD command --help' to obtain further information about
 the usage of 'command'.
@@ -209,9 +210,6 @@ R_binary="${R_HOME}/bin/exec${R_ARCH}/R"
 export R_ARCH
 
 case "${gui}" in
-gnome|GNOME)
-  R_binary="${R_HOME}/bin/exec${R_ARCH}/Rgnome"
-  ;;
 Tk|tk|X11|x11)
   ;;
 "")

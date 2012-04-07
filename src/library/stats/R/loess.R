@@ -28,23 +28,23 @@ function(formula, data, weights, subset, na.action, model = FALSE,
     mf$model <- mf$span <- mf$enp.target <- mf$degree <-
 	mf$parametric <- mf$drop.square <- mf$normalize <- mf$family <-
 	    mf$method <- mf$control <- mf$... <- NULL
-    mf[[1]] <- as.name("model.frame")
+    mf[[1L]] <- as.name("model.frame")
     mf <- eval(mf, parent.frame())
     if (match.arg(method) == "model.frame") return(mf)
     mt <- attr(mf, "terms")
     y <- model.response(mf, "numeric")
     w <- model.weights(mf)
     if(is.null(w)) w <- rep(1, length(y))
-    nmx <- as.character(attr(mt, "variables"))[-(1:2)]
+    nmx <- as.character(attr(mt, "variables"))[-(1L:2)]
     x <- mf[, nmx, drop=FALSE]
     if(any(sapply(x, is.factor))) stop("predictors must all be numeric")
     x <- as.matrix(x)
     D <- ncol(x)
     nmx <- colnames(x)
     names(nmx) <- nmx
-    drop.square <- match(nmx, nmx[drop.square], 0) > 0
-    parametric <- match(nmx, nmx[parametric], 0) > 0
-    if(!match(degree, 0:2, 0)) stop("'degree' must be 0, 1 or 2")
+    drop.square <- match(nmx, nmx[drop.square], 0L) > 0L
+    parametric <- match(nmx, nmx[parametric], 0L) > 0L
+    if(!match(degree, 0L:2L, 0L)) stop("'degree' must be 0, 1 or 2")
     iterations <- if(family == "gaussian") 1 else control$iterations
     if(!missing(enp.target))
 	if(!missing(span))
@@ -102,11 +102,11 @@ simpleLoess <-
     max.kd <-  max(N, 200)
     robust <- rep(1, N)
     divisor<- rep(1, D)
-    if(normalize && D > 1) {
+    if(normalize && D > 1L) {
 	trim <- ceiling(0.1 * N)
 	divisor <-
-	    sqrt(apply(apply(x, 2, sort)[seq(trim+1, N-trim), , drop = FALSE],
-		       2, var))
+	    sqrt(apply(apply(x, 2L, sort)[seq(trim+1, N-trim), , drop = FALSE],
+		       2L, var))
 	x <- x/rep(divisor, rep(N, D))
     }
     sum.drop.sqr <- sum(drop.square)
@@ -122,7 +122,7 @@ simpleLoess <-
     if(sum.parametric == D) stop("specified parametric for all predictors")
 
     if(iterations)
-    for(j in 1:iterations) {
+    for(j in 1L:iterations) {
 	robust <- weights * robust
 	if(j > 1) statistics <- "none"
 	else if(surface == "interpolate" && statistics == "approximate")
@@ -172,8 +172,8 @@ simpleLoess <-
 	pars <- z$parameter
 	names(pars) <- c("d", "n", "vc", "nc", "nv", "liv", "lv")
 	enough <- (D + 1) * pars["nv"]
-	fit.kd <- list(parameter=pars, a=z$a[1:pars[4]], xi=z$xi[1:pars[4]],
-		       vert=z$vert, vval=z$vval[1:enough])
+	fit.kd <- list(parameter=pars, a=z$a[1L:pars[4L]], xi=z$xi[1L:pars[4L]],
+		       vert=z$vert, vval=z$vval[1L:enough])
     }
     if(iterations > 1) {
 	pseudovalues <- .Fortran(R_lowesp,
@@ -208,7 +208,7 @@ simpleLoess <-
 		trL = double(1),
 		delta1 = double(1),
 		delta2 = double(1),
-		as.integer(0))
+		as.integer(0L))
 	pseudo.resid <- pseudovalues - zz$temp
     }
     sum.squares <- if(iterations <= 1) sum(weights * fitted.residuals^2)
@@ -315,7 +315,7 @@ predLoess <-
     else { ## interpolate
 	## need to eliminate points outside original range - not in pred_
 	inside <- matrix(FALSE, M, ncol = D)
-	ranges <- apply(x, 2, range)
+	ranges <- apply(x, 2L, range)
 	inside <- (x.evaluate <= rep(ranges[2,], rep(M, D))) &
 	(x.evaluate >= rep(ranges[1,], rep(M, D)))
 	inside <- inside %*% rep(1, D) == D
@@ -438,7 +438,7 @@ loess.smooth <-
     new.x <- seq.int(min(x[notna]), max(x[notna]), length.out = evaluation)
 
     control <- loess.control(...)
-    ##	x <- matrix(x, ncol = 1)
+    ##	x <- matrix(x, ncol = 1L)
     ##	n <- length(y)
     x <- x[notna]; y <- y[notna]
     w <- rep(1, length(y))
@@ -472,8 +472,8 @@ anova.loess <- function(object, ...)
 {
     objects <- list(object, ...)
     responses <- as.character(lapply(objects,
-				     function(x) as.character(x$terms[[2]])))
-    sameresp <- responses == responses[1]
+				     function(x) as.character(x$terms[[2L]])))
+    sameresp <- responses == responses[1L]
     ## calculate the number of models
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
@@ -484,7 +484,7 @@ anova.loess <- function(object, ...)
     nmodels <- length(objects)
     if(nmodels <= 1) stop("no models to compare")
     models <- as.character(lapply(objects, function(x) x$call))
-    descr <- paste("Model ", format(1:nmodels), ": ", models,
+    descr <- paste("Model ", format(1L:nmodels), ": ", models,
 		   sep = "", collapse = "\n")
     ## extract statistics
     delta1 <- sapply(objects, function(x) x$one.delta)

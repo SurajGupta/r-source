@@ -9,9 +9,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.8.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-10-06 17:10-0500\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
+"POT-Creation-Date: 2009-03-17 19:27\n"
+"PO-Revision-Date: 2009-03-28 23:43-0500\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=KOI8-R\n"
@@ -171,6 +171,9 @@ msgstr "похоже, что имя пакета '%s' неправильное; вместо него использую имя папк
 
 msgid "Packages required but not available:"
 msgstr "Пакет требуется, но недоступен:"
+
+msgid "Packages required and available but unsuitable version:"
+msgstr "Пакет требуется и доступен, но неподходящей версии:"
 
 msgid "Former standard packages required but now defunct:"
 msgstr "Бывший стандартный пакет требуется, который сейчас вышел из употребления:"
@@ -336,8 +339,11 @@ msgstr "Нестандартная лицензия:"
 msgid "Invalid license file pointers: %s"
 msgstr "Неправильные указатели файла лицензии: %s"
 
-msgid "Verifiable as open source: %s"
-msgstr "Поддается проверке как open source: %s"
+msgid "Standardizable: %s"
+msgstr "Стандартизируемо:: %s"
+
+msgid "Standardized license specification:"
+msgstr "Стандартизованная спецификация лицензии:"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "Непереносимые флаги в переменной '%s':"
@@ -359,6 +365,9 @@ msgstr "не объявлен импорт '::' или ':::' из:"
 
 msgid "'library' or 'require' calls not declared from:"
 msgstr "не объявлены вызовы 'library' или 'require' из:"
+
+msgid "*** error on file"
+msgstr "*** ошибка в файле"
 
 msgid "Generics g in env ="
 msgstr "Общие 'g' в env ="
@@ -461,6 +470,15 @@ msgid ""
 "missing/empty \\n"
 "ame field in Rd file(s)"
 msgstr "пропущенное/пустое поле \\имя Rd-файлы"
+
+msgid "should not get here"
+msgstr "сюда не должно дойти"
+
+msgid "Rd2HTML is designed for Rd version 2 or higher."
+msgstr "Rd2HTML разработан для Rd версии 2 или выше."
+
+msgid "more than one \\examples section, using the first"
+msgstr "более чем одна \\секция примеров, использую первую"
 
 msgid "unable to create temp directory"
 msgstr "не могу создать временную папку"
@@ -567,6 +585,199 @@ msgstr "ОШИБКА: это R версии %s, а требуется R %s %s"
 msgid "cannot read index information in file '%s'"
 msgstr "не могу прочитать индексную информацию из файла '%s'"
 
+msgid "ERROR:"
+msgstr "ОШИБКА:"
+
+msgid "for package"
+msgstr "для пакета"
+
+msgid "incorrect Contains metadata for bundle"
+msgstr "неправильное Содержание метаданных для связки пакетов"
+
+msgid ": there is no package '"
+msgstr ": нет пакета '"
+
+msgid "skipping installation of bundle"
+msgstr "пропускаю установку связки пакетов"
+
+msgid "problem installing per-package DESCRIPTION files"
+msgstr "проблема при установке пакетных DESCRIPTION файлов"
+
+msgid "ERROR unable to create"
+msgstr "ОШИБКА: не могу создать"
+
+msgid "packaged installation of"
+msgstr "пакетная установка"
+
+msgid "as"
+msgstr "как"
+
+msgid ".gz"
+msgstr ".gz"
+
+msgid "'cleanup' exists but is not executable -- see the 'R Installation and Adminstration Manual'"
+msgstr "'cleanup' есть, но невыполним  -- смотрите 'R Installation and Adminstration Manual'"
+
+msgid "about to run"
+msgstr "почти готов к запуску"
+
+msgid "R CMD SHLIB"
+msgstr "R CMD SHLIB"
+
+msgid "Using auto-selected zip options '"
+msgstr "Использую автоматически выбранные опции zip '"
+
+msgid "--use-zip-data"
+msgstr "--use-zip-data"
+
+msgid "--use-zip-help"
+msgstr "--use-zip-help"
+
+msgid "**********************************************"
+msgstr "**********************************************"
+
+msgid "WARNING: this package has a configure script"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: у этого пакета есть конфигурационный скрипт"
+
+msgid "It probably needs manual configuration"
+msgstr "Возможно, нужна ручная настройка"
+
+msgid "configure command:"
+msgstr "комманда configure:"
+
+msgid "R include directory is empty -- perhaps need to install R-devel.rpm or similar"
+msgstr "Включаемая папка R пуста -- возможно, надо установить R-devel.rpm или похожее"
+
+msgid "running src/Makefile.win ..."
+msgstr "запускаю src/Makefile.win ..."
+
+msgid "making DLL ..."
+msgstr "делаю DLL..."
+
+msgid "... done"
+msgstr "... готово"
+
+msgid "no source files found"
+msgstr "не найдено файлов исходников"
+
+msgid "empty 'data' directory"
+msgstr "пустая папка 'data'"
+
+msgid "use of file 'install.R' is no longer supported"
+msgstr "использование файла 'install.R' больше не поддерживается"
+
+msgid "use of file 'R_PROFILE.R' is no longer supported"
+msgstr "использование файла 'R_PROFILE.R' больше не поддерживается"
+
+msgid "field 'SaveImage' is defunct: please remove it"
+msgstr "поле 'SaveImage\" больше не существует: удалите его"
+
+msgid "cannot create temporary directory"
+msgstr "Не могу создать врЕменную"
+
+msgid "Use of --with-package-versions is defunct"
+msgstr "Использование --with-package-versions больше не требуется"
+
+msgid "--auto-zip' is for Windows only"
+msgstr "--auto-zip' только для Windows"
+
+msgid "-l option without value"
+msgstr "-l опция без значения"
+
+msgid "Warning: unknown option"
+msgstr "Предупреждение: неизвестная опция"
+
+msgid "processing"
+msgstr "обрабытываю"
+
+msgid "a file"
+msgstr "файл"
+
+msgid "unknown package layout"
+msgstr "неизвестная структура пакета"
+
+msgid "a directory"
+msgstr "папка"
+
+msgid "invalid package"
+msgstr "неправильный пакет"
+
+msgid "--pkglock applies only to a single bundle/package"
+msgstr "--pkglock применим только к одиночному пакету или связке"
+
+msgid "ERROR: no packages specified"
+msgstr "ОШИБКА: пакет не определен"
+
+msgid "ERROR: cannot cd to directory"
+msgstr "ОШИБКА: не могу перейти в папку"
+
+msgid "ERROR: no permission to install to directory"
+msgstr "ОШИБКА: нет прав для установочной папки"
+
+msgid "ERROR: failed to lock directory"
+msgstr "ОШИБКА: не удалось заблокировать папку"
+
+msgid ""
+"for modifying\n"
+"Try removing"
+msgstr ""
+"для модификации\n"
+"Пытаюсь переместить"
+
+msgid "ERROR: failed to create lock directory"
+msgstr "ОШИБКА: не удалось создать блокированную папку"
+
+msgid "building a fake installation is disallowed"
+msgstr "сборка ложной установки не разрешается"
+
+msgid "*** 'hhc.exe' not found: not building CHM help"
+msgstr "*** 'hhc.exe' не найден: не собираю CHM помощь"
+
+msgid "-o option without value"
+msgstr "-o опция без значения"
+
+msgid "Converting Rd files to LaTeX ..."
+msgstr "Конвертирую  Rd файлы в LaTeX ..."
+
+msgid "this package does not have either a"
+msgstr "этот пакет не имеет либо"
+
+msgid "latex"
+msgstr "LaTeX"
+
+msgid "or a"
+msgstr "или"
+
+msgid "man"
+msgstr "ман-страницу"
+
+msgid "directory"
+msgstr "папка"
+
+msgid "no validly-named files in the"
+msgstr "нет правильно именованных файлов в"
+
+msgid "file"
+msgstr "файл"
+
+msgid "lacks a header: skipping"
+msgstr "отсуствует заголовок: пропускаю"
+
+msgid "there are no help pages in this package"
+msgstr "в пакете нет файлов помощи"
+
+msgid "skipping repeated alias(es)"
+msgstr "пропускаю повторяющиеся имена-ссылк(и)"
+
+msgid "in file"
+msgstr "в файле"
+
+msgid "problem in converting"
+msgstr "проблема конвертирования"
+
+msgid "Bundle package:"
+msgstr "Связка пакетов:"
+
 msgid "there is no package called '%s'"
 msgstr "нет пакета по имени '%s'"
 
@@ -606,6 +817,15 @@ msgstr "у 'DESCRIPTION' есть поле 'Encoding', перекодировка невозможна"
 msgid "cannot create HTML package index"
 msgstr "не могу создать HTML-индекс пакета"
 
+msgid "multiple \\encoding lines in file"
+msgstr "несколько \\строк кодировок в файле"
+
+msgid "found encoding"
+msgstr "найдена кодировка"
+
+msgid "non-UTF-8 multibyte locales are not supported -- reencoding to UTF-8"
+msgstr "не-UTF-8 многобайтные локали не поддерживаются -- перекодирую в UTF-8"
+
 msgid "argument 'pkg' must be of length 1"
 msgstr "аргумент 'pkg' должен быть единичной длины"
 
@@ -626,6 +846,96 @@ msgstr "'file' должен быть текстовой строкой или соединением"
 
 msgid "unimplemented encoding"
 msgstr "не разработанная кодировка"
+
+msgid "cannot be opened"
+msgstr "нельзя открыть"
+
+msgid "testing '%s' failed"
+msgstr "тестирование '%s' не удалось"
+
+msgid "Collecting examples for package"
+msgstr "Собираю примеры к пакету"
+
+msgid "Running examples in package"
+msgstr "Запускаю примеры к пакету"
+
+msgid "Comparing"
+msgstr "Сравниваю"
+
+msgid "to"
+msgstr "в"
+
+msgid "..."
+msgstr "..."
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Running specific tests for package"
+msgstr "Запускаю специфические тесты для пакета"
+
+msgid "Running"
+msgstr "Запускаю"
+
+msgid "Running vignettes for package"
+msgstr "Запускаю миниатюры для пакета"
+
+msgid "Creating"
+msgstr "Создаю"
+
+msgid "creation of"
+msgstr "создание"
+
+msgid "failed"
+msgstr "не удалось"
+
+msgid "creating"
+msgstr "создаю"
+
+msgid "running code in"
+msgstr "запускаю код в "
+
+msgid "FAILED"
+msgstr "НЕ УДАЛОСЬ"
+
+msgid "comparing"
+msgstr "сравниваю"
+
+msgid "running strict specific tests"
+msgstr "запускаю узкоспецифические тесты"
+
+msgid "running sloppy specific tests"
+msgstr "запускаю широкие тесты"
+
+msgid "running regression tests"
+msgstr "запускаю регрессионные тесты"
+
+msgid "comparing 'reg-plot.ps' to 'reg-plot.ps.save' ..."
+msgstr "сравниваю 'reg-plot.ps' с 'reg-plot.ps.save' ..."
+
+msgid "running tests of plotting Latin-1"
+msgstr "запускаю тесты на рисование с Latin-1"
+
+msgid "expect failure or some differences if not in a Latin or UTF-8 locale"
+msgstr "ожидайте неудачу или отличия если не на локали Latin или UTF-8"
+
+msgid "comparing 'reg-plot-latin1.ps' to 'reg-plot-latin1.ps.save' ..."
+msgstr "сравниваю 'reg-plot-latin1.ps' с 'reg-plot-latin1.ps.save' ..."
+
+msgid "running tests of consistency of as/is.*"
+msgstr "запускаю тесты на соответствие as/is.*"
+
+msgid "running tests of random deviate generation -- fails occasionally"
+msgstr "запускаю тесты на генерацию случайных отклонений -- иногда не удаются"
+
+msgid "running tests of primitives"
+msgstr "запускаю тесты на примитивы"
+
+msgid "running regexp regression tests"
+msgstr "запускаю регрессионные тесты на регулярные выражения"
+
+msgid "running tests to possibly trigger segfaults"
+msgstr "запускаю тесты на возможное переключение ошибок сегментации"
 
 msgid "test '%s' is not available"
 msgstr "тест '%s' недоступен"
@@ -699,6 +1009,14 @@ msgstr[0] "Найдены возможные глобальные T или F в следующем Rd-файле примеров:"
 msgstr[1] "Найдены возможные глобальные T или F в следующих Rd-файлах примеров:"
 msgstr[2] "Найдены возможные глобальные T или F в следующих Rd-файлах примеров:"
 
+msgid "Found .Internal call in the following function:"
+msgid_plural "Found .Internal calls in the following functions:"
+msgstr[0] "Найден вызов .Internal call в следующей функции:"
+msgstr[1] "Найдены вызовы .Internal в следующих функциях:"
+msgstr[2] "Найдены вызовы .Internal в следующих функциях:"
+
+#~ msgid "Verifiable as open source: %s"
+#~ msgstr "Поддается проверке как open source: %s"
 #~ msgid "--- running texi2dvi on vignettes"
 #~ msgstr "--- запуск 'texi2dvi' на очерки"
 #~ msgid "unable to run pdflatex on '%s'"

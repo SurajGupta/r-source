@@ -7,11 +7,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.8.0\n"
+"Project-Id-Version: R 2.9.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-06-05 19:48\n"
-"PO-Revision-Date: 2008-10-06 16:47-0500\n"
-"Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
+"POT-Creation-Date: 2009-03-20 09:02\n"
+"PO-Revision-Date: 2009-03-28 22:26-0500\n"
+"Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=KOI8-R\n"
@@ -268,9 +268,6 @@ msgstr "неправильные аргументы в quartzFonts (должен быть имена шрифтов)"
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "неправильные аргументы в quartzFonts (нужны именованные аргументы)"
 
-msgid "invalid value for 'antialias'"
-msgstr "неправильное значение 'antialias'"
-
 msgid "invalid 'filename'"
 msgstr "неправильное 'filename'"
 
@@ -291,6 +288,12 @@ msgstr "неправильное значение 'rescale'"
 
 msgid "can only bring windows devices to the front"
 msgstr "могу лишь переместить устройства windows на первый план"
+
+msgid "'type' not applicable to the R console"
+msgstr "'type' неприменим к консоли R"
+
+msgid "can only manipulate windows devices"
+msgstr "могу работать только с 'windows'-устройствами"
 
 msgid "can only copy from 'windows' devices"
 msgstr "могу копировать лишь с 'windows'-устройств"
@@ -337,6 +340,8 @@ msgstr[0] "%d значение z <= 0 пропущено на логарифмическом графике"
 msgstr[1] "%d значения z <= 0 пропущены на логарифмическом графике"
 msgstr[2] "%d значения z <= 0 пропущены на логарифмическом графике"
 
+#~ msgid "invalid value for 'antialias'"
+#~ msgstr "неправильное значение 'antialias'"
 #~ msgid "quartz() device interactivity reduced without an event loop manager"
 #~ msgstr ""
 #~ "устройство quartz() интерактивно сокращено без использования обработчика "

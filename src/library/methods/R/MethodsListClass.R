@@ -34,9 +34,8 @@
     setClass("signature", representation("character", names = "character"), where = envir); clList <- c(clList, "signature")
 
     ## formal method definition for all but primitives
-    setClass("MethodDefinition",
-             representation("function", "PossibleMethod",
-                            target = "signature", defined = "signature", generic = "character"),
+    setClass("MethodDefinition", contains = "function", 
+             representation(target = "signature", defined = "signature", generic = "character"),
              where = envir); clList <- c(clList, "MethodDefinition")
     ## class for default methods made from ordinary functions
     setClass("derivedDefaultMethod", "MethodDefinition")
@@ -44,8 +43,8 @@
     setClass("MethodWithNext",
              representation("MethodDefinition", nextMethod = "PossibleMethod", excluded = "list"), where = envir); clList <- c(clList, "MethodWithNext")
     setClass("SealedMethodDefinition", contains = "MethodDefinition"); clList <- c(clList, "SealedMethodDefinition")
-    setClass("genericFunction",
-             representation("function", generic = "character", package = "character",
+    setClass("genericFunction", contains = "function",
+             representation( generic = "character", package = "character",
                             group = "list", valueClass = "character",
                             signature = "character", default = "MethodsList",
                             skeleton = "call"), where = envir); clList <- c(clList, "genericFunction")
@@ -131,10 +130,10 @@
             if(!identical(class(value), class(.Object))) {
                 cv <- class(value)
                 co <- class(.Object)
-                if(.identC(cv[[1]], co)) {
+                if(.identC(cv[[1L]], co)) {
                   ## ignore S3 with multiple classes  or basic classes
                     if(is.na(match(cv, .BasicClasses)) &&
-                       length(cv) == 1) {
+                       length(cv) == 1L) {
                         warning(gettextf("missing package slot (%s) in object of class \"%s\" (package info added)", packageSlot(co), class(.Object)),
                                 domain = NA)
                         class(value) <- class(.Object)
@@ -197,12 +196,31 @@
                       show(mat)
                   }
               }, where = envir)
+    ## show method for reports of method selection ambiguities; see MethodsTable.R
+    setMethod("show", "MethodSelectionReport", where = envir,
+              function(object) {
+                nreport <- length(object@target)
+                cat(gettextf("Reported %d ambiguous selections out of %d for function %s\n",nreport, length(object@allSelections), object@generic))
+                target <- object@target; selected = object@selected
+                candidates <- object@candidates; note <- object@note
+                for(i in seq(length = nreport)) {
+                  these <- candidates[[i]]; notei <- note[[i]]
+                  these <- these[is.na(match(these, selected[[i]]))]
+                  cat(gettextf(
+                               '%d: target "%s": chose "%s" (others: %s)',
+                               i,target[[i]], selected[[i]], paste('"', these, '"', sep="", collapse =", ")))
+                  if(nzchar(notei))
+                    cat(gettextf("\n    Notes: %s.\n", notei))
+                  else
+                    cat(".\n")
+                }
+              })
 
     setGeneric("cbind2", function(x, y) standardGeneric("cbind2"),
 	       where = envir)
     ## and its default methods:
     setMethod("cbind2", signature(x = "ANY", y = "ANY"),
-	      function(x,y) .Internal(cbind(deparse.level = 0, x,y)))
+	      function(x,y) .Internal(cbind(deparse.level = 0, x, y)))
     setMethod("cbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(cbind(deparse.level = 0, x)))
 
@@ -210,7 +228,7 @@
 	       where = envir)
     ## and its default methods:
     setMethod("rbind2", signature(x = "ANY", y = "ANY"),
-	      function(x,y) .Internal(rbind(deparse.level = 0, x,y)))
+	      function(x,y) .Internal(rbind(deparse.level = 0, x, y)))
     setMethod("rbind2", signature(x = "ANY", y = "missing"),
 	      function(x,y) .Internal(rbind(deparse.level = 0, x)))
     .InitStructureMethods(envir)
@@ -219,6 +237,20 @@
 }
 
 .InitStructureMethods <- function(where) {
+    ## these methods need to be cached (for the sake of the primitive
+    ## functions in the group) if a class is loaded that extends
+    ## one of the classes structure, vector, or array.
+    if(!exists(".NeedPrimitiveMethods", where))
+      needed <- list()
+    else
+      needed <- get(".NeedPrimitiveMethods", where)
+    needed <- c(needed, list(structure = "Ops", vector = "Ops",
+          array = "Ops", nonStructure = "Ops",
+          .environment = "$<-", .environment = "[[<-"),
+          array = "[", structure = "[", nonStructure = "[",
+          structure = "Math", nonStructure = "Math"
+                )
+    assign(".NeedPrimitiveMethods", needed, where)
     setMethod("Ops", c("structure", "vector"), where = where,
               function(e1, e2) {
                   value <- callGeneric(e1@.Data, e2)
@@ -262,11 +294,49 @@
                  callGeneric(e1@.Data, e2@.Data)
               )
 
+
     setMethod("Math", "structure", where = where,
               function(x) {
                   x@.Data <- callGeneric(x@.Data)
                   x
               })
+    setMethod("Math2", "structure", where = where,
+              function(x, digits) {
+                  value <- x
+                  x <- x@.Data
+                  value@Data  <- callGeneric()
+                  value
+              })
+    ## some methods for nonStructure, ensuring that the class and slots
+    ## will be discarded
+    setMethod("Ops", c("nonStructure", "vector"), where = where,
+              function(e1, e2) {
+                  callGeneric(e1@.Data, e2)
+              })
+    setMethod("Ops", c("vector", "nonStructure"), where = where,
+              function(e1, e2) {
+                  callGeneric(e1, e2@.Data)
+              })
+    setMethod("Ops", c("nonStructure", "nonStructure"), where = where,
+              function(e1, e2)
+                 callGeneric(e1@.Data, e2@.Data)
+              )
+    setMethod("Math", "nonStructure", where = where,
+              function(x) {
+                  callGeneric(x@.Data)
+              })
+    setMethod("Math2", "nonStructure", where = where,
+              function(x, digits) {
+                  x <- x@.Data
+                  callGeneric()
+              })
+    setMethod("[", "nonStructure", where = where,
+                        function (x, i, j, ..., drop = TRUE) 
+                        {
+                          value <- callNextMethod()
+                          value@.Data
+                        })
+     
 }
 
 
@@ -288,7 +358,7 @@
         if(length(formalNames) > 0) {
             if(is.null(sigArgs))
               names(signature) <- formalNames[seq_along(classes)]
-            else if(length(sigArgs) > 0 && any(is.na(match(sigArgs, formalNames))))
+            else if(length(sigArgs) && any(is.na(match(sigArgs, formalNames))))
               stop(gettextf("the names in signature for method (%s) do not match %s's arguments (%s)",
                             paste(sigArgs, collapse = ", "),
                             if(is(fdef, "genericFunction")) fdef@generic else "function",

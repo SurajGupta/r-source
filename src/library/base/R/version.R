@@ -42,10 +42,10 @@ function(x, strict = TRUE, regexp, classes = NULL)
     x <- as.character(x)
     y <- rep.int(list(integer()), length(x))
     valid_numeric_version_regexp <- sprintf("^%s$", regexp)
-    if(length(x) > 0) {
-        ok <- (regexpr(valid_numeric_version_regexp, x) > -1L)
+    if(length(x)) {
+        ok <- grepl(valid_numeric_version_regexp, x)
         if(!all(ok) && strict)
-            stop("invalid version specification", call. = FALSE)
+            stop("invalid version specification ", x, call. = FALSE)
         y[ok] <- lapply(strsplit(x[ok], "[.-]"), as.integer)
     }
     class(y) <- unique(c(classes, "numeric_version"))
@@ -191,7 +191,7 @@ function(x, ..., exact = NA)
 }
 
 ## allowed forms
-## x[[i]] <- "1.2.3"; x[[i]] <- 1:3; x[[c(i,j)]] <- <single integer>
+## x[[i]] <- "1.2.3"; x[[i]] <- 1L:3; x[[c(i,j)]] <- <single integer>
 ## x[[i,j]] <- <single integer>
 `[[<-.numeric_version` <-
 function(x, ..., value)

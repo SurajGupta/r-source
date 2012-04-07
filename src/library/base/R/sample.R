@@ -16,7 +16,7 @@
 
 sample <- function(x, size, replace=FALSE, prob=NULL)
 {
-    if(length(x) == 1 && is.numeric(x) && x >= 1) {
+    if(length(x) == 1L && is.numeric(x) && x >= 1) {
 	if(missing(size)) size <- x
 	.Internal(sample(x, size, replace, prob))
     }
@@ -25,3 +25,6 @@ sample <- function(x, size, replace=FALSE, prob=NULL)
 	x[.Internal(sample(length(x), size, replace, prob))]
     }
 }
+
+sample.int  <- function(n, size, replace=FALSE, prob=NULL)
+    .Internal(sample(n, size, replace, prob))

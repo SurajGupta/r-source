@@ -134,7 +134,7 @@ identify(x, \dots)
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole.
+  Wadsworth & Brooks/Cole.
 }
 \seealso{
   \code{\link{locator}}, \code{\link{text}}.
@@ -148,11 +148,11 @@ identifyPch <- function(x, y=NULL, n=length(x), pch=19, ...)
     sel <- rep(FALSE, length(x)); res <- integer(0)
     while(sum(sel) < n) {
         ans <- identify(x[!sel], y[!sel], n=1, plot=FALSE, ...)
-	if(!length(ans)) break
-	ans <- which(!sel)[ans]
-	points(x[ans], y[ans], pch = pch)
-	sel[ans] <- TRUE
-	res <- c(res, ans)
+        if(!length(ans)) break
+        ans <- which(!sel)[ans]
+        points(x[ans], y[ans], pch = pch)
+        sel[ans] <- TRUE
+        res <- c(res, ans)
     }
     res
 }

@@ -59,8 +59,8 @@ getNativeSymbolInfo <- function(name, PACKAGE, unlist = TRUE,
 	v
     })
 
-   if(length(name) == 1 && unlist)
-     syms <- syms[[1]]
+   if(length(name) == 1L && unlist)
+     syms <- syms[[1L]]
    else
      names(syms) <- name
 
@@ -87,8 +87,8 @@ getDLLRegisteredRoutines.character <- function(dll, addNames = TRUE)
     if(!any(w))
         stop("No DLL currently loaded with name or path ", dll)
 
-    dll <- which(w)[1]
-    if(sum(w) > 1)
+    dll <- which(w)[1L]
+    if(sum(w) > 1L)
         warning(gettextf("multiple DLLs match '%s'. Using '%s'",
                          dll, dll[["path"]]), domain = NA)
 
@@ -145,12 +145,12 @@ function(x, ...)
                 d[[id]] <<- rep("", n)
                 names <- sapply(x[[id]], function(x) x$name)
                 if(length(names))
-                    d[[id]][1:length(names)] <<- names
+                    d[[id]][1L:length(names)] <<- names
 
                 d[[paste(id, "numParameters")]] <<- rep("", n)
                 names <- sapply(x[[id]], function(x) x$numParameters)
                 if(length(names))
-                    d[[paste(id, "numParameters")]][1:length(names)] <<- names
+                    d[[paste(id, "numParameters")]][1L:length(names)] <<- names
              })
     print(as.data.frame(d), ...)
     invisible(x)
@@ -161,7 +161,7 @@ getCallingDLLe <- function(e)
     if (is.null(env <- e$".__NAMESPACE__.")) env <- baseenv()
     if(exists("DLLs", envir = env) &&
        length(env$DLLs))
-        return(env$DLLs[[1]])
+        return(env$DLLs[[1L]])
     NULL
 }
 
@@ -180,7 +180,7 @@ function(f = sys.function(-1), doStop = FALSE)
        # Please feel free to replace with a more encapsulated way to do this.
     if (is.null(env <- e$".__NAMESPACE__.")) env <- baseenv()
     if(exists("DLLs", envir = env) && length(env$DLLs))
-        return(env$DLLs[[1]])
+        return(env$DLLs[[1L]])
     else {
         if(doStop)
             stop("looking for DLL for native routine call, but no DLLs in namespace of call")

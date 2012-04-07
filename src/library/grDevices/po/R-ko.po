@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-06-05 19:48\n"
+"POT-Creation-Date: 2009-03-20 09:02\n"
 "PO-Revision-Date: 2005-05-25 14:17+0900\n"
 "Last-Translator: Korean <uiami@hanmail.com>\n"
 "Language-Team: Korean <translation-team-ko@lists.sourceforge.net>\n"
@@ -281,9 +281,6 @@ msgstr "quartzFonts에서 부적절한 인수입니다(font명이 필요합니�
 msgid "invalid arguments in quartzFonts (need named args)"
 msgstr "quartFonts에서 부적절한 인수입니다(이름이 붙은 인수가 필요합니다)"
 
-msgid "invalid value for 'antialias'"
-msgstr ""
-
 #, fuzzy
 msgid "invalid 'filename'"
 msgstr "부적절한 'family' 인수입니다"
@@ -306,6 +303,13 @@ msgstr ""
 
 msgid "can only bring windows devices to the front"
 msgstr "windows 디바이스만을 그 전방으로 가져 올수가 없습니다"
+
+msgid "'type' not applicable to the R console"
+msgstr ""
+
+#, fuzzy
+msgid "can only manipulate windows devices"
+msgstr "'windows' 디바이스로부터만 복사할수 없습니다"
 
 msgid "can only copy from 'windows' devices"
 msgstr "'windows' 디바이스로부터만 복사할수 없습니다"

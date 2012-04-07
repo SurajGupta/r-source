@@ -69,10 +69,10 @@ zapsmall(x, digits = getOption("digits"))
   the specified number of digits in the larger of the components.  Each
   element of the vector is rounded individually, unlike printing.
 
-  All except \code{zapsmall} are primitive, but as from \R 2.7.0
-  arguments are matched by name in \code{round} and \code{signif}
-  (whereas the default method for \code{ceiling}, \code{floor} and
-  \code{trunc} ignore argument names).
+  All except \code{zapsmall} are primitive, but arguments are matched by
+  name in \code{round} and \code{signif} (whereas the default methods
+  for \code{ceiling}, \code{floor} and \code{trunc} ignore argument
+  names).
 }
 \section{S4 methods}{
   \code{ceiling}, \code{floor} and \code{trunc} are S4 generic and
@@ -85,7 +85,7 @@ zapsmall(x, digits = getOption("digits"))
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
-  Wadsworth \& Brooks/Cole. (Except \code{zapsmall}.)
+  Wadsworth & Brooks/Cole. (Except \code{zapsmall}.)
 
   Chambers, J. M. (1998)
   \emph{Programming with Data. A Guide to the S Language}.

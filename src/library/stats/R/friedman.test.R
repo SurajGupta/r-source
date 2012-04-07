@@ -47,7 +47,7 @@ function(y, groups, blocks, ...)
     y <- matrix(unlist(split(y, blocks)), ncol = k, byrow = TRUE)
     y <- y[complete.cases(y), ]
     n <- nrow(y)
-    r <- t(apply(y, 1, rank))
+    r <- t(apply(y, 1L, rank))
     TIES <- tapply(r, row(r), table)
     STATISTIC <- ((12 * sum((colSums(r) - n * (k + 1) / 2)^2)) /
                   (n * k * (k + 1)
@@ -75,18 +75,18 @@ function(formula, data, subset, na.action, ...)
     ## Maybe put this into an internal rewriteTwoWayFormula() when
     ## adding support for strata()
     if((length(formula) != 3)
-       || (length(formula[[3]]) != 3)
-       || (formula[[3]][[1]] != as.name("|"))
-       || (length(formula[[3]][[2]]) != 1)
-       || (length(formula[[3]][[3]]) != 1))
+       || (length(formula[[3L]]) != 3)
+       || (formula[[3L]][[1L]] != as.name("|"))
+       || (length(formula[[3L]][[2L]]) != 1)
+       || (length(formula[[3L]][[3L]]) != 1))
         stop("incorrect specification for 'formula'")
-    formula[[3]][[1]] <- as.name("+")
+    formula[[3L]][[1L]] <- as.name("+")
     ## </FIXME>
     m <- match.call(expand.dots = FALSE)
     m$formula <- formula
     if(is.matrix(eval(m$data, parent.frame())))
         m$data <- as.data.frame(data)
-    m[[1]] <- as.name("model.frame")
+    m[[1L]] <- as.name("model.frame")
     mf <- eval(m, parent.frame())
     DNAME <- paste(names(mf), collapse = " and ")
     names(mf) <- NULL

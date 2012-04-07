@@ -46,7 +46,7 @@ function(object, filename = NULL, name = NULL,
             if(is.name(name))
                 as.character(name)
             else if(is.call(name)
-                    && (as.character(name[[1]]) %in%
+                    && (as.character(name[[1L]]) %in%
                         c("::", ":::", "getAnywhere"))) {
                 name <- as.character(name)
                 name[length(name)]
@@ -74,7 +74,7 @@ function(object, filename = NULL, name = NULL,
     ## </FIXME>
 
     n <- length(argls <- formals(x))
-    if(n > 0) {
+    if(n) {
         arg.names <- arg.n <- names(argls)
         arg.n[arg.n == "..."] <- "\\dots"
     }
@@ -84,7 +84,7 @@ function(object, filename = NULL, name = NULL,
         Call <- paste0(Call, arg.names[i],
                        if(!is.missing.arg(argls[[i]]))
                        paste0(" = ",
-                              paste(deparse(argls[[i]], width.cutoff= 500),
+                              paste(deparse(argls[[i]], width.cutoff= 500L),
                                     collapse="\n")))
         if(i != n) Call <- paste0(Call, ", ")
     }
@@ -93,7 +93,7 @@ function(object, filename = NULL, name = NULL,
     x.def <- attr(x, "source")
     if(is.null(x.def))
         x.def <- deparse(x)
-    if(any(br <- substr(x.def, 1, 1) == "}"))
+    if(any(br <- substr(x.def, 1L, 1L) == "}"))
         x.def[br] <- paste(" ", x.def[br])
 
     ## escape "%" :
@@ -101,12 +101,13 @@ function(object, filename = NULL, name = NULL,
 
     Rdtxt <-
         list(name = paste0("\\name{", name, "}"),
+             version = "\\Rdversion{1.1}",
              aliases = c(paste0("\\alias{", name, "}"),
              paste("%- Also NEED an '\\alias' for EACH other topic",
                    "documented here.")),
-             title = "\\title{ ~~function to do ... ~~ }",
+             title = "\\title{\n%%  ~~function to do ... ~~\n}",
              description = c("\\description{",
-             paste("  ~~ A concise (1-5 lines) description of what",
+             paste("%%  ~~ A concise (1-5 lines) description of what",
                    "the function does. ~~"),
              "}"),
              usage = c("\\usage{", paste0(Call, ")"), "}",
@@ -114,26 +115,26 @@ function(object, filename = NULL, name = NULL,
                    "documented here.")),
              arguments = NULL,
              details = c("\\details{",
-             paste("  ~~ If necessary, more details than the",
+             paste("%%  ~~ If necessary, more details than the",
                    "description above ~~"),
              "}"),
              value = c("\\value{",
-             "  ~Describe the value returned",
-             "  If it is a LIST, use",
-             "  \\item{comp1 }{Description of 'comp1'}",
-             "  \\item{comp2 }{Description of 'comp2'}",
-             "  ...",
+             "%%  ~Describe the value returned",
+             "%%  If it is a LIST, use",
+             "%%  \\item{comp1 }{Description of 'comp1'}",
+             "%%  \\item{comp2 }{Description of 'comp2'}",
+             "%% ...",
              "}"),
-             references = paste("\\references{ ~put references to the",
-             "literature/web site here ~ }"),
-             author = "\\author{ ~~who you are~~ }",
-             note = c("\\note{ ~~further notes~~ ",
+             references = paste("\\references{\n%% ~put references to the",
+             "literature/web site here ~\n}"),
+             author = "\\author{\n%%  ~~who you are~~\n}",
+             note = c("\\note{\n%%  ~~further notes~~\n}",
              "",
-             paste(" ~Make other sections like Warning with",
+             paste("%% ~Make other sections like Warning with",
                    "\\section{Warning }{....} ~"),
-             "}"),
-             seealso = paste("\\seealso{ ~~objects to See Also as",
-             "\\code{\\link{help}}, ~~~ }"),
+             ""),
+             seealso = paste("\\seealso{\n%% ~~objects to See Also as",
+             "\\code{\\link{help}}, ~~~\n}"),
              examples = c("\\examples{",
              "##---- Should be DIRECTLY executable !! ----",
              "##-- ==>  Define data, use random,",
@@ -148,10 +149,10 @@ function(object, filename = NULL, name = NULL,
              "\\keyword{ ~kwd1 }",
              "\\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line"))
 
-    Rdtxt$arguments <- if(n > 0)
+    Rdtxt$arguments <- if(n)
         c("\\arguments{",
           paste0("  \\item{", arg.n, "}{",
-                 " ~~Describe \\code{", arg.n, "} here~~ }"),
+                 "\n%%     ~~Describe \\code{", arg.n, "} here~~\n}"),
           "}") ## else NULL
 
     if(is.na(filename)) return(Rdtxt)
@@ -272,24 +273,25 @@ function(object, filename = NULL, name = NULL)
 
     Rdtxt <-
         list(name = paste0("\\name{", name, "}"),
+             version = "\\Rdversion{1.1}",
              aliases = paste0("\\alias{", name, "}"),
              docType = "\\docType{data}",
-             title = "\\title{ ~~ data name/kind ... ~~}",
+             title = "\\title{\n%%   ~~ data name/kind ... ~~\n}",
              description = c("\\description{",
-             "  ~~ A concise (1-5 lines) description of the dataset. ~~",
+             "%%  ~~ A concise (1-5 lines) description of the dataset. ~~",
              "}"),
              usage = paste0("\\usage{data(", name, ")}"),
              format = fmt,
              details = c("\\details{",
-             paste("  ~~ If necessary, more details than the",
+             paste("%%  ~~ If necessary, more details than the",
                    "__description__ above ~~"),
              "}"),
              source = c("\\source{",
-             paste("  ~~ reference to a publication or URL",
+             paste("%%  ~~ reference to a publication or URL",
                    "from which the data were obtained ~~"),
              "}"),
              references = c("\\references{",
-             "  ~~ possibly secondary sources and usages ~~",
+             "%%  ~~ possibly secondary sources and usages ~~",
              "}"),
              examples = c("\\examples{",
              paste0("data(", name, ")"),
@@ -334,13 +336,14 @@ function(package, lib.loc = NULL, filename = NULL, name = NULL, final = FALSE)
 
     Rdtxt <-
     	    list(name = paste0("\\name{", name, "}"),
+                 version = "\\Rdversion{1.1}",
     	         aliases = paste0("\\alias{", name, "}"),
     	         docType = "\\docType{package}",
     	         title = c("\\title{", "}"),
     	         description = c("\\description{","}"),
     	         details = c("\\details{","}"),
     	         author = c("\\author{","}"),
-    	         references = character(0),
+    	         references = character(0L),
 
     	         keywords = c("\\keyword{ package }")
     	     )
@@ -351,7 +354,7 @@ function(package, lib.loc = NULL, filename = NULL, name = NULL, final = FALSE)
     	info <- library(help = package, lib.loc = lib.loc,
                         character.only = TRUE)
 
-    	if (!length(grep(paste0("^", package, " "), info$info[[2]])))
+    	if (!length(grep(paste0("^", package, " "), info$info[[2L]])))
     	    Rdtxt$aliases <- c(Rdtxt$aliases, paste0("\\alias{", package, "}"))
 
         insert1("title", desc$Title)
@@ -364,15 +367,15 @@ function(package, lib.loc = NULL, filename = NULL, name = NULL, final = FALSE)
 
 	insert1("details", tabular(paste0(names(desc), ":"), unlist(desc)))
 
-	if (!is.null(info$info[[2]]))
+	if (!is.null(info$info[[2L]]))
 	    insert1("details",  c("", identity("Index:"), "\\preformatted{",
-	                          info$info[[2]], "}"))
-	if (!is.null(info$info[[3]]))
+	                          info$info[[2L]], "}"))
+	if (!is.null(info$info[[3L]]))
 	    insert1("details",
                     c("",
         identity("Further information is available in the following vignettes:"),
-                      tabular(paste0("\\code{", info$info[[3]][,1], "}"),
-                              info$info[[3]][,2])))
+                      tabular(paste0("\\code{", info$info[[3L]][,1], "}"),
+                              info$info[[3L]][,2])))
     }
 
     if (!final) {

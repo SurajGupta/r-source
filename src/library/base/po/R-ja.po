@@ -2,15 +2,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-08 14:13\n"
-"PO-Revision-Date: 2008-09-30 10:48+0900 \n"
-"Last-Translator: takahashi <takahashi.kohske@gmail.com> \n"
+"POT-Creation-Date: 2009-03-17 19:25\n"
+"PO-Revision-Date: 2009-03-31 13:18+0900 \n"
+"Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
 "Plural-Forms: nplurals=1; plural=0; \n"
-"X-Generator: Pootle 0.10.1 \n"
+"X-Generator: Pootle 1.1.0 \n"
 
 msgid "'%s' is defunct."
 msgstr " '%s' は廃止されました。 "
@@ -167,6 +167,9 @@ msgstr " 'x' は少なくとも二次元の配列でなければなりません 
 
 msgid "invalid 'dims'"
 msgstr " 無効な 'dims' です "
+
+msgid "extra arguments ignored:"
+msgstr " 余計な引数は無視されました: "
 
 msgid "bad handler specification"
 msgstr " 誤ったハンドラーの指定です "
@@ -622,6 +625,9 @@ msgstr " そこへコピーすべきファイルがありません "
 msgid "more 'from' files than 'to' files"
 msgstr " コピー先ファイルよりも多くのコピー元ファイルがあります "
 
+msgid "'recursive' will be ignored"
+msgstr " 'recursive' は無視されます "
+
 msgid "file can not be copied both 'from' and 'to'"
 msgstr " 同じファイルにコピーすることはできません "
 
@@ -655,9 +661,13 @@ msgstr " 'vec' は NA 値を含んでいます "
 msgid "'vec' must be sorted non-decreasingly"
 msgstr " 'vec' は非減少順にソートされていなければいけません "
 
-msgid "'mode' must be \"double\" (\"real\") or \"integer\""
+msgid "using the first element of 'value' of type expression"
+msgstr "タイプ表現 'value' の最初の要素だけを使います "
+
+msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr ""
-" 'mode' は \"double\" (\"real\") または \"integer\" でなければなりません "
+" 'mode' は \"double\" (\"real\") , \"integer\" または \"character\" でなけれ"
+"ばなりません "
 
 msgid "coercing argument to \"character\" for format=\"s\""
 msgstr " 引数を \"format=\"s\" に対する \"character\" へ強制変換します "
@@ -759,31 +769,14 @@ msgstr "  :  "
 msgid "invalid package name"
 msgstr " 不当なパッケージ名です "
 
-msgid "package '%s' has been merged into '%s'"
-msgstr " パッケージ '%s' は '%s' に併合されました "
-
-msgid "package 'lqs' has been moved back to package 'MASS'"
-msgstr " パッケージ 'lqs' はパッケージ 'MASS' へ戻さました "
-
-msgid "package 'MASS' has now been loaded"
-msgstr " パッケージ 'MASS' は現在ロードされています "
-
-msgid "package 'MASS' seems to be missing from this R installation"
-msgstr " パッケージ 'MASS' はこの R のインストールでは存在しないようです "
-
-msgid "there is no package called '%s', version %s"
-msgstr " '%s' という名前のパッケージ(%s 版)がありません "
-
 msgid "there is no package called '%s'"
 msgstr " '%s' という名前のパッケージはありません "
 
 msgid "no library trees found in 'lib.loc'"
 msgstr " 'lib.loc' 中に如何なるライブラリー木も見つかりません "
 
-msgid "'%s' is not a valid package -- installed < 2.0.0?"
-msgstr ""
-" '%s' は有効なパッケージではありません。バージョン < 2.0.0 でインストールされ"
-"たかも知れません "
+msgid "'%s' is not a valid installed package"
+msgstr " '%s' は有効なインストール済みパッケージではありません "
 
 msgid "'%s' not found on search path, using pos = 2"
 msgstr " '%s' は検索パス上には見つかりませんでした。pos = 2 を使用します "
@@ -1007,11 +1000,14 @@ msgstr ""
 " トレース関数は methods パッケージを必要としていますが、その名前空間をロード"
 "できません "
 
-msgid "Expected a single logical value for the S4 object state"
-msgstr " この S4 オブジェクト状態に対しては単一の論理値が期待されています "
+msgid "Expected a single logical value for the S4 state flag"
+msgstr " S4 状態フラグに対しては単一の論理値が期待されています "
 
 msgid "invalid to change the storage mode of a factor"
 msgstr " factor　の格納モードを変えるのは不正です "
+
+msgid "package '%s' has been merged into '%s'"
+msgstr " パッケージ '%s' は '%s' に併合されました "
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr ""
@@ -1061,6 +1057,10 @@ msgstr " 以下に対する NativeSymbolInfo を代入できません "
 
 msgid "package '%s' does not have a name space"
 msgstr " パッケージ '%s' は名前空間を持っていません "
+
+msgid "exportClassPattern specified but no matching classes in %s"
+msgstr ""
+" exportClassPattern が指定されましたが、%s 中には対応するクラスがありません "
 
 msgid "in '%s' classes for export not defined: %s"
 msgstr " '%s' 中にはエクスポートのためのクラスは見付かりません： %s "
@@ -1505,6 +1505,33 @@ msgstr " '%s' を実行できませんでした "
 msgid "'%s' execution failed with error code %d"
 msgstr " '%s' の実行は失敗しました(エラーコード %d) "
 
+msgid "-l option without value"
+msgstr " 値がない -l  オプション"
+
+msgid "ERROR: no packages specified"
+msgstr " エラー：いかなるパッケージも指定されていません "
+
+msgid "Removing from library"
+msgstr "ライブラリーから取り除いています "
+
+msgid "ERROR: cannot cd to directory"
+msgstr " エラー：ディレクトリーに変更できません "
+
+msgid "ERROR: no permission to remove from directory"
+msgstr " エラー：このディレクトリーから抹消する許可がありません "
+
+msgid "T used instead of TRUE"
+msgstr " TRUE の代わりに T が使われました "
+
+msgid "F used instead of FALSE"
+msgstr " FALSE の代わりに F が使われました "
+
+msgid "items"
+msgstr " 項目"
+
+msgid "have been removed from the search path"
+msgstr " 検索パスから抹消されています "
+
 msgid "cannot find name space environment"
 msgstr " 名前空間環境を見つけられません "
 
@@ -1548,6 +1575,23 @@ msgstr[0] ""
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] " 警告メッセージ： \n"
+
+#~ msgid "package 'lqs' has been moved back to package 'MASS'"
+#~ msgstr " パッケージ 'lqs' はパッケージ 'MASS' へ戻さました "
+
+#~ msgid "package 'MASS' has now been loaded"
+#~ msgstr " パッケージ 'MASS' は現在ロードされています "
+
+#~ msgid "package 'MASS' seems to be missing from this R installation"
+#~ msgstr " パッケージ 'MASS' はこの R のインストールでは存在しないようです "
+
+#~ msgid "there is no package called '%s', version %s"
+#~ msgstr " '%s' という名前のパッケージ(%s 版)がありません "
+
+#~ msgid "'%s' is not a valid package -- installed < 2.0.0?"
+#~ msgstr ""
+#~ " '%s' は有効なパッケージではありません。バージョン < 2.0.0 でインストール"
+#~ "されたかも知れません "
 
 #~ msgid "non-numeric data type in frame"
 #~ msgstr " フレーム中に数値でないデータタイプがあります "

@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2008-09-26 08:39\n"
+"POT-Creation-Date: 2009-04-03 13:01\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -20,7 +20,8 @@ msgstr "'acf' deve avere lunghezza due o più"
 msgid "object not interpretable as a factor"
 msgstr "oggetto non interpretabile come factor"
 
-msgid "cannot fit models without level ('alpha' must not be 0)."
+#, fuzzy
+msgid "cannot fit models without level ('alpha' must not be 0 or FALSE)."
 msgstr "non posso stimare modelli senza livelli ('alpha' non deve essere 0)."
 
 msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
@@ -144,6 +145,10 @@ msgstr ""
 "lunghezza di FUN, %d,\n"
 " non coincide con la lunghezza delle marginali, %d"
 
+#, fuzzy
+msgid "no rows to aggregate"
+msgstr "nessun modello da confrontare"
+
 msgid "'by' must be a list"
 msgstr "'by' deve essere di tipo list"
 
@@ -206,6 +211,9 @@ msgstr "'formula' mancante o sbagliata"
 
 msgid "grouping factor must have exactly 2 levels"
 msgstr "la variabile di gruppo deve avere esattamente 2 livelli"
+
+msgid "weights are not supported in a multistratum aov() fit"
+msgstr ""
 
 msgid "Error() model is singular"
 msgstr "modello Error() singolare"
@@ -792,6 +800,9 @@ msgstr ""
 msgid "negative values not allowed for the Poisson family"
 msgstr "valori negativi non ammissibili per la famiglia Poisson"
 
+msgid "ignoring prior weights"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for quasipoisson family; available links are %s"
@@ -836,6 +847,9 @@ msgstr ""
 "o una matrice di 2 colonne dove la prima colonna contiene il numero di "
 "successi e la seconda colonna il numero di insuccessi"
 
+msgid "cannot simulate from non-integer prior.weights"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for quasibinomial family; available links are %s"
@@ -855,6 +869,9 @@ msgstr ""
 msgid "non-positive values not allowed for the gamma family"
 msgstr "valori non positivi non sono ammessi per la famiglia gamma"
 
+msgid "using weights as shape paraneters"
+msgstr ""
+
 #, fuzzy
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
@@ -864,6 +881,12 @@ msgstr ""
 
 msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "sono ammessi solo valori positivi per la famiglia gaussiana inversa"
+
+msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
+msgstr ""
+
+msgid "using weights as inverse variances"
+msgstr ""
 
 msgid ""
 "'variance' \"%s\" is invalid: possible values are \"mu(1-mu)\", \"mu\", "
@@ -1281,6 +1304,13 @@ msgstr ""
 "numero di gradi di libertà dei residui dell'oggetto suggeriscono che questo "
 "non una stima \"lm\""
 
+msgid "family '"
+msgstr ""
+
+#, fuzzy
+msgid "' not implemented"
+msgstr "tipo '%s' non ancora implementato"
+
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
 
@@ -1471,6 +1501,10 @@ msgstr "l'argomento 'cterms' deve far coincidre 'terms' nell'oggetto model"
 msgid "Design is unbalanced - use se.contrast() for se's"
 msgstr "Il disegno è non bilanciato - usare se.contrast() per gli s.e."
 
+#, fuzzy
+msgid "design is unbalanced so cannot proceed"
+msgstr "Il disegno è non bilanciato - usare se.contrast() per gli s.e."
+
 msgid ""
 "Standard error information not returned as design is unbalanced. \n"
 "Standard errors can be obtained through 'se.contrast'."
@@ -1601,7 +1635,8 @@ msgstr ""
 msgid "'params' has wrong length"
 msgstr "'parms' ha lunghezza sbagliata"
 
-msgid "'varying' must be in 1:length(pars)"
+#, fuzzy
+msgid "'varying' must be in 1L:length(pars)"
 msgstr "'varying' deve essere in 1:length(pars)"
 
 msgid "'varying' has wrong length"
@@ -1729,14 +1764,15 @@ msgstr "'x' e 'n' devono avere la stessa lunghezza"
 msgid "too few groups"
 msgstr "troppi pochi gruppi"
 
+msgid "Not plotting observations with leverage one:"
+msgstr ""
+
 msgid "use only with \"lm\" objects"
 msgstr "usare solo con oggetti \"lm\""
 
-msgid "'which' must be in 1:6"
+#, fuzzy
+msgid "'which' must be in 1L:6"
 msgstr "'which' deve essere in 1:6"
-
-msgid "Not plotting observations with leverage one:"
-msgstr ""
 
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' deve essere in {1,..,%d}"
@@ -1746,6 +1782,29 @@ msgstr ""
 
 msgid "and there are no factor predictors; no plot no. 5"
 msgstr ""
+
+#, fuzzy
+msgid "'x' and 'T' have incompatible length"
+msgstr "'x' e 'g' devono avere la stessa lunghezza"
+
+#, fuzzy
+msgid "'x' must be finite, nonnegative, and integer"
+msgstr "'x' deve essere un intero non negativo"
+
+#, fuzzy
+msgid "'T' must be nonnegative"
+msgstr "'x' deve essere non negativo"
+
+msgid "not enough data"
+msgstr "dati insufficienti"
+
+#, fuzzy
+msgid "The case k > 2 is unimplemented"
+msgstr "tipo '%s' non ancora implementato"
+
+#, fuzzy
+msgid "'r' must be a single positive number"
+msgstr "'ratio' deve essere un numero positivo"
 
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
@@ -1835,9 +1894,6 @@ msgstr "'proj' non implementata per stime \"mlm\""
 msgid "'proj' is not implemented for multiple responses"
 msgstr "'proj' non implementata per risposte multiple"
 
-msgid "not enough data"
-msgstr "dati insufficienti"
-
 msgid "elements of 'n' must be positive"
 msgstr "gli elementi di 'n' devono essere positivi"
 
@@ -1893,7 +1949,8 @@ msgstr "'relevel' solo per variabili factor"
 msgid "'ref' must be an existing level"
 msgstr "'ref' deve essere un livello esistente"
 
-msgid "ref = %d must be in 1:%d"
+#, fuzzy
+msgid "ref = %d must be in 1L:%d"
 msgstr "ref = %d deve essere in 1:%d"
 
 msgid "Failed to guess time-varying variables from their names"
@@ -2054,6 +2111,11 @@ msgstr ""
 #, fuzzy
 msgid "'spline' requires n >= 1"
 msgstr "'approx' richiede n >= 1"
+
+#, fuzzy
+msgid "spline: first and last y values differ - using y[1L] for both"
+msgstr ""
+"spline: il primo e l'ultimo valore di y sono diversi - uso y[1] per entrambi"
 
 #, fuzzy
 msgid "'deriv' must be between 0 and 3"

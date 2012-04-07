@@ -1,3 +1,30 @@
+Changes from grid_2.8.0 to grid_2.9.0:
+------------------------------------
+
+1.  Copied grid.roundRect() from 'RGraphics' package into 'grid'.
+
+    Renamed to grid.roundrect() and also used roundrectGrob()
+    rather than roundRect(), partly for more consistent naming,
+    partly to avoid namespace collision until original functions
+    get removed from 'RGraphics' package.
+
+2.  Fixed bug in grid.curve() when curve is horizontal or vertical
+    straight line.
+
+3.  Exposed is.grob() and valid.just() via the NAMESPACE.
+
+4.  Fixed bug in downViewport(), which meant that unsuccessful
+    downViewport()s were still being recorded on the graphics
+    engine display list.  This could cause interesting results
+    when a window is resized (i.e., when the display list is 
+    replayed).  
+
+    Bug reported by Felix Andrews.
+
+5.  Added some pseudonyms for come units.  For example, it is now
+    possible to specify just "in" instead of "inches".
+
+
 Changes from grid_2.7.0 to grid_2.8.0:
 ------------------------------------
 
