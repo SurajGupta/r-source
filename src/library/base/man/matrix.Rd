@@ -27,7 +27,9 @@ as.matrix(x, \dots)
 is.matrix(x)
 }
 \arguments{
-  \item{data}{an optional data vector.}
+  \item{data}{an optional data vector (including a list or
+    \code{\link{expression}} vector).  Other \R objects are coerced by
+    \code{\link{as.vector}}.}
   \item{nrow}{the desired number of rows.}
   \item{ncol}{the desired number of columns.}
   \item{byrow}{logical. If \code{FALSE} (the default) the matrix is
@@ -73,6 +75,14 @@ is.matrix(x)
   promotes the names (if any) of the vector to the rownames of the matrix.
   
   \code{is.matrix} is a \link{primitive} function.
+}
+\note{
+  If you just want to convert a vector to a matrix, something like
+\preformatted{
+  dim(x) <- c(nx, ny)
+  dimnames(x) <- list(row_names, col_names)
+}
+will avoid duplicating \code{x}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

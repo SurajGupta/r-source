@@ -49,8 +49,8 @@ HoltWinters(x, alpha = NULL, beta = NULL, gamma = NULL,
 \details{
   The additive Holt-Winters prediction function (for time series with
   period length p) is
-  \deqn{\hat Y[t+h] = a[t] + h b[t] + s[t + 1 + (h - 1) \bmod p],}{
-    Yhat[t+h] = a[t] + h * b[t] + s[t + 1 + (h - 1) mod p],}
+  \deqn{\hat Y[t+h] = a[t] + h b[t] + s[t + p + 1 + (h - 1) \bmod p],}{
+    Yhat[t+h] = a[t] + h * b[t] + s[t + p + 1 + (h - 1) mod p],}
   where \eqn{a[t]}, \eqn{b[t]} and \eqn{s[t]} are given by
   \deqn{a[t] = \alpha (Y[t] - s[t-p])  + (1-\alpha) (a[t-1] + b[t-1])}{
   a[t] = \alpha (Y[t] - s[t-p])  + (1-\alpha) (a[t-1] + b[t-1])}
@@ -61,8 +61,8 @@ HoltWinters(x, alpha = NULL, beta = NULL, gamma = NULL,
 
   The multiplicative Holt-Winters prediction function (for time series
   with period length p) is
-  \deqn{\hat Y[t+h] = (a[t] + h b[t]) \times s[t + 1 + (h - 1) \bmod p].}{
-    Yhat[t+h] = (a[t] + h * b[t]) * s[t + 1 + (h - 1) mod p],}
+  \deqn{\hat Y[t+h] = (a[t] + h b[t]) \times s[t + p + 1 + (h - 1) \bmod p].}{
+    Yhat[t+h] = (a[t] + h * b[t]) * s[t + p + 1 + (h - 1) mod p],}
   where \eqn{a[t]}, \eqn{b[t]} and \eqn{s[t]} are given by
   \deqn{a[t] = \alpha (Y[t] / s[t-p])  + (1-\alpha) (a[t-1] + b[t-1])}{
   a[t] = \alpha (Y[t] / s[t-p])  + (1-\alpha) (a[t-1] + b[t-1])}
@@ -122,7 +122,9 @@ HoltWinters(x, alpha = NULL, beta = NULL, gamma = NULL,
   \code{\link{predict.HoltWinters}}, \code{\link{optim}}.
 }
 
+% Differences seen on 32-bit Linux at -O3
 \examples{
+\testonly{od <- options(digits=5)}
 require(graphics)
 
 ## Seasonal Holt-Winters
@@ -141,5 +143,6 @@ plot(m)
 ## Exponential Smoothing
 m2 <- HoltWinters(x, gamma = FALSE, beta = FALSE)
 lines(fitted(m2)[,1], col = 3)
+\testonly{options(od)}
 }
 \keyword{ts}

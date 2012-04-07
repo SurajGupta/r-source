@@ -2579,6 +2579,7 @@ enum {
   OR2ND_OP,
   GETVAR_MISSOK_OP,
   DDVAL_MISSOK_OP,
+  VISIBLE_OP,
   OPCOUNT
 };
 
@@ -2631,7 +2632,8 @@ SEXP do_subassign2_dflt(SEXP, SEXP, SEXP, SEXP);
     Relop2(opval, opsym); \
 } while (0)
 
-static SEXP cmp_relop(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
+static SEXP cmp_relop(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y,
+		      SEXP rho)
 {
     SEXP op = SYMVALUE(opsym);
     if (TYPEOF(op) == PROMSXP) {
@@ -2642,7 +2644,7 @@ static SEXP cmp_relop(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
 	SEXP args, ans;
 	args = CONS(x, CONS(y, R_NilValue));
 	PROTECT(args);
-	if (DispatchGroup("Ops", call, op, args, R_GlobalEnv, &ans)) {
+	if (DispatchGroup("Ops", call, op, args, rho, &ans)) {
 	    UNPROTECT(1);
 	    return ans;
 	}
@@ -2651,13 +2653,13 @@ static SEXP cmp_relop(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
     return do_relop_dflt(R_NilValue, op, x, y);
 }
 
-static SEXP cmp_arith1(SEXP call, SEXP op, SEXP x)
+static SEXP cmp_arith1(SEXP call, SEXP op, SEXP x, SEXP rho)
 {
   if (isObject(x)) {
     SEXP args, ans;
     args = CONS(x, R_NilValue);
     PROTECT(args);
-    if (DispatchGroup("Ops", call, op, args, R_GlobalEnv, &ans)) {
+    if (DispatchGroup("Ops", call, op, args, rho, &ans)) {
       UNPROTECT(1);
       return ans;
     }
@@ -2666,7 +2668,8 @@ static SEXP cmp_arith1(SEXP call, SEXP op, SEXP x)
   return R_unary(R_NilValue, op, x);
 }
 
-static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
+static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y,
+		       SEXP rho)
 {
     SEXP op = SYMVALUE(opsym);
     if (TYPEOF(op) == PROMSXP) {
@@ -2677,7 +2680,7 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
 	SEXP args, ans;
 	args = CONS(x, CONS(y, R_NilValue));
 	PROTECT(args);
-	if (DispatchGroup("Ops", call, op, args, R_GlobalEnv, &ans)) {
+	if (DispatchGroup("Ops", call, op, args, rho, &ans)) {
 	    UNPROTECT(1);
 	    return ans;
 	}
@@ -2693,9 +2696,9 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
   NEXT(); \
 } while(0)
 
-#define NewBuiltin1(do_fun,which) do { \
+#define NewBuiltin1(do_fun,which,rho) do {		\
   SEXP x = R_BCNodeStackTop[-1]; \
-  R_BCNodeStackTop[-1] = do_fun(FakeCall1, SYMVALUE(which), x); \
+  R_BCNodeStackTop[-1] = do_fun(FakeCall1, SYMVALUE(which), x, rho);	\
   NEXT(); \
 } while(0)
 
@@ -2708,18 +2711,18 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y)
   NEXT(); \
 } while(0)
 
-#define NewBuiltin2(do_fun,opval,opsym) do { \
+#define NewBuiltin2(do_fun,opval,opsym,rho) do {	\
   SEXP x = R_BCNodeStackTop[-2]; \
   SEXP y = R_BCNodeStackTop[-1]; \
-  R_BCNodeStackTop[-2] = do_fun(FakeCall2, opval, opsym, x, y); \
+  R_BCNodeStackTop[-2] = do_fun(FakeCall2, opval, opsym, x, y,rho);	\
   R_BCNodeStackTop--; \
   NEXT(); \
 } while(0)
 
-#define Arith1(which) NewBuiltin1(cmp_arith1,which)
-#define Arith2(opval,opsym) NewBuiltin2(cmp_arith2,opval,opsym)
+#define Arith1(which) NewBuiltin1(cmp_arith1,which,rho)
+#define Arith2(opval,opsym) NewBuiltin2(cmp_arith2,opval,opsym,rho)
 #define Math1(which) Builtin1(do_math1,which,rho)
-#define Relop2(opval,opsym) NewBuiltin2(cmp_relop,opval,opsym)
+#define Relop2(opval,opsym) NewBuiltin2(cmp_relop,opval,opsym,rho)
 
 # define DO_FAST_BINOP(op,a,b) do { \
     SEXP val = allocVector(REALSXP, 1); \
@@ -2867,7 +2870,12 @@ typedef int BCODE;
     } \
   } \
   else if (TYPEOF(value) == PROMSXP) { \
-    value = forcePromise(value); \
+    if (PRVALUE(value) == R_UnboundValue) { \
+      if (keepmiss && R_isMissing(symbol, rho)) /**** this is inefficient */ \
+        value = R_MissingArg;		    \
+      else value = forcePromise(value); \
+    } \
+    else value = PRVALUE(value); \
     SET_NAMED(value, 2); \
   } \
   else if (!isNull(value) && NAMED(value) < 1) \
@@ -2987,7 +2995,7 @@ static int opcode_counts[OPCOUNT];
   } \
 } while (0)
 
-static void loopWithContect(volatile SEXP code, volatile SEXP rho)
+static void loopWithContext(volatile SEXP code, volatile SEXP rho)
 {
     RCNTXT cntxt;
     begincontext(&cntxt, CTXT_LOOP, R_NilValue, rho, R_BaseEnv, R_NilValue,
@@ -3177,11 +3185,8 @@ static SEXP bcEval(SEXP body, SEXP rho)
       {
 	int label = GETOP(), cond;
 	value = BCNPOP();
-	cond = asLogical(value);
-	if (cond == NA_LOGICAL)
-	  error(isLogical(value)
-		? _("missing value where logical needed")
-		: _("argument of if(*) is not interpretable as logical"));
+	/**** should probably inline this and use proper call here: */
+	cond = asLogicalNoNA(value, R_NilValue);
 	if (! cond) {
 	    BC_CHECK_SIGINT();
 	    pc = codebase + label;
@@ -3194,7 +3199,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
     OP(STARTLOOPCNTXT, 1):
 	{
 	    SEXP code = VECTOR_ELT(constants, GETOP());
-	    loopWithContect(code, rho);
+	    loopWithContext(code, rho);
 	    NEXT();
 	}
     OP(ENDLOOPCNTXT, 0): value = R_NilValue; goto done;
@@ -3205,6 +3210,12 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	SEXP seq = R_BCNodeStackTop[-1];
 	SEXP symbol = VECTOR_ELT(constants, GETOP());
 	int label = GETOP();
+
+	/* if we are iterating over a factor, coerce to character first */
+	if (inherits(seq, "factor")) {
+	    seq = asCharacterFactor(seq);
+	    R_BCNodeStackTop[-1] = seq;
+	}
 
 	defineVar(symbol, R_NilValue, rho);
 	BCNPUSH((SEXP) R_findVarLocInFrame(rho, symbol));
@@ -3284,10 +3295,12 @@ static SEXP bcEval(SEXP body, SEXP rho)
     OP(SETLOOPVAL, 0):
       BCNPOP_IGNORE_VALUE(); R_BCNodeStackTop[-1] = R_NilValue; NEXT();
     OP(INVISIBLE,0): R_Visible = FALSE; NEXT();
-    OP(LDCONST, 1): DO_LDCONST(value); BCNPUSH(value); NEXT();
+    /**** for now LDCONST, LDTRUE, and LDFALSE duplicate/allocate to
+	  be defensive agains bad package C code */
+    OP(LDCONST, 1): DO_LDCONST(value); BCNPUSH(duplicate(value)); NEXT();
     OP(LDNULL, 0): R_Visible = TRUE; BCNPUSH(R_NilValue); NEXT();
-    OP(LDTRUE, 0): R_Visible = TRUE; BCNPUSH(R_TrueValue); NEXT();
-    OP(LDFALSE, 0): R_Visible = TRUE; BCNPUSH(R_FalseValue); NEXT();
+    OP(LDTRUE, 0): R_Visible = TRUE; BCNPUSH(mkTrue()); NEXT();
+    OP(LDFALSE, 0): R_Visible = TRUE; BCNPUSH(mkFalse()); NEXT();
     OP(GETVAR, 1): DO_GETVAR(FALSE, FALSE);
     OP(DDVAL, 1): DO_GETVAR(TRUE, FALSE);
     OP(SETVAR, 1):
@@ -3616,19 +3629,12 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	SEXP symbol = VECTOR_ELT(constants, GETOP());
 	SEXP x = R_BCNodeStackTop[-1];
 	if (isObject(x)) {
-	  RCNTXT cntxt;
-	  SEXP pargs, str, rho1;
-	  PROTECT(pargs = promiseArgs(CDR(call), rho));
-	  /* See comment at first usemethod() call in this file. LT */
-	  PROTECT(rho1 = NewEnvironment(R_NilValue, R_NilValue, rho));
-	  SET_PRVALUE(CAR(pargs), x);
-	  str = ScalarString(PRINTNAME(symbol));
-	  SET_PRVALUE(CADR(pargs), str);
-	  begincontext(&cntxt, CTXT_RETURN, call, rho1, rho, pargs, R_NilValue);/**** FIXME: put in op */
-	  if (usemethod("$", x, call, pargs, rho1, rho, R_BaseEnv, &value))
-	    dispatched = TRUE;
-	  endcontext(&cntxt);
-	  UNPROTECT(2);
+	    SEXP ncall;
+	    PROTECT(ncall = duplicate(call));
+	    /**** hack to avoid evaluating the symbol */
+	    SETCAR(CDDR(ncall), ScalarString(PRINTNAME(symbol)));
+	    dispatched = tryDispatch("$", ncall, x, rho, &value);
+	    UNPROTECT(1);
 	}
 	if (dispatched)
 	  R_BCNodeStackTop[-1] = value;
@@ -3644,20 +3650,14 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	SEXP x = R_BCNodeStackTop[-1];
 	value = R_BCNodeStackTop[-2];
 	if (isObject(x)) {
-	  RCNTXT cntxt;
-	  SEXP pargs, str, rho1;
-	  PROTECT(pargs = promiseArgs(CDR(call), rho));
-	  /* See comment at first usemethod() call in this file. LT */
-	  PROTECT(rho1 = NewEnvironment(R_NilValue, R_NilValue, rho));
-	  SET_PRVALUE(CAR(pargs), x);
-	  str = ScalarString(PRINTNAME(symbol));
-	  SET_PRVALUE(CADR(pargs), str);
-	  SET_PRVALUE(CADDR(pargs), value);
-	  begincontext(&cntxt, CTXT_RETURN, call, rho1, rho, pargs, R_NilValue);/**** FIXME: put in op */
-	  if (usemethod("$<-", x, call, pargs, rho1, rho, R_BaseEnv, &value))
-	    dispatched = TRUE;
-	  endcontext(&cntxt);
-	  UNPROTECT(2);
+	    SEXP ncall;
+	    PROTECT(ncall = duplicate(call));
+	    /**** hack to avoid evaluating the symbol */
+	    SETCAR(CDDR(ncall), ScalarString(PRINTNAME(symbol)));
+	    /**** this may result in multiple evaluation of the
+		  assigned value */
+	    dispatched = tryDispatch("$<-", ncall, x, rho, &value);
+	    UNPROTECT(1);
 	}
 	R_BCNodeStackTop--;
 	if (dispatched)
@@ -3680,7 +3680,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
     OP(ISSYMBOL, 0): DO_ISTYPE(SYMSXP); /**** S4 thingy allowed now???*/
     OP(ISOBJECT, 0): DO_ISTEST(OBJECT);
     OP(ISNUMERIC, 0): DO_ISTEST(isNumericOnly);
-    OP(NVECELT, 2): {
+    OP(NVECELT, 0): {
 	SEXP vec = R_BCNodeStackTop[-2];
 	SEXP idx = R_BCNodeStackTop[-1];
 	value = numVecElt(vec, idx);
@@ -3688,7 +3688,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	R_BCNodeStackTop[-1] = value;
 	NEXT();
     }
-    OP(NMATELT, 3): {
+    OP(NMATELT, 0): {
 	SEXP mat = R_BCNodeStackTop[-3];
 	SEXP idx = R_BCNodeStackTop[-2];
 	SEXP jdx = R_BCNodeStackTop[-1];
@@ -3697,7 +3697,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	R_BCNodeStackTop[-1] = value;
 	NEXT();
     }
-    OP(SETNVECELT, 3): {
+    OP(SETNVECELT, 0): {
 	SEXP vec = R_BCNodeStackTop[-3];
 	SEXP idx = R_BCNodeStackTop[-2];
 	value = R_BCNodeStackTop[-1];
@@ -3706,7 +3706,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	R_BCNodeStackTop[-1] = value;
 	NEXT();
     }
-    OP(SETNMATELT, 4): {
+    OP(SETNMATELT, 0): {
 	SEXP mat = R_BCNodeStackTop[-4];
 	SEXP idx = R_BCNodeStackTop[-3];
 	SEXP jdx = R_BCNodeStackTop[-2];
@@ -3740,7 +3740,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
 	int label = GETOP();
         FIXUP_SCALAR_LOGICAL("'x'", "||");
         value = R_BCNodeStackTop[-1];
-	if (LOGICAL(value)[0] == TRUE)
+	if (LOGICAL(value)[0] != NA_LOGICAL && LOGICAL(value)[0]) /* is true */
 	    pc = codebase + label;
 	NEXT();
     }
@@ -3758,6 +3758,7 @@ static SEXP bcEval(SEXP body, SEXP rho)
     }
     OP(GETVAR_MISSOK, 1): DO_GETVAR(FALSE, TRUE);
     OP(DDVAL_MISSOK, 1): DO_GETVAR(TRUE, TRUE);
+    OP(VISIBLE,0): R_Visible = TRUE; NEXT();
     LASTOP;
   }
 

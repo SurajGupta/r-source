@@ -1375,4 +1375,32 @@ stopifnot(is.expression(x3))
 ## coerced to lists
 
 
+## predict on an lm object with type = "terms" and 'terms' specified
+dat <- data.frame(y=log(1:10), x=1:10, fac=rep(LETTERS[11:13],c(3,3,4)))
+fit <- lm(y~fac*x, data=dat)
+pfit <- predict(fit, type="terms", interval="confidence", newdata=dat[7:5,])
+pfit2 <- predict(fit, type="terms", terms=c("x","fac"),
+                 interval="confidence", newdata=dat[7:5,])
+pfit2Expected <- lapply(pfit,
+                        function(x)if(is.matrix(x))
+                        structure(x[, c("x","fac")], constant=attr(x, "constant"))
+                        else x)
+stopifnot(identical(pfit2, pfit2Expected))
+## pfit2 failed, and without 'interval' gave se's for all terms.
+
+
+## TRE called assert() on an invalid regexp (PR#14398)
+try(regexpr("a{2-}", ""))
+## terminated R <= 2.12.0
+
+
+## mapply() & sapply() should not wrongly simplify e.g. for "call":
+f2 <- function(i,j) call(':',i,j)
+stopifnot(identical(2:3,
+		    dim(sapply(1:3, function(i) list(0, 1:i)))),
+	  length(r <- mapply(1:2, c(3,7), FUN= f2)) == 2,
+	  length(s <- sapply(1:3, f2, j=7)) == 3)
+## length wrongly were 6 and 9, in R <= 2.12.0
+
+
 proc.time()

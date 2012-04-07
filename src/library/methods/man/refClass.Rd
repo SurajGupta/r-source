@@ -41,6 +41,10 @@ getRefClass(Class, where =)
 \arguments{
   \item{Class}{
 character string name for the class.
+
+In the call to \code{getRefClass()} this argument can also be any
+object from the relevant class;  note also the corresponding reference
+class methods documented in the section on \dQuote{Writing Reference Methods}.
 }
   \item{fields}{
 either a character vector of field names or
@@ -189,6 +193,8 @@ methods in the example below.
 Note that non-local assignment is required:  a local assignment with
 the \code{<-} operator just creates a local object in the function
 call, as it would in any \R function.
+When methods are installed, a heuristic check is made for local
+assignments to field names and a warning issued if any are detected.
 
 Reference methods should be kept simple; if they need to do some
 specialized \R computation, that computation should use a separate \R
@@ -265,6 +271,27 @@ arguments automatically, in contrast to the similar mechanism for
 functional methods.
 }
 
+\item{\code{$copy(shallow = FALSE)}}{ %$
+Creates a copy of the object.  With reference classes, unlike ordinary
+\R objects, merely assigning the object with a different name does not
+create an independent copy.  If \code{shallow} is \code{FALSE}, any
+field that is itself a reference object will also be copied, and
+similarly recursively for its fields.  Otherwise, while reassigning a
+field to a new reference object will have no side effect, modifying
+such a field will still be reflected in both copies of the object.
+The argument has no effect on non-reference objects in fields.  When
+there are reference objects in some fields but it is asserted that
+they will not be modified, using \code{shallow = TRUE} will save some
+memory and time.
+}
+
+\item{\code{$getRefClass()}; \code{$getClass()}}{
+These return respectively the generator object and the formal class
+definition for the reference class of this object, efficiently.
+}
+
+
+
 \item{\code{$export(Class)}}{ %$
 Returns the result of coercing the object to \code{Class} (typically
 one of the superclasses of the object's class).  Calling the method
@@ -326,19 +353,35 @@ The currently available methods are:
 This method is equivalent to the function \code{\link{new}} with the
 class name as an argument.  The \dots arguments are values for the
 named fields.
-If the class has a method defined for \code{$initialize(...)}, %$
+If the class has a method defined for \code{$initialize()}, %$
 this method will be called once the reference object has been
 created.  You should write such a method for a class that needs to do
 some special initialization.
 In particular, a reference method is recommended rather than a method
 for the S4 generic function, because some special initialization is
-required for reference objects \emph{before} the initialization of fields.
+required for reference objects \emph{before} the initialization of
+fields.
+As with S4 classes, methods are written for \code{$initialize()} %$
+and not for \code{$new()}, %$
+both for the previous reason and also because \code{$new()} %$
+is invoked on the generator object and would be a method for that class.
 
-In the absence of a method for \code{intialize}, a computation
-equivalent to invoking the method \code{$initFields(...)} %$
-will take place.  It is possible (and usually a good idea) to invoke
-this method from within a special initialization method.
+The default method for \code{$initialize()} %$
+is equivalent to invoking the method \code{$initFields(...)} %$
+with named fields as its arguments.  For technical reasons, the
+default method does not currently appear explicitly, but can be
+invoked by $callSuper(...) %$
+from a method for \code{$initialize()}. %$
+Initialization methods need some care in design, as they do for S4
+classes.
+In particular, remember that others may subclass your class and pass
+through field assignments or other arguments.  Therefore, your method
+should normally include \dots as an argument, all other arguments
+should have defaults or check for missingness, and your method should
+pass all initialized values on via \code{$callSuper()} or \code{$initFields()} if
+you know that your superclasses have no initialization methods.
 }
+
 \item{\code{$help(topic)}}{ %$
 Prints brief help on the topic.  The topics recognized
 are reference method names, quoted or not.
@@ -471,6 +514,10 @@ itself a reference object, with methods to generate objects from the
 class and also for defining new methods and for help-style
 documentation. See the
 section on \dQuote{Reference Class Generator Objects} for details.
+Note that \code{Class} in the call to \code{getRefClass()} can be an
+object from the corresponding class, and that a similar reference
+class method \code{$getRefClass()} %$
+is available as well.
 
 \code{setRefClass} defines the class and stores its class definition.
 \code{getRefClass} requires that the class has been defined as a
@@ -565,12 +612,13 @@ mv <- setRefClass("matrixViewer",
           }))
 
 ## initialize and finalize methods
-mv$methods( initialize = function(...) {
-    viewerFile <<- "./matrixView.pdf"
+mv$methods( initialize = 
+  function(file = "./matrixView.pdf", ...) {
+    viewerFile <<- file
     pdf(viewerFile)
     viewerDevice <<- dev.cur()
     dev.set(dev.prev())
-    initFields(...)
+    callSuper(...)
   },
   finalize = function() {
     dev.off(viewerDevice)

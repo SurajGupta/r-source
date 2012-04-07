@@ -87,7 +87,7 @@ getExportedValue <- function(ns, name) {
     if (is.null(ns)) {
         pos <- match(paste("package", pkg, sep=":"), search(), 0L)
         if (pos == 0)
-            stop(gettextf("package %s has no name space and is not on the search path"), sQuote(pkg), domain = NA)
+            stop(gettextf("package %s has no name space and is not on the search path", sQuote(pkg)), domain = NA)
         get(name, pos = pos, inherits = FALSE)
     }
     else getExportedValue(pkg, name)
@@ -938,10 +938,12 @@ namespaceExport <- function(ns, vars) {
         new <- makeImportExportNames(unique(vars))
         ## calling exists each time is too slow, so do two phases
         undef <- new[! new %in% .Internal(ls(ns, TRUE))]
-        undef <- undef[! sapply(undef, exists, envir = ns)]
-        if (length(undef)) {
-            undef <- do.call("paste", as.list(c(undef, sep = ", ")))
-            stop("undefined exports: ", undef)
+        if (length(undef)) { # avoid list result from sapply
+            undef <- undef[! sapply(undef, exists, envir = ns)]
+            if (length(undef)) {
+                undef <- do.call("paste", as.list(c(undef, sep = ", ")))
+                stop("undefined exports: ", undef)
+            }
         }
         if(.isMethodsDispatchOn()) .mergeExportMethods(new, ns)
         addExports(ns, new)
@@ -1051,7 +1053,8 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
                else if (length(e) == 4L)
                parseDirective(e[[4L]]),
                "{" =  for (ee in as.list(e[-1L])) parseDirective(ee),
-               "=", "<-" = {
+               "=" =, 
+               "<-" = {
                    parseDirective(e[[3L]])
                    if(as.character(e[[3L]][[1L]]) == "useDynLib")
                        names(dynlibs)[length(dynlibs)] <<- asChar(e[[2L]])
@@ -1197,7 +1200,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
                        stop("too many 'S3method' directives", call. = FALSE)
                    S3methods[nS3, seq_along(spec)] <<- asChar(spec)
                },
-               stop(gettextf("unknown namespace directive: %s", deparse(e)),
+               warning(gettextf("unknown namespace directive: %s", deparse(e, nlines=1L)),
                     call. = FALSE, domain = NA)
                )
     }

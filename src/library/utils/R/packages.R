@@ -448,12 +448,12 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         pkgpath <- file.path(pkgpath, "DESCRIPTION")
         if(file.access(pkgpath, 4L)) next
         desc <- tryCatch(read.dcf(pkgpath, fields = fields), error = identity)
-        if(inherits(desc, "error")) {
+        if(inherits(desc, "error") || NROW(desc) < 1L) {
             warning(gettextf("read.dcf() error on file '%s'", pkgpath),
                     domain = NA, call. = FALSE)
             next
         }
-        desc <- desc[1,]
+        desc <- desc[1L,]
         Rver <- strsplit(strsplit(desc["Built"], ";")[[1L]][1L],
                          "[ \t]+")[[1L]][2L]
         desc["Built"] <- Rver
@@ -503,17 +503,18 @@ installed.packages <-
 {
     ## to be used in installed.packages() and similar
     colnames(mat) <- c("Package", "LibPath", fields)
-    if(length(mat) && !is.null(priority)) {
+    if (length(mat) && !is.null(priority)) {
 	keep <- !is.na(pmatch(mat[,"Priority"], priority,
 			      duplicates.ok = TRUE))
-	mat <- mat[keep, , drop=FALSE]
+	mat <- mat[keep, , drop = FALSE]
     }
-    if(length(mat) && !is.null(subarch) && nzchar(subarch)) {
+    if (length(mat) && !is.null(subarch) && nzchar(subarch)) {
         archs <- strsplit(mat[, "Archs"], ", ", fixed = TRUE)
         keep <- unlist(lapply(archs,
                               function(x) is.na(x[1L]) || subarch %in% x))
-	mat <- mat[keep, , drop=FALSE]
+	mat <- mat[keep, , drop = FALSE]
     }
+    if (length(mat)) mat <- mat[, colnames(mat) != "Archs", drop = FALSE]
     if (length(mat)) rownames(mat) <- mat[, "Package"]
     mat
 }

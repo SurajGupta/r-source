@@ -1,10 +1,173 @@
 R News
 
+CHANGES IN R VERSION 2.12.1:
+
+  NEW FEATURES:
+
+    • The DVI/PDF reference manual now includes the help pages for all
+      the standard packages: splines, stats4 and tcltk were previously
+      omitted (intentionally).
+
+    • <URL: http://www.rforge.net> has been added to the default set of
+      repositories known to setRepositories().
+
+    • xz-utils has been updated to version 5.0.0.
+
+    • reshape() now makes use of sep when forming names during
+      reshaping to wide format.  (PR#14435)
+
+    • legend() allows the length of lines to be set by the end user
+      _via_ the new argument seg.len.
+
+    • New reference class utility methods copy(), field(),
+      getRefClass() and getClass() have been added.
+
+    • When a character value is used for the EXPR argument in switch(),
+      a warning is given if more than one unnamed alternative value is
+      given.  This will become an error in R 2.13.0.
+
+    • StructTS(type = "BSM") now allows series with just two seasons.
+      (Reported by Birgit Erni.)
+
+  INSTALLATION:
+
+    • The PDF reference manual is now built as PDF version 1.5 with
+      object compression, which on platforms for which this is not the
+      default (notably MiKTeX) halves its size.
+
+    • Variable FCLIBS can be set during configuration, for any
+      additional library flags needed when linking a shared object with
+      the Fortran 9x compiler.  (Needed with Solaris Studio 12.2.)
+
+  BUG FIXES:
+
+    • seq.int() no longer sometimes evaluates arguments twice.
+      (PR#14388)
+
+    • The data.frame method of format() failed if a column name was
+      longer than 256 bytes (the maximum length allowed for an R name).
+
+    • predict(<lm object>, type ="terms", ...) failed if both terms and
+      interval were specified.  (Reported by Bill Dunlap.)
+
+      Also, if se.fit = TRUE the standard errors were reported for all
+      terms, not just those selected by a non-null terms.
+
+    • The TRE regular expressions engine could terminate R rather than
+      give an error when given certain invalid regular expressions.
+      (PR#14398)
+
+    • cmdscale(eig = TRUE) was documented to return n-1 eigenvalues but
+      in fact only returned k.  It now returns all n eigenvalues.
+
+      cmdscale(add = TRUE) failed to centre the return configuration
+      and sometimes lost the labels on the points.  Its return value
+      was described wrongly (it is always a list and contains component
+      ac).
+
+    • promptClass() in package methods now works for reference classes
+      and gives a suitably specialized skeleton of documentation.
+
+      Also, callSuper() now works via the methods() invocation as well
+      as for initially specified methods.
+
+    • download.file() could leave the destination file open if the URL
+      was not able to be opened.  (PR#14414)
+
+    • Assignment of an environment to functions or as an attribute to
+      other objects now works for S4 subclasses of "environment".
+
+    • Use of [[<- for S4 subclasses of "environment" generated an
+      infinite recursion from the method.  The method has been replaced
+      by internal code.
+
+    • In a reference class S4 method, callSuper() now works in
+      initialize() methods when there is no explicit superclass method.
+
+    • ! dropped attributes such as names and dimensions from a
+      length-zero argument.  (PR#14424)
+
+    • When list2env() created an environment it was missing a PROTECT
+      call and so was vulnerable to garbage collection.
+
+    • Sweave() with keep.source=TRUE dropped comments at the start and
+      end of code chunks.  It could also fail when \SweaveInput was
+      combined with named chunks.
+
+    • The Fortran code used by nls(algorithm = "port") could
+      infinite-loop when compiled with high optimization on a modern
+      version of gcc, and SAFE_FFLAGS is now used to make this less
+      likely.  (PR#14427, seen with 32-bit Windows using gcc 4.5.0 used
+      from R 2.12.0.)
+
+    • sapply() with default simplify = TRUE and mapply() with default
+      SIMPLIFY = TRUE wrongly simplified language-like results, as,
+      e.g., in mapply(1:2, c(3,7), FUN = function(i,j) call(':',i,j)).
+
+    • Backreferences to undefined patterns in [g]sub(pcre = TRUE) could
+      cause a segfault.  (PR#14431)
+
+    • The format() (and hence the print()) method for class "Date"
+      rounded fractional dates towards zero: it now always rounds them
+      down.
+
+    • Reference S4 class creation could generate ambiguous inheritance
+      patterns under very special circumstances.
+
+    • [[<- turned S4 subclasses of "environment" into plain
+      environments.
+
+    • Long titles for help pages were truncated in package indices and
+      a few other places.
+
+    • Additional utilities now work correctly with S4 subclasses of
+      "environment" (rm, locking tools and active bindings).
+
+    • spec.ar() now also work for the "ols" method.  (Reported by
+      Hans-Ruedi Kuensch.)
+
+    • The initialization of objects from S4 subclasses of "environment"
+      now allocates a new environment object.
+
+    • R CMD check has more protection against (probably erroneous)
+      example or test output which is invalid in the current locale.
+
+    • qr.X() with column names and pivoting now also pivots the column
+      names.  (PR#14438)
+
+    • unit.pmax() and unit.pmin() in package grid gave incorrect
+      results when all inputs were of length 1.  (PR#14443)
+
+    • The parser for NAMESPACE files ignored misspelled directives,
+      rather than signalling an error.  For 2.12.x a warning will be
+      issued, but this will be correctly reported as an error in later
+      releases. (Reported by Charles Berry.)
+
+    • Fix for subsetting of "raster" objects when only one of i or j is
+      specified.
+
+    • grid.raster() in package grid did not accept "nativeRaster"
+      objects (like rasterImage() does).
+
+    • Rendering raster images in PDF output was resetting the clipping
+      region.
+
+    • Rendering of raster images on Cairo X11 device was wrong,
+      particularly when a small image was being scaled up using
+      interpolation.
+
+      With Cairo < 1.6, will be better than before, though still a
+      little clunky.  With Cairo >= 1.6, should be sweet as.
+
+    • Several bugs fixed in read.DIF(): single column inputs caused
+      errors, cells marked as "character" could be converted to other
+      types, and (in Windows) copying from the clipboard failed.
+
 CHANGES IN R VERSION 2.12.0:
 
   NEW FEATURES:
 
-    • Reading a packages's CITATION file now defaults to ASCII rather
+    • Reading a package's CITATION file now defaults to ASCII rather
       than Latin-1: a package with a non-ASCII CITATION file should
       declare an encoding in its DESCRIPTION file and use that encoding
       for the CITATION file.
@@ -72,7 +235,8 @@ CHANGES IN R VERSION 2.12.0:
 
     • There are several small changes to output which ‘zap’ small
       numbers, e.g. in printing quantiles of residuals in summaries
-      from "lm" and "glm" fits, and in test statisics in print.anova().
+      from "lm" and "glm" fits, and in test statistics in
+      print.anova().
 
     • Special names such as "dim", "names", etc, are now allowed as
       slot names of S4 classes, with "class" the only remaining
@@ -285,7 +449,7 @@ CHANGES IN R VERSION 2.12.0:
       (portably) ignore standard output.
 
     • system(intern = TRUE) and pipe() connections are guaranteed to be
-      avaliable on all builds of R.
+      available on all builds of R.
 
     • Sys.which() has been altered to return "" if the command is not
       found (even on Solaris).
@@ -1311,7 +1475,7 @@ CHANGES IN R VERSION 2.11.0:
     • Various ar() fitting methods have more protection for singular
       fits.
 
-    • callNextMethod now works again with the drop= argument in `[`
+    • callNextMethod now works again with the drop= argument in [
 
     • parse() and parse_Rd() miscounted columns when multibyte UTF-8
       characters were present.
@@ -1515,7 +1679,7 @@ CHANGES IN R VERSION 2.10.1 patched:
       user.child instead) on systems with HAVE_GETRUSAGE.  (PR#14210)
 
     • Changing both line texture and line cap (end) resulted in the
-      latter to be ommitted form the PDF code.  In addition, line cap
+      latter to be omitted form the PDF code.  In addition, line cap
       (end) and join are now set explicitly in PDF output to ensure
       correct defaults.
 
@@ -1761,7 +1925,7 @@ CHANGES IN R VERSION 2.10.0:
     • [g]sub(perl=TRUE) now also supports "\E" in order to *end* "\U"
       and "\L" case changes, thanks to a patch from Bill Dunlap.
 
-    • factor(), `levels<-`(), etc, now ensure that the resulting factor
+    • factor(), levels()<-, etc, now ensure that the resulting factor
       levels are unique (as was always the implied intention).  Factors
       with duplicated levels are still constructible by low-level
       means, but are now declared illegal.
@@ -1785,7 +1949,7 @@ CHANGES IN R VERSION 2.10.0:
 
     • available.packages() by default only returns information on the
       latest versions of packages whose version requirements are
-      satisified by the currently running R.
+      satisfied by the currently running R.
 
     • tools::write_PACKAGES() has a new argument latestOnly, which
       defaults to TRUE when only the latest versions in the repository
@@ -2044,7 +2208,7 @@ CHANGES IN R VERSION 2.10.0:
 
     • A different regular expression engine is used for basic and
       extended regexps and is also for approximate matching.  This is
-      based on the TRE library of Ville Laurikari, a modifed copy of
+      based on the TRE library of Ville Laurikari, a modified copy of
       which is included in the R sources.
 
       This is often faster, especially in a MBCS locale.

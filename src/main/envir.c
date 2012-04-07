@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2008  The R Development Core Team.
+ *  Copyright (C) 1999-2010  The R Development Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1556,7 +1556,7 @@ SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
     n = LENGTH(x);
     xnms = getAttrib(x, R_NamesSymbol);
     if (TYPEOF(xnms) != STRSXP || LENGTH(xnms) != n)
-	error(_("names(x) must be valid character(length(x))."));
+	error(_("names(x) must be a character vector of the same length as x"));
     envir = CAR(args);  args = CDR(args);
     if (TYPEOF(envir) == NILSXP) {
 	/* "copied" from do_newenv()  [ ./builtin.c ] */
@@ -1576,13 +1576,16 @@ SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     } else { /* assign into existing environment */
 	if (TYPEOF(envir) != ENVSXP)
-	    error(_("invalid '%s' argument: must be NULL or environment"), "envir");
+	    error(_("invalid '%s' argument: must be NULL or environment"), 
+		  "envir");
     }
 
+    PROTECT(envir);
     for(int i = 0; i < n ; i++) {
 	SEXP name = install(translateChar(STRING_ELT(xnms, i)));
 	defineVar(name, VECTOR_ELT(x, i), envir);
     }
+    UNPROTECT(1);
 
     return envir;
 }
@@ -1666,7 +1669,8 @@ SEXP attribute_hidden do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
     envarg = CAR(args);
     if (TYPEOF(envarg) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(envarg) != ENVSXP)
+    if (TYPEOF(envarg) != ENVSXP &&
+	TYPEOF((envarg = simple_as_environment(envarg))) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");
     args = CDR(args);
 
@@ -2979,7 +2983,8 @@ void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env)
 	error(_("not a function"));
     if (TYPEOF(env) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(env) != ENVSXP)
+    if (TYPEOF(env) != ENVSXP &&
+	TYPEOF((env = simple_as_environment(env))) != ENVSXP)
 	error(_("not an environment"));
     if (env == R_BaseEnv || env == R_BaseNamespace) {
 	if (SYMVALUE(sym) != R_UnboundValue && ! IS_ACTIVE_BINDING(sym))
@@ -3013,7 +3018,8 @@ Rboolean R_BindingIsLocked(SEXP sym, SEXP env)
 	error(_("not a symbol"));
     if (TYPEOF(env) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(env) != ENVSXP)
+    if (TYPEOF(env) != ENVSXP &&
+	TYPEOF((env = simple_as_environment(env))) != ENVSXP)
 	error(_("not an environment"));
     if (env == R_BaseEnv || env == R_BaseNamespace)
 	/* It is a symbol, so must have a binding even if it is
@@ -3033,7 +3039,8 @@ Rboolean R_BindingIsActive(SEXP sym, SEXP env)
 	error(_("not a symbol"));
     if (TYPEOF(env) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(env) != ENVSXP)
+    if (TYPEOF(env) != ENVSXP &&
+	TYPEOF((env = simple_as_environment(env))) != ENVSXP)
 	error(_("not an environment"));
     if (env == R_BaseEnv || env == R_BaseNamespace)
 	/* It is a symbol, so must have a binding even if it is
@@ -3326,7 +3333,7 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
        to another environment, possibly with different names.
        Promises are not forced and active bindings are preserved. */
     SEXP impenv, impnames, expenv, expnames;
-    SEXP impsym, expsym, binding, env, val;
+    SEXP impsym, expsym, val;
     int i, n;
 
     checkArity(op, args);
@@ -3338,11 +3345,13 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if (TYPEOF(impenv) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(impenv) != ENVSXP)
+    if (TYPEOF(impenv) != ENVSXP && 
+	TYPEOF((impenv = simple_as_environment(impenv))) != ENVSXP)
 	error(_("bad import environment argument"));
     if (TYPEOF(expenv) == NILSXP)
 	error(_("use of NULL environment is defunct"));
-    if (TYPEOF(expenv) != ENVSXP)
+    if (TYPEOF(expenv) != ENVSXP &&
+	TYPEOF((expenv = simple_as_environment(expenv))) != ENVSXP)
 	error(_("bad export environment argument"));
     if (TYPEOF(impnames) != STRSXP || TYPEOF(expnames) != STRSXP)
 	error(_("invalid '%s' argument"), "names");
@@ -3355,14 +3364,14 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 	expsym = install(translateChar(STRING_ELT(expnames, i)));
 
 	/* find the binding--may be a CONS cell or a symbol */
-	for (env = expenv, binding = R_NilValue;
+	SEXP binding = R_NilValue;
+	for (SEXP env = expenv;
 	     env != R_EmptyEnv && binding == R_NilValue;
 	     env = ENCLOS(env))
 	    if (env == R_BaseNamespace) {
 		if (SYMVALUE(expsym) != R_UnboundValue)
 		    binding = expsym;
-	    }
-	    else
+	    } else
 		binding = findVarLocInFrame(env, expsym, NULL);
 	if (binding == R_NilValue)
 	    binding = expsym;

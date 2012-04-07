@@ -218,7 +218,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 
 {"vector",	do_makevector,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"complex",	do_complex,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"matrix",	do_matrix,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"matrix",	do_matrix,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"row",		do_rowscols,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"col",		do_rowscols,	2,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"unlist",	do_unlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -586,7 +586,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"invisible",	do_invisible,	0,	101,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rep",		do_rep,		0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rep.int",	do_rep_int,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"seq.int",	do_seq,		0,	0,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"seq.int",	do_seq,		0,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"seq_len",	do_seq_len,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"seq_along",	do_seq_along,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"list",	do_makelist,	1,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -1142,7 +1142,6 @@ void InitNames()
 
 SEXP install(const char *name)
 {
-    char buf[MAXIDSIZE+1];
     SEXP sym;
     int i, hashcode;
 
@@ -1150,15 +1149,13 @@ SEXP install(const char *name)
 	error(_("attempt to use zero-length variable name"));
     if (strlen(name) > MAXIDSIZE)
 	error(_("variable names are limited to %d bytes"), MAXIDSIZE);
-    strcpy(buf, name);
-    hashcode = R_Newhashpjw(buf);
+    hashcode = R_Newhashpjw(name);
     i = hashcode % HSIZE;
     /* Check to see if the symbol is already present;  if it is, return it. */
     for (sym = R_SymbolTable[i]; sym != R_NilValue; sym = CDR(sym))
-	if (strcmp(buf, CHAR(PRINTNAME(CAR(sym)))) == 0)
-	    return (CAR(sym));
+	if (strcmp(name, CHAR(PRINTNAME(CAR(sym)))) == 0) return (CAR(sym));
     /* Create a new symbol node and link it into the table. */
-    sym = mkSYMSXP(mkChar(buf), R_UnboundValue);
+    sym = mkSYMSXP(mkChar(name), R_UnboundValue);
     SET_HASHVALUE(PRINTNAME(sym), hashcode);
     SET_HASHASH(PRINTNAME(sym), 1);
     R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);

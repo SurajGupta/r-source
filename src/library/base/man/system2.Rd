@@ -7,7 +7,7 @@
 \alias{system2}
 \title{Invoke a System Command}
 \description{
-  \code{system} invokes the OS command specified by \code{command}.
+  \code{system2} invokes the OS command specified by \code{command}.
 }
 \usage{
 system2(command, args = character(),
@@ -36,9 +36,8 @@ system2(command, args = character(),
     asynchronously.  This will be ignored (and the interpreter will
     always wait) if \code{stdout = TRUE}.}
 #ifdef unix
-  \item{minimized, invisible}{arguments
-    that are accepted on Windows but ignored on this platform, with a
-    warning.}
+  \item{minimized, invisible}{arguments that are accepted on Windows but
+    ignored on this platform, with a warning.}
 #endif
 #ifdef windows
   \item{minimized}{logical (not \code{NA}), indicates whether the
@@ -49,23 +48,29 @@ system2(command, args = character(),
 }
 \details{
   Unlike \code{\link{system}}, \code{command} is always quoted by
-  \code{\link{shQuote}}.
+  \code{\link{shQuote}}, so it must be a single command without arguments.
 
   For details of how \code{command} is found see \code{\link{system}}.
+
+  On Windows, \code{env} is currently only supported for comamnds such
+  as \command{R} and \command{make} which accept environment variables on
+  their command line.
+  
+  Some Unix commands (such as \code{ls}) change their output depending
+  on whether they think it is redirected: \code{stdout = TRUE} uses a
+  pipe whereas \code{stdout = "some_file_name"} uses redirection.
 
   Because of the way it is implemented, on a Unix-alike \code{stderr =
     TRUE} implies \code{stdout = TRUE}.
 }
+%% We use popen, and that pipes stdout only
 
 \value{  
   If \code{stdout = TRUE} or \code{stderr = TRUE}, a character vector
   giving the output of the command, one line per character string.
   (Output lines of more than 8095 bytes will be split.)  If the command
-  could not be run an \R error is generated.
-#ifdef Unix
-  If \code{command} runs but gives a non-zero exit status this will be
-  reported with a warning. 
-#endif
+  could not be run an \R error is generated.  If \code{command} runs but
+  gives a non-zero exit status this will be reported with a warning.
 
   In other cases, the return value is an error code (\code{0}
   for success), given the invisible attribute (so needs to be printed
@@ -80,9 +85,13 @@ system2(command, args = character(),
 }
 
 \note{
-  \code{system2} is the beginnings of a more portable interface than
-  \code{\link{system}} which allows redirection of output without
-  needing to invoke a shell on Windows.  It is more flexible.
+  \code{system2} is a more portable and flexible interface than
+  \code{\link{system}}, introduced in \R 2.12.0.  It allows redirection
+  of output without needing to invoke a shell on Windows, a portable way
+  to set environment variables for the execution of \code{command}, and
+  finer control over the redirection of \code{stdout} and \code{stderr}.
+  Conversely, \code{system} (and \code{shell} on Windows) allows the
+  invocation of arbitrary command lines.
 
   There is no guarantee that if \code{stdout} and \code{stderr} are both
   \code{TRUE} or the same file that the two streams will be interleaved
@@ -90,19 +99,11 @@ system2(command, args = character(),
   the OS.
 }
 
-#ifdef windows
-\section{Warning}{
-  On Windows, using non-null \code{stdin} or \code{input} suppresses
-  output to the console (both standard output and standard error).
-}
-#endif
-
 \seealso{
   \code{\link{system}}.
 #ifdef windows
   
-  \code{\link{shell}} or \code{\link{shell.exec}} for a less raw
-  interface.
+  \code{\link{shell}} and \code{\link{shell.exec}}.
 #endif
 }
 \keyword{interface}

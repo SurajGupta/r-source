@@ -45,8 +45,8 @@
     paste0 <- function(...) paste(..., sep="")
 
     MAKE <- Sys.getenv("MAKE")
-    TAR <- Sys.getenv("TAR", 'tar') # used on Unix only
-    GZIP <- Sys.getenv("R_GZIPCMD") # ditto
+    TAR <- Sys.getenv("TAR", 'tar') # used by default on Unix only
+    GZIP <- Sys.getenv("R_GZIPCMD") # used on Unix only
     if (!nzchar(GZIP)) GZIP <- "gzip"
     if (WINDOWS) zip <- "zip"
     rarch <- Sys.getenv("R_ARCH") # unix only
@@ -330,7 +330,7 @@
             dir.create(instdir, recursive = TRUE, showWarnings = FALSE)
         }
         res <- system(paste("cp -r .", shQuote(instdir),
-                            "|| (", TAR, "cd - .| (cd", shQuote(instdir), "&&", TAR, "xf-))"
+                            "|| (", TAR, "cd - .| (cd", shQuote(instdir), "&&", TAR, "-xf -))"
                             ))
         if (res) errmsg("installing binary package failed")
 
@@ -381,8 +381,8 @@
                 from <- shQuote(from)
                 to <- shQuote(to)
                 system(paste0("cp -r ", from, "/* ", to,
-                              " || (cd ", from, " && ", TAR, " cf - . | (cd '",
-                              to, "' && ", TAR, " xf - ))"))
+                              " || (cd ", from, " && ", TAR, " -cf - . | (cd '",
+                              to, "' && ", TAR, " -xf - ))"))
             }
         }
 
@@ -739,7 +739,7 @@
 
             ## if we have subarchs, update DESCRIPTION
             fi <- file.info(Sys.glob(file.path(instdir, "libs", "*")))
-            dirs <- basename(row.names(fi[fi$isdir %in% TRUE]))
+            dirs <- basename(row.names(fi[fi$isdir %in% TRUE, ]))
             ## avoid DLLs installed by rogue packages
             if(WINDOWS) dirs <- dirs[dirs %in% c("i386", "x64")]
             if (length(dirs)) {
@@ -1535,6 +1535,7 @@
     }
     if (with_objc) shlib_libadd <- c(shlib_libadd, "$(OBJC_LIBS)")
     if (with_f77) shlib_libadd <- c(shlib_libadd, "$(FLIBS)")
+    if (with_f9x) shlib_libadd <- c(shlib_libadd, "$(FCLIBS)")
 
     if (length(pkg_libs))
         makeargs <- c(makeargs,

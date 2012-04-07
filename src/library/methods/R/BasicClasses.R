@@ -537,18 +537,6 @@
       ## these classes need explicit coercion for S3 methods
       assign(cl, getClass(cl, where), envir = S3table)
     }
-  setMethod("$<-", ".environment", function (x, name, value) {
-    call <- sys.call()
-    call[[2]] <- x@.Data
-    eval.parent(call)
-    x
-  })
-  setMethod("[[<-", ".environment", function (x, i, j, ..., exact = TRUE, value) {
-    call <- sys.call()
-    call[[2]] <- x@.Data
-    eval.parent(call)
-    x
-  })
     ## a few other special classes
     setClass("namedList", representation(names = "character"),
              contains = "list", where = where)
@@ -564,4 +552,27 @@
              where = where)
     specialClasses <- c(specialClasses, "namedList", "listOfMethods")
     assign(".SealedClasses", c(get(".SealedClasses", where), specialClasses), where)
+    setMethod("initialize", ".environment", # for simple subclasses of "environment"
+              function(.Object, ...) {
+                  args <- list(...)
+                  objs <- names(args)
+                  hasEnvArg <- length(args) && !all(nzchar(objs))
+                  if(hasEnvArg) {
+                      i <- seq_along(args)[!nzchar(objs)]
+                      if(length(i)>1)
+                          stop("Can't have more than one unnamed argument as environment")
+                      selfEnv <- args[[i]]
+                      args <- args[-i]
+                      objs <- objs[-i]
+                      if(!is(selfEnv, "environment"))
+                          stop("Unnamed argument to new() must be an environment for the new object")
+                      selfEnv <- as.environment(selfEnv)
+                  }
+                  else
+                      selfEnv <- new.env()
+                  for(what in objs)
+                      assign(what, elNamed(args, what), envir = selfEnv)
+                  .Object@.xData <- selfEnv
+                  .Object
+              }, where = where)
 }

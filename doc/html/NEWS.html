@@ -8,6 +8,294 @@
 
 <h2>R News</h2>
 
+<h3>CHANGES IN R VERSION 2.12.1</h3>
+
+<p>
+
+
+<h4>NEW FEATURES</h4>
+
+<p>
+
+<ul>
+<li> The DVI/PDF reference manual now includes the help pages for
+all the standard packages: <span class="pkg">splines</span>, <span class="pkg">stats4</span> and
+<span class="pkg">tcltk</span> were previously omitted (intentionally).
+</p>
+<p>
+</li>
+<li><a href="http://www.rforge.net">http://www.rforge.net</a> has been added to the default
+set of repositories known to <code>setRepositories()</code>.
+</p>
+<p>
+</li>
+<li>xz-utils has been updated to version 5.0.0.
+</p>
+<p>
+</li>
+<li><code>reshape()</code> now makes use of <code>sep</code> when forming
+names during reshaping to wide format.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14435">PR#14435</a>)
+</p>
+<p>
+</li>
+<li><code>legend()</code> allows the length of lines to be set by the
+end user <EM>via</EM> the new argument <code>seg.len</code>.
+</p>
+<p>
+</li>
+<li>New reference class utility methods <code>copy()</code>, <code>field()</code>,
+<code>getRefClass()</code> and <code>getClass()</code> have been added.
+</p>
+<p>
+</li>
+<li>When a character value is used for the <code>EXPR</code>
+argument in <code>switch()</code>, a warning is given if more than
+one unnamed alternative value is given.  This will become an
+error in R 2.13.0.
+</p>
+<p>
+</li>
+<li><code>StructTS(type = "BSM")</code> now allows series with just
+two seasons.  (Reported by Birgit Erni.)
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>INSTALLATION</h4>
+
+<p>
+
+<ul>
+<li> The PDF reference manual is now built as PDF version 1.5
+with object compression, which on platforms for which this is not
+the default (notably MiKTeX) halves its size.
+</p>
+<p>
+</li>
+<li>Variable <span class="env">FCLIBS</span> can be set during configuration, for
+any additional library flags needed when linking a shared object
+with the Fortran 9x compiler.  (Needed with Solaris Studio 12.2.)
+</ul>
+
+</p>
+
+</p>
+<p>
+
+
+<h4>BUG FIXES</h4>
+
+<p>
+
+<ul>
+<li> <code>seq.int()</code> no longer sometimes evaluates arguments
+twice.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14388">PR#14388</a>)
+</p>
+<p>
+</li>
+<li>The <code>data.frame</code> method of <code>format()</code> failed if a
+column name was longer than 256 bytes (the maximum length allowed
+for an <font face="Courier New,Courier" color="#666666"><b>R</b></font> name).
+</p>
+<p>
+</li>
+<li><code>predict(&lt;lm object&gt;, type ="terms", ...)</code> failed if
+both <code>terms</code> and <code>interval</code> were specified.  (Reported
+by Bill Dunlap.)
+</p>
+<p>
+Also, if <code>se.fit = TRUE</code> the standard errors were reported
+for all terms, not just those selected by a non-null <code>terms</code>.
+</p>
+<p>
+</li>
+<li>The TRE regular expressions engine could terminate <font face="Courier New,Courier" color="#666666"><b>R</b></font> rather
+than give an error when given certain invalid regular expressions.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14398">PR#14398</a>)
+</p>
+<p>
+</li>
+<li><code>cmdscale(eig = TRUE)</code> was documented to return <i>n-1</i>
+eigenvalues but in fact only returned <code>k</code>.  It now returns
+all <i>n</i> eigenvalues.
+</p>
+<p>
+<code>cmdscale(add = TRUE)</code> failed to centre the return
+configuration and sometimes lost the labels on the points.  Its
+return value was described wrongly (it is always a list and
+contains component <code>ac</code>).
+</p>
+<p>
+</li>
+<li><code>promptClass()</code> in package <span class="pkg">methods</span> now works for
+reference classes and gives a suitably specialized skeleton of
+documentation.
+</p>
+<p>
+Also, <code>callSuper()</code> now works via the <code>methods()</code>
+invocation as well as for initially specified methods.
+</p>
+<p>
+</li>
+<li><code>download.file()</code> could leave the destination file open
+if the URL was not able to be opened.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14414">PR#14414</a>)
+</p>
+<p>
+</li>
+<li>Assignment of an environment to functions or as an attribute
+to other objects now works for S4 subclasses of <code>"environment"</code>.
+</p>
+<p>
+</li>
+<li>Use of <span class="samp">[[&lt;-</span> for S4 subclasses of
+<code>"environment"</code> generated an infinite recursion from the
+method.  The method has been replaced by internal code.
+</p>
+<p>
+</li>
+<li>In a reference class S4 method, <code>callSuper()</code> now works in
+<code>initialize()</code> methods when there is no explicit superclass
+method.
+</p>
+<p>
+</li>
+<li><span class="samp">!</span> dropped attributes such as names and dimensions from a
+length-zero argument.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14424">PR#14424</a>)
+</p>
+<p>
+</li>
+<li>When <code>list2env()</code> created an environment it was missing
+a <code>PROTECT</code> call and so was vulnerable to garbage collection.
+</p>
+<p>
+</li>
+<li><code>Sweave()</code> with <code>keep.source=TRUE</code> dropped
+comments at the start and end of code chunks.  It could also
+fail when <span class="samp">\SweaveInput</span> was combined with named chunks.
+</p>
+<p>
+</li>
+<li>The Fortran code used by <code>nls(algorithm = "port")</code>
+could infinite-loop when compiled with high optimization on a
+modern version of <code>gcc</code>, and <code>SAFE_FFLAGS</code> is now used
+to make this less likely.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14427">PR#14427</a>, seen with 32-bit Windows
+using <code>gcc 4.5.0</code> used from <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.12.0.)
+</p>
+<p>
+</li>
+<li><code>sapply()</code> with default <code>simplify = TRUE</code> and
+<code>mapply()</code> with default <code>SIMPLIFY = TRUE</code> wrongly
+simplified language-like results, as, e.g., in
+<code>mapply(1:2, c(3,7), FUN = function(i,j) call(':',i,j))</code>.
+</p>
+<p>
+</li>
+<li>Backreferences to undefined patterns in
+<code>[g]sub(pcre = TRUE)</code> could cause a segfault.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14431">PR#14431</a>)
+</p>
+<p>
+</li>
+<li>The <code>format()</code> (and hence the <code>print()</code>) method
+for class <code>"Date"</code> rounded fractional dates towards zero: it
+now always rounds them down.
+</p>
+<p>
+</li>
+<li>Reference S4 class creation could generate ambiguous
+inheritance patterns under very special circumstances.
+</p>
+<p>
+</li>
+<li><span class="samp">[[&lt;-</span> turned S4 subclasses of <code>"environment"</code> into
+plain environments.
+</p>
+<p>
+</li>
+<li>Long titles for help pages were truncated in package indices
+and a few other places.
+</p>
+<p>
+</li>
+<li>Additional utilities now work correctly with S4 subclasses of
+<code>"environment"</code> (<code>rm</code>, locking tools and active
+bindings).
+</p>
+<p>
+</li>
+<li><code>spec.ar()</code> now also work for the <code>"ols"</code> method.
+(Reported by Hans-Ruedi Kuensch.)
+</p>
+<p>
+</li>
+<li>The initialization of objects from S4 subclasses of
+<code>"environment"</code> now allocates a new environment object.
+</p>
+<p>
+</li>
+<li><CODE>R CMD check</CODE> has more protection against (probably
+erroneous) example or test output which is invalid in the current
+locale.
+</p>
+<p>
+</li>
+<li><code>qr.X()</code> with column names and pivoting now also pivots
+the column names.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14438">PR#14438</a>)
+</p>
+<p>
+</li>
+<li><code>unit.pmax()</code> and <code>unit.pmin()</code> in package
+<span class="pkg">grid</span> gave incorrect results when all inputs were of length 1.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14443">PR#14443</a>)
+</p>
+<p>
+</li>
+<li>The parser for &lsquo;<span class="file">NAMESPACE</span>&rsquo; files ignored misspelled
+directives, rather than signalling an error.  For 2.12.x a warning
+will be issued, but this will be correctly reported as an error 
+in later releases. (Reported by Charles Berry.)
+</p>
+<p>
+</li>
+<li>Fix for subsetting of <code>"raster"</code> objects when only one
+of <code>i</code> or <code>j</code> is specified.
+</p>
+<p>
+</li>
+<li><code>grid.raster()</code> in package <span class="pkg">grid</span> did not accept
+<code>"nativeRaster"</code> objects (like <code>rasterImage()</code> does).
+</p>
+<p>
+</li>
+<li>Rendering raster images in PDF output was resetting the
+clipping region.
+</p>
+<p>
+</li>
+<li>Rendering of raster images on Cairo X11 device was wrong,
+particularly when a small image was being scaled up using
+interpolation.
+</p>
+<p>
+With Cairo &lt; 1.6, will be better than before, though still a
+little clunky.  With Cairo &gt;= 1.6, should be sweet as.
+</p>
+<p>
+</li>
+<li>Several bugs fixed in <code>read.DIF()</code>:  single column
+inputs caused errors, cells marked as <code>"character"</code> could
+be converted to other types, and (in Windows) copying from the
+clipboard failed.      
+</ul>
+
+</p>
+
+</p>
+
+
 <h3>CHANGES IN R VERSION 2.12.0</h3>
 
 <p>
@@ -18,7 +306,7 @@
 <p>
 
 <ul>
-<li> Reading a packages's &lsquo;<span class="file">CITATION</span>&rsquo; file now defaults to
+<li> Reading a package's &lsquo;<span class="file">CITATION</span>&rsquo; file now defaults to
 ASCII rather than Latin-1: a package with a non-ASCII
 &lsquo;<span class="file">CITATION</span>&rsquo; file should declare an encoding in its
 &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file and use that encoding for the
@@ -127,7 +415,7 @@ and uses <code>list2env()</code> as list method.
 <li>There are several small changes to output which &lsquo;zap&rsquo;
 small numbers, e.g. in printing quantiles of residuals in
 summaries from <code>"lm"</code> and <code>"glm"</code> fits, and in test
-statisics in <code>print.anova()</code>.
+statistics in <code>print.anova()</code>.
 </p>
 <p>
 </li>
@@ -180,7 +468,7 @@ mainly for use by <CODE>R CMD Rd2pdf</CODE>.
 It avoids the use of <CODE>texindy</CODE> by <CODE>texinfo</CODE>'s
 <CODE>texi2dvi &gt;= 1.157</CODE>, since that does not emulate
 'makeindex' well enough to avoid problems with special characters
-(such as <code>(</code>, <code>{</code>, <code>!</code>) in indices.
+(such as <span class="samp">(</span>, <span class="samp">{</span>, <span class="samp">!</span>) in indices.
 </p>
 <p>
 </li>
@@ -278,12 +566,12 @@ options(<code>"help_text_width"</code>) is no longer used.
 </p>
 <p>
 </li>
-<li>Added <code>\href</code> tag to the Rd format, to allow
+<li>Added <span class="samp">\href</span> tag to the Rd format, to allow
 hyperlinks to URLs without displaying the full URL.
 </p>
 <p>
 </li>
-<li>Added <code>\newcommand</code> and <code>\renewcommand</code> tags
+<li>Added <span class="samp">\newcommand</span> and <span class="samp">\renewcommand</span> tags
 to the Rd format, to allow user-defined macros.
 </p>
 <p>
@@ -321,7 +609,7 @@ arguments such as <code>nsmall</code> to <code>format()</code>.  (Wish of
 </li>
 <li>Added support for subsetting <code>"raster"</code> objects, plus
 assigning to a subset, conversion to a matrix (of colour
-strings), and comparisons (<code>==</code> and <code>!=</code>).
+strings), and comparisons (<span class="samp">==</span> and <span class="samp">!=</span>).
 </p>
 <p>
 </li>
@@ -331,7 +619,7 @@ support conversion of bibliographic entries for display in R.
 </p>
 <p>
 </li>
-<li>Text rendering of <code>\itemize</code> in help uses a Unicode
+<li>Text rendering of <span class="samp">\itemize</span> in help uses a Unicode
 bullet in UTF-8 and most single-byte Windows locales.
 </p>
 <p>
@@ -474,7 +762,7 @@ which can be used to (portably) ignore standard output.
 <p>
 </li>
 <li><code>system(intern = TRUE)</code> and <code>pipe()</code> connections
-are guaranteed to be avaliable on all builds of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+are guaranteed to be available on all builds of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
 </p>
 <p>
 </li>
@@ -691,7 +979,7 @@ It supports a file &lsquo;<span class="file">~/.R/build.Renviron</span>&rsquo; a
 <CODE>check</CODE>.
 </p>
 <p>
-It now runs build-time <code>\Sexpr</code> expressions in help files.
+It now runs build-time <span class="samp">\Sexpr</span> expressions in help files.
 </p>
 <p>
 </li>
@@ -1157,7 +1445,7 @@ level.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14317">PR
 </p>
 <p>
 </li>
-<li>Text help rendering of <code>\tabular{}</code> has been
+<li>Text help rendering of <span class="samp">\tabular{}</span> has been
 improved: under some circumstances leading blank columns were
 not rendered.
 </p>
@@ -1185,7 +1473,7 @@ for Ncells or Vcells.
 </p>
 <p>
 </li>
-<li>The internal strptime() could corrupt its copy of the
+<li>The internal <code>strptime()</code> could corrupt its copy of the
 timezone which would then lead to spurious warnings. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14338">PR#14338</a>)
 </p>
 <p>
@@ -1214,7 +1502,7 @@ undefined, probably device-specific, and possibly dangerous.
 </p>
 <p>
 </li>
-<li>wilcox.test(x, y, conf.int = TRUE) failed with an unhelpful
+<li><code>wilcox.test(x, y, conf.int = TRUE)</code> failed with an unhelpful
 message if <code>x</code> and <code>y</code> were constant vectors, and
 similarly in the one-sample case.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14329">PR#14329</a>)
 </p>
@@ -1225,7 +1513,7 @@ could cause a segfault.  (Reported by Robert McGehee.)
 </p>
 <p>
 </li>
-<li><code>\Sexpr[result=rd]</code> in an Rd file added a
+<li><span class="samp">\Sexpr[result=rd]</span> in an Rd file added a
 spurious newline, which was displayed as extra whitespace when
 rendered.
 </p>
@@ -1388,7 +1676,7 @@ crash when used on very long vectors.  (<a href="https://bugs.R-project.org/bugz
 <p>
 </li>
 <li><code>Rd2latex()</code> incorrectly escaped special characters in
-<code>\usage</code> sections.
+<span class="samp">\usage</span> sections.
 </p>
 <p>
 </li>
@@ -1469,7 +1757,7 @@ files consistently with other renderers.
 <p>
 It computed widths of strings that would be <code>print()</code>ed with
 escapes incorrectly, for example in the computation of column
-width for <code>\tabular</code>.
+width for <span class="samp">\tabular</span>.
 </p>
 <p>
 </li>
@@ -1811,10 +2099,10 @@ for use on platforms which have <CODE>curl</CODE> but not
 </p>
 <p>
 </li>
-<li>In <code>Rd</code>, <code>\eqn</code> and <code>\deqn</code> will render in
+<li>In <code>Rd</code>, <span class="samp">\eqn</span> and <span class="samp">\deqn</span> will render in
 HTML (and convert to text) upper- and lower-case Greek letters
-(entered as <code>\alpha</code> ...), <code>\ldots</code>, <code>\dots</code>,
-<code>\ge</code> and <code>\le</code>.
+(entered as <span class="samp">\alpha</span> ...), <span class="samp">\ldots</span>, <span class="samp">\dots</span>,
+<span class="samp">\ge</span> and <span class="samp">\le</span>.
 </p>
 <p>
 </li>
@@ -1853,7 +2141,7 @@ where <code>seq()</code> does, e.g. <code>seq.int(1L, 9L, by = 2L)</code>.
 </p>
 <p>
 </li>
-<li>Added <code>\subsection{}{}</code> macro to Rd syntax, for
+<li>Added <span class="samp">\subsection{}{}</span> macro to Rd syntax, for
 subsections within sections.
 </p>
 <p>
@@ -2007,7 +2295,7 @@ Thanks to Patrick Aboyoun for implementation suggestions.
 <p>
 </li>
 <li>Help conversion to text now uses the first part of
-<code>\enc{}{}</code> markup if it is representable in the current
+<span class="samp">\enc{}{}</span> markup if it is representable in the current
 output encoding.  On the other hand, conversion to LaTeX with the
 default <code>outputEncoding = "ASCII"</code> uses the second part.
 </p>
@@ -2236,7 +2524,7 @@ singular fits.
 <p>
 </li>
 <li><code>callNextMethod</code> now works again with the <code>drop=</code>
-argument in <code>`[`</code>
+argument in <span class="samp">[</span>
 </p>
 <p>
 </li>
@@ -2589,7 +2877,7 @@ wrong (copied <code>user.child</code> instead) on systems with
 <p>
 </li>
 <li>Changing both line texture and line cap (end) resulted in the
-latter to be ommitted form the PDF code.  In addition, line cap
+latter to be omitted form the PDF code.  In addition, line cap
 (end) and join are now set explicitly in PDF output to ensure
 correct defaults.
 </p>
@@ -3040,7 +3328,7 @@ thanks to a patch from Bill Dunlap.
 </p>
 <p>
 </li>
-<li><code>factor()</code>, <code>`levels&lt;-`()</code>, etc, now ensure that
+<li><code>factor()</code>, <code>levels()&lt;-</code>, etc, now ensure that
 the resulting factor levels are unique (as was always the implied
 intention).  Factors with duplicated levels are still
 constructible by low-level means, but are now declared illegal.
@@ -3075,7 +3363,7 @@ or <code>contriburl</code>).
 </li>
 <li><code>available.packages()</code> by default only returns
 information on the latest versions of packages whose version
-requirements are satisified by the currently running <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+requirements are satisfied by the currently running <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
 </p>
 <p>
 </li>
@@ -3509,7 +3797,7 @@ already did).
 <ul>
 <li> A different regular expression engine is used for basic and
 extended regexps and is also for approximate matching.  This is
-based on the TRE library of Ville Laurikari, a modifed copy of
+based on the TRE library of Ville Laurikari, a modified copy of
 which is included in the <font face="Courier New,Courier" color="#666666"><b>R</b></font> sources.
 </p>
 <p>

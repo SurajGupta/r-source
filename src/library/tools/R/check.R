@@ -16,8 +16,6 @@
 
 #### R based engine for R CMD check
 
-## we assume that getwd() after setwd() is safe
-
 ## Used for INSTALL and Rd2pdf
 run_Rcmd <- function(args, out = "")
 {
@@ -27,45 +25,31 @@ run_Rcmd <- function(args, out = "")
         system2(file.path(R.home("bin"), "R"), c("CMD", args), out, out)
 }
 
-##' @title R executable (full PATH) for windows (as the name suggests)
-##' @param arch
-##' @return
-.R_EXE <- function(arch) {
-    if (nzchar(arch)) file.path(R.home(), "bin", arch, "Rterm.exe")
-    else file.path(R.home("bin"), "Rterm.exe")
-}
-
-R_runR <- function(cmd, Ropts = "", env = "", arch = "")
+R_runR <- function(cmd = NULL, Ropts = "", env = "",
+                   stdout = TRUE, stderr = TRUE, stdin = NULL,
+                   arch = "")
 {
     if (.Platform$OS.type == "windows") {
         ## workaround Windows problem with input = cmd
-        Rin <- tempfile("Rin"); on.exit(unlink(Rin)); writeLines(cmd, Rin)
-        ## This was called from Rcmd which set R_ARCH, so we may need to reset it.
+        if (!is.null(cmd)) {
+            Rin <- tempfile("Rin"); on.exit(unlink(Rin)); writeLines(cmd, Rin)
+        } else Rin <- stdin
+        ## This was called from Rcmd which set R_ARCH,
+        ## so we may need to reset it.  (This used to be necessary for
+        ## nested calls of Rcmd in 2.12.x, but no longer.)
         if(nzchar(arch))
-            system2(.R_EXE(arch), c(Ropts, paste("-f", Rin)), TRUE, TRUE,
+            system2(file.path(R.home(), "bin", arch, "Rterm.exe"),
+                    c(Ropts, paste("-f", Rin)), stdout, stderr,
                     env = c(env, paste("R_ARCH=/", arch, sep="")))
         else
-            system2(.R_EXE(arch), c(Ropts, paste("-f", Rin)), TRUE, TRUE,
+            system2(file.path(R.home("bin"), "Rterm.exe"),
+                    c(Ropts, paste("-f", Rin)), stdout, stderr,
                     env = env)
     } else {
         suppressWarnings(system2(file.path(R.home("bin"), "R"),
                                  c(if(nzchar(arch)) paste("--arch=", arch, sep = ""), Ropts),
-                                 TRUE, TRUE, input = cmd, env = env))
+                                 stdout, stderr, stdin, input = cmd, env = env))
     }
-}
-
-## used for .createDotR
-R_run_R <- function(cmd, Ropts, env = "", arch = "")
-{
-    Rout <- tempfile("Rout")
-    if (.Platform$OS.type == "windows") {
-        status <- system2(.R_EXE(arch), Ropts, Rout, Rout, input = cmd, env = env)
-    } else {
-        status <- system2(file.path(R.home("bin"), "R"),
-                          c(if(nzchar(arch)) paste("--arch=", arch, sep = ""), Ropts),
-                          Rout, Rout, input = cmd, env = env)
-    }
-    list(status = status, out = readLines(Rout, warn = FALSE))
 }
 
 .check_packages <- function(args = NULL)
@@ -77,7 +61,7 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
         text <- paste(..., collapse=" ")
         ## strwrap expects paras separated by blank lines.
         ## Perl's wrap split on \n
-        text <- strsplit(text, "\n")[[1L]]
+        text <- strsplit(text, "\n", useBytes = TRUE)[[1L]]
         printLog(Log, paste(strwrap(text), collapse="\n"), "\n")
     }
 
@@ -1228,17 +1212,8 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
             if (use_valgrind) Ropts <- paste(Ropts, "-d valgrind")
             ## might be diff-ing results against tests/Examples later
             ## so force LANGUAGE=en
-            status <- if (WINDOWS) {
-                if (nzchar(arch))
-                    system2(.R_EXE(arch), c(Ropts, enc), exout, exout, exfile,
-                            env = c("LANGUAGE=en", paste("R_ARCH=/", arch, sep="")))
-                else
-                    system2(.R_EXE(arch), c(Ropts, enc), exout, exout, exfile,
-                            env = "LANGUAGE=en")
-            } else
-                system2(file.path(R.home("bin"), "R"),
-                        c(if(nzchar(arch)) paste("--arch=", arch, sep = ""), Ropts, enc),
-                        exout, exout, exfile, env = "LANGUAGE=en")
+            status <- R_runR(NULL, c(Ropts, enc), env = "LANGUAGE=en",
+                              exout, exout, exfile, arch = arch)
             if (status) {
                 errorLog(Log, "Running examples in ", sQuote(exfile),
                          " failed")
@@ -1251,7 +1226,7 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
                 ## testing.R).  Should perhaps also be more
                 ## defensive about the prompt ...
                 chunks <- strsplit(txt,
-                                   "> ### \\* [^\n]+\n> \n> flush[^\n]+\n> \n")[[1L]] #
+                                   "> ### \\* [^\n]+\n> \n> flush[^\n]+\n> \n", useBytes = TRUE)[[1L]]
                                        if((ll <- length(chunks)) >= 2) {
                                            printLog(Log,
                                                     "The error most likely occurred in:\n\n")
@@ -1308,16 +1283,19 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
         else {
             pkgtopdir <- file.path(libdir, pkgname)
             cmd <- sprintf('tools:::.createExdotR("%s", "%s", silent = TRUE, use_gct = %s, addTiming = %s)', pkgname, pkgtopdir, use_gct, do_timings)
-            exfile <- paste(pkgname, "-Ex.R", sep = "")
-            out <- R_run_R(cmd, R_opts2, "LC_ALL=C")
-            if (out$status) {
+            Rout <- tempfile("Rout")
+            ## any arch will do here
+            status <- R_runR(cmd, R_opts2, "LC_ALL=C", Rout, Rout)
+            if (status) {
                 errorLog(Log,
                          paste("Running massageExamples to create",
                                sQuote(exfile), "failed"))
-                printLog(Log, paste(out$out, collapse = "\n"), "\n")
+                printLog(Log, paste(readLines(Rout, warn = FALSE),
+                                    collapse = "\n"), "\n")
                 do_exit(1L)
             }
             ## It ran, but did it create any examples?
+            exfile <- paste(pkgname, "-Ex.R", sep = "")
             if (file.exists(exfile)) {
                 enc <- if (!is.na(e <- desc["Encoding"])) {
                     if (is_ascii)
@@ -1385,20 +1363,10 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
             cmd <- paste("tools:::.runPackageTestsR(",
                          paste(extra, collapse=", "),
                          ")", sep = "")
-            status <- if (.Platform$OS.type == "windows") {
-                Rin <- tempfile("Rin"); on.exit(unlink(Rin))
-                writeLines(cmd, Rin)
-                if (nzchar(arch))
-                    system2(.R_EXE(arch), c(R_opts4, paste("-f", Rin)),
-                            env = c("LANGUAGE=en", paste("R_ARCH=/", arch, sep="")))
-                else
-                    system2(.R_EXE(arch), c(R_opts2, paste("-f", Rin)),
-                            env = "LANGUAGE=en")
-            } else
-                system2(file.path(R.home("bin"), "R"),
-                        c(if(nzchar(arch)) paste("--arch=", arch, sep = ""),
-                          if(nzchar(arch)) R_opts4 else R_opts2),
-                        input = cmd, env = "LANGUAGE=en")
+            status <- R_runR(cmd,
+                             if(nzchar(arch)) R_opts4 else R_opts2,
+                             env = "LANGUAGE=en",
+                             stdout = "", stderr = "", arch = arch)
             if (status) {
                 errorLog(Log)
                 ## Don't just fail: try to log where the problem occurred.
@@ -1565,7 +1533,9 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
                 unlink(build_dir, recursive = TRUE)
                 ## for Windows' sake: errors can make it unwritable
                 build_dir <- gsub("\\", "/", tempfile("Rd2pdf"), fixed = TRUE)
-                checkingLog(Log, "PDF version of manual without index")
+                checkingLog(Log, "PDF version of manual without hyperrefs or index")
+                ## Also turn off hyperrefs.
+                Sys.setenv(R_RD4PDF = "times")
                 args <- c( "Rd2pdf ", Rd2pdf_opts,
                           paste("--build-dir=", shQuote(build_dir), sep = ""),
                           "--no-clean", "--no-index",
@@ -1967,6 +1937,7 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
                   " of the 'Writing R Extensions' manual.\n")
             tryCatch(parseNamespaceFile(basename(pkgdir), dirname(pkgdir)),
                      error = function(e) {
+                         errorLog(Log)
                          printLog(Log,
                                   "Invalid NAMESPACE file, parsing gives:", "\n",
                                   as.character(e), "\n")
@@ -1984,7 +1955,9 @@ R_run_R <- function(cmd, Ropts, env = "", arch = "")
         ## package vignette must require its own package, which OTOH is
         ## not required in the package DESCRIPTION file.
         ## Namespace imports must really be in Depends.
-        res <- .check_package_depends(pkgdir, R_check_force_suggests)
+
+        ## Suppress warnings from incorrect NAMESPACE files (errors in 2.13.0)
+        res <- suppressWarnings(.check_package_depends(pkgdir, R_check_force_suggests))
         if (any(sapply(res, length) > 0)) {
             if (!all(names(res) %in% c("suggests_but_not_installed",
                                        "enhances_but_not_installed"))) {

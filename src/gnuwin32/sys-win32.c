@@ -174,7 +174,6 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     const char *fout = "", *ferr = "";
     int   vis = 0, flag = 2, i = 0, j, ll;
     SEXP  cmd, fin, Stdout, Stderr, tlist = R_NilValue, tchar, rval;
-    HANDLE hOUT = NULL, hERR = NULL /* -Wall */;
 
     checkArity(op, args);
     cmd = CAR(args);
@@ -193,25 +192,21 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
     Stdout = CAR(args);
     args = CDR(args);
     Stderr = CAR(args);
-
+ 
     if (CharacterMode == RGui) {
+	/* This is a rather conservative approach: if
+	   Rgui is launched from a console window it does have
+	   standard handles -- but users might well not expect that.
+	*/
 	SetStdHandle(STD_INPUT_HANDLE, INVALID_HANDLE_VALUE);
 	SetStdHandle(STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE);
 	SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
     } else {
 	if (flag == 2) flag = 1; /* ignore std.output.on.console */
-	if (TYPEOF(Stdout) == STRSXP) {
-	    fout = CHAR(STRING_ELT(Stdout, 0));
-	} else if (asLogical(Stdout) == 0) {
-	    hOUT = GetStdHandle(STD_OUTPUT_HANDLE);
-	    SetStdHandle(STD_OUTPUT_HANDLE, INVALID_HANDLE_VALUE);
-	}
-	if (TYPEOF(Stderr) == STRSXP) {
-	    ferr = CHAR(STRING_ELT(Stderr, 0));
-	} else if (asLogical(Stderr) == 0) {
-	    hERR = GetStdHandle(STD_ERROR_HANDLE);
-	    SetStdHandle(STD_ERROR_HANDLE, INVALID_HANDLE_VALUE);
-	}
+	if (TYPEOF(Stdout) == STRSXP) fout = CHAR(STRING_ELT(Stdout, 0));
+	else if (asLogical(Stdout) == 0) fout = NULL;
+	if (TYPEOF(Stderr) == STRSXP) ferr = CHAR(STRING_ELT(Stderr, 0));
+	else if (asLogical(Stderr) == 0) ferr = NULL;
     }
 
     if (flag < 2) { /* Neither intern = TRUE nor
@@ -219,7 +214,6 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	ll = runcmd(CHAR(STRING_ELT(cmd, 0)),
 		    getCharCE(STRING_ELT(cmd, 0)),
 		    flag, vis, CHAR(STRING_ELT(fin, 0)), fout, ferr);
-	// if (ll == NOLAUNCH) warning(runerror());
     } else {
 	/* read stdout +/- stderr from pipe */
 	int m = 0;
@@ -229,31 +223,38 @@ SEXP do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(m  && TYPEOF(Stdout) == LGLSXP && asLogical(Stdout)) m = 3;
 	fp = rpipeOpen(CHAR(STRING_ELT(cmd, 0)),
 		       getCharCE(STRING_ELT(cmd, 0)),
-		       vis, CHAR(STRING_ELT(cmd, 0)), m);
+		       vis, CHAR(STRING_ELT(fin, 0)), m, fout, ferr);
 	if (!fp) {
 	    /* If intern = TRUE generate an error */
 	    if (flag == 3) error(runerror());
-	    // warning(runerror());
 	    ll = NOLAUNCH;
 	} else {
 	    /* FIXME: use REPROTECT */
-	    if (flag == 3) PROTECT(tlist);
-	    for (i = 0; rpipeGets(fp, buf, INTERN_BUFSIZE); i++) {
-		if (flag == 3) { /* intern = TRUE */
-		    ll = strlen(buf) - 1;
-		    if ((ll >= 0) && (buf[ll] == '\n')) buf[ll] = '\0';
-		    tchar = mkChar(buf);
-		    UNPROTECT(1); /* tlist */
-		    PROTECT(tlist = CONS(tchar, tlist));
-		} else
+	    if (flag == 3) {
+		PROTECT(tlist);
+		/* honour intern = FALSE, ignore.stdout = TRUE */
+		if (m > 0 ||
+		    (!(TYPEOF(Stdout) == LGLSXP && !asLogical(Stdout))))
+		    for (i = 0; rpipeGets(fp, buf, INTERN_BUFSIZE); i++) {
+			ll = strlen(buf) - 1;
+			if ((ll >= 0) && (buf[ll] == '\n')) buf[ll] = '\0';
+			tchar = mkChar(buf);
+			UNPROTECT(1); /* tlist */
+			PROTECT(tlist = CONS(tchar, tlist));
+		    }
+
+	    } else {
+		for (i = 0; rpipeGets(fp, buf, INTERN_BUFSIZE); i++)
 		    R_WriteConsole(buf, strlen(buf));
 	    }
 	    ll = rpipeClose(fp);
+	    if(ll) {
+		warningcall(R_NilValue, 
+			    _("running command '%s' had status %d"), 
+			    CHAR(STRING_ELT(cmd, 0)), ll);
+	    }
 	}
     }
-    /* restore stdout/stderr if we changed it */
-    if (hOUT) SetStdHandle(STD_OUTPUT_HANDLE, hOUT);
-    if (hERR) SetStdHandle(STD_ERROR_HANDLE, hERR);
     if (flag == 3) { /* intern = TRUE: convert pairlist to list */
 	PROTECT(rval = allocVector(STRSXP, i));
 	for (j = (i - 1); j >= 0; j--) {

@@ -3,6 +3,62 @@
 \name{CHANGES}
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
+
+\section{CHANGES IN R VERSION 2.12.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{system()} and \code{system2()} with output redirected
+      to a character vector now give a warning if the command returns a
+      non-zero error code.  (This is what a Unix-alike does as from \R
+      2.12.0.)
+
+      \item \code{system()} and \code{system2()} no longer discard
+      output from the command to stdout and stderr as often as they used
+      to, and more cases of \code{system2()} are implemented.
+
+      \item \code{stdout} is now flushed after echoing the input line.
+
+      \item The internal implementation of \code{tar()} (package
+      \pkg{utils}) is now supported on Windows.
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item The MSI installer is now made by an \R script, and there is
+      now support for 64-bit builds.  (Unlike the Inno Setup installer,
+      there are separate MSI installers for 32- and 64-bit Windows.)
+
+      It is now built using \command{WiX 3.x} rather than \command{WiX
+	2.0}.  (As a result it is about 25\% smaller.)
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item Some warning/error messages from \code{dyn.load()} could be
+      masked in \command{Rgui} on Windows 7, as that OS can return
+      messages containing carriage returns and \command{Rgui} does not
+      support overwriting.
+      
+      \item Filenames could not be specified using backslashes in 
+      \code{Sweave()}.
+
+      \item In \R 2.12.0, \code{system(intern = TRUE)} captured
+      \file{stderr} on \command{Rterm} when it was documented to only do
+      so on \command{Rgui}.
+
+      \item \command{Rgui} in \R 2.12.0 (only) did not always handle lines
+      containing carriage returns (\samp{\r}) correctly: sometimes
+      random characters where shown.
+
+      Since carriage returns have been supported in \command{Rgui},
+      the cursor positioning after outputting a line containing a
+      carriage return had been unreliable.
+    }
+  }
+}
+
 \section{CHANGES IN R VERSION 2.12.0}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -69,7 +125,7 @@
       
         The default package type is \code{"win.binary"} on both 32- and
         64-bit builds: a single repository contains binary packages for
-        both architectures.  This is in place for CRAN, CRANextras and
+        both architectures.  This is in place for CRAN, CRAN extras and
         BioC: \code{type = "win64.binary"} can still be used for any
         repositories which follow the \R 2.11.x convention.  With the
         default filters (see \code{?available.packages}) packages will
@@ -80,7 +136,7 @@
 	is now the same for both 32- and 64-bit \R.
 	
       \item The recommended 64-bit toolchain has been changed to one
-      that does not add leading underscores. See
+      that does not add leading underscores.  See
       \url{http://www.murdoch-sutherland.com/Rtools/} or
       \url{http://www.stats.ox.ac.uk/pub/Rtools/}.  Any static or import
       libraries for external software used in installing packages will
@@ -249,8 +305,9 @@
        did not return the focus to the console if the user cancelled the
        action.
        
-      \item \code{system()} (and hence \code{shell()}) did not set the
-        standard file handles properly, so some programs would not run.
+      \item \code{system()} (and hence \code{shell()}) did not always
+        set the standard file handles properly, so some programs would
+        not run.
       
       \item \code{setWinProgressBar()} did not check the type of its
        \code{'title'} and \code{'label'} arguments and might have

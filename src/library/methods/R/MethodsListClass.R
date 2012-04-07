@@ -170,7 +170,7 @@
                   else
                       .MakeSignature(.Object, functionDef, list(...))
               }, where = envir)
-    setMethod("initialize", "environment",
+    setMethod("initialize", "environment", # only for new("environment",...); see .InitSpecialTypesAndClasses for subclasses
               function(.Object, ...) {
                   value <- new.env()
                   args <- list(...)
@@ -263,8 +263,7 @@
     else
       needed <- get(".NeedPrimitiveMethods", where)
     needed <- c(needed, list(structure = "Ops", vector = "Ops",
-          array = "Ops", nonStructure = "Ops",
-          .environment = "$<-", .environment = "[[<-"),
+          array = "Ops", nonStructure = "Ops"),
           array = "[", structure = "[", nonStructure = "[",
           structure = "Math", nonStructure = "Math",
           refClass = "$"

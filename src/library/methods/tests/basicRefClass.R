@@ -1,4 +1,3 @@
-options(error = recover)
 ## simple call, only field names
 fg <- setRefClass("foo", c("bar", "flag"))
 f1<- new("foo")
@@ -217,8 +216,8 @@ mv <- setRefClass("matrixViewer",
           }))
 
 ## initialize and finalize methods
-mv$methods( initialize = function(...) {
-    viewerFile <<- tempfile("matrixView")
+mv$methods( initialize = function(file = "./matrixView.pdf", ...) {
+    viewerFile <<- file
     pdf(viewerFile)
     viewerDevice <<- dev.cur()
     message("Plotting to ", viewerFile)
@@ -231,7 +230,7 @@ mv$methods( initialize = function(...) {
     setMarkViewer("OFF")
   })
 
-ff = new("matrixViewer", data = xMat)
+ff = mv$new( data = xMat)
 stopifnot(identical(markViewer, "ON")) # check initialize
 ff$edit(2,2,0)
 ff$data
@@ -240,3 +239,140 @@ stopifnot(all.equal(ff$data, xMat))
 rm(ff)
 gc()
 stopifnot(identical(markViewer, "OFF")) #check finalize
+
+## tests of copying
+viewerPlus <- setRefClass("viewerPlus",
+                   fields = list( text = "character",
+                      viewer = "matrixViewer"))
+ff <- mv$new( data = xMat)
+v1 <- viewerPlus$new(text = letters, viewer = ff)
+v2 <- v1$copy()
+v3 <- v1$copy(TRUE)
+v2$text <- "Hello, world"
+v2$viewer$data <- t(xMat) # change a field in v2$viewer
+v3$text <- LETTERS
+v3$viewer <- mv$new( data = matrix(nrow=1,ncol=1))
+## with a deep copy all is protected, with a shallow copy
+## the environment of a copied field remains the same,
+## but replacing the whole field should be local
+stopifnot(identical(v1$text, letters),
+          identical(v1$viewer, ff),
+          identical(v2$text, "Hello, world"))
+v3 <- v1$copy(TRUE)
+v3$viewer$data <- t(xMat) # should modify v1$viewer as well
+stopifnot(identical(v1$viewer$data, t(xMat)))
+
+## the field() method
+stopifnot(identical(v1$text, v1$field("text")))
+v1$field("text", "Now is the time")
+stopifnot(identical(v1$field("text"), "Now is the time"))
+
+## setting a non-existent field, or a method, should throw an error
+stopifnot(is(tryCatch(v1$field("foobar", 0), error = function(e)e), "error"),
+         is(tryCatch(v1$field("copy", 0), error = function(e)e), "error") )
+
+## the methods to extract class definition and generator
+stopifnot(identical(v3$getRefClass()$def, getRefClass("viewerPlus")$def),
+          identical(v3$getClass(), getClass("viewerPlus")))
+
+## deal correctly with inherited methods and overriding existing
+## methods from $methods(...)
+refClassA <- setRefClass("refClassA", methods=list(foo=function() "A"))
+refClassB <- setRefClass("refClassB", contains="refClassA")
+mnames <- objects(getClass("refClassB")@refMethods)
+refClassB$methods(foo=function() callSuper())
+stopifnot(identical(refClassB$new()$foo(), "A"))
+mnames2 <- objects(getClass("refClassB")@refMethods)
+stopifnot(identical(mnames2[is.na(match(mnames2,mnames))], "foo#refClassA"))
+refClassB$methods(foo=function() paste(callSuper(), "Version 2"))
+stopifnot(identical(refClassB$new()$foo(), "A Version 2"))
+stopifnot(identical(mnames2, objects(getClass("refClassB")@refMethods)))
+
+if(methods:::.hasCodeTools()) {
+    ## code warnings assigning locally to, or hiding, field names
+    stopifnot(is(tryCatch(mv$methods(test = function(x) {data <- x[!is.na(x)]; mean(data)}), warning = function(e)e), "warning"))
+
+### formal arg test suppressed--see comment in .checkFieldsInMethod
+    ## stopifnot(is(tryCatch(mv$methods(test2 = function(data) {data[!is.na(x)]}), warning = function(e)e), "warning"))
+} else
+    warning("Can't run some tests:  recommended package codetools is not available")
+
+## tests (fragmentary by necessity) of promptClass for reference class
+ccon <- textConnection("ctxt", "w")
+suppressMessages(promptClass("refClassB", filename = ccon))
+## look for a method, inheritance, inherited method
+stopifnot(length(c(grep("foo.*refClassA", ctxt),
+                   grep("code{foo()}", ctxt, fixed = TRUE),
+                   grep("linkS4class{refClassA", ctxt, fixed = TRUE))) >= 3)
+close(ccon)
+rm(ctxt)
+
+
+## tests related to subclassing environments.  These really test code in the core, viz. builtin.c
+a <- refClassA$new()
+ev <- new.env(parent = a) # parent= arg
+stopifnot(is.environment(ev))
+foo <- function()"A"; environment(foo) <- a # environment of function
+stopifnot(identical(as.environment(a), environment(foo)))
+xx <- 1:10; environment(xx) <- a # environment attribute
+stopifnot(identical(as.environment(a), environment(xx)))
+
+
+## tests of [[<- and $<- for subclasses of environment.  At one point methods for these assignments were defined
+## and caused inf. recursion when the arguments to the [[<- case were changed in base.
+setClass("myEnv", contains = "environment")
+m <- new("myEnv", a="test")
+m2 <- new("myEnv"); m3 <- new("myEnv")
+## test that new.env() is called for each new object
+stopifnot(!identical(as.environment(m), as.environment(m2)),
+          !identical(as.environment(m3), as.environment(m2)))
+m[["x"]] <- 1; m$y <- 2
+stopifnot(identical(c(m[["x"]], m$y), c(1,2)))
+rm(x, envir = m) # check rm() works, does not clobber class
+stopifnot(identical(sort(objects(m)), sort(c("a", "y"))),
+          is(m, "myEnv"))
+
+## tests of binding & environment tools with subclases of environment
+lockBinding("y", m)
+stopifnot(bindingIsLocked("y", m))
+unlockBinding("y", m)
+stopifnot(!bindingIsLocked("y", m))
+
+makeActiveBinding("z", function(value) {
+    if(missing(value))
+        "dummy"
+    else
+        "dummy assignment"
+}, m)
+stopifnot(identical(get("z", m),"dummy"))
+## assignment will return the value but do nothing
+stopifnot(identical(assign("z","other", m), "other"),
+          identical(get("z", m),"dummy"))
+
+
+## this has to be last--Seems no way to unlock an environment!
+lockEnvironment(m)
+stopifnot(environmentIsLocked(m))
+
+
+## test of callSuper() to a hidden default method for initialize() (== initFields)
+TestClass <- setRefClass ("TestClass",
+     fields = list (text = "character"),
+     methods = list(
+       print = function ()  {cat(text)},
+       initialize = function(text = "", ...) callSuper(text = paste(text, ":", sep=""),...)
+  ))
+tt <- TestClass$new("hello world")
+stopifnot(identical(tt$text, "hello world:"))
+## now a subclass with another field & another layer of callSuper()
+TestClass2 <- setRefClass("TestClass2",
+        contains = "TestClass",
+        fields = list( version = "integer"),
+        methods = list(
+          initialize = function(..., version = 1)
+              callSuper(..., version = version+1))
+  )
+tt <- TestClass2$new("test", version = 1)
+stopifnot(identical(tt$text, "test:"), identical(tt$version, as.integer(2)))
+tt <- TestClass2$new(version=3) # default text
+stopifnot(identical(tt$text, ":"), identical(tt$version, as.integer(4)))

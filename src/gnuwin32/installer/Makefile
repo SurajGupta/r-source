@@ -43,11 +43,11 @@ GW_INFO_FILES = COPYRIGHTS README.Rterm rw-FAQ
 ETC_FILES = Rprofile.site Rconsole Rdevga rgb.txt repositories Rcmd_environ
 
 
-# we don't want share/{Makefile.in,java,perl,sh} installed
+# we don't want share/{Makefile.in,java,sh} installed
 SHARE_DIRS = R encodings licenses locale make texmf zoneinfo
 
-all: $(RPREFIX)-$(SUFF).exe
-msi: $(RPREFIX)-win32.msi
+all: $(RPREFIX)-win.exe
+msi: $(RPREFIX)-$(SUFF).msi
 
 imagedir:
 	$(RM) -r $(RPREFIX)
@@ -145,7 +145,7 @@ R.iss: JRins.R header1.iss types3264.iss types32.iss code.iss \
 	../../../bin$(R_ARCH)/Rscript JRins.R \
 	  $(RPREFIX) $(RPREFIX) $(MDISDI) $(HelpStyle) $(Internet) $(Producer)
 
-$(RPREFIX)-$(SUFF).exe: R.iss
+$(RPREFIX)-win.exe: R.iss
 	"$(ISDIR)/iscc" R.iss > $(RPREFIX).log 2>&1
 
 
@@ -154,31 +154,20 @@ $(RPREFIX)-$(SUFF).exe: R.iss
 uuidgen.exe: uuidgen.o
 	$(CC) -o $@ $< -lole32
 
-# currently use about 3200
+# currently use about 3300
 uuids: uuidgen.exe
-	uuidgen 10000 > $@
+	uuidgen 4000 > $@
 
-files.wxs: imagedir fixups md5sums
-	"$(WIXDIR)/tallow" -1 -d $(RPREFIX) > $@
+files.wxs: imagedir fixups 32bit md5sums
+	"$(WIX3DIR)/bin/heat" dir $(RPREFIX) -sw5150 -nologo -o $@
 
-R.wxs: WIXins.pl uuids files.wxs
-	$(PERL) WIXins.pl $(RPREFIX) $(RPREFIX) $(WIX_PERSONAL)
+R.wxs: WIXins.R uuids files.wxs
+	Rscript WIXins.R $(RPREFIX) $(RPREFIX) $(WIX_PERSONAL) || (rm -f $@;exit 1)
 
-## for WiX 3.0 light uses -ext WixUIExtension
-## To change compression with WiX 3.0 use
-## light -dcl:high
-## http://www.joyofsetup.com/2008/01/28/new-wix-feature-defaultcompressionlevel/
-ifeq ($(strip $(WIN)),64)
-$(RPREFIX)-win32.msi:
-	@echo "MSI installs for 64-bit builds are not yet supported"
-	@exit 1
-else
-$(RPREFIX)-win32.msi: R.wxs License.rtf
-	"$(WIXDIR)/candle" R.wxs > $(RPREFIX).log 2>&1
-	"$(WIXDIR)/light" -out $@ R.wixobj $(WIXDIR)/wixui.wixlib \
-	  -loc $(WIXDIR)/WixUI_en-us.wxl >> $(RPREFIX).log 2>&1
-endif
-
+$(RPREFIX)-$(SUFF).msi: R.wxs License.rtf
+	"$(WIX3DIR)/bin/candle" R.wxs > $(RPREFIX).log 2>&1
+	"$(WIX3DIR)/bin/light" -out $@ R.wixobj -dcl:high \
+	 -ext WixUIExtension -sw1076 -sval -spdb >> $(RPREFIX).log 2>&1
 
 
 clean:
@@ -186,7 +175,7 @@ clean:
 	  uuidgen.o uuidgen.exe uuids
 
 distclean: clean
-	rm -f R*-win32.*exe R*-win32.msi R*-win64.exe R*-win.exe
+	rm -f R*-win*.exe R*-win*.msi
 
 myR:
 	echo "make.packages.html(.Library, verbose=FALSE)" | "$(IMAGEDIR)/$(BINDIR)/Rterm.exe" --vanilla --slave LC_COLLATE=C

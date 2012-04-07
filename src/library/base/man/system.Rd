@@ -39,9 +39,9 @@ system(command, intern = FALSE,
     whether to capture the output of the command and show it on the \R
     console (not used by \code{Rterm}, which shows the output in the
     terminal unless \code{wait} is false).}
-  \item{minimized}{logical (not \code{NA}), indicates whether the
+  \item{minimized}{logical (not \code{NA}), indicates whether a
     command window should be displayed initially as a minimized window.}
-  \item{invisible}{logical (not \code{NA}), indicates whether the
+  \item{invisible}{logical (not \code{NA}), indicates whether a
     command window should be visible on the screen.}
 #endif
 }
@@ -53,31 +53,31 @@ system(command, intern = FALSE,
   Only double quotes are allowed on Windows: see the examples.  (Note: a
   Windows path name cannot contain a double quote, so we do not need to
   worry about escaping embedded quotes.)
-#endif
   
-  % at least on Linux the shell cannot be changed.
-  How the command is run differs by platform: Unix-alikes use a shell
-  (normally \file{/bin/sh}), and Windows executes the command directly.
-#ifdef windows
   \code{command} must be an executable (extensions \file{.exe},
-  \file{.com}) or a batch file (extensions \file{.cmd} and
-  \file{.bat}): these extensions are tried in turn if none is supplied.)
-  This means that redirection, pipes, \dots cannot be used: see
-  \code{\link{shell}}.  (To use DOS internal commands use
-  \code{paste(Sys.getenv("COMSPEC"),"/c", \var{cmd})}.)
+  \file{.com}) or a batch file (extensions \file{.cmd} and \file{.bat}):
+  these extensions are tried in turn if none is supplied.)  This means
+  that redirection, pipes, DOS internal commands, \dots cannot be used:
+  see \code{\link{shell}}.
   
   The search path for \code{command} may be system-dependent: it will
   include the \R \file{bin} directory, the working directory and the
-  Windows system directories before \code{PATH}.
+  Windows system directories before \env{PATH}.
 #endif
 #ifdef unix
-  \code{command} can be anything the shell regards as executable,
-  including shell scripts.
+  Unix-alikes pass the command line to a shell (normally \file{/bin/sh},
+  and POSIX requires that shell), so \code{command} can be anything the
+  shell regards as executable, including shell scripts, and it can
+  contain multiple commands separated by \code{;}.
 
   If \code{intern} is \code{TRUE} then \code{popen} is used to invoke the
   command and the output collected, line by line, into an \R
   \code{\link{character}} vector.  If \code{intern} is \code{FALSE} then
   the C function \code{system} is used to invoke the command.
+
+  \code{wait} is implemented by appending \code{&} to the command: this
+  is in principle shell-dependent, but required by POSIX and so widely
+  supported.
 #endif
 
   The ordering of arguments after the first two has changed from time to
@@ -96,10 +96,8 @@ system(command, intern = FALSE,
   Under the \code{Rgui} console \code{intern = TRUE} also captures
   \code{stderr} unless \code{ignore.stderr = TRUE}.
 #endif
-#ifdef Unix
   If \code{command} runs but gives a non-zero exit status this will be
   reported with a warning. 
-#endif
 
   If \code{intern = FALSE}, the return value is an error code (\code{0}
   for success), given the invisible attribute (so needs to be printed
@@ -138,11 +136,6 @@ system(command, intern = FALSE,
   is unsafe to assume that such messages will appear on a GUI console
   (they do on the Mac OS X console, but not on some others).
 }
-
-\note{
-  \code{wait} is implemented by appending \code{&} to the command: this
-  is shell-dependent, but required by POSIX and so widely supported.
-}
 #endif
 
 #ifdef windows
@@ -174,12 +167,6 @@ system(command, intern = FALSE,
   input from \code{Rgui} setting \code{intern = TRUE} or
   \code{show.output.on.console = TRUE}.  They will not work.
 }
-\section{Warning}{
-  On Windows, using non-null\code{input} suppresses output to the
-  console (both standard output and standard error) unless redirected,
-  e.g. by \code{intern = TRUE} and/or \code{show.output.on.console =
-  TRUE}.  This is a long-standing feature of the implementation.
-}
 #endif
 
 \section{Differences between Unix and Windows}{
@@ -191,16 +178,24 @@ system(command, intern = FALSE,
   in this section.
 
   \itemize{
-    \item The most important difference is that on Unix-alike what
-    \code{system} does is to launch a shell which then runs
-    \code{command}.  On Windows the command is run directly -- use
-    \code{shell} for an interface which runs \code{comamnd} \emph{via} a
-    shell (by default the Windows shell \command{cmd.exe}).
+    \item The most important difference is that on a Unix-alike
+    \code{system} launches a shell which then runs \code{command}.  On
+    Windows the command is run directly -- use \code{shell} for an
+    interface which runs \code{command} \emph{via} a shell (by default
+    the Windows shell \command{cmd.exe}, which has many differences from
+    the POSIX shell).
 
     This means that it cannot be assumed that redirection or piping will
     work in \code{system} (redirection sometimes does, but we have seen
     cases where it stopped working after a Windows security patch), and
-    \code{shell} must be used on Windows.
+    \code{\link{system2}} (or \code{shell}) must be used on Windows.
+
+    \item What happens to \code{stdout} and \code{stderr} when not
+    captured depends on how \R is running: Windows batch commands behave
+    like a Unix-alike, but from the Windows GUI they are
+    generally lost.  \code{system(intern=TRUE)} captures \file{stderr}
+    when run from the Windows GUI console unless \code{ignore.stderr =
+      TRUE}.
 
     \item The behaviour on error is different in subtle ways (and has
     differed between \R versions).
@@ -210,7 +205,7 @@ system(command, intern = FALSE,
     
     \item Arguments \code{show.output.on.console}, \code{minimized},
     \code{invisible} only do something on Windows (and are most relevant
-    to a GUI interface there).
+    to \command{Rgui} there).
   }
 }
 \seealso{
@@ -230,8 +225,7 @@ system(command, intern = FALSE,
 # list all files in the current directory using the -F flag
 \dontrun{system("ls -F")}
 
-# t1 is a character vector, each one
-# representing a separate line of output from who
+# t1 is a character vector, each element giving a line of output from who
 # (if the platform has who)
 t1 <- try(system("who", intern = TRUE))
 

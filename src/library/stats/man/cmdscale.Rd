@@ -1,10 +1,12 @@
 % File src/library/stats/man/cmdscale.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Development Team
+% Copyright 1995-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{cmdscale}
 \alias{cmdscale}
+\concept{ordination}
+\concept{MDS}
 \title{Classical (Metric) Multidimensional Scaling}
 \usage{
 cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
@@ -28,10 +30,20 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
 \details{
   Multidimensional scaling takes a set of dissimilarities and returns a
   set of points such that the distances between the points are
-  approximately equal to the dissimilarities.
+  approximately equal to the dissimilarities.  (It is a major part of
+  what ecologists call \sQuote{ordination}.)
 
-  The functions \code{isoMDS} and \code{sammon} in package \pkg{MASS}
-  provide alternative ordination techniques.
+  A set of Euclidean distances on \eqn{n} points can be represented
+  exactly in at most \eqn{n-1} dimensions.  However, the approximation
+  given by classical scaling for non-Eucliean distances can be poor for
+  large \code{k}, and warnings about negative eigenvalues should be
+  heeded.
+  
+  The representation is only determined up to location (\code{cmdscale}
+  takes the column means of the configuration to be at the origin),
+  rotations and reflections.  The configuration returned is given in
+  principal-component axes, so the reflection chosen may differ between
+  \R platforms (see \code{\link{prcomp}}).
 
   When \code{add = TRUE}, an additive constant \eqn{c*} is computed, and
   the dissimilarities \eqn{d_{ij} + c*}{d[i,j] + c*} are used instead of
@@ -39,19 +51,21 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
 
   Whereas S (Becker \emph{et al.}, 1988) computes this constant using
   an approximation suggested by Torgerson, \R uses the analytical
-  solution of Cailliez (1983), see also Cox and Cox (1994).
+  solution of Cailliez (1983), see also Cox and Cox (2001).
 }
 \value{
-  If \code{eig = FALSE} and \code{x.ret = FALSE} (default), a matrix
-  with \code{k} columns whose rows give the coordinates of the points
-  chosen to represent the dissimilarities.
+  If \code{eig = FALSE}, \code{add = FALSE} and \code{x.ret = FALSE}
+  (default), a matrix with \code{k} columns whose rows give the
+  coordinates of the points chosen to represent the dissimilarities.
 
   Otherwise, a list containing the following components.
   \item{points}{a matrix with \code{k} columns whose rows give the
     coordinates of the points chosen to represent the dissimilarities.}
-  \item{eig}{the \eqn{n-1} eigenvalues computed during the scaling process if
-    \code{eig} is true.}
+  \item{eig}{the \eqn{n} eigenvalues computed during the scaling process if
+    \code{eig} is true.  \strong{NB}: versions of \R before 2.12.1
+    returned only \code{k} but were documented to return \eqn{n-1}.}
   \item{x}{the doubly centered distance matrix if \code{x.ret} is true.}
+  \item{ac}{the additive constant \eqn{c*}, \code{0} if \code{add=FALSE}.}
   \item{GOF}{a numeric vector of length 2, equal to say
     \eqn{(g_1,g_2)}{(g.1,g.2)}, where
     \eqn{g_i = (\sum_{j=1}^k \lambda_j)/ (\sum_{j=1}^n T_i(\lambda_j))}{g.i = (sum{j=1..k} \lambda[j]) / (sum{j=1..n} T.i(\lambda[j]))},
@@ -70,14 +84,18 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
   The analytical solution of the additive constant problem.
   \emph{Psychometrika} \bold{48}, 343--349.
 
-  Cox, T. F. and Cox, M. A. A. (1994)
-  \emph{Multidimensional Scaling}.
+  Cox, T. F. and Cox, M. A. A. (2001)
+  \emph{Multidimensional Scaling}.  Second edition.
   Chapman and Hall.
 
   Gower, J. C. (1966)  
   Some distance properties of latent root and vector 
   methods used in multivariate analysis.  
   \emph{Biometrika} \bold{53}, 325--328.
+
+  Krzanowski, W. J. and Marriott, F. H. C. (1994)
+  \emph{Multivariate Analysis. Part I. Distributions, Ordination and
+  Inference.}  London: Edward Arnold. (Especially pp. 108--111.)
 
   Mardia, K. V., Kent, J. T. and Bibby, J. M. (1979).  Chapter 14 of
   \emph{Multivariate Analysis}, London: Academic Press.
@@ -92,19 +110,20 @@ cmdscale(d, k = 2, eig = FALSE, add = FALSE, x.ret = FALSE)
 }
 \seealso{
   \code{\link{dist}}.
-  Also \code{\link[MASS]{isoMDS}} and \code{\link[MASS]{sammon}}
-  in package \pkg{MASS}.
+
+  \code{\link[MASS]{isoMDS}} and \code{\link[MASS]{sammon}}
+  in package \pkg{MASS} provide alternative methods of multidimensional
+  scaling.
 }
 \examples{
 require(graphics)
 
 loc <- cmdscale(eurodist)
-x <- loc[,1]
-y <- -loc[,2]
-plot(x, y, type="n", xlab="", ylab="", main="cmdscale(eurodist)")
-text(x, y, rownames(loc), cex=0.8)
-
-cmdsE <- cmdscale(eurodist, k=20, add = TRUE, eig = TRUE, x.ret = TRUE)
-\donttest{utils::str(cmdsE)}
+x <- loc[, 1]
+y <- -loc[, 2] # reflect so North is at the top
+## note asp = 1, to ensure Euclidean distances are represented correctly
+plot(x, y, type = "n", xlab = "", ylab = "", asp = 1, axes = FALSE,
+     main = "cmdscale(eurodist)")
+text(x, y, rownames(loc), cex = 0.6)
 }
 \keyword{multivariate}
