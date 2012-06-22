@@ -1,6 +1,6 @@
 % File src/library/base/man/table.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{table}
@@ -68,7 +68,7 @@ is.table(x)
   arguments.
 
   \code{useNA} controls if the table includes counts of \code{NA}
-  values: the alllowed value correspond to never, only if the count is
+  values: the allowed values correspond to never, only if the count is
   positive and even for zero counts.  This is overridden by specifying
   \code{exclude = NULL}.  Note that levels specified in \code{exclude}
   are mapped to \code{NA} and so included in \code{NA} counts.

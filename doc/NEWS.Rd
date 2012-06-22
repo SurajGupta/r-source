@@ -6,6 +6,322 @@
 \title{ R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R VERSION 2.15.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{source()} now uses \code{withVisible()} rather than
+      \code{.Internal(eval.with.vis)}.  This sometimes alters tracebacks
+      slightly.
+
+      \item \code{install.packages("pkg_version.tgz")} on Mac OS X now
+      has sanity checks that this is actually a binary package (as
+      people have tried it with incorrectly named source packages).
+
+      \item \code{splineDesign()} and \code{spline.des()} in package
+      \pkg{splines} have a new option \code{sparse} which can be used
+      for efficient construction of a sparse B-spline design matrix
+      (\emph{via} \pkg{Matrix}).
+
+      \item \code{norm()} now allows \code{type = "2"} (the
+      \sQuote{spectral} or 2-norm) as well, mainly for didactical
+      completeness.
+
+      \item \code{pmin()} and \code{pmax())} now also work when one of
+      the inputs is of length zero and others are not, returning a
+      zero-length vector, analogously to, say, \code{+}.
+
+      \item \code{colorRamp()} (and hence \code{colorRampPalette()}) now
+      also works for the boundary case of just one color when the ramp is
+      flat.
+
+      \item \code{qqline()} has new optional arguments
+      \code{distribution}, \code{probs} and \code{qtype}, following the
+      example of \pkg{lattice}'s \code{panel.qqmathline()}.
+
+      \item \code{.C()} gains some protection against the misuse of
+      character vector arguments.  (An all too common error is to pass
+      \code{character(N)}, which initializes the elements to \code{""},
+      and then attempt to edit the strings in-place, sometimes forgetting
+      to terminate them.)
+
+      \item Calls to the new function \code{globalVariables()} in
+      package \pkg{utils} declare that functions and other objects in a
+      package should be treated as globally defined, so that \code{CMD
+      check} will not note them.
+
+      \item \code{print(packageDescription(*))} trims the \code{Collate}
+      field by default.
+
+      \item The included copy of \code{zlib} has been updated to version
+      1.2.7.
+
+      \item A new option \code{"show.error.locations"} has been added.
+      When set to \code{TRUE}, error messages will contain the
+      location of the most recent call containing source reference
+      information. (Other values are supported as well; see
+      \code{?options}.)
+
+      \item The NA warning messages from e.g. \code{pchisq()} now report
+      the call to the closure and not that of the \code{.Internal}.
+
+      \item Added Polish translations by Łukasz Daniel.
+    }
+  }
+
+  \subsection{PERFORMANCE IMPROVEMENTS}{
+    \itemize{
+      \item In package \pkg{parallel}, \code{makeForkCluster()} and the
+      multicore-based functions use native byte-order for serialization
+      (deferred from 2.15.0).
+
+      \item \code{lm.fit()}, \code{lm.wfit()}, \code{glm.fit()} and
+      \code{lsfit()} do less copying of objects, mainly by using
+      \code{.Call()} rather than \code{.Fortran()}.
+
+      \item \code{.C()} and \code{.Fortran()} do less copying: arguments
+      which are raw, logical, integer, real or complex vectors and are
+      unnamed are not copied before the call, and (named or not) are not
+      copied after the call.  Lists are no longer copied (they are
+      supposed to be used read-only in the C code).
+
+      \item \code{tabulate()} makes use of \code{.C(DUP = FALSE)} and
+      hence does not copy \code{bin}.  (Suggested by Tim Hesterberg.)
+      It also avoids making a copy of a factor argument \code{bin}.
+
+      \item Other functions (often or always) doing less copying include
+      \code{cut()}, \code{dist()}, the complex case of \code{eigen()},
+      \code{hclust()}, \code{image()}, \code{kmeans()}, \code{loess()},
+      \code{stl()} and \code{svd(LINPACK = TRUE)}.
+
+      \item There is less copying when using primitive replacement
+      functions such as \code{names()}, \code{attr()} and
+      \code{attributes()}.
+    }
+  }
+
+  \subsection{DEPRECATED AND DEFUNCT}{
+   \itemize{
+      \item The converters for use with \code{.C()} (see
+      \code{?getCConverterDescriptions}) are deprecated: use the
+      \code{.Call()} interface instead.  There are no known examples
+      (they were never fully documented).
+    }
+  }
+
+  \subsection{UTILITIES}{
+    \itemize{
+      \item For \command{R CMD check}, a few people have reported
+      problems with junctions on Windows (although they were tested on
+      Windows 7, XP and Server 2008 machines and it is unknown under
+      what circumstances the problems occur).  Setting the environment
+      variable \env{R_WIN_NO_JUNCTIONS} to a non-empty value (e.g. in
+      \file{~/.R/check.Renviron}) will force copies to be used instead.
+    }
+  }
+
+  \subsection{INSTALLATION}{
+    \itemize{
+      \item \command{R CMD INSTALL} with \env{_R_CHECK_INSTALL_DEPENDS_}
+        set to a true value (as done by \command{R CMD check --as-cran})
+        now restricts the packages available when lazy-loading as well
+	as when test-loading (since packages such as \CRANpkg{ETLUtils}
+	and \CRANpkg{agsemisc} had top-level calls to \code{library()}
+	for undeclared packages).
+
+	This check is now also available on Windows.
+    }
+  }
+
+  \subsection{C-LEVEL FACILITIES}{
+    \itemize{
+      \item C entry points \code{mkChar} and \code{mkCharCE} now check
+      that the length of the string they are passed does not exceed
+      \eqn{2^{31}-1}{2^31-1} bytes: they used to overflow with
+      unpredictable consequences.
+
+      \item C entry points \code{R_GetCurrentSrcref} and
+      \code{R_GetSrcFilename} have been added to the API to allow
+      debuggers access to the source references on the stack.
+    }
+  }
+
+  \subsection{WINDOWS-SPECIFIC CHANGES}{
+    \itemize{
+      \item Windows-specific changes will now be announced in this file
+      (\file{NEWS}).  Changes up and including \R 2.15.0 remain in the
+      \file{CHANGES} file.
+
+      \item There are two new environment variables which
+      control the defaults for command-line options.
+
+      If \env{R_WIN_INTERNET2} is set to a non-empty value, it is as if
+      \option{--internet2} was used.
+
+      If \env{R_MAX_MEM_SIZE} is set, it gives the default memory limit
+      if \option{--max-mem-size} is not specified: invalid values being
+      ignored.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{lsfit()} lost the names from the residuals.
+
+      \item More cases in which \code{merge()} could create a data frame
+      with duplicate column names now give warnings.  Cases where
+      names specified in \code{by} match multiple columns are errors.
+
+      \item Nonsense uses such as \code{seq(1:50, by = 5)} (from package
+      \CRANpkg{plotrix}) and \code{seq.int(1:50, by = 5)} are now errors.
+
+      \item The residuals in the 5-number summary printed by
+      \code{summary()} on an \code{"lm"} object are now explicitly
+      labelled as weighted residuals when non-constant weights are
+      present.  (Wish of \PR{14840}.)
+
+      \item \code{tracemem()} reported that all objects were copied
+      by \code{.C()} or \code{.Fortran()} whereas only some object types
+      were ever copied.
+
+      It also reported and marked as copies \emph{some} transformations
+      such as \code{rexp(n, x)}: it no longer does so.
+
+      \item The \code{plot()} method for class \code{"stepfun"} only
+      used the optional \code{xval} argument to compute \code{xlim} and
+      not the points at which to plot (as documented).  (\PR{14864})
+
+      \item Names containing characters which need to be escaped were
+      not deparsed properly.  (\PR{14846})
+
+      \item Trying to update (recommended) packages in
+      \file{R_HOME/library} without write access is now dealt with more
+      gracefully.  Further, such package updates may be skipped (with a
+      warning), when a newer installed version is already going to be
+      used from \code{.libPaths()}.  (\PR{14866})
+
+      \item \code{hclust()} is now fast again (as up to end of 2003),
+      with a different fix for the "median"/"centroid" problem.  (\PR{4195}).
+
+      \item \code{get_all_vars()} failed when the data came entirely
+      from vectors in the global environment. (\PR{14847})
+
+      \item \command{R CMD check} with \env{_R_CHECK_NO_RECOMMENDED_}
+      set to a true value (as done by the \command{--as-cran} option)
+      could issue false errors if there was an indirect dependency
+      on a recommended package.
+
+      \item \code{formatC()} uses the C entry point \code{str_signif}
+      which could write beyond the length allocated for the output string.
+
+      \item Missing default argument added to implicit S4 generic for
+      \code{backsolve()}. (\PR{14883})
+
+      \item Some bugs have been fixed in handling load actions that
+      could fail to export assigned items or generate spurious warnings
+      in \code{CMD check} on loading.
+
+      \item For \code{tiff(type = "windows")}, the numbering of per-page
+      files except the last was off by one.
+
+      \item On Windows, loading package \pkg{stats} (which is done for
+      a default session) would switch line endings on \file{stdout}
+      and \file{stderr} from CRLF to LF.  This affected
+      \command{Rterm} and \command{R CMD BATCH}.
+
+      \item On Windows, the compatibility function \code{x11()} had
+      not kept up with changes to \code{windows()}, and issued
+      warnings about bad parameters. (\PR{14880})
+
+      \item On Windows, the \code{Sys.glob()} function did not handle
+      UNC paths as it was designed to try to do. (\PR{14884})
+
+      \item In package \pkg{parallel}, \code{clusterApply()} and similar
+      failed to handle a (pretty pointless) length-1 argument. (\PR{14898})
+
+      \item Quartz Cocoa display reacted asynchronously to
+      \code{dev.flush()} which means that the redraw could be performed
+      after the plot has been already modified by subsequent code. The
+      redraw is now done synchronously in \code{dev.flush()} to allow
+      animations without sleep cycles.
+
+      \item Source locations reported in \code{traceback()} were
+      incorrect when byte-compiled code was on the stack.
+
+      \item \code{plogis(x, lower = FALSE, log.p = TRUE)} no longer
+      underflows early for large x (e.g. 800).
+
+      \item \code{?Arithmetic}'s \dQuote{\code{1 ^ y} and \code{y ^ 0}
+	are \code{1}, \emph{always}} now also applies for \code{integer}
+      vectors \code{y}.
+
+      \item X11-based pixmap devices like \code{png(type = "Xlib")} were
+      trying to set the cursor style, which triggered some warnings and
+      hangs.
+
+      \item Code executed by the built-in HTTP server no longer allows
+      other HTTP clients to re-enter \R until the current worker
+      evaluation finishes, to prevent cascades.
+
+      \item The \code{plot()} and \code{Axis()} methods for class
+      \code{"table"} now respect graphical parameters such as
+      \code{cex.axis}.  (Reported by Martin Becker.)
+
+      \item Under some circumstances \code{package.skeleton()} would
+      give out progress reports that could not be translated and so were
+      displayed by question marks.  Now they are always in English.
+      (This was seen for CJK locales on Windows, but may have occurred
+      elsewhere.)
+
+      \item The evaluator now keeps track of source references outside
+      of functions, e.g. when \code{source()} executes a script.
+
+      \item The replacement method for \code{window()} now works
+      correctly for multiple time series of class \code{"mts"}.
+      (\PR{14925})
+
+      \item \code{is.unsorted()} gave incorrect results on non-atomic
+      objects such as data frames.  (Reported by Matthew Dowle.)
+
+      \item The value returned by \code{tools::psnice()} for invalid
+      \code{pid} values was not always \code{NA} as documented.
+
+      \item Closing an \code{X11()} window while \code{locator()} was
+      active could abort the \R process.
+
+      \item \code{getMethod(f, sig)} produced an incorrect error message
+      in some cases when \code{f} was not a string).
+
+      \item Using a string as a \dQuote{call} in an error condition
+      with \code{options(showErrorCalls=TRUE)} could cause a segfault.
+      (\PR{14931})
+
+      \item The string \code{"infinity"} allowed by C99 was not accepted
+      as a numerical string value by e.g. \code{scan()} and
+      \code{as.character()}.  (\PR{14933})
+
+      \item In \code{legend()}, setting some entries of \code{lwd} to
+      \code{NA} was inconsistent (depending on the graphics device) in
+      whether it would suppress those lines; now it consistently does
+      so.  (\PR{14926})
+
+      \item \code{by()} failed for a zero-row data frame.  (Reported by
+      Weiqiang Qian)
+
+      \item Yates correction in \code{chisq.test()} could be bigger than
+      the terms it corrected, previously leading to an infinite test
+      statistic in some corner cases which are now reported as
+      \code{NaN}.
+
+      \item \code{xgettext()} and related functions sometimes returned
+      items that were not strings for translation. (\PR{14935})
+
+      \item \code{plot(<lm>, which=5)} now correctly labels the factor
+      level combinations for the special case where all
+      \eqn{h_ii}{h[i,i]} are the same. (\PR{14837})
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R VERSION 2.15.0}{
   \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
     \itemize{
@@ -175,7 +491,7 @@
       \item The \code{"difftime"} replacement method of \code{units}
       tries harder to preserve other attributes of the argument.  (Wish
       of \PR{14839}.)
-      
+
       \item \code{poly(raw = TRUE)} no longer requires more unique
       points than the degree.  (Requested by John Fox.)
     }
@@ -356,10 +672,6 @@
       \item Building with a positive value of
       \option{--with-valgrind-instrumentation} now also instruments logical,
       complex and raw vectors.
-
-      \item There is experimental support for \emph{link-time
-	optimization} with \command{gcc} 4.5.0 or later on platforms
-      which support it.
     }
   }
 
@@ -449,10 +761,10 @@
       \item \code{print(x, max=m)} is now consistent when \code{x} is a
       \code{"Date"}; also the \dQuote{reached ... max.print ..} messages
       are now consistently using single brackets.
-      
+
       \item Closed the \samp{<li>} tag in pages generated by \code{
-      Rd2HTML()}. (\PR{14841}.)      
-      
+      Rd2HTML()}. (\PR{14841}.)
+
       \item Axis tick marks could go out of range when a log scale was
       used.  (\PR{14833}.)
 

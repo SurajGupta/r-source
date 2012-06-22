@@ -229,21 +229,30 @@ install.packages <-
                 domain = NA, immediate. = TRUE)
         userdir <- unlist(strsplit(Sys.getenv("R_LIBS_USER"),
                                    .Platform$path.sep))[1L]
-        if(interactive() && !file.exists(userdir)) {
-            msg <- gettext("Would you like to create a personal library\n%s\nto install packages into?")
-            if(.Platform$OS.type == "windows") {
-                ans <- winDialog("yesno", sprintf(msg, sQuote(userdir)))
-                if(ans != "YES") stop("unable to install packages")
-            } else {
-                ans <- readline(paste(sprintf(msg, userdir), " (y/n) "))
-                if(substr(ans, 1L, 1L) == "n")
-                    stop("unable to install packages")
-            }
-            if(!dir.create(userdir, recursive = TRUE))
-                stop("unable to create ", sQuote(userdir))
-            lib <- userdir
-            .libPaths(c(userdir, .libPaths()))
-        } else stop("unable to install packages")
+	if(interactive()) {
+	    ask.yes.no <- function(msg) {
+                ##' returns "no" for "no",  otherwise 'ans', a string
+		msg <- gettext(msg)
+		if(.Platform$OS.type == "windows") {
+		    ans <- winDialog("yesno", sprintf(msg, sQuote(userdir)))
+		    if(ans != "YES") "no" else ans
+		} else {
+		    ans <- readline(paste(sprintf(msg, userdir), " (y/n) "))
+		    if(substr(ans, 1L, 1L) == "n") "no" else ans
+		}
+	    }
+	    ans <- ask.yes.no("Would you like to use a personal library instead?")
+	    if(identical(ans, "no")) stop("unable to install packages")
+
+	    lib <- userdir
+	    if(!file.exists(userdir)) {
+		ans <- ask.yes.no("Would you like to create a personal library\n%s\nto install packages into?")
+		if(identical(ans, "no")) stop("unable to install packages")
+		if(!dir.create(userdir, recursive = TRUE))
+		    stop("unable to create ", sQuote(userdir))
+		.libPaths(c(userdir, .libPaths()))
+	    }
+	} else stop("unable to install packages")
     }
 
     ## Look at type == "both"
@@ -507,4 +516,40 @@ install.packages <-
     } else if(!is.null(tmpd) && is.null(destdir)) unlink(tmpd, TRUE)
 
     invisible()
+}
+
+## treat variables as global in a package, for codetools & check
+globalVariables <- function(names, package, add = TRUE) {
+    .listFile <- ".__global__"
+    .simplePackageName <- function(env) {
+        if(exists(".packageName", envir = env, inherits = FALSE))
+           get(".packageName", envir = env)
+        else
+            "(unknown package)"
+    }
+    if(missing(package)) {
+        env <- topenv(parent.frame())
+        package <- .simplePackageName(env)
+    }
+    else if(is.environment(package)) {
+        env <- package
+        package <- .simplePackageName(env)
+    }
+    else
+        env <- asNamespace(package)
+    if(exists(.listFile, envir = env, inherits = FALSE))
+        current <- get(.listFile, envir = env)
+    else
+        current <- character()
+    if(! missing(names)) {
+        if(environmentIsLocked(env))
+            stop(gettextf("The namespace for package \"%s\" is locked; no changes in the global variables list may be made.",
+                          package))
+        if(add)
+            current <- unique(c(current, names))
+        else
+            current <- names
+        assign(.listFile, current, envir = env)
+    }
+    current
 }

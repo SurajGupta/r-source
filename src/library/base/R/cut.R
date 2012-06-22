@@ -53,15 +53,14 @@ cut.default <-
         codes.only <- TRUE
     else if (length(labels) != nb - 1L)
         stop("labels/breaks length conflict")
-    code <- .C("bincode",
-	       x =     	as.double(x),
-	       n =	as.integer(length(x)),
-	       breaks =	as.double(breaks),
-               as.integer(nb),
-	       code= 	integer(length(x)),
-               right=	as.logical(right),
-	       include= as.logical(include.lowest), naok = TRUE,
-	       NAOK= TRUE, DUP = FALSE, PACKAGE = "base") $code
+    if(!is.double(x)) storage.mode(x) <- "double"
+    if(!is.double(breaks)) storage.mode(breaks) <- "double"
+    nx <- as.integer(length(x))
+    if (is.na(nx)) stop("invalid value of length(x)")
+    code <- .C("bincode", x = x, n = nx, breaks = breaks,
+               as.integer(nb), code = integer(nx), right = as.logical(right),
+	       include = as.logical(include.lowest), naok = TRUE,
+	       NAOK = TRUE, DUP = FALSE, PACKAGE = "base") $code
     ## NB this relies on passing NAOK in that position!
     if(codes.only) code
     else factor(code, seq_along(labels), labels, ordered = ordered_result)

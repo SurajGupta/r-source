@@ -1,6 +1,6 @@
 % File src/library/stats/man/factanal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -145,7 +145,7 @@ factanal(x, factors, data = NULL, covmat = NULL, n.obs = NA,
   \item{call}{The matched call.}
   \item{na.action}{If relevant.}
   \item{STATISTIC, PVAL}{The significance-test statistic and P value, if
-    if can be computed.}
+    it can be computed.}
 }
 
 \note{
@@ -201,7 +201,7 @@ cor(m1)
 factanal(m1, factors = 3) # varimax is the default
 \donttest{factanal(m1, factors = 3, rotation = "promax")}
 # The following shows the g factor as PC1
-prcomp(m1)
+\donttest{prcomp(m1) # signs may depend on platform}
 
 ## formula interface
 factanal(~v1+v2+v3+v4+v5+v6, factors = 3,

@@ -45,8 +45,13 @@ function(dir, verbose = FALSE, asCall = TRUE)
                        %in% c("gettext", "gettextf"))) {
                     domain <- e[["domain"]]
                     suppress <- !is.null(domain) && !is.name(domain) && is.na(domain)
-                    if(as.character(e[[1L]]) %in% "gettextf")
-                        e <- e[2L] # just look at first arg
+                    if(as.character(e[[1L]]) == "gettextf") {	
+                        e <- match.call(gettextf, e)
+                        e <- e["fmt"] # just look at fmt arg
+                    } else if(as.character(e[[1L]]) == "gettext" &&
+                              !is.null(names(e))) {
+                        e <- e[!(names(e) == "domain")] # remove domain arg
+                    }
                 }
                 for(i in seq_along(e)) find_strings2(e[[i]], suppress)
             }
@@ -116,13 +121,10 @@ function(dir, verbose = FALSE)
     find_strings <- function(e) {
         if(is.call(e) && is.name(e[[1L]])
            && as.character(e[[1L]]) %in% "ngettext") {
-             domain <- e[["domain"]]
-             ## remove named domain arg
-             if(!is.null(names(e))) e <- e[!names(e) %in% "domain"]
-             ## for now, take second and third remaining args.
-             ## <FIXME> emulate full arg-matching
-             if(is.character(e[[3L]]) && is.character(e[[4L]]))
-                 strings <<- c(strings, list(c(msg1=e[[3L]], msg2=e[[4L]])))
+	    e <- match.call(ngettext, e)
+	    if (is.character(e[["msg1"]]) && is.character(e[["msg2"]]))
+	    	strings <<- c(strings, list(c(msg1=e[["msg1"]], 
+	    				      msg2=e[["msg2"]])))
         } else if(is.recursive(e))
             for(i in seq_along(e)) Recall(e[[i]])
     }
@@ -145,7 +147,8 @@ function(dir, potFile)
         potFile <- paste0("R-", basename(dir), ".pot")
     tmp <- unique(unlist(xgettext(dir, asCall = FALSE)))
     tmp <- tmp[nzchar(tmp)]
-    tmp <- shQuote(encodeString(tmp), type="cmd")  # need to quote \n, \t etc
+    if(length(tmp) > 0L)
+	tmp <- shQuote(encodeString(tmp), type="cmd")  # need to quote \n, \t etc
     con <- file(potFile, "wt")
     on.exit(close(con))
     writeLines(con=con,

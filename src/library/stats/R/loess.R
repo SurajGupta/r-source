@@ -93,12 +93,17 @@ simpleLoess <-
 {
     ## loess_ translated to R.
 
-    D <- NCOL(x)
+    D <- as.integer(NCOL(x))
+    if (is.na(D)) stop("invalid NCOL(X)")
     if(D > 4) stop("only 1-4 predictors are allowed")
-    N <- NROW(x)
+    N <- as.integer(NROW(x))
+    if (is.na(N)) stop("invalid NCOL(X)")
     if(!N || !D)	stop("invalid 'x'")
     if(!length(y))	stop("invalid 'y'")
     x <- as.matrix(x)
+    if(!is.double(x)) storage.mode(x) <- "double"
+    if(!is.double(y)) storage.mode(y) <- "double"
+    if(!is.double(weights)) storage.mode(weights) <- "double"
     max.kd <-  max(N, 200)
     robust <- rep(1, N)
     divisor<- rep(1, D)
@@ -133,12 +138,7 @@ simpleLoess <-
         if (length(cell) != 1L) stop("invalid argument 'cell'")
         if (length(degree) != 1L) stop("invalid argument 'degree'")
 	z <- .C(C_loess_raw, # ../src/loessc.c
-		as.double(y),
-		as.double(x),
-		as.double(weights),
-		as.double(robust),
-		as.integer(D),
-		as.integer(N),
+		y, x, weights, robust, D, N,
 		as.double(span),
 		as.integer(degree),
 		as.integer(nonparametric),
@@ -164,11 +164,8 @@ simpleLoess <-
 	}
 	fitted.residuals <- y - z$fitted.values
 	if(j < iterations)
-	    robust <- .Fortran(C_lowesw,
-			       as.double(fitted.residuals),
-			       as.integer(N),
-			       robust = double(N),
-			       integer(N))$robust
+	    robust <- .Fortran(C_lowesw, fitted.residuals, N,
+			       robust = double(N), integer(N))$robust
     }
     if(surface == "interpolate")
     {
@@ -188,12 +185,8 @@ simpleLoess <-
 				 integer(N),
 				 pseudovalues = double(N))$pseudovalues
 	zz <- .C(C_loess_raw,
-		as.double(pseudovalues),
-		as.double(x),
-		as.double(weights),
-		as.double(weights),
-		as.integer(D),
-		as.integer(N),
+		as.double(pseudovalues), # ? needed
+		x, weights, weights, D, N,
 		as.double(span),
 		as.integer(degree),
 		as.integer(nonparametric),
@@ -278,6 +271,8 @@ predLoess <-
     x <- x[, order.parametric, drop=FALSE]
     x.evaluate <- newx[, order.parametric, drop=FALSE]
     order.drop.sqr <- (2 - drop.square)[order.parametric]
+    if(!is.double(x)) storage.mode(x) <- "double"
+    if(!is.double(y)) storage.mode(y) <- "double"
     if(surface == "direct") {
         nas <- rowSums(is.na(newx)) > 0L
         fit <- rep(NA_real_, length(nas))
@@ -286,8 +281,8 @@ predLoess <-
 	if(se) {
             se.fit <- fit
 	    z <- .C(C_loess_dfitse,
-		    as.double(y),
-		    as.double(x),
+		    y,
+		    x,
 		    as.double(x.evaluate),
 		    as.double(weights*robust),
 		    as.double(robust),
@@ -307,8 +302,8 @@ predLoess <-
 	    se.fit[!nas] <- drop(s * sqrt(ses))
 	} else {
 	    fit[!nas] <- .C(C_loess_dfit,
-                            as.double(y),
-                            as.double(x),
+                            y,
+                            x,
                             as.double(x.evaluate),
                             as.double(weights*robust),
                             as.double(span),
@@ -344,8 +339,8 @@ predLoess <-
 	    se.fit <- rep(NA_real_, M)
 	    if(any(inside)) {
 		L <- .C(C_loess_ise,
-			as.double(y),
-			as.double(x),
+			y,
+			x,
 			as.double(x.evaluate[inside, ]),
 			as.double(weights),
 			as.double(span),

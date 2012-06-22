@@ -1,6 +1,6 @@
 % File src/library/graphics/man/legend.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2011 R Core Team
 % Distributed under GPL 2 or later
 
 \name{legend}
@@ -123,8 +123,11 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
   both margins; if two values are given, the first is used for \code{x}-
   distance, the second for \code{y}-distance.
 
-  Attribute arguments such as \code{col}, \code{pch}, \code{lty},
-  etc, are recycled if necessary: \code{merge} is not.
+  Attribute arguments such as \code{col}, \code{pch}, \code{lty}, etc,
+  are recycled if necessary: \code{merge} is not.  Set entries of
+  \code{lty} to \code{0} or set entries of \code{lwd} to \code{NA} to
+  suppress lines in corresponding legend entries; set \code{pch}
+  values to \code{NA} to suppress points.
 
   Points are drawn \emph{after} lines in order that they can cover the
   line with their background color \code{pt.bg}, if applicable.

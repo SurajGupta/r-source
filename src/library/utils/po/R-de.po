@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-02-12 08:59\n"
+"POT-Creation-Date: 2012-05-21 13:00\n"
 "PO-Revision-Date: 2012-03-06 13:36+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
@@ -179,7 +179,8 @@ msgid "%s has to be one of %s"
 msgstr "%s muss einer aus %s sein"
 
 msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
-msgstr "Ein bibentry vom Typ %s muss das/die Feld(er) %s korrekt spezifizieren."
+msgstr ""
+"Ein bibentry vom Typ %s muss das/die Feld(er) %s korrekt spezifizieren."
 
 msgid "%s should be one of %s"
 msgstr "%s sollte einer von %s sein"
@@ -516,7 +517,8 @@ msgstr "DESCRIPTION von Paket '%s' ist korrumpiert"
 
 msgid ""
 "'DESCRIPTION' file has an 'Encoding' field and re-encoding is not possible"
-msgstr "Die 'DESCRIPTION' Datei hat Feld 'Encoding' und rekodieren ist nicht möglich"
+msgstr ""
+"Die 'DESCRIPTION' Datei hat Feld 'Encoding' und rekodieren ist nicht möglich"
 
 msgid "DESCRIPTION file of package '%s' is missing or broken"
 msgstr "DESCRIPTIN von Paket '%s' fehlt oder zerstört"
@@ -590,36 +592,11 @@ msgstr "'code_files' muss ein Charaktervektor sein"
 msgid "'list' must be a character vector naming R objects"
 msgstr "'list' muss ein Charaktervektor sein, mit Namen von R Objekten"
 
-msgid "cannot turn off locale-specific chars via LC_CTYPE"
-msgstr ""
-"kann die lokalisierungs-spezifischen Zeichen nicht via LC_CTYPE abschalten"
-
 msgid "no R objects specified or available"
 msgstr "keine R Objekte spezifiziert oder verfügbar"
 
-msgid "Creating directories ..."
-msgstr "Erzeuge Verzeichnisse ..."
-
 msgid "directory '%s' already exists"
 msgstr "Verzeichnis '%s' exisitiert bereits"
-
-msgid "Creating DESCRIPTION ..."
-msgstr "Erzeuge DESCRIPTION ..."
-
-msgid "From R 2.14.0 on, every package gets a NAMESPACE."
-msgstr "Ab R-2.14.0 bekommt jedes Paket einen NAMESPACE"
-
-msgid "Argument 'namespace' is deprecated."
-msgstr "Argument 'namespace' ist veraltet"
-
-msgid "Creating NAMESPACE ..."
-msgstr "Erzeuge NAMESPACE ..."
-
-msgid "Creating Read-and-delete-me ..."
-msgstr "Erzeuge Read-and-delete-me ..."
-
-msgid "Saving functions and data ..."
-msgstr "Speichere Funktionen und Daten ..."
 
 msgid ""
 "Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
@@ -628,32 +605,15 @@ msgstr ""
 "Generische Funktionen und andere S4 Objekte (z.B. '%s') können nicht "
 "gedumped werden: nutze code_files= Argument"
 
-msgid "Copying code files ..."
-msgstr "Kopiere Code-Dateien ..."
-
-msgid "Invalid file name(s) for R code in"
-msgstr "Ungültige Dateiname(n) für R Kode in"
-
-msgid ":"
-msgstr ":"
-
-msgid "are now renamed to 'z<name>.R'"
-msgstr "sind nun unbenannt nach 'z<name>.R'"
-
-msgid "Making help files ..."
-msgstr "Erzeuge Hilfedateien ..."
-
-msgid "Done."
-msgstr "Fertig."
-
-msgid "Further steps are described in '%s'."
-msgstr "Die nächsten Schritte werden in '%s' beschrieben."
-
 msgid "unable to access index for repository %s"
 msgstr "kann nicht auf den Index für das Repository %s zugreifen"
 
 msgid "Invalid 'filters' argument."
 msgstr "unzulässiges 'filters' Argument"
+
+#, fuzzy
+msgid "package '%s' in library '%s' will not be updated"
+msgstr "Paket %s wird gerade benutzt und deshab nicht installiert"
 
 msgid ""
 "invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
@@ -745,15 +705,6 @@ msgstr ""
 msgid "'lib = \"%s\"' is not writable"
 msgstr "'lib = \"%s\" ist nicht schreibbar"
 
-msgid ""
-"Would you like to create a personal library\n"
-"%s\n"
-"to install packages into?"
-msgstr ""
-"Soll eine persönliche Bibliothek\n"
-"%s\n"
-"eingerichtet werden, um dort Pakete zu installieren?"
-
 msgid "unable to install packages"
 msgstr "kann keinee Pakete installieren"
 
@@ -814,6 +765,11 @@ msgstr ""
 "Die heruntergeladenen Quellpakete sind in \n"
 "\t%s"
 
+msgid ""
+"The namespace for package \"%s\" is locked; no changes in the global "
+"variables list may be made."
+msgstr ""
+
 msgid "no object named '%s' to show"
 msgstr "kein Objket namens '%s' anzuzeigen"
 
@@ -842,7 +798,9 @@ msgstr ""
 msgid ""
 "the object of class %s in the function call %s could not be used as a "
 "documentation topic"
-msgstr "das Objekt der Klasse %s im Funktionsaufruf %s konnte nicht als Doku-Thema benutzt werden"
+msgstr ""
+"das Objekt der Klasse %s im Funktionsaufruf %s konnte nicht als Doku-Thema "
+"benutzt werden"
 
 msgid "no methods for %s and no documentation for it as a function"
 msgstr ""
@@ -1132,7 +1090,10 @@ msgid "download had nonzero exit status"
 msgstr "Download hatte Exit-Status ungleich 0"
 
 msgid "'tar' returned non-zero exit code %d"
-msgstr "'tar' hatte Exit-Status ungleich 0"
+msgstr "'tar' hatte Exit-Status %d"
+
+msgid "file %s is not an OS X binary package"
+msgstr ""
 
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "Paket %s erfolgreich ausgepackt und MD5 Summen abgeglichen"
@@ -1240,6 +1201,61 @@ msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "Paket %s wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete %s werden gerade bennutzt und deshalb nicht installiert"
+
+#~ msgid "cannot turn off locale-specific chars via LC_CTYPE"
+#~ msgstr ""
+#~ "kann die lokalisierungs-spezifischen Zeichen nicht via LC_CTYPE abschalten"
+
+#~ msgid "Creating directories ..."
+#~ msgstr "Erzeuge Verzeichnisse ..."
+
+#~ msgid "Creating DESCRIPTION ..."
+#~ msgstr "Erzeuge DESCRIPTION ..."
+
+#~ msgid "From R 2.14.0 on, every package gets a NAMESPACE."
+#~ msgstr "Ab R-2.14.0 bekommt jedes Paket einen NAMESPACE"
+
+#~ msgid "Argument 'namespace' is deprecated."
+#~ msgstr "Argument 'namespace' ist veraltet"
+
+#~ msgid "Creating NAMESPACE ..."
+#~ msgstr "Erzeuge NAMESPACE ..."
+
+#~ msgid "Creating Read-and-delete-me ..."
+#~ msgstr "Erzeuge Read-and-delete-me ..."
+
+#~ msgid "Saving functions and data ..."
+#~ msgstr "Speichere Funktionen und Daten ..."
+
+#~ msgid "Copying code files ..."
+#~ msgstr "Kopiere Code-Dateien ..."
+
+#~ msgid "Invalid file name(s) for R code in"
+#~ msgstr "Ungültige Dateiname(n) für R Kode in"
+
+#~ msgid ":"
+#~ msgstr ":"
+
+#~ msgid "are now renamed to 'z<name>.R'"
+#~ msgstr "sind nun unbenannt nach 'z<name>.R'"
+
+#~ msgid "Making help files ..."
+#~ msgstr "Erzeuge Hilfedateien ..."
+
+#~ msgid "Done."
+#~ msgstr "Fertig."
+
+#~ msgid "Further steps are described in '%s'."
+#~ msgstr "Die nächsten Schritte werden in '%s' beschrieben."
+
+#~ msgid ""
+#~ "Would you like to create a personal library\n"
+#~ "%s\n"
+#~ "to install packages into?"
+#~ msgstr ""
+#~ "Soll eine persönliche Bibliothek\n"
+#~ "%s\n"
+#~ "eingerichtet werden, um dort Pakete zu installieren?"
 
 #~ msgid "running %s failed"
 #~ msgstr "Ausführen von %s fehlgeschlagen"

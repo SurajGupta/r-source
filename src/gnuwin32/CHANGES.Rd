@@ -4,6 +4,13 @@
 \title{Windows-specific changes to R}
 \encoding{UTF-8}
 
+\section{CHANGES IN R VERSIONS > 2.15.0}{
+  \itemize{
+    \item Windows-specific changes will now be announced in the
+    common NEWS file.
+  }
+}
+
 \section{CHANGES IN R VERSION 2.15.0}{
   \subsection{NEW FEATURES}{
     \itemize{

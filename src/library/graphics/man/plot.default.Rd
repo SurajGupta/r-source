@@ -1,6 +1,6 @@
 % File src/library/graphics/man/plotdefault.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{plot.default}
@@ -85,11 +85,11 @@
       default.  This works as a multiple of \code{\link{par}("cex")}.
       \code{NULL} and \code{NA} are equivalent to \code{1.0}.  Note that
       this does not affect annotation: see below.}
-    \item{\code{lty}}{the line type, see \code{\link{par}}.}
+    \item{\code{lty}}{a vector of line types, see \code{\link{par}}.}
     \item{\code{cex.main}, \code{col.lab}, \code{font.sub},
       etc}{settings for main- and sub-title and axis annotation, see
       \code{\link{title}} and \code{\link{par}}.}
-    \item{\code{lwd}}{the line width, see \code{\link{par}}.}
+    \item{\code{lwd}}{a vector of line widths, see \code{\link{par}}.}
   }
 }
 \note{

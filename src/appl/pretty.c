@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998	      Robert Gentleman, Ross Ihaka and the
- *                            R Development Core Team
+ *                            R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ double R_pretty0(double *lo, double *up, int *ndiv, int min_n,
     } else {
 	cell = fmax2(fabs(*lo),fabs(*up));
 	/* U = upper bound on cell/unit */
-	U = 1 + (h5 >= 1.5*h+.5) ? 1/(1+h) : 1.5/(1+h5);
+	U = (1 + (h5 >= 1.5*h+.5)) ? 1/(1+h) : 1.5/(1+h5);
 	/* added times 3, as several calculations here */
 	i_small = dx < cell * U * imax2(1,*ndiv) * DBL_EPSILON *3;
     }

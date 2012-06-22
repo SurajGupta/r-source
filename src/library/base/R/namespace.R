@@ -520,19 +520,19 @@ loadNamespace <- function (package, lib.loc = NULL,
 
         for (p in nsInfo$exportPatterns)
             exports <- c(ls(env, pattern = p, all.names = TRUE), exports)
-        ## certain things should never be exported.
-        if (length(exports)) {
-            stoplist <- c(".__NAMESPACE__.", ".__S3MethodsTable__.",
-                          ".packageName", ".First.lib", ".onLoad",
-                          ".onAttach", ".conflicts.OK", ".noGenerics")
-            exports <- exports[! exports %in% stoplist]
-        }
         ##
         if(.isMethodsDispatchOn() && methods:::.hasS4MetaData(ns) &&
            !identical(package, "methods") ) {
             ## cache generics, classes in this namespace (but not methods itself,
             ## which pre-cached at install time
             methods:::cacheMetaData(ns, TRUE, ns)
+            ## load actions may have added objects matching patterns
+            for (p in nsInfo$exportPatterns) {
+                expp <- ls(ns, pattern = p, all.names = TRUE)
+                newEx <- !(expp %in% exports)
+                if(any(newEx))
+                    exports <- c(expp[newEx], exports)
+            }
             ## process class definition objects
             expClasses <- nsInfo$exportClasses
             ##we take any pattern, but check to see if the matches are classes
@@ -585,7 +585,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                     ## skip primitives
                     addGenerics <- addGenerics[sapply(addGenerics, function(what) ! is.primitive(get(what, mode = "function", envir = ns)))]
                     ## the rest must be generic functions, implicit or local
-                    ok <- sapply(addGenerics, function(what) methods::is(get(what, mode = "function", envir = ns), "genericFunction"))
+                    ## or have been cached via a DEPENDS package
+                    ok <- sapply(addGenerics, methods:::.findsGeneric, ns)
                     if(!all(ok)) {
                         bad <- sort(unique(addGenerics[!ok]))
                         msg <-
@@ -596,6 +597,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                                      paste(sQuote(bad), collapse = ", ")),
                              domain = NA, call. = FALSE)
                     }
+                    else if(any(ok > 1L))  #from the cache, don't add
+                        addGenerics <- addGenerics[ok < 2L]
                 }
 ### <note> Uncomment following to report any local generic functions
 ### that should have been exported explicitly.  But would be reported
@@ -669,6 +672,13 @@ loadNamespace <- function (package, lib.loc = NULL,
                               paste(expMethods, collapse = ", ")),
                      domain = NA)
             exports <- c(exports, expClasses,  expTables)
+        }
+        ## certain things should never be exported.
+        if (length(exports)) {
+            stoplist <- c(".__NAMESPACE__.", ".__S3MethodsTable__.",
+                          ".packageName", ".First.lib", ".onLoad",
+                          ".onAttach", ".conflicts.OK", ".noGenerics")
+            exports <- exports[! exports %in% stoplist]
         }
         namespaceExport(ns, exports)
         sealNamespace(ns)

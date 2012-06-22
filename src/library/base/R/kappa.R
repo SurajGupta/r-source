@@ -14,8 +14,13 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-norm <- function(x, type = c("O", "I", "F", "M")) {
-    .Call("La_dlange", x, type, PACKAGE="base")
+norm <- function(x, type = c("O", "I", "F", "M", "2")) {
+    if(identical("2", type)) {
+	svd(x, nu=0L, nv=0L)$d[1L]
+	## *faster* at least on some platforms {but possibly less accurate}:
+	##sqrt(eigen(crossprod(x), symmetric=TRUE, only.values=TRUE)$values[1L])
+    } else
+	.Call("La_dlange", x, type, PACKAGE="base")
 } ## and define it as implicitGeneric, so S4 methods are consistent
 
 kappa <- function(z, ...) UseMethod("kappa")
@@ -80,7 +85,8 @@ kappa.tri <- function(z, exact = FALSE, LINPACK = TRUE, norm=NULL, ...)
         kappa.default(z, exact = TRUE) ## using "2 - norm" !
     }
     else { ## norm is "1" ("O") or "I(nf)" :
-	p <- nrow(z)
+        p <- as.integer(nrow(z))
+        if(is.na(p)) stop("invalid nrow(x)")
 	if(p != ncol(z)) stop("triangular matrix should be square")
 	if(is.null(norm)) norm <- "1"
 	if(is.complex(z))
@@ -91,14 +97,15 @@ kappa.tri <- function(z, exact = FALSE, LINPACK = TRUE, norm=NULL, ...)
 	    ##	dtrco  *differs* from Lapack's dtrcon() quite a bit
 	    ## even though dtrco's doc also say to compute the
 	    ## 1-norm reciprocal condition
+            if(!is.double(z)) storage.mode(z) <- "double"
 	    1 / .Fortran("dtrco",
-			 as.double(z),
+			 z,
 			 p,
 			 p,
 			 k = double(1),
 			 double(p),
 			 1L,
-			 PACKAGE="base")$k
+			 PACKAGE = "base")$k
 	}
 	else { ## Lapack
 	    storage.mode(z) <- "double"

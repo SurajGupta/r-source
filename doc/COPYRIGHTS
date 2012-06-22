@@ -1,8 +1,8 @@
 
 COPYRIGHT STATUS
 
-The bulk of this code is copyright by members of or all of the R
-Development Core Team.
+The bulk of this code is copyright by members of or all of the R Core
+Team.
 
 See the file COPYING for the exact conditions under which you may
 redistribute it.  R as a whole is distributed under GPL version 2 or
@@ -284,7 +284,7 @@ src/extra/xdr/*
 
 src/extra/zlib/README, *.c, *.h
 
-  Taken from zlib-1.2.6 (C) 1995-2012 Jean-loup Gailly and Mark Adler
+  Taken from zlib-1.2.7 (C) 1995-2012 Jean-loup Gailly and Mark Adler
   See src/extra/zlib/README for the licence.
 
 src/main/connections.c, src/main/gzio.h

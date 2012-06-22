@@ -40,7 +40,7 @@ notice identical to this one except for the removal of this paragraph
 @titlepage
 @title Writing R Extensions
 @subtitle Version @value{VERSION}
-@author R Development Core Team
+@author R Core Team
 @page
 @vskip 0pt plus 1filll
 @permission{}
@@ -217,7 +217,7 @@ faster and use less (virtual) memory.
 @section Package structure
 @cindex Package structure
 
-The sources of a @R{} package consists of a subdirectory containing a
+The sources of an @R{} package consists of a subdirectory containing a
 file @file{DESCRIPTION} and the subdirectories @file{R}, @file{data},
 @file{demo}, @file{exec}, @file{inst}, @file{man}, @file{po},
 @file{src}, and @file{tests} (some of which can be missing, but which
@@ -805,7 +805,7 @@ There are default @command{make} variables and rules for this
 @file{@var{R_HOME}/etc@var{R_ARCH}/Makeconf}), providing support for C,
 C++, FORTRAN 77, Fortran 9x@footnote{Note that Ratfor is not supported.
 If you have Ratfor source code, you need to convert it to FORTRAN.  Only
-FORTRAN-77 (which we write in upper case) is supported on all platforms,
+FORTRAN 77 (which we write in upper case) is supported on all platforms,
 but most also support Fortran-95 (for which we use title case).  If you
 want to ship Ratfor source files, please do so in a subdirectory of
 @file{src} and not in the main subdirectory.}, Objective C and Objective
@@ -1104,7 +1104,7 @@ files created by @command{configure}.
 As an example consider we want to use functionality provided by a (C or
 FORTRAN) library @code{foo}.  Using Autoconf, we can create a configure
 script which checks for the library, sets variable @code{HAVE_FOO} to
-@code{TRUE} if it was found and with @code{FALSE} otherwise, and then
+@code{TRUE} if it was found and to @code{FALSE} otherwise, and then
 substitutes this value into output files (by replacing instances of
 @samp{@@HAVE_FOO@@} in input files with the value of @code{HAVE_FOO}).
 For example, if a function named @code{bar} is to be made available by
@@ -1228,12 +1228,12 @@ used on that platform.  (Optionally, there can be a @file{cleanup.win}
 script.  Both should be shell scripts to be executed by @command{ash},
 which is a minimal version of Bourne-style @command{sh}.)  When
 @file{configure.win} is run the environment variables @env{R_HOME}
-(which uses @code{/} as the file separator) and @env{R_ARCH} will be
+(which uses @samp{/} as the file separator) and @env{R_ARCH} will be
 set.  Use @env{R_ARCH} to decide if this is a 64-bit build (its value
 there is @samp{/x64}) and to install DLLs to the correct place
-(@code{$@{R_HOME@}/libs$@{R_ARCH@}}).  Use @env{R_ARCH_BIN} to find the
+(@file{$@{R_HOME@}/libs$@{R_ARCH@}}).  Use @env{R_ARCH_BIN} to find the
 correct place under the @file{bin} directory, e.g.@:
-@code{$@{R_HOME@}/bin$@{R_ARCH_BIN@}/Rscript.exe}.
+@file{$@{R_HOME@}/bin$@{R_ARCH_BIN@}/Rscript.exe}.
 
 In some rare circumstances, the configuration and cleanup scripts need
 to know the location into which the package is being installed.  An
@@ -1367,8 +1367,8 @@ double-complex BLAS routines, but no single-precision or complex
 routines.  If @code{BLAS_LIBS} is included, then @code{FLIBS} also needs
 to be@footnote{at least on Unix-alikes: the Windows build currently
 resolves such dependencies to a static FORTRAN library when
-@file{Rblas.dll} is built.}, as most BLAS libraries are written at least
-partially in FORTRAN.
+@file{Rblas.dll} is built.} included following it, as most BLAS
+libraries are written at least partially in FORTRAN.
 
 @item LAPACK_LIBS
 @vindex LAPACK_LIBS
@@ -1385,7 +1385,7 @@ all the double-precision and double-complex routines, and some do not
 provide all the auxiliary routines.]
 
 For portability, the macros @code{BLAS_LIBS} and @code{FLIBS} should
-always be included @emph{after} @code{LAPACK_LIBS}.
+always be included @emph{after} @code{LAPACK_LIBS} (and in that order).
 
 @item SAFE_FFLAGS
 @vindex SAFE_FFLAGS
@@ -1394,7 +1394,7 @@ over-optimization of FORTRAN code: it is typically @samp{-g -O2
 -ffloat-store} on @cputype{ix86} platforms using @command{gfortran}.
 Note that this is @strong{not} an additional flag to be used as part of
 @code{PKG_FFLAGS}, but a replacement for @code{FFLAGS}, and that it is
-intended for the FORTRAN-77 compiler @samp{F77} and not necessarily for
+intended for the FORTRAN 77 compiler @samp{F77} and not necessarily for
 the Fortran 90/95 compiler @samp{FC}.  See the example later in this
 section.
 @end table
@@ -1680,18 +1680,18 @@ One simple way is simply to set @code{OBJECTS} to be all the objects
 that need to be compiled, including in sub-directories.  For example,
 CRAN package @CRANpkg{RSiena} has
 
-@example
+@smallexample
 SOURCES = $(wildcard data/*.cpp network/*.cpp utils/*.cpp model/*.cpp model/*/*.cpp model/*/*/*.cpp)
 
 OBJECTS = siena07utilities.o siena07internals.o siena07setup.o siena07models.o $(SOURCES:.cpp=.o)
-@end example
+@end smallexample
 
 @noindent
 One problem with that approach is that unless GNU make extensions are
 used, the source files need to be listed and kept up-to-date.  As in the
 following from CRAN package @CRANpkg{lossDev}:
 
-@example
+@smallexample
 OBJECTS.samplers = samplers/ExpandableArray.o samplers/Knots.o \
   samplers/RJumpSpline.o samplers/RJumpSplineFactory.o \
   samplers/RealSlicerOV.o samplers/SliceFactoryOV.o samplers/MNorm.o
@@ -1701,12 +1701,12 @@ OBJECTS.distributions = distributions/DSpline.o \
 OBJECTS.root = RJump.o
 
 OBJECTS = $(OBJECTS.samplers) $(OBJECTS.distributions) $(OBJECTS.root)
-@end example
+@end smallexample
 
 Where the subdirectory is self-contained code with a suitable makefile,
 the best approach is something like
 
-@example
+@smallexample
 PKG_LIBS = -LCsdp/lib -lsdp $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
 
 $(SHLIB): Csdp/lib/libsdp.a
@@ -1714,7 +1714,7 @@ $(SHLIB): Csdp/lib/libsdp.a
 Csdp/lib/libsdp.a
         @@(cd Csdp/lib && $(MAKE) libsdp.a \
           CC="$(CC)" CFLAGS="$(CFLAGS) $(CPICFLAGS)" AR="$(AR)" RANLIB="$(RANLIB)")
-@end example
+@end smallexample
 
 @noindent
 Note the quotes: the macros can contain spaces, e.g.@: @code{gcc -m64
@@ -1916,11 +1916,14 @@ directly.
 @code{R CMD check} and @code{R CMD build} run @R{} with
 @option{--vanilla}, so none of the user's startup files are read.  If
 you need @env{R_LIBS} set (to find packages in a non-standard library)
-you can set it in the environment: also you can use files@footnote{On
-systems which use sub-architectures, architecture-specific versions such
-as @file{~/.R/check.Renviron.i386} take precedence.}
-@file{~/.R/check.Renviron} and @file{~/.R/build.Renviron} to set
-environment variables when using these utilities.
+you can set it in the environment: also you can use the check and build
+environment files (as specified by the environment variables
+@env{R_CHECK_ENVIRON} and @env{R_BUILD_ENVIRON}; if unset,
+files@footnote{On systems which use sub-architectures,
+architecture-specific versions such as @file{~/.R/check.Renviron.i386}
+take precedence.}  @file{~/.R/check.Renviron} and
+@file{~/.R/build.Renviron} are used) to set environment variables when
+using these utilities.
 @end quotation
 
 @quotation Note to Windows users
@@ -2158,9 +2161,12 @@ setting environment variables @w{@env{_R_CHECK_*_}:}, as described in
 @ifclear UseExternalXrefs
 `R Internals':
 @end ifclear
-a set of these customizations similar to those used by
-@acronym{CRAN} can be selected by the option @option{--as-cran} (which
-works best if Internet access is available).
+a set of these customizations similar to those used by @acronym{CRAN}
+can be selected by the option @option{--as-cran} (which works best if
+Internet access is available@footnote{Windows users behind proxies may
+want to set environment variable @env{R_WIN_INTERNET2} to a non-empty
+value, e.g.@: in @file{~/.R/check_environ}.  Some Windows users may need
+to set @env{R_WIN_NO_JUNCTIONS} to a non-empty value.}).
 
 You do need to ensure that the package is checked in a suitable locale
 if it contains non-@acronym{ASCII} characters.  Such packages are likely
@@ -3644,7 +3650,7 @@ rendered at all, rendered incorrectly, or cause your @R{} code to give
 an error.  For documentation, marking the encoding and including
 @acronym{ASCII} transliterations is likely to do a reasonable job.  The
 set of characters which is commonly supported is wider than it used to
-be around 2000, but non-Latin alphabets (Greek, Russion, Georgian,
+be around 2000, but non-Latin alphabets (Greek, Russian, Georgian,
 @dots{}) are still often problematic and those with double-width
 characters (Chinese, Japanese, Korean) often need specialist fonts to
 render correctly.
@@ -4056,13 +4062,13 @@ citEntry(entry="Manual",
                              as.person("Douglas Bates"),
                              as.person("Saikat DebRoy"),
                              as.person("Deepayan Sarkar"),
-                             person("R Development Core Team")),
+                             person("R Core Team")),
          year = year,
          note = vers,
 
          textVersion =
          paste("Jose Pinheiro, Douglas Bates, Saikat DebRoy,",
-               "Deepayan Sarkar and the R Development Core Team (",
+               "Deepayan Sarkar and the R Core Team (",
                year,
                "). nlme: Linear and Nonlinear Mixed Effects Models. ",
                vers, ".", sep=""))
@@ -6623,7 +6629,7 @@ the use of memory allocated from the @R{} heap.  The configure option is
 @option{--with-valgrind-instrumentation=@var{level}}, where @var{level}
 is 0, 1, or 2.  Level 0 is the default and does not add any anything.
 Level 1 will detect use of uninitialised memory and has little impact on
-speed. Level 2 will detect many other memory use bugs but makes @R{}
+speed. Level 2 will detect many other memory-use bugs but makes @R{}
 much slower when running under @code{valgrind}.  Using this in
 conjunction with @code{gctorture} can be even more effective (and even
 slower).
@@ -6735,8 +6741,8 @@ the first.
 
 Another cause of a `crash' is to overrun the C stack.  @R{} tries to
 track that in its own code, but it may happen in third-party compiled
-code.  For modern POSIX-compliant OSes we can safely catch that and
-return to the top-level prompt.
+code.  For modern POSIX-compliant OSes @R{} can safely catch that and
+return to the top-level prompt, so one gets something like
 
 @example
 > .C("aaa")
@@ -7168,6 +7174,11 @@ Up to 255 characters are passed back to a length-one character vector.
 How well this works (or even if it works at all) depends on the C and
 FORTRAN compilers on each platform.
 
+It is possible to pass @R{} objects other than atomic vectors via
+@code{.C}, but this is only supported for historical compatibility: use
+the @code{.Call} or @code{.External} interfaces for such objects.  Any
+C/C++ code that includes @file{Rinternals.h} should be called via
+@code{.Call} or @code{.External}.
 
 @node dyn.load and dyn.unload, Registering native routines, Interface functions .C and .Fortran, System and foreign language interfaces
 @section @code{dyn.load} and @code{dyn.unload}
@@ -7758,7 +7769,7 @@ system and so the two interworked successfully.  This was true of
 I/O will when compiled on Windows interfere with C I/O: when the Fortran
 I/O is initialized (typically when the package is loaded) the C
 @code{stdout} and @code{stderr} are switched to LF line endings.
-(Function @code{La_Init} in file @file{src/main/lapack.c} shows how to
+(Function @code{init} in file @file{src/modules/lapack/init_win.c} shows how to
 mitigate this.)  Even worse, prior to @R{} 2.6.2 using Fortran output
 when running under the Windows GUI console (@code{Rgui}) would hang the
 @R{} session.  This is now avoided by ensuring that the Fortran output
@@ -8549,6 +8560,11 @@ nul-terminated C-style string.  This function will return a pre-existing
 it will create a new one and add it to the cache before returning it to
 you.   The variant @code{mkCharLen} can be used to create a
 @code{CHARSXP} from part of a buffer and will ensure null-termination.
+
+Note that @R{} character strings are restricted to @code{2^31 - 1}
+bytes, and hence so should the input to @code{mkChar} be (C allows
+longer strings on 64-bit platforms): the function itself did not check
+prior to @R{} 2.15.1.
 
 @node Finding and setting variables, Some convenience functions, Handling character data, Handling R objects in C
 @subsection Finding and setting variables
@@ -9544,6 +9560,40 @@ attribute would be attached to the result, containing a list of
 @code{srcref} objects of the same length as the expression, to allow it to be
 echoed with its original formatting.
 
+@menu
+* Accessing source references::
+@end menu
+
+@node Accessing source references, , Parsing R code from C, Parsing R code from C
+@subsection Accessing source references
+
+The source references added by the parser are recorded by @R{}'s evaluator 
+as it evaluates code. Two functions
+make these available to debuggers running C code:
+@findex R_Srcref
+@findex R_GetCurrentSrcref
+@findex R_GetSrcFilename
+
+@example
+SEXP R_GetCurrentSrcref(int skip);
+@end example
+
+This function checks @code{R_Srcref} and the current evaluation stack
+for entries that contain source reference information.  The
+@code{skip} argument tells how many source references to skip before
+returning the @code{SEXP} of the @code{srcref} object, counting from
+the top of the stack.  If @code{skip < 0}, @code{abs(skip)} locations
+are counted up from the bottom of the stack. If too few or no source
+references are found, @code{NULL} is returned.
+
+@example
+SEXP R_GetSrcFilename(SEXP srcref);
+@end example
+
+This function extracts the filename from the source reference for
+display, returning a length 1 character vector containing the
+filename.  If no name is found, @code{""} is returned.
+
 @node External pointers and weak references, Vector accessor functions, Parsing R code from C, System and foreign language interfaces
 @section External pointers and weak references
 
@@ -9772,7 +9822,8 @@ and these should only be used on non-@acronym{ASCII} strings.  Value
 Value @code{CE_ANY} is used to indicate a character string that will not
 need re-encoding -- this is used for character strings known to be in
 @acronym{ASCII}, and can also be used as an input parameter where the
-intention is that the string is treated as a series of bytes.
+intention is that the string is treated as a series of bytes.  (See the
+comments under @code{mkChar} about the length of input allowed.)
 
 Function
 
@@ -9795,7 +9846,7 @@ with any other value causing the byte to produce no output.
 There is also
 
 @example
-SEXP mkCharLenCE(const char *, int, cetype_t);
+SEXP mkCharLenCE(const char *, size_t, cetype_t);
 @end example
 
 @noindent
@@ -10532,6 +10583,13 @@ in @file{Rmath.h}, but is (probably) in @file{math.h} which
 Computes @code{log(1 + @var{x}) - @var{x}} (@emph{log 1 @b{p}lus x @b{m}inus @b{x}}),
 accurately even for small @var{x}, i.e., @eqn{|x| \ll 1, |x| << 1}.
 @end deftypefun
+
+@deftypefun double log1pexp (double @var{x})
+Computes @code{log(1 + exp(@var{x}))} (@emph{log 1 @b{p}lus @b{exp}}),
+accurately, notably for large @var{x}, e.g., @eqn{x > 720, x > 720}.
+@end deftypefun
+
+@c  log1mexp(.) to come
 
 @deftypefun double expm1 (double @var{x})
 Computes @code{exp(@var{x}) - 1} (@emph{exp x @b{m}inus 1}), accurately

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2012  The R Development Core Team.
+ *  Copyright (C) 1995--2012  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -508,6 +508,25 @@ void PrintWarnings(void)
     return;
 }
 
+/* Return a constructed source location (e.g. filename#123) from a srcref.  If the srcref
+   is not valid "" will be returned.
+*/
+
+static SEXP GetSrcLoc(SEXP srcref)
+{
+    SEXP sep, line, result;
+    SEXP srcfile = R_GetSrcFilename(srcref);
+    if (TYPEOF(srcref) != INTSXP || length(srcref) < 4) {
+	return ScalarString(mkChar(""));
+    }
+    PROTECT(srcfile = eval( lang2( install("basename"), srcfile ), R_BaseEnv ) );
+    PROTECT(sep = ScalarString(mkChar("#")));
+    PROTECT(line = ScalarInteger(INTEGER(srcref)[0]));
+    result = eval( lang4( install("paste0"), srcfile, sep, line ), R_BaseEnv );
+    UNPROTECT(3);
+    return result;
+}
+
 static char errbuf[BUFSIZE];
 
 const char *R_curErrorBuf() {
@@ -560,9 +579,35 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 
     if(call != R_NilValue) {
 	char tmp[BUFSIZE];
-	char *head = _("Error in "), *mid = " : ", *tail = "\n  ";
-	int len = strlen(head) + strlen(mid) + strlen(tail);
+	char *head = _("Error in "),
+	     *mid1 = " : ", *mid2 = _(" (from %s) : "), *tail = "\n  ";
+	char *mid = mid1;
+	char src[BUFSIZE];
+	SEXP srcloc;
+	size_t len;	
+	int protected = 0, skip = NA_INTEGER;
+	SEXP opt = GetOption1(install("show.error.locations"));
+	if (!isNull(opt)) {
+	    if (TYPEOF(opt) == STRSXP && length(opt) == 1) {
+	    	if (pmatch(ScalarString(mkChar("top")), opt, 0)) skip = 0;
+	    	else if (pmatch(ScalarString(mkChar("bottom")), opt, 0)) skip = -1;
+	    } else if (TYPEOF(opt) == LGLSXP)
+	    	skip = asLogical(opt) == 1 ? 0 : NA_INTEGER;
+	    else
+	    	skip = asInteger(opt);
+	}
 
+	if (skip != NA_INTEGER) {
+	    PROTECT(srcloc = GetSrcLoc(R_GetCurrentSrcref(skip)));
+	    protected++;
+	    len = strlen(CHAR(STRING_ELT(srcloc, 0)));
+	    if (len) {
+	        snprintf(src, BUFSIZE, mid2, CHAR(STRING_ELT(srcloc, 0)));
+	        mid = src;
+	    }
+	}
+	len = strlen(head) + strlen(mid) + strlen(tail);
+	
 	Rvsnprintf(tmp, min(BUFSIZE, R_WarnLength) - strlen(head), format, ap);
 	dcall = CHAR(STRING_ELT(deparse1s(call), 0));
 	if (len + strlen(dcall) + strlen(tmp) < BUFSIZE) {
@@ -589,6 +634,7 @@ static void verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	    sprintf(errbuf, _("Error: "));
 	    strcat(errbuf, tmp);
 	}
+	UNPROTECT(protected);
     }
     else {
 	sprintf(errbuf, _("Error: "));
@@ -1337,7 +1383,7 @@ static char * R_ConciseTraceback(SEXP call, int skip)
     /* don't add Calls if it adds no extra information */
     /* However: do we want to include the call in the list if it is a
        primitive? */
-    if (ncalls == 1 && call != R_NilValue) {
+    if (ncalls == 1 && TYPEOF(call) == LANGSXP) {
 	SEXP fun = CAR(call);
 	const char *this = (TYPEOF(fun) == SYMSXP) ?
 	    CHAR(PRINTNAME(fun)) : "<Anonymous>";
@@ -1783,4 +1829,48 @@ do_interruptsSuspended(SEXP call, SEXP op, SEXP args, SEXP env)
     return ScalarLogical(orig_value);
 }
 
+/* These functions are to be used in error messages, and available for others to use in the API 
+   GetCurrentSrcref returns the first non-NULL srcref after skipping skip of them.  If it
+   doesn't find one it returns NULL. */
+
+SEXP
+R_GetCurrentSrcref(int skip)
+{
+    RCNTXT *c = R_GlobalContext;
+    SEXP srcref = R_Srcref;
+    if (skip < 0) { /* to count up from the bottom, we need to count them all first */
+    	while (c) {
+    	    if (srcref && srcref != R_NilValue) 
+		skip++;
+    	    srcref = c->srcref;
+    	    c = c->nextcontext;
+    	};
+    	if (skip < 0) return R_NilValue; /* not enough there */
+    	c = R_GlobalContext;
+    	srcref = R_Srcref;
+    }
+    while (c && (skip || !srcref || srcref == R_NilValue)) {
+    	if (srcref && srcref != R_NilValue) 
+	    skip--;
+    	srcref = c->srcref;
+    	c = c->nextcontext;
+    }
+    if (skip || !srcref)
+    	srcref = R_NilValue;
+    return srcref;
+}
+
+/* Return the filename corresponding to a srcref, or "" if none is found */
+
+SEXP 
+R_GetSrcFilename(SEXP srcref)
+{
+    SEXP srcfile = getAttrib(srcref, R_SrcfileSymbol);
+    if (TYPEOF(srcfile) != ENVSXP) 
+    	return ScalarString(mkChar(""));
+    srcfile = findVar(install("filename"), srcfile);	
+    if (TYPEOF(srcfile) != STRSXP)
+        return ScalarString(mkChar(""));
+    return srcfile;
+}
 

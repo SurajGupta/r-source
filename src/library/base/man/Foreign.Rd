@@ -1,6 +1,6 @@
 % File src/library/base/man/Foreign.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Foreign}
@@ -112,7 +112,7 @@
   Missing (\code{NA}) string values are passed to \code{.C} as the string
   "NA". As the C \code{char} type can represent all possible bit patterns
   there appears to be no way to distinguish missing strings from the
-  string \code{"NA"}.  If this distinction is important use \code{.Call}.
+  string \code{"NA"}.  If this distinction is important use \code{\link{.Call}}.
 
   \code{.Fortran} passes the first (only )character string of a character
   vector is passed as a C character array to Fortran: that may be usable
@@ -120,18 +120,12 @@
   up to 255 characters of the string are passed back.  (How well this
   works, and even if it works at all, depends on the C and Fortran
   compilers and the platform.)
-
-  \R objects such as functions, expressions, environments and other
-  language elements are passed as the \R pointer type \code{SEXP}.  This
-  type is defined in header \file{Rinternals.h} or the arguments can be
-  declared as generic pointers, \code{void *}.  Lists are passed as C
-  arrays of \code{SEXP} and can be declared as \code{void **} or
-  \code{SEXP *}.  All inputs apart from atomic vectors should be
-  regarded as read-only, and all apart from vectors (including lists),
-  functions and environments are now deprecated.
-
-  If you need to return \R objects created within the C routine, use the
-  \code{.Call} interface.
+  
+  Lists, functions are other \R objects can (for historical reasons) be
+  passed to \code{.C}, but the \code{\link{.Call}} interface is much
+  preferred.  All inputs apart from atomic vectors should be regarded as
+  read-only, and all apart from vectors (including lists), functions and
+  environments are now deprecated.
 }
 %%-- This note by Thomas Lumley, (minimally edited by MM,
 %%      edited by BDR for 1.2.0's non-moving garbage collector):
@@ -148,7 +142,7 @@
   be able to change not only the local variable but the variable one
   level up.  This will be very hard to trace.
 
-  Character vectors and lists cannot be used with \code{DUP = FALSE}.
+  Character vectors cannot be used with \code{DUP = FALSE}.
 
   It is safe and useful to set \code{DUP = FALSE} if you do not change any
   of the variables that might be affected, e.g.,
@@ -159,10 +153,14 @@
   so it cannot cause trouble.  If the \code{input} variable is not
   changed in the C code of \code{Cfunction} you are safe.
 
-  Note that if \code{DUP = TRUE} there are two copies involved, one when
-  the data from the argument is copied and the pointer to the copied data
-  passed to the compiled code, and one when the return value is prepared
-  from the data accessed by the compiled code.
+  Note that if \code{DUP = TRUE} there are up to two copies involved.
+  Prior to \R 2.15.1 this was always the case for vectors (one before
+  calling the compiled code and one to collect the results), and this is
+  still the case for character vectors.  For other atomic vectors, the
+  argument is copied before calling the compiled code if it is not
+  otherwise used in the calling code (such as \code{output} in the
+  example above).  Non-atomic-vector objects are read-only to the C code
+  and are never copied.
 }
 
 \section{Fortran symbol names}{
@@ -209,9 +207,5 @@
   \code{\link{dyn.load}}, \code{\link{.Call}}.
 
   The \sQuote{Writing R Extensions} manual.
-  
-  \code{\link{getCConverterDescriptions}} for converters that might be
-  used when passing \R objects with explicit classes to and from
-  compiled code.
 }
 \keyword{programming}

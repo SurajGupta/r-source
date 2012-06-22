@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2011  The R Development Core Team
+ *  Copyright (C) 1997--2011  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -243,7 +243,7 @@ static void Cairo_update(pX11Desc xd)
 {
     if(inclose || !xd || !xd->buffered || xd->holdlevel > 0) return;
     cairo_paint(xd->xcc);
-    XDefineCursor(display, xd->window, arrow_cursor);
+    if (xd->type == WINDOW) XDefineCursor(display, xd->window, arrow_cursor);
     XSync(display, 0);
     xd->last = currentTime();
 }
@@ -342,7 +342,7 @@ static int Cairo_holdflush(pDevDesc dd, int level)
     if(xd->holdlevel == 0) {
 	if(xd->buffered) Cairo_update(xd);
 	else {
-	    XDefineCursor(display, xd->window, arrow_cursor);
+	  if (xd->type == WINDOW) XDefineCursor(display, xd->window, arrow_cursor);
 	    XSync(display, 0);
 	}
     } else if (old == 0) {
@@ -352,7 +352,7 @@ static int Cairo_holdflush(pDevDesc dd, int level)
 	    Cairo_update(xd);
 	    xd->holdlevel = level;
 	}
-	XDefineCursor(display, xd->window, watch_cursor);
+	if (xd->type == WINDOW) XDefineCursor(display, xd->window, watch_cursor);
 	XSync(display, 0);
     }
     return xd->holdlevel;
@@ -1599,7 +1599,7 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
 		cross_cursor = XCreateFontCursor(display, XC_crosshair);
 	    if(!watch_cursor)
 		watch_cursor = XCreateFontCursor(display, XC_watch) ;
-	    XDefineCursor(display, xd->window, arrow_cursor);
+	    if(xd->type==WINDOW) XDefineCursor(display, xd->window, arrow_cursor);
 
 #ifdef HAVE_WORKING_CAIRO
 	    if(xd->useCairo) {
@@ -2507,7 +2507,7 @@ static Rboolean X11_Locator(double *x, double *y, pDevDesc dd)
     if (xd->buffered) Cairo_update(xd);
 #endif
     R_ProcessX11Events((void*)NULL);	/* discard pending events */
-    XDefineCursor(display, xd->window, cross_cursor);
+    if(xd->type==WINDOW) XDefineCursor(display, xd->window, cross_cursor);
     XSync(display, 1);
     /* handle X events as normal until get a button */
     /* click in the desired device */
@@ -2536,8 +2536,10 @@ static Rboolean X11_Locator(double *x, double *y, pDevDesc dd)
 	else
 	    handleEvent(event);
     }
+    /* In case it got closed asynchronously, PR#14872 */
+    if (!displayOpen) return 0;
     /* if it was a Button1 succeed, otherwise fail */
-    XDefineCursor(display, xd->window, arrow_cursor);
+    if(xd->type==WINDOW) XDefineCursor(display, xd->window, arrow_cursor);
     XSync(display, 0);
     return (done == 1);
 }
@@ -2660,7 +2662,7 @@ static void X11_Mode(int mode, pDevDesc dd)
 	return;
     }
     if(mode == 1) {
-	XDefineCursor(display, xd->window, watch_cursor);
+	if(xd->type==WINDOW) XDefineCursor(display, xd->window, watch_cursor);
 	XSync(display, 0);
     }
     if(mode == 0) {
@@ -2673,7 +2675,7 @@ static void X11_Mode(int mode, pDevDesc dd)
 	}
 	if(xd->buffered) cairo_paint(xd->xcc);
 #endif
-	XDefineCursor(display, xd->window, arrow_cursor);
+	if(xd->type==WINDOW) XDefineCursor(display, xd->window, arrow_cursor);
 	XSync(display, 0);
     }
 }

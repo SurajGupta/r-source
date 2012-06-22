@@ -1,6 +1,6 @@
 % File src/library/base/man/tracemem.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{tracemem}
@@ -9,10 +9,9 @@
 \alias{retracemem}
 \title{Trace Copying of Objects}
 \description{
-This function marks an object so that a message is printed whenever the
-internal function \code{duplicate} is called.   This happens when two
-objects share the same memory  and one of them is modified.  It is a
-major cause of hard-to-predict memory use in R.  
+  This function marks an object so that a message is printed whenever the
+  internal code copies the object.  It is a
+  major cause of hard-to-predict memory use in R.  
 }
 \usage{
 tracemem(x)
@@ -29,18 +28,19 @@ retracemem(x, previous = NULL)
   traced.  \code{tracemem} and \code{untracemem} give errors when R is not
   compiled with memory profiling; \code{retracemem} does not (so it can be
   left in code during development).
-#ifdef Windows
-  It is enabled in a standard Windows build of \R.
-#endif
+
+  It is enabled in the standard Mac OS X and Windows builds of \R.
   
   When an object is traced any copying of the object by the C function
-  \code{duplicate} or by arithmetic or mathematical operations produces a
-  message to standard output.  The message consists of the string
-  \code{tracemem}, the identifying strings for the object being copied and
-  the new object being created, and a stack trace showing where the
-  duplication occurred.  \code{retracemem()} is used to indicate that a
-  variable should be considered a copy of a previous variable (e.g. after
-  subscripting).
+  \code{duplicate} produces a message to standard output, as does type
+  coercion and copying when passing arguments to \code{.C} or
+  \code{.Fortran}.
+
+  The message consists of the string \code{tracemem}, the identifying
+  strings for the object being copied and the new object being created,
+  and a stack trace showing where the duplication occurred.
+  \code{retracemem()} is used to indicate that a variable should be
+  considered a copy of a previous variable (e.g. after subscripting).
 
   The messages can be turned off with \code{\link{tracingState}}.
 
@@ -72,7 +72,7 @@ b <- a
 b[1] <- 1
 untracemem(a)
 
-## copying in lm
+## copying in lm: less than R <= 2.15.0
 d <- stats::rnorm(10)
 tracemem(d)
 lm(d ~ a+log(b))

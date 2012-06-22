@@ -1,6 +1,6 @@
 % File src/library/base/man/source.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2011 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -28,9 +28,10 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
     of the file or URL to read from.  \code{""} indicates the connection
     \code{\link{stdin}()}.}
   \item{local}{\code{TRUE}, \code{FALSE} or an environment, determining
-    where the parsed expressions are evaluated.  \code{TRUE} corresponds
-    to the user's workspace (the global environment) and \code{FALSE} to
-    the environment from \code{source} is called.}
+    where the parsed expressions are evaluated.  \code{FALSE} (the
+    default) corresponds to the user's workspace (the global
+    environment) and \code{TRUE} to the environment from which
+    \code{source} is called.}
   \item{echo}{logical; if \code{TRUE}, each expression is printed
     after parsing, before evaluation.}
   \item{print.eval}{logical; if \code{TRUE}, the result of
@@ -70,7 +71,7 @@ source(file, local = FALSE, echo = verbose, print.eval = echo,
   into the workspace by code that has been run will be kept (just as
   from the command line), but diagnostic information such as
   \code{\link{traceback}()} will contain additional calls to
-  \code{eval.with.vis}, an undocumented internal function.
+  \code{\link{withVisible}}.
 
   All versions of \R accept input from a connection with end of line
   marked by LF (as used on Unix), CRLF (as used on DOS/Windows) or CR

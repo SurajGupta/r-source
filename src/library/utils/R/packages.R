@@ -323,6 +323,21 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 	oldPkgs <- old.packages(lib.loc = lib.loc,
 				contriburl = contriburl, method = method,
 				available = available, checkBuilt = checkBuilt)
+	## prune package versions which are invisible to require()
+	if(!is.null(oldPkgs)) {
+	    pkg <- 0L
+	    while(pkg < nrow(oldPkgs)) {
+		pkg <- pkg + 1L
+		if(find.package(oldPkgs[pkg], lib.loc = lib.loc) !=
+		   find.package(oldPkgs[pkg], lib.loc = oldPkgs[pkg,2])) {
+		    warning(sprintf("package '%s' in library '%s' will not be updated",
+				    oldPkgs[pkg], oldPkgs[pkg, 2]),
+			    call. = FALSE, immediate. = TRUE)
+		    oldPkgs <- oldPkgs[-pkg, , drop = FALSE]
+		    pkg <- pkg - 1L
+		}
+	    }
+	}
 	if(is.null(oldPkgs))
 	    return(invisible())
     } else if (!(is.matrix(oldPkgs) && is.character(oldPkgs)))
@@ -522,7 +537,7 @@ installed.packages <-
     }
 
     fields <- .instPkgFields(fields)
-    retval <- matrix(character(0), 0L, 2L + length(fields))
+    retval <- matrix(character(), 0L, 2L + length(fields))
     for(lib in lib.loc) {
         if(noCache) {
             ret0 <- .readPkgDesc(lib, fields)
@@ -763,6 +778,8 @@ chooseBioCmirror <- function(graphics = getOption("menu.graphics"))
 	   , "Bergen (Norway)"="http://bioconductor.uib.no/"
 	   , "Cambridge (UK)"="http://mirrors.ebi.ac.uk/bioconductor/"
 	   , "Riken, Kobe (Japan)" = "http://bioconductor.jp/"
+	   , "Canberra (Australia)" = "http://mirror.aarnet.edu.au/pub/bioconductor/"
+	   , "Sao Paulo (Brazil)" = "http://bioconductor.fmrp.usp.br/"
 	   )
     res <- menu(names(m), graphics, "BioC mirror")
     if(res > 0L) options("BioC_mirror" = m[res])

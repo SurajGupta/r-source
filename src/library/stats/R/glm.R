@@ -14,6 +14,8 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+utils::globalVariables("n", add = TRUE)
+
 ### This function fits a generalized linear model via
 ### iteratively reweighted least squares for any family.
 ### Written by Simon Davies, Dec 1995
@@ -100,11 +102,15 @@ glm <- function(formula, family = gaussian, data, weights,
     ## re-calculated by setting an offset (provided there is an intercept).
     ## Prior to 2.4.0 this was only done for non-zero offsets.
     if(length(offset) && attr(mt, "intercept") > 0L) {
-        fit$null.deviance <-
+        fit2 <-
             eval(call(if(is.function(method)) "method" else method,
                       x = X[, "(Intercept)", drop=FALSE], y = Y,
                       weights = weights, offset = offset, family = family,
-                      control = control, intercept = TRUE))$deviance
+                      control = control, intercept = TRUE))
+        ## That fit might not have converged ....
+        if(!fit2$converged)
+            warning("fitting to calculate the null deviance did not converge -- increase maxit?")
+        fit$null.deviance <- fit2$deviance
     }
     if(model) fit$model <- mf
     fit$na.action <- attr(mf, "na.action")
@@ -229,18 +235,9 @@ glm.fit <-
             z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
             w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
             ngoodobs <- as.integer(nobs - sum(!good))
-            ## call Fortran code
-            fit <- .Fortran("dqrls",
-                            qr = x[good, ] * w, n = ngoodobs,
-                            p = nvars, y = w * z, ny = 1L,
-                            tol = min(1e-7, control$epsilon/1000),
-                            coefficients = double(nvars),
-                            residuals = double(ngoodobs),
-                            effects = double(ngoodobs),
-                            rank = integer(1L),
-                            pivot = 1L:nvars, qraux = double(nvars),
-                            work = double(2 * nvars),
-                            PACKAGE = "base")
+            ## call Fortran code via C wrapper
+            fit <- .Call(C_Cdqrls, x[good, , drop = FALSE] * w, z * w,
+                         min(1e-7, control$epsilon/1000))
             if (any(!is.finite(fit$coefficients))) {
                 conv <- FALSE
                 warning(gettextf("non-finite coefficients at iteration %d", iter), domain = NA)

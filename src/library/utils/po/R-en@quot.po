@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-02-12 08:59\n"
-"PO-Revision-Date: 2012-02-12 08:59\n"
+"POT-Creation-Date: 2012-05-21 13:00\n"
+"PO-Revision-Date: 2012-05-21 13:00\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -602,35 +602,11 @@ msgstr "‘code_files’ must be a character vector"
 msgid "'list' must be a character vector naming R objects"
 msgstr "‘list’ must be a character vector naming R objects"
 
-msgid "cannot turn off locale-specific chars via LC_CTYPE"
-msgstr "cannot turn off locale-specific chars via LC_CTYPE"
-
 msgid "no R objects specified or available"
 msgstr "no R objects specified or available"
 
-msgid "Creating directories ..."
-msgstr "Creating directories ..."
-
 msgid "directory '%s' already exists"
 msgstr "directory ‘%s’ already exists"
-
-msgid "Creating DESCRIPTION ..."
-msgstr "Creating DESCRIPTION ..."
-
-msgid "From R 2.14.0 on, every package gets a NAMESPACE."
-msgstr "From R 2.14.0 on, every package gets a NAMESPACE."
-
-msgid "Argument 'namespace' is deprecated."
-msgstr "Argument ‘namespace’ is deprecated."
-
-msgid "Creating NAMESPACE ..."
-msgstr "Creating NAMESPACE ..."
-
-msgid "Creating Read-and-delete-me ..."
-msgstr "Creating Read-and-delete-me ..."
-
-msgid "Saving functions and data ..."
-msgstr "Saving functions and data ..."
 
 msgid ""
 "Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
@@ -639,32 +615,14 @@ msgstr ""
 "Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
 "the code_files= argument"
 
-msgid "Copying code files ..."
-msgstr "Copying code files ..."
-
-msgid "Invalid file name(s) for R code in"
-msgstr "Invalid file name(s) for R code in"
-
-msgid ":"
-msgstr ":"
-
-msgid "are now renamed to 'z<name>.R'"
-msgstr "are now renamed to ‘z<name>.R’"
-
-msgid "Making help files ..."
-msgstr "Making help files ..."
-
-msgid "Done."
-msgstr "Done."
-
-msgid "Further steps are described in '%s'."
-msgstr "Further steps are described in '%s'."
-
 msgid "unable to access index for repository %s"
 msgstr "unable to access index for repository %s"
 
 msgid "Invalid 'filters' argument."
 msgstr "Invalid ‘filters’ argument."
+
+msgid "package '%s' in library '%s' will not be updated"
+msgstr "package ‘%s’ in library ‘%s’ will not be updated"
 
 msgid ""
 "invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
@@ -755,15 +713,6 @@ msgstr ""
 msgid "'lib = \"%s\"' is not writable"
 msgstr "‘lib = “%s”’ is not writable"
 
-msgid ""
-"Would you like to create a personal library\n"
-"%s\n"
-"to install packages into?"
-msgstr ""
-"Would you like to create a personal library\n"
-"%s\n"
-"to install packages into?"
-
 msgid "unable to install packages"
 msgstr "unable to install packages"
 
@@ -821,6 +770,13 @@ msgid ""
 msgstr ""
 "The downloaded source packages are in\n"
 "\t%s"
+
+msgid ""
+"The namespace for package \"%s\" is locked; no changes in the global "
+"variables list may be made."
+msgstr ""
+"The namespace for package “%s” is locked; no changes in the global variables "
+"list may be made."
 
 msgid "no object named '%s' to show"
 msgstr "no object named ‘%s’ to show"
@@ -1137,6 +1093,9 @@ msgstr "download had nonzero exit status"
 
 msgid "'tar' returned non-zero exit code %d"
 msgstr "‘tar’ returned non-zero exit code %d"
+
+msgid "file %s is not an OS X binary package"
+msgstr "file %s is not an OS X binary package"
 
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "package %s successfully unpacked and MD5 sums checked"

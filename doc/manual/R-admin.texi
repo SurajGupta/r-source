@@ -38,7 +38,7 @@ notice identical to this one except for the removal of this paragraph
 @titlepage
 @title R Installation and Administration
 @subtitle Version @value{VERSION}
-@author R Development Core Team
+@author R Core Team
 @page
 @vskip 0pt plus 1filll
 @permission{}
@@ -854,42 +854,6 @@ recommended packages are lazyloaded but not byte-compiled.
 @env{R_NO_BASE_COMPILE} can be set to a non-empty value for the duration
 of the build.)
 
-@menu
-* Inter-Procedure Optimization::  
-@end menu
-
-@node Inter-Procedure Optimization,  , Other Options, Other Options
-@subsection Inter-Procedure Optimization
-
-In a conventional build system each C/Fortran source file is compiled
-and optimized separately.  A trend in modern compilers is to carry
-optimization across source files: this has been done in commercial
-compilers for some time.
-
-GCC introduced a version of inter-procedure optimization in version
-4.5.0, which it calls @emph{link-time optimization}.  This writes an
-intermediate representation in the @file{.o} file, and then the linker
-combines those intermediate representations and re-compiles with
-optimization the combined representation.  Support for LTO is still
-evolving: it is available for ELF-based systems and more recently for
-PE_COFF (Windows): only on some platforms@footnote{For those using GNU
-@code{binutils}, where @command{gold} is used as the linker: this might
-be enabled when @command{gcc} was built or selected @emph{via} the
-@command{alternatives} mechanism.} can objects in static libraries be
-included in the link-time optimization.
-
-Link-time optimization roughly doubles the compilation time and
-increases the size of the @file{.o} files (but not the installed
-@file{.so} and executable files).
-
-Link-time optimization can be enabled by the @command{configure} option
-@option{--enable-lto}: no check is made that the compiler/linker support
-it.  In experiments with @command{gcc} 4.5.x on Linux the performance
-gain was very small (mainly seen with @option{--enable-R-shlib}), but
-this may not be so with later compilers or other platforms.
-
-Setting @option{--enable-lto=R} enables LTO for building @R{} itself but
-not for extension packages (including the recommended packages).
 
 @node Testing a Unix-alike Installation,  , Other Options, Installing R under Unix-alikes
 @section Testing an Installation
@@ -1309,7 +1273,7 @@ building all the parts in the sequence:
 
 @example
 rbuild @r{(the executables, the @acronym{FAQ} docs etc.)}
-rpackage @r{(the base packages)}
+rpackages @r{(the base packages)}
 htmldocs @r{(the HTML documentation)}
 bitmapdll @r{(the bitmap support files)}
 cairodevices @r{(the cairo-based graphics devices)}
@@ -1337,12 +1301,11 @@ make rinstaller EXTRA_PKGS='pkg1 pkg2 pkg3'
 
 
 An alternative way to customize the installer starting with a binary
-distribution is to first make a full installation of R from the standard
-installer (that is, select @samp{Full Installation} from the
-@samp{Select Components} screen), then add packages and make other
-customizations to that installation.  Then (after having customized file
-@file{MkRules}, possibly @emph{via} @file{MkRules.local}, and having
-made R in the source tree) in @file{src/gnuwin32/installer} run
+distribution is to first make an installation of R from the standard
+installer, then add packages and make other customizations to that
+installation.  Then (after having customized file @file{MkRules},
+possibly @emph{via} @file{MkRules.local}, and having made R in the
+source tree) in @file{src/gnuwin32/installer} run
 
 @example
 make myR IMAGEDIR=rootdir
@@ -1460,30 +1423,28 @@ build systems.
 @section Testing an Installation
 
 The Windows installer contains a set of test files used when building
-@R{}.  These are an optional part of the installation, and if it is
-desired to run tests on the installation these should be selected as
-well as the help source files (perhaps most easily by doing a `Full
-Installation').
+@R{}.
 
 The @code{Rtools} are not needed to run these tests. but more
 comprehensive analysis of errors will be given if @command{diff} is in
-the path.
+the path (and @code{errorsAreFatal = FALSE} is then not needed below).
 
-Once this has been done, launch either @code{Rgui} or @code{Rterm},
-preferably with @option{--vanilla}.  Then
+Launch either @code{Rgui} or @code{Rterm}, preferably with
+@option{--vanilla}.  Then run
 
 @example
 library("tools")
 testInstalledBasic("both")
-testInstalledPackages("base")
-testInstalledPackages("recommended")
+testInstalledPackages("base", errorsAreFatal = FALSE)
+testInstalledPackages("recommended", errorsAreFatal = FALSE)
 @end example
 
 @noindent
 runs the basic tests and then all the tests on the standard and
 recommended packages.  These tests can be run from anywhere: they write
 their results in the @file{tests} folder of the @R{} home directory (as
-given by @code{R.home()}).
+given by @code{R.home()}), and hence may need to be run under the
+account used to install @R{}.
 
 
 @node Installing R under (Mac) OS X, Running R, Installing R under Windows, Top
@@ -1495,62 +1456,13 @@ binaries for OS X for a base distribution and a large number of
 add-on packages from @acronym{CRAN} to run on OS X 10.[567].
 
 The simplest way is to use @file{R-@value{VERSIONno}.pkg}: just
-double-click on the icon.  Note that Tcl/Tk and the Fortran compiler
+double-click on the icon.  Note that Tcl/Tk and the compilers
 need to be installed separately if needed.
 
 See the @uref{http://CRAN.R-project.org/@/bin/@/macosx/@/RMacOSX-FAQ.html, R
 for Mac OS X @acronym{FAQ}} for more details.
 
-@menu
-* Building from source on (Mac) OS X::  
-@end menu
-
-@node Building from source on (Mac) OS X,  , Installing R under (Mac) OS X, Installing R under (Mac) OS X
-@section Building from source on (Mac) OS X
-
-If you want to build this port from the sources, you should read the R for
-Mac OS X FAQ for full details.  You will need to collect and install
-some tools as explained in that document.  Then you have to unpack the
-@R{} sources and configure @R{} appropriately, for example
-
-@example
-tar -zxvf R-@value{VERSIONno}.tar.gz
-cd R-@value{VERSIONno}
-./configure --with-blas='-framework vecLib' --with-lapack \
-  --with-aqua --enable-R-framework
-make
-@end example
-
-@noindent
-and then sit back and wait.  The first two options are the default and
-use the BLAS and LAPACK built into OS X.  This has pros and cons: it
-used to be faster (but has not been on some recent multicore hardware)
-but less accurate.
-
-The second line of options are also default on OS X, but needed only
-if you want to build @R{} for use with @code{R.app} Console, and imply
-@option{--enable-R-shlib} to build @R{} as a shared/dynamic library.
-These options configure @R{} to be built and installed as a framework
-called @file{R.framework}.  The default installation path for
-@file{R.framework} is @file{/Library/Frameworks} but this can be changed
-at configure time by specifying the flag
-@option{--enable-R-framework[=@var{DIR}]} or at install time as
-
-@example
-make prefix=/where/you/want/R.framework/to/go install
-@end example
-
-@noindent
-(the final @file{R.framework} directory should not be included in the
-path).
-
-For compatibility with the @acronym{CRAN} distribution you may need to
-specify @option{--with-included-gettext} to avoid linking against a
-@samp{libintl} dynamic library you may have available, for example in
-@file{/usr/local/lib}.
-
-Note that building the @file{R.app} GUI console is a separate project:
-see the OS X FAQ for details.
+For building from source, see @ref{Mac OS X}.
 
 
 @node Running R, Add-on packages, Installing R under (Mac) OS X, Top
@@ -3153,7 +3065,7 @@ versions of MKL for Mac OS X and Windows, but they do not work with the
 standard compilers used for @R{} on those platforms.
 
 The MKL interface has changed several times, and may change again: the
-following notes apply to version 10.0, and prior to that 9.
+following notes apply exactly only to version 10.0.
 
 Version 10 of MKL supports two linking models: the default model, which
 is backward compatible with version 9 (see below), and the pure layered
@@ -3178,15 +3090,24 @@ MKL="-L$@{MKL_LIB_PATH@} -lmkl_gf_lp64 -lmkl_sequential -lmkl_lapack -lmkl_core"
 
 @noindent
 The order of the libraries is important.  The option
-@option{--with-lapack} is used since MKL contains a copy of LAPACK as
-well as @acronym{BLAS} (@pxref{LAPACK}).
+@option{--with-lapack} is used since MKL contains a tuned copy of LAPACK
+as well as @acronym{BLAS} (@pxref{LAPACK}), although this (and the
+corresponding library) can be omitted.
 
-Threaded MKL may be used by replacing the line defining the variable @code{MKL} 
-with
+Threaded MKL may be used (according to Zhang Zhang of Intel) by
+replacing the line defining the variable @code{MKL} with (Intel OMP)
+
+@example
+MKL="-L$@{MKL_LIB_PATH@} -lmkl_gf_lp64 -lmkl_intel_thread \
+     -lmkl_lapack -lmkl_core -liomp5 -lpthread"
+@end example
+
+@noindent
+or (GNU OMP)
 
 @example
 MKL="-L$@{MKL_LIB_PATH@} -lmkl_gf_lp64 -lmkl_gnu_thread \
-     -lmkl_lapack -lmkl_core -liomp5 -lpthread"
+     -lmkl_lapack -lmkl_core -fopenmp -lpthread"
 @end example
 
 @noindent
@@ -3194,7 +3115,7 @@ The default number of threads will be chosen by the OpenMP software,
 but can be controlled by setting @code{OMP_NUM_THREADS} or
 @code{MKL_NUM_THREADS}.
 
-Static threaded MKL may be used with
+Static threaded MKL may be used (GNU OpenMP) with something like
 
 @example
 MKL="   -L$@{MKL_LIB_PATH@}                               \
@@ -3209,7 +3130,7 @@ MKL="   -L$@{MKL_LIB_PATH@}                               \
 @noindent
 (Thanks to Ei-ji Nakama).
 
-The default linking model, which is also used by version 9 of MKL, can
+The default linking model, which was also used by version 9 of MKL, can
 be used by
 
 @example
@@ -3217,9 +3138,10 @@ be used by
 @end example
 
 @noindent
-This is multi-threaded, but in version 9 the number of threads defaults
-to 1.  It can be increased by setting @code{OMP_NUM_THREADS}.  (Thanks to
-Andy Liaw for the information.)
+but this may not match your compiler on a 64-bit platform.  This is
+multi-threaded, but in version 9 the number of threads defaults to 1.
+It can be increased by setting @code{OMP_NUM_THREADS}.  (Thanks to Andy
+Liaw for the information.)
 
 @node Shared BLAS,  , MKL, BLAS
 @subsubsection Shared BLAS
@@ -4125,19 +4047,16 @@ There are also FreeBSD packages for a small eclectic collection of
 @cindex OS X
 
 You can build @R{} as a Unix application on OS X using the Apple
-Developer Tools (`Xcode') and @command{gfortran}.  You may also need to
-install an X sub-system or configure with @option{--without-x}.  The X
-window manager is part of the standard OS X distribution since
-OS X version 10.3 (Panther), but it is typically not pre-installed prior
-to 10.5 (Leopard).  You will also need @command{gfortran} and
-@code{libreadline} (or configure with @option{--without-readline}).
+Developer Tools (`Xcode') and a version of @command{gfortran}.  (Recent
+versions of Xcode need `Command Line Tools for Xcode'.)  You may also
+need to install an X sub-system or configure with @option{--without-x}.
+The X window manager is part of the standard OS X distribution.  You
+will also need a version of @command{gfortran} and @code{libreadline}
+(or configure with @option{--without-readline}).
 
 For more information on how to find these tools please read the
 @uref{http://CRAN.R-project.org/@/bin/@/macosx/@/RMacOSX-FAQ.html, R for
-Mac OS X @acronym{FAQ}} or look at
-@url{http://r.research.att.com/@/tools/}.  You will typically need to
-install Xcode and a matching version of @command{gfortran} from the
-tools page.
+Mac OS X @acronym{FAQ}}.
 
 @cindex BLAS library
 @cindex LAPACK library
@@ -4161,42 +4080,55 @@ can be done (and is provided as an alternative in the binary
 distribution).
 
 @menu
+* 32-bit builds::               
 * 64-bit builds::               
 * Snow Leopard::                
 * Lion::                        
+* Frameworks::                  
 @end menu
 
-@node 64-bit builds, Snow Leopard, Mac OS X, Mac OS X
-@subsection 64-bit builds
+@node 32-bit builds, 64-bit builds, Mac OS X, Mac OS X
+@subsection 32-bit builds
 
-64-bit builds are supported on 10.5.x (Leopard) and later.  All that is
-needed is to select suitable compiler options, e.g.@: for most Intel
-Macs
+It is safest to tell the compilers explicitly to compile for 32-bit code
+by setting
 
 @example
-CC='gcc -arch x86_64'
-CXX='g++ -arch x86_64'
-F77='gfortran -arch x86_64'
-FC='gfortran -arch x86_64'
-OBJC='gcc -arch x86_64'
+CC='gcc-4.2 -arch i386'
+CXX='g++-4.2 -arch i386'
+F77='gfortran-4.2 -arch i386'
+FC='gfortran-4.2 -arch i386'
+OBJC='gcc-4.2 -arch i386'
 @end example
 
 @noindent
-in @file{config.site} or on the @command{configure} command line.  (Or
-on Leopard specify @option{gcc-4.2} etc: those versions are the default
-on Snow Leopard.)
+in @file{config.site} or on the @command{configure} command line.
+
+
+
+@node 64-bit builds, Snow Leopard, 32-bit builds, Mac OS X
+@subsection 64-bit builds
+
+64-bit builds are supported on 10.5.x (Leopard) and later.  All that is
+needed is to select suitable compiler options, e.g.@:
+
+@example
+CC='gcc-4.2 -arch x86_64'
+CXX='g++-4.2 -arch x86_64'
+F77='gfortran-4.2 -arch x86_64'
+FC='gfortran-4.2 -arch x86_64'
+OBJC='gcc-4.2 -arch x86_64'
+@end example
+
+@noindent
+in @file{config.site} or on the @command{configure} command line.
 
 @node Snow Leopard, Lion, 64-bit builds, Mac OS X
 @subsection Snow Leopard
 
-On Snow Leopard you will most likely to need to specify @option{-arch
-i386} for a 32-bit build and @option{-arch x86_64} for a 64-bit build:
-the Apple compilers default to 64-bit but the @command{gfortran}
-supplied on @uref{http://r.research.att.com} defaults to 32-bit.
-
-Another quirk is that the X11 libraries are not in the default linking
-path, so something like @samp{LIBS=-L/usr/X11/lib} may be required (or
-you can use the @command{configure} options
+A quirk on Snow Leopard is that the X11 libraries are not in the default
+linking path, so something like @samp{LIBS=-L/usr/X11/lib} may be
+required (or you can use the @command{configure} options
 @option{--x-includes=/usr/X11/include --x-libraries=/usr/X11/lib.}).
 
 So for a 64-bit build of @R{} you need a file @file{config.site} in the
@@ -4211,22 +4143,10 @@ OBJC='gcc -arch x86_64'
 LIBS=-L/usr/X11/lib
 @end example
 
-@noindent
-whereas for a 32-bit build it should have
-
-@example
-CC='gcc -arch i386'
-CXX='g++ -arch i386'
-F77='gfortran -arch i386'
-FC='gfortran -arch i386'
-OBJC='gcc -arch i386'
-LIBS=-L/usr/X11/lib
-@end example
-
-@node Lion,  , Snow Leopard, Mac OS X
+@node Lion, Frameworks, Snow Leopard, Mac OS X
 @subsection Lion
 
-With Xcode 4.2 you need to install a package named like
+With Xcode 4.2 and later you need to install a package named like
 @url{http://r.research.att.com/@/tools/@/gcc-42-5666.3-darwin11.pkg} to
 provide compilers named @command{gcc-4.2}, @command{g++-4.2} and
 @command{gfortran-4.2}.  These default to 64-bit, so for a 64-bit build
@@ -4240,8 +4160,7 @@ FC=gfortran-4.2
 OBJC=gcc-4.2
 @end example
 
-and for a 32-bit build add @option{-arch i386} as displayed under Snow
-Leopard.
+and for a 32-bit build add @option{-arch i386} as displayed above.
 
 It is also possible to build @R{} using Apple's C/C++ compilers supplied
 with Xcode, but these do need to be supplemented by a Fortran compiler
@@ -4249,6 +4168,36 @@ with Xcode, but these do need to be supplemented by a Fortran compiler
 @command{llvm-gcc}, an LLVM-based compiler with a @command{gcc 4.2.1}
 front end, and @command{clang} can also be used (and @command{clang++}
 for C++).
+
+@node Frameworks,  , Lion, Mac OS X
+@subsection Frameworks
+
+The @acronym{CRAN} build of @R{} is installed as a framework, which is
+selected by option
+
+@example
+./configure --with-blas='-framework vecLib' --with-lapack \
+  --with-aqua --enable-R-framework
+@end example
+
+The second line of options is only needed if you want to build @R{} for
+use with @code{R.app} Console, and imply @option{--enable-R-shlib} to
+build @R{} as a shared/dynamic library.  These options configure @R{} to
+be built and installed as a framework called @file{R.framework}.  The
+default installation path for @file{R.framework} is
+@file{/Library/Frameworks} but this can be changed at configure time by
+specifying the flag @option{--enable-R-framework[=@var{DIR}]} or at
+install time as
+
+@example
+make prefix=/where/you/want/R.framework/to/go install
+@end example
+
+
+Note that building the @file{R.app} GUI console is a separate project:
+see @uref{http://CRAN.R-project.org/@/bin/@/macosx/@/RMacOSX-FAQ.html,
+R for Mac OS X @acronym{FAQ}} for details.
+
 
 @node Solaris, AIX, Mac OS X, Platform notes
 @section Solaris
@@ -4445,9 +4394,13 @@ If using @command{gcc}, ensure that the compiler was compiled for the
 version of Solaris in use.  (This can be ascertained from @command{gcc
 -v}.)  @command{gcc} makes modified versions of some header files, and
 several reports of problems were due to using @command{gcc} compiled on
-one version of Solaris on a later version.
+one version of Solaris on a later version.  
 
-Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.6.2
+The notes here are for @command{gcc} set up to use the Solaris linker:
+it can also be set up to use GNU @command{ld}, but that has not been
+tested.
+
+Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.7.1
 needed
 
 @example
@@ -4475,7 +4428,7 @@ be in the
 The compilation can be tuned to a particular cpu: the CRAN check system
 uses @code{-mtune=niagara2}.
 
-Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.6.2
+Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.7.1
 needed
 
 @example
@@ -4491,10 +4444,19 @@ LDFLAGS="-L/opt/csw/gcc4/lib -L/opt/csw/lib -L/usr/local/lib"
 32-bit @code{gcc}, and we need @file{/opt/csw/lib} in
 @code{R_LD_LIBRARY_PATH}.)
 
-For @cputype{amd64} the builds have failed to complete in several
-different ways, currently with relocation errors for @file{libRblas.so}.
+For an @cputype{amd64} target with @command{gcc}@tie{}4.7.1
+we used 
 
-
+@example
+CC="/opt/csw/gcc4/bin/gcc -m64"
+CPPFLAGS="-I/opt/csw/include -I/usr/local/include"
+F77="/opt/csw/gcc4/bin/gfortran -m64"
+FPICFLAGS=-fPIC
+CXX="/opt/csw/gcc4/bin/g++ -m64"
+FC=$F77
+FCPICFLAGS=$FPICFLAGS
+LDFLAGS="-L/opt/csw/gcc4/lib/amd64 -L/opt/csw/lib/amd64"
+@end example
 
 @node AIX, Cygwin, Solaris, Platform notes
 @section AIX

@@ -2,7 +2,7 @@
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 2005-6 Morten Welinder <terra@gnome.org>
  *  Copyright (C) 2005-10 The R Foundation
- *  Copyright (C) 2006-10 The R Core Development Team
+ *  Copyright (C) 2006-10 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -727,7 +727,7 @@ double pgamma(double x, double alph, double scale, int lower_tail, int log_p)
 /* R_USE_OLD_PGAMMA */
 /*
  *  Copyright (C) 1998		Ross Ihaka
- *  Copyright (C) 1999-2000	The R Development Core Team
+ *  Copyright (C) 1999-2000	The R Core Team
  *  Copyright (C) 2003-2004	The R Foundation
  *  based on AS 239 (C) 1988 Royal Statistical Society
  *

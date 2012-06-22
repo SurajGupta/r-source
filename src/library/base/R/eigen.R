@@ -39,6 +39,8 @@ eigen <- function(x, symmetric, only.values = FALSE, EISPACK = FALSE)
     n <- nrow(x)
     if (!n) stop("0 x 0 matrix")
     if (n != ncol(x)) stop("non-square matrix in 'eigen'")
+    n <- as.integer(n)
+    if(is.na(n)) stop("invalid nrow(x)")
 
     complex.x <- is.complex(x)
     if(!complex.x && !is.double(x))
@@ -68,17 +70,15 @@ eigen <- function(x, symmetric, only.values = FALSE, EISPACK = FALSE)
     dbl.n <- double(n)
     if(symmetric) {##--> real values
 	if(complex.x) {
-	    xr <- Re(x)
-	    xi <- Im(x)
 	    z <- .Fortran("ch",
 			  n,
 			  n,
-			  xr,
-			  xi,
+			  Re(x),
+			  Im(x),
 			  values = dbl.n,
 			  !only.values,
-			  vectors = xr,
-			  ivectors = xi,
+			  vectors = Re(x),
+			  ivectors = Im(x),
 			  dbl.n,
 			  dbl.n,
 			  double(2*n),
@@ -166,5 +166,5 @@ eigen <- function(x, symmetric, only.values = FALSE, EISPACK = FALSE)
 	ord <- sort.list(Mod(z$values), decreasing = TRUE)
     }
     list(values = z$values[ord],
-	 vectors = if(!only.values) z$vectors[,ord, drop = FALSE])
+	 vectors = if(!only.values) z$vectors[, ord, drop = FALSE])
 }

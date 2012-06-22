@@ -1,6 +1,6 @@
 % File src/library/base/man/srcfile.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2011 R Core Team
 % Distributed under GPL 2 or later
 
 \name{srcfile}
@@ -141,8 +141,10 @@ srcref(srcfile, lloc)
 
 \code{srcref} returns a \code{srcref} object.
 }
+\seealso{
+\code{\link{getSrcFilename}} for extracting information from a source reference.
+}
 \author{Duncan Murdoch}
-
 \examples{\donttest{ # has timestamp
 src <- srcfile(system.file("DESCRIPTION", package = "base"))
 summary(src)

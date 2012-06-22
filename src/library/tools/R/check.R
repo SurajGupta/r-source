@@ -52,19 +52,23 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
 }
 
 setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
-                     libdir = NULL)
+                     libdir = NULL, self = FALSE)
 {
     WINDOWS <- .Platform$OS.type == "windows"
-    flink <- if(WINDOWS) {
-        if(TRUE) Sys.junction
-        else function(from, to) file.copy(from, to, recursive = TRUE)
-    } else file.symlink
+    useJunctions <- WINDOWS && !nzchar(Sys.getenv("R_WIN_NO_JUNCTIONS"))
+    flink <- function(from, to) {
+        res <- if(WINDOWS) {
+            if(useJunctions) Sys.junction(from, to)
+            else file.copy(from, to, recursive = TRUE)
+        } else file.symlink(from, to)
+        if (!res) stop("cannot link from ", from)
+    }
 
     pi <- .split_description(.read_description(file.path(pkgdir, "DESCRIPTION")))
     thispkg <- unname(pi$DESCRIPTION["Package"])
 
     ## We need to make some assumptions about layout: this version
-    ## asssumes .Library contains standard and recommended packages
+    ## assumes .Library contains standard and recommended packages
     ## and nothing else.
     tmplib <- tempfile("RLIBS_")
     dir.create(tmplib)
@@ -119,9 +123,17 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 if (pkg == "nlme") unlink(file.path(tmplib, "lattice"), TRUE)
             }
             where <- find.package(pkg, quiet = TRUE)
-            ## here we assume that dependencies from .Library are also in .Library
-            if(length(where) && !(dirname(where) %in% poss)) {
-                flink(where, tmplib)
+            if(length(where)) {
+                if (!(dirname(where) %in% poss))
+                    flink(where, tmplib)
+                else if (!test_recommended)
+                    # If the package is in the standard library we can
+                    # assume dependencies have been met, but we can
+                    # only skip the traversal if we aren't testing recommended
+                    # packages, because loading will fail if there is
+                    # an indirect dependency to one that has been hidden
+                    # by a dummy in tmplib.
+                    next
                 pi <- readRDS(file.path(where, "Meta", "package.rds"))
                 more <- c(more, names(pi$Depends), names(pi$Imports),
                           names(pi$LinkingTo))
@@ -130,6 +142,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
         already <- c(already, m0)
         more <- unique(more[!more %in% already])
     }
+    if (self) flink(normalizePath(pkgdir), tmplib)
     # print(dir(tmplib))
     rlibs <- tmplib
     if (nzchar(lib0)) rlibs <- c(lib0, rlibs)
@@ -881,7 +894,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             printLog(Log, .format_lines_with_indent(out), "\n")
             wrapLog("Portable packages must use only ASCII",
                     "characters in their R code,\n",
-                    "except perhaps in comments.\n")
+                    "except perhaps in comments.\n",
+                    "Use \\uxxxx escapes for other characters.\n")
         } else resultLog(Log, "OK")
 
         checkingLog(Log, "R files for syntax errors")
@@ -1631,9 +1645,9 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             else
                 wrapLog("\nCompiled code should not call functions which",
                         "might terminate R nor write to stdout/stderr instead",
-                        "of to the console.  The detected symbols are linked into the",
-                        "code but might come from libraries and not actually",
-                        "be called.\n",
+                        "of to the console.  The detected symbols are linked",
+                        "into the code but might come from libraries",
+                        "and not actually be called.\n",
                         "\n",
                         "See 'Writing portable packages'",
                         "in the 'Writing R Extensions' manual.\n")
@@ -2360,7 +2374,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 these <- files[chunk]
                 files <- files[-chunk]
                 lines <- suppressWarnings(system2("file", shQuote(these), TRUE, TRUE))
-                ex <- grepl("executable", lines, useBytes=TRUE)
+                ## avoid match to is_executable.Rd
+                ex <- grepl(" executable", lines, useBytes=TRUE)
 		ex2 <- grepl("script", lines, useBytes=TRUE) &
 		       grepl("text", lines, useBytes=TRUE)
                 execs <- c(execs, lines[ex & !ex2])
@@ -2993,7 +3008,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 1997-2011 The R Core Development Team.",
+                "Copyright (C) 1997-2011 The R Core Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep="\n")

@@ -4,11 +4,11 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ_YEAR 2012
-@set FAQ_DATE @value{FAQ_YEAR}-03-29
+@set FAQ_DATE @value{FAQ_YEAR}-09-19
 @set REL_YEAR 2012
 @set REL_MAJOR 2
 @set REL_MINOR 15
-@set REL_PATCHLEVEL 0
+@set REL_PATCHLEVEL 1
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 
@@ -550,11 +550,11 @@ The @file{bin/linux} directory of a @CRAN{} site contains the following
 packages.
 
 @quotation
-@multitable {Red Hat} {i386/x86_64} {hardy/lucid/maverick/natty/oneiric} {Martyn Plummer}
+@multitable {Red Hat} {i386/x86_64} {hardy/lucid/natty/oneiric/precise} {Martyn Plummer}
 @headitem @tab CPU @tab Versions @tab Provider
 @item Debian   @tab i386/amd64 @tab etch/lenny/squeeze @tab Johannes Ranke
 @item Red Hat  @tab i386/x86_64 @tab fedora10/fedora11 @tab Martyn Plummer
-@item Ubuntu   @tab i386/amd64 @tab hardy/lucid/maverick/natty/oneiric @tab Michael Rutter
+@item Ubuntu   @tab i386/amd64 @tab hardy/lucid/natty/oneiric/precise @tab Michael Rutter
 @end multitable
 @end quotation
 
@@ -720,7 +720,7 @@ To cite R in publications, use
 @@Manual@{,
   title        = @{R: A Language and Environment for Statistical
                   Computing@},
-  author       = @{@{R Development Core Team@}@},
+  author       = @{@{R Core Team@}@},
   organization = @{R Foundation for Statistical Computing@},
   address      = @{Vienna, Austria@},
   year         = @value{REL_YEAR},
@@ -3645,9 +3645,7 @@ bugs new-to-old'' or the search facility on
 @url{http://bugs.R-project.org/}.  Second, consult
 @url{https://svn.R-project.org/@/R/@/trunk/@/doc/@/NEWS.Rd}, which
 records changes that will appear in the @emph{next} release of R,
-including bug fixes that do not appear on the Bug Tracker.  (Windows
-users should additionally consult
-@url{https://svn.R-project.org/@/R/@/trunk/@/src/@/gnuwin32/@/CHANGES.Rd}.)
+including bug fixes that do not appear on the Bug Tracker.  
 Third, if possible try the current r-patched or r-devel version of R.
 If a bug has already been reported or fixed, please do not submit
 further bug reports on it.  Finally, check carefully whether the bug is

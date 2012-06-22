@@ -1,7 +1,7 @@
  /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996	Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2011	The R Development Core Team.
+ *  Copyright (C) 1998--2011	The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -781,6 +781,10 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedenv)
     else
 	begincontext(&cntxt, CTXT_RETURN, call, newrho, rho, arglist, op);
 
+    /* Get the srcref record from the closure object */
+    
+    R_Srcref = getAttrib(op, R_SrcrefSymbol);
+    
     /* The default return value is NULL.  FIXME: Is this really needed
        or do we always get a sensible value returned?  */
 
@@ -2016,6 +2020,10 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     RCNTXT cntxt;
 
     checkArity(op, args);
+
+    if (PRIMVAL(op)) {
+	warning(".Internal(eval.with.vis) should not be used and will be removed soon");
+    }
     expr = CAR(args);
     env = CADR(args);
     encl = CADDR(args);
@@ -2081,13 +2089,16 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     else if (TYPEOF(expr) == EXPRSXP) {
 	int i, n;
+	SEXP srcrefs = getBlockSrcrefs(expr);
 	PROTECT(expr);
 	n = LENGTH(expr);
 	tmp = R_NilValue;
 	begincontext(&cntxt, CTXT_RETURN, call, env, rho, args, op);
 	if (!SETJMP(cntxt.cjmpbuf))
-	    for(i = 0 ; i < n ; i++)
+	    for(i = 0 ; i < n ; i++) {
+	    	R_Srcref = getSrcref(srcrefs, i); 
 		tmp = eval(VECTOR_ELT(expr, i), env);
+	    }
 	else {
 	    tmp = R_ReturnedValue;
 	    if (tmp == R_RestartToken) {
@@ -4303,7 +4314,8 @@ static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
 	SEXP symbol = VECTOR_ELT(constants, GETOP());
 	value = INTERNAL(symbol);
 	if (TYPEOF(value) != BUILTINSXP)
-	  error(_("not a BUILTIN function"));
+	  error(_("there is no .Internal function '%s'"),
+		CHAR(PRINTNAME(symbol)));
 
 	/* push the function and push space for creating the argument list. */
 	ftype = TYPEOF(value);

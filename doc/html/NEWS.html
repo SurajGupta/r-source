@@ -8,6 +8,432 @@
 
 <h2> R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.15.1</h3>
+
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+
+<ul>
+<li> <p><code>source()</code> now uses <code>withVisible()</code> rather than
+<code>.Internal(eval.with.vis)</code>.  This sometimes alters tracebacks
+slightly.
+</p>
+</li>
+<li> <p><code>install.packages("pkg_version.tgz")</code> on Mac OS X now
+has sanity checks that this is actually a binary package (as
+people have tried it with incorrectly named source packages).
+</p>
+</li>
+<li> <p><code>splineDesign()</code> and <code>spline.des()</code> in package
+<span class="pkg">splines</span> have a new option <code>sparse</code> which can be used
+for efficient construction of a sparse B-spline design matrix
+(<EM>via</EM> <span class="pkg">Matrix</span>).
+</p>
+</li>
+<li> <p><code>norm()</code> now allows <code>type = "2"</code> (the
+&lsquo;spectral&rsquo; or 2-norm) as well, mainly for didactical
+completeness.
+</p>
+</li>
+<li> <p><code>pmin()</code> and <code>pmax())</code> now also work when one of
+the inputs is of length zero and others are not, returning a
+zero-length vector, analogously to, say, <code>+</code>.
+</p>
+</li>
+<li> <p><code>colorRamp()</code> (and hence <code>colorRampPalette()</code>) now
+also works for the boundary case of just one color when the ramp is
+flat.
+</p>
+</li>
+<li> <p><code>qqline()</code> has new optional arguments
+<code>distribution</code>, <code>probs</code> and <code>qtype</code>, following the
+example of <span class="pkg">lattice</span>'s <code>panel.qqmathline()</code>.
+</p>
+</li>
+<li> <p><code>.C()</code> gains some protection against the misuse of
+character vector arguments.  (An all too common error is to pass
+<code>character(N)</code>, which initializes the elements to <code>""</code>,
+and then attempt to edit the strings in-place, sometimes forgetting
+to terminate them.)
+</p>
+</li>
+<li><p> Calls to the new function <code>globalVariables()</code> in
+package <span class="pkg">utils</span> declare that functions and other objects in a
+package should be treated as globally defined, so that <code>CMD
+      check</code> will not note them.
+</p>
+</li>
+<li> <p><code>print(packageDescription(*))</code> trims the <code>Collate</code>
+field by default.
+</p>
+</li>
+<li><p> The included copy of <code>zlib</code> has been updated to version
+1.2.7.
+</p>
+</li>
+<li><p> A new option <code>"show.error.locations"</code> has been added.
+When set to <code>TRUE</code>, error messages will contain the
+location of the most recent call containing source reference
+information. (Other values are supported as well; see
+<code>?options</code>.)
+</p>
+</li>
+<li><p> The NA warning messages from e.g. <code>pchisq()</code> now report
+the call to the closure and not that of the <code>.Internal</code>.
+</p>
+</li>
+<li><p> Added Polish translations by Łukasz Daniel.
+</p>
+</li></ul>
+
+
+
+
+<h4>PERFORMANCE IMPROVEMENTS</h4>
+
+
+
+<ul>
+<li><p> In package <span class="pkg">parallel</span>, <code>makeForkCluster()</code> and the
+multicore-based functions use native byte-order for serialization
+(deferred from 2.15.0).
+</p>
+</li>
+<li> <p><code>lm.fit()</code>, <code>lm.wfit()</code>, <code>glm.fit()</code> and
+<code>lsfit()</code> do less copying of objects, mainly by using
+<code>.Call()</code> rather than <code>.Fortran()</code>.
+</p>
+</li>
+<li> <p><code>.C()</code> and <code>.Fortran()</code> do less copying: arguments
+which are raw, logical, integer, real or complex vectors and are
+unnamed are not copied before the call, and (named or not) are not
+copied after the call.  Lists are no longer copied (they are
+supposed to be used read-only in the C code).
+</p>
+</li>
+<li> <p><code>tabulate()</code> makes use of <code>.C(DUP = FALSE)</code> and
+hence does not copy <code>bin</code>.  (Suggested by Tim Hesterberg.)
+It also avoids making a copy of a factor argument <code>bin</code>.
+</p>
+</li>
+<li><p> Other functions (often or always) doing less copying include
+<code>cut()</code>, <code>dist()</code>, the complex case of <code>eigen()</code>,
+<code>hclust()</code>, <code>image()</code>, <code>kmeans()</code>, <code>loess()</code>,
+<code>stl()</code> and <code>svd(LINPACK = TRUE)</code>.
+</p>
+</li>
+<li><p> There is less copying when using primitive replacement
+functions such as <code>names()</code>, <code>attr()</code> and
+<code>attributes()</code>.
+</p>
+</li></ul>
+
+
+
+
+<h4>DEPRECATED AND DEFUNCT</h4>
+
+
+
+<ul>
+<li><p> The converters for use with <code>.C()</code> (see
+<code>?getCConverterDescriptions</code>) are deprecated: use the
+<code>.Call()</code> interface instead.  There are no known examples
+(they were never fully documented).
+</p>
+</li></ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+
+<ul>
+<li><p> For <CODE>R CMD check</CODE>, a few people have reported
+problems with junctions on Windows (although they were tested on
+Windows 7, XP and Server 2008 machines and it is unknown under
+what circumstances the problems occur).  Setting the environment
+variable <span class="env">R_WIN_NO_JUNCTIONS</span> to a non-empty value (e.g. in
+&lsquo;<span class="file">~/.R/check.Renviron</span>&rsquo;) will force copies to be used instead.
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION</h4>
+
+
+
+<ul>
+<li> <p><CODE>R CMD INSTALL</CODE> with <span class="env">_R_CHECK_INSTALL_DEPENDS_</span>
+set to a true value (as done by <CODE>R CMD check --as-cran</CODE>)
+now restricts the packages available when lazy-loading as well
+as when test-loading (since packages such as <a href="http://CRAN.R-project.org/package=ETLUtils"><span class="pkg">ETLUtils</span></a>
+and <a href="http://CRAN.R-project.org/package=agsemisc"><span class="pkg">agsemisc</span></a> had top-level calls to <code>library()</code>
+for undeclared packages).
+</p>
+<p>This check is now also available on Windows.
+</p>
+</li></ul>
+
+
+
+
+<h4>C-LEVEL FACILITIES</h4>
+
+
+
+<ul>
+<li><p> C entry points <code>mkChar</code> and <code>mkCharCE</code> now check
+that the length of the string they are passed does not exceed
+<i>2^31-1</i> bytes: they used to overflow with
+unpredictable consequences.
+</p>
+</li>
+<li><p> C entry points <code>R_GetCurrentSrcref</code> and
+<code>R_GetSrcFilename</code> have been added to the API to allow
+debuggers access to the source references on the stack.
+</p>
+</li></ul>
+
+
+
+
+<h4>WINDOWS-SPECIFIC CHANGES</h4>
+
+
+
+<ul>
+<li><p> Windows-specific changes will now be announced in this file
+(&lsquo;<span class="file">NEWS</span>&rsquo;).  Changes up and including <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.15.0 remain in the
+&lsquo;<span class="file">CHANGES</span>&rsquo; file.
+</p>
+</li>
+<li><p> There are two new environment variables which
+control the defaults for command-line options.
+</p>
+<p>If <span class="env">R_WIN_INTERNET2</span> is set to a non-empty value, it is as if
+<span class="option">--internet2</span> was used.
+</p>
+<p>If <span class="env">R_MAX_MEM_SIZE</span> is set, it gives the default memory limit
+if <span class="option">--max-mem-size</span> is not specified: invalid values being
+ignored.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+
+<ul>
+<li> <p><code>lsfit()</code> lost the names from the residuals.
+</p>
+</li>
+<li><p> More cases in which <code>merge()</code> could create a data frame
+with duplicate column names now give warnings.  Cases where
+names specified in <code>by</code> match multiple columns are errors.
+</p>
+</li>
+<li><p> Nonsense uses such as <code>seq(1:50, by = 5)</code> (from package
+<a href="http://CRAN.R-project.org/package=plotrix"><span class="pkg">plotrix</span></a>) and <code>seq.int(1:50, by = 5)</code> are now errors.
+</p>
+</li>
+<li><p> The residuals in the 5-number summary printed by
+<code>summary()</code> on an <code>"lm"</code> object are now explicitly
+labelled as weighted residuals when non-constant weights are
+present.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14840">PR#14840</a>.)
+</p>
+</li>
+<li> <p><code>tracemem()</code> reported that all objects were copied
+by <code>.C()</code> or <code>.Fortran()</code> whereas only some object types
+were ever copied.
+</p>
+<p>It also reported and marked as copies <EM>some</EM> transformations
+such as <code>rexp(n, x)</code>: it no longer does so.
+</p>
+</li>
+<li><p> The <code>plot()</code> method for class <code>"stepfun"</code> only
+used the optional <code>xval</code> argument to compute <code>xlim</code> and
+not the points at which to plot (as documented).  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14864">PR#14864</a>)
+</p>
+</li>
+<li><p> Names containing characters which need to be escaped were
+not deparsed properly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14846">PR#14846</a>)
+</p>
+</li>
+<li><p> Trying to update (recommended) packages in
+&lsquo;<span class="file">R_HOME/library</span>&rsquo; without write access is now dealt with more
+gracefully.  Further, such package updates may be skipped (with a
+warning), when a newer installed version is already going to be
+used from <code>.libPaths()</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14866">PR#14866</a>)
+</p>
+</li>
+<li> <p><code>hclust()</code> is now fast again (as up to end of 2003),
+with a different fix for the &quot;median&quot;/&quot;centroid&quot; problem.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=4195">PR#4195</a>).
+</p>
+</li>
+<li> <p><code>get_all_vars()</code> failed when the data came entirely
+from vectors in the global environment. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14847">PR#14847</a>)
+</p>
+</li>
+<li> <p><CODE>R CMD check</CODE> with <span class="env">_R_CHECK_NO_RECOMMENDED_</span>
+set to a true value (as done by the <CODE>--as-cran</CODE> option)
+could issue false errors if there was an indirect dependency
+on a recommended package.
+</p>
+</li>
+<li> <p><code>formatC()</code> uses the C entry point <code>str_signif</code>
+which could write beyond the length allocated for the output string.
+</p>
+</li>
+<li><p> Missing default argument added to implicit S4 generic for
+<code>backsolve()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14883">PR#14883</a>)
+</p>
+</li>
+<li><p> Some bugs have been fixed in handling load actions that
+could fail to export assigned items or generate spurious warnings
+in <code>CMD check</code> on loading.
+</p>
+</li>
+<li><p> For <code>tiff(type = "windows")</code>, the numbering of per-page
+files except the last was off by one.
+</p>
+</li>
+<li><p> On Windows, loading package <span class="pkg">stats</span> (which is done for
+a default session) would switch line endings on &lsquo;<span class="file">stdout</span>&rsquo;
+and &lsquo;<span class="file">stderr</span>&rsquo; from CRLF to LF.  This affected
+<CODE>Rterm</CODE> and <CODE>R CMD BATCH</CODE>.
+</p>
+</li>
+<li><p> On Windows, the compatibility function <code>x11()</code> had
+not kept up with changes to <code>windows()</code>, and issued
+warnings about bad parameters. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14880">PR#14880</a>)
+</p>
+</li>
+<li><p> On Windows, the <code>Sys.glob()</code> function did not handle
+UNC paths as it was designed to try to do. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14884">PR#14884</a>)
+</p>
+</li>
+<li><p> In package <span class="pkg">parallel</span>, <code>clusterApply()</code> and similar
+failed to handle a (pretty pointless) length-1 argument. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14898">PR#14898</a>)
+</p>
+</li>
+<li><p> Quartz Cocoa display reacted asynchronously to
+<code>dev.flush()</code> which means that the redraw could be performed
+after the plot has been already modified by subsequent code. The
+redraw is now done synchronously in <code>dev.flush()</code> to allow
+animations without sleep cycles.
+</p>
+</li>
+<li><p> Source locations reported in <code>traceback()</code> were
+incorrect when byte-compiled code was on the stack.
+</p>
+</li>
+<li> <p><code>plogis(x, lower = FALSE, log.p = TRUE)</code> no longer
+underflows early for large x (e.g. 800).
+</p>
+</li>
+<li> <p><code>?Arithmetic</code>'s &ldquo;<code>1 ^ y</code> and <code>y ^ 0</code>
+are <code>1</code>, <EM>always</EM>&rdquo; now also applies for <code>integer</code>
+vectors <code>y</code>.
+</p>
+</li>
+<li><p> X11-based pixmap devices like <code>png(type = "Xlib")</code> were
+trying to set the cursor style, which triggered some warnings and
+hangs.
+</p>
+</li>
+<li><p> Code executed by the built-in HTTP server no longer allows
+other HTTP clients to re-enter <font face="Courier New,Courier" color="#666666"><b>R</b></font> until the current worker
+evaluation finishes, to prevent cascades.
+</p>
+</li>
+<li><p> The <code>plot()</code> and <code>Axis()</code> methods for class
+<code>"table"</code> now respect graphical parameters such as
+<code>cex.axis</code>.  (Reported by Martin Becker.)
+</p>
+</li>
+<li><p> Under some circumstances <code>package.skeleton()</code> would
+give out progress reports that could not be translated and so were
+displayed by question marks.  Now they are always in English.
+(This was seen for CJK locales on Windows, but may have occurred
+elsewhere.)
+</p>
+</li>
+<li><p> The evaluator now keeps track of source references outside
+of functions, e.g. when <code>source()</code> executes a script.
+</p>
+</li>
+<li><p> The replacement method for <code>window()</code> now works
+correctly for multiple time series of class <code>"mts"</code>.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14925">PR#14925</a>)
+</p>
+</li>
+<li> <p><code>is.unsorted()</code> gave incorrect results on non-atomic
+objects such as data frames.  (Reported by Matthew Dowle.)
+</p>
+</li>
+<li><p> The value returned by <code>tools::psnice()</code> for invalid
+<code>pid</code> values was not always <code>NA</code> as documented.
+</p>
+</li>
+<li><p> Closing an <code>X11()</code> window while <code>locator()</code> was
+active could abort the <font face="Courier New,Courier" color="#666666"><b>R</b></font> process.
+</p>
+</li>
+<li> <p><code>getMethod(f, sig)</code> produced an incorrect error message
+in some cases when <code>f</code> was not a string).
+</p>
+</li>
+<li><p> Using a string as a &ldquo;call&rdquo; in an error condition
+with <code>options(showErrorCalls=TRUE)</code> could cause a segfault.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14931">PR#14931</a>)
+</p>
+</li>
+<li><p> The string <code>"infinity"</code> allowed by C99 was not accepted
+as a numerical string value by e.g. <code>scan()</code> and
+<code>as.character()</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14933">PR#14933</a>)
+</p>
+</li>
+<li><p> In <code>legend()</code>, setting some entries of <code>lwd</code> to
+<code>NA</code> was inconsistent (depending on the graphics device) in
+whether it would suppress those lines; now it consistently does
+so.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14926">PR#14926</a>)
+</p>
+</li>
+<li> <p><code>by()</code> failed for a zero-row data frame.  (Reported by
+Weiqiang Qian)
+</p>
+</li>
+<li><p> Yates correction in <code>chisq.test()</code> could be bigger than
+the terms it corrected, previously leading to an infinite test
+statistic in some corner cases which are now reported as
+<code>NaN</code>.
+</p>
+</li>
+<li> <p><code>xgettext()</code> and related functions sometimes returned
+items that were not strings for translation. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14935">PR#14935</a>)
+</p>
+</li>
+<li> <p><code>plot(&lt;lm&gt;, which=5)</code> now correctly labels the factor
+level combinations for the special case where all
+<i>h[i,i]</i> are the same. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14837">PR#14837</a>)
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.15.0</h3>
 
 
@@ -467,11 +893,6 @@ rare cases where it is still needed.
 <span class="option">--with-valgrind-instrumentation</span> now also instruments logical,
 complex and raw vectors.
 </p>
-</li>
-<li><p> There is experimental support for <EM>link-time
-optimization</EM> with <CODE>gcc</CODE> 4.5.0 or later on platforms
-which support it.
-</p>
 </li></ul>
 
 
@@ -593,7 +1014,7 @@ are now consistently using single brackets.
 </p>
 </li>
 <li><p> Closed the <span class="samp">&lt;li&gt;</span> tag in pages generated by <code>
-      Rd2HTML()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14841">PR#14841</a>.)      
+      Rd2HTML()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14841">PR#14841</a>.)
 </p>
 </li>
 <li><p> Axis tick marks could go out of range when a log scale was

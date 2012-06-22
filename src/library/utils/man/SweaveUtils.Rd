@@ -1,6 +1,6 @@
 % File src/library/utils/man/SweaveUtils.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
 \name{SweaveUtils}
@@ -32,5 +32,7 @@ SweaveHooks(options, run = FALSE, envir = .GlobalEnv)
 makeRweaveLatexCodeRunner(evalFunc=RweaveEvalWithOpt)
 }
 \author{Friedrich Leisch, with contributions by Seth Falcon}
+\seealso{The \code{\link{Sweave}}, \code{\link{RweaveLatex}} help pages.
+}
 \keyword{utilities}
 \keyword{internal}

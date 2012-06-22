@@ -5,11 +5,11 @@ fi
 
 tools_classpath=${R_SHARE_DIR}/java
 
-revision='$Rev: 58677 $'
+revision='$Rev: 59038 $'
 version=`set - ${revision}; echo ${2}`
 version="R Java configurator: ${R_VERSION} (r${version})
 
-Copyright (C) 2002-11 The R Core Development Team.
+Copyright (C) 2002-11 The R Core Team.
 This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 

@@ -1,6 +1,6 @@
 % File src/library/base/man/ls.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Development Team
+% Copyright 1995-2010 R Core Team
 % Distributed under GPL 2 or later
 
 \name{ls}
@@ -74,7 +74,7 @@ objects(name, pos= -1, envir = as.environment(pos),
 \examples{
 .Ob <- 1
 ls(pattern = "O")
-ls(pattern= " O", all.names = TRUE)    # also shows ".[foo]"
+ls(pattern= "O", all.names = TRUE)    # also shows ".[foo]"
 
 # shows an empty list because inside myfunc no variables are defined
 myfunc <- function() {ls()}

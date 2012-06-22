@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2012  The R Development Core Team
+ *  Copyright (C) 1995--2012  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -892,7 +892,7 @@ static R_INLINE void OutComplexVec(R_outpstream_t stream, SEXP s, int length)
         for (done = 0; done < length; done += this) {
 	    this = min2(CHUNK_SIZE, length - done);
 	    stream->OutBytes(stream, COMPLEX(s) + done, 
-			     sizeof(Rcomplex) * length);
+			     sizeof(Rcomplex) * this);
 	}
 	break;
     }
@@ -1426,6 +1426,13 @@ static R_INLINE void InComplexVec(R_inpstream_t stream, SEXP obj, int length)
     }
 }
 
+static int ReadLENGTH (R_inpstream_t stream)
+{
+    int len = InInteger(stream);
+    if (len < 0)
+	error("negative serialized vector length:\nperhaps long vector from future 64-bit version of R?");
+    return len;
+}
 
 static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 {
@@ -1555,7 +1562,7 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    }
 	    break;
 	case CHARSXP:
-	    /* Let us support these will still be limited to 2^31 -1 bytes */
+	    /* Let us suppose these will still be limited to 2^31 -1 bytes */
 	    length = InInteger(stream);
 	    if (length == -1)
 		PROTECT(s = NA_STRING);
@@ -1581,29 +1588,29 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    break;
 	case LGLSXP:
 	case INTSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    InIntegerVec(stream, s, len);
 	    break;
 	case REALSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    InRealVec(stream, s, len);
 	    break;
 	case CPLXSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    InComplexVec(stream, s, len);
 	    break;
 	case STRSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    for (count = 0; count < len; ++count)
 		SET_STRING_ELT(s, count, ReadItem(ref_table, stream));
 	    break;
 	case VECSXP:
 	case EXPRSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    for (count = 0; count < len; ++count)
 		SET_VECTOR_ELT(s, count, ReadItem(ref_table, stream));
@@ -1616,7 +1623,7 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	case GENERICREFSXP:
 	    error(_("this version of R cannot read generic function references"));
 	case RAWSXP:
-	    len = InInteger(stream);
+	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
 	    {
 		/* need to read longer vectors in chunks in future */

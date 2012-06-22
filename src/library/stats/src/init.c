@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-2010   The R Development Core Team.
+ *  Copyright (C) 2001-2012   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -152,6 +152,10 @@ static const R_CMethodDef CEntries[]  = {
     {NULL, NULL, 0}
 };
 
+SEXP Cdqrls(SEXP x, SEXP y, SEXP tol);
+SEXP Cdist(SEXP x, SEXP method, SEXP attrs, SEXP p);
+
+
 static const R_CallMethodDef CallEntries[] = {
     {"R_cutree", (DL_FUNC) &R_cutree, 2},
     {"R_isoreg", (DL_FUNC) &R_isoreg, 1},
@@ -189,6 +193,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"logit_mu_eta", (DL_FUNC) &logit_mu_eta, 1},
     {"binomial_dev_resids", (DL_FUNC) &binomial_dev_resids, 3},
     {"R_rWishart", (DL_FUNC) &R_rWishart, 3},
+    {"Cdqrls", (DL_FUNC) &Cdqrls, 3},
+    {"Cdist", (DL_FUNC) &Cdist, 4},
     {NULL, NULL, 0}
 };
 

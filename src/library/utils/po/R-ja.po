@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-02-12 08:59\n"
+"POT-Creation-Date: 2012-05-21 13:00\n"
 "PO-Revision-Date: 2012-02-26 14:23+0200 \n"
 "Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
@@ -590,35 +590,11 @@ msgid "'list' must be a character vector naming R objects"
 msgstr ""
 " 'list' は R オブジェクトの名前を与える文字ベクトルでなければなりません "
 
-msgid "cannot turn off locale-specific chars via LC_CTYPE"
-msgstr " LC_CTYPE 経由でロケール固有の文字を使用停止にできません "
-
 msgid "no R objects specified or available"
 msgstr " 如何なる R オブジェクトも指定されていないか利用可能ではありません "
 
-msgid "Creating directories ..."
-msgstr " ディレクトリを作成中 ... "
-
 msgid "directory '%s' already exists"
 msgstr " ディレクトリ '%s' は既に存在します "
-
-msgid "Creating DESCRIPTION ..."
-msgstr " DESCRIPTION を作成中 ... "
-
-msgid "From R 2.14.0 on, every package gets a NAMESPACE."
-msgstr "R 2.14.0以降、すべてのパッケージは名前空間を持つ必要があります。 "
-
-msgid "Argument 'namespace' is deprecated."
-msgstr " 引数 'namespace' は廃止される予定です。 "
-
-msgid "Creating NAMESPACE ..."
-msgstr " NAMESPACE を作成中 ... "
-
-msgid "Creating Read-and-delete-me ..."
-msgstr " Read-and-delete-me を作成中 ... "
-
-msgid "Saving functions and data ..."
-msgstr " 関数とデータを保存中 ... "
 
 msgid ""
 "Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
@@ -627,32 +603,15 @@ msgstr ""
 " ジェネリック関数と他のS4オブジェクト（例えば %s）をダンプできません。 "
 "code_files = argumentを使ってください。 "
 
-msgid "Copying code files ..."
-msgstr " コードファイルをコピー中 ... "
-
-msgid "Invalid file name(s) for R code in"
-msgstr " Rコードに不正なファイル名 "
-
-msgid ":"
-msgstr " : "
-
-msgid "are now renamed to 'z<name>.R'"
-msgstr " の名前は 'z<name>.R' に変更されました "
-
-msgid "Making help files ..."
-msgstr " ヘルプファイルを作成中 ... "
-
-msgid "Done."
-msgstr " 終了。 "
-
-msgid "Further steps are described in '%s'."
-msgstr " これ以上のステップが '%s' 中に説明されています "
-
 msgid "unable to access index for repository %s"
 msgstr " リポジトリー %s に対する索引にアクセスできません "
 
 msgid "Invalid 'filters' argument."
 msgstr " 不正な 'filters' 引数 "
+
+#, fuzzy
+msgid "package '%s' in library '%s' will not be updated"
+msgstr " パッケージ '%s' は使用中ですから、インストールされません "
 
 msgid ""
 "invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
@@ -746,15 +705,6 @@ msgstr ""
 msgid "'lib = \"%s\"' is not writable"
 msgstr " 'lib = \"%s\"' は書き込み可能ではありません "
 
-msgid ""
-"Would you like to create a personal library\n"
-"%s\n"
-"to install packages into?"
-msgstr ""
-" パッケージをインストールするために個人的なライブラリ \n"
-" '%s' \n"
-" を作りたいのですか？ "
-
 msgid "unable to install packages"
 msgstr " パッケージをインストール出来ませんでした "
 
@@ -820,6 +770,11 @@ msgid ""
 msgstr ""
 " ダウンロードされたパッケージは、以下にあります \n"
 " \t%s "
+
+msgid ""
+"The namespace for package \"%s\" is locked; no changes in the global "
+"variables list may be made."
+msgstr ""
 
 msgid "no object named '%s' to show"
 msgstr " 表示すべき '%s' という名前のオブジェクトがありません "
@@ -1156,6 +1111,9 @@ msgstr " ダウンロードはゼロ以外の終了状態を持ちました "
 msgid "'tar' returned non-zero exit code %d"
 msgstr " 'tar' がゼロでない終了コード %d を返しました "
 
+msgid "file %s is not an OS X binary package"
+msgstr ""
+
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr " パッケージ %s は無事に展開され、MD5 サムもチェックされました "
 
@@ -1169,6 +1127,7 @@ msgstr ""
 " 変更中 \n"
 " 除去を試みています "
 
+#, fuzzy
 msgid "ERROR: failed to create lock directory"
 msgstr " 排他的ディレクトリ '%s' を作ることが出来ません "
 
@@ -1231,6 +1190,7 @@ msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] " オブジェクト '%s' が見付かりません "
 
+#, fuzzy
 msgid "package %s is not available (for %s)"
 msgid_plural "packages %s are not available (for %s)"
 msgstr[0] " パッケージ %s が利用できません "
@@ -1254,6 +1214,60 @@ msgstr[0] " ソースパッケージ %s をインストール中です "
 msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] " パッケージ '%s' は使用中ですから、インストールされません "
+
+#~ msgid "cannot turn off locale-specific chars via LC_CTYPE"
+#~ msgstr " LC_CTYPE 経由でロケール固有の文字を使用停止にできません "
+
+#~ msgid "Creating directories ..."
+#~ msgstr " ディレクトリを作成中 ... "
+
+#~ msgid "Creating DESCRIPTION ..."
+#~ msgstr " DESCRIPTION を作成中 ... "
+
+#~ msgid "From R 2.14.0 on, every package gets a NAMESPACE."
+#~ msgstr "R 2.14.0以降、すべてのパッケージは名前空間を持つ必要があります。 "
+
+#~ msgid "Argument 'namespace' is deprecated."
+#~ msgstr " 引数 'namespace' は廃止される予定です。 "
+
+#~ msgid "Creating NAMESPACE ..."
+#~ msgstr " NAMESPACE を作成中 ... "
+
+#~ msgid "Creating Read-and-delete-me ..."
+#~ msgstr " Read-and-delete-me を作成中 ... "
+
+#~ msgid "Saving functions and data ..."
+#~ msgstr " 関数とデータを保存中 ... "
+
+#~ msgid "Copying code files ..."
+#~ msgstr " コードファイルをコピー中 ... "
+
+#~ msgid "Invalid file name(s) for R code in"
+#~ msgstr " Rコードに不正なファイル名 "
+
+#~ msgid ":"
+#~ msgstr " : "
+
+#~ msgid "are now renamed to 'z<name>.R'"
+#~ msgstr " の名前は 'z<name>.R' に変更されました "
+
+#~ msgid "Making help files ..."
+#~ msgstr " ヘルプファイルを作成中 ... "
+
+#~ msgid "Done."
+#~ msgstr " 終了。 "
+
+#~ msgid "Further steps are described in '%s'."
+#~ msgstr " これ以上のステップが '%s' 中に説明されています "
+
+#~ msgid ""
+#~ "Would you like to create a personal library\n"
+#~ "%s\n"
+#~ "to install packages into?"
+#~ msgstr ""
+#~ " パッケージをインストールするために個人的なライブラリ \n"
+#~ " '%s' \n"
+#~ " を作りたいのですか？ "
 
 #~ msgid "Postscript offline help is deprecated"
 #~ msgstr "Postscript のオフラインヘルプは廃止されました  "

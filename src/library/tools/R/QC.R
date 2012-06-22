@@ -2577,7 +2577,7 @@ function(dir, force_suggests = TRUE)
             have_ver <- unlist(lapply(lreqs, function(x) length(x) == 3L))
             lreqs3 <- lreqs[have_ver]
             if(length(lreqs3)) {
-                bad <- character(0)
+                bad <- character()
                 for (r in lreqs3) {
                     pkg <- r[[1L]]
                     op <- r[[2L]]
@@ -3412,6 +3412,12 @@ function(package, lib.loc = NULL)
             lapply(sub(".*=[[:space:]]*", "", opts),
                    config_val_to_logical)
     }
+    ## look for globalVariables declaration in package
+    .glbs <- utils::globalVariables(,package)
+    if(length(.glbs))
+        ## codetools doesn't allow adding to its default
+        args$suppressUndefined <-
+            c(codetools:::dfltSuppressUndefined, .glbs)
 
     args <- c(list(package, report = foo), args)
     suppressMessages(do.call(codetools::checkUsagePackage, args))
@@ -3425,6 +3431,12 @@ function(package, lib.loc = NULL)
 format.check_code_usage_in_package <-
 function(x, ...)
 {
+    if(length(x)) {
+        ## There seems no easy we can gather usage diagnostics by type,
+        ## so try to rearrange to some extent when formatting.
+        ind <- grepl(": partial argument match of", x, fixed = TRUE)
+        if(any(ind)) x <- c(x[ind], x[!ind])
+    }
     strwrap(x, indent = 0L, exdent = 2L)
 }
 
@@ -5243,13 +5255,12 @@ function(dir)
     db <- tryCatch(lapply(urls, .repository_db), error = identity)
     if(inherits(db, "error")) {
         message("NB: need Internet access to use CRAN incoming checks")
+        ## Actually, all repositories could be local file:// mirrors.
         return(out)
     }
     db <- do.call(rbind, db)
 
-    ## Assume the CRAN URL comes first.
-    ## Note that .get_standard_repository_URLs() currently [2011-07-26]
-    ## does not provide repository names.
+    ## Note that .get_standard_repository_URLs() puts the CRAN master first.
     CRAN <- urls[1L]
 
     ## For now, information about the CRAN package archive is provided
@@ -5294,7 +5305,7 @@ function(dir)
     if(length(repositories))
         out$repositories <- repositories
 
-    ## Is this an update for package already on CRAN?
+    ## Is this an update for a package already on CRAN?
     db <- db[(packages == package) &
              (db[, "Repository"] == CRAN) &
              is.na(db[, "Path"]), , drop = FALSE]

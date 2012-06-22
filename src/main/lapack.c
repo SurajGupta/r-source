@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-2010 The R Development Core Team
+ *  Copyright (C) 2001-2010 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,10 +49,6 @@ SEXP det_ge_real(SEXP A, SEXP logarithm)
 
 static int initialized = 0;
 
-#ifdef Win32
-# include <fcntl.h>
-#endif
-
 static void La_Init(void)
 {
     int res = R_moduleCdynload("lapack", 1, 1);
@@ -61,11 +57,6 @@ static void La_Init(void)
     if(!ptr->svd)
 	error(_("lapack routines cannot be accessed in module"));
     initialized = 1;
-#ifdef Win32
-    /* gfortran initialization sets these to _O_BINARY */
-    setmode(1,_O_TEXT); /* stdout */
-    setmode(2,_O_TEXT); /* stderr */
-#endif
     return;
 }
 

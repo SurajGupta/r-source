@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/dev2bitmap.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{dev2bitmap}
@@ -17,7 +17,7 @@ dev2bitmap(file, type = "png16m", height = 7, width = 7, res = 72,
 }
 \arguments{
   \item{file}{The output file name, with an appropriate extension.}
-  \item{type}{The type of bitmap. the default is \code{"png256"}.}
+  \item{type}{The type of bitmap.}
   \item{width, height}{Dimensions of the display region.}
   \item{res}{Resolution, in dots per inch.}
   \item{units}{The units in which \code{height} and \code{width} are

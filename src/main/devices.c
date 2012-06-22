@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2008  The R Development Core Team
+ *  Copyright (C) 1997--2008  The R Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -400,8 +400,8 @@ SEXP attribute_hidden do_devprev(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP attribute_hidden do_devset(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+    checkArity_length;
     int devNum = INTEGER(CAR(args))[0] - 1;
-    checkArity(op, args);
     return ScalarInteger( selectDevice(devNum) + 1 );
 }
 

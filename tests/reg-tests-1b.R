@@ -1763,12 +1763,80 @@ stopifnot(identical(names(tt), "a"))
 
 ## predict( VAR(p >= 2) )
 set.seed(42)
-u <- matrix(rnorm(200),100,2)
-y <- filter(u,filter=0.8,"recursive")
-est <- ar(y, aic=FALSE, order.max=2) ## Estimate VAR(2)
-xpred <- predict(object=est, n.ahead=100, se.fit=FALSE)
-stopifnot(dim(xpred) == c(100,2), abs(range(xpred)) < 1)
+u <- matrix(rnorm(200), 100, 2)
+y <- filter(u, filter=0.8, "recursive")
+est <- ar(y, aic = FALSE, order.max = 2) ## Estimate VAR(2)
+xpred <- predict(object = est, n.ahead = 100, se.fit = FALSE)
+stopifnot(dim(xpred) == c(100, 2), abs(range(xpred)) < 1)
 ## values went to +- 1e23 in R <= 2.14.2
 
+
+## regression tests for merge
+d1 <- data.frame(a = 1:10, b = 1:10, b.x = 10:1)
+d2 <- data.frame(a = 1:10, b = 101:110)
+op <- options(warn = 2)
+z <- try(merge(d1, d2, by = 'a'))
+stopifnot(inherits(z, "try-error"))
+merge(d1, d2, by = 'a', suffixes = c("", ".y"))
+z <- try(merge(d1, d2, by = 'a', suffixes = c(".z", ".z")))
+stopifnot(inherits(z, "try-error"))
+options(op)
+# First 'worked' in R < 2.15.0, second was disallowed in early 2012,
+# third 'worked' in R < 2.15.1.
+# example based on package SDMTools::compare.matrix
+# where 'by' is ambiguous.
+x <- expand.grid(x = 1:2, y = 1:2)
+y <- data.frame(x = c(1,2,1,2), y = c(1,1,2,2), z = c(5040,128,1123,3709))
+merge(x, y, all = TRUE)
+names(y)[3] <- "x"
+stopifnot(inherits(try(merge(x, y, all = TRUE)), "try-error"))
+## 'worked' in R < 2.15.1.
+
+
+## misuse of seq() by package 'plotrix'
+stopifnot(inherits(try(seq(1:50, by = 5)), "try-error"))
+## gave 1:50 in R < 2.15.1, with warnings from seq().
+
+
+## regression test for PR#14850 (misuse of dim<-)
+b <- a <- matrix(1:2, ncol = 2)
+`dim<-`(b, c(2, 1))
+stopifnot(ncol(a) == 2)
+## did not duplicate.
+
+
+## deparsing needs escape characters in names (PR#14846)
+f <- function(x) switch(x,"\\dbc"=2,3)
+parse(text=deparse(f))
+## Gave error about unrecognized escape
+
+
+## hclust()'s original algo was not ok for "median" (nor "centroid") -- PR#4195
+n <- 12; p <- 3
+set.seed(46)
+d <- dist(matrix(round(rnorm(n*p), digits = 2), n,p), "manhattan")
+d[] <- d[] * sample(1 + (-4:4)/100, length(d), replace=TRUE)
+hc <- hclust(d, method = "median")
+stopifnot(all.equal(hc$height[5:11],
+                    c(1.69805, 1.75134375, 1.34036875, 1.47646406,
+                      3.21380039, 2.9653438476, 6.1418258), tol = 1e-9))
+##
+
+
+## 'infinity' partially matched 'inf'
+stopifnot(as.numeric("infinity") == Inf)
+## was NA in R < 2.15.1
+
+
+## by() failed for a 0-row data frame
+b <- data.frame(ppg.id=1, predvol=2)
+a <- b[b$ppg.id == 2, ]
+by(a, a["ppg.id"], function(x){
+    vol.sum = numeric()
+    id = integer();
+    if(dim(x)[1] > 0) {id = x$ppg.id[1]; vol.sum = sum(x$predvol)}
+    data.frame(ppg.id=id, predVolSum=vol.sum)
+})
+## failed in 2.15.0
 
 proc.time()

@@ -22,9 +22,8 @@ function(x, centers, iter.max = 10, nstart = 1,
         Z <-
             switch(nmeth,
                    { # 1
-                       Z <- .Fortran(C_kmns, as.double(x), as.integer(m),
-                                as.integer(ncol(x)),
-                                centers = as.double(centers),
+                       Z <- .Fortran(C_kmns, x, m, p,
+                                centers = centers,
                                 as.integer(k), c1 = integer(m), integer(m),
                                 nc = integer(k), double(k), double(k), integer(k),
                                 double(m), integer(k), integer(k),
@@ -41,9 +40,8 @@ function(x, centers, iter.max = 10, nstart = 1,
                        Z
                    },
                    { # 2
-                       Z <- .C(C_kmeans_Lloyd, as.double(x), as.integer(m),
-                               as.integer(ncol(x)),
-                               centers = as.double(centers), as.integer(k),
+                       Z <- .C(C_kmeans_Lloyd, x, m, p,
+                               centers = centers, as.integer(k),
                                c1 = integer(m), iter = as.integer(iter.max),
                                nc = integer(k), wss = double(k))
                        if(Z$iter > iter.max)
@@ -54,8 +52,7 @@ function(x, centers, iter.max = 10, nstart = 1,
                        Z
                    },
                    { # 3
-                       Z <- .C(C_kmeans_MacQueen, as.double(x), as.integer(m),
-                               as.integer(ncol(x)),
+                       Z <- .C(C_kmeans_MacQueen, x, m, p,
                                centers = as.double(centers), as.integer(k),
                                c1 = integer(m), iter = as.integer(iter.max),
                                nc = integer(k), wss = double(k))
@@ -69,7 +66,10 @@ function(x, centers, iter.max = 10, nstart = 1,
         Z
     }
     x <- as.matrix(x)
-    m <- nrow(x)
+    m <- as.integer(nrow(x))
+    if(is.na(m)) stop("invalid nrow(x)")
+    p <- as.integer(ncol(x))
+    if(is.na(p)) stop("invalid ncol(x)")
     if(missing(centers))
 	stop("'centers' must be a number or a matrix")
     nmeth <- switch(match.arg(algorithm),
@@ -101,6 +101,8 @@ function(x, centers, iter.max = 10, nstart = 1,
     if(iter.max < 1) stop("'iter.max' must be positive")
     if(ncol(x) != ncol(centers))
 	stop("must have same number of columns in 'x' and 'centers'")
+    if(!is.double(x)) storage.mode(x) <- "double"
+    if(!is.double(centers)) storage.mode(centers) <- "double"
     Z <- do_one(nmeth)
     best <- sum(Z$wss)
     if(nstart >= 2 && !is.null(cn))

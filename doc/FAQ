@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.15.2012-03-29
+Version 2.15.2012-09-19
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -258,7 +258,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.15.0.  Based on this
+The current released version is 2.15.1.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -392,11 +392,11 @@ port of R for Macintosh is no longer supported.
 
 The `bin/linux' directory of a CRAN site contains the following packages.
 
-               CPU           Versions                             Provider
-     ------------------------------------------------------------------------------ 
-     Debian    i386/amd64    etch/lenny/squeeze                   Johannes Ranke
-     Red Hat   i386/x86_64   fedora10/fedora11                    Martyn Plummer
-     Ubuntu    i386/amd64    hardy/lucid/maverick/natty/oneiric   Michael Rutter
+               CPU           Versions                            Provider
+     ----------------------------------------------------------------------------- 
+     Debian    i386/amd64    etch/lenny/squeeze                  Johannes Ranke
+     Red Hat   i386/x86_64   fedora10/fedora11                   Martyn Plummer
+     Ubuntu    i386/amd64    hardy/lucid/natty/oneiric/precise   Michael Rutter
 
    Debian packages, maintained by Dirk Eddelbuettel, have long been part of
 the Debian distribution, and can be accessed through APT, the Debian
@@ -527,7 +527,7 @@ To cite R in publications, use
      @Manual{,
        title        = {R: A Language and Environment for Statistical
                        Computing},
-       author       = {{R Development Core Team}},
+       author       = {{R Core Team}},
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
        year         = 2012,
@@ -2824,12 +2824,10 @@ bug has already been reported and/or fixed.  First, try the "Show open bugs
 new-to-old" or the search facility on `http://bugs.R-project.org/'.
 Second, consult `https://svn.R-project.org/R/trunk/doc/NEWS.Rd', which
 records changes that will appear in the _next_ release of R, including bug
-fixes that do not appear on the Bug Tracker.  (Windows users should
-additionally consult
-`https://svn.R-project.org/R/trunk/src/gnuwin32/CHANGES.Rd'.)  Third, if
-possible try the current r-patched or r-devel version of R.  If a bug has
-already been reported or fixed, please do not submit further bug reports on
-it.  Finally, check carefully whether the bug is with R, or a contributed
+fixes that do not appear on the Bug Tracker.  Third, if possible try the
+current r-patched or r-devel version of R.  If a bug has already been
+reported or fixed, please do not submit further bug reports on it.
+Finally, check carefully whether the bug is with R, or a contributed
 package.  Bug reports on contributed packages should be sent first to the
 package maintainer, and only submitted to the R-bugs repository by package
 maintainers, mentioning the package in the subject line.

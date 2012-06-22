@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2011	    The R Development Core Team.
+ *  Copyright (C) 1998--2012	    The R Core Team.
  *  Copyright (C) 2003-4	    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -643,29 +643,6 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
     else
 	ans = allocVector(INTSXP, n);
     if (n1 == 0 || n2 == 0) return(ans);
-    /* note: code below was surely wrong in DIVOP and POWOP cases,
-       since ans was a REALSXP.
-     */
-
-/*    if (n1 < 1 || n2 < 1) {
-	for (i = 0; i < n; i++)
-	    INTEGER(ans)[i] = NA_INTEGER;
-	return ans;
-	} */
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(s1) || RTRACE(s2)) {
-       if (RTRACE(s1) && RTRACE(s2)) {
-	  if (n1 > n2)
-	      memtrace_report(s1, ans);
-	  else
-	      memtrace_report(s2, ans);
-       } else if (RTRACE(s1))
-	   memtrace_report(s1, ans);
-       else /* only s2 */
-	   memtrace_report(s2, ans);
-       SET_RTRACE(ans, 1);
-    }
-#endif
 
     switch (code) {
     case PLUSOP:
@@ -737,9 +714,9 @@ static SEXP integer_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2, SEXP lcall)
 	break;
     case POWOP:
 	mod_iterate(n1, n2, i1, i2) {
-	    x1 = INTEGER(s1)[i1];
-	    x2 = INTEGER(s2)[i2];
-	    if (x1 == NA_INTEGER || x2 == NA_INTEGER)
+	    if((x1 = INTEGER(s1)[i1]) == 1 || (x2 = INTEGER(s2)[i2]) == 0)
+		REAL(ans)[i] = 1.;
+	    else if (x1 == NA_INTEGER || x2 == NA_INTEGER)
 		REAL(ans)[i] = NA_REAL;
 	    else {
 		REAL(ans)[i] = R_POW((double) x1, (double) x2);
@@ -808,26 +785,6 @@ static SEXP real_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 
     n = (n1 > n2) ? n1 : n2;
     PROTECT(ans = allocVector(REALSXP, n));
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(s1) || RTRACE(s2)) {
-       if (RTRACE(s1) && RTRACE(s2)) {
-	  if (n1 > n2)
-	      memtrace_report(s1, ans);
-	  else
-	      memtrace_report(s2, ans);
-       } else if (RTRACE(s1))
-	   memtrace_report(s1,ans);
-       else /* only s2 */
-	   memtrace_report(s2, ans);
-       SET_RTRACE(ans, 1);
-    }
-#endif
-
-/*    if (n1 < 1 || n2 < 1) {
-      for (i = 0; i < n; i++)
-      REAL(ans)[i] = NA_REAL;
-      return ans;
-      } */
 
     switch (code) {
     case PLUSOP:
@@ -1041,12 +998,6 @@ static SEXP math1(SEXP sa, double(*f)(double), SEXP lcall)
     /* coercion can lose the object bit */
     PROTECT(sa = coerceVector(sa, REALSXP));
     PROTECT(sy = allocVector(REALSXP, n));
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa)){
-       memtrace_report(sa, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
     a = REAL(sa);
     y = REAL(sy);
     naflag = 0;
@@ -1058,8 +1009,8 @@ static SEXP math1(SEXP sa, double(*f)(double), SEXP lcall)
 	    if (ISNAN(y[i])) naflag = 1;
 	}
     }
-    if(naflag)
-	warningcall(lcall, R_MSG_NA);
+    /* These are primitives, so need to use the call */
+    if(naflag) warningcall(lcall, R_MSG_NA);
 
     DUPLICATE_ATTRIB(sy, sa);
     UNPROTECT(2);
@@ -1213,21 +1164,6 @@ static SEXP math2(SEXP sa, SEXP sb, double (*f)(double, double),
 
     SETUP_Math2;
 
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb)) {
-       if (RTRACE(sa) && RTRACE(sb)){
-	  if (na > nb)
-	      memtrace_report(sa, sy);
-	  else
-	      memtrace_report(sb, sy);
-       } else if (RTRACE(sa))
-	   memtrace_report(sa, sy);
-       else /* only s2 */
-	   memtrace_report(sb, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
-
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1239,8 +1175,7 @@ static SEXP math2(SEXP sa, SEXP sb, double (*f)(double, double),
     }
 
 #define FINISH_Math2				\
-    if(naflag)					\
-	warningcall(lcall, R_MSG_NA);		\
+    if(naflag) warning(R_MSG_NA);		\
     if (n == na)  DUPLICATE_ATTRIB(sy, sa);	\
     else if (n == nb) DUPLICATE_ATTRIB(sy, sb);	\
     UNPROTECT(3)
@@ -1264,21 +1199,6 @@ static SEXP math2_1(SEXP sa, SEXP sb, SEXP sI,
 
     SETUP_Math2;
     m_opt = asInteger(sI);
-
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb)) {
-       if (RTRACE(sa) && RTRACE(sb)) {
-	  if (na > nb)
-	      memtrace_report(sa, sy);
-	  else
-	      memtrace_report(sb, sy);
-       } else if (RTRACE(sa))
-	   memtrace_report(sa, sy);
-       else /* only s2 */
-	   memtrace_report(sb, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
 
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
@@ -1307,21 +1227,6 @@ static SEXP math2_2(SEXP sa, SEXP sb, SEXP sI1, SEXP sI2,
     SETUP_Math2;
     i_1 = asInteger(sI1);
     i_2 = asInteger(sI2);
-
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb)) {
-       if (RTRACE(sa) && RTRACE(sb)) {
-	  if (na > nb)
-	      memtrace_report(sa, sy);
-	  else
-	      memtrace_report(sb, sy);
-       } else if (RTRACE(sa))
-	   memtrace_report(sa, sy);
-       else /* only s2 */
-	   memtrace_report(sb, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
 
     mod_iterate(na, nb, ia, ib) {
 	ai = a[ia];
@@ -1352,21 +1257,6 @@ static SEXP math2B(SEXP sa, SEXP sb, double (*f)(double, double, double *),
     /* for 0-length a we want the attributes of a, not those of b
        as no recycling will occur */
     SETUP_Math2;
-
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb)) {
-       if (RTRACE(sa) && RTRACE(sb)) {
-	  if (na > nb)
-	      memtrace_report(sa, sy);
-	  else
-	      memtrace_report(sb, sy);
-       } else if (RTRACE(sa))
-	   memtrace_report(sa, sy);
-       else /* only s2 */
-	   memtrace_report(sb, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
 
     /* allocate work array for BesselJ, BesselY large enough for all
        arguments */
@@ -1619,8 +1509,7 @@ SEXP attribute_hidden do_log(SEXP call, SEXP op, SEXP args, SEXP env)
     naflag = 0
 
 #define FINISH_Math3				\
-    if(naflag)					\
-	warningcall(lcall, R_MSG_NA);		\
+    if(naflag) warning(R_MSG_NA);		\
 						\
     if (n == na) DUPLICATE_ATTRIB(sy, sa);	\
     else if (n == nb) DUPLICATE_ATTRIB(sy, sb);	\
@@ -1638,18 +1527,6 @@ static SEXP math3_1(SEXP sa, SEXP sb, SEXP sc, SEXP sI,
 
     SETUP_Math3;
     i_1 = asInteger(sI);
-
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb) || RTRACE(sc)) {
-       if (RTRACE(sa))
-	  memtrace_report(sa, sy);
-       else if (RTRACE(sb))
-	  memtrace_report(sb, sy);
-       else if (RTRACE(sc))
-	  memtrace_report(sc, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
 
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
@@ -1679,19 +1556,6 @@ static SEXP math3_2(SEXP sa, SEXP sb, SEXP sc, SEXP sI, SEXP sJ,
     i_1 = asInteger(sI);
     i_2 = asInteger(sJ);
 
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb) || RTRACE(sc)) {
-       if (RTRACE(sa))
-	  memtrace_report(sa, sy);
-       else if (RTRACE(sb))
-	  memtrace_report(sb, sy);
-       else if (RTRACE(sc))
-	  memtrace_report(sc, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
-
-
     mod_iterate3 (na, nb, nc, ia, ib, ic) {
 	ai = a[ia];
 	bi = b[ib];
@@ -1718,18 +1582,6 @@ static SEXP math3B(SEXP sa, SEXP sb, SEXP sc,
     long nw;
 
     SETUP_Math3;
-
-#ifdef R_MEMORY_PROFILING
-    if (RTRACE(sa) || RTRACE(sb) || RTRACE(sc)) {
-       if (RTRACE(sa))
-	  memtrace_report(sa, sy);
-       else if (RTRACE(sb))
-	  memtrace_report(sb, sy);
-       else if (RTRACE(sc))
-	  memtrace_report(sc, sy);
-       SET_RTRACE(sy, 1);
-    }
-#endif
 
     /* allocate work array for BesselI, BesselK large enough for all
        arguments */
@@ -1899,8 +1751,7 @@ static SEXP math4(SEXP sa, SEXP sb, SEXP sc, SEXP sd,
     }
 
 #define FINISH_Math4				\
-    if(naflag)					\
-	warningcall(lcall, R_MSG_NA);		\
+    if(naflag) warning(R_MSG_NA);		\
 						\
     if (n == na) DUPLICATE_ATTRIB(sy, sa);	\
     else if (n == nb) DUPLICATE_ATTRIB(sy, sb);	\
@@ -2085,8 +1936,7 @@ static SEXP math5(SEXP sa, SEXP sb, SEXP sc, SEXP sd, SEXP se, double (*f)())
     }
 
 #define FINISH_Math5				\
-    if(naflag)					\
-	warningcall(lcall, R_MSG_NA);		\
+    if(naflag) warning(R_MSG_NA);		\
 						\
     if (n == na) DUPLICATE_ATTRIB(sy, sa);	\
     else if (n == nb) DUPLICATE_ATTRIB(sy, sb);	\

@@ -1,12 +1,13 @@
 % File src/library/base/man/Defunct.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Development Team
+% Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Defunct}
 \title{Marking Objects as Defunct}
 \alias{Defunct}
 \alias{.Defunct}
+\alias{defunct}
 
 \description{
   When a function is removed from \R it should be replaced by a function

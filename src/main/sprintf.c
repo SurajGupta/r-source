@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002--2009     The R Development Core Team
+ *  Copyright (C) 2002--2009     The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -252,7 +252,7 @@ SEXP attribute_hidden do_sprintf(SEXP call, SEXP op, SEXP args, SEXP env)
 			    *q = '\0';
 			    nf = strlen(fmt2);
 			    if (nf > MAXLINE)
-				error(_("the '%*' constructed 'fmt2' length exceeds maximum of %d"),
+				error(_("'fmt' length exceeds maximal format length %d"),
 				      MAXLINE);
 			    fmtp = fmt2;
 			} else fmtp = fmt;

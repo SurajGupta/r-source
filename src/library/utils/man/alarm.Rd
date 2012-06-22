@@ -1,6 +1,6 @@
 % File src/library/utils/man/alarm.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Development Team
+% Copyright 1995-2011 R Core Team
 % Distributed under GPL 2 or later
 
 \name{alarm}
@@ -20,7 +20,7 @@ alarm()
   to the user (unless standard output has been redirected).
 
   As from \R 2.14.0 it attempts to flush the console (see
-  \code{\link{flush.console}}.
+  \code{\link{flush.console}}).
 }
 \value{
   No useful value is returned.

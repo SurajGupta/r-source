@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2012  The R Development Core Team
+ *  Copyright (C) 1997--2012  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -270,7 +270,7 @@ SEXP type2symbol(SEXPTYPE t)
        character string and to the symbol would be better */
     for (i = 0; TypeTable[i].str; i++) {
 	if (TypeTable[i].type == t)
-	    return install((char *) &TypeTable[i].str);
+	    return install((const char *)&TypeTable[i].str);
     }
     error(_("type %d is unimplemented in '%s'"), t, "type2symbol");
     return R_NilValue; /* for -Wall */
@@ -492,7 +492,7 @@ void attribute_hidden setRVector(double * vec, int len, double val)
 	vec[i] = val;
 }
 
-
+/* unused in R, in Rinternals.h */
 void setSVector(SEXP * vec, int len, SEXP val)
 {
     int i;
@@ -1486,14 +1486,14 @@ double R_strtod4(const char *str, char **endptr, char dec, Rboolean NA)
 	ans = R_NaN;
 	p += 3;
 	goto done;
-    } else if (strncasecmp(p, "Inf", 3) == 0) {
-	ans = R_PosInf;
-	p += 3;
-	goto done;
-    /* C99 specifies this */
+    /* C99 specifies this: must come first to avoid 'inf' match */
     } else if (strncasecmp(p, "infinity", 8) == 0) {
 	ans = R_PosInf;
 	p += 8;
+	goto done;
+    } else if (strncasecmp(p, "Inf", 3) == 0) {
+	ans = R_PosInf;
+	p += 3;
 	goto done;
     }
 
@@ -1747,6 +1747,7 @@ SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
     UErrorCode  status = U_ZERO_ERROR;
 
     for (; args != R_NilValue; args = CDR(args)) {
+	if (isNull(TAG(args))) error(_("alll arguments must be named"));
 	const char *this = CHAR(PRINTNAME(TAG(args)));
 	const char *s;
 

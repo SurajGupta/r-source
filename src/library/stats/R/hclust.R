@@ -53,6 +53,7 @@ hclust <- function(d, method="complete", members=NULL)
     n <- as.integer(attr(d, "Size"))
     if(is.null(n))
 	stop("invalid dissimilarities")
+    if(is.na(n) || n > 65536L) stop("size cannot be NA nor exceed 65536")
     if(n < 2)
         stop("must have n >= 2 objects to cluster")
     len <- as.integer(n*(n-1)/2)
@@ -65,6 +66,7 @@ hclust <- function(d, method="complete", members=NULL)
     else if(length(members) != n)
         stop("invalid length of members")
 
+    if (!is.double(d)) storage.mode(d) <- "double"
     hcl <- .Fortran(C_hclust,
 		    n = n,
 		    len = len,
@@ -76,7 +78,7 @@ hclust <- function(d, method="complete", members=NULL)
 		    nn = integer(n),
 		    disnn = double(n),
 		    flag = logical(n),
-		    diss = as.double(d), PACKAGE="stats")
+		    diss = d, PACKAGE="stats")
 
     ## 2nd step: interpret the information that we now have
     ## as merge, height, and order lists.
@@ -92,8 +94,8 @@ hclust <- function(d, method="complete", members=NULL)
     tree <- list(merge = cbind(hcass$iia[1L:(n-1)], hcass$iib[1L:(n-1)]),
 		 height= hcl$crit[1L:(n-1)],
 		 order = hcass$order,
-		 labels=attr(d, "Labels"),
-                 method=METHODS[method],
+		 labels = attr(d, "Labels"),
+                 method = METHODS[method],
                  call = match.call(),
                  dist.method = attr(d, "method"))
     class(tree) <- "hclust"
@@ -118,12 +120,12 @@ plot.hclust <-
     labels <-
 	if(missing(labels) || is.null(labels)) {
 	    if (is.null(x$labels))
-		paste(1L:(n+1))
+		paste(1L:(n+1L))
 	    else
 		as.character(x$labels)
 	} else {
 	    if(is.logical(labels) && !labels)# FALSE
-		character(n+1)
+		character(n+1L)
 	    else
 		as.character(labels)
 	}

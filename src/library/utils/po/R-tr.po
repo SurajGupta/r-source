@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-02-12 08:59\n"
+"POT-Creation-Date: 2012-05-21 13:00\n"
 "PO-Revision-Date: 2011-04-02 \n"
 "Last-Translator: Murat Alkan <muratalk@gmail.com>\n"
 "Language-Team: Turkish <muratalk@gmail.com>\n"
@@ -565,34 +565,10 @@ msgstr ""
 msgid "'list' must be a character vector naming R objects"
 msgstr ""
 
-msgid "cannot turn off locale-specific chars via LC_CTYPE"
-msgstr ""
-
 msgid "no R objects specified or available"
 msgstr ""
 
-msgid "Creating directories ..."
-msgstr ""
-
 msgid "directory '%s' already exists"
-msgstr ""
-
-msgid "Creating DESCRIPTION ..."
-msgstr ""
-
-msgid "From R 2.14.0 on, every package gets a NAMESPACE."
-msgstr ""
-
-msgid "Argument 'namespace' is deprecated."
-msgstr ""
-
-msgid "Creating NAMESPACE ..."
-msgstr ""
-
-msgid "Creating Read-and-delete-me ..."
-msgstr ""
-
-msgid "Saving functions and data ..."
 msgstr ""
 
 msgid ""
@@ -600,31 +576,13 @@ msgid ""
 "the code_files= argument"
 msgstr ""
 
-msgid "Copying code files ..."
-msgstr ""
-
-msgid "Invalid file name(s) for R code in"
-msgstr ""
-
-msgid ":"
-msgstr ":"
-
-msgid "are now renamed to 'z<name>.R'"
-msgstr ""
-
-msgid "Making help files ..."
-msgstr ""
-
-msgid "Done."
-msgstr ""
-
-msgid "Further steps are described in '%s'."
-msgstr ""
-
 msgid "unable to access index for repository %s"
 msgstr ""
 
 msgid "Invalid 'filters' argument."
+msgstr ""
+
+msgid "package '%s' in library '%s' will not be updated"
 msgstr ""
 
 msgid ""
@@ -709,12 +667,6 @@ msgstr ""
 msgid "'lib = \"%s\"' is not writable"
 msgstr ""
 
-msgid ""
-"Would you like to create a personal library\n"
-"%s\n"
-"to install packages into?"
-msgstr ""
-
 msgid "unable to install packages"
 msgstr "paketler yüklenemedi"
 
@@ -763,6 +715,11 @@ msgstr ""
 msgid ""
 "The downloaded source packages are in\n"
 "\t%s"
+msgstr ""
+
+msgid ""
+"The namespace for package \"%s\" is locked; no changes in the global "
+"variables list may be made."
 msgstr ""
 
 msgid "no object named '%s' to show"
@@ -1073,6 +1030,9 @@ msgstr ""
 msgid "'tar' returned non-zero exit code %d"
 msgstr ""
 
+msgid "file %s is not an OS X binary package"
+msgstr ""
+
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr ""
 
@@ -1176,3 +1136,6 @@ msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] ""
 msgstr[1] ""
+
+#~ msgid ":"
+#~ msgstr ":"

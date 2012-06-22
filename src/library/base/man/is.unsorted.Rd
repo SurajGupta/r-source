@@ -1,6 +1,6 @@
 % File src/library/base/man/sort.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Development Team
+% Copyright 1995-2008 R Core Team
 % Distributed under GPL 2 or later
 
 \name{is.unsorted}
@@ -23,7 +23,13 @@ is.unsorted(x, na.rm = FALSE, strictly = FALSE)
   A length-one logical value.  All objects of length 0 or 1 are sorted:
   the result will be \code{NA} for objects of length 2 or more except for
   atomic vectors and objects with a class (where the \code{>=} or \code{>}
-  method is used).
+  method is used to compare \code{x[i]} with \code{x[i-1]} for 
+  \code{i} in \code{2:length(x)}).
+}
+\note{
+  This function is designed for objects with one-dimensional indices, as
+  described above.  Dataframes, matrices and other arrays may give
+  surprising results.
 }
 \seealso{\code{\link{sort}}, \code{\link{order}}.}
 

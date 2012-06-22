@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2011   The R Development Core Team.
+ *  Copyright (C) 2011   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,7 +76,10 @@ SEXP ps_priority(SEXP spid, SEXP svalue)
     pid = INTEGER(sspid);
     res = INTEGER(sres);
     for (int i = 0; i < ns; i++) {
-	if (pid[i] <= 0) continue;
+	if (pid[i] <= 0) {
+	    res[i] = NA_INTEGER;
+	    continue;
+	}
 	if (pid[i] != NA_INTEGER) {
 	    /* return value -1 is both an error value 
 	       and a legitimate niceness */

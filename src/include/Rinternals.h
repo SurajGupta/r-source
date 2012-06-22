@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2010   The R Development Core Team.
+ *  Copyright (C) 1999-2010   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -551,6 +551,10 @@ LibExtern SEXP  R_dot_target;       /* ".target" */
 #define NA_STRING	R_NaString
 LibExtern SEXP	R_NaString;	    /* NA_STRING as a CHARSXP */
 LibExtern SEXP	R_BlankString;	    /* "" as a CHARSXP */
+
+/* srcref related functions */
+SEXP R_GetCurrentSrcref(int);
+SEXP R_GetSrcFilename(SEXP);
 
 /*--- FUNCTIONS ------------------------------------------------------ */
 

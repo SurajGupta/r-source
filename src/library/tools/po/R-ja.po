@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-03-16 06:26\n"
+"POT-Creation-Date: 2012-04-22 15:25\n"
 "PO-Revision-Date: 2012-02-26 14:22+0200 \n"
 "Last-Translator: Shigeru Mase <maseshigeru@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
@@ -324,6 +324,7 @@ msgstr " もう使われていない %s が Rd xrefs　中にあります "
 msgid "Package(s) unavailable to check Rd xrefs: %s"
 msgstr "Rd xrefs をチェックするためのパッケージがありません: %s "
 
+#, fuzzy
 msgid "Unknown package(s) %s in Rd xrefs"
 msgstr " Rd xrefs 中に未知のパッケージがあります "
 
@@ -404,6 +405,7 @@ msgid "'library' or 'require' calls not declared from:"
 msgstr ""
 " 'library' もしくは 'requires'　による呼出しが以下から宣言されていません: "
 
+#, fuzzy
 msgid "'library' or 'require' call not declared from: %s"
 msgstr ""
 " 'library' もしくは 'requires' 呼出しが以下から宣言されていません： ％ｓ "
@@ -621,6 +623,7 @@ msgstr ""
 msgid "ERROR: this R is version %s, required is R %s %s"
 msgstr " エラー：この R はバージョン %s です。 R %s %s を必要とします "
 
+#, fuzzy
 msgid "loading failed"
 msgstr " '%s' のロードに失敗しました "
 
@@ -635,6 +638,9 @@ msgstr " --compact-vignettes に対する不正な値です、 \"qpdf\" であ�
 
 msgid "Error: cannot rename directory to"
 msgstr " エラー：ディレクトリの名前を以下に変更できません "
+
+msgid "cannot link from"
+msgstr ""
 
 msgid "-l option without value"
 msgstr " 値のない -l オプション "
@@ -660,6 +666,9 @@ msgstr " パッケージ dir "
 
 msgid "does not exist"
 msgstr " は存在しません "
+
+msgid "non-ASCII input in a CITATION file without a declared encoding"
+msgstr ""
 
 msgid "No files in this directory"
 msgstr " このディレクトリにはファイルが存在しません "
