@@ -1,6 +1,8 @@
 #  File src/library/grDevices/R/calc.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -69,8 +71,7 @@ function (x = seq(0, 1, length.out = nrow(z)),
 	stop("no proper 'z' matrix specified")
     ##- don't lose  dim(.)
     if (!is.double(z)) storage.mode(z) <- "double"
-    invisible(.Internal(contourLines(as.double(x), as.double(y), z,
-                                     as.double(levels))))
+    .Internal(contourLines(as.double(x), as.double(y), z, as.double(levels)))
 }
 
 chull <- function(x, y = NULL)

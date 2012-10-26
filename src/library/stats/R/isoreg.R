@@ -1,6 +1,8 @@
 #  File src/library/stats/R/isoreg.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -29,7 +31,7 @@ isoreg <- function(x, y=NULL)
 	ord <- order(x, -y) ## 'increasing in x, decreasing in y'
 	y <- y[ord]
     }
-    z <- .Call(C_R_isoreg, if(isOrd)xy$y else y, PACKAGE = "stats")
+    z <- .Call(C_R_isoreg, if(isOrd)xy$y else y)
     structure(c(xy[c("x","y")], z[c("yf","yc","iKnots")],
                 list(isOrd = isOrd, ord = if(!isOrd) ord,
                      call = match.call())),

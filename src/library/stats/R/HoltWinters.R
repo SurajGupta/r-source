@@ -1,6 +1,8 @@
 #  File src/library/stats/R/HoltWinters.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 2002-12 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -13,6 +15,8 @@
 #
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
+
+# Originally contributed by David Meyer
 
 HoltWinters <-
 function (x,
@@ -92,6 +96,7 @@ function (x,
            as.double(max(min(beta, 1), 0)),
            as.double(max(min(gamma, 1), 0)),
            as.integer(start.time),
+           ## no idea why this is so: same as seasonal != "multiplicative"
            as.integer(! + (seasonal == "multiplicative")),
            as.integer(f),
            as.integer(!is.logical(beta) || beta),
@@ -105,9 +110,7 @@ function (x,
            SSE = as.double(0),
            level = double(len + 1L),
            trend = double(len + 1L),
-           seasonal = double(len + f),
-
-	   PACKAGE = "stats"
+           seasonal = double(len + f)
            )
 
     ## if alpha and/or beta and/or gamma are omitted, use optim to find the

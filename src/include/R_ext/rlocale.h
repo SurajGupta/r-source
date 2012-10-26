@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2005-6   The R Core Team
+ *  Copyright (C) 2005-12   The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 
 /*  This file was contributed by Ei-ji Nakama.
  *  See also the comments in src/main/rlocale.c.
+
+ * For use in R only. 
  */
 
 #ifndef R_LOCALE_H
@@ -35,7 +37,7 @@
 extern "C" {
 #endif
 
-extern char *locale2charset(const char *);
+extern const char *locale2charset(const char *);
 
 /*
  * Windows CJK

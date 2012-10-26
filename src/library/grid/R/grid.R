@@ -1,6 +1,8 @@
 #  File src/library/grid/R/grid.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -416,21 +418,21 @@ grid.refresh <- function() {
 grid.DLapply <- function(FUN, ...) {
     FUN <- match.fun(FUN)
     # Traverse DL and do something to each entry
-    gridDL <- grid.Call("L_getDisplayList")
-    gridDLindex <- grid.Call("L_getDLindex")
+    gridDL <- grid.Call(L_getDisplayList)
+    gridDLindex <- grid.Call(L_getDLindex)
     newDL <- vector("list", gridDLindex)
     for (i in 1:(gridDLindex - 1)) {
-        elt <- grid.Call("L_getDLelt", i)
+        elt <- grid.Call(L_getDLelt, i)
         newElt <- FUN(elt, ...)
         if (!(is.null(newElt) || inherits(newElt, class(elt))))
             stop("Invalid modification of the display list")
         newDL[[i]] <- newElt
     }
     for (i in 1:(gridDLindex - 1)) {
-        grid.Call("L_setDLindex", i)
-        grid.Call("L_setDLelt", newDL[[i]])
+        grid.Call(L_setDLindex, i)
+        grid.Call(L_setDLelt, newDL[[i]])
     }
-    grid.Call("L_setDLindex", gridDLindex)
+    grid.Call(L_setDLindex, gridDLindex)
 }
 
 # Wrapper for .Call and .Call.graphics
@@ -442,7 +444,7 @@ grid.DLapply <- function(FUN, ...) {
 # you are doing -- this will be a bit of overkill, but is for safety
 grid.Call <- function(fnname, ...) {
   .Call(L_gridDirty)
-  .Call(fnname, ..., PACKAGE="grid")
+  .Call(fnname, ...)
 }
 
 grid.Call.graphics <- function(fnname, ...) {
@@ -454,11 +456,11 @@ grid.Call.graphics <- function(fnname, ...) {
     # the the first thing on the engine display list is a dirty
     # operation;  this is necessary in case the display list is
     # played on another device (e.g., via replayPlot() or dev.copy())
-    .Call.graphics(L_gridDirty, PACKAGE="grid")
-    result <- .Call.graphics(fnname, ..., PACKAGE="grid")
+    .Call.graphics(L_gridDirty)
+    result <- .Call.graphics(fnname, ...)
   } else {
     .Call(L_gridDirty)
-    result <- .Call(fnname, ..., PACKAGE="grid")
+    result <- .Call(fnname, ...)
   }
   result
 }

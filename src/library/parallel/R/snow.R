@@ -1,6 +1,8 @@
 #  File src/library/parallel/R/snow.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -23,6 +25,7 @@ defaultCluster <- function(cl = NULL)
 {
     if(is.null(cl)) cl <- get("default", envir = .reg)
     if(is.null(cl)) stop("no cluster supplied and none is registered")
+    checkCluster(cl)
     cl
 }
 
@@ -232,7 +235,7 @@ recvData.MPInode <- function(node) snow::recvData.MPInode(node)
 recvData.NWSnode <- function(node) snow::recvData.NWSnode(node)
 recvData.PVMnode <- function(node) snow::recvData.PVMnode(node)
 
-recvOneData.MPIcluster <- function(cl) snow::recvOneData.MPIclusted(cl)
+recvOneData.MPIcluster <- function(cl) snow::recvOneData.MPIcluster(cl)
 recvOneData.NWScluster <- function(cl) snow::recvOneData.NWScluster(cl)
 recvOneData.PVMcluster <- function(cl) snow::recvOneData.PVMcluster(cl)
 
@@ -240,9 +243,21 @@ sendData.MPInode <- function(node, data) snow::sendData.MPInode(node, data)
 sendData.NWSnode <- function(node, data) snow::sendData.NWSnode(node, data)
 sendData.PVMnode <- function(node, data) snow::sendData.PVMnode(node, data)
 
-stopCluster.MPIcluster <- function(cl) snow::stopCluster.MPIcluster(cl)
-stopCluster.NWScluster <- function(cl) snow::stopCluster.NWScluster(cl)
-stopCluster.PVMcluster <- function(cl) snow::stopCluster.PVMcluster(cl)
-stopCluster.spawnedMPIcluster <-
-    function(cl) snow::stopCluster.spawnedMPIcluster(cl)
+## these use NextMethod() so need copies.
+stopCluster.MPIcluster <- function(cl) {
+    NextMethod()
+    snow::setMPIcluster(NULL)
+}
+
+stopCluster.spawnedMPIcluster <- function(cl) {
+    comm <- 1
+    NextMethod()
+    mpi.comm.disconnect(comm)
+}
+
+stopCluster.NWScluster <- function(cl) {
+  NextMethod()
+  nwsDeleteWs(cl[[1]]$wsServer, nwsWsName(cl[[1]]$ws))
+  close(cl[[1]]$wsServer)
+}
 

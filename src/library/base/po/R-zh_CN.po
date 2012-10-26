@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-06 10:53\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
 "Language-Team: Chinese\n"
@@ -91,6 +91,10 @@ msgstr "'X'必需有带名字的维名"
 
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr "所有'MARGIN'的元素都必需是维的名字不是'缘'的所有元素都是尺寸名称"
+
+#, fuzzy
+msgid "use of 0-length dim is deprecated"
+msgstr "'save'不再有用。"
 
 msgid "'dim' specifies too large an array"
 msgstr "'dim'的值太大"
@@ -245,10 +249,6 @@ msgstr "'breaks' 的值有重复"
 msgid "labels/breaks length conflict"
 msgstr "label/breaks两个参数的长度不一样"
 
-#, fuzzy
-msgid "invalid value of length(x)"
-msgstr "无效值"
-
 msgid "invalid 'row.names' length"
 msgstr "'row.names'的长度不对"
 
@@ -270,7 +270,8 @@ msgstr "'row.names'不对，长度%d与数据框的%d行不相配"
 msgid "supplied %d row names for %d rows"
 msgstr "%d行名与%d行不相配"
 
-msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+#, fuzzy
+msgid "options(\"stringsAsFactors\") not set to TRUE or FALSE"
 msgstr "options('stringsAsFactors') 只能取TRUE或FALSE值"
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
@@ -660,6 +661,10 @@ msgstr "如果所有的参数都有相同的因子水平设置的话，'%s'才�
 msgid "no files to copy to"
 msgstr "拷贝时没有可以写的文件"
 
+#, fuzzy
+msgid "attempt to copy a directory to itself"
+msgstr "无法为'%s'这个链结创建目录"
+
 msgid "more 'from' files than 'to' files"
 msgstr "'from'的文件比'to'的文件要多"
 
@@ -695,14 +700,6 @@ msgstr "'vec'内有NA值"
 
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec'的顺序一定得从小到大"
-
-#, fuzzy
-msgid "invalid length(x)"
-msgstr "名字不对"
-
-#, fuzzy
-msgid "invalid length(vec)"
-msgstr "名字不对"
 
 msgid "using the first element of 'value' of type expression"
 msgstr "用种类表现'value'的第一个元素"
@@ -1051,6 +1048,10 @@ msgstr "不能给没有维度的对象设行名"
 msgid "attempt to set colnames on object with less than two dimensions"
 msgstr "不能给维度小于二的对名设列名"
 
+#, fuzzy
+msgid "invalid value of nrow(x)"
+msgstr "无效值"
+
 msgid "argument is not numeric or logical: returning NA"
 msgstr "参数不是数值也不是逻辑值：回覆NA"
 
@@ -1296,6 +1297,10 @@ msgstr ""
 
 msgid "invalid ncol(qr$qr)"
 msgstr ""
+
+#, fuzzy
+msgid "invalid ncol(qr$rank)"
+msgstr "名字不对"
 
 #, fuzzy
 msgid "invalid ncol(y)"
@@ -1555,6 +1560,10 @@ msgstr "无效值"
 msgid "invalid value of nbins"
 msgstr "无效值"
 
+#, fuzzy
+msgid "'INDEX' is of length zero"
+msgstr "'x'的长度必需为一"
+
 msgid "arguments must have same length"
 msgstr "参数的长度必需相同"
 
@@ -1747,6 +1756,18 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告信息：\n"
 
+#, fuzzy
+#~ msgid "invalid length(x)"
+#~ msgstr "名字不对"
+
+#, fuzzy
+#~ msgid "invalid length(vec)"
+#~ msgstr "名字不对"
+
+#, fuzzy
+#~ msgid "invalid value of length(x)"
+#~ msgstr "无效值"
+
 #~ msgid ""
 #~ "Functions for exporting methods must have been made generic, explicitly "
 #~ "or implicitly; not true when loading %s for %s"
@@ -1795,9 +1816,6 @@ msgstr[0] "警告信息：\n"
 #~ msgid "no files to copy from"
 #~ msgstr "拷贝时没有可以读的文件"
 
-#~ msgid "use of 'save' is deprecated"
-#~ msgstr "'save'不再有用。"
-
 #, fuzzy
 #~ msgid "save != FALSE is defunct"
 #~ msgstr "'%s'不再有用。"
@@ -1833,9 +1851,6 @@ msgstr[0] "警告信息：\n"
 
 #~ msgid "invalid digits"
 #~ msgstr "数字无效"
-
-#~ msgid "'x' must be of length 1"
-#~ msgstr "'x'的长度必需为一"
 
 #~ msgid "The following object(s) are masked"
 #~ msgstr "以下的对象被遮蔽"

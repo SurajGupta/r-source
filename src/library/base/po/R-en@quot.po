@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
-"PO-Revision-Date: 2012-06-07 15:52\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-06 10:53\n"
+"PO-Revision-Date: 2012-08-06 10:53\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -41,19 +41,19 @@ msgid "Use '%s' instead."
 msgstr "Use ‘%s’ instead."
 
 msgid "See help(\"Defunct\") and help(\"%s-defunct\")."
-msgstr "See help(“Defunct”) and help(“%s-defunct”)."
+msgstr "See help(\"Defunct\") and help(\"%s-defunct\")."
 
 msgid "See help(\"Defunct\")"
-msgstr "See help(“Defunct”)"
+msgstr "See help(\"Defunct\")"
 
 msgid "'%s' is deprecated."
 msgstr "‘%s’ is deprecated."
 
 msgid "See help(\"Deprecated\") and help(\"%s-deprecated\")."
-msgstr "See help(“Deprecated”) and help(“%s-deprecated”)."
+msgstr "See help(\"Deprecated\") and help(\"%s-deprecated\")."
 
 msgid "See help(\"Deprecated\")"
-msgstr "See help(“Deprecated”)"
+msgstr "See help(\"Deprecated\")"
 
 msgid "argument to 'La.svd' must be numeric or complex"
 msgstr "argument to ‘La.svd’ must be numeric or complex"
@@ -109,6 +109,9 @@ msgstr "‘X’ must have named dimnames"
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr "not all elements of ‘MARGIN’ are names of dimensions"
 
+msgid "use of 0-length dim is deprecated"
+msgstr "use of 0-length dim is deprecated"
+
 msgid "'dim' specifies too large an array"
 msgstr "‘dim’ specifies too large an array"
 
@@ -141,7 +144,7 @@ msgid ""
 "  call: %s\n"
 "  error: %s"
 msgstr ""
-"%s failed in %s() for '%s', details:\n"
+"%s failed in %s() for ‘%s’, details:\n"
 "  call: %s\n"
 "  error: %s"
 
@@ -173,7 +176,7 @@ msgid "invalid value of ncol(x)"
 msgstr "invalid value of ncol(x)"
 
 msgid "singular matrix in 'backsolve'. First zero in diagonal [%d]"
-msgstr "singular matrix in 'backsolve'. First zero in diagonal [%d]"
+msgstr "singular matrix in ‘backsolve’. First zero in diagonal [%d]"
 
 msgid "complex matrices not permitted at present"
 msgstr "complex matrices not permitted at present"
@@ -230,7 +233,7 @@ msgid "argument 'object' must deparse to a single character string"
 msgstr "argument ‘object’ must deparse to a single character string"
 
 msgid "'origin' must be one of 'start', 'current' or 'end'"
-msgstr "‘origin’ must be one of 'start', ‘current’ or ‘end’"
+msgstr "‘origin’ must be one of ‘start’, ‘current’ or ‘end’"
 
 msgid "can only truncate an open connection"
 msgstr "can only truncate an open connection"
@@ -259,9 +262,6 @@ msgstr "‘breaks’ are not unique"
 msgid "labels/breaks length conflict"
 msgstr "labels/breaks length conflict"
 
-msgid "invalid value of length(x)"
-msgstr "invalid value of length(x)"
-
 msgid "invalid 'row.names' length"
 msgstr "invalid ‘row.names’ length"
 
@@ -278,16 +278,16 @@ msgid "cannot coerce class '%s' into a data.frame"
 msgstr "cannot coerce class ‘%s’ into a data.frame"
 
 msgid "invalid 'row.names', length %d for a data frame with %d rows"
-msgstr "invalid 'row.names', length %d for a data frame with %d rows"
+msgstr "invalid ‘row.names’, length %d for a data frame with %d rows"
 
 msgid "supplied %d row names for %d rows"
 msgstr "supplied %d row names for %d rows"
 
-msgid "options('stringsAsFactors') not set to TRUE or FALSE"
-msgstr "options('stringsAsFactors') not set to TRUE or FALSE"
+msgid "options(\"stringsAsFactors\") not set to TRUE or FALSE"
+msgstr "options(\"stringsAsFactors\") not set to TRUE or FALSE"
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
-msgstr "mismatch of row names in arguments of 'data.frame', item %d"
+msgstr "mismatch of row names in arguments of ‘data.frame’, item %d"
 
 msgid "some row.names duplicated:"
 msgstr "some row.names duplicated:"
@@ -424,13 +424,13 @@ msgid "'origin' must be supplied"
 msgstr "‘origin’ must be supplied"
 
 msgid "do not know how to convert '%s' to class \"Date\""
-msgstr "do not know how to convert ‘%s’ to class “Date”"
+msgstr "do not know how to convert ‘%s’ to class \"Date\""
 
 msgid "'%s' is not a \"date\" object"
-msgstr "‘%s’ is not a “date” object"
+msgstr "‘%s’ is not a \"date\" object"
 
 msgid "'%s' is not a \"dates\" object"
-msgstr "‘%s’ is not a “dates” object"
+msgstr "‘%s’ is not a \"dates\" object"
 
 msgid "binary + is not defined for Date objects"
 msgstr "binary + is not defined for Date objects"
@@ -471,7 +471,7 @@ msgstr "‘length.out’ must be of length 1"
 msgid ""
 "exactly two of 'to', 'by' and 'length.out' / 'along.with' must be specified"
 msgstr ""
-"exactly two of 'to', ‘by’ and ‘length.out’ / ‘along.with’ must be specified"
+"exactly two of ‘to’, ‘by’ and ‘length.out’ / ‘along.with’ must be specified"
 
 msgid "'by' must be of length 1"
 msgstr "‘by’ must be of length 1"
@@ -501,31 +501,31 @@ msgid "'lag' and 'differences' must be integers >= 1"
 msgstr "‘lag’ and ‘differences’ must be integers >= 1"
 
 msgid "do not know how to convert '%s' to class \"POSIXlt\""
-msgstr "do not know how to convert ‘%s’ to class “POSIXlt”"
+msgstr "do not know how to convert ‘%s’ to class \"POSIXlt\""
 
 msgid "do not know how to convert '%s' to class \"POSIXct\""
-msgstr "do not know how to convert ‘%s’ to class “POSIXct”"
+msgstr "do not know how to convert ‘%s’ to class \"POSIXct\""
 
 msgid "wrong class"
 msgstr "wrong class"
 
 msgid "binary '+' is not defined for \"POSIXt\" objects"
-msgstr "binary ‘+’ is not defined for “POSIXt” objects"
+msgstr "binary ‘+’ is not defined for \"POSIXt\" objects"
 
 msgid "Can only subtract from POSIXt objects"
 msgstr "Can only subtract from POSIXt objects"
 
 msgid "unary '-' is not defined for \"POSIXt\" objects"
-msgstr "unary ‘-’ is not defined for “POSIXt” objects"
+msgstr "unary ‘-’ is not defined for \"POSIXt\" objects"
 
 msgid "can only subtract numbers from POSIXt objects"
 msgstr "can only subtract numbers from POSIXt objects"
 
 msgid "unary '%s' not defined for \"POSIXt\" objects"
-msgstr "unary ‘%s’ not defined for “POSIXt” objects"
+msgstr "unary ‘%s’ not defined for \"POSIXt\" objects"
 
 msgid "'%s' not defined for \"POSIXt\" objects"
-msgstr "‘%s’ not defined for “POSIXt” objects"
+msgstr "‘%s’ not defined for \"POSIXt\" objects"
 
 msgid "'tzone' attributes are inconsistent"
 msgstr "‘tzone’ attributes are inconsistent"
@@ -540,16 +540,16 @@ msgid "invalid units specified"
 msgstr "invalid units specified"
 
 msgid "unary '%s' not defined for \"difftime\" objects"
-msgstr "unary ‘%s’ not defined for “difftime” objects"
+msgstr "unary ‘%s’ not defined for \"difftime\" objects"
 
 msgid "'%s' not defined for \"difftime\" objects"
-msgstr "‘%s’ not defined for “difftime” objects"
+msgstr "‘%s’ not defined for \"difftime\" objects"
 
 msgid "both arguments of * cannot be \"difftime\" objects"
-msgstr "both arguments of * cannot be “difftime” objects"
+msgstr "both arguments of * cannot be \"difftime\" objects"
 
 msgid "second argument of / cannot be a \"difftime\" object"
-msgstr "second argument of / cannot be a “difftime” object"
+msgstr "second argument of / cannot be a \"difftime\" object"
 
 msgid "'from' must be a POSIXt object"
 msgstr "‘from’ must be a POSIXt object"
@@ -613,7 +613,7 @@ msgid "No DLL currently loaded with name or path"
 msgstr "No DLL currently loaded with name or path"
 
 msgid "multiple DLLs match '%s'. Using '%s'"
-msgstr "multiple DLLs match '%s'. Using ‘%s’"
+msgstr "multiple DLLs match ‘%s’. Using ‘%s’"
 
 msgid "must specify DLL via a DLLInfo object. See getLoadedDLLs()"
 msgstr "must specify DLL via a DLLInfo object. See getLoadedDLLs()"
@@ -678,6 +678,9 @@ msgstr ""
 msgid "no files to copy to"
 msgstr "no files to copy to"
 
+msgid "attempt to copy a directory to itself"
+msgstr "attempt to copy a directory to itself"
+
 msgid "more 'from' files than 'to' files"
 msgstr "more ‘from’ files than ‘to’ files"
 
@@ -714,23 +717,17 @@ msgstr "‘vec’ contains NAs"
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "‘vec’ must be sorted non-decreasingly"
 
-msgid "invalid length(x)"
-msgstr "invalid length(x)"
-
-msgid "invalid length(vec)"
-msgstr "invalid length(vec)"
-
 msgid "using the first element of 'value' of type expression"
 msgstr "using the first element of ‘value’ of type expression"
 
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
-msgstr "‘mode’ must be “double” (“real”), “integer” or “character”"
+msgstr "‘mode’ must be \"double\" (\"real\"), \"integer\" or \"character\""
 
 msgid "coercing argument to \"character\" for format=\"s\""
-msgstr "coercing argument to “character” for format=“s”"
+msgstr "coercing argument to \"character\" for format=\"s\""
 
 msgid "'format' must be one of {\"f\",\"e\",\"E\",\"g\",\"G\", \"fg\", \"s\"}"
-msgstr "‘format’ must be one of {“f”,“e”,“E”,“g”,“G”, “fg”, “s”}"
+msgstr "‘format’ must be one of {\"f\",\"e\",\"E\",\"g\",\"G\", \"fg\", \"s\"}"
 
 msgid "'digits' reduced to"
 msgstr "‘digits’ reduced to"
@@ -901,7 +898,7 @@ msgid "shared object '%s' already loaded"
 msgstr "shared object ‘%s’ already loaded"
 
 msgid "now dyn.load(\"%s\") ..."
-msgstr "now dyn.load(“%s”) ..."
+msgstr "now dyn.load(\"%s\") ..."
 
 msgid "no DLL was specified"
 msgstr "no DLL was specified"
@@ -922,7 +919,7 @@ msgid "shared object '%s' not found"
 msgstr "shared object ‘%s’ not found"
 
 msgid "now dyn.unload(\"%s\") ..."
-msgstr "now dyn.unload(“%s”) ..."
+msgstr "now dyn.unload(\"%s\") ..."
 
 msgid "Loading required package: %s"
 msgstr "Loading required package: %s"
@@ -1001,7 +998,7 @@ msgid "'compress' must be logical or character"
 msgstr "‘compress’ must be logical or character"
 
 msgid "'compress = \"%s\"' is invalid"
-msgstr "‘compress = “%s”’ is invalid"
+msgstr "‘compress = \"%s\"’ is invalid"
 
 msgid "bad file argument"
 msgstr "bad file argument"
@@ -1062,6 +1059,9 @@ msgstr "attempt to set rownames on object with no dimensions"
 
 msgid "attempt to set colnames on object with less than two dimensions"
 msgstr "attempt to set colnames on object with less than two dimensions"
+
+msgid "invalid value of nrow(x)"
+msgstr "invalid value of nrow(x)"
 
 msgid "argument is not numeric or logical: returning NA"
 msgstr "argument is not numeric or logical: returning NA"
@@ -1214,7 +1214,7 @@ msgid "found methods to import for function %s but not the generic itself"
 msgstr "found methods to import for function %s but not the generic itself"
 
 msgid "No methods found in \"%s\" for requests: %s"
-msgstr "No methods found in “%s” for requests: %s"
+msgstr "No methods found in \"%s\" for requests: %s"
 
 msgid "requested methods not found in environment/package %s: %s"
 msgstr "requested methods not found in environment/package %s: %s"
@@ -1224,7 +1224,7 @@ msgid ""
 "\"%s\" from package \"%s\" (malformed exports?)"
 msgstr ""
 "No generic function found corresponding to requested imported methods for "
-"“%s” from package “%s” (malformed exports?)"
+"\"%s\" from package \"%s\" (malformed exports?)"
 
 msgid "cannot add to exports of a sealed namespace"
 msgstr "cannot add to exports of a sealed namespace"
@@ -1239,7 +1239,7 @@ msgid "empty name in directive '%s' in NAMESPACE file"
 msgstr "empty name in directive ‘%s’ in NAMESPACE file"
 
 msgid "duplicated symbol names %s in useDynlib(\"%s\")"
-msgstr "duplicated symbol names %s in useDynlib(“%s”)"
+msgstr "duplicated symbol names %s in useDynlib(\"%s\")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "bad ‘S3method’ directive: %s"
@@ -1310,6 +1310,9 @@ msgstr "invalid nrow(qr$qr)"
 msgid "invalid ncol(qr$qr)"
 msgstr "invalid ncol(qr$qr)"
 
+msgid "invalid ncol(qr$rank)"
+msgstr "invalid ncol(qr$rank)"
+
 msgid "invalid ncol(y)"
 msgstr "invalid ncol(y)"
 
@@ -1365,7 +1368,7 @@ msgid "length of 'scale' must equal the number of columns of 'x'"
 msgstr "length of ‘scale’ must equal the number of columns of ‘x’"
 
 msgid "either specify 'nmax' or 'n', but not both."
-msgstr "either specify ‘nmax’ or 'n', but not both."
+msgstr "either specify ‘nmax’ or ‘n’, but not both."
 
 msgid "argument 'length.out' must be of length 1"
 msgstr "argument ‘length.out’ must be of length 1"
@@ -1407,7 +1410,7 @@ msgid "'file' must be NULL, a connection or a character string"
 msgstr "‘file’ must be NULL, a connection or a character string"
 
 msgid "this is the \"qr\" method for the generic function solve()"
-msgstr "this is the “qr” method for the generic function solve()"
+msgstr "this is the \"qr\" method for the generic function solve()"
 
 msgid "singular matrix 'a' in 'solve'"
 msgstr "singular matrix ‘a’ in ‘solve’"
@@ -1419,7 +1422,7 @@ msgid "'b' must be compatible with 'a'"
 msgstr "‘b’ must be compatible with ‘a’"
 
 msgid "solve.default called with a \"qr\" object: use 'qr.solve'"
-msgstr "solve.default called with a “qr” object: use ‘qr.solve’"
+msgstr "solve.default called with a \"qr\" object: use ‘qr.solve’"
 
 msgid "singular matrix 'a' in solve"
 msgstr "singular matrix ‘a’ in solve"
@@ -1429,7 +1432,7 @@ msgid ""
 "Did you intend to set 'partial'?"
 msgstr ""
 "‘decreasing’ must be a length-1 logical vector.\n"
-"Did you intend to set 'partial'?"
+"Did you intend to set ‘partial’?"
 
 msgid "'index.return' only for non-factors"
 msgstr "‘index.return’ only for non-factors"
@@ -1457,10 +1460,10 @@ msgstr ""
 "Have you called ‘sort’ on a list?"
 
 msgid "method=\"quick\" is only for numeric 'x'"
-msgstr "method=“quick” is only for numeric ‘x’"
+msgstr "method=\"quick\" is only for numeric ‘x’"
 
 msgid "method=\"radix\" is only for integer 'x'"
-msgstr "method=“radix” is only for integer ‘x’"
+msgstr "method=\"radix\" is only for integer ‘x’"
 
 msgid "'local' must be TRUE, FALSE or an environment"
 msgstr "‘local’ must be TRUE, FALSE or an environment"
@@ -1475,7 +1478,7 @@ msgid "unable to find a plausible encoding"
 msgstr "unable to find a plausible encoding"
 
 msgid "encoding = \"%s\" chosen"
-msgstr "encoding = “%s” chosen"
+msgstr "encoding = \"%s\" chosen"
 
 msgid "'chdir = TRUE' makes no sense for a URL"
 msgstr "‘chdir = TRUE’ makes no sense for a URL"
@@ -1547,10 +1550,10 @@ msgid "attempt to make a table with >= 2^31 elements"
 msgstr "attempt to make a table with >= 2^31 elements"
 
 msgid "'object' must inherit from class \"table\""
-msgstr "‘object’ must inherit from class “table”"
+msgstr "‘object’ must inherit from class \"table\""
 
 msgid "'x' must inherit from class \"summary.table\""
-msgstr "‘x’ must inherit from class “summary.table”"
+msgstr "‘x’ must inherit from class \"summary.table\""
 
 msgid "cannot coerce into a table"
 msgstr "cannot coerce into a table"
@@ -1566,6 +1569,9 @@ msgstr "invalid value of length(bin)"
 
 msgid "invalid value of nbins"
 msgstr "invalid value of nbins"
+
+msgid "'INDEX' is of length zero"
+msgstr "‘INDEX’ is of length zero"
 
 msgid "arguments must have same length"
 msgstr "arguments must have same length"
@@ -1607,10 +1613,10 @@ msgid "invalid value"
 msgstr "invalid value"
 
 msgid "unary '%s' not defined for \"numeric_version\" objects"
-msgstr "unary ‘%s’ not defined for “numeric_version” objects"
+msgstr "unary ‘%s’ not defined for \"numeric_version\" objects"
 
 msgid "'%s' not defined for \"numeric_version\" objects"
-msgstr "‘%s’ not defined for “numeric_version” objects"
+msgstr "‘%s’ not defined for \"numeric_version\" objects"
 
 msgid "not defined for numeric_version objects"
 msgstr "not defined for numeric_version objects"
@@ -1625,7 +1631,7 @@ msgid ""
 "arguments 'show.output.on.console', 'minimized' and 'invisible' are for "
 "Windows only"
 msgstr ""
-"arguments 'show.output.on.console', ‘minimized’ and ‘invisible’ are for "
+"arguments ‘show.output.on.console’, ‘minimized’ and ‘invisible’ are for "
 "Windows only"
 
 msgid "'intern' must be TRUE or FALSE"

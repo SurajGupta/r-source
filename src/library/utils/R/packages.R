@@ -1,6 +1,8 @@
 #  File src/library/utils/R/packages.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -72,11 +74,11 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
                 if(inherits(z, "error")) {
                     ## read.dcf is going to interpret CRLF as LF, so use
                     ## binary mode to avoid CRCRLF.
-                    z <- tryCatch(download.file(url=paste(repos, "PACKAGES", sep = "/"),
+                    z <- tryCatch(download.file(url = paste(repos, "PACKAGES", sep = "/"),
                                                 destfile = tmpf, method = method,
                                                 cacheOK = FALSE, quiet = TRUE,
                                                 mode = "wb"),
-                             error = identity)
+                                  error = identity)
 		    options(op)
 		    if(inherits(z, "error")) {
 			warning(gettextf("unable to access index for repository %s", repos),
@@ -86,6 +88,7 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
 		    res0 <- read.dcf(file = tmpf)
 		} else
 		    options(op)
+                ## Do we want to cache an empty result?
                 if(length(res0)) rownames(res0) <- res0[, "Package"]
                 saveRDS(res0, dest, compress = TRUE)
                 unlink(tmpf)
@@ -797,6 +800,7 @@ setRepositories <-
         p <- file.path(R.home("etc"), "repositories")
     a <- tools:::.read_repositories(p)
     pkgType <- getOption("pkgType")
+    if (pkgType == "both") pkgType <- .Platform$pkgType
     if(length(grep("^mac\\.binary", pkgType))) pkgType <- "mac.binary"
     thisType <- a[[pkgType]]
     a <- a[thisType, 1L:3L]

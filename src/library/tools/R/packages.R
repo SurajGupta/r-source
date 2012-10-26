@@ -1,6 +1,8 @@
 #  File src/library/tools/R/writePACKAGES.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -146,6 +148,11 @@ function(dir, fields = NULL,
                 temp <- tryCatch(read.dcf(p, fields = fields)[1L, ],
                                  error = identity)
                 if(!inherits(temp, "error")) {
+                    if(is.na(temp["NeedsCompilation"])) {
+                        l <- utils::untar(files[i], list = TRUE)
+                        temp["NeedsCompilation"] <-
+                            if(any(l == file.path(packages[i], "src/"))) "yes" else "no"
+                    }
                     temp["MD5sum"] <- md5sum(files[i])
                     db[[i]] <- temp
                 }
@@ -193,7 +200,7 @@ function(pkgs, dependencies = c("Depends", "Imports", "LinkingTo"),
     else if(identical(dependencies, "most"))
         dependencies <-
             c("Depends", "Imports", "LinkingTo", "Suggests")
-    
+
     av <- installed[, dependencies, drop = FALSE]
     rn <- row.names(installed)
     need <- apply(av, 1L, function(x)

@@ -1,13 +1,13 @@
 % File src/library/stats/man/nlminb.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{nlminb}
 \alias{nlminb}
 \title{Optimization using PORT routines }
 \description{
-  Unconstrained and constrained optimization using PORT routines.
+  Unconstrained and box-constrained optimization using PORT routines.
 }
 \usage{
 nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
@@ -18,12 +18,11 @@ nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
     numeric vector, initial values for the parameters to be optimized.
   }
   \item{objective}{
-    Function to be minimized.  Must return a scalar value (possibly
-    NA/Inf).  The first argument to \code{objective} is the vector of
-    parameters to be optimized, whose initial values are supplied
-    through \code{start}.  Further arguments (fixed during the course of
-    the optimization) to \code{objective} may be specified as well (see
-    \code{\dots}).
+    Function to be minimized.  Must return a scalar value.  The first
+    argument to \code{objective} is the vector of parameters to be
+    optimized, whose initial values are supplied through \code{start}.
+    Further arguments (fixed during the course of the optimization) to
+    \code{objective} may be specified as well (see \code{\dots}).
   }
   \item{gradient}{
     Optional function that takes the same arguments as \code{objective} and
@@ -46,13 +45,23 @@ nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
   }
 }
 \details{
-  Any names of \code{start} are passed
-  on to \code{objective} and where applicable, \code{gradient} and
-  \code{hessian}.  The parameter vector will be coerced to double.
+  Any names of \code{start} are passed on to \code{objective} and where
+  applicable, \code{gradient} and \code{hessian}.  The parameter vector
+  will be coerced to double.
 
   The PORT documentation is at
   \url{http://netlib.bell-labs.com/cm/cs/cstr/153.pdf}.
+  
+  The parameter vector passed to \code{objective}, \code{gradient} and
+  \code{hessian} has special semantics and is shared between calls.  The
+  functions should not copy it.
+  
+  If any of the functions returns \code{NA} or \code{NaN} the internal code
+  could infinite-loop in \R prior to 2.15.2: this is now an error for
+  the gradient and Hessian, and such values for function evaluation are
+  replaced by \code{+Inf} with a warning.
 }
+% see PR#15052.
 \value{
   A list with components:
   \item{par}{The best set of parameters found.}
@@ -96,9 +105,11 @@ nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
       objective function value.}% ETA0  42
   }
 }
-\references{ \url{http://netlib.bell-labs.com/netlib/port/} }
+\source{ \url{http://netlib.bell-labs.com/netlib/port/} }
 \author{
-  (of \R port) Douglas Bates and Deepayan Sarkar.
+  \R port: Douglas Bates and Deepayan Sarkar.
+
+  Underlying Fortran code by David M. Gay
 }
 \seealso{
   \code{\link{optim}} and \code{\link{nlm}}.
@@ -109,9 +120,8 @@ nlminb(start, objective, gradient = NULL, hessian = NULL, \dots,
 % Lots of near-zeros, platform-specific results.
 \examples{\donttest{
 x <- rnbinom(100, mu = 10, size = 10)
-hdev <- function(par) {
+hdev <- function(par)
     -sum(dnbinom(x, mu = par[1], size = par[2], log = TRUE))
-}
 nlminb(c(9, 12), hdev)
 nlminb(c(20, 20), hdev, lower = 0, upper = Inf)
 nlminb(c(20, 20), hdev, lower = 0.001, upper = Inf)
@@ -163,4 +173,3 @@ r <- nlminb(rep(3, 25), flb, control = list(rel.tol=1e-16))
 stopifnot(grepl("rel.tol", r$message))
 }}
 \keyword{optimize}
-

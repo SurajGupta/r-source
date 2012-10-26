@@ -1,6 +1,8 @@
 #  File src/library/base/R/pretty.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -23,8 +25,7 @@ pretty.default <-
              eps.correct = 0, ...)
 {
     x <- x[is.finite(x <- as.numeric(x))]
-    if(length(x)==0L)
-	return(x)
+    if(!length(x)) return(x)
     if(is.na(n <- as.integer(n[1L])) || n < 0L)# n=0 !!
 	stop("invalid 'n' value")
     if(!is.numeric(shrink.sml) || shrink.sml <= 0)

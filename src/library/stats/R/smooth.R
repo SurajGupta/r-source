@@ -1,6 +1,8 @@
 #  File src/library/stats/R/smooth.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -28,20 +30,17 @@ smooth <- function(x, kind = c("3RS3R", "3RSS", "3RSR", "3R", "3", "S"),
     rules <- c("copy","Tukey")#- exact order matters!
     if(is.na(iend <- pmatch(endrule, rules)))
         stop("wrong endrule")
-    n <- length(x)
+    n <- as.integer(length(x))
+    if(is.na(n)) stop("invalid length(x)")
     kind <- match.arg(kind)
     if(substr(kind ,1L, 3L) == "3RS" && !do.ends)
         iend <- -iend
     else if(kind == "S")
         iend <- as.logical(do.ends)
     ## same number and type of arguments for all:
-    smo <- .C(paste("Rsm", kind, sep="_"),
-              as.double(x),
-              y = double(n),
-              n, iend,
-              iter = integer(1L),
-              DUP=FALSE,
-	      PACKAGE = "stats")[c("y","iter")]
+    obj <- get(paste("C_Rsm", kind, sep="_"))
+    smo <- .C(obj, as.double(x), y = double(n), n, iend, iter = integer(1L),
+              DUP = FALSE)[c("y","iter")]
 
     if(any(kind == c("R", "S"))) { # `iter' really was `changed'
         smo$iter <- as.logical(smo$iter)

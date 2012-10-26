@@ -40,6 +40,12 @@
 
 #include "nmath.h"
 
+/* These are recursive, so we should do a stack check */
+
+#ifndef MATHLIB_STANDALONE
+void R_CheckStack(void);
+#endif
+
 double attribute_hidden lfastchoose(double n, double k)
 {
     return -log(n + 1.) - lbeta(n - k + 1., k + 1.);
@@ -66,6 +72,9 @@ double lchoose(double n, double k)
     /* NaNs propagated correctly */
     if(ISNAN(n) || ISNAN(k)) return n + k;
 #endif
+#ifndef MATHLIB_STANDALONE
+    R_CheckStack();
+#endif
     if (fabs(k - k0) > 1e-7)
 	MATHLIB_WARNING2(_("'k' (%.2f) must be integer, rounded to %.0f"), k0, k);
     if (k < 2) {
@@ -79,6 +88,7 @@ double lchoose(double n, double k)
 	return lchoose(-n+ k-1, k);
     }
     else if (R_IS_INT(n)) {
+	n = floor(n + 0.5);
 	if(n < k) return ML_NEGINF;
 	/* k <= n :*/
 	if(n - k < 2) return lchoose(n, n-k); /* <- Symmetry */
@@ -105,6 +115,9 @@ double choose(double n, double k)
     /* NaNs propagated correctly */
     if(ISNAN(n) || ISNAN(k)) return n + k;
 #endif
+#ifndef MATHLIB_STANDALONE
+    R_CheckStack();
+#endif
     if (fabs(k - k0) > 1e-7)
 	MATHLIB_WARNING2(_("'k' (%.2f) must be integer, rounded to %.0f"), k0, k);
     if (k < k_small_max) {
@@ -126,6 +139,7 @@ double choose(double n, double k)
 	return r;
     }
     else if (R_IS_INT(n)) {
+	n = floor(n + 0.5);
 	if(n < k) return 0.;
 	if(n - k < k_small_max) return choose(n, n-k); /* <- Symmetry */
 	return floor(exp(lfastchoose(n, k)) + 0.5);

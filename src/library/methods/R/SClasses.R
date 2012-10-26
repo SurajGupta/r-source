@@ -1,6 +1,8 @@
 #  File src/library/methods/R/SClasses.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -24,7 +26,9 @@ setClass <-
 {
     oldDef <- getClassDef(Class, where)
     if(is(oldDef, "classRepresentation") && oldDef@sealed)
-        stop(gettextf("\"%s\" has a sealed class definition and cannot be redefined", Class), domain = NA)
+        stop(gettextf("%s has a sealed class definition and cannot be redefined",
+                      dQuote(Class)),
+             domain = NA)
     if(is(representation, "classRepresentation")) {
         ## supplied a class definition object
         classDef <- representation
@@ -61,7 +65,8 @@ setClass <-
             else { # update class definition
                 classDef <- getClassDef(Class, where = where)
                 if(is.null(classDef))
-                  stop(gettextf('Internal error: definition of class "%s" not properly assigned', Class),
+                  stop(gettextf("Internal error: definition of class %s not properly assigned",
+                                dQuote(Class)),
                        domain = NA)
             }
           }
@@ -247,7 +252,9 @@ getClass <-
         value <- getClassDef(Class, where) # searches
         if(is.null(value)) {
             if(!.Force)
-                stop(gettextf("\"%s\" is not a defined class", Class), domain = NA)
+                stop(gettextf("%s is not a defined class",
+                              dQuote(Class)),
+                     domain = NA)
             else
                 value <- makeClassRepresentation(Class, package = "base",
                                                  virtual = TRUE, where = where)
@@ -284,8 +291,8 @@ checkSlotAssignment <- function(obj, name, value)
     ClassDef <- getClass(cl) # fails if cl not a defined class (!)
     slotClass <- elNamed(ClassDef@slots, name)
     if(is.null(slotClass))
-        stop(gettextf("\"%s\" is not a slot in class %s",
-                      name, dQuote(cl)),
+        stop(gettextf("%s is not a slot in class %s",
+                      sQuote(name), dQuote(cl)),
              domain = NA)
     valueClass <- class(value)
     if(.identC(slotClass, valueClass))
@@ -295,8 +302,8 @@ checkSlotAssignment <- function(obj, name, value)
     ok <- possibleExtends(valueClass, slotClass,
                           ClassDef2 = getClassDef(slotClass, where = .classEnv(ClassDef)))
     if(identical(ok, FALSE))
-       stop(gettextf("assignment of an object of class %s is not valid for slot \"%s\" in an object of class %s; is(value, \"%s\") is not TRUE",
-		     dQuote(valueClass), name, dQuote(cl), slotClass),
+       stop(gettextf("assignment of an object of class %s is not valid for slot %s in an object of class %s; is(value, \"%s\") is not TRUE",
+		     dQuote(valueClass), sQuote(name), dQuote(cl), slotClass),
             domain = NA)
     else if(identical(ok, TRUE))
         value
@@ -342,7 +349,8 @@ removeClass <-  function(Class, where = topenv(parent.frame())) {
        classEnv <- .classEnv(Class, where, FALSE)
         classWhere <- findClass(Class, where = classEnv)
         if(length(classWhere) == 0L) {
-            warning(gettextf("Class definition for \"%s\" not found  (no action taken)", Class),
+            warning(gettextf("Class definition for %s not found (no action taken)",
+                             dQuote(Class)),
                     domain = NA)
             return(FALSE)
         }
@@ -787,7 +795,8 @@ names(.indirectAbnormalClasses) <- .AbnormalTypes
          domain = NA)
   class <- .indirectAbnormalClasses[type]
   if(is.na(class))
-    stop(gettextf("Sorry, abnormal type \"%s\" is not supported as a superclass of a class definition", type),
+    stop(gettextf("Sorry, abnormal type %s is not supported as a superclass of a class definition",
+                  dQuote(type)),
          domain = NA)
   ## this message USED TO BE PRINTED: reminds programmers that
   ## they will see an unexpected superclass

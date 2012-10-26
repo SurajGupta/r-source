@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-10-03 18:50\n"
-"PO-Revision-Date: 2011-10-03 18:50\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-07-31 12:46\n"
+"PO-Revision-Date: 2012-07-31 12:46\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -56,7 +56,7 @@ msgid "at least one entry of 'x' must be positive"
 msgstr "at least one entry of ‘x’ must be positive"
 
 msgid "incorrect 'col': must be length 2"
-msgstr "incorrect 'col': must be length 2"
+msgstr "incorrect ‘col’: must be length 2"
 
 msgid "only for 1-D table"
 msgstr "only for 1-D table"
@@ -101,7 +101,7 @@ msgid "'formula' missing or incorrect"
 msgstr "‘formula’ missing or incorrect"
 
 msgid "'at' must have same length as 'z$n', i.e."
-msgstr "‘at’ must have same length as 'z$n', i.e."
+msgstr "‘at’ must have same length as ‘z$n’, i.e."
 
 msgid "invalid boxplot widths"
 msgstr "invalid boxplot widths"
@@ -155,7 +155,7 @@ msgid "'add' will be ignored as there is no existing plot"
 msgstr "‘add’ will be ignored as there is no existing plot"
 
 msgid "'from' and 'to' must be > 0 with log=\"x\""
-msgstr "‘from’ and ‘to’ must be > 0 with log=“x”"
+msgstr "‘from’ and ‘to’ must be > 0 with log=\"x\""
 
 msgid "'expr' did not evaluate to an object of length 'n'"
 msgstr "‘expr’ did not evaluate to an object of length ‘n’"
@@ -199,6 +199,9 @@ msgstr "incorrect geometry specification"
 msgid "'x' must be numeric"
 msgstr "‘x’ must be numeric"
 
+msgid "invalid length(x)"
+msgstr "invalid length(x)"
+
 msgid "'nclass' not used when 'breaks' is specified"
 msgstr "‘nclass’ not used when ‘breaks’ is specified"
 
@@ -214,14 +217,14 @@ msgstr "invalid number of ‘breaks’"
 msgid "hist.default: pretty() error, breaks="
 msgstr "hist.default: pretty() error, breaks="
 
+msgid "invalid length(breaks)"
+msgstr "invalid length(breaks)"
+
 msgid "'breaks' are not strictly increasing"
 msgstr "‘breaks’ are not strictly increasing"
 
 msgid "'probability' is an alias for '!freq', however they differ."
-msgstr "‘probability’ is an alias for '!freq', however they differ."
-
-msgid "negative 'counts'. Internal Error in C-code for \"bincount\""
-msgstr "negative 'counts'. Internal Error in C-code for “bincount”"
+msgstr "‘probability’ is an alias for ‘!freq’, however they differ."
 
 msgid "some 'x' not counted; maybe 'breaks' do not span range of 'x'"
 msgstr "some ‘x’ not counted; maybe ‘breaks’ do not span range of ‘x’"

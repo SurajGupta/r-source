@@ -1,6 +1,8 @@
 #  File src/library/base/R/tapply.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -19,12 +21,13 @@ tapply <- function (X, INDEX, FUN = NULL, ..., simplify = TRUE)
     FUN <- if (!is.null(FUN)) match.fun(FUN)
     if (!is.list(INDEX)) INDEX <- list(INDEX)
     nI <- length(INDEX)
+    if (!nI) warning("'INDEX' is of length zero")
     namelist <- vector("list", nI)
     names(namelist) <- names(INDEX)
     extent <- integer(nI)
     nx <- length(X)
     one <- 1L
-    group <- rep.int(one, nx)#- to contain the splitting vector
+    group <- rep.int(one, nx) #- to contain the splitting vector
     ngroup <- one
     for (i in seq_along(INDEX)) {
 	index <- as.factor(INDEX[[i]])
@@ -39,11 +42,11 @@ tapply <- function (X, INDEX, FUN = NULL, ..., simplify = TRUE)
     ans <- lapply(X = split(X, group), FUN = FUN, ...)
     index <- as.integer(names(ans))
     if (simplify && all(unlist(lapply(ans, length)) == 1L)) {
-	ansmat <- array(dim=extent, dimnames=namelist)
+	ansmat <- array(dim = extent, dimnames = namelist)
 	ans <- unlist(ans, recursive = FALSE)
     } else {
 	ansmat <- array(vector("list", prod(extent)),
-			dim=extent, dimnames=namelist)
+			dim = extent, dimnames = namelist)
     }
     if(length(index)) {
         names(ans) <- NULL

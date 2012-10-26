@@ -1,6 +1,8 @@
 #  File src/library/stats/R/integrate.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -14,7 +16,7 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-integrate<- function(f, lower, upper, ..., subdivisions=100,
+integrate<- function(f, lower, upper, ..., subdivisions = 100L,
 		     rel.tol = .Machine$double.eps^.25,
 		     abs.tol = rel.tol, stop.on.error = TRUE,
 		     keep.xy = FALSE, aux = NULL)
@@ -22,7 +24,7 @@ integrate<- function(f, lower, upper, ..., subdivisions=100,
     f <- match.fun(f)
     ff <- function(x) f(x, ...)
     limit <- as.integer(subdivisions)
-    if (limit < 1 || (abs.tol <= 0 &&
+    if (limit < 1L || (abs.tol <= 0 &&
 	rel.tol < max(50*.Machine$double.eps, 0.5e-28)))
 	stop("invalid parameter values")
     if(is.finite(lower) && is.finite(upper)) {
@@ -53,7 +55,7 @@ integrate<- function(f, lower, upper, ..., subdivisions=100,
     }
     res <- wk[c("value", "abs.error", "subdivisions")]
     res$message <-
-	switch(wk$ierr + 1,
+	switch(wk$ierr + 1L,
 	       "OK",
 	       "maximum number of subdivisions reached",
 	       "roundoff error was detected",
@@ -61,7 +63,7 @@ integrate<- function(f, lower, upper, ..., subdivisions=100,
 	       "roundoff error is detected in the extrapolation table",
 	       "the integral is probably divergent",
 	       "the input is invalid")
-    if(wk$ierr == 6 || (wk$ierr > 0 && stop.on.error)) stop(res$message)
+    if(wk$ierr == 6L || (wk$ierr > 0L && stop.on.error)) stop(res$message)
     res$call <- match.call()
     class(res) <- "integrate"
     res

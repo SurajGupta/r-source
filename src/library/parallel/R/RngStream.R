@@ -1,6 +1,8 @@
 #  File src/library/parallel/R/RngStream.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -18,14 +20,14 @@ nextRNGStream <- function(seed)
 {
     if(!is.integer(seed) || seed[1L] %% 100L != 7L)
         stop("invalid value of 'seed'")
-    .Call(C_nextStream, seed, PACKAGE = "parallel")
+    .Call(C_nextStream, seed)
 }
 
 nextRNGSubStream <- function(seed)
 {
     if(!is.integer(seed) || seed[1L] %% 100L != 7L)
         stop("invalid value of 'seed'")
-    .Call(C_nextSubStream, seed, PACKAGE = "parallel")
+    .Call(C_nextSubStream, seed)
 }
 
 ## Different from snow's RNG code

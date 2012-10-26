@@ -132,7 +132,10 @@ static void CairoLineType(const pGEcontext gc, pX11Desc xd)
 	cairo_set_dash(cc, 0, 0, 0);
     else {
 	double ls[16], lwd = (gc->lwd > 1) ? gc->lwd : 1;
-	int l, dt = gc->lty;
+	int l;
+        /* Use unsigned int otherwise right shift of 'dt'
+           may not terminate for loop */
+        unsigned int dt = gc->lty;
 	for (l = 0; dt != 0; dt >>= 4, l++)
 	    ls[l] = (dt & 0xF) * lwd * xd->lwdscale;
 	cairo_set_dash(cc, ls, l, 0);
@@ -303,11 +306,11 @@ static cairo_surface_t* createImageSurface(unsigned int *raster, int w, int h)
      */
     for (i=0; i<w*h; i++) {
         int alpha = R_ALPHA(raster[i]);
-        imageData[i*4 + 3] = alpha;
+        imageData[i*4 + 3] = (unsigned char) alpha;
         if (alpha < 255) {
-            imageData[i*4 + 2] = R_RED(raster[i]) * alpha / 255;
-            imageData[i*4 + 1] = R_GREEN(raster[i]) * alpha / 255;
-            imageData[i*4 + 0] = R_BLUE(raster[i]) * alpha / 255;
+            imageData[i*4 + 2] = (unsigned char)(R_RED(raster[i]) * alpha / 255);
+	    imageData[i*4 + 1] = (unsigned char)(R_GREEN(raster[i]) * alpha / 255);
+	    imageData[i*4 + 0] = (unsigned char)(R_BLUE(raster[i]) * alpha / 255);
         } else {
             imageData[i*4 + 2] = R_RED(raster[i]);
             imageData[i*4 + 1] = R_GREEN(raster[i]);
@@ -839,7 +842,7 @@ static void Cairo_MetricInfo(int c, pGEcontext gc,
 	Rf_ucstoutf8(str, (unsigned int) c);
     } else {
 	/* Here, we assume that c < 256 */
-	str[0] = c; str[1] = 0;
+	str[0] = (char)c; str[1] = 0;
     }
 
     FT_getFont(gc, dd, xd->fontscale);

@@ -1,6 +1,8 @@
 #  File src/library/stats/R/ts-tests.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -22,7 +24,7 @@ Box.test <- function (x, lag = 1, type=c("Box-Pierce", "Ljung-Box"), fitdf=0)
     type <- match.arg(type)
     cor <- acf (x, lag.max = lag, plot = FALSE, na.action = na.pass)
     n <- sum(!is.na(x))
-    PARAMETER <- lag-fitdf
+    PARAMETER <- c(df = lag-fitdf)
     obs <- cor$acf[2:(lag+1)]
     if (type=="Box-Pierce")
     {
@@ -37,7 +39,6 @@ Box.test <- function (x, lag = 1, type=c("Box-Pierce", "Ljung-Box"), fitdf=0)
         PVAL <- 1-pchisq(STATISTIC, lag-fitdf)
     }
     names(STATISTIC) <- "X-squared"
-    names(PARAMETER) <- "df"
     structure(list(statistic = STATISTIC,
                    parameter = PARAMETER,
                    p.value = PVAL,
@@ -67,9 +68,8 @@ PP.test <- function (x, lshort = TRUE)
         l <- trunc(4*(n/100)^0.25)
     else
         l <- trunc(12*(n/100)^0.25)
-    ssqrtl <- .C ("R_pp_sum", as.vector(u,mode="double"), as.integer(n),
-                  as.integer(l), trm=as.double(ssqru), PACKAGE="stats")
-    ssqrtl <- ssqrtl$trm
+    ssqrtl <- .C(C_R_pp_sum, as.double(u), as.integer(n),
+                 as.integer(l), trm = as.double(ssqru))$trm
     n2 <- n^2
     trm1 <- n2*(n2-1)*sum(yt1^2)/12
     trm2 <- n*sum(yt1*(1L:n))^2

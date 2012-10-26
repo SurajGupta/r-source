@@ -1,6 +1,8 @@
 #  File src/library/stats/R/shapiro.test.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -14,12 +16,13 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-shapiro.test <- function(x) {
+shapiro.test <- function(x)
+{
     DNAME <- deparse(substitute(x))
     x <- sort(x[complete.cases(x)])
     stopifnot(is.numeric(x))
-    n <- length(x) # *is* integer
-    if(n < 3 || n > 5000)
+    n <- length(x)
+    if(is.na(n) || n < 3L || n > 5000L)
 	stop("sample size must be between 3 and 5000")
     rng <- x[n] - x[1L]
     if(rng == 0)
@@ -35,10 +38,10 @@ shapiro.test <- function(x) {
 	     n1 = n,#   "
 	     n2,#       "
 	     a = single(n2),
-	     w	= double(1),
+	     w	= 0, # input/output
 	     pw = double(1),
 	     ifault = integer(1L))
-    if (sw$ifault && sw$ifault != 7)# 7 *does* happen (Intel Linux)
+    if (sw$ifault && sw$ifault != 7L) # 7 *does* happen (Intel Linux)
 	stop(gettextf("ifault=%d. This should not happen", sw$ifault),
              domain = NA)
     RVAL <- list(statistic = c(W = sw$w),

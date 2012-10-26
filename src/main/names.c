@@ -220,6 +220,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"vector",	do_makevector,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"complex",	do_complex,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"matrix",	do_matrix,	0,	11,	7,	{PP_FUNCALL, PREC_FN,	0}},
+{"array",	do_array,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"row",		do_rowscols,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"col",		do_rowscols,	2,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"unlist",	do_unlist,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -458,7 +459,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"sample",	do_sample,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"RNGkind",	do_RNGkind,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"set.seed",	do_setseed,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"set.seed",	do_setseed,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Data Summaries */
 /* these four are group generic and so need to eval args */
@@ -526,6 +527,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"toupper",	do_tolower,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"chartr",	do_chartr,	1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"sprintf",	do_sprintf,	1,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"getfmts",	do_getfmts,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"make.unique",	do_makeunique,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"charToRaw",	do_charToRaw,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rawToChar",	do_rawToChar,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -630,7 +632,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 #ifdef Win32
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"win.version", do_winver,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"shell.exec",	do_shellexec,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"shell.exec",	do_shellexec,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialog",	do_windialog,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"winDialogString", do_windialogstring, 0, 11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"winMenuNames", do_winmenunames, 0,    11,     0,      {PP_FUNCALL, PREC_FN,   0}},
@@ -665,13 +667,16 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"mkjunction", do_mkjunction,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 #if defined(__APPLE_CC__) && defined(HAVE_AQUA)
+// part of utils::browseEnv
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
+{"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+// next four are ued in GUI-tools.R in the R.app sources
 {"pkgbrowser",	do_browsepkgs,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"data.manager",	do_datamanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"package.manager",	do_packagemanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"hsbrowser",	do_hsbrowser,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+// used in utils::help and in GUI-tools.R
 {"aqua.custom.print", do_aqua_custom_print, 0, 11, 2,   {PP_FUNCALL, PREC_FN,   0}},
 #endif
 {"parse",	do_parse,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
@@ -695,7 +700,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"prmatrix",	do_prmatrix,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"gc",		do_gc,		0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"gcinfo",	do_gcinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"gctorture",	do_gctorture,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"gctorture",	do_gctorture,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"gctorture2",	do_gctorture2,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"memory.profile",do_memoryprofile, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"split",	do_split,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -754,8 +759,8 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"colMeans",	do_colsum,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"rowSums",	do_colsum,	2,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"rowMeans",	do_colsum,	3,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"Rprof",	do_Rprof,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"Rprofmem",	do_Rprofmem,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"Rprof",	do_Rprof,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"Rprofmem",	do_Rprofmem,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"tracemem",    do_tracemem,    0,      1,	1,      {PP_FUNCALL, PREC_FN,	0}},
 {"retracemem",  do_retracemem,  0,      201,     -1,      {PP_FUNCALL, PREC_FN,	0}},
 {"untracemem",  do_untracemem,  0,      101,	1,      {PP_FUNCALL, PREC_FN,	0}},
@@ -791,7 +796,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"file.choose", do_filechoose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.info",	do_fileinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.access",	do_fileaccess,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"dir.create",	do_dircreate,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"dir.create",	do_dircreate,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempfile",	do_tempfile,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempdir",	do_tempdir,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"R.home",	do_Rhome,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -808,7 +813,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"Sys.umask",	do_sysumask,	0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"Sys.readlink", do_readlink,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"Sys.info",	do_sysinfo,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-{"Sys.sleep",	do_syssleep,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"Sys.sleep",	do_syssleep,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"Sys.getlocale",do_getlocale,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"Sys.setlocale",do_setlocale,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"Sys.localeconv",do_localeconv,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -873,7 +878,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"strheight",	do_strheight,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"strwidth",	do_strwidth,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"contour",	do_contour,	0,	11,	12,	{PP_FUNCALL, PREC_FN,	0}},
-{"contourLines",do_contourLines,0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"contourLines",do_contourLines,0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"image",	do_image,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"dend",	do_dend,	0,	111,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"dend.window",	do_dendwindow,	0,	111,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -918,8 +923,8 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"deriv.default",do_deriv,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* History manipulation */
-{"loadhistory", do_loadhistory,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"savehistory", do_savehistory,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"loadhistory", do_loadhistory,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"savehistory", do_savehistory,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"addhistory",  do_addhistory,  0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* date-time manipulations */
@@ -953,17 +958,17 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"stderr",	do_stderr,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"isatty",	do_isatty,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"readLines",	do_readLines,	0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
-{"writeLines",	do_writelines,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
+{"writeLines",	do_writelines,	0,      111,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"readBin",	do_readbin,	0,      11,     6,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeBin",	do_writebin,	0,      211,    5,      {PP_FUNCALL, PREC_FN,	0}},
 {"readChar",	do_readchar,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeChar",	do_writechar,	0,      211,    5,      {PP_FUNCALL, PREC_FN,	0}},
-{"open",	do_open,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"open",	do_open,	0,      111,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"isOpen",	do_isopen,	0,      11,     2,      {PP_FUNCALL, PREC_FN,	0}},
 {"isIncomplete",do_isincomplete,0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"isSeekable",	do_isseekable,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
-{"close",	do_close,	0,      11,     2,      {PP_FUNCALL, PREC_FN,	0}},
-{"flush",	do_flush,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
+{"close",	do_close,	0,      111,     2,      {PP_FUNCALL, PREC_FN,	0}},
+{"flush",	do_flush,	0,      111,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"file",	do_url,		1,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
 {"url",		do_url,		0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"pipe",	do_pipe,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
@@ -974,7 +979,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"unz",		do_unz,		0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"seek",	do_seek,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"truncate",	do_truncate,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
-{"pushBack",	do_pushback,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"pushBack",	do_pushback,	0,      111,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"clearPushBack",do_clearpushback,0,    11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBackLength",do_pushbacklength,0,  11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"rawConnection",do_rawconnection,0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},

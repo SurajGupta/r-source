@@ -1,6 +1,8 @@
 #  File src/library/tools/R/zzz.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -22,6 +24,7 @@ function(libpath)
 
 ## These are created at install time: the numbers are hard-coded in signals.c
 ## They happen to be the BSD ones as this started in multicore
+## They are created before the C symbols are registered
 library.dynam("tools", "tools", .Library)
 SIGHUP <- .Call("ps_sigs", 1L, PACKAGE = "tools")
 SIGINT <- .Call("ps_sigs", 2L, PACKAGE = "tools")

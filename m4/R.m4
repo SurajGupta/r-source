@@ -2007,15 +2007,17 @@ if test "${use_libpng}" = yes; then
 	      [Define if you have the PNG headers and libraries.])
   fi
 fi
-AC_CHECK_HEADERS(tiffio.h)
-# may need to resolve jpeg routines
-AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
-if test "x${ac_cv_header_tiffio_h}" = xyes ; then
-  if test "x${have_tiff}" = xyes; then
-    AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
-    BITMAP_LIBS="-ltiff ${BITMAP_LIBS}"
-  else
-    have_tiff=no
+if test "${use_libtiff}" = yes; then
+  AC_CHECK_HEADERS(tiffio.h)
+  # may need to resolve jpeg routines
+  AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
+  if test "x${ac_cv_header_tiffio_h}" = xyes ; then
+    if test "x${have_tiff}" = xyes; then
+      AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
+      BITMAP_LIBS="-ltiff ${BITMAP_LIBS}"
+    else
+      have_tiff=no
+    fi
   fi
 fi
 AC_SUBST(BITMAP_LIBS)
@@ -2683,11 +2685,8 @@ fi
       AC_MSG_RESULT([yes])
       ## for vecLib we have a work-around by using cblas_..._sub
       use_veclib_g95fix=yes
-      ## The fix may not work with internal lapack, because
-      ## the lapack dylib won't have the fixed functions.
-      ## those are available to the lapack module only.
-      #      use_lapack=yes
-      #	     with_lapack=""
+      ## The fix may not work with internal lapack, but
+      ## is more likely to in R >= 2.15.2.
     else
       AC_MSG_RESULT([no])
       BLAS_LIBS=
@@ -2850,6 +2849,8 @@ AC_SUBST(BLAS_LIBS)
 ## broken LAPACKs out there.
 ## Based on acx_lapack.m4 version 1.3 (2002-03-12).
 
+## Test function was zgeev, changed to dpstrf which is LAPACK 3.2.
+
 AC_DEFUN([R_LAPACK_LIBS],
 [AC_REQUIRE([R_PROG_F77_FLIBS])
 AC_REQUIRE([R_PROG_F77_APPEND_UNDERSCORE])
@@ -2866,9 +2867,9 @@ case "${with_lapack}" in
 esac
 
 if test "${r_cv_prog_f77_append_underscore}" = yes; then
-  zgeev=zgeev_
+  lapack=dpstrf_
 else
-  zgeev=zgeev
+  lapack=dpstrf
 fi
 
 # We cannot use LAPACK if BLAS is not found
@@ -2881,15 +2882,15 @@ LIBS="${BLAS_LIBS} ${FLIBS} ${LIBS}"
 
 ## LAPACK linked to by default?  (Could be in the BLAS libs.)
 if test "${acx_lapack_ok}" = no; then
-  AC_CHECK_FUNC(${zgeev}, [acx_lapack_ok=yes])
+  AC_CHECK_FUNC(${lapack}, [acx_lapack_ok=yes])
 fi
 
 ## Next, check LAPACK_LIBS environment variable
 if test "${acx_lapack_ok}" = no; then
   if test "x${LAPACK_LIBS}" != x; then
     r_save_LIBS="${LIBS}"; LIBS="${LAPACK_LIBS} ${LIBS}"
-    AC_MSG_CHECKING([for ${zgeev} in ${LAPACK_LIBS}])
-    AC_TRY_LINK_FUNC(${zgeev}, [acx_lapack_ok=yes], [LAPACK_LIBS=""])
+    AC_MSG_CHECKING([for ${lapack} in ${LAPACK_LIBS}])
+    AC_TRY_LINK_FUNC(${lapack}, [acx_lapack_ok=yes], [LAPACK_LIBS=""])
     AC_MSG_RESULT([${acx_lapack_ok}])
     LIBS="${r_save_LIBS}"
   fi
@@ -2900,7 +2901,7 @@ fi
 
 ## Generic LAPACK library?
 if test "${acx_lapack_ok}" = no; then
-  AC_CHECK_LIB(lapack, ${zgeev},
+  AC_CHECK_LIB(lapack, ${lapack},
                [acx_lapack_ok=yes; LAPACK_LIBS="-llapack"])
 fi
 

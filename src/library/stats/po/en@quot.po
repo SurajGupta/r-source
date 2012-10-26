@@ -1,5 +1,5 @@
 # English translations for R package.
-# Copyright (C) 2012 The R Foundation
+# Copyright (C) 2012 The R Core Team
 # This file is distributed under the same license as the R package.
 # Automatically generated, 2012.
 #
@@ -27,10 +27,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2012-04-22 16:14+0100\n"
-"PO-Revision-Date: 2012-04-22 16:14+0100\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-09-10 13:58+0100\n"
+"PO-Revision-Date: 2012-09-10 13:58+0100\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: en\n"
@@ -43,7 +43,7 @@ msgstr ""
 msgid "bandwidth/span of running medians is larger than n"
 msgstr "bandwidth/span of running medians is larger than n"
 
-#: ansari.c:129
+#: ansari.c:149
 msgid "probabilities outside [0,1] in qansari()"
 msgstr "probabilities outside [0,1] in qansari()"
 
@@ -63,7 +63,7 @@ msgstr "approx(): attempted to interpolate NA values"
 msgid "invalid argument type"
 msgstr "invalid argument type"
 
-#: arima.c:418 arima.c:502 pacf.c:308 pacf.c:348
+#: arima.c:418 arima.c:502 pacf.c:307 pacf.c:347
 msgid "can only transform 100 pars in arima0"
 msgstr "can only transform 100 pars in arima0"
 
@@ -83,24 +83,24 @@ msgstr "distance(): invalid p"
 msgid "distance(): invalid distance"
 msgstr "distance(): invalid distance"
 
-#: family.c:21
+#: family.c:43
 #, c-format
 msgid "Value %g out of range (0, 1)"
 msgstr "Value %g out of range (0, 1)"
 
-#: family.c:42 family.c:56 family.c:74
+#: family.c:64 family.c:78 family.c:96
 #, c-format
 msgid "Argument %s must be a nonempty numeric vector"
 msgstr "Argument %s must be a nonempty numeric vector"
 
-#: family.c:107 family.c:110
+#: family.c:129 family.c:132
 #, c-format
 msgid "argument %s must be a numeric vector of length 1 or length %d"
 msgstr "argument %s must be a numeric vector of length 1 or length %d"
 
 #: ksmooth.c:65
 msgid "only 2500 rows are allowed for sm.method=\"spline\""
-msgstr "only 2500 rows are allowed for sm.method=“spline”"
+msgstr "only 2500 rows are allowed for sm.method=\"spline\""
 
 #: loessc.c:235
 msgid "span is too small"
@@ -214,7 +214,7 @@ msgstr "starma error code %d"
 msgid "forkal error code %d"
 msgstr "forkal error code %d"
 
-#: pacf.c:451
+#: pacf.c:450
 msgid "invalid value of lag.max"
 msgstr "invalid value of lag.max"
 
@@ -297,22 +297,22 @@ msgstr "‘scal’ must be a square, real matrix"
 msgid "'scal' matrix is not positive-definite"
 msgstr "‘scal’ matrix is not positive-definite"
 
-#: smooth.c:79
+#: smooth.c:102
 #, c-format
 msgid "invalid end-rule for running median of 3: %d"
 msgstr "invalid end-rule for running median of 3: %d"
 
-#: smooth.c:231
+#: smooth.c:254
 msgid "allocation error in smooth(*, '3RSR')."
-msgstr "allocation error in smooth(*, '3RSR')."
+msgstr "allocation error in smooth(*, ‘3RSR’)."
 
-#: smooth.c:244 smooth.c:254
+#: smooth.c:267 smooth.c:277
 msgid "allocation error in smooth(*, '3RSS')."
-msgstr "allocation error in smooth(*, '3RSS')."
+msgstr "allocation error in smooth(*, ‘3RSS’)."
 
-#: smooth.c:264
+#: smooth.c:287
 msgid "allocation error in smooth(*, '3R')."
-msgstr "allocation error in smooth(*, '3R')."
+msgstr "allocation error in smooth(*, ‘3R’)."
 
 #: starma.c:366
 #, c-format

@@ -1,6 +1,8 @@
 #  File src/library/base/R/connections.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -40,16 +42,14 @@ writeLines <- function(text, con = stdout(), sep = "\n", useBytes = FALSE)
         con <- file(con, "w")
         on.exit(close(con))
     }
-    invisible(.Internal(writeLines(text, con, sep, useBytes)))
+    .Internal(writeLines(text, con, sep, useBytes))
 }
 
 open <- function(con, ...)
     UseMethod("open")
 
 open.connection <- function(con, open = "r", blocking = TRUE, ...)
-{
-    invisible(.Internal(open(con, open, blocking)))
-}
+    .Internal(open(con, open, blocking))
 
 isOpen <- function(con, rw = "")
 {
@@ -67,12 +67,12 @@ close <- function(con, ...)
     UseMethod("close")
 
 close.connection <- function (con, type = "rw", ...)
-    invisible(.Internal(close(con, type)))
+    .Internal(close(con, type))
 
 flush <- function(con) UseMethod("flush")
 
 flush.connection <- function (con)
-    invisible(.Internal(flush(con)))
+    .Internal(flush(con))
 
 file <- function(description = "", open = "", blocking = TRUE,
                  encoding = getOption("encoding"), raw = FALSE)
@@ -153,7 +153,7 @@ truncate.connection <- function(con, ...)
 }
 
 pushBack <- function(data, connection, newLine = TRUE)
-    invisible(.Internal(pushBack(data, connection, newLine)))
+    .Internal(pushBack(data, connection, newLine))
 
 pushBackLength <- function(connection)
     .Internal(pushBackLength(connection))

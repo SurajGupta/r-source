@@ -1,6 +1,6 @@
 % File src/library/base/man/rep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{rep}
@@ -24,10 +24,10 @@ rep(x, \dots)
 rep.int(x, times)
 }
 \arguments{
-  \item{x}{a vector (of any mode including a list) or a pairlist or a
-    factor or (except for \code{rep.int}) a \code{POSIXct} or
-    \code{POSIXlt} or \code{date} object; or also, an S4 object containing
-    a vector of the above kind.}
+  \item{x}{a vector (of any mode including a list) or a factor or
+    (except for \code{rep.int}) a \code{POSIXct} or \code{POSIXlt} or
+    \code{date} object; or also, an S4 object containing a vector of the
+    above kind.}
   \item{\dots}{further arguments to be passed to or from other methods.
     For the internal default method these can include:
     \describe{
@@ -48,8 +48,8 @@ rep.int(x, times)
 }
 
 \details{
-  The default behaviour is as if the call was \code{rep(x, times=1,
-    length.out=NA, each=1)}.  Normally just one of the additional
+  The default behaviour is as if the call was \code{rep(x, times = 1,
+    length.out = NA, each = 1)}.  Normally just one of the additional
   arguments is specified, but if \code{each} is specified with either
   of the other two, its replication is performed first, and then that
   implied by \code{times} or \code{length.out}.
@@ -75,22 +75,26 @@ rep.int(x, times)
   (\code{0} for raw vectors) and \code{NULL} for a list.
 }
 \value{
-  An object of the same type as \code{x} (except that \code{rep} will
-  coerce pairlists to vector lists).
+  An object of the same type as \code{x}.
 
-  \code{rep.int} returns no attributes.
+  \code{rep.int} returns no attributes (except the class if returning a
+  factor).
 
   The default method of \code{rep} gives the result names (which will
   almost always contain duplicates) if \code{x} had names, but retains
-  no other attributes except for factors.
+  no other attributes.
 }
 \note{
   Function \code{rep.int} is a simple case handled by internal code, and
-  provided as a separate function purely for S compatibility.
+  provided as a separate function partly for S compatibility and partly
+  for speed (especially when names can be dropped).
 
   Function \code{rep} is a primitive, but (partial) matching of argument
   names is performed as for normal functions.  You can no longer pass a
   missing argument to e.g. \code{length.out}.
+
+  For historical reasons \code{rep} works on \code{NULL}: the result is
+  always \code{NULL} even when \code{length.out} is positive.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

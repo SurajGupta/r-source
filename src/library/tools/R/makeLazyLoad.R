@@ -1,6 +1,8 @@
 #  File src/library/tools/R/makeLazyLoad.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -27,7 +29,7 @@ code2LazyLoadDB <-
     codeFile <- file.path(pkgpath, "R", package)
     dbbase <- file.path(pkgpath, "R", package)
     if (packageHasNamespace(package, dirname(pkgpath))) {
-        if (! is.null(.Internal(getRegisteredNamespace(as.name(package)))))
+        if (! is.null(.getNamespace(as.name(package))))
             stop("namespace must not be already loaded")
         ns <- suppressPackageStartupMessages(loadNamespace(package, lib.loc, keep.source, partial = TRUE))
         makeLazyLoadDB(ns, dbbase, compress = compress)

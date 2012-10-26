@@ -78,7 +78,6 @@ static R_NativePrimitiveArgType loglin_t[] = {INTSXP, INTSXP, INTSXP, INTSXP, IN
 static R_NativePrimitiveArgType lowess_t[] = {REALSXP, REALSXP, INTSXP, REALSXP,
 				       INTSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 
-static R_NativePrimitiveArgType massdist_t[] = {REALSXP, REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP};
 static R_NativePrimitiveArgType spline_coef_t[] = {INTSXP, INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
 static R_NativePrimitiveArgType spline_eval_t[] = {INTSXP, INTSXP, REALSXP, REALSXP,
 						   INTSXP, REALSXP, REALSXP, REALSXP, REALSXP, REALSXP};
@@ -121,7 +120,6 @@ static const R_CMethodDef CEntries[]  = {
     {"Rsm_3", (DL_FUNC) &Rsm_3, 5},
     {"Rsm_S", (DL_FUNC) &Rsm_S, 5},
     {"tukeyline", (DL_FUNC) &tukeyline, 6},
-    {"dblcen", (DL_FUNC) &dblcen, 2},
     {"R_distance", (DL_FUNC) &R_distance, 7},
     {"acf", (DL_FUNC) &acf, 6},
     {"uni_pacf", (DL_FUNC) &uni_pacf, 3},
@@ -146,7 +144,6 @@ static const R_CMethodDef CEntries[]  = {
     CDEF(band_den_bin),
     CDEF(loglin),
     CDEF(lowess),
-    CDEF(massdist),
     CDEF(spline_coef),
     CDEF(spline_eval),
     {NULL, NULL, 0}
@@ -154,7 +151,10 @@ static const R_CMethodDef CEntries[]  = {
 
 SEXP Cdqrls(SEXP x, SEXP y, SEXP tol);
 SEXP Cdist(SEXP x, SEXP method, SEXP attrs, SEXP p);
+SEXP DoubleCentre(SEXP A);
+SEXP BinDist(SEXP x, SEXP weights, SEXP slo, SEXP sup, SEXP sn);
 
+#define CALLDEF(name, n)  {#name, (DL_FUNC) &name, n}
 
 static const R_CallMethodDef CallEntries[] = {
     {"R_cutree", (DL_FUNC) &R_cutree, 2},
@@ -195,6 +195,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"R_rWishart", (DL_FUNC) &R_rWishart, 3},
     {"Cdqrls", (DL_FUNC) &Cdqrls, 3},
     {"Cdist", (DL_FUNC) &Cdist, 4},
+    CALLDEF(DoubleCentre, 1),
+    CALLDEF(BinDist, 5),
     {NULL, NULL, 0}
 };
 
@@ -205,7 +207,7 @@ static const R_FortranMethodDef FortEntries[] = {
     {"smart", (DL_FUNC) &F77_SUB(smart), 16},
     {"pppred", (DL_FUNC) &F77_SUB(pppred), 5},
     {"setsmu", (DL_FUNC) &F77_SUB(setsmu), 0},
-    {"qsbart", (DL_FUNC) &F77_SUB(qsbart), 21},
+    {"rbart", (DL_FUNC) &F77_SUB(rbart), 20},
     {"bvalus", (DL_FUNC) &F77_SUB(bvalus), 7},
     {"supsmu", (DL_FUNC) &F77_SUB(supsmu), 10},
     {"hclust", (DL_FUNC) &F77_SUB(hclust), 11},

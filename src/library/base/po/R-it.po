@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-06 10:53\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -99,6 +99,10 @@ msgstr "'input' deve avere lunghezza 1"
 
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr ""
+
+#, fuzzy
+msgid "use of 0-length dim is deprecated"
+msgstr "'%s' è deprecata"
 
 msgid "'dim' specifies too large an array"
 msgstr "'dim' specifica un array troppo esteso"
@@ -257,10 +261,6 @@ msgstr "i 'breaks' non sono distinti"
 msgid "labels/breaks length conflict"
 msgstr "lunghezze di labels e breaks differenti"
 
-#, fuzzy
-msgid "invalid value of length(x)"
-msgstr "valore 'n' non valido"
-
 msgid "invalid 'row.names' length"
 msgstr "lunghezza di 'row.names' non ammissibile"
 
@@ -284,7 +284,7 @@ msgstr "'row.names' non valido, lunghezza %d per un data frame con %d righe"
 msgid "supplied %d row names for %d rows"
 msgstr "specificati %d nomi di rica per %d righe"
 
-msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgid "options(\"stringsAsFactors\") not set to TRUE or FALSE"
 msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
@@ -705,6 +705,10 @@ msgstr "'%s' è senza senso per le variabili qualitative ordinali"
 msgid "no files to copy to"
 msgstr "nessun file su cui copiare"
 
+#, fuzzy
+msgid "attempt to copy a directory to itself"
+msgstr "nessun file/directory da collegare"
+
 msgid "more 'from' files than 'to' files"
 msgstr "ci sono più file 'from' che file 'to'"
 
@@ -744,14 +748,6 @@ msgstr "'vec' contiene NA"
 
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' deve essere ordinato in ordine non decrescente"
-
-#, fuzzy
-msgid "invalid length(x)"
-msgstr "nome non valido"
-
-#, fuzzy
-msgid "invalid length(vec)"
-msgstr "nome non valido"
 
 msgid "using the first element of 'value' of type expression"
 msgstr ""
@@ -1141,6 +1137,10 @@ msgid "attempt to set colnames on object with less than two dimensions"
 msgstr ""
 "tentativo di impostare colnames per un oggetto con meno di due dimensioni"
 
+#, fuzzy
+msgid "invalid value of nrow(x)"
+msgstr "valore 'n' non valido"
+
 msgid "argument is not numeric or logical: returning NA"
 msgstr "l'argomento non è numerico o logico: restituisco NA"
 
@@ -1416,6 +1416,10 @@ msgid "invalid ncol(qr$qr)"
 msgstr ""
 
 #, fuzzy
+msgid "invalid ncol(qr$rank)"
+msgstr "nome non valido"
+
+#, fuzzy
 msgid "invalid ncol(y)"
 msgstr "nome non valido"
 
@@ -1680,6 +1684,10 @@ msgstr "valore 'n' non valido"
 msgid "invalid value of nbins"
 msgstr "valore 'n' non valido"
 
+#, fuzzy
+msgid "'INDEX' is of length zero"
+msgstr "'to' deve avere  lunghezza 1"
+
 msgid "arguments must have same length"
 msgstr "gli argomenti devono avere la stessa lunghezza"
 
@@ -1900,6 +1908,18 @@ msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
 
+#, fuzzy
+#~ msgid "invalid length(x)"
+#~ msgstr "nome non valido"
+
+#, fuzzy
+#~ msgid "invalid length(vec)"
+#~ msgstr "nome non valido"
+
+#, fuzzy
+#~ msgid "invalid value of length(x)"
+#~ msgstr "valore 'n' non valido"
+
 #~ msgid "'pattern' must be a non-empty character string"
 #~ msgstr "il 'pattern' deve essere una stringa di caratteri non vuota"
 
@@ -1932,10 +1952,6 @@ msgstr[1] "Messaggi di avvertimento:\n"
 
 #~ msgid "no files to copy from"
 #~ msgstr "nessun file da cui copiare"
-
-#, fuzzy
-#~ msgid "use of 'save' is deprecated"
-#~ msgstr "'%s' è deprecata"
 
 #, fuzzy
 #~ msgid "save != FALSE is defunct"
@@ -1971,10 +1987,6 @@ msgstr[1] "Messaggi di avvertimento:\n"
 #, fuzzy
 #~ msgid "invalid digits"
 #~ msgstr "'digits' non valido"
-
-#, fuzzy
-#~ msgid "'x' must be of length 1"
-#~ msgstr "'to' deve avere  lunghezza 1"
 
 #~ msgid "argument to 'which' is not logical"
 #~ msgstr "l'argomento di 'which' non è di tipo logico"

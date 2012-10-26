@@ -1,6 +1,8 @@
 #  File src/library/tools/R/build.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -236,7 +238,7 @@ get_exclude_patterns <- function()
             "  --resave-data         same as --resave-data=best",
             "  --no-resave-data      same as --resave-data=no",
             "  --compact-vignettes=  try to compact PDF files under inst/doc:",
-            '                        "no" (default), "qpdf", "gs", "gs+pdf", "both"',
+            '                        "no" (default), "qpdf", "gs", "gs+qpdf", "both"',
             "  --compact-vignettes   same as --compact-vignettes=qpdf",
             "  --md5                 add MD5 sums",
            "",
@@ -403,7 +405,7 @@ get_exclude_patterns <- function()
             length(pdfs <- dir(doc_dir, pattern = "\\.pdf", recursive = TRUE,
                                full.names = TRUE))) {
             messageLog(Log, "compacting vignettes and other PDF files")
-            if(compact_vignettes %in% c("gs", "gs+pdf", "both")) {
+            if(compact_vignettes %in% c("gs", "gs+qpdf", "both")) {
                 gs_cmd <- find_gs_cmd(Sys.getenv("R_GSCMD", ""))
                 gs_quality <- "ebook"
             } else {
@@ -411,7 +413,7 @@ get_exclude_patterns <- function()
                 gs_quality <- "none"
             }
             qpdf <-
-                ifelse(compact_vignettes %in% c("qpdf", "gs+pdf", "both"),
+                ifelse(compact_vignettes %in% c("qpdf", "gs+qpdf", "both"),
                        Sys.which(Sys.getenv("R_QPDF", "qpdf")), "")
             res <- compactPDF(pdfs, qpdf = qpdf,
                               gs_cmd = gs_cmd, gs_quality = gs_quality)
@@ -676,7 +678,9 @@ get_exclude_patterns <- function()
             if(any(rdas$compress %in% c("bzip2", "xz")))
                 fixup_R_dep(pkgname, "2.10")
         } else {
-            rdas <- checkRdaFiles(ddir)
+            ## ddir need not exist if just R/sysdata.rda
+            rdas <- checkRdaFiles(Sys.glob(c(file.path(ddir, "*.rda"),
+                                             file.path(ddir, "*.RData"))))
             if(nrow(rdas)) {
                 update <- with(rdas, ASCII | compress == "none" | version < 2)
                 if(any(update)) {
@@ -822,7 +826,7 @@ get_exclude_patterns <- function()
         args <- args[-1L]
     }
 
-    if(!compact_vignettes %in% c("no", "qpdf", "gs", "gs+pdf", "both")) {
+    if(!compact_vignettes %in% c("no", "qpdf", "gs", "gs+qpdf", "both")) {
         warning('invalid value for --compact-vignettes, assuming "qpdf"')
         compact_vignettes <-"qpdf"
     }
@@ -860,12 +864,11 @@ get_exclude_patterns <- function()
         checkingLog(Log, "for file ", sQuote(file.path(pkg, "DESCRIPTION")))
         f <- file.path(pkgdir, "DESCRIPTION")
         if (file.exists(f)) {
-            desc <- try(read.dcf(f))
+            desc <- try(.read_description(f))
             if (inherits(desc, "try-error") || !length(desc)) {
                 resultLog(Log, "EXISTS but not correct format")
                 do_exit(1L)
             }
-            desc <- desc[1L, ]
             resultLog(Log, "OK")
         } else {
             resultLog(Log, "NO")
@@ -938,8 +941,15 @@ get_exclude_patterns <- function()
         exclude <- exclude | bases %in% c("Read-and-delete-me", "GNUMakefile")
         ## Mac resource forks
         exclude <- exclude | grepl("^\\._", bases)
+        exclude <- exclude | (isdir & grepl("^src.*/[.]deps$", allfiles))
 	## Windows DLL resource file
-        exclude <- exclude | (bases == paste0("src/", pkgname, "_res.rc"))
+        exclude <- exclude | (allfiles == paste0("src/", pkgname, "_res.rc"))
+        ## inst/doc/.Rinstignore is a mistake
+        exclude <- exclude | grepl("inst/doc/[.](Rinstignore|build[.]timestamp)$", allfiles)
+        exclude <- exclude | grepl("vignettes/[.]Rinstignore$", allfiles)
+        ## leftovers
+        exclude <- exclude | grepl("^.Rbuildindex[.]", allfiles)
+        exclude <- exclude | (bases %in% .hidden_file_exclusions)
         unlink(allfiles[exclude], recursive = TRUE, force = TRUE)
         setwd(owd)
 

@@ -10,7 +10,8 @@ if(tools:::.OStype() == "windows") {
 } else {
     useDynLib(grDevices, R_chull, R_CreateAtVector, R_GAxisPars,
               PicTeX, PostScript, XFig, PDF, CQuartz = Quartz, devCairo,
-              Type1FontInUse, CIDFontInUse, R_GD_nullDevice)
+              Type1FontInUse, CIDFontInUse, R_GD_nullDevice,
+              cairoProps, makeQuartzDefault)
 }
 
 export(Hershey, adjustcolor, as.graphicsAnnot, as.raster, axisTicks, blues9,

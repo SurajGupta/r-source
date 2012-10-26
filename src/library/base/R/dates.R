@@ -1,6 +1,8 @@
 #  File src/library/base/R/dates.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -276,7 +278,7 @@ seq.Date <- function(from, to, by, length.out=NULL, along.with=NULL, ...)
     if(valid <= 2L) { # days or weeks
         from <- unclass(as.Date(from))
         if(!is.null(length.out))
-            res <- seq.int(from, by=by, length.out=length.out)
+            res <- seq.int(from, by = by, length.out = length.out)
         else {
             to0 <- unclass(as.Date(to))
             ## defeat test in seq.default
@@ -322,7 +324,7 @@ cut.Date <-
     x <- as.Date(x)
 
     if (inherits(breaks, "Date")) {
-	breaks <- as.Date(breaks)
+	breaks <- sort(as.Date(breaks))
     } else if(is.numeric(breaks) && length(breaks) == 1L) {
 	## specified number of breaks
     } else if(is.character(breaks) && length(breaks) == 1L) {

@@ -1,6 +1,8 @@
 #  File src/library/stats/R/biplot.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -65,7 +67,7 @@ biplot.default <-
          xlab = xlab, ylab = ylab, sub = sub, main = main, ...)
     text(x, xlabs, cex = cex[1L], col = col[1L], ...)
     par(new = TRUE)
-    dev.hold(); on.exit(dev.flush())
+    dev.hold(); on.exit(dev.flush(), add = TRUE)
     plot(y, axes = FALSE, type = "n", xlim = xlim*ratio, ylim = ylim*ratio,
 	 xlab = "", ylab = "", col = col[1L], ...)
     axis(3, col = col[2L], ...)

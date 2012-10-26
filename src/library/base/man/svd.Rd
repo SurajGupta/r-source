@@ -29,18 +29,16 @@ La.svd(x, nu = min(n, p), nv = min(n, p))
 \details{
   The singular value decomposition plays an important role in many
   statistical techniques.  \code{svd} and \code{La.svd} provide two
-  slightly different interfaces.  The main functions used are
-  the LAPACK routines DGESDD and ZGESVD; \code{svd(LINPACK = TRUE)}
-  provides an interface to the LINPACK routine DSVDC, purely for
-  backwards compatibility.
+  slightly different interfaces.
 
   Computing the singular vectors is the slow part for large matrices.
   The computation will be more efficient if \code{nu <= min(n, p)} and
   \code{nv <= min(n, p)}, and even more efficient if one or both are zero.
 
   Unsuccessful results from the underlying LAPACK code will result in an
-  error giving a positive error code: these can only be interpreted by
-  detailed study of the FORTRAN code.
+  error giving a positive error code (most often \code{1}): these can
+  only be interpreted by detailed study of the FORTRAN code but mean
+  that the algorithm failed to converge.
 }
 \value{
   The SVD decomposition of the matrix as computed by LAPACK/LINPACK,
@@ -61,19 +59,34 @@ La.svd(x, nu = min(n, p), nv = min(n, p))
   For \code{La.svd} the return value replaces \code{v} by \code{vt}, the
   (conjugated if complex) transpose of \code{v}.
 }
+\source{
+  The main functions used are the LAPACK routines \code{DGESDD} and
+  \code{ZGESVD}; \code{svd(LINPACK = TRUE)} provides an interface to the
+  LINPACK routine \code{DSVDC}.
+     
+  LAPACK and LINPACK are from \url{http://www.netlib.org/lapack} and
+  \url{http://www.netlib.org/linpack} and their guides are listed
+  in the references.
+}
 \references{
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
+  
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 
   Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
   \emph{LINPACK Users Guide.}  Philadelphia: SIAM Publications.
-
-  Anderson. E. and ten others (1999)
-  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
-  Available on-line at
-  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
 }
+
+\note{
+  \code{LINPACK = TRUE} (for compatibility with \R < 1.7.0) was formally
+  deprecated in \R 2.15.2.
+}
+
 \seealso{
   \code{\link{eigen}}, \code{\link{qr}}.
 }

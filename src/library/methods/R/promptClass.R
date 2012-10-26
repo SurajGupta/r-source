@@ -1,6 +1,8 @@
 #  File src/library/methods/R/promptClass.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -96,8 +98,10 @@ function (clName, filename = NULL, type = "class",
         else if(length(whereClass) > 1L) {
             if(identical(where, topenv(parent.frame()))) {
                 whereClass <- whereClass[[1L]]
-                warning(gettextf("multiple definitions of \"%s\" found; using the one on %s",
-                                 clName, whereClass), domain = NA)
+                warning(gettextf("multiple definitions of %s found; using the one on %s",
+                                 dQuote(clName),
+                                 whereClass),
+                        domain = NA)
             }
             else {
                 if(exists(classMetaName(clName), where, inherits = FALSE))

@@ -1,6 +1,8 @@
 #  File src/library/graphics/R/image.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -87,11 +89,7 @@ image.default <- function (x = seq(0, 1, length.out = nrow(z)),
 	    stop("breaks must all be finite")
         ## spatstat passes a factor matrix here.
         z1 <- if (!is.double(z)) as.double(z) else z
-        if (!is.double(breaks)) breaks <- as.double(breaks)
-	zi <- .C("bincode",
-		 z1, length(z), breaks, length(breaks),
-		 code = integer(length(z)), (TRUE), (TRUE), nok = TRUE,
-		 NAOK = TRUE, DUP = FALSE, PACKAGE = "base") $code - 1
+        zi <- .bincode(z1, breaks, TRUE, TRUE) - 1L
     }
     if (!add)
 	plot(NA, NA, xlim = xlim, ylim = ylim, type = "n", xaxs = xaxs,

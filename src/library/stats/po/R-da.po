@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-09-10 13:59\n"
 "PO-Revision-Date: 2012-01-28 01:18+0200\n"
 "Last-Translator: Joe <joedalton2@yahoo.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -267,13 +267,7 @@ msgstr ""
 msgid "'approx' requires n >= 1"
 msgstr ""
 
-msgid "'vec' contains NAs"
-msgstr ""
-
-msgid "'vec' must be sorted non-decreasingly"
-msgstr ""
-
-msgid "invalid length(vec)"
+msgid "invalid length(xout)"
 msgstr ""
 
 msgid "'order.max' must be >= 1"
@@ -364,6 +358,9 @@ msgid "need at least 2 data points"
 msgstr ""
 
 msgid "invalid 'x'"
+msgstr ""
+
+msgid "invalid 'nb'"
 msgstr ""
 
 msgid "sample is too sparse to find TD"
@@ -716,10 +713,16 @@ msgstr ""
 msgid "'xi' has not the right length"
 msgstr ""
 
+msgid "invalid value of length(x)"
+msgstr ""
+
 msgid "incorrect dimensions for 'xi'"
 msgstr ""
 
 msgid "'x' is not a vector or matrix"
+msgstr ""
+
+msgid "extra argument(s) %s will be disregarded"
 msgstr ""
 
 msgid "invalid distance method"
@@ -882,6 +885,9 @@ msgid "'filter' is longer than time series"
 msgstr ""
 
 msgid "argument 'sides' must be 1 or 2"
+msgstr ""
+
+msgid "'circular' must be logical and not NA"
 msgstr ""
 
 msgid "length of 'init' must equal length of 'filter'"
@@ -1217,6 +1223,9 @@ msgstr ""
 msgid "more cluster centers than data points"
 msgstr ""
 
+msgid "'invalid value of 'k'"
+msgstr ""
+
 msgid "'iter.max' must be positive"
 msgstr ""
 
@@ -1244,9 +1253,6 @@ msgstr ""
 msgid ""
 "numeric y must be supplied.\n"
 "For density estimation use density()"
-msgstr ""
-
-msgid "invalid value of length(x)"
 msgstr ""
 
 msgid "'k' is not an integer"
@@ -1389,6 +1395,9 @@ msgid "no models to compare"
 msgstr ""
 
 msgid "extra arguments discarded"
+msgstr ""
+
+msgid "logLik.lm only handles single responses"
 msgstr ""
 
 msgid "no \"nobs\" attribute is available"
@@ -1618,13 +1627,7 @@ msgstr ""
 msgid "control argument must be a named list"
 msgstr ""
 
-msgid "unrecognized control element(s) named `"
-msgstr ""
-
-msgid "' ignored"
-msgstr ""
-
-msgid "Logical `hessian' argument not allowed.  See documentation."
+msgid "Logical 'hessian' argument not allowed.  See documentation."
 msgstr ""
 
 msgid "'params' has wrong length"
@@ -1654,22 +1657,16 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr ""
 
+msgid "unrecognized control element(s) named `"
+msgstr ""
+
+msgid "' ignored"
+msgstr ""
+
 msgid "'data' must be a list or an environment"
 msgstr ""
 
 msgid "No starting values specified"
-msgstr ""
-
-msgid "No starting values specified for some parameters."
-msgstr ""
-
-msgid "Initializing"
-msgstr ""
-
-msgid "to '1.'."
-msgstr ""
-
-msgid "Consider specifying 'start' or using a selfStart model"
 msgstr ""
 
 msgid "parameters without starting value in 'data':"
@@ -1844,9 +1841,6 @@ msgid ""
 msgstr ""
 
 msgid "'newdata' does not have the correct number of columns"
-msgstr ""
-
-msgid "wrong number of predictors"
 msgstr ""
 
 msgid "both 'x' and 'covmat' were supplied: 'x' will be ignored"
@@ -2045,6 +2039,10 @@ msgstr ""
 
 msgid "cannot use more inner knots than unique 'x' values"
 msgstr ""
+
+#, fuzzy
+msgid "'spar' must be of length 1"
+msgstr "»acf« skal have længden to eller længere"
 
 msgid "specified both 'df' and 'cv'; will disregard the latter"
 msgstr ""

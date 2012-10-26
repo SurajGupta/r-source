@@ -1,6 +1,8 @@
 #  File src/library/utils/R/history.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -15,10 +17,10 @@
 #  http://www.r-project.org/Licenses/
 
 loadhistory <- function(file = ".Rhistory")
-    invisible(.Internal(loadhistory(file)))
+    .Internal(loadhistory(file))
 
 savehistory <- function(file = ".Rhistory")
-    invisible(.Internal(savehistory(file)))
+    .Internal(savehistory(file))
 
 history <- function(max.show = 25, reverse = FALSE, pattern, ...)
 {

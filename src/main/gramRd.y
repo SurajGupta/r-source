@@ -165,8 +165,6 @@ static int 	mkComment(int);
 
 %}
 
-%debug
-
 %token		END_OF_INPUT ERROR
 %token		SECTIONHEADER RSECTIONHEADER VSECTIONHEADER
 %token		SECTIONHEADER2
@@ -897,15 +895,6 @@ static SEXP GrowList(SEXP l, SEXP s)
 }
 
 /*--------------------------------------------------------------------------*/
-
-/*
- *  Parsing Entry Points:
- *
- *  The Following entry points provide Rd parsing facilities.
- *
- *	SEXP R_ParseRd(Rconnection con, ParseStatus *status, SEXP srcfile)
- *
- */
  
 static SEXP ParseRd(ParseStatus *status, SEXP srcfile, Rboolean fragment)
 {
@@ -964,7 +953,7 @@ static int con_getc(void)
     return (last = c);
 }
 
-attribute_hidden
+static
 SEXP R_ParseRd(Rconnection con, ParseStatus *status, SEXP srcfile, Rboolean fragment)
 {
     con_parse = con;

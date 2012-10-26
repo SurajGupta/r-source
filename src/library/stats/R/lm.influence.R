@@ -1,6 +1,8 @@
 #  File src/library/stats/R/lm.influence.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -57,6 +59,7 @@ lm.influence <- function (model, do.coef = TRUE)
         n <- as.integer(nrow(mqr$qr))
         if (is.na(n)) stop("invalid model QR matrix")
         k <- as.integer(mqr$rank)
+        if (is.na(k)) stop("invalid model QR matrix")
         ## in na.exclude case, omit NAs; also drop 0-weight cases
         if(NROW(e) != n)
             stop("non-NA residual length does not match cases used in fitting")
@@ -73,7 +76,7 @@ lm.influence <- function (model, do.coef = TRUE)
                         coefficients= if(do.coef) matrix(0, n, k) else double(),
                         sigma = double(n),
                         tol = 10 * .Machine$double.eps,
-                        DUP = FALSE, PACKAGE="stats"
+                        DUP = FALSE
                         )[c("hat", "coefficients", "sigma","wt.res")]
         if(!is.null(model$na.action)) {
             hat <- naresid(model$na.action, res$hat)

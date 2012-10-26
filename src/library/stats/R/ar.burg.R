@@ -1,6 +1,8 @@
 #  File src/library/stats/R/ar.burg.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1999-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -39,7 +41,6 @@ ar.burg.default <-
     else floor(order.max)
     if (order.max < 1L) stop("'order.max' must be >= 1")
     else if (order.max >= n.used) stop("'order.max' must be < 'n.used'")
-    xaic <- numeric(order.max + 1L)
     z <- .C(C_burg,
             as.integer(n.used),
             as.double(x),

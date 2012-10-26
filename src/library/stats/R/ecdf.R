@@ -1,6 +1,8 @@
 #  File src/library/stats/R/ecdf.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -48,7 +50,8 @@ print.ecdf <- function (x, digits= getOption("digits") - 2, ...)
 
 summary.ecdf <- function(object, ...)
 {
-    header <- paste("Empirical CDF:	 ", environment(object)$"n",
+    n <- length(eval(expression(x), envir = environment(object)))
+    header <- paste("Empirical CDF:	 ", n,
                     "unique values with summary\n")
     structure(summary(knots(object), ...),
               header = header, class = "summary.ecdf")

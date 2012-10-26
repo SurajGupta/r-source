@@ -1,6 +1,6 @@
 % File src/library/base/man/qr.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{qr}
@@ -41,13 +41,11 @@ as.qr(x)
   \item{a}{a QR decomposition or (\code{qr.solve} only) a rectangular matrix.}
   \item{k}{effective rank.}
   \item{LAPACK}{logical.  For real \code{x}, if true use LAPACK
-    otherwise use LINPACK.}
+    otherwise use LINPACK (the default).}
   \item{\dots}{further arguments passed to or from other methods}
 }
 \description{
-  \code{qr} computes the QR decomposition of a matrix.  It provides an
-  interface to the techniques used in the LINPACK routine DQRDC
-  or the LAPACK routines DGEQP3 and (for complex matrices) ZGEQP3.
+  \code{qr} computes the QR decomposition of a matrix.
 }
 \details{
   The QR decomposition plays an important role in many
@@ -64,7 +62,7 @@ as.qr(x)
   \code{t(Q) \%*\% y}, where \code{Q} is the (complete) \eqn{\bold{Q}} matrix.
 
   All the above functions keep \code{dimnames} (and \code{names}) of
-  \code{x} and \code{y} if there are.
+  \code{x} and \code{y} if there are any.
 
   \code{solve.qr} is the method for \code{\link{solve}} for \code{qr} objects.
   \code{qr.solve} solves systems of equations via the QR decomposition:
@@ -79,6 +77,8 @@ as.qr(x)
 
   It is not possible to coerce objects to mode \code{"qr"}.  Objects
   either are QR decompositions or they are not.
+
+  \code{qr.fitted} and \code{qr.resid} only support the LINPACK interface.
 }
 \value{
   The QR decomposition of the matrix as computed by LINPACK or LAPACK.
@@ -107,18 +107,27 @@ as.qr(x)
   Using LAPACK (including in the complex case) uses column pivoting and
   does not attempt to detect rank-deficient matrices.
 }
+\source{
+  For \code{qr}, the LINPACK routine \code{DQRDC} and the LAPACK
+  routines \code{DGEQP3} and \code{ZGEQP3}.  Further LINPACK and LAPACK
+  routines are used for \code{qr.coef}, \code{qr.qy} and \code{qr.aty}.
+  
+  LAPACK and LINPACK are from \url{http://www.netlib.org/lapack} and
+  \url{http://www.netlib.org/linpack} and their guides are listed
+  in the references.
+}
 \references{
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
+  
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 
   Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
   \emph{LINPACK Users Guide.}  Philadelphia: SIAM Publications.
-
-  Anderson. E. and ten others (1999)
-  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
-  Available on-line at
-  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
 }
 \seealso{
   \code{\link{qr.Q}},  \code{\link{qr.R}},  \code{\link{qr.X}} for

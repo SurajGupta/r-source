@@ -1,6 +1,8 @@
 #  File src/library/base/R/load.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -64,8 +66,7 @@ save <- function(..., list = character(),
     names <- as.character( substitute(list(...)))[-1L]
     list <- c(list, names)
     if (!is.null(version) && version == 1)
-        invisible(.Internal(save(list, file, ascii, version, envir,
-                                 eval.promises)))
+        .Internal(save(list, file, ascii, version, envir, eval.promises))
     else {
         if (precheck) {
             ## check for existence of objects before opening connection
@@ -113,8 +114,7 @@ save <- function(..., list = character(),
 	else stop("bad file argument")
 	if(isOpen(con) && summary(con)$text != "binary")
 	    stop("can only save to a binary connection")
-	invisible(.Internal(saveToConn(list, con, ascii, version, envir,
-				       eval.promises)))
+	.Internal(saveToConn(list, con, ascii, version, envir, eval.promises))
     }
 }
 

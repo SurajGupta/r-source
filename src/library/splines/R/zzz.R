@@ -1,6 +1,8 @@
 #  File src/library/splines/R/zzz.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -15,11 +17,6 @@
 #  http://www.r-project.org/Licenses/
 
 .noGenerics <- TRUE
-
-.onLoad <- function(libname, pkgname)
-{
-    library.dynam("splines", pkgname, libname)
-}
 
 .onUnload <- function(libpath)
     library.dynam.unload("splines", libpath)

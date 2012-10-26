@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.15.2012-09-19
+Version 2.15.2012-10-21
 ISBN 3-900051-08-9
 Kurt Hornik
 
@@ -258,7 +258,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.15.1.  Based on this
+The current released version is 2.15.2.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -424,7 +424,7 @@ version of R is released, there may be a delay of up to 2 weeks until the
 Fedora RPM becomes publicly available, as it must pass through the
 statutory Fedora review process.
 
-   See `http://cran.r-project.org/bin/linux/suse/README.html' for
+   See `http://CRAN.R-project.org/bin/linux/suse/README.html' for
 information about RPMs for openSUSE.
 
    No other binary distributions are currently publically available via
@@ -1298,8 +1298,7 @@ resource.
    Rwui (http://sysbio.mrc-bsu.cam.ac.uk/Rwui) is a web application to
 create user-friendly web interfaces for R scripts.  All code for the web
 interface is created automatically.  There is no need for the user to do
-any extra scripting or learn any new scripting techniques.  Rwui can also
-be found at `http://rwui.cryst.bbk.ac.uk'.
+any extra scripting or learn any new scripting techniques.
 
    The *R.rsp* (http://CRAN.R-project.org/package=R.rsp) package by Henrik
 Bengtsson introduces "R Server Pages".  Analogous to Java Server Pages, an
@@ -2487,7 +2486,7 @@ Okular (Linux/KDE)
      There is not an option in the GUI to enable/disable anti-aliasing.
      From a console command line, use:
           $ kwriteconfig --file okularpartrc --group 'Dlg Performance' \
-                         --key TextAntialias Disabled
+                         --key GraphicsAntialias Disabled
      Then restart Okular.  Change the final word to `Enabled' to restore
      the original setting.
 
@@ -2589,7 +2588,7 @@ In most cases, typing the name of the function will print its source code.
 However, code is sometimes hidden in a namespace, or compiled.  For a
 complete overview on how to access source code, see Uwe Ligges (2006),
 "Help Desk: Accessing the sources", _R News_, *6/4*, 43-45
-(`http://cran.r-project.org/doc/Rnews/Rnews_2006-4.pdf').
+(`http://CRAN.R-project.org/doc/Rnews/Rnews_2006-4.pdf').
 
 7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
 ================================================================================================================

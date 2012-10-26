@@ -1,6 +1,8 @@
 #  File src/library/grid/R/curve.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -444,7 +446,7 @@ calcCurveGrob <- function(x, debug) {
 validDetails.curve <- function(x) {
     if ((!is.unit(x$x1) || !is.unit(x$y1)) ||
         (!is.unit(x$x2) || !is.unit(x$y2)))
-        stop("'x1', 'y1' ,'x2', and 'y2' must be units")
+        stop("'x1', 'y1', 'x2', and 'y2' must be units")
     x$curvature <- as.numeric(x$curvature)
     x$angle <- x$angle %% 180
     x$ncp <- as.integer(x$ncp)

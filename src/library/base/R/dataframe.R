@@ -14,6 +14,10 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+# Statlib code by John Chambers, Bell Labs, 1994
+# Changes Copyright (C) 1998-2012 The R Core Team
+
+
 ## As from R 2.4.0, row.names can be either character or integer.
 ## row.names() will always return character.
 ## attr(, "row.names") will return either character or integer.
@@ -77,7 +81,10 @@ row.names.default <- function(x) if(!is.null(dim(x))) rownames(x)# else NULL
 
 is.na.data.frame <- function (x)
 {
-    y <- do.call("cbind", lapply(x, "is.na")) # gives a matrix
+    ## need to special-case no columns
+    y <- if (length(x)) {
+        do.call("cbind", lapply(x, "is.na")) # gives a matrix
+    } else matrix(FALSE, length(row.names(x)), 0)
     if(.row_names_info(x) > 0L) rownames(y) <- row.names(x)
     y
 }
@@ -218,17 +225,20 @@ default.stringsAsFactors <- function()
     val <- getOption("stringsAsFactors")
     if(is.null(val)) val <- TRUE
     if(!is.logical(val) || is.na(val) || length(val) != 1L)
-        stop("options('stringsAsFactors') not set to TRUE or FALSE")
+        stop('options("stringsAsFactors") not set to TRUE or FALSE')
     val
 }
 
-
+## in case someone passes 'nm'
 as.data.frame.character <-
-    function(x, ..., stringsAsFactors = default.stringsAsFactors()){
-        nm <- deparse(substitute(x), width.cutoff=500L)
-        if(stringsAsFactors) x <- factor(x)
-        as.data.frame.vector(x, ..., nm=nm)
-    }
+    function(x, ..., stringsAsFactors = default.stringsAsFactors())
+{
+    nm <- deparse(substitute(x), width.cutoff=500L)
+    if(stringsAsFactors) x <- factor(x)
+    if(!"nm" %in% names(list(...)))
+        as.data.frame.vector(x, ..., nm = nm)
+    else as.data.frame.vector(x, ...)
+}
 
 as.data.frame.logical <- as.data.frame.vector
 
@@ -253,7 +263,8 @@ as.data.frame.matrix <- function(x, row.names = NULL, optional = FALSE, ...,
 	for(i in ic)
 	    value[[i]] <- as.vector(x[,i])
     }
-    if(length(row.names) != nrows)
+    ## Explicitly check for NULL in case nrows==0
+    if(is.null(row.names) || length(row.names) != nrows)
 	row.names <- .set_row_names(nrows)
     if(length(collabs) == ncols)
 	names(value) <- collabs

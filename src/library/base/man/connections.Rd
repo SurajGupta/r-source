@@ -324,7 +324,7 @@ isIncomplete(con)
   \code{open = "w"} when the connection is created or
   \code{\link{unlink}} the file before creating the connection.)
   
-  For write-mode connections, \code{compress} specifies now hard the
+  For write-mode connections, \code{compress} specifies how hard the
   compressor works to minimize the file size, and higher values need
   more CPU time and more working memory (up to ca 800Mb for
   \code{xzfile(compress = 9)}).  For \code{xzfile} negative values of
@@ -381,6 +381,9 @@ isIncomplete(con)
   undocumented.  On output the result is likely to be that up to the
   error, with a warning.  On input, it will most likely be all or some
   of the input up to the error.
+  
+  It may be possible to deduce the current native encoding from
+  \code{\link{Sys.getlocale}("LC_CTYPE")}, but not all OSes record it. 
 }
 
 \section{Blocking}{
@@ -566,7 +569,7 @@ readLines(pipe("ls -1"))
 writeLines(c("450, 390, 467, 654,  30, 542, 334, 432, 421,",
 "357, 497, 493, 550, 549, 467, 575, 578, 342,",
 "446, 547, 534, 495, 979, 479"), "data2_")}
-\dontrun{\% cat data2
+\dontrun{\% cat data2_
 450, 390, 467, 654,  30, 542, 334, 432, 421,
 357, 497, 493, 550, 549, 467, 575, 578, 342,
 446, 547, 534, 495, 979, 479}

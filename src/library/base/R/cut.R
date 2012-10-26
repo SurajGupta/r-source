@@ -1,6 +1,8 @@
 #  File src/library/base/R/cut.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -22,10 +24,10 @@ cut.default <-
 {
     if (!is.numeric(x)) stop("'x' must be numeric")
     if (length(breaks) == 1L) {
-	if (is.na(breaks) | breaks < 2L)
+	if (is.na(breaks) || breaks < 2L)
 	    stop("invalid number of intervals")
-	nb <- as.integer(breaks + 1)# one more than #{intervals}
-	dx <- diff(rx <- range(x,na.rm=TRUE))
+	nb <- as.integer(breaks + 1) # one more than #{intervals}
+	dx <- diff(rx <- range(x, na.rm = TRUE))
 	if(dx == 0) dx <- abs(rx[1L])
 	breaks <- seq.int(rx[1L] - dx/1000,
                           rx[2L] + dx/1000, length.out = nb)
@@ -53,15 +55,15 @@ cut.default <-
         codes.only <- TRUE
     else if (length(labels) != nb - 1L)
         stop("labels/breaks length conflict")
-    if(!is.double(x)) storage.mode(x) <- "double"
-    if(!is.double(breaks)) storage.mode(breaks) <- "double"
-    nx <- as.integer(length(x))
-    if (is.na(nx)) stop("invalid value of length(x)")
-    code <- .C("bincode", x = x, n = nx, breaks = breaks,
-               as.integer(nb), code = integer(nx), right = as.logical(right),
-	       include = as.logical(include.lowest), naok = TRUE,
-	       NAOK = TRUE, DUP = FALSE, PACKAGE = "base") $code
-    ## NB this relies on passing NAOK in that position!
+    code <- .bincode(x, breaks, right, include.lowest)
     if(codes.only) code
     else factor(code, seq_along(labels), labels, ordered = ordered_result)
+}
+
+## called from image.default and for use in packages.
+.bincode <- function(x, breaks, right = TRUE, include.lowest = FALSE)
+{
+    if(!is.double(x)) storage.mode(x) <- "double"
+    if(!is.double(breaks)) storage.mode(breaks) <- "double"
+    .Call("BinCode", x, breaks, right, include.lowest, PACKAGE = "base")
 }

@@ -156,8 +156,6 @@
  R_ParseErrorFile
  R_ParseErrorMsg
  R_ParseFile
- R_ParseLatex
- R_ParseRd
  R_PendingPromises
  R_Primitive
  R_Quiet
@@ -340,7 +338,6 @@
  Rf_check_stack_balance
  Rf_con_pushback
  Rf_convertToC
- Rf_copyListMatrix
  Rf_copyMostAttribNoTs
  Rf_d1mach
  Rf_deparse1s
@@ -583,6 +580,7 @@
  do_args
  do_arith
  do_arrangeWindows
+ do_array
  do_arrows
  do_asPOSIXct
  do_asPOSIXlt
@@ -763,6 +761,7 @@
  do_getconst
  do_getenv
  do_geterrmessage
+ do_getfmts
  do_getlocale
  do_gettext
  do_getwd

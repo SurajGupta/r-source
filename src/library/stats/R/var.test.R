@@ -1,6 +1,8 @@
 #  File src/library/stats/R/var.test.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -51,8 +53,7 @@ function(x, y, ratio = 1,
     }
     ESTIMATE <- V.x / V.y
     STATISTIC <- ESTIMATE / ratio
-    PARAMETER <- c(DF.x, DF.y)
-
+    PARAMETER <- c("num df" = DF.x, "denom df" = DF.y)
     PVAL <- pf(STATISTIC, DF.x, DF.y)
     if (alternative == "two.sided") {
         PVAL <- 2 * min(PVAL, 1 - PVAL)
@@ -67,7 +68,6 @@ function(x, y, ratio = 1,
     else
         CINT <- c(0, ESTIMATE / qf(1 - conf.level, DF.x, DF.y))
     names(STATISTIC) <- "F"
-    names(PARAMETER) <- c("num df", "denom df")
     names(ESTIMATE) <- names(ratio) <- "ratio of variances"
     attr(CINT, "conf.level") <- conf.level
     RVAL <- list(statistic = STATISTIC,

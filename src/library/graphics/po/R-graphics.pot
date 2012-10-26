@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2011-10-03 18:50\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-07-31 12:46\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -176,6 +176,9 @@ msgstr ""
 msgid "'x' must be numeric"
 msgstr ""
 
+msgid "invalid length(x)"
+msgstr ""
+
 msgid "'nclass' not used when 'breaks' is specified"
 msgstr ""
 
@@ -191,13 +194,13 @@ msgstr ""
 msgid "hist.default: pretty() error, breaks="
 msgstr ""
 
+msgid "invalid length(breaks)"
+msgstr ""
+
 msgid "'breaks' are not strictly increasing"
 msgstr ""
 
 msgid "'probability' is an alias for '!freq', however they differ."
-msgstr ""
-
-msgid "negative 'counts'. Internal Error in C-code for \"bincount\""
 msgstr ""
 
 msgid "some 'x' not counted; maybe 'breaks' do not span range of 'x'"

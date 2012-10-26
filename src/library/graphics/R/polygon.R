@@ -1,6 +1,9 @@
 #  File src/library/graphics/R/polygon.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright 1995-2012 The R Core Team
+#  In part (C) 2001 Kevin Buhr
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -15,7 +18,7 @@
 #  http://www.r-project.org/Licenses/
 
 ### polyhatch -  a pure R implementation of polygon hatching
-### Copyright (C) 2001 by Kevin Buhr <buhr@stat.wisc.edu>
+### Copyright (C) 2001 Kevin Buhr
 ### Provided to the R project for release under GPL.
 ### Original nice clean structure destroyed by Ross Ihaka
 
@@ -231,20 +234,22 @@ polygon <-
 
         num.polygons <- length(ends)
         col <- rep(col, length.out = num.polygons)
-        border <- rep(border, length.out = num.polygons)
-        lty <- rep(lty, length.out = num.polygons)
-        density <- rep(density, length.out = num.polygons)
+        if(length(border))
+            border <- rep(border, length.out = num.polygons)
+        if(length(lty))
+            lty <- rep(lty, length.out = num.polygons)
+        if(length(density))
+            density <- rep(density, length.out = num.polygons)
         angle <- rep(angle, length.out = num.polygons)
 
-        i <- 1
+        i <- 1L
         for (end in ends) {
             if (end > start) {
-                den <- density[i]
-                if(is.na(den) || den < 0)
+                if(is.null(density) || is.na(density[i]) || density[i] < 0)
                     .Internal(polygon(xy$x[start:(end - 1)],
                                       xy$y[start:(end - 1)],
                                       col[i], NA, lty[i], ...))
-                else if (den > 0) {
+                else if (density[i] > 0) {
 
                         ## note: if col[i]==NA, "segments" will fill with par("fg")
 
@@ -284,7 +289,7 @@ xspline <-
 }
 
 polypath <-
-  function(x, y = NULL, 
+  function(x, y = NULL,
            border = NULL, col = NA, lty = par("lty"),
            rule = "winding", ...)
 {

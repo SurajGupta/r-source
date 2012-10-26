@@ -1,6 +1,8 @@
 #  File src/library/stats/R/glm.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -475,8 +477,7 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
               zz <- eval(call(if(is.function(method)) "method" else method,
                              x=x[, varseq <= i, drop = FALSE],
                              y=r,
-                             weights=w,
-                             offset=object$offset))
+                             weights=w))
               score[i] <-  zz$null.deviance - zz$deviance
               r <- fit$residuals
               w <- fit$weights
@@ -488,8 +489,7 @@ anova.glm <- function(object, ..., dispersion=NULL, test=NULL)
           zz <- eval(call(if(is.function(method)) "method" else method,
                           x=x,
                           y=r,
-                          weights=w,
-                          offset=object$offset))
+                          weights=w))
           score[nvars] <-  zz$null.deviance - zz$deviance
         }
     }
@@ -584,8 +584,7 @@ anova.glmlist <- function(object, ..., dispersion=NULL, test=NULL)
         zz <- eval(call(if(is.function(method)) "method" else method,
                         x=model.matrix(m2),
                         y=r,
-                        weights=w,
-                        offset=m2$offset))
+                        weights=w))
         score[i+1] <-  zz$null.deviance - zz$deviance
         if (df < 0) score[i+1] <- - score[i+1]
       }

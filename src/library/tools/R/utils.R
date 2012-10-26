@@ -1,6 +1,8 @@
 #  File src/library/tools/R/utils.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -439,24 +441,40 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.10")
-## (Could also use something programmatically mapping (R) 2.10.x to
-## (BioC) 2.5, 2.9.x to 2.4, ..., 2.1.x to 1.6, but what if R 3.0.0
-## comes out? Also, pre-2.12.0 is out weeks before all of BioC 2.7)
-## E.g. pre-2.13.0 was out ca Sept 20, BioC 2.8 was ready Nov 17.
+    numeric_version("2.11")
+## Things are more complicated from R-2.15.x with still two BioC
+## releases a year, so we do need to set this manually.
 
 ### ** .vc_dir_names
 
 ## Version control directory names: CVS, .svn (Subversion), .arch-ids
 ## (arch), .bzr, .git, .hg (mercurial) and _darcs (Darcs)
+## And it seems .metadata (eclipse) is in the same category.
 
 .vc_dir_names <-
-    c("CVS", ".svn", ".arch-ids", ".bzr", ".git", ".hg", "_darcs")
+    c("CVS", ".svn", ".arch-ids", ".bzr", ".git", ".hg", "_darcs", ".metadata")
 
 ## and RE version (beware of the need for escapes if amending)
 
 .vc_dir_names_re <-
-    "/(CVS|\\.svn|\\.arch-ids|\\.bzr|\\.git|\\.hg|_darcs)(/|$)"
+    "/(CVS|\\.svn|\\.arch-ids|\\.bzr|\\.git|\\.hg|_darcs|\\.metadata)(/|$)"
+
+## We are told
+## .Rproj.user is Rstudio
+## .cproject .project .settings are Eclipse
+## .exrc is for vi
+## .tm_properties is Mac's TextMate
+.hidden_file_exclusions <-
+    c(".Renviron", ".Rprofile", ".Rproj.user",
+      ".Rhistory", ".Rapp.history",
+      ".tex", ".log", ".aux", ".pdf", ".png",
+      ".backups", ".cvsignore", ".cproject", ".directory",
+      ".dropbox", ".exrc", ".gdb.history",
+      ".gitattributes", ".gitignore", ".gitmodules",
+      ".hgignore", ".hgtags",
+      ".htaccess",
+      ".latex2html-init",
+      ".project", ".seed", ".settings", ".tm_properties")
 
 ### * Internal utility functions.
 
@@ -1100,13 +1118,13 @@ function(package)
 {
     ## Return a character vector with the names of the functions in
     ## @code{package} which 'look' like S3 methods, but are not.
-    ## Using package=NULL returns all known examples
+    ## Using package = NULL returns all known examples
 
     stopList <-
         list(base = c("all.equal", "all.names", "all.vars",
              "format.char", "format.info", "format.pval",
-             "kappa.tri",
              "max.col",
+             ## the next two only exist in *-defunct.Rd.
              "print.atomic", "print.coefmat",
              "qr.Q", "qr.R", "qr.X", "qr.coef", "qr.fitted", "qr.qty",
              "qr.qy", "qr.resid", "qr.solve",
@@ -1156,6 +1174,7 @@ function(package)
              ic.infer = "all.R2",
              hier.part = "all.regs",
              lasso2 = "qr.rtr.inv",
+             latticeExtra = "xyplot.list",
              locfit = c("density.lf", "plot.eval"),
              moments = c("all.cumulants", "all.moments"),
              mratios = c("t.test.ration", "t.test.ratio.default",
@@ -1249,11 +1268,14 @@ function(dfile)
         stop(gettextf("file '%s' does not exist", dfile), domain = NA)
     out <- tryCatch(read.dcf(dfile,
                              keep.white =
-                             .keep_white_description_fields)[1L, ],
+                             .keep_white_description_fields),
                     error = function(e)
                     stop(gettextf("file '%s' is not in valid DCF format",
                                   dfile),
                          domain = NA, call. = FALSE))
+    if (nrow(out) != 1)
+    	stop("contains a blank line", call. = FALSE)
+    out <- out[1,]
     if(!is.na(encoding <- out["Encoding"])) {
         ## could convert everything to UTF-8
         if (encoding %in% c("latin1", "UTF-8"))
@@ -1289,7 +1311,7 @@ function(x, dfile)
     }
     ## Avoid declared encodings when writing out.
     Encoding(x) <- "unknown"
-    ## Avoid folding for Description, Author, Built, and Packaged.
+    ## Avoid folding for fields where we keep whitespace when reading.
     write.dcf(rbind(x), dfile,
               keep.white = .keep_white_description_fields)
 }
@@ -1524,13 +1546,13 @@ function(args, msg)
 ### ** pskill
 
 pskill <- function(pid, signal = SIGTERM)
-    invisible(.Call(ps_kill, pid, signal, PACKAGE = "tools"))
+    invisible(.Call(ps_kill, pid, signal))
 
 ### ** psnice
 
 psnice <- function(pid = Sys.getpid(), value = NA_integer_)
 {
-    res <- .Call(ps_priority, pid, value,  PACKAGE = "tools")
+    res <- .Call(ps_priority, pid, value)
     if(is.na(value)) res else invisible(res)
 }
 ### Local variables: ***

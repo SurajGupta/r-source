@@ -22,10 +22,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
-"PO-Revision-Date: 2012-06-07 15:52\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-09-10 13:59\n"
+"PO-Revision-Date: 2012-09-10 13:59\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -113,7 +113,7 @@ msgid "x$lag must have at least 1 column"
 msgstr "x$lag must have at least 1 column"
 
 msgid "can use ci.type=\"ma\" only if first lag is 0"
-msgstr "can use ci.type=“ma” only if first lag is 0"
+msgstr "can use ci.type=\"ma\" only if first lag is 0"
 
 msgid "univariate time series only"
 msgstr "univariate time series only"
@@ -137,13 +137,13 @@ msgid "F test assumes quasi%s family"
 msgstr "F test assumes quasi%s family"
 
 msgid "no 'add1' method implemented for \"mlm\" models"
-msgstr "no ‘add1’ method implemented for “mlm” models"
+msgstr "no ‘add1’ method implemented for \"mlm\" models"
 
 msgid "scope is not a subset of term labels"
 msgstr "scope is not a subset of term labels"
 
 msgid "no 'drop1' method for \"mlm\" models"
-msgstr "no ‘drop1’ method for “mlm” models"
+msgstr "no ‘drop1’ method for \"mlm\" models"
 
 msgid "F test assumes 'quasi%s' family"
 msgstr "F test assumes ‘quasi%s’ family"
@@ -189,7 +189,7 @@ msgid "'x' must be coefficient matrix/data frame"
 msgstr "‘x’ must be coefficient matrix/data frame"
 
 msgid "option \"show.coef.Pvalues\" is invalid: assuming TRUE"
-msgstr "option “show.coef.Pvalues” is invalid: assuming TRUE"
+msgstr "option \"show.coef.Pvalues\" is invalid: assuming TRUE"
 
 msgid "'P.values' is TRUE, but 'has.Pvalue' is not"
 msgstr "‘P.values’ is TRUE, but ‘has.Pvalue’ is not"
@@ -198,7 +198,7 @@ msgid "wrong k / cs.ind"
 msgstr "wrong k / cs.ind"
 
 msgid "option \"show.signif.stars\" is invalid: assuming TRUE"
-msgstr "option “show.signif.stars” is invalid: assuming TRUE"
+msgstr "option \"show.signif.stars\" is invalid: assuming TRUE"
 
 msgid "'anova' object must have colnames"
 msgstr "‘anova’ object must have colnames"
@@ -288,14 +288,8 @@ msgstr "zero non-NA points"
 msgid "'approx' requires n >= 1"
 msgstr "‘approx’ requires n >= 1"
 
-msgid "'vec' contains NAs"
-msgstr "‘vec’ contains NAs"
-
-msgid "'vec' must be sorted non-decreasingly"
-msgstr "‘vec’ must be sorted non-decreasingly"
-
-msgid "invalid length(vec)"
-msgstr "invalid length(vec)"
+msgid "invalid length(xout)"
+msgstr "invalid length(xout)"
 
 msgid "'order.max' must be >= 1"
 msgstr "‘order.max’ must be >= 1"
@@ -386,6 +380,9 @@ msgstr "need at least 2 data points"
 
 msgid "invalid 'x'"
 msgstr "invalid ‘x’"
+
+msgid "invalid 'nb'"
+msgstr "invalid ‘nb’"
 
 msgid "sample is too sparse to find TD"
 msgstr "sample is too sparse to find TD"
@@ -554,7 +551,7 @@ msgid "numeric contrasts or contrast name expected"
 msgstr "numeric contrasts or contrast name expected"
 
 msgid "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
-msgstr "contr*(.., sparse=TRUE) needs package “Matrix” correctly installed"
+msgstr "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
 
 msgid "not enough degrees of freedom to define contrasts"
 msgstr "not enough degrees of freedom to define contrasts"
@@ -677,7 +674,7 @@ msgid "row dendrogram ordering gave index of wrong length"
 msgstr "row dendrogram ordering gave index of wrong length"
 
 msgid "Colv = \"Rowv\" but nrow(x) != ncol(x)"
-msgstr "Colv = “Rowv” but nrow(x) != ncol(x)"
+msgstr "Colv = \"Rowv\" but nrow(x) != ncol(x)"
 
 msgid "column dendrogram ordering gave index of wrong length"
 msgstr "column dendrogram ordering gave index of wrong length"
@@ -739,11 +736,17 @@ msgstr "bad value for ‘lag’ or ‘differences’"
 msgid "'xi' has not the right length"
 msgstr "‘xi’ has not the right length"
 
+msgid "invalid value of length(x)"
+msgstr "invalid value of length(x)"
+
 msgid "incorrect dimensions for 'xi'"
 msgstr "incorrect dimensions for ‘xi’"
 
 msgid "'x' is not a vector or matrix"
 msgstr "‘x’ is not a vector or matrix"
+
+msgid "extra argument(s) %s will be disregarded"
+msgstr "extra argument(s) %s will be disregarded"
 
 msgid "invalid distance method"
 msgstr "invalid distance method"
@@ -818,7 +821,7 @@ msgid "link not recognised"
 msgstr "link not recognised"
 
 msgid "link \"%s\" not available for poisson family; available links are %s"
-msgstr "link “%s” not available for poisson family; available links are %s"
+msgstr "link \"%s\" not available for poisson family; available links are %s"
 
 msgid "negative values not allowed for the Poisson family"
 msgstr "negative values not allowed for the Poisson family"
@@ -829,19 +832,19 @@ msgstr "ignoring prior weights"
 msgid ""
 "link \"%s\" not available for quasipoisson family; available links are %s"
 msgstr ""
-"link “%s” not available for quasipoisson family; available links are %s"
+"link \"%s\" not available for quasipoisson family; available links are %s"
 
 msgid "negative values not allowed for the quasiPoisson family"
 msgstr "negative values not allowed for the quasiPoisson family"
 
 msgid "link \"%s\" not available for gaussian family; available links are %s"
-msgstr "link “%s” not available for gaussian family; available links are %s"
+msgstr "link \"%s\" not available for gaussian family; available links are %s"
 
 msgid "cannot find valid starting values: please specify some"
 msgstr "cannot find valid starting values: please specify some"
 
 msgid "link \"%s\" not available for binomial family; available links are %s"
-msgstr "link “%s” not available for binomial family; available links are %s"
+msgstr "link \"%s\" not available for binomial family; available links are %s"
 
 msgid "y values must be 0 <= y <= 1"
 msgstr "y values must be 0 <= y <= 1"
@@ -866,13 +869,13 @@ msgstr "cannot simulate from non-integer prior.weights"
 msgid ""
 "link \"%s\" not available for quasibinomial family; available links are %s"
 msgstr ""
-"link “%s” not available for quasibinomial family; available links are %s"
+"link \"%s\" not available for quasibinomial family; available links are %s"
 
 msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
 msgstr "for the quasibinomial family, y must be a vector of 0 and 1's"
 
 msgid "link \"%s\" not available for gamma family; available links are %s"
-msgstr "link “%s” not available for gamma family; available links are %s"
+msgstr "link \"%s\" not available for gamma family; available links are %s"
 
 msgid "non-positive values not allowed for the gamma family"
 msgstr "non-positive values not allowed for the gamma family"
@@ -883,7 +886,7 @@ msgstr "using weights as shape parameters"
 msgid ""
 "link \"%s\" not available for inverse.gaussian family; available links are %s"
 msgstr ""
-"link “%s” not available for inverse.gaussian family; available links are %s"
+"link \"%s\" not available for inverse.gaussian family; available links are %s"
 
 msgid "positive values only allowed for the inverse.gaussian family"
 msgstr "positive values only allowed for the inverse.gaussian family"
@@ -898,8 +901,8 @@ msgid ""
 "'variance' \"%s\" is invalid: possible values are \"mu(1-mu)\", \"mu\", "
 "\"mu^2\", \"mu^3\" and \"constant\""
 msgstr ""
-"‘variance’ “%s” is invalid: possible values are “mu(1-mu)”, “mu”, “mu^2”, "
-"“mu^3” and “constant”"
+"‘variance’ \"%s\" is invalid: possible values are \"mu(1-mu)\", \"mu\", "
+"\"mu^2\", \"mu^3\" and \"constant\""
 
 msgid "length mismatch in convolution"
 msgstr "length mismatch in convolution"
@@ -912,6 +915,9 @@ msgstr "‘filter’ is longer than time series"
 
 msgid "argument 'sides' must be 1 or 2"
 msgstr "argument ‘sides’ must be 1 or 2"
+
+msgid "'circular' must be logical and not NA"
+msgstr "‘circular’ must be logical and not NA"
 
 msgid "length of 'init' must equal length of 'filter'"
 msgstr "length of ‘init’ must equal length of ‘filter’"
@@ -935,7 +941,7 @@ msgid "'mult' must be integer >= 2, typically = 30"
 msgstr "‘mult’ must be integer >= 2, typically = 30"
 
 msgid "alternative must be \"two.sided\", \"less\" or \"greater\""
-msgstr "alternative must be “two.sided”, “less” or “greater”"
+msgstr "alternative must be \"two.sided\", \"less\" or \"greater\""
 
 msgid "'or' must be a single number between 0 and Inf"
 msgstr "‘or’ must be a single number between 0 and Inf"
@@ -998,7 +1004,7 @@ msgid "cannot use dots in formula with given data"
 msgstr "cannot use dots in formula with given data"
 
 msgid "'x' must be an \"ftable\" object"
-msgstr "‘x’ must be an “ftable” object"
+msgstr "‘x’ must be an \"ftable\" object"
 
 msgid "'file' must be a character string or connection"
 msgstr "‘file’ must be a character string or connection"
@@ -1148,7 +1154,7 @@ msgid "'merge' component in dendrogram must be integer"
 msgstr "‘merge’ component in dendrogram must be integer"
 
 msgid "argument 'x' cannot be coerced to class \"hclust\""
-msgstr "argument ‘x’ cannot be coerced to class “hclust”"
+msgstr "argument ‘x’ cannot be coerced to class \"hclust\""
 
 msgid "Consider providing an as.hclust.%s() method"
 msgstr "Consider providing an as.hclust.%s() method"
@@ -1249,6 +1255,9 @@ msgstr "initial centers are not distinct"
 msgid "more cluster centers than data points"
 msgstr "more cluster centers than data points"
 
+msgid "'invalid value of 'k'"
+msgstr "'invalid value of ‘k’"
+
 msgid "'iter.max' must be positive"
 msgstr "‘iter.max’ must be positive"
 
@@ -1279,9 +1288,6 @@ msgid ""
 msgstr ""
 "numeric y must be supplied.\n"
 "For density estimation use density()"
-
-msgid "invalid value of length(x)"
-msgstr "invalid value of length(x)"
 
 msgid "'k' is not an integer"
 msgstr "‘k’ is not an integer"
@@ -1314,7 +1320,8 @@ msgid "calling summary.lm(<fake-lm-object>) ..."
 msgstr "calling summary.lm(<fake-lm-object>) ..."
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
-msgstr "residual degrees of freedom in object suggest this is not an “lm” fit"
+msgstr ""
+"residual degrees of freedom in object suggest this is not an \"lm\" fit"
 
 msgid ""
 "lm object does not have a proper 'qr' component.\n"
@@ -1368,7 +1375,7 @@ msgid "'object' has no 'effects' component"
 msgstr "‘object’ has no ‘effects’ component"
 
 msgid "the 'se.fit' argument is not yet implemented for \"mlm\" objects"
-msgstr "the ‘se.fit’ argument is not yet implemented for “mlm” objects"
+msgstr "the ‘se.fit’ argument is not yet implemented for \"mlm\" objects"
 
 msgid "invalid model QR matrix"
 msgstr "invalid model QR matrix"
@@ -1425,7 +1432,7 @@ msgid "invalid argument 'degree'"
 msgstr "invalid argument ‘degree’"
 
 msgid "first argument must be a \"loess\" object"
-msgstr "first argument must be a “loess” object"
+msgstr "first argument must be a \"loess\" object"
 
 msgid "no models to compare"
 msgstr "no models to compare"
@@ -1433,8 +1440,11 @@ msgstr "no models to compare"
 msgid "extra arguments discarded"
 msgstr "extra arguments discarded"
 
+msgid "logLik.lm only handles single responses"
+msgstr "logLik.lm only handles single responses"
+
 msgid "no \"nobs\" attribute is available"
-msgstr "no “nobs” attribute is available"
+msgstr "no \"nobs\" attribute is available"
 
 msgid "no 'nobs' method is available"
 msgstr "no ‘nobs’ method is available"
@@ -1482,7 +1492,7 @@ msgid "need multiple response"
 msgstr "need multiple response"
 
 msgid "object must be of class \"manova\" or \"maov\""
-msgstr "object must be of class “manova” or “maov”"
+msgstr "object must be of class \"manova\" or \"maov\""
 
 msgid "need multiple responses"
 msgstr "need multiple responses"
@@ -1506,7 +1516,7 @@ msgid "if 'x' is not an array, 'z' must be given"
 msgstr "if ‘x’ is not an array, ‘z’ must be given"
 
 msgid "'x', 'y', and 'z' must have the same length"
-msgstr "'x', 'y', and ‘z’ must have the same length"
+msgstr "'x', ‘y’, and ‘z’ must have the same length"
 
 msgid "sample size in each stratum must be > 1"
 msgstr "sample size in each stratum must be > 1"
@@ -1542,7 +1552,7 @@ msgid "type '%s' is not implemented yet"
 msgstr "type ‘%s’ is not implemented yet"
 
 msgid "this fit does not inherit from \"lm\""
-msgstr "this fit does not inherit from “lm”"
+msgstr "this fit does not inherit from \"lm\""
 
 msgid "'cterms' argument must match terms in model object"
 msgstr "‘cterms’ argument must match terms in model object"
@@ -1558,7 +1568,7 @@ msgid ""
 "Standard errors can be obtained through 'se.contrast'."
 msgstr ""
 "Standard error information not returned as design is unbalanced. \n"
-"Standard errors can be obtained through 'se.contrast'."
+"Standard errors can be obtained through ‘se.contrast’."
 
 msgid "SEs for type '%s' are not yet implemented"
 msgstr "SEs for type ‘%s’ are not yet implemented"
@@ -1582,10 +1592,10 @@ msgid "'termlabels' must be a character vector of length at least one"
 msgstr "‘termlabels’ must be a character vector of length at least one"
 
 msgid "'termobj' must be a object of class \"terms\""
-msgstr "‘termobj’ must be a object of class “terms”"
+msgstr "‘termobj’ must be a object of class \"terms\""
 
 msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
-msgstr "variable ‘%s’ was fitted with type “%s” but type “%s” was supplied"
+msgstr "variable ‘%s’ was fitted with type \"%s\" but type \"%s\" was supplied"
 
 msgid "variables %s were specified with different types from the fit"
 msgstr "variables %s were specified with different types from the fit"
@@ -1621,7 +1631,7 @@ msgid "variable '%s' is absent, its contrast will be ignored"
 msgstr "variable ‘%s’ is absent, its contrast will be ignored"
 
 msgid "using type=\"numeric\" with a factor response will be ignored"
-msgstr "using type=“numeric” with a factor response will be ignored"
+msgstr "using type=\"numeric\" with a factor response will be ignored"
 
 msgid "invalid response type"
 msgstr "invalid response type"
@@ -1662,13 +1672,7 @@ msgstr "_NOT_ converged in"
 msgid "control argument must be a named list"
 msgstr "control argument must be a named list"
 
-msgid "unrecognized control element(s) named `"
-msgstr "unrecognized control element(s) named `"
-
-msgid "' ignored"
-msgstr "' ignored"
-
-msgid "Logical `hessian' argument not allowed.  See documentation."
+msgid "Logical 'hessian' argument not allowed.  See documentation."
 msgstr "Logical ‘hessian’ argument not allowed.  See documentation."
 
 msgid "'params' has wrong length"
@@ -1698,26 +1702,20 @@ msgstr "setVarying : ‘vary’ length must match length of parameters"
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr "singular gradient matrix at initial parameter estimates"
 
+msgid "unrecognized control element(s) named `"
+msgstr "unrecognized control element(s) named `"
+
+msgid "' ignored"
+msgstr "' ignored"
+
 msgid "'data' must be a list or an environment"
 msgstr "‘data’ must be a list or an environment"
 
 msgid "No starting values specified"
 msgstr "No starting values specified"
 
-msgid "No starting values specified for some parameters."
-msgstr "No starting values specified for some parameters."
-
-msgid "Initializing"
-msgstr "Initializing"
-
-msgid "to '1.'."
-msgstr "to '1.'."
-
-msgid "Consider specifying 'start' or using a selfStart model"
-msgstr "Consider specifying ‘start’ or using a selfStart model"
-
 msgid "parameters without starting value in 'data':"
-msgstr "parameters without starting value in 'data':"
+msgstr "parameters without starting value in ‘data’:"
 
 msgid "fitting parameters"
 msgstr "fitting parameters"
@@ -1735,16 +1733,16 @@ msgid "argument 'na.action' will be ignored"
 msgstr "argument ‘na.action’ will be ignored"
 
 msgid "Upper or lower bounds ignored unless algorithm = \"port\""
-msgstr "Upper or lower bounds ignored unless algorithm = “port”"
+msgstr "Upper or lower bounds ignored unless algorithm = \"port\""
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
-msgstr "cannot calculate REML log-likelihood for “nls” objects"
+msgstr "cannot calculate REML log-likelihood for \"nls\" objects"
 
 msgid "anova is only defined for sequences of \"nls\" objects"
-msgstr "anova is only defined for sequences of “nls” objects"
+msgstr "anova is only defined for sequences of \"nls\" objects"
 
 msgid "'anova' is only defined for sequences of \"nls\" objects"
-msgstr "‘anova’ is only defined for sequences of “nls” objects"
+msgstr "‘anova’ is only defined for sequences of \"nls\" objects"
 
 msgid "formula '%s' must be of the form '~expr'"
 msgstr "formula ‘%s’ must be of the form ‘~expr’"
@@ -1773,16 +1771,16 @@ msgstr "‘trace != 0’ needs ‘REPORT >= 1’"
 msgid ""
 "method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr ""
-"method L-BFGS-B uses ‘factr’ (and 'pgtol') instead of ‘reltol’ and ‘abstol’"
+"method L-BFGS-B uses ‘factr’ (and ‘pgtol’) instead of ‘reltol’ and ‘abstol’"
 
 msgid "one-diml optimization by Nelder-Mead is unreliable:"
 msgstr "one-diml optimization by Nelder-Mead is unreliable:"
 
 msgid "use \"Brent\" or optimize() directly"
-msgstr "use “Brent” or optimize() directly"
+msgstr "use \"Brent\" or optimize() directly"
 
 msgid "method = \"Brent\" is only available for one-dimensional optimization"
-msgstr "method = “Brent” is only available for one-dimensional optimization"
+msgstr "method = \"Brent\" is only available for one-dimensional optimization"
 
 msgid "'lower' and 'upper' must be finite values"
 msgstr "‘lower’ and ‘upper’ must be finite values"
@@ -1803,7 +1801,7 @@ msgid "Not plotting observations with leverage one:"
 msgstr "Not plotting observations with leverage one:"
 
 msgid "use only with \"lm\" objects"
-msgstr "use only with “lm” objects"
+msgstr "use only with \"lm\" objects"
 
 msgid "'which' must be in 1:6"
 msgstr "‘which’ must be in 1:6"
@@ -1838,7 +1836,7 @@ msgstr "‘r’ must be a single positive number"
 msgid ""
 "exactly one of 'n', 'delta', 'sd', 'power', and 'sig.level' must be NULL"
 msgstr ""
-"exactly one of 'n', 'delta', 'sd', 'power', and ‘sig.level’ must be NULL"
+"exactly one of ‘n’, ‘delta’, ‘sd’, ‘power’, and ‘sig.level’ must be NULL"
 
 msgid "'sig.level' must be numeric in [0, 1]"
 msgstr "‘sig.level’ must be numeric in [0, 1]"
@@ -1847,13 +1845,13 @@ msgid "internal error"
 msgstr "internal error"
 
 msgid "exactly one of 'n', 'p1', 'p2', 'power', and 'sig.level' must be NULL"
-msgstr "exactly one of 'n', 'p1', 'p2', 'power', and ‘sig.level’ must be NULL"
+msgstr "exactly one of ‘n’, ‘p1’, ‘p2’, ‘power’, and ‘sig.level’ must be NULL"
 
 msgid ""
 "exactly one of 'groups', 'n', 'between.var', 'within.var', 'power', and 'sig."
 "level' must be NULL"
 msgstr ""
-"exactly one of 'groups', 'n', 'between.var', 'within.var', 'power', and ‘sig."
+"exactly one of ‘groups’, ‘n’, ‘between.var’, ‘within.var’, ‘power’, and ‘sig."
 "level’ must be NULL"
 
 msgid "number of groups must be at least 2"
@@ -1896,9 +1894,6 @@ msgstr ""
 msgid "'newdata' does not have the correct number of columns"
 msgstr "‘newdata’ does not have the correct number of columns"
 
-msgid "wrong number of predictors"
-msgstr "wrong number of predictors"
-
 msgid "both 'x' and 'covmat' were supplied: 'x' will be ignored"
 msgstr "both ‘x’ and ‘covmat’ were supplied: ‘x’ will be ignored"
 
@@ -1918,7 +1913,7 @@ msgid "argument does not include an 'effects' component"
 msgstr "argument does not include an ‘effects’ component"
 
 msgid "'proj' is not implemented for \"mlm\" fits"
-msgstr "‘proj’ is not implemented for “mlm” fits"
+msgstr "‘proj’ is not implemented for \"mlm\" fits"
 
 msgid "'proj' is not implemented for multiple responses"
 msgstr "‘proj’ is not implemented for multiple responses"
@@ -2030,7 +2025,7 @@ msgid "'k' must be odd!  Changing 'k' to"
 msgstr "‘k’ must be odd!  Changing ‘k’ to"
 
 msgid "'k' is bigger than 'n'!  Changing 'k' to"
-msgstr "‘k’ is bigger than 'n'!  Changing ‘k’ to"
+msgstr "‘k’ is bigger than ‘n’!  Changing ‘k’ to"
 
 msgid "bandwidth 'k' must be >= 1 and odd!"
 msgstr "bandwidth ‘k’ must be >= 1 and odd!"
@@ -2039,7 +2034,7 @@ msgid "argument 'object' has an impossible length"
 msgstr "argument ‘object’ has an impossible length"
 
 msgid "no 'getInitial' method found for \"%s\" objects"
-msgstr "no ‘getInitial’ method found for “%s” objects"
+msgstr "no ‘getInitial’ method found for \"%s\" objects"
 
 msgid "sample size must be between 3 and 5000"
 msgstr "sample size must be between 3 and 5000"
@@ -2098,8 +2093,11 @@ msgstr "‘nknots’ must be at least 1"
 msgid "cannot use more inner knots than unique 'x' values"
 msgstr "cannot use more inner knots than unique ‘x’ values"
 
+msgid "'spar' must be of length 1"
+msgstr "‘spar’ must be of length 1"
+
 msgid "specified both 'df' and 'cv'; will disregard the latter"
-msgstr "specified both ‘df’ and 'cv'; will disregard the latter"
+msgstr "specified both ‘df’ and ‘cv’; will disregard the latter"
 
 msgid "you must supply 1 < df <= n,  n = #{unique x} ="
 msgstr "you must supply 1 < df <= n,  n = #{unique x} ="
@@ -2114,10 +2112,10 @@ msgid "need result of smooth.spline(*, keep.data=TRUE)"
 msgstr "need result of smooth.spline(*, keep.data=TRUE)"
 
 msgid "type = \"partial\" is not yet implemented"
-msgstr "type = “partial” is not yet implemented"
+msgstr "type = \"partial\" is not yet implemented"
 
 msgid "not a valid \"smooth.spline\" object"
-msgstr "not a valid “smooth.spline” object"
+msgstr "not a valid \"smooth.spline\" object"
 
 msgid "'y' must be numeric vector"
 msgstr "‘y’ must be numeric vector"
@@ -2273,7 +2271,7 @@ msgid "series is corrupt: length %d with 'tsp' implying %d"
 msgstr "series is corrupt: length %d with ‘tsp’ implying %d"
 
 msgid "cannot plot more than 10 series as \"multiple\""
-msgstr "cannot plot more than 10 series as “multiple”"
+msgstr "cannot plot more than 10 series as \"multiple\""
 
 msgid "scatter plots only for univariate time series"
 msgstr "scatter plots only for univariate time series"
@@ -2385,7 +2383,7 @@ msgid "xtabs(*, sparse=TRUE) applies only to two-way tables"
 msgstr "xtabs(*, sparse=TRUE) applies only to two-way tables"
 
 msgid "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
-msgstr "xtabs(*, sparse=TRUE) needs package “Matrix” correctly installed"
+msgstr "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr "too few distinct input values to fit an asymptotic regression model"
@@ -2436,8 +2434,8 @@ msgstr[1] "there are %d Error terms: only 1 is allowed"
 
 msgid "extra argument %s is not a \"%s\""
 msgid_plural "extra arguments %s are not \"%s\"s"
-msgstr[0] "extra argument %s is not a “%s”"
-msgstr[1] "extra arguments %s are not “%s”s"
+msgstr[0] "extra argument %s is not a \"%s\""
+msgstr[1] "extra arguments %s are not \"%s\"s"
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"

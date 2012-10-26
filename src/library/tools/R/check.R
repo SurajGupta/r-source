@@ -1,6 +1,8 @@
 #  File src/library/tools/R/check.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -52,7 +54,7 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
 }
 
 setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
-                     libdir = NULL, self = FALSE)
+                     libdir = NULL, self = FALSE, self2 = TRUE)
 {
     WINDOWS <- .Platform$OS.type == "windows"
     useJunctions <- WINDOWS && !nzchar(Sys.getenv("R_WIN_NO_JUNCTIONS"))
@@ -104,7 +106,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
 
     deps <- unique(c(names(pi$Depends), names(pi$Imports), names(pi$LinkingTo),
                      if(suggests) names(pi$Suggests)))
-    if(length(libdir)) flink(file.path(libdir, thispkg), tmplib)
+    if(length(libdir) && self2) flink(file.path(libdir, thispkg), tmplib)
     ## .Library is not necessarily canonical, but the .libPaths version is.
     lp <- .libPaths()
     poss <- c(lp[length(lp)], .Library)
@@ -150,7 +152,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
     c(paste("R_LIBS", rlibs, sep = "="),
       if(WINDOWS) " R_ENVIRON_USER='no_such_file'" else "R_ENVIRON_USER=''",
       if(WINDOWS) " R_LIBS_USER='no_such_dir'" else "R_LIBS_USER=''",
-      if(WINDOWS) " R_LIBS_SITE='no_such_dir'" else "R_LIBS_SITE=''")
+      " R_LIBS_SITE='no_such_dir'")
 }
 
 ###- The main function for "R CMD check"  {currently extends all the way to the end-of-file}
@@ -258,6 +260,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             if (R_check_permissions) check_permissions(allfiles)
             check_meta()  # Check DESCRIPTION meta-information.
             check_top_level()
+            check_detritus()
             check_indices()
             check_subdirectories(haveR, subdirs)
             ## Check R code for non-ASCII chars which
@@ -584,6 +587,23 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
         } else resultLog(Log, "OK")
     }
 
+    check_detritus <- function()
+    {
+        checkingLog(Log, "for left-over files")
+        files <- dir(".", full.names = TRUE, recursive = TRUE)
+        bad <- grep("svn-commit[.].*tmp$", files, value = TRUE)
+        if (length(bad)) {
+            bad <- sub("^[.]/", "", bad)
+            noteLog(Log)
+            printLog(Log,
+                     "The following files look like leftovers:\n",
+                     paste(strwrap(paste(sQuote(bad), collapse = ", "),
+                                   indent = 2, exdent = 2), collapse = "\n"),
+                     "\nPlease remove them from your package.\n")
+        } else resultLog(Log, "OK")
+    }
+
+
     check_indices <- function()
     {
         ## Check index information.
@@ -748,11 +768,50 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             printLog(Log, "Subdirectory 'data' contains no data sets.\n")
        }
         ## Subdirectory 'demo' without demos?
-        if (dir.exists("demo") &&
-            !length(list_files_with_type("demo", "demo"))) {
-            if (!any) warningLog(Log)
-            any <- TRUE
-            printLog(Log, "Subdirectory 'demo' contains no demos.\n")
+
+        if (dir.exists("demo")) {
+            demos <- list_files_with_type("demo", "demo")
+            if(!length(demos)) {
+                if (!any) warningLog(Log)
+                any <- TRUE
+                printLog(Log, "Subdirectory 'demo' contains no demos.\n")
+            } else {
+                ## check for non-ASCII code in each demo
+                bad <- character()
+                for(d in demos) {
+                    x <- readLines(d, warn = FALSE)
+                    asc <- iconv(x, "latin1", "ASCII")
+                    ind <- is.na(asc) | asc != x
+                    if (any(ind)) bad <- c(bad, basename(d))
+                }
+                if (length(bad)) {
+                    if (!any) warningLog(Log)
+                    any <- TRUE
+                    printLog(Log, "Demos with non-ASCII characters:")
+                    if(length(bad) > 1L)
+                        printLog(Log, "\n",
+                                 .format_lines_with_indent(bad), "\n")
+                    else printLog(Log, "  ", bad, "\n")
+                    wrapLog("Portable packages must use only ASCII",
+                            "characters in their demos.\n",
+                            "Use \\uxxxx escapes for other characters.\n")
+                    demos <- demos[! basename(demos) %in% bad]
+                }
+                ## check we can parse each demo.
+                bad <- character()
+                for(d in demos)
+                    tryCatch(parse(file = d),
+                             error = function(e) bad <<- c(bad, basename(d)))
+                if (length(bad)) {
+                    if (!any) warningLog(Log)
+                    any <- TRUE
+                    printLog(Log, "Demos which do not contain valid R code:")
+                    if(length(bad) > 1L)
+                        printLog(Log, "\n",
+                                 .format_lines_with_indent(bad), "\n")
+                    else printLog(Log, "  ", bad, "\n")
+               }
+            }
         }
 
         ## Subdirectory 'exec' without files?
@@ -992,10 +1051,20 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                           sprintf("tools::checkFF(dir = \"%s\")\n", pkgdir))
             out <- R_runR2(Rcmd)
             if (length(out)) {
-                warningLog(Log)
+                if(any(grepl("^Foreign function calls? with(out| empty)", out)) ||
+                   (!is_base_pkg && any(grepl("in a base package:", out))) ||
+                   any(grepl("^Undeclared packages? in", out))
+                   ) warningLog(Log)
+                else noteLog(Log)
                 printLog(Log, paste(c(out, ""), collapse = "\n"))
-                wrapLog("See the chapter 'System and foreign language interfaces'",
-                        "of the 'Writing R Extensions' manual.\n")
+                if(!is_base_pkg && any(grepl("in a base package:", out)))
+                    wrapLog("Packages should not make .C/.Call/.Fortran",
+                            "calls to base packages.",
+                            "They are not part of the API,",
+                            "for use only by R itself",
+                            "and subject to change without notice.")
+                else
+                    wrapLog("See the chapter 'System and foreign language interfaces' of the 'Writing R Extensions' manual.\n")
             } else resultLog(Log, "OK")
         }
     }
@@ -1534,6 +1603,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
         ## pattern is "([cfh]|cc|cpp)"
         files <- dir("src", pattern = "\\.([cfh]|cc|cpp)$",
                      full.names = TRUE, recursive = TRUE)
+        ## exclude dirs starting src/win, e.g for tiff
+        files <- grep("^src/[Ww]in", files, invert = TRUE, value = TRUE)
         bad_files <- character()
         for(f in files) {
             contents <- readChar(f, file.info(f)$size, useBytes = TRUE)
@@ -1743,6 +1814,23 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 printLog(Log, paste(c(out, ""), collapse = "\n"))
             } else resultLog(Log, "OK")
         }
+
+        ## No point in this test if already installed in .Library
+        if (!pkgname %in% dir(.Library)) {
+            checkingLog(Log, "loading without being on the library search path")
+            Rcmd <- sprintf("library(%s, lib.loc = '%s')", pkgname, libdir)
+            opts <- if(nzchar(arch)) R_opts4 else R_opts2
+            env <- setRlibs(pkgdir = pkgdir, libdir = libdir, self2 = FALSE)
+            if(nzchar(arch)) env <- c(env, "R_DEFAULT_PACKAGES=NULL")
+            out <- R_runR(Rcmd, opts, env, arch = arch)
+            if (any(grepl("^Error", out))) {
+                warningLog(Log)
+                printLog(Log, paste(c(out, ""), collapse = "\n"))
+                wrapLog("\nIt looks like this package",
+                        "has a loading problem when not on .libPaths:",
+                        "see the messages for details.\n")
+            } else resultLog(Log, "OK")
+        }
     }
 
     run_examples <- function()
@@ -1822,6 +1910,18 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 if(length(out))
                     printLog0(Log, paste(c("", out, ""), collapse = "\n"))
                 resultLog(Log, "OK")
+            }
+            if (do_timings) {
+                tfile <- paste0(pkgname, "-Ex.timings")
+                times <- read.table(tfile, header = TRUE, row.names = 1)
+                o <- order(times[[1]]+times[[2]], decreasing = TRUE)
+                times <- times[o, ]
+                keep <- (times[[1]] + times[[2]] > 5) | (times[[3]] > 5)
+                if(any(keep)) {
+                    printLog(Log, "Examples with CPU or elapsed time > 5s\n")
+                    times <- capture.output(format(times[keep, ]))
+                    printLog(Log, paste(times, collapse="\n"))
+                }
             }
             TRUE
         }
@@ -2412,6 +2512,31 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
         setwd(owd)
     }
 
+    check_dot_files <- function()
+    {
+        checkingLog(Log, "for hidden files and directories")
+        owd <- setwd(pkgdir)
+        dots <- dir(".", all.files = TRUE, full.names = TRUE,
+                        recursive = TRUE, pattern = "^[.]")
+        dots <- sub("^./","", dots)
+        allowed <-
+            c(".Rbuildignore", ".Rinstignore", "vignettes/.install_extras")
+        dots <- dots[!dots %in% allowed]
+        alldirs <- list.dirs(".", full.names = TRUE, recursive = TRUE)
+        alldirs <- sub("^./","", alldirs)
+        alldirs <- alldirs[alldirs != "."]
+        bases <- basename(alldirs)
+        dots <- c(dots, alldirs[grepl("^[.]", basename(alldirs))])
+        if (length(dots)) {
+            noteLog(Log, "Found the following hidden files and directories:")
+            printLog(Log, .format_lines_with_indent(dots), "\n")
+            wrapLog("These were most likely included in error.",
+                    "See section 'Package structure'",
+                    "in the 'Writing R Extensions' manual.\n")
+        } else resultLog(Log, "OK")
+        setwd(owd)
+    }
+
     check_install <- function()
     {
         ## Option '--no-install' turns off installation and the tests
@@ -2680,12 +2805,11 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
         checkingLog(Log, "for file ",
                     sQuote(file.path(pkgname0, "DESCRIPTION")))
         if (file.exists(f <- file.path(pkgdir, "DESCRIPTION"))) {
-            desc <- try(read.dcf(f))
+            desc <- try(.read_description(f))
             if (inherits(desc, "try-error") || !length(desc)) {
                 resultLog(Log, "EXISTS but not correct format")
                 do_exit(1L)
             }
-            desc <- desc[1L, ]
             if(!grepl("^[[:alpha:]][[:alnum:].]*[[:alnum:]]$", desc["Package"])
                || grepl("[.]$", desc["Package"])) {
                 warningLog(Log)
@@ -2737,7 +2861,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 do_exit(1L)
             } else if(length(res$bad_version))
                 warningLog(Log)
-            else noteLog(Log)
+            else if(length(res) > 1L) noteLog(Log)
+            else resultLog(Log, "OK")
             printLog(Log, paste(c(out, ""), collapse = "\n"))
         } else resultLog(Log, "OK")
     }
@@ -3427,6 +3552,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
 
             ## we need to do this before installation
             if (R_check_executables) check_executables()
+
+            if (as_cran) check_dot_files()
 
             if (do_install) {
                 check_install()

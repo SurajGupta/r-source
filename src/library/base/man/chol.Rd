@@ -1,6 +1,6 @@
 % File src/library/base/man/chol.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{chol}
@@ -21,8 +21,8 @@ chol(x, \dots)
     applies to real symmetric, positive-definite matrices.}
   \item{\dots}{arguments to be based to or from methods.}
   \item{pivot}{Should pivoting be used?}
-  \item{LINPACK}{logical.  Should LINPACK be used in the non-pivoting
-    case (for compatibility with \R < 1.7.0)?}
+  \item{LINPACK}{logical.  Should LINPACK be used? (For compatibility
+    with \R < 1.7.0 in the non-pivoting case.)}
 }
 \value{
   The upper triangular factor of the Choleski decomposition, i.e., the
@@ -34,16 +34,13 @@ chol(x, \dots)
 \details{
   \code{chol} is generic: the description here applies to the default
   method.
-  
-  This is an interface to the LAPACK routine DPOTRF and the
-  LINPACK routines DPOFA and DCHDC.
 
   Note that only the upper triangular part of \code{x} is used, so
   that \eqn{R'R = x} when \code{x} is symmetric.
 
   If \code{pivot = FALSE} and \code{x} is not non-negative definite an
   error occurs.  If \code{x} is positive semi-definite (i.e., some zero
-  eigenvalues) an error will also occur, as a numerical tolerance is used.
+  eigenvalues) an error will also occur as a numerical tolerance is used.
 
   If \code{pivot = TRUE}, then the Choleski decomposition of a positive
   semi-definite \code{x} can be computed.  The rank of \code{x} is
@@ -65,19 +62,33 @@ chol(x, \dots)
   by construction.
 }
 
+\source{
+  This is an interface to the LAPACK routines \code{DPOTRF} and
+  \code{DPSTRF} and the LINPACK routines \code{DPOFA} and \code{DCHDC}.
+  
+  LAPACK and LINPACK are from \url{http://www.netlib.org/lapack} and
+  \url{http://www.netlib.org/linpack} and their guides are listed
+  in the references.
+}
 \references{
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
+  
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 
   Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
   \emph{LINPACK Users Guide.}  Philadelphia: SIAM Publications.
-
-  Anderson. E. and ten others (1999)
-  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
-  Available on-line at
-  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
 }
+
+\note{
+  \code{LINPACK = TRUE, pivot = FALSE} (for compatibility with \R <
+  1.7.0) was formally deprecated in \R 2.15.2.
+}
+
 
 \seealso{
   \code{\link{chol2inv}} for its \emph{inverse} (without pivoting),
@@ -96,6 +107,7 @@ crossprod(cm)  #-- = 'm'
 # now for something positive semi-definite
 x <- matrix(c(1:5, (1:5)^2), 5, 2)
 x <- cbind(x, x[, 1] + 3*x[, 2])
+colnames(x) <- letters[20:22]
 m <- crossprod(x)
 qr(m)$rank # is 2, as it should be
 
@@ -108,10 +120,15 @@ try(chol(m))
 pivot <- attr(Q, "pivot")
 crossprod(Q[, order(pivot)]) # recover m
 
+(Q <- chol(m, TRUE, FALSE)) # NB rank is correct
+## we can use this by
+pivot <- attr(Q, "pivot")
+crossprod(Q[, order(pivot)]) # recover m
+
+
 ## now for a non-positive-definite matrix
 ( m <- matrix(c(5,-5,-5,3),2,2) )
 try(chol(m))  # fails
-try(chol(m, LINPACK=TRUE))   # fails
 (Q <- chol(m, pivot = TRUE)) # warning
 crossprod(Q)  # not equal to m
 }

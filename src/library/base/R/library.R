@@ -1,6 +1,8 @@
 #  File src/library/base/R/library.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -147,7 +149,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     checkNoGenerics <- function(env, pkg)
     {
         nenv <- env
-        ns <- .Internal(getRegisteredNamespace(as.name(pkg)))
+        ns <- .getNamespace(as.name(pkg))
         if(!is.null(ns)) nenv <- asNamespace(ns)
         if (exists(".noGenerics", envir = nenv, inherits = FALSE))
             TRUE

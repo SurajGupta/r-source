@@ -1,6 +1,8 @@
 #  File src/library/stats/R/models.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -515,8 +517,8 @@ model.matrix.default <- function(object, data = environment(object),
             }
         }
     } else {               # internal model.matrix needs some variable
-        isF <-  FALSE
-        data <- list(x=rep(0, nrow(data)))
+	isF <- FALSE
+	data <- data.frame(x=rep(0, nrow(data)))
     }
     ans <- .Internal(model.matrix(t, data))
     cons <- if(any(isF))

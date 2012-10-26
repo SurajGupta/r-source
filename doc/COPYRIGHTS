@@ -2,7 +2,8 @@
 COPYRIGHT STATUS
 
 The bulk of this code is copyright by members of or all of the R Core
-Team.
+Team.  ('The R Core Team' in copyright statements in individual files
+refers to some or all of the team.)
 
 See the file COPYING for the exact conditions under which you may
 redistribute it.  R as a whole is distributed under GPL version 2 or
@@ -47,7 +48,7 @@ From the announcement of the change (2001-Feb-05)
 
     We encourage packages to be distributed under Open Source conditions,
     but accept that this is not possible for some contributions.  Our
-    intention is that export files and import libraries be `accessors'
+    intention is that export files and import libraries be 'accessors'
     under clause 5 of the LGPL, so that in most cases no (additional)
     restrictions are imposed by compiling a package using the LGPL-ed
     components of R.
@@ -95,7 +96,7 @@ src/library/grDevices/inst/afm/CM_*.afm
 src/library/grDevices/inst/afm/cm*.afm
 
 	are derived from afms which are copyright by the American
-	Mathematical Society, but `the AMS does require that the
+	Mathematical Society, but 'the AMS does require that the
 	AMS copyright notice be removed from any derivative versions
 	of the fonts which have been altered in any way'.
 
@@ -147,9 +148,12 @@ src/library/datasets/man/lh.Rd
 src/library/datasets/man/rock.Rd
 src/library/datasets/man/UKLungDeaths.Rd
 src/library/datasets/man/USAccDeaths.Rd
+src/library/stats/R/add.R
 src/library/stats/R/bandwidths.R
+src/library/stats/R/confint.R
 src/library/stats/R/cpgram.R
 src/library/stats/R/spectrum.R
+src/library/stats/R/vcov.R
 src/library/stats/src//bandwidths.c
 src/appl/maxcol.c
 
@@ -174,11 +178,6 @@ src/library/stats/src/PPsum.c
 	Copyright (C) 1997-1999	 Adrian Trapletti
 
 
-src/library/stats/src/carray.c, mburg.c, myw.c, qr.c
-
-	Copyright (C) 1999 Martyn Plummer
-
-
 src/library/stats/R/nls.R
 
 	In part, Copyright 1999-1999 Saikat DebRoy
@@ -188,7 +187,7 @@ src/library/stats/R/nlsFunc.R
 src/library/stats/R/selfStart.R
 src/library/stats/R/zzModels.R
 
-	Copyright 1997,1999 Jose C. Pinheiro
+	Copyright 1997,1999 Jose C. Pinheiro, Douglas M. Bates
 
 src/library/stats/R/runmed.R
 src/library/stats/src/Trunmed.c
@@ -199,6 +198,10 @@ src/library/stats/src/loessc.c
 src/library/stats/src/loessf.f
 
 	In part Copyright (c) 1989, 1992 by AT&T
+
+src/library/stats/R/spline.R
+
+	In part, Copyright (C) 2002 Simon N. Wood
 
 src/library/tcltk/exec/{hierarchy,util*,widget}.tcl
 
@@ -216,8 +219,7 @@ src/library/stats/src/nscor.c
 src/library/stats/src/prho.c
 src/library/stats/src/swilk.c
 src/library/stats/src/kmns.f
-src/library/ts/src/starma.c
-src/nmath/pgamma.c
+src/library/stats/src/starma.c
 src/nmath/pnbeta.c
 src/nmath/pnchisq.c
 src/nmath/pnt.c
@@ -225,14 +227,13 @@ src/nmath/qbeta.c
 src/nmath/qgamma.c
 src/nmath/qnorm.c
 src/nmath/qtukey.c
-src/nmath/sunif.c
   are based in whole or in part on Applied Statistics algorithms
   (C) Royal Statistical Society
 
 src/nmath/stirlerr.c
 src/nmath/dbinom.c
 src/nmath/dpois.c
-  are partly based on Clive Loader's (1999) work,
+  are partly based on Catherine/Clive Loader's (1999) work,
   (C) 1999-2000 Lucent Technologies, Bell Laboratories.
 
 
@@ -261,18 +262,21 @@ src/main/xspline.c
  * notice remain intact.
 
 
-src/modules/lapack/dlapack[0123].f, cmplx.f, dlamc.f
+src/modules/lapack/dlapack.f, cmplx.f, dlamc.f
 
   Extracted from
-  *  -- LAPACK routine (version 3.1) --
-  *     Univ. of Tennessee, Univ. of California Berkeley, NAG Ltd.,
-  *     Courant Institute, Argonne National Lab, and Rice University
+  *  -- LAPACK computational routine (version 3.4.0) --
+  *  -- LAPACK is a software package provided by Univ. of Tennessee,    --
+  *  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd..--
+  *     November 2011
 
-  The README says
+  where the version number and date vary by subroutine.
+
+  The LAPACK README says
 
     It is freely-available software, and is copyrighted.
 
-  although no actual copyright statement appears in the code.
+  but no copyright statements appear in the sources.
 
 
 src/extra/xdr/*
@@ -466,3 +470,20 @@ From GNU coreutils 8.12
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
+   
+
+Some of the files in src/appl were originally taken from the Netlib
+archive now at www.netlib.org and do not clearly state their
+authorship, let alone copyright status.
+
+src/appl/eigen.f is part of EISPACK: it says
+
+'Questions and comments should be directed to Burton S. Garbow' but
+the original authors (in ALGOL) appear to be Bowdler, Martin, Parlett,
+Peters, Reinsch and Wilkinson
+
+src/appl/{dchdc,dpfa,dpbsl,dpoco,dpodi,dpofa,dposl,dqrdc,
+          dqrsl,dsvdc,dtrco,dtrsl}.f 
+
+are part of LINPACK, with authors J.J. Dongarra, Cleve Moler and
+G.W. Stewart

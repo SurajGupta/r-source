@@ -1,6 +1,8 @@
 #  File src/library/methods/R/method.skeleton.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -21,7 +23,9 @@ method.skeleton <- function (generic, signature, file, external = FALSE,
     if (is.null(fdef)) {
         fdef <- implicitGeneric(generic, where = where)
         if(is.null(fdef))
-            stop(gettextf("No function definition found for \"%s\"", generic))
+            stop(gettextf("No function definition found for %s",
+                          sQuote(generic)),
+                 domain = NA)
     }
     else {
         generic <- fdef@generic

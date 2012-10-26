@@ -1,6 +1,6 @@
 % File src/library/base/man/array.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{array}
@@ -19,18 +19,18 @@ is.array(x)
 }
 \arguments{
   \item{data}{a vector (including a list or \code{\link{expression}}
-    vector) giving data to fill the array.  Other objects are coerced by
-    \code{\link{as.vector}}.}
-  \item{dim}{the dim attribute for the array to be created, that is a
-    vector of length one or more giving the maximal indices in
+    vector) giving data to fill the array.  Non-atomic classed objects
+    are coerced by \code{\link{as.vector}}.}
+  \item{dim}{the dim attribute for the array to be created, that is an
+    integer vector of length one or more giving the maximal indices in
     each dimension.}
-  \item{dimnames}{either \code{NULL} or the names for the
-    dimensions.  This is a list with one component for each dimension,
-    either \code{NULL} or a character vector of the length given by
-    \code{dim} for that dimension.  The list can be named, and the list names
-    will be used as names for the dimensions.  If the list is shorter
-    than the number of dimensions, it is extended by \code{NULL}s to the
-    length required}
+  \item{dimnames}{either \code{NULL} or the names for the dimensions.
+    This must a list (or it will be ignored) with one component for each
+    dimension, either \code{NULL} or a character vector of the length
+    given by \code{dim} for that dimension.  The list can be named, and
+    the list names will be used as names for the dimensions.  If the
+    list is shorter than the number of dimensions, it is extended by
+    \code{NULL}s to the length required.}
   \item{x}{an \R object.}
   \item{\dots}{additional arguments to be passed to or from methods.}
 }
@@ -65,6 +65,13 @@ is.array(x)
   then the elements in \code{data} are recycled.  If \code{data} has
   length zero, \code{NA} of an appropriate type is used for atomic
   vectors (\code{0} for raw vectors) and \code{NULL} for lists.
+
+  In the deprecated case that \code{dims} has length 0, the result will
+  be a vector of length 1 and a warning will be given.
+
+  Unlike \code{\link{matrix}}, \code{array} does not currently remove
+  any attributes left by \code{as.vector} from a classed list
+  \code{data}, so can return a list array with a class attribute.
 
   \code{as.array} is a generic function for coercing to arrays.  The
   default method does so by attaching a \code{\link{dim}} attribute to

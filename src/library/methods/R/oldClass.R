@@ -1,6 +1,8 @@
 #  File src/library/methods/R/oldClass.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -72,7 +74,10 @@ setOldClass <- function(Classes, prototype = NULL,
                 ## maybe an object type or other valid data part
                 cl1 <- .validDataPartClass(cl, where, dataPartClass)
                 if(is.null(cl1))
-                  stop(gettextf("inconsistent old-style class information for \"%s\"; the class is defined but does not extend \"%s\" and is not valid as the data part", cl, prevClass), domain = NA)
+                  stop(gettextf("inconsistent old-style class information for %s; the class is defined but does not extend %s and is not valid as the data part",
+                                dQuote(cl),
+                                dQuote(prevClass)),
+                       domain = NA)
                 else dataPartClass <- cl1
               }
             else {
@@ -174,8 +179,8 @@ setOldClass <- function(Classes, prototype = NULL,
         bad <- character()
         for(what in n2[match(n2, n1, 0) > 0])
           if(!extends(elNamed(slots1, what), elNamed(slots2, what))) {
-              message(gettextf("Slot \"%s\": class %s should extend class %s",
-                               what,
+              message(gettextf("Slot %s: class %s should extend class %s",
+                               sQuote(what),
                                dQuote(elNamed(slots1, what)),
                                dQuote(elNamed(slots2, what))),
                       domain = NA)
@@ -194,6 +199,8 @@ setOldClass <- function(Classes, prototype = NULL,
 slotsFromS3 <- function(object) {
     list()
 }
+
+utils::globalVariables("CLASS")
 
 .oldTestFun <- function(object) CLASS %in% attr(object, "class")
 .oldCoerceFun <- function(from, strict = TRUE) {
@@ -217,7 +224,8 @@ slotsFromS3 <- function(object) {
     for(cl in Classes) {
         if(isClass(cl, where)) {
             if(!extends(cl, "oldClass"))
-                warning(gettextf("inconsistent old-style class information for \"%s\" (maybe mixing old and new classes?)", cl), domain = NA)
+                warning(gettextf("inconsistent old-style class information for %s (maybe mixing old and new classes?)",
+                                 dQuote(cl)), domain = NA)
         }
         else
             setClass(cl, representation("oldClass", "VIRTUAL"), where = where)

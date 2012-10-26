@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-06 10:53\n"
 "PO-Revision-Date: 2011-11-30 14:20+0200\n"
 "Last-Translator: Joe <joedalton2@yahoo.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -87,6 +87,10 @@ msgstr "'X' skal have navngivne dimnavne"
 
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr "ikke alle elementer for 'MARGIN' er navne på dimensioner"
+
+#, fuzzy
+msgid "use of 0-length dim is deprecated"
+msgstr "Brug af save-versioner før 2 er forældet"
 
 msgid "'dim' specifies too large an array"
 msgstr "'dim' angiver en for stor array"
@@ -239,10 +243,6 @@ msgstr "'breaks' er ikke unikke"
 msgid "labels/breaks length conflict"
 msgstr "længdekonflikt for etiketter/skift"
 
-#, fuzzy
-msgid "invalid value of length(x)"
-msgstr "ugyldigt antal intervaller"
-
 msgid "invalid 'row.names' length"
 msgstr "ugyldig længde for 'row.names'"
 
@@ -264,7 +264,8 @@ msgstr "ugyldig 'row-names', længde %d for en dataramme med %d rækker"
 msgid "supplied %d row names for %d rows"
 msgstr "angivet %d rækkenavne for %d rækker"
 
-msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+#, fuzzy
+msgid "options(\"stringsAsFactors\") not set to TRUE or FALSE"
 msgstr "tilvalg('stringsAsFactors') ikke angivet til SAND eller FALSK"
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
@@ -659,6 +660,10 @@ msgstr ""
 msgid "no files to copy to"
 msgstr "ingen filer at kopiere til"
 
+#, fuzzy
+msgid "attempt to copy a directory to itself"
+msgstr "ingen filer/mappe at henvise til"
+
 msgid "more 'from' files than 'to' files"
 msgstr "flere 'from'-filer end 'to'-filer"
 
@@ -695,14 +700,6 @@ msgstr "'vec' indeholder NA'er"
 
 msgid "'vec' must be sorted non-decreasingly"
 msgstr "'vec' skal sorteres ikkefaldende"
-
-#, fuzzy
-msgid "invalid length(x)"
-msgstr "ugyldigt antal intervaller"
-
-#, fuzzy
-msgid "invalid length(vec)"
-msgstr "ugyldig længde for 'row.names'"
 
 msgid "using the first element of 'value' of type expression"
 msgstr "bruger det første element for 'value' for typeudtryk"
@@ -1048,6 +1045,10 @@ msgstr ""
 msgid "attempt to set colnames on object with less than two dimensions"
 msgstr ""
 
+#, fuzzy
+msgid "invalid value of nrow(x)"
+msgstr "ugyldigt antal intervaller"
+
 msgid "argument is not numeric or logical: returning NA"
 msgstr ""
 
@@ -1287,6 +1288,10 @@ msgstr ""
 
 msgid "invalid ncol(qr$qr)"
 msgstr ""
+
+#, fuzzy
+msgid "invalid ncol(qr$rank)"
+msgstr "ugyldigt antal intervaller"
 
 msgid "invalid ncol(y)"
 msgstr ""
@@ -1544,6 +1549,10 @@ msgstr "ugyldigt antal intervaller"
 msgid "invalid value of nbins"
 msgstr "ugyldigt antal intervaller"
 
+#, fuzzy
+msgid "'INDEX' is of length zero"
+msgstr "'to' skal være af længde 1"
+
 msgid "arguments must have same length"
 msgstr ""
 
@@ -1747,6 +1756,18 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+#~ msgid "invalid length(x)"
+#~ msgstr "ugyldigt antal intervaller"
+
+#, fuzzy
+#~ msgid "invalid length(vec)"
+#~ msgstr "ugyldig længde for 'row.names'"
+
+#, fuzzy
+#~ msgid "invalid value of length(x)"
+#~ msgstr "ugyldigt antal intervaller"
 
 #~ msgid "'symbol.C' is not needed: please remove it"
 #~ msgstr "'symbol.C' er ikke krævet: fjern det venligst"

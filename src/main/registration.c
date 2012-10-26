@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002-2011	The R Core Team.
+ *  Copyright (C) 2002-2012	The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,20 +60,10 @@
 
 #include "basedecl.h"
 
-/* Omitted (relative to those in ROUTINES):
+/* FIXME: bincode is no longer used in R, but is still used by
+   packages misc3d mixOmics spam
 
-   fft_factor
-   fft_work
-   fdhess
-   optif9
-
-   These can still be called directly in native code in a package.
-   They are just not exported here for access via the .C(), .Call(),
-   .Fortran() or .External() interfaces.
-
-   If these omitted routines are not visible to package DLLs/shared
-   libraries on some platforms, the package should be linked against
-   Rdll.lib or libR.so or the equivalent on that platform.
+   bincount is no longer used in R, used in pegas.
 */
 
 static R_NativePrimitiveArgType bakslv_t[] = {REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP, REALSXP, INTSXP, INTSXP};
@@ -148,12 +138,6 @@ static R_CMethodDef cMethods [] = {
     /* nmath cleanup */
     {"signrank_free", (DL_FUNC)&signrank_free, 0, NULL},
     {"wilcox_free", (DL_FUNC)&wilcox_free, 0, NULL},
-
-#if 0
-    /* Why are these here?  Not used (currently) */
-    {"InitGraphics", (DL_FUNC)&Rf_InitGraphics, 0, NULL},
-    {"InitColors", (DL_FUNC)&Rf_InitColors, 0, NULL},
-#endif
     {NULL, NULL, 0}
 };
 
@@ -179,7 +163,7 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(La_rs_cmplx, 2),
     CALLDEF(La_rg_cmplx, 2),
     CALLDEF(La_chol2inv, 2),
-    CALLDEF(La_chol, 1),
+    CALLDEF(La_chol, 2),
     CALLDEF(La_dgesv, 3),
     CALLDEF(La_dgeqp3, 1),
     CALLDEF(qr_coef_real, 2),
@@ -231,9 +215,12 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(R_lazyLoadDBinsertValue, 5),
     CALLDEF(R_lazyLoadDBflush, 1),
 
+#ifdef BC_PROFILING
+    // These have no interface in R, so used directly by .Call
     CALLDEF(R_getbcprofcounts, 0),
     CALLDEF(R_startbcprof, 0),
     CALLDEF(R_stopbcprof, 0),
+#endif
 
     /* base graphics */
     CALLDEF(Rg_contourDef, 0),
@@ -244,6 +231,11 @@ static R_CallMethodDef callMethods [] = {
     CALLDEF(bitwiseXor, 2),
 
     CALLDEF(crc64ToString, 1),
+    CALLDEF(BinCode, 4),
+    CALLDEF(BinCount, 4),
+    CALLDEF(R_Tabulate, 2),
+    CALLDEF(BinCount, 4),
+    CALLDEF(FindIntervVec, 4),
 
     {NULL, NULL, 0}
 };
@@ -278,7 +270,6 @@ static R_FortranMethodDef fortranMethods[] = {
     FDEF(dqrdc),
     FDEF(dqrdc2),
     FDEF(dqrls),
-    FDEF(dqrsl),
     FDEF(dqrqty),
     FDEF(dqrqy),
     FDEF(dqrrsd),

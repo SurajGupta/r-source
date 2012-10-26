@@ -1,6 +1,8 @@
 #  File src/library/stats/R/loglin.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -23,7 +25,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
     nvar <- length(dtab)
 
     ncon <- length(margin)
-    conf <- matrix(0, nrow = nvar, ncol = ncon)
+    conf <- matrix(0L, nrow = nvar, ncol = ncon)
     nmar <- 0
     varnames <- names(dimnames(table))
     for (k in seq_along(margin)) {
@@ -61,8 +63,7 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             as.integer(iter),
             dev = double(iter),
             nlast = integer(1L),
-            ifault = integer(1L),
-            PACKAGE = "stats")
+            ifault = integer(1L))
     switch(z$ifault,
            stop("this should not happen"),
            stop("this should not happen"),

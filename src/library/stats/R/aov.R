@@ -1,6 +1,9 @@
 #  File src/library/stats/R/aov.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1998 B. D. Ripley
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -68,7 +71,7 @@ aov <- function(formula, data = NULL, projections = FALSE, qr = TRUE,
         nmstrata <- c("(Intercept)", nmstrata)
         qr.e <- er.fit$qr
         rank.e <- er.fit$rank
-        if(rank.e < length(er.fit$coefficients))
+        if(rank.e < NROW(er.fit$coefficients))
             warning("Error() model is singular")
         qty <- er.fit$residuals
         maov <- is.matrix(qty)

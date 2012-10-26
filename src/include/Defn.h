@@ -294,7 +294,7 @@ extern int putenv(char *string);
 #endif
 
 #define HSIZE	   4119	/* The size of the hash table for symbols */
-#define MAXIDSIZE 10000	/* Largest symbol size, 
+#define MAXIDSIZE 10000	/* Largest symbol size,
 			   in bytes excluding terminator.
 			   Was 256 prior to 2.13.0, now just a sanity check.
 			*/
@@ -601,9 +601,10 @@ LibExtern SEXP	R_CurrentExpr;	    /* Currently evaluating expression */
 extern0 SEXP	R_ReturnedValue;    /* Slot for return-ing values */
 extern0 SEXP*	R_SymbolTable;	    /* The symbol table */
 #ifdef R_USE_SIGNALS
-LibExtern RCNTXT R_Toplevel;	    /* Storage for the toplevel environment */
-LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel environment */
-LibExtern RCNTXT* R_GlobalContext;    /* The global environment */
+LibExtern RCNTXT R_Toplevel;	      /* Storage for the toplevel context */
+LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel context */
+LibExtern RCNTXT* R_GlobalContext;    /* The global context */
+LibExtern RCNTXT* R_SessionContext;   /* The session toplevel context */
 #endif
 extern0 Rboolean R_Visible;	    /* Value visibility flag */
 LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
@@ -766,7 +767,6 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define ComplexFromLogical	Rf_ComplexFromLogical
 # define ComplexFromReal	Rf_ComplexFromReal
 # define ComplexFromString	Rf_ComplexFromString
-# define copyListMatrix		Rf_copyListMatrix
 # define copyMostAttribNoTs	Rf_copyMostAttribNoTs
 # define CustomPrintValue	Rf_CustomPrintValue
 # define DataFrameClass		Rf_DataFrameClass
@@ -960,7 +960,6 @@ void CheckFormals(SEXP);
 void R_check_locale(void);
 void check_stack_balance(SEXP op, int save);
 void CleanEd(void);
-void copyListMatrix(SEXP, SEXP, Rboolean);
 void copyMostAttribNoTs(SEXP, SEXP);
 void CustomPrintValue(SEXP, SEXP);
 void DataFrameClass(SEXP);
@@ -1201,7 +1200,7 @@ double R_atof(const char *str);
 void set_rl_word_breaks(const char *str);
 
 /* From localecharset.c */
-extern char *locale2charset(const char *);
+extern const char *locale2charset(const char *);
 
 /* Localization */
 

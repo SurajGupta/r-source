@@ -1,6 +1,8 @@
 #  File src/library/stats/R/cor.test.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -39,12 +41,12 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
     conf.int <- FALSE
 
     if(method == "pearson") {
-	if(n < 3)
+	if(n < 3L)
 	    stop("not enough finite observations")
 	method <- "Pearson's product-moment correlation"
 	names(NVAL) <- "correlation"
 	r <- cor(x, y)
-        df <- n - 2
+        df <- n - 2L
 	ESTIMATE <- c(cor = r)
 	PARAMETER <- c(df = df)
 	STATISTIC <- c(t = sqrt(df) * r / sqrt(1 - r^2))
@@ -92,8 +94,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                         .C(C_pkendall,
                            length(q),
                            p = as.double(q),
-                           as.integer(n),
-                           PACKAGE = "stats")$p
+                           as.integer(n))$p
                     }
                     PVAL <-
                         switch(alternative,
@@ -156,8 +157,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                            as.double(round(q) + 2*lower.tail),
                            p = double(1L),
                            integer(1L),
-                           as.logical(lower.tail),
-                           PACKAGE = "stats")$p
+                           as.logical(lower.tail))$p
 		    else { # for large n: asymptotic t_{n-2}
                         den <- (n*(n^2-1))/6 # careful for overflow
                         ## Kendall et all (1939) p. 260

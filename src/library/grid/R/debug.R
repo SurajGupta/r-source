@@ -1,5 +1,7 @@
 # Label grobs in a scene
 
+#
+#  Copyright (C) 1995-2012 The R Core Team
 labelGrob <- function(grob, recurse, curdepth, depth, labelfun, ...) {
     UseMethod("labelGrob")
 }
@@ -105,7 +107,7 @@ showGrob <- function(x=NULL,
         # To remove labels use grid.redraw()
         if (is.null(gPath)) {
             # Show the current scene
-            dl <- grid.Call(L_getDisplayList)[1L:grid:::grid.Call("L_getDLindex")]
+            dl <- grid.Call(L_getDisplayList)[1L:grid:::grid.Call(L_getDLindex)]
             grid.newpage(recording=FALSE)
             # -1 because first element on DL is ROOT viewport
             lapply(dl[-1],

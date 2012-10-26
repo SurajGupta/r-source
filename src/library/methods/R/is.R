@@ -1,6 +1,8 @@
 #  File src/library/methods/R/is.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -146,8 +148,10 @@ setIs <-
     local2 <- exists(m2, where, inherits = FALSE) &&
     !(classDef2@sealed || bindingIsLocked(m2, where))
     if(!(local1 || local2) )
-        stop(gettextf("cannot create a 'setIs' relation when neither of the classes (\"%s\" and \"%s\") is local and modifiable in this package",
-                      class1, class2), domain = NA)
+        stop(gettextf("cannot create a 'setIs' relation when neither of the classes (%s and %s) is local and modifiable in this package",
+                      dQuote(class1),
+                      dQuote(class2)),
+             domain = NA)
     if(classDef@sealed && !isClassUnion(classDef2))
         stop(gettextf("class %s is sealed; new superclasses can not be defined, except by 'setClassUnion'",
                       dQuote(class1)),

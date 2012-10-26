@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-07 15:52\n"
+"Project-Id-Version: R 2.15.1\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-06 10:53\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -84,6 +84,9 @@ msgid "'X' must have named dimnames"
 msgstr ""
 
 msgid "not all elements of 'MARGIN' are names of dimensions"
+msgstr ""
+
+msgid "use of 0-length dim is deprecated"
 msgstr ""
 
 msgid "'dim' specifies too large an array"
@@ -230,9 +233,6 @@ msgstr ""
 msgid "labels/breaks length conflict"
 msgstr ""
 
-msgid "invalid value of length(x)"
-msgstr ""
-
 msgid "invalid 'row.names' length"
 msgstr ""
 
@@ -254,7 +254,7 @@ msgstr ""
 msgid "supplied %d row names for %d rows"
 msgstr ""
 
-msgid "options('stringsAsFactors') not set to TRUE or FALSE"
+msgid "options(\"stringsAsFactors\") not set to TRUE or FALSE"
 msgstr ""
 
 msgid "mismatch of row names in arguments of 'data.frame', item %d"
@@ -623,6 +623,9 @@ msgstr ""
 msgid "no files to copy to"
 msgstr ""
 
+msgid "attempt to copy a directory to itself"
+msgstr ""
+
 msgid "more 'from' files than 'to' files"
 msgstr ""
 
@@ -657,12 +660,6 @@ msgid "'vec' contains NAs"
 msgstr ""
 
 msgid "'vec' must be sorted non-decreasingly"
-msgstr ""
-
-msgid "invalid length(x)"
-msgstr ""
-
-msgid "invalid length(vec)"
 msgstr ""
 
 msgid "using the first element of 'value' of type expression"
@@ -992,6 +989,9 @@ msgstr ""
 msgid "attempt to set colnames on object with less than two dimensions"
 msgstr ""
 
+msgid "invalid value of nrow(x)"
+msgstr ""
+
 msgid "argument is not numeric or logical: returning NA"
 msgstr ""
 
@@ -1224,6 +1224,9 @@ msgid "invalid nrow(qr$qr)"
 msgstr ""
 
 msgid "invalid ncol(qr$qr)"
+msgstr ""
+
+msgid "invalid ncol(qr$rank)"
 msgstr ""
 
 msgid "invalid ncol(y)"
@@ -1473,6 +1476,9 @@ msgid "invalid value of length(bin)"
 msgstr ""
 
 msgid "invalid value of nbins"
+msgstr ""
+
+msgid "'INDEX' is of length zero"
 msgstr ""
 
 msgid "arguments must have same length"

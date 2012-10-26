@@ -1,6 +1,11 @@
 #  File src/library/grDevices/R/prettyDate.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
+# Original code Copyright (C) 2010 Felix Andrews
+# Modifications Copyright (C) 2010 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -13,8 +18,6 @@
 #
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
-
-## Original code Copyright (C) 2010 Felix Andrews <felix@nfrac.org>
 
 pretty.Date <- function(x, n = 5, min.n = n %/% 2, sep = " ", ...)
 {
@@ -99,7 +102,7 @@ prettyDate <- function(x, n = 5, min.n = n %/% 2, sep = " ", ...)
             at <- seq(startTime, max(zz), by = "months")
             at2 <- as.POSIXlt(at)
             at2$mday <- 15L
-            at <- structure(sort(c(as.POSIXct(at), as.POSIXct(at2))), 
+            at <- structure(sort(c(as.POSIXct(at), as.POSIXct(at2))),
                             tzone = attr(at, "tzone"))
         } else {
             at <- seq(startTime, max(zz), by = s$spec)

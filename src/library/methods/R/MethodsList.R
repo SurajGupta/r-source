@@ -1,6 +1,8 @@
 #  File src/library/methods/R/MethodsList.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -466,7 +468,7 @@ matchSignature <-
         if(is.null(pkgs))
             pkgs <- character(length(signature))
         else if(length(pkgs) != length(signature))
-            stop("invalid \"package\" slot or attribute, wrong length")
+            stop("invalid 'package' slot or attribute, wrong length")
         sigClasses <- as.character(signature)
     }
     else if(is(signature, "list")) {
@@ -666,7 +668,8 @@ promptMethods <- function(f, filename = NULL, methods)
 
     fdef <- getGeneric(f)
     if(!isGeneric(f, fdef=fdef))
-	stop(gettextf("No generic function found corresponding to \"%s\"", f),
+	stop(gettextf("No generic function found corresponding to %s",
+                      sQuote(f)),
 	     domain = NA)
     if(missing(methods)) {
 	methods <- findMethods(fdef)

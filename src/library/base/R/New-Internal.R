@@ -1,6 +1,8 @@
 #  File src/library/base/R/New-Internal.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -146,7 +148,7 @@ gc <- function(verbose = getOption("verbose"),	reset=FALSE)
     if(all(is.na(res[, 5L]))) res[, -5L] else res
 }
 gcinfo <- function(verbose) .Internal(gcinfo(verbose))
-gctorture <- function(on=TRUE) invisible(.Internal(gctorture(on)))
+gctorture <- function(on = TRUE) .Internal(gctorture(on))
 gctorture2 <- function(step, wait = step, inhibit_release = FALSE)
     .Internal(gctorture2(step, wait, inhibit_release))
 

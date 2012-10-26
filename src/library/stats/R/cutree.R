@@ -1,6 +1,8 @@
 #  File src/library/stats/R/cutree.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -37,7 +39,7 @@ cutree <- function(tree, k=NULL, h=NULL)
                  domain = NA)
     }
 
-    ans <- .Call(C_R_cutree, tree$merge, k, PACKAGE = "stats")
+    ans <- .Call(C_R_cutree, tree$merge, k)
 
     if(length(k) == 1L) {
         ans <- as.vector(ans)

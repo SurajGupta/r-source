@@ -1,6 +1,6 @@
 % File src/library/base/man/matrix.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{matrix}
@@ -28,8 +28,8 @@ is.matrix(x)
 }
 \arguments{
   \item{data}{an optional data vector (including a list or
-    \code{\link{expression}} vector).  Other \R objects are coerced by
-    \code{\link{as.vector}}.}
+    \code{\link{expression}} vector).  Non-atomic classed \R objects are
+    coerced by \code{\link{as.vector}} and all attributes discarded.}
   \item{nrow}{the desired number of rows.}
   \item{ncol}{the desired number of columns.}
   \item{byrow}{logical. If \code{FALSE} (the default) the matrix is
@@ -70,6 +70,9 @@ is.matrix(x)
   (logical < integer < double < complex) will be used, e.g., all-logical
   data frames will be coerced to a logical matrix, mixed logical-integer
   will give a integer matrix, etc.
+
+  The default method for \code{as.matrix} calls \code{as.vector(x)}, and
+  hence e.g. coerces factors to character vectors.
 
   When coercing a vector, it produces a one-column matrix, and
   promotes the names (if any) of the vector to the rownames of the matrix.

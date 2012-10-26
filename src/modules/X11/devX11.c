@@ -70,6 +70,7 @@
 typedef int (*X11IOhandler)(Display *);
 
 #include "devX11.h"
+#include "rlogo_icon.h" /* hard-coded ARGB icon */
 
 #include <Rmodules/RX11.h>
 
@@ -819,7 +820,7 @@ static void R_ProcessX11Events(void *data)
 {
     XEvent event;
 
-    while (displayOpen && XPending(display)) {
+    while (!R_isForkedChild && displayOpen && XPending(display)) {
 	XNextEvent(display, &event);
 	/* printf("%i\n",event.type); */
 	handleEvent(event);
@@ -1575,8 +1576,7 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
 
 	    XStoreName(display, xd->window, xd->title);
 
-#ifndef USE_Xt
-	    /* For those too idle to make use of Xt (PR#14588) */
+	    /* See (PR#14588) */
 	    XClassHint *chint;
 	    chint = XAllocClassHint();
 	    if (chint) {
@@ -1585,7 +1585,13 @@ X11_Open(pDevDesc dd, pX11Desc xd, const char *dsp,
 		XSetClassHint(display, xd->window, chint);
 	    	XFree(chint);
 	    }
-#endif
+
+            /* set window icon */
+            XChangeProperty(display, xd->window,
+                            XInternAtom(display, "_NET_WM_ICON", False),
+                            XInternAtom(display, "CARDINAL", False), 32,
+                            PropModeReplace,
+                            (const unsigned char*) rlogo_icon, 2 + 48*48);
 
 	    /* set up protocols so that window manager sends */
 	    /* me an event when user "destroys" window */
@@ -3099,6 +3105,9 @@ static SEXP in_do_X11(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     vmax = vmaxget();
+
+    if(R_isForkedChild)
+	error("a forked child should not open a graphics device");
 
     /* Decode the arguments */
     display = CHAR(STRING_ELT(CAR(args), 0)); args = CDR(args);

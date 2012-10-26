@@ -1,10 +1,8 @@
 #  File src/library/stats/R/nls.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright 1999-1999 Saikat DebRoy <saikat$stat.wisc.edu>,
-#                      Douglas M. Bates <bates$stat.wisc.edu>,
-#                      Jose C. Pinheiro <jcp$research.bell-labs.com>
-#  Copyright 2005-7    The R Core Team
+#  Copyright (C) 1999-1999 Saikat DebRoy, Douglas M. Bates, Jose C. Pinheiro
+#  Copyright (C) 2000-7    The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -502,7 +500,7 @@ nls <-
                 warning("No starting values specified for some parameters.\n",
                         "Initializing ", paste(sQuote(nnn), collapse=", "),
                         " to '1.'.\n",
-                        "Consider specifying 'start' or using a selfStart model")
+                        "Consider specifying 'start' or using a selfStart model", domain = NA)
                 start <- as.list(rep(1., length(nnn)))
                 names(start) <- nnn
                 varNames <- varNames[i <- is.na(match(varNames, nnn))]

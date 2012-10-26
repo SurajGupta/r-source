@@ -1,6 +1,8 @@
 #  File src/library/stats/R/aggregate.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -117,7 +119,7 @@ function(formula, data, FUN, ..., subset, na.action = na.omit)
     m$... <- m$FUN <- NULL
     m[[1L]] <- as.name("model.frame")
 
-    if(as.character(formula[[2L]] == ".")) {
+    if (formula[[2L]] == ".") {
         ## LHS is a dot, expand it ...
         rhs <- unlist(strsplit(deparse(formula[[3L]]), " *[:+] *"))
         ## <NOTE>

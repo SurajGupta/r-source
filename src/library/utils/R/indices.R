@@ -1,6 +1,8 @@
 #  File src/library/utils/R/indices.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -108,7 +110,8 @@ packageDescription <- function(pkg, lib.loc=NULL, fields=NULL, drop=TRUE,
 }
 
 
-print.packageDescription <- function(x, abbrCollate = 0.8 * getOption("width"), ...)
+print.packageDescription <-
+    function(x, abbrCollate = 0.8 * getOption("width"), ...)
 {
     xx <- x
     xx[] <- lapply(xx, function(x) if(is.na(x)) "NA" else x)
@@ -130,12 +133,15 @@ print.packageDescription <- function(x, abbrCollate = 0.8 * getOption("width"), 
 
 # Simple convenience functions
 
-maintainer <- function(pkg) {
+maintainer <- function(pkg)
+{
     force(pkg)
-    packageDescription(pkg)$Maintainer
+    desc <- packageDescription(pkg)
+    if(is.list(desc)) gsub("\n", " ", desc$Maintainer, fixed = TRUE)
+    else NA_character_
 }
 
-packageVersion <- function(pkg, lib.loc=NULL)
+packageVersion <- function(pkg, lib.loc = NULL)
 {
     res <- suppressWarnings(packageDescription(pkg, lib.loc=lib.loc,
                                                fields = "Version"))

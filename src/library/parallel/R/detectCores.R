@@ -1,6 +1,8 @@
 #  File src/library/parallel/R/detectCores.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +22,7 @@ detectCores <-
     if(.Platform$OS.type == "windows") {
         function(all.tests = FALSE, logical = TRUE) {
             ## result is # cores, logical processors.
-            res <- .Call(C_ncpus, FALSE, PACKAGE = "parallel")
+            res <- .Call(C_ncpus, FALSE)
             ifelse(logical, res[2L], res[1L]);
         }
     } else {

@@ -1,6 +1,8 @@
 #  File src/library/grid/R/components.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -172,7 +174,7 @@ grid.xaxis <- function(at=NULL, label=TRUE, main=TRUE,
     major <- make.xaxis.major(at, main)
     ticks <- make.xaxis.ticks(at, main)
     if (is.logical(label) && length(label) == 0)
-	stop("logical 'label' supplied on length 0")
+	stop("logical 'label' supplied of length 0")
     if (is.logical(label) && !label)
       labels <- NULL
     else
@@ -299,7 +301,7 @@ grid.yaxis <- function(at=NULL, label=TRUE, main=TRUE,
     major <- make.yaxis.major(at, main)
     ticks <- make.yaxis.ticks(at, main)
     if (is.logical(label) && length(label) == 0)
-	stop("logical 'label' supplied on length 0")
+	stop("logical 'label' supplied of length 0")
     if (is.logical(label) && !label)
       labels <- NULL
     else

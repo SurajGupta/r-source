@@ -1,6 +1,8 @@
 #  File src/library/stats/R/termplot.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -48,6 +50,9 @@ termplot <- function(model, data = NULL,envir = environment(formula(model)),
     use.rows <- if (NROW(tms) < NROW(data))
         match(rownames(tms), rownames(data)) ## else NULL
     nmt <- colnames(tms)
+    if (any(grepl(":", nmt, fixed = TRUE)))
+        warning("'model' appears to involve interactions: see the help page",
+                domain = NA, immediate. = TRUE)
     cn <- parse(text = nmt)
     ## Defaults:
     if (!is.null(smooth))

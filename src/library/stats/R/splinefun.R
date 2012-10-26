@@ -1,6 +1,8 @@
 #  File src/library/stats/R/splinefun.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -17,9 +19,10 @@
 #### 'spline' and 'splinefun' are very similar --- keep in sync!
 ####  also consider ``compatibility'' with  'approx' and 'approxfun'
 
-splinefun <- function(x, y=NULL,
-                      method = c("fmm", "periodic", "natural", "monoH.FC"),
-                      ties = mean)
+splinefun <-
+    function(x, y = NULL,
+             method = c("fmm", "periodic", "natural", "monoH.FC", "hyman"),
+             ties = mean)
 {
     x <- regularize.values(x, y, ties) # -> (x,y) numeric of same length
     y <- x$y
@@ -42,30 +45,36 @@ splinefun <- function(x, y=NULL,
         m <- c(Sx[1L], (Sx[-1L] + Sx[-n1])/2, Sx[n1]) ## 1.
 
         ## use C, as we need to "serially" progress from left to right:
-        m <- .Call(C_R_monoFC_m, m, Sx, PACKAGE="stats")
+        m <- .Call(C_R_monoFC_m, m, Sx)
 
         ## Hermite spline with (x,y,m) :
         return(splinefunH0(x = x, y = y, m = m, dx = dx))
     }
     ## else
-    iMeth <- match(method, c("periodic", "natural", "fmm", "monoH.FC"))
+    iMeth <- match(method, c("periodic", "natural", "fmm",
+                             "monoH.FC", "hyman"))
+    if(iMeth == 5L) {
+        dy <- diff(y)
+        if(!(all(dy >= 0) || all(dy <= 0)))
+            stop("'y' must be increasing or decreasing")
+    }
     z <- .C(C_spline_coef,
-	    method=as.integer(iMeth),
+	    method=as.integer(min(3L, iMeth)),
 	    n=nx,
 	    x=x,
 	    y=y,
 	    b=double(nx),
 	    c=double(nx),
 	    d=double(nx),
-	    e=double(if(iMeth == 1) nx else 0),
-	    PACKAGE="stats")
-    rm(x,y,nx,method,iMeth,ties)
+	    e=double(if(iMeth == 1) nx else 0))
+    if(iMeth == 5L) z <- spl_coef_conv(hyman_filter(z))
+    rm(x, y, nx, method, iMeth, ties)
     z$e <- NULL
-    function(x, deriv = 0) {
+    function(x, deriv = 0L) {
 	deriv <- as.integer(deriv)
-	if (deriv < 0 || deriv > 3)
+	if (deriv < 0L || deriv > 3L)
 	    stop("'deriv' must be between 0 and 3")
-	if (deriv > 0) {
+	if (deriv > 0L) {
 	    ## For deriv >= 2, using approx() should be faster, but doing it correctly
 	    ## for all three methods is not worth the programmer's time...
 	    z0 <- double(z$n)
@@ -90,8 +99,7 @@ splinefun <- function(x, y=NULL,
                   z$y,
                   z$b,
                   z$c,
-                  z$d,
-                  PACKAGE="stats")$y
+                  z$d)$y
 
         ## deal with points to the left of first knot if natural
         ## splines are used  (Bug PR#13132)

@@ -1,6 +1,9 @@
 #  File src/library/stats/R/add.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1994-8 W. N. Venables and B. D. Ripley
+#  Copyright (C) 1998-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -13,6 +16,7 @@
 #
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
+
 
 ## version to return NA for df = 0, as R did before 2.7.0
 safe_pchisq <- function(q, df, ...)
@@ -672,28 +676,12 @@ factor.scope <- function(factor, scope)
     list(drop = nmdrop, add = nmadd)
 }
 
+
+## a slightly simplified version of stepAIC().
 step <- function(object, scope, scale = 0,
 		 direction = c("both", "backward", "forward"),
 		 trace = 1, keep = NULL, steps = 1000, k = 2, ...)
 {
-#     fixFormulaObject <- function(object) {
-# 	tt <- terms(object)
-# 	tmp <- attr(tt, "term.labels")
-# 	if (!attr(tt, "intercept"))
-# 	    tmp <- c(tmp, "0")
-# 	if (!length(tmp))
-# 	    tmp <- "1"
-#         tmp <- paste("~", paste(tmp, collapse = " + "))
-#         form <- formula(object) # some formulae have no lhs
-#         tmp <- if(length(form) > 2) paste(deparse(form[[2L]]), tmp)
-#         ## must be as.character as deparse gives spurious ()
-# 	if (length(offset <- attr(tt, "offset")))
-# 	    tmp <- paste(tmp, as.character(attr(tt, "variables")[offset + 1]),
-# 			 sep = " + ")
-# 	form <- formula(tmp)
-#         environment(form) <- environment(tt)
-#         form
-#     }
     mydeviance <- function(x, ...)
     {
         dev <- deviance(x)
@@ -775,6 +763,8 @@ step <- function(object, scope, scale = 0,
     bAIC <- bAIC[2L]
     if(is.na(bAIC))
         stop("AIC is not defined for this model, so 'step' cannot proceed")
+    if(bAIC == -Inf)
+        stop("AIC is -infinity for this model, so 'step' cannot proceed")
     nm <- 1
     ## Terms <- fit$terms
     if(trace) {

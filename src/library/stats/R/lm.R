@@ -1,6 +1,8 @@
 #  File src/library/stats/R/lm.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -25,7 +27,7 @@ lm <- function (formula, data, subset, weights, na.action,
     cl <- match.call()
     mf <- match.call(expand.dots = FALSE)
     m <- match(c("formula", "data", "subset", "weights", "na.action", "offset"),
-	       names(mf), 0L)
+               names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
@@ -509,11 +511,17 @@ model.frame.lm <- function(formula, ...)
     dots <- list(...)
     nargs <- dots[match(c("data", "na.action", "subset"), names(dots), 0)]
     if (length(nargs) || is.null(formula$model)) {
+        ## mimic lm(method = "model.frame")
         fcall <- formula$call
-        fcall$method <- "model.frame"
-        fcall[[1L]] <- as.name("lm")
+        m <- match(c("formula", "data", "subset", "weights", "na.action",
+                     "offset"), names(fcall), 0L)
+        fcall <- fcall[c(1L, m)]
+        fcall$drop.unused.levels <- TRUE
+        fcall[[1L]] <- as.name("model.frame")
+        fcall$xlev <- formula$xlevels
+        ## We want to copy over attributes here, especially predvars.
+        fcall$formula <- terms(formula)
         fcall[names(nargs)] <- nargs
-#	env <- environment(fcall$formula)  # always NULL
         env <- environment(formula$terms)
 	if (is.null(env)) env <- parent.frame()
         eval(fcall, env, parent.frame())
@@ -622,7 +630,7 @@ anova.lmlist <- function (object, ..., scale = 0, test = "F")
 	table <- stat.anova(table = table, test = test,
 			    scale = scale,
                             df.scale = resdf[bigmodel],
-			    n = length(objects[bigmodel$residuals]))
+			    n = length(objects[[bigmodel]]$residuals))
     }
     structure(table, heading = c(title, topnote),
               class = c("anova", "data.frame"))

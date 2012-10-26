@@ -1,6 +1,8 @@
 #  File src/library/stats/R/smspline.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -122,6 +124,8 @@ smooth.spline <-
         } else 1L
     spar <- if(ispar == 1L) as.double(spar) else double(1)
     ## was <- if(missing(spar)) 0 else if(spar < 1.01e-15) 0 else  1
+    ## but package forecast passed a length-0 vector.
+    if(length(spar) != 1) stop("'spar' must be of length 1")
 
     ## icrit {../src/sslvrg.f}:
     ##		(0 = no crit,  1 = GCV ,  2 = ord.CV , 3 = df-matching)
@@ -141,15 +145,12 @@ smooth.spline <-
     keep.stuff <- FALSE ## << to become an argument in the future
     ans.names <- c("coef","ty","lev","spar","parms","crit","iparms","ier",
                    if(keep.stuff) "scratch")
-    ## This uses DUP = FALSE which is dangerous since it does change
-    ## its argument w.  We don't assume that as.double will
-    ## always duplicate, although it does in R 2.3.1.
-    fit <- .Fortran(C_qsbart,		# code in ../src/qsbart.f
+    fit <- .Fortran(C_rbart,		# code in ../src/qsbart.f
 		    as.double(penalty),
 		    as.double(dofoff),
 		    x = as.double(xbar),
 		    y = as.double(ybar),
-		    w = as.double(wbar),
+		    w = as.double(wbar), # changed in the Fortran code
 		    ssw = as.double(yssw),
 		    as.integer(nx),
 		    as.double(knot),
@@ -161,12 +162,10 @@ smooth.spline <-
 		    iparms = iparms,
 		    spar = spar,
 		    parms = unlist(contr.sp[1:4]),
-		    isetup = 0L,
 		    scratch = double(17L * nk + 1L),
 		    ld4  = 4L,
 		    ldnk = 1L,
-		    ier = integer(1),
-		    DUP = FALSE
+		    ier = integer(1L)
 		    )[ans.names]
     ## now we have clobbered wbar, recompute it.
     wbar <- tmp[, 1]
@@ -297,8 +296,7 @@ predict.smooth.spline.fit <- function(object, x, deriv = 0, ...)
 			      nk  = as.integer(object$nk),
 			      x	  = as.double(xs[interp]),
 			      s	  = double(n),
-			      order= as.integer(deriv),
-			      DUP = FALSE)$s
+			      order= as.integer(deriv))$s
     if(any(extrap)) {
 	xrange <- c(object$min, object$min + object$range)
 	if(deriv == 0) {

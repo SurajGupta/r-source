@@ -1,6 +1,8 @@
 #  File src/library/stats/R/anova.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +19,8 @@
 ## utility for anova.FOO(), FOO in "lmlist", "glm", "glmlist"
 ## depending on the ordering of the models this might get called with
 ## negative deviance and df changes.
-stat.anova <- function(table, test=c("Rao","LRT","Chisq", "F", "Cp"), scale, df.scale, n)
+stat.anova <-
+    function(table, test=c("Rao","LRT","Chisq", "F", "Cp"), scale, df.scale, n)
 {
     test <- match.arg(test)
     dev.col <- match("Deviance", colnames(table))
@@ -43,9 +46,14 @@ stat.anova <- function(table, test=c("Rao","LRT","Chisq", "F", "Cp"), scale, df.
 		     "Pr(>F)" = pf(Fvalue, abs(dfs), df.scale, lower.tail=FALSE)
                      )
 	   },
-	   "Cp" = {
-	       cbind(table, Cp = table[,"Resid. Dev"] +
-		     2*scale*(n - table[,"Resid. Df"]))
+	   "Cp" = { # depends on the type of object.
+               if ("RSS" %in% names(table)) { # an lm object
+                   cbind(table, Cp = table[, "RSS"] +
+                         2*scale*(n - table[, "Res.Df"]))
+               } else { # a glm object
+                   cbind(table, Cp = table[, "Resid. Dev"] +
+                         2*scale*(n - table[, "Resid. Df"]))
+               }
 	   })
 }
 

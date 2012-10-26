@@ -1,6 +1,8 @@
 #  File src/library/tools/R/Rd2pdf.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -466,12 +468,17 @@ function(pkgdir, outfile, title, batch = FALSE,
     inputenc <- Sys.getenv("RD2PDF_INPUTENC", "inputenc")
     ## this needs to be canonical, e.g. 'utf8'
     ## trailer is for detection if we want to edit it later.
+    latex_outputEncoding <- latex_canonical_encoding(outputEncoding)
     setEncoding <-
         paste("\\usepackage[",
-              latex_canonical_encoding(outputEncoding), "]{",
+              latex_outputEncoding, "]{",
               inputenc, "} % @SET ENCODING@", sep="")
     useGraphicx <- "% \\usepackage{graphicx} % @USE GRAPHICX@"
     writeLines(c(setEncoding,
+                 if (inputenc == "inputenx" &&
+                     latex_outputEncoding == "utf8") {
+                     "\\IfFileExists{ix-utf8enc.dfu}{\\input{ix-utf8enc.dfu}}{}"
+                 },
     		 useGraphicx,
                  if (index) "\\makeindex{}",
                  "\\begin{document}"), out)
@@ -498,15 +505,16 @@ function(pkgdir, outfile, title, batch = FALSE,
         "{\\textbf{\\huge ", title, "}}\n",
         "\\par\\bigskip{\\large \\today}\n",
         "\\end{center}\n", sep = "", file = out)
-    if (description && file.exists(f <- file.path(pkgdir, "DESCRIPTION")))
-        .DESCRIPTION_to_latex(f, out)
-    ## running on the sources of a base package will have DESCRIPTION.in,
-    ## only.
-    if (description &&
-        file.exists(f <- file.path(pkgdir, "DESCRIPTION.in"))) {
-        version <- readLines(file.path(pkgdir, "../../../VERSION"))
-        .DESCRIPTION_to_latex(file.path(pkgdir, "DESCRIPTION.in"),
-                              out, version)
+    if(description) {
+        if(file.exists(f <- file.path(pkgdir, "DESCRIPTION")))
+            .DESCRIPTION_to_latex(f, out)
+        else if(file.exists(f <- file.path(pkgdir, "DESCRIPTION.in"))) {
+            ## running on the sources of a base package will have
+            ## DESCRIPTION.in, only.
+            version <- readLines(file.path(pkgdir, "../../../VERSION"))
+            .DESCRIPTION_to_latex(file.path(pkgdir, "DESCRIPTION.in"),
+                                  out, version)
+        }
     }
 
     ## Rd2.tex part 2: body
@@ -545,21 +553,28 @@ function(pkgdir, outfile, title, batch = FALSE,
     latexEncodings <- unique(latexEncodings)
     latexEncodings <- latexEncodings[!is.na(latexEncodings)]
     cyrillic <- if (nzchar(Sys.getenv("_R_CYRILLIC_TEX_"))) "utf8" %in% latexEncodings else FALSE
-    latex_outputEncoding <- latex_canonical_encoding(outputEncoding)
     encs <- latexEncodings[latexEncodings != latex_outputEncoding]
     if (length(encs) || hasFigures || cyrillic) {
         lines <- readLines(outfile)
+        moreUnicode <- inputenc == "inputenx" && "utf8" %in% encs
 	encs <- paste(encs, latex_outputEncoding, collapse=",", sep=",")
 
 	if (!cyrillic) {
-	    lines[lines == setEncoding] <-
+	    setEncoding2 <-
 		paste0("\\usepackage[", encs, "]{", inputenc, "}")
 	} else {
-	    lines[lines == setEncoding] <-
+	    setEncoding2 <-
 		paste(
 "\\usepackage[", encs, "]{", inputenc, "}
 \\IfFileExists{t2aenc.def}{\\usepackage[T2A]{fontenc}}{}", sep = "")
 	}
+	if (moreUnicode) {
+	    setEncoding2 <-
+		paste0(
+setEncoding2, "
+\\IfFileExists{ix-utf8enc.dfu}{\\input{ix-utf8enc.dfu}}{}")
+        }
+        lines[lines == setEncoding] <- setEncoding2
 	if (hasFigures)
 	    lines[lines == useGraphicx] <- "\\usepackage{graphicx}\\setkeys{Gin}{width=0.7\\textwidth}"
 	writeLines(lines, outfile)

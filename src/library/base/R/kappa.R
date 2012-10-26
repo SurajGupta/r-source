@@ -1,6 +1,9 @@
 #  File src/library/base/R/kappa.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1998 B. D. Ripley
+#  Copyright (C) 1998-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -63,8 +66,8 @@ kappa.default <- function(z, exact = FALSE,
         d <- dim(z)
         if(method == "qr" || d[1L] != d[2L])
 	    kappa.qr(qr(if(d[1L] < d[2L]) t(z) else z),
-		     exact=FALSE, norm=norm, ...)
-        else kappa.tri(z, exact=FALSE, norm=norm, ...)
+		     exact = FALSE, norm = norm, ...)
+        else .kappa_tri(z, exact = FALSE, norm = norm, ...)
     }
 }
 
@@ -75,10 +78,10 @@ kappa.qr <- function(z, ...)
     qr <- z$qr
     R <- qr[1L:min(dim(qr)), , drop = FALSE]
     R[lower.tri(R)] <- 0
-    kappa.tri(R, ...)
+    .kappa_tri(R, ...)
 }
 
-kappa.tri <- function(z, exact = FALSE, LINPACK = TRUE, norm=NULL, ...)
+.kappa_tri <- function(z, exact = FALSE, LINPACK = TRUE, norm=NULL, ...)
 {
     if(exact) {
         stopifnot(is.null(norm) || identical("2", norm))

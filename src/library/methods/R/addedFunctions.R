@@ -1,6 +1,8 @@
 #  File src/library/methods/R/addedFunctions.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -84,7 +86,8 @@ elNamed <-
     i <- match(name, names(x))
     if(is.na(i)) {
         if(mustFind)
-            stop(gettextf("\"%s\" is not one of the element names", name),
+            stop(gettextf("%s is not one of the element names",
+                          sQuote(name)),
                  domain = NA)
         else NULL
     }

@@ -1,6 +1,8 @@
 #  File src/library/base/R/namespace.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -26,6 +28,8 @@ getNamespace <- function(name) {
     if (! is.null(ns)) ns
     else tryCatch(loadNamespace(name), error = function(e) stop(e))
 }
+
+.getNamespace <- function(name) .Internal(getRegisteredNamespace(as.name(name)))
 
 loadedNamespaces <- function()
     ls(.Internal(getNamespaceRegistry()), all.names = TRUE)
@@ -937,8 +941,10 @@ namespaceImportClasses <- function(self, ns, vars) {
 
 namespaceImportMethods <- function(self, ns, vars) {
     allVars <- character()
+    generics <- character()
+    packages <- character()
     allFuns <- methods:::.getGenerics(ns) # all the methods tables in ns
-    packages <- attr(allFuns, "package")
+    allPackages <- attr(allFuns, "package")
     pkg <- methods:::getPackageName(ns)
     if(!all(vars %in% allFuns)) {
         message(gettextf("No methods found in \"%s\" for requests: %s",
@@ -957,16 +963,23 @@ namespaceImportMethods <- function(self, ns, vars) {
         ## import methods tables if asked for
         ## or if the corresponding generic was imported
         g <- allFuns[[i]]
+        p <- allPackages[[i]]
         if(exists(g, envir = self, inherits = FALSE) # already imported
            || g %in% vars) { # requested explicitly
-            tbl <- methods:::.TableMetaName(g, packages[[i]])
-            if(is.null(.mergeImportMethods(self, ns, tbl))) # a new methods table
+            tbl <- methods:::.TableMetaName(g, p)
+            if(is.null(.mergeImportMethods(self, ns, tbl))) { # a new methods table
                allVars <- c(allVars, tbl) # import it;else, was merged
+               generics <- c(generics, g)
+               packages <- c(packages, p)
+            }
         }
         if(g %in% vars && !exists(g, envir = self, inherits = FALSE)) {
             if(exists(g, envir = ns) &&
-               methods:::is(get(g, envir = ns), "genericFunction"))
+               methods:::is(get(g, envir = ns), "genericFunction")) {
                 allVars <- c(allVars, g)
+                generics <- c(generics, g)
+                packages <- c(packages, p)
+            }
             else { # should be primitive
                 fun <- methods::getFunction(g, mustFind = FALSE, where = self)
                 if(is.primitive(fun) || methods::is(fun, "genericFunction")) {}
@@ -977,7 +990,7 @@ namespaceImportMethods <- function(self, ns, vars) {
             }
         }
     }
-    namespaceImportFrom(self, asNamespace(ns), allVars, allFuns, packages)
+    namespaceImportFrom(self, asNamespace(ns), allVars, generics, packages)
 }
 
 importIntoEnv <- function(impenv, impnames, expenv, expnames) {
@@ -1307,7 +1320,8 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
     for (e in directives)
         parseDirective(e)
 
-    dynlibs <- unique(dynlibs)
+       # need to preserve the names on dynlibs, so unique() is not appropriate.
+    dynlibs <- dynlibs[!duplicated(dynlibs)]  
     list(imports = imports, exports = exports, exportPatterns = exportPatterns,
          importClasses = importClasses, importMethods = importMethods,
          exportClasses = exportClasses,  exportMethods = exportMethods,

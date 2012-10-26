@@ -1,6 +1,8 @@
 #  File src/library/tools/R/install.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -151,6 +153,13 @@
         setwd(startdir)
         if (dir.exists(tmpdir)) unlink(tmpdir, recursive=TRUE)
     }
+    
+    # Check whether dir is a subdirectory of parent,
+    # to protect against malicious package names like ".." below
+    # Assumes that both directories exist
+    
+    is_subdir <- function(dir, parent) 
+        normalizePath(parent) == normalizePath(file.path(dir, ".."))
 
     do_exit_on_error <- function()
     {
@@ -158,14 +167,16 @@
         ## set curPkg
         if(clean_on_error && length(curPkg)) {
             pkgdir <- file.path(lib, curPkg)
-            if (nzchar(pkgdir) && dir.exists(pkgdir)) {
+            if (nzchar(pkgdir) && dir.exists(pkgdir) &&
+                is_subdir(pkgdir, lib)) {
                 starsmsg(stars, "removing ", sQuote(pkgdir))
                 unlink(pkgdir, recursive = TRUE)
             }
 
             if (nzchar(lockdir) &&
-                dir.exists(lp <- file.path(lockdir, curPkg))) {
-                starsmsg(stars, "restoring previous ", sQuote(pkgdir))
+                dir.exists(lp <- file.path(lockdir, curPkg)) &&
+                is_subdir(lp, lockdir)) {
+                starsmsg(stars, "restoring previous ", sQuote(pkgdir)) 
                 if (WINDOWS) {
                     file.copy(lp, dirname(pkgdir), recursive = TRUE)
                     .Call("R_setFileTime", pkgdir, file.info(lp)$mtime,
@@ -255,6 +266,12 @@
         dir.create(instdir, recursive = TRUE, showWarnings = FALSE)
         if (!dir.exists(instdir)) {
             message("ERROR: unable to create ", sQuote(instdir), domain = NA)
+            do_exit_on_error()
+        }
+        
+        if (!is_subdir(instdir, lib)) {
+            message("ERROR: ", sQuote(pkg_name), " is not a legal package name", 
+                    domain = NA)
             do_exit_on_error()
         }
 
@@ -508,6 +525,8 @@
 
         if (!is.na(Type) && Type == "Translation") {
             starsmsg(stars, "installing *Translation* package ", sQuote(pkg_name), " ...")
+            warning("'Translation' packages are deprecated",
+                    immediate. = TRUE, call. = TRUE, domain = NA)
             if (dir.exists("share")) {
                 files <- Sys.glob("share/*")
                 if (length(files)) file.copy(files, R.home("share"), TRUE)
@@ -688,7 +707,7 @@
                                             "igraph", "jpeg", "png", "proj4",
                                             "randtoolbox", "rgdal", "rngWELL",
                                             "rphast", "rtfbs", "sparsenet",
-                                            "tcltk2", "udunits2"))
+                                            "tcltk2", "tiff", "udunits2"))
                             one_only <- sum(nchar(readLines("../configure.win", warn = FALSE), "bytes")) > 0
                         if(one_only && !force_biarch)
                             warning("this package has a non-empty 'configure.win' file,\nso building only the main architecture\n", call. = FALSE, domain=NA)

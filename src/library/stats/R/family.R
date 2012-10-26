@@ -1,6 +1,8 @@
 #  File src/library/stats/R/family.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -48,12 +50,9 @@ make.link <- function (link)
 {
     switch(link,
            "logit" = {
-               linkfun <- function(mu)
-                   .Call(C_logit_link, mu, PACKAGE="stats")
-               linkinv <- function(eta)
-                   .Call(C_logit_linkinv, eta, PACKAGE="stats")
-               mu.eta <- function(eta)
-                   .Call(C_logit_mu_eta, eta, PACKAGE="stats")
+               linkfun <- function(mu) .Call(C_logit_link, mu)
+               linkinv <- function(eta) .Call(C_logit_linkinv, eta)
+               mu.eta <- function(eta) .Call(C_logit_mu_eta, eta)
                valideta <- function(eta) TRUE
            },
            "probit" = {
@@ -301,8 +300,7 @@ binomial <- function (link = "logit")
     }
     variance <- function(mu) mu * (1 - mu)
     validmu <- function(mu) all(mu>0) && all(mu<1)
-    dev.resids <- function(y, mu, wt)
-        .Call(C_binomial_dev_resids, y, mu, wt, PACKAGE="stats")
+    dev.resids <- function(y, mu, wt) .Call(C_binomial_dev_resids, y, mu, wt)
     aic <- function(y, n, mu, wt, dev) {
         m <- if(any(n > 1)) n else wt
 	-2*sum(ifelse(m > 0, (wt/m), 0)*

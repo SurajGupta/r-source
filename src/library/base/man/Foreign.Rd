@@ -27,9 +27,9 @@
     \code{NA} or \code{NaN} or \code{Inf} values is regarded as an error.}
   \item{DUP}{if \code{TRUE} then arguments are duplicated before
     their address is passed to C or Fortran.}
-  \item{PACKAGE}{if supplied, confine the search for the \code{.NAME} to
-    the DLL given by this argument (plus the conventional extension,
-    \file{.so}, \file{.dll}, \dots).
+  \item{PACKAGE}{if supplied, confine the search for a character string
+    \code{.NAME} to the DLL given by this argument (plus the
+    conventional extension, \file{.so}, \file{.dll}, \dots).
 
     This is intended to add safety for packages, which can ensure by
     using this argument that no other package can override their external
@@ -43,7 +43,8 @@
 \details{
   These functions can be used to make calls to compiled C and Fortran 77
   code.  Later interfaces are \code{\link{.Call}} and
-  \code{\link{.External}}.
+  \code{\link{.External}} which are more flexible and have better
+  performance.
 
   Character strings will be translated from the value of \code{ENCODING}
   or any declared encoding (see \code{\link{Encoding}}) to the current
@@ -52,12 +53,12 @@
   specified, when the output strings are translated to the specified
   encoding.  This is deprecated: convert code to use \code{\link{iconv}}.
   
-  These functions are all \link{primitive}, and \code{.NAME} is always
-  matched to the first argument supplied (which if named must partially
-  match \code{.NAME}).  The other named arguments follow \code{\dots}
-  and so cannot be abbreviated.  For clarity, should avoid using names
-  in the arguments passed to \code{\dots} that match or partially match
-  \code{.NAME}.
+  These functions are \link{primitive}, and \code{.NAME} is always
+  matched to the first argument supplied (which should not be named and
+  there will be a warning if it is---and an error in future.).
+  The other named arguments follow \code{\dots} and so cannot be
+  abbreviated.  For clarity, should avoid using names in the arguments
+  passed to \code{\dots} that match or partially match \code{.NAME}.
 }
 
 \value{
@@ -150,14 +151,15 @@
   \code{.C("Cfunction", input = x, output = numeric(10))}.
 
   In this case the \code{output} variable did not exist before the call
-  so it cannot cause trouble.  If the \code{input} variable is not
+  so it cannot cause trouble (but as from \R 2.15.1 it is not copied
+  even with \code{DUP = TRUE}).  If the \code{input} variable is not
   changed in the C code of \code{Cfunction} you are safe.
 
   Note that if \code{DUP = TRUE} there are up to two copies involved.
   Prior to \R 2.15.1 this was always the case for vectors (one before
   calling the compiled code and one to collect the results), and this is
   still the case for character vectors.  For other atomic vectors, the
-  argument is copied before calling the compiled code if it is not
+  argument is not copied before calling the compiled code if it is not
   otherwise used in the calling code (such as \code{output} in the
   example above).  Non-atomic-vector objects are read-only to the C code
   and are never copied.
@@ -191,6 +193,8 @@
   You may see \code{PACKAGE = "base"} for symbols linked into \R.  Do
   not use this in your own code: such symbols are not part of the API
   and may be changed without warning.
+  
+  \code{PACKAGE = ""} is accepted, but will become an error in \R 2.16.0.
   
   The way \link{pairlist}s were passed by \code{.C} prior to \R 2.15.0
   was not as documented.  This has been corrected, but the

@@ -1,6 +1,6 @@
 % File src/library/stats/man/nlm.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{nlm}
@@ -74,6 +74,9 @@ nlm(f, p, \dots, hessian = FALSE, typsize = rep(1, length(p)),
 
   The functions supplied must always return finite (including not
   \code{NA} and not \code{NaN}) values.
+  
+  The parameter vector passed to \code{f} and \code{hessian} has special
+  semantics and is shared between calls.  The functions should not copy it.
 }
 \value{
   A list containing the following components:
@@ -100,6 +103,11 @@ nlm(f, p, \dots, hessian = FALSE, typsize = rep(1, length(p)),
     }
   }
   \item{iterations}{the number of iterations performed.}
+}
+
+\source{
+  The current code is by Saikat DebRoy and the R Core team, using a C
+  translation of Fortran code by Richard H. Jones.
 }
 \references{
   Dennis, J. E. and Schnabel, R. B. (1983) \emph{Numerical Methods for

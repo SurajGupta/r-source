@@ -1,6 +1,8 @@
 #  File src/library/methods/R/NextMethod.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -55,7 +57,9 @@ callNextMethod <- function(...) {
         fdef <- genericForPrimitive(f)
         ## check that this could be a basic function with methods
         if(is.null(fdef))
-            stop(gettextf("a call to callNextMethod() appears in a call to \"%s\", but the call does not seem to come from either a generic function or another 'callNextMethod'", f), domain = NA)
+            stop(gettextf("a call to callNextMethod() appears in a call to %s, but the call does not seem to come from either a generic function or another 'callNextMethod'",
+                          sQuote(f)),
+                 domain = NA)
         f <- fdef@generic
         method <- maybeMethod
     }

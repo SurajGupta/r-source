@@ -1,8 +1,8 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2010   The R Core Team
- *  Copyright (C) 2002--2008  The R Foundation
+ *  Copyright (C) 1998-2012   The R Core Team
+ *  Copyright (C) 2002-2008   The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,6 @@ SEXP GetColNames(SEXP dimnames)
 	return R_NilValue;
 }
 
-/* Package matrix uses this .Internal with 5 args: should have 7 */
 SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP vals, ans, snr, snc, dimnames;
@@ -136,23 +135,23 @@ SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	int i, j;
 	switch(TYPEOF(vals)) {
 	case STRSXP:
-	    for (i = 0; i < nr; i++)
-		for (j = 0; j < nc; j++)
+	    for (j = 0; j < nc; j++)
+		for (i = 0; i < nr; i++)
 		    SET_STRING_ELT(ans, i + j * nr, NA_STRING);
 	    break;
 	case LGLSXP:
-	    for (i = 0; i < nr; i++)
-		for (j = 0; j < nc; j++)
+	    for (j = 0; j < nc; j++)
+		for (i = 0; i < nr; i++)
 		    LOGICAL(ans)[i + j * nr] = NA_LOGICAL;
 	    break;
 	case INTSXP:
-	    for (i = 0; i < nr; i++)
-		for (j = 0; j < nc; j++)
+	    for (j = 0; j < nc; j++)
+		for (i = 0; i < nr; i++)
 		    INTEGER(ans)[i + j * nr] = NA_INTEGER;
 	    break;
 	case REALSXP:
-	    for (i = 0; i < nr; i++)
-		for (j = 0; j < nc; j++)
+	    for (j = 0; j < nc; j++)
+		for (i = 0; i < nr; i++)
 		    REAL(ans)[i + j * nr] = NA_REAL;
 	    break;
 	case CPLXSXP:
@@ -160,14 +159,14 @@ SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 		Rcomplex na_cmplx;
 		na_cmplx.r = NA_REAL;
 		na_cmplx.i = 0;
-		for (i = 0; i < nr; i++)
-		    for (j = 0; j < nc; j++)
+		for (j = 0; j < nc; j++)
+		    for (i = 0; i < nr; i++)
 			COMPLEX(ans)[i + j * nr] = na_cmplx;
 	    }
 	    break;
 	case RAWSXP:
-	    for (i = 0; i < nr; i++)
-		for (j = 0; j < nc; j++)
+	    for (j = 0; j < nc; j++)
+		for (i = 0; i < nr; i++)
 		    RAW(ans)[i + j * nr] = 0;
 	    break;
 	default:
@@ -392,17 +391,23 @@ SEXP attribute_hidden do_drop(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_length(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP ans;
-    R_len_t len;
-
     checkArity(op, args);
     check1arg(args, call, "x");
 
-    if(isObject(CAR(args)) && DispatchOrEval(call, op, "length", args,
-					     rho, &ans, 0, 1))
-      return(ans);
+    SEXP x = CAR(args), ans;
 
-    len = length(CAR(args));
+    if (isObject(x) &&
+       DispatchOrEval(call, op, "length", args, rho, &ans, 0, 1)) {
+	if (length(ans) == 1 && TYPEOF(ans) == REALSXP) {
+	    double d = REAL(ans)[0];
+	    if (R_FINITE(d) && d >= 0. && d <= INT_MAX && floor(d) == d)
+		return coerceVector(ans, INTSXP);
+	}
+	return(ans);
+    }
+
+    /* with current defn of R_len_t this cannot happen */
+    R_len_t len = length(x);
     return ScalarInteger((len <= INT_MAX) ? len : NA_INTEGER);
 }
 
@@ -1356,5 +1361,132 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     UNPROTECT(1);
+    return ans;
+}
+
+/*
+{
+    data <- as.vector(data)
+    dim <- as.integer(dim)
+    vl <- prod(dim)
+    if (length(data) != vl) {
+        if (vl > .Machine$integer.max)
+            stop("'dim' specifies too large an array")
+        data <- rep(data, length.out = vl)
+    }
+    if (length(dim))
+        dim(data) <- dim
+    if (is.list(dimnames) && length(dimnames))
+        dimnames(data) <- dimnames
+    data
+}
+*/
+
+/* array(data, dim, dimnames) */
+SEXP attribute_hidden do_array(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP vals, ans, dims, dimnames;
+    R_len_t lendat, i, nans;
+
+    checkArity(op, args);
+    vals = CAR(args);
+    /* Supposedly as.vector() gave a vector type, but we check before
+       calling XLENGTH */
+    switch(TYPEOF(vals)) {
+	case LGLSXP:
+	case INTSXP:
+	case REALSXP:
+	case CPLXSXP:
+	case STRSXP:
+	case RAWSXP:
+	case EXPRSXP:
+	case VECSXP:
+	    break;
+	default:
+	    error(_("'data' must be of a vector type"));
+    }
+    lendat = LENGTH(vals);
+    dims = CADR(args);
+    dimnames = CADDR(args);
+    PROTECT(dims = coerceVector(dims, INTSXP));
+    int nd = LENGTH(dims);
+    if (nd) {
+	double d = 1.0;
+	for (int j = 0; j < nd; j++) d *= INTEGER(dims)[j];
+	if (d > INT_MAX) error(_("'dim' specifies too large an array"));
+	nans = (R_len_t) d;
+    } else {
+	// tmp message so do not translate.
+	warning("use of 0-length dim is deprecated");
+	nans = 1;
+    }
+
+    PROTECT(ans = allocVector(TYPEOF(vals), nans));
+    switch(TYPEOF(vals)) {
+    case LGLSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++)
+		LOGICAL(ans)[i] = LOGICAL(vals)[i % lendat];
+	else
+	    for (i = 0; i < nans; i++) LOGICAL(ans)[i] = NA_LOGICAL;
+	break;
+    case INTSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++)
+		INTEGER(ans)[i] = INTEGER(vals)[i % lendat];
+	else
+	    for (i = 0; i < nans; i++) INTEGER(ans)[i] = NA_INTEGER;
+	break;
+    case REALSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++) REAL(ans)[i] = REAL(vals)[i % lendat];
+	else
+	    for (i = 0; i < nans; i++) REAL(ans)[i] = NA_REAL;
+	break;
+    case CPLXSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++)
+		COMPLEX(ans)[i] = COMPLEX(vals)[i % lendat];
+	else {
+	    Rcomplex na_cmplx;
+	    na_cmplx.r = NA_REAL;
+	    na_cmplx.i = 0;
+	    for (i = 0; i < nans; i++) COMPLEX(ans)[i] = na_cmplx;
+	}
+	break;
+    case RAWSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++) RAW(ans)[i] = RAW(vals)[i % lendat];
+	else
+	    for (i = 0; i < nans; i++) RAW(ans)[i] = 0;
+	break;
+    /* Rest are already initialized */
+    case STRSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++)
+		SET_STRING_ELT(ans, i, STRING_ELT(vals, i % lendat));
+	break;
+    case VECSXP:
+    case EXPRSXP:
+	if (nans && lendat)
+	    for (i = 0; i < nans; i++)
+		SET_VECTOR_ELT(ans, i, VECTOR_ELT(vals, i % lendat));
+	break;
+    default:
+	// excluded above
+	break;
+    }
+
+    if (nd) {
+	ans = dimgets(ans, dims);
+	if (TYPEOF(dimnames) == VECSXP && LENGTH(dimnames)) {
+	    PROTECT(ans);
+	    ans = dimnamesgets(ans, dimnames);
+	    UNPROTECT(1);
+	}
+    } else if (TYPEOF(dimnames) == VECSXP && LENGTH(dimnames))
+	error(_("'dimnames' applied to non-array"));
+
+    UNPROTECT(2);
     return ans;
 }

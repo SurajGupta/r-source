@@ -156,14 +156,14 @@ static const int days_in_month[12] =
 #define days_in_year(year) (isleap(year) ? 366 : 365)
 
 #ifndef HAVE_POSIX_LEAPSECONDS
-/* There have been 24 leapseconds, the last being on 2008-12-31.
+/* There have been 25 leapseconds: see .leap.seconds in R
  */
-static int n_leapseconds = 24;
+static int n_leapseconds = 25;
 static const time_t leapseconds[] =
 {  78796800, 94694400,126230400,157766400,189302400,220924800,252460800,
   283996800,315532800,362793600,394329600,425865600,489024000,567993600,
   631152000,662688000,709948800,741484800,773020800,820454400,867715200,
-  915148800,1136073600,1230768000};
+   915148800,1136073600,1230768000,1341100800};
 #endif
 
 /*
@@ -588,13 +588,19 @@ static int set_tz(const char *tz, char *oldtz)
 
     strcpy(oldtz, "");
     p = getenv("TZ");
-    if(p) strcpy(oldtz, p);
+    if(p) {
+	if (strlen(p) > 1000)
+	    error("time zone specification is too long");
+	strcpy(oldtz, p);
+    }
 #ifdef HAVE_SETENV
     if(setenv("TZ", tz, 1)) warning(_("problem with setting timezone"));
     settz = 1;
 #elif defined(HAVE_PUTENV)
     {
-	static char buff[200];
+	static char buff[1010];
+	if (strlen(tz) > 1000)
+	    error("time zone specification is too long");
 	strcpy(buff, "TZ="); strcat(buff, tz);
 	if(putenv(buff)) warning(_("problem with setting timezone"));
     }
@@ -662,7 +668,7 @@ SEXP attribute_hidden do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP stz, x, ans, ansnames, klass, tzone;
     int i, n, isgmt = 0, valid, settz = 0;
-    char oldtz[20] = "";
+    char oldtz[1001] = "";
     const char *tz = NULL;
 
     checkArity(op, args);

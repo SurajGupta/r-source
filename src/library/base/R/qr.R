@@ -1,6 +1,8 @@
 #  File src/library/base/R/qr.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -23,15 +25,17 @@ qr <- function(x, ...) UseMethod("qr")
 qr.default <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
 {
     x <- as.matrix(x)
-    if(is.complex(x))
-        return(structure(.Call("La_zgeqp3", x, PACKAGE = "base"), class="qr"))
+    if(is.complex(x)) {
+        res <- .Call("La_zgeqp3", x, PACKAGE = "base")
+         if(!is.null(cn <- colnames(x))) colnames(res$qr) <- cn[res$pivot]
+       return(structure(res, class = "qr"))
+    }
     ## otherwise :
     if(!is.double(x))
 	storage.mode(x) <- "double"
     if(LAPACK) {
         res <- .Call("La_dgeqp3", x, PACKAGE = "base")
-        if(!is.null(cn <- colnames(x)))
-            colnames(res$qr) <- cn[res$pivot]
+        if(!is.null(cn <- colnames(x))) colnames(res$qr) <- cn[res$pivot]
         attr(res, "useLAPACK") <- TRUE
         class(res) <- "qr"
         return(res)
@@ -42,16 +46,16 @@ qr.default <- function(x, tol = 1e-07, LAPACK = FALSE, ...)
     n <- as.integer(nrow(x))
     if(is.na(n)) stop("invalid nrow(x)")
     res <- .Fortran("dqrdc2",
-	     qr=x,
+	     qr = x,
 	     n,
 	     n,
 	     p,
 	     as.double(tol),
-	     rank=integer(1L),
+	     rank = integer(1L),
 	     qraux = double(p),
 	     pivot = as.integer(1L:p),
 	     double(2*p),
-	     PACKAGE="base")[c(1,6,7,8)]# c("qr", "rank", "qraux", "pivot")
+	     PACKAGE = "base")[c(1,6,7,8)]# c("qr", "rank", "qraux", "pivot")
     if(!is.null(cn <- colnames(x)))
         colnames(res$qr) <- cn[res$pivot]
     class(res) <- "qr"
@@ -70,6 +74,7 @@ qr.coef <- function(qr, y)
     p <- as.integer(ncol(qr$qr))
     if(is.na(p)) stop("invalid ncol(qr$qr)")
     k <- as.integer(qr$rank)
+    if(is.na(k)) stop("invalid ncol(qr$rank)")
     im <- is.matrix(y)
     if (!im) y <- as.matrix(y)
     ny <- as.integer(ncol(y))
@@ -103,12 +108,12 @@ qr.coef <- function(qr, y)
 		  as.double(qr$qraux),
 		  y,
 		  ny,
-		  coef=matrix(0, nrow=k,ncol=ny),
-		  info=integer(1L),
-		  NAOK = TRUE, PACKAGE="base")[c("coef","info")]
+		  coef = matrix(0, nrow = k,ncol = ny),
+		  info = integer(1L),
+		  NAOK = TRUE, PACKAGE = "base")[c("coef","info")]
     if(z$info) stop("exact singularity in 'qr.coef'")
     if(k < p) {
-	coef <- matrix(NA_real_, nrow=p, ncol=ny)
+	coef <- matrix(NA_real_, nrow = p, ncol = ny)
 	coef[qr$pivot[1L:k],] <- z$coef
     }
     else coef <- z$coef
@@ -204,7 +209,7 @@ qr.resid <- function(qr, y)
              y,
 	     ny,
 	     rsd = y,# incl. {dim}names
-	     PACKAGE="base")$rsd
+	     PACKAGE = "base")$rsd
 }
 
 qr.fitted <- function(qr, y, k=qr$rank)
@@ -230,7 +235,7 @@ qr.fitted <- function(qr, y, k=qr$rank)
 	     y,
 	     ny,
 	     xb = y,# incl. {dim}names
-             DUP=FALSE, PACKAGE="base")$xb
+             PACKAGE = "base")$xb
 }
 
 ## qr.solve is defined in  ./solve.R

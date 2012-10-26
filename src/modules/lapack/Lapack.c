@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001--2010  The R Core Team.
+ *  Copyright (C) 2001--2012  The R Core Team.
  *  Copyright (C) 2003--2010  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ char La_norm_type(const char *typstr)
 	error(
 	    _("argument type[1]='%s' must be a character string of string length 1"),
 	    typstr);
-    typup = toupper(*typstr);
+    typup = (char) toupper(*typstr);
     if (typup == '1')
 	typup = 'O'; /* aliases */
     else if (typup == 'E')
@@ -63,7 +63,7 @@ char La_rcond_type(const char *typstr)
     if (strlen(typstr) != 1)
 	error(_("argument type[1]='%s' must be a character string of string length 1"),
 	      typstr);
-    typup = toupper(*typstr);
+    typup = (char) toupper(*typstr);
     if (typup == '1')
 	typup = 'O'; /* alias */
     else if (typup != 'O' && typup != 'I')
@@ -522,15 +522,21 @@ static SEXP modLa_zgesv(SEXP A, SEXP Bin)
 #ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
     int n, p, info, *ipiv, *Adims, *Bdims;
     Rcomplex *avals;
-    SEXP B;
+    SEXP B, Ad, Bd;
 
     if (!(isMatrix(A) && isComplex(A)))
 	error(_("'a' must be a complex matrix"));
     if (!(isMatrix(Bin) && isComplex(Bin)))
 	error(_("'b' must be a complex matrix"));
     PROTECT(B = duplicate(Bin));
+    /* This could allocate so needs protection
     Adims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
     Bdims = INTEGER(coerceVector(getAttrib(B, R_DimSymbol), INTSXP));
+    */
+    PROTECT(Ad = coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
+    PROTECT(Bd = coerceVector(getAttrib(B, R_DimSymbol), INTSXP));
+    Adims = INTEGER(Ad);
+    Bdims = INTEGER(Bd);
     n = Adims[0];
     if(n == 0) error(_("'a' is 0-diml"));
     p = Bdims[1];
@@ -551,7 +557,7 @@ static SEXP modLa_zgesv(SEXP A, SEXP Bin)
 	      -info, "zgesv");
     if (info > 0)
 	error(("Lapack routine zgesv: system is exactly singular"));
-    UNPROTECT(1);
+    UNPROTECT(3);
     return B;
 #else
     error(_("Fortran complex functions are not available on this platform"));
@@ -861,11 +867,11 @@ static SEXP modLa_rg_cmplx(SEXP x, SEXP only_values)
 
 /* ------------------------------------------------------------ */
 
-static SEXP modLa_chol(SEXP A)
+static SEXP modLa_chol(SEXP A, SEXP pivot)
 {
     if (isMatrix(A)) {
-	SEXP ans = PROTECT((TYPEOF(A) == REALSXP)?duplicate(A):
-			   coerceVector(A, REALSXP));
+	SEXP ans = PROTECT((TYPEOF(A) == REALSXP) ?
+			   duplicate(A) : coerceVector(A, REALSXP));
 	SEXP adims = getAttrib(A, R_DimSymbol);
 	int m = INTEGER(adims)[0];
 	int n = INTEGER(adims)[1];
@@ -873,21 +879,49 @@ static SEXP modLa_chol(SEXP A)
 
 	if (m != n) error(_("'a' must be a square matrix"));
 	if (m <= 0) error(_("'a' must have dims > 0"));
-	for (j = 0; j < n; j++) {	/* zero the lower triangle */
-	    for (i = j+1; i < n; i++) {
-		REAL(ans)[i + j * n] = 0.;
-	    }
-	}
+	for (j = 0; j < n; j++)	/* zero the lower triangle */
+	    for (i = j+1; i < n; i++) REAL(ans)[i + j * n] = 0.;
 
-	F77_CALL(dpotrf)("Upper", &m, REAL(ans), &m, &i);
-	if (i != 0) {
-	    if (i > 0)
-		error(_("the leading minor of order %d is not positive definite"),
-		      i);
-	    error(_("argument %d of Lapack routine %s had invalid value"),
-		  -i, "dpotrf");
+	int piv = asInteger(pivot);
+	if (piv != 0 && piv != 1) error("invalid '%s' value", "pivot");
+	if(!piv) {
+	    F77_CALL(dpotrf)("Upper", &m, REAL(ans), &m, &i);
+	    if (i != 0) {
+		if (i > 0)
+		    error(_("the leading minor of order %d is not positive definite"),
+			  i);
+		error(_("argument %d of Lapack routine %s had invalid value"),
+		      -i, "dpotrf");
+	    }
+	} else {
+	    double tol = -1;
+	    SEXP piv = PROTECT(allocVector(INTSXP, m));
+	    int *ip = INTEGER(piv);
+	    double *work = (double *) R_alloc(2 * (size_t)m, sizeof(double));
+	    int rank, info;
+	    F77_CALL(dpstrf)("U", &m, REAL(ans), &m, ip, &rank, &tol, work, &info);
+	    if (info != 0) {
+		if (info > 0)
+		    warning(_("the matrix is either rank-deficient or indefinite"));
+		else
+		    error(_("argument %d of Lapack routine %s had invalid value"),
+			  -info, "dpstrf");
+	    }
+	    setAttrib(ans, install("pivot"), piv);
+	    setAttrib(ans, install("rank"), ScalarInteger(rank));
+	    SEXP cn, dn = getAttrib(ans, R_DimNamesSymbol);
+	    if (!isNull(dn) && !isNull(cn = VECTOR_ELT(dn, 1))) {
+		// need to pivot the colnames
+		SEXP dn2 = PROTECT(duplicate(dn));
+		SEXP cn2 = VECTOR_ELT(dn2, 1);
+		for(int i = 0; i < m; i++) 
+		    SET_STRING_ELT(cn2, i, STRING_ELT(cn, ip[i] - 1)); // base 1
+		setAttrib(ans, R_DimNamesSymbol, dn2);
+		UNPROTECT(1);
+	    }
+	    UNPROTECT(1);
 	}
-	unprotect(1);
+	UNPROTECT(1);
 	return ans;
     }
     else error(_("'a' must be a numeric matrix"));
@@ -944,15 +978,22 @@ static SEXP modLa_dgesv(SEXP A, SEXP Bin, SEXP tolin)
 {
     int n, p, info, *ipiv, *Adims, *Bdims;
     double *avals, anorm, rcond, tol = asReal(tolin), *work;
-    SEXP B;
+    SEXP B, Ad, Bd;
 
     if (!(isMatrix(A) && isReal(A)))
 	error(_("'a' must be a numeric matrix"));
     if (!(isMatrix(Bin) && isReal(Bin)))
 	error(_("'b' must be a numeric matrix"));
     PROTECT(B = duplicate(Bin));
+    /* This could allocate so needs protection
     Adims = INTEGER(coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
     Bdims = INTEGER(coerceVector(getAttrib(B, R_DimSymbol), INTSXP));
+    */
+    PROTECT(Ad = coerceVector(getAttrib(A, R_DimSymbol), INTSXP));
+    PROTECT(Bd = coerceVector(getAttrib(B, R_DimSymbol), INTSXP));
+    Adims = INTEGER(Ad);
+    Bdims = INTEGER(Bd);
+    
     n = Adims[0];
     if(n == 0) error(_("'a' is 0-diml"));
     p = Bdims[1];
@@ -972,14 +1013,17 @@ static SEXP modLa_dgesv(SEXP A, SEXP Bin, SEXP tolin)
 	error(_("argument %d of Lapack routine %s had invalid value"),
 	      -info, "dgesv");
     if (info > 0)
-	error(_("Lapack routine dgesv: system is exactly singular"));
-    anorm = F77_CALL(dlange)("1", &n, &n, REAL(A), &n, (double*) NULL);
-    work = (double *) R_alloc(4*n, sizeof(double));
-    F77_CALL(dgecon)("1", &n, avals, &n, &anorm, &rcond, work, ipiv, &info);
-    if (rcond < tol)
-	error(_("system is computationally singular: reciprocal condition number = %g"),
-	      rcond);
-    UNPROTECT(1);
+	error(_("Lapack routine %s: system is exactly singular: U[%d,%d] = 0"),
+	      "dgesv", info, info);
+    if(tol > 0) {
+	anorm = F77_CALL(dlange)("1", &n, &n, REAL(A), &n, (double*) NULL);
+	work = (double *) R_alloc(4*n, sizeof(double));
+	F77_CALL(dgecon)("1", &n, avals, &n, &anorm, &rcond, work, ipiv, &info);
+	if (rcond < tol)
+	    error(_("system is computationally singular: reciprocal condition number = %g"),
+		  rcond);
+    }
+    UNPROTECT(3);
     return B;
 }
 

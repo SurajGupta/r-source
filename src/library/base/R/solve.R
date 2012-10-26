@@ -1,6 +1,8 @@
 #  File src/library/base/R/solve.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -73,6 +75,7 @@ solve.default <-
 	} else
 	    drop(.Call("La_dgesv", a, as.matrix(b), tol, PACKAGE = "base")))
     }
+    warning("LINPACK = TRUE is deprecated", domain = NA)
     a <- qr(a, tol = tol)
     nc <- ncol(a$qr)
     if( a$rank != nc )

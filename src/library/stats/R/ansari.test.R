@@ -1,6 +1,8 @@
 #  File src/library/stats/R/ansari.test.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -32,11 +34,11 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
 
     x <- x[complete.cases(x)]
     y <- y[complete.cases(y)]
-    m <- length(x)
-    if(m < 1L)
+    m <- as.integer(length(x))
+    if(is.na(m) || m < 1L)
         stop("not enough 'x' observations")
-    n <- length(y)
-    if(n < 1L)
+    n <- as.integer(length(y))
+    if(is.na(n) || n < 1L)
         stop("not enough 'y' observations")
     N <- m + n
 
@@ -49,11 +51,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
 
     if(exact && !TIES) {
         pansari <- function(q, m, n) {
-            .C(C_pansari,
-               as.integer(length(q)),
-               p = as.double(q),
-               as.integer(m),
-               as.integer(n))$p
+            .C(C_pansari, as.integer(length(q)), p = as.double(q), m, n)$p
         }
         PVAL <-
             switch(alternative,
@@ -69,11 +67,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                    greater = pansari(STATISTIC, m, n))
         if (conf.int) {
             qansari <- function(p, m, n) {
-                .C(C_qansari,
-                   as.integer(length(p)),
-                   q = as.double(p),
-                   as.integer(m),
-                   as.integer(n))$q
+                .C(C_qansari, as.integer(length(p)), q = as.double(p), m, n)$q
             }
             alpha <- 1 - conf.level
             x <- sort(x)

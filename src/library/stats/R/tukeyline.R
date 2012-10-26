@@ -1,6 +1,8 @@
 #  File src/library/stats/R/tukeyline.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -18,8 +20,9 @@ line <- function(x, y=NULL)
 {
     xy <- xy.coords(x, y)
     ok <- complete.cases(xy$x,xy$y)
-    n <- length(ok)
-    if(n <= 1) stop("insufficient observations")
+    n <- as.integer(length(ok))
+    if(is.na(n)) stop("invalid length(x)")
+    if(n <= 1L) stop("insufficient observations")
     z <- .C(C_tukeyline,
 	    as.double(xy$x[ok]),
 	    as.double(xy$y[ok]),
@@ -27,8 +30,8 @@ line <- function(x, y=NULL)
 	    double(n),
 	    n,
 	    double(2),
-	    DUP=FALSE, PACKAGE="stats")
-    value <- list(call=sys.call(), coefficients = z[[6L]],
+	    DUP = FALSE)
+    value <- list(call = sys.call(), coefficients = z[[6L]],
                   residuals = z[[3L]], fitted.values = z[[4L]])
     class(value) <- "tukeyline"
     value

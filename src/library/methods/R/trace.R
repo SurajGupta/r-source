@@ -1,6 +1,8 @@
 #  File src/library/methods/R/trace.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -78,9 +80,8 @@
         def <- eval(substitute(.dollarForEnvRefClass(.where, what)))
         if(!is(def, "refMethodDef")) {
             thisName <- substitute(what)
-            stop(gettextf(
-             "\"%s\" is not a method for reference class %s",
-                          as.character(if(is.symbol(thisName)) thisName else what),
+            stop(gettextf("%s is not a method for reference class %s",
+                          sQuote(as.character(if(is.symbol(thisName)) thisName else what)),
                           dQuote(class(where))),
                  domain = NA)
         }
@@ -145,7 +146,8 @@
     if(is.null(whereF)) {
         allWhere <- findFunction(what, where = where)
         if(length(allWhere)==0)
-            stop(gettextf("no function definition for \"%s\" found", what),
+            stop(gettextf("no function definition for %s found",
+                          sQuote(what)),
                  domain = NA)
         whereF <- as.environment(allWhere[[1L]])
     }
@@ -160,8 +162,10 @@
         fdef <- if(is.primitive(def))  getGeneric(what, TRUE, where) else def
         def <- selectMethod(what, signature, fdef = fdef, optional = TRUE)
         if(is.null(def)) {
-            warning(gettextf("Can't untrace method for \"%s\"; no method defined for this signature: %s",
-                             what, paste(signature, collapse = ", ")))
+            warning(gettextf("Can't untrace method for %s; no method defined for this signature: %s",
+                             sQuote(what),
+                             paste(signature, collapse = ", ")),
+                    domain = NA)
             return(def)
         }
         ## pick up signature with package slot from selectMethod
@@ -187,7 +191,9 @@
             if(is(def, "traceable"))
                 newFun <- .untracedFunction(def)
             else {
-                warning(gettextf("the method for \"%s\" for this signature was not being traced", what), domain = NA)
+                warning(gettextf("the method for %s for this signature was not being traced",
+                                 sQuote(what)),
+                        domain = NA)
                 return(what)
             }
         }
@@ -580,7 +586,7 @@ setCacheOnAssign <- function(env, onOff = cacheOnAssign(env))
 }
 
 
-
+utils::globalVariables("fdef")
 .dummySetMethod <- function(f, signature = character(), definition,
 	     where = topenv(parent.frame()), valueClass = NULL,
 	     sealed = FALSE)
@@ -593,7 +599,7 @@ setCacheOnAssign <- function(env, onOff = cacheOnAssign(env))
             f <- .primname(f)
         }
         else
-            stop("A function for argument \"f\" must be a generic function")
+            stop("A function for argument 'f' must be a generic function")
     }
     else {
         f <- switch(f, "as.double" =, "as.real" = "as.numeric", f)
@@ -654,8 +660,9 @@ evalSource <- function(source, package = "", lock = TRUE, cache = FALSE) {
             envns <- envp
         }
         if(is.null(envp))
-            stop(gettextf('Package "%s" is not attached and no namespace found for it',
-                          package), domain = NA)
+            stop(gettextf("Package %s is not attached and no namespace found for it",
+                          sQuote(package)),
+                 domain = NA)
     }
     env <- new("sourceEnvironment", new.env(parent = envp),
         packageName = package,
@@ -880,8 +887,9 @@ insertSource <- function(source, package = "",
         if(exists(what, envir = env, inherits = FALSE))
             newObject <- get(what, envir = env)
         else
-            stop(gettextf("No definition for object \"%s\" found in tracing environment",
-                          what, source), domain = NA)
+            stop(gettextf("No definition for object %s found in tracing environment",
+                          sQuote(what), source),
+                 domain = NA)
     }
     else {
         ## we don't know the package for the generic (which may not
@@ -898,12 +906,16 @@ insertSource <- function(source, package = "",
             table <- get(table, envir = env)
         }
         else
-            stop(gettextf("Does not seem to be a method table for generic  \"%s\" in tracing environment",
-                          what), domain = NA)
+            stop(gettextf("Does not seem to be a method table for generic %s in tracing environment",
+                          sQuote(what)),
+                 domain = NA)
         if(exists(signature, envir = table, inherits = FALSE))
           newObject <- get(signature, envir = table)
         else
-          stop(gettextf("No method in methods table for \"%s\" for signature \"%s\"", what, signature), domain = NA)
+          stop(gettextf("No method in methods table for %s for signature %s",
+                        sQuote(what),
+                        sQuote(signature)),
+               domain = NA)
     }
     newObject
 }

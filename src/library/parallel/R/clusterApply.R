@@ -1,6 +1,8 @@
 #  File src/library/parallel/R/clusterApply.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -163,28 +165,39 @@ splitCols <- function(x, ncl)
     lapply(splitIndices(ncol(x), ncl), function(i) x[, i, drop=FALSE])
 
 parLapply <- function(cl = NULL, X, fun, ...)
+{
+    cl <- defaultCluster(cl)
     do.call(c,
             clusterApply(cl, x = splitList(X, length(cl)),
                          fun = lapply, fun, ...),
             quote = TRUE)
+}
 
 parLapplyLB <- function(cl = NULL, X, fun, ...)
+{
+    cl <- defaultCluster(cl)
     do.call(c,
             clusterApplyLB(cl, x = splitList(X, length(cl)),
                            fun = lapply, fun, ...),
             quote = TRUE)
+}
 
 parRapply <- function(cl = NULL, x, FUN, ...)
+{
+    cl <- defaultCluster(cl)
     do.call(c,
             clusterApply(cl = cl, x = splitRows(x, length(cl)),
                          fun = apply, MARGIN = 1L, FUN = FUN, ...),
             quote = TRUE)
+}
 
-parCapply <- function(cl = NULL, x, FUN, ...)
+parCapply <- function(cl = NULL, x, FUN, ...) {
+    cl <- defaultCluster(cl)
     do.call(c,
             clusterApply(cl = cl, x = splitCols(x, length(cl)),
                          fun = apply, MARGIN = 2L, FUN = FUN, ...),
             quote = TRUE)
+}
 
 
 parSapply <-

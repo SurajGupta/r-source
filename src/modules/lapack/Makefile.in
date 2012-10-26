@@ -19,18 +19,19 @@ SOURCES = $(SOURCES_C) $(SOURCES_F)
 OBJECTS = $(SOURCES_C:.c=.o) $(SOURCES_F:.f=.o)
 HEADERS = Lapack.h
 
-LIBSOURCES = dlamch.f dlapack0.f dlapack1.f dlapack2.f dlapack3.f dlapack4.f \
+## Sources for the -lRlapack.  On OSX this may be linked directly to
+## vecLib/Accelerate, so needs the zdot* fix.
+LIBSOURCES = dlamch.f dlapack.f \
   @COMPILE_FORTRAN_DOUBLE_COMPLEX_FALSE@ cmplx.f
-LIBOBJECTS = $(LIBSOURCES:.f=.o)
+LIBOBJECTS = $(LIBSOURCES:.f=.o) @USE_VECLIB_G95FIX_TRUE@ vecLibg95f.o vecLibg95c.o
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = \
 	README Makefile.in Makefile.win \
 	Rlapackrc.rc dllversion.rc \
-	$(HEADERS) Lapack.c \
+	$(HEADERS) Lapack.c init_win.c \
 	vecLibg95c.c vecLibg95f.f \
-	cmplx.f \
-	dlamch.f dlapack0.f dlapack1.f dlapack2.f dlapack3.f dlapack4.f
+	cmplx.f dlapack.f dlamch.f
 
 lapack_la = lapack$(SHLIB_EXT)
 Rlapack_la = libRlapack$(DYLIB_EXT)

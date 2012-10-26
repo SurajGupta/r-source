@@ -1,6 +1,8 @@
 #  File src/library/tools/R/testing.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -137,7 +139,7 @@ Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE, nullPointers=TRUE, L
             txt <- txt[!grepl('options(pager = "console")', txt,
                               fixed = TRUE, useBytes = TRUE)]
         }
-        pat <- '(^Time |^Loading required package|^Package [A-Za-z][A-Za-z0-9]+ loaded|^<(environment|promise|pointer|bytecode):|^/CreationDate|^/ModDate )'
+        pat <- '(^Time |^Loading required package|^Package [A-Za-z][A-Za-z0-9]+ loaded|^<(environment|promise|pointer|bytecode):|^/CreationDate |^/ModDate |^/Producer )'
         txt[!grepl(pat, txt, perl = TRUE, useBytes = TRUE)]
     }
     clean2 <- function(txt)

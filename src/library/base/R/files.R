@@ -1,6 +1,8 @@
 #  File src/library/base/R/files.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -104,6 +106,8 @@ file.copy <- function(from, to,
     if (!(nt <- length(to)))   stop("no files to copy to")
     ## we don't use file_test as that is in utils.
     if (nt == 1 && isTRUE(file.info(to)$isdir)) {
+        if (recursive && to %in% from)
+            stop("attempt to copy a directory to itself")
         ## on Windows we need \ for the compiled code (e.g. mkdir).
         if(.Platform$OS.type == "windows") {
             from <- gsub("/", "\\", from, fixed = TRUE)
@@ -163,8 +167,7 @@ file.access <- function(names, mode = 0)
 
 dir.create <- function(path, showWarnings = TRUE, recursive = FALSE,
                        mode = "0777")
-    invisible(.Internal(dir.create(path, showWarnings, recursive,
-                                   as.octmode(mode))))
+    .Internal(dir.create(path, showWarnings, recursive, as.octmode(mode)))
 
 system.file <- function(..., package = "base", lib.loc = NULL, mustWork = FALSE)
 {
@@ -195,7 +198,7 @@ Sys.info <- function()
     .Internal(Sys.info())
 
 Sys.sleep <- function(time)
-    invisible(.Internal(Sys.sleep(time)))
+    .Internal(Sys.sleep(time))
 
 path.expand <- function(path)
     .Internal(path.expand(path))

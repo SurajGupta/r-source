@@ -1,6 +1,6 @@
 % File src/library/stats/man/termplot.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -32,7 +32,9 @@ termplot(model, data = NULL, envir = environment(formula(model)),
   \item{envir}{environment in which variables in \code{model} can be found}
   \item{partial.resid}{logical; should partial residuals be plotted?}
   \item{rug}{add \link{rug}plots (jittered 1-d histograms) to the axes?}
-  \item{terms}{which terms to plot (default \code{NULL} means all terms)}
+  \item{terms}{which terms to plot (default \code{NULL} means all
+    terms); a \code{\link{character}} vector, passed to
+    \code{\link{predict}(.., term = "terms", terms = *)}.}
   \item{se}{plot pointwise standard errors?}
   \item{xlabs}{vector of labels for the x axes}
   \item{ylabs}{vector of labels for the y axes}
@@ -60,20 +62,23 @@ termplot(model, data = NULL, envir = environment(formula(model)),
    \item{\dots}{other graphical parameters.}
 }
 \details{
-  The model object must have a \code{predict} method that accepts
-  \code{type=terms}, eg \code{\link{glm}} in the \pkg{base} package,
+  The \code{model} object must have a \code{predict} method that accepts
+  \code{type = terms}, e.g., \code{\link{glm}} in the \pkg{stats} package,
   \code{\link[survival]{coxph}} and \code{\link[survival]{survreg}} in
   the \CRANpkg{survival} package.
 
-  For the \code{partial.resid=TRUE} option it must have a
-  \code{\link{residuals}} method that accepts \code{type="partial"},
+  For the \code{partial.resid = TRUE} option \code{model} must have a
+  \code{\link{residuals}} method that accepts \code{type = "partial"},
   which \code{\link{lm}} and \code{\link{glm}} do.
 
   The \code{data} argument should rarely be needed, but in some cases
   \code{termplot} may be unable to reconstruct the original data
   frame. Using \code{na.action=na.exclude} makes these problems less likely.
 
-  Nothing sensible happens for interaction terms.
+  Nothing sensible happens for interaction terms, and they may cause errors.
+}
+\value{
+  The number of terms, invisibly.
 }
 \seealso{For (generalized) linear models, \code{\link{plot.lm}} and
   \code{\link{predict.glm}}.}

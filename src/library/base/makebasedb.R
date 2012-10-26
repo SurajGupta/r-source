@@ -1,3 +1,5 @@
+#  Copyright (C) 1995-2012 The R Core Team
+
 local({
     makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
                                variables) {

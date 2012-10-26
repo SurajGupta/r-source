@@ -24,6 +24,7 @@ RGUI_CATALOGS = \
   RGui-ja.po RGui-ja.gmo \
   RGui-ko.po RGui-ko.gmo \
   RGui-nn.po RGui-nn.gmo \
+  RGui-pl.po RGui-pl.gmo \
   RGui-pt_BR.po RGui-pt_BR.gmo \
   RGui-ru.po RGui-ru.gmo \
   RGui-tr.po RGui-tr.gmo \
@@ -51,6 +52,8 @@ MSGMERGE_UPDATE = @MSGMERGE@ --update
 MSGINIT = msginit
 MSGCONV = msgconv
 MSGFILTER = msgfilter
+## needs a GNU (not FreeBSD) version of sed
+SED = sed
 
 POFILES = @POFILES@
 GMOFILES = @GMOFILES@
@@ -385,7 +388,7 @@ pkg-update: remove-potcdate.sed en@quot.insert-header
 	  echo $(ECHO_N) "  $$lang:$(ECHO_C)"; \
 	  LC_ALL=C; export LC_ALL; \
 	  cd $(srcdir); \
-	  if $(MSGINIT) -i $${psrc}/$${pkg}.pot --no-translator -l en -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | sed -e s/PACKAGE/R/ -e s/VERSION/$(VERSION)/ | $(MSGCONV) -t UTF-8 | $(MSGFILTER) sed -f $(srcdir)/quot.sed 2>/dev/null > $$tmpdir/$$lang.new.po; then \
+	  if $(MSGINIT) -i $${psrc}/$${pkg}.pot --no-translator -l en -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | sed -e "s/PACKAGE VERSION/R $(VERSION)/" | $(MSGCONV) -t UTF-8 | $(MSGFILTER) $(SED) -f $(srcdir)/quot.sed 2>/dev/null > $$tmpdir/$$lang.new.po; then \
 	    if cmp $${psrc}/$$lang.po $$tmpdir/$$lang.new.po >/dev/null 2>&1; then \
 	      rm -f $$tmpdir/$$lang.new.po; \
 	    else \
@@ -437,7 +440,7 @@ pkg-update: remove-potcdate.sed en@quot.insert-header
 	echo $(ECHO_N) "  $$lang:$(ECHO_C)"; \
 	LC_ALL=C; export LC_ALL; \
 	cd $(srcdir); \
-	if $(MSGINIT) -i $${psrc}/R-$${pkg}.pot --no-translator -l en -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | sed -e s/PACKAGE/R/ -e s/VERSION/$(VERSION)/ | $(MSGCONV) -t UTF-8 | $(MSGFILTER) sed -f $(srcdir)/quot.sed 2>/dev/null > $$tmpdir/R-$$lang.new.po; then \
+	if $(MSGINIT) -i $${psrc}/R-$${pkg}.pot --no-translator -l en -o - 2>/dev/null | sed -f $$tmpdir/$$lang.insert-header | sed -e "s/PACKAGE VERSION/R $(VERSION)/" | $(MSGCONV) -t UTF-8 | $(MSGFILTER) sed -f $(srcdir)/quot.sed 2>/dev/null > $$tmpdir/R-$$lang.new.po; then \
 	  if cmp $${psrc}/R-$$lang.po $$tmpdir/R-$$lang.new.po >/dev/null 2>&1; then \
 	    rm -f $$tmpdir/R-$$lang.new.po; \
 	  else \

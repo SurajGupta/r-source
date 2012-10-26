@@ -1839,4 +1839,66 @@ by(a, a["ppg.id"], function(x){
 })
 ## failed in 2.15.0
 
+## JMC's version of class<- did not work as documented. (PR#14942)
+x <- 1:10
+class(x) <- character()
+class(x) <- "foo"
+class(x) <- character()
+oldClass(x) <- "foo"
+oldClass(x) <- character()
+## class<- version failed: required NULL
+
+
+## anova.lmlist could fail (PR#14960)
+set.seed(1)
+y <- rnorm(20)
+x <- rnorm(20)
+f <- factor(rep(letters[1:2], each = 10))
+model1 <- lm(y ~ x)
+model2 <- lm(y ~ x + f)
+anova(model1, model2, test = "F")
+##
+
+
+## regression test for sunflowerplot's formula method
+sunflowerplot( Sepal.Length ~ Sepal.Width, data = iris, xlab = "A")
+## failed in 2.15.1
+
+
+## PR14974
+a.factor <- as.factor(rep(letters[1:2], 2))
+b.factor <- as.factor(rep(c(1:2), each = 2))
+y <- cbind(aa = as.character(a.factor), bb = b.factor)
+data1 <- data.frame(a.factor, b.factor, y = NA)
+data1$y <- y # inserts a matric
+data1 <- subset(data1, !((a.factor == "b") & (b.factor == 2))) # Delete row
+factorial.data <- data.frame(a.factor, b.factor, row = 1:length(b.factor))
+ans <- merge(factorial.data, data1, by = c("a.factor", "b.factor"),
+             all.x = TRUE)
+stopifnot(is.na(ans[["y"]][4,]))
+## only set the first column of ans[["y"]] to NA.
+
+
+## backsolve with k < nrows(rhs)
+r <- rbind(c(1,2,3),c(0,1,1),c(0,0,2))
+b <- c(8,4,2,1)
+x <- backsolve(r, cbind(b,b))
+stopifnot(identical(x[,1], x[,2]))
+## used elements (4,1), (2,1), (2,2) for second column.
+
+## as.data.frame() methods should preferably not barf on an 'nm' arg
+## reported by Bill Dunlap
+## (https://stat.ethz.ch/pipermail/r-devel/2012-September/064848.html)
+as.data.frame(1:10, nm="OneToTen")
+as.data.frame(LETTERS[1:10], nm="FirstTenLetters")
+as.data.frame(LETTERS[1:10])
+## second failed in 2.15.1.
+
+
+## maintainer()
+maintainer('stats')
+maintainer("impossible_package_name")
+## gave an error in R < 2.15.2
+
+
 proc.time()

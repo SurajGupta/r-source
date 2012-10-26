@@ -1,6 +1,8 @@
 #  File src/library/tools/R/QC.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -1793,6 +1795,9 @@ function(package, dir, file, lib.loc = NULL,
         if(length(package) != 1L)
             stop("argument 'package' must be of length 1")
         dir <- find.package(package, lib.loc)
+        dfile <- file.path(dir, "DESCRIPTION")
+        db <- .read_description(dfile)
+        pkg <- basename(dir)
         ## Using package installed in @code{dir} ...
         code_dir <- file.path(dir, "R")
         if(!file_test("-d", code_dir))
@@ -1818,9 +1823,13 @@ function(package, dir, file, lib.loc = NULL,
                  domain = NA)
         else
             dir <- file_path_as_absolute(dir)
+        pkg <- basename(dir)
         dfile <- file.path(dir, "DESCRIPTION")
-        enc <- if(file.exists(dfile))
-            .read_description(dfile)["Encoding"] else NA
+        enc <- NA; db <- NULL
+        if(file.exists(dfile)) {
+            db <- .read_description(dfile)
+            enc <- db["Encoding"]
+        }
         if(file.exists(file.path(dir, "NAMESPACE"))) {
             nm <- parseNamespaceFile(basename(dir), dirname(dir))
             has_namespace <- length(nm$dynlibs)
@@ -1832,15 +1841,15 @@ function(package, dir, file, lib.loc = NULL,
                  domain = NA)
         file <- tempfile()
         on.exit(unlink(file))
-        if(!file.create(file)) stop("unable to create ", file)
+        if(!file.create(file)) stop("unable to create ", file, domain = NA)
         if(!all(.file_append_ensuring_LFs(file,
                                           list_files_with_type(code_dir,
                                                                "code"))))
-            stop("unable to write code files")
+            stop("unable to write code files", domain = NA)
     }
-    else if(!missing(file))
-        enc <- NA
-    else
+    else if(!missing(file)) {
+        pkg <- enc <- NA
+    } else
         stop("you must specify 'package', 'dir' or 'file'")
 
     if(missing(package) && !file_test("-f", file))
@@ -1857,7 +1866,8 @@ function(package, dir, file, lib.loc = NULL,
     ## *invisibly* (so that output is not duplicated).
     ## Otherwise, if not verbose, we return the list of bad FF calls.
 
-    bad_exprs <- list()
+    bad_exprs <- empty_exprs <- wrong_pkg <- list()
+    bad_pkg <- character()
     FF_funs <- FF_fun_names <- c(".C", ".Fortran", ".Call", ".External",
                                  ".Call.graphics", ".External.graphics")
     ## As pointed out by DTL, packages could use non-base FF calls for
@@ -1875,6 +1885,10 @@ function(package, dir, file, lib.loc = NULL,
     ## Also, need to handle base::.Call() etc ...
     FF_funs <- c(FF_funs, sprintf("base::%s", FF_fun_names))
 
+    ## allow calls to LINPACK functions in base, if registered.
+    ## NB: dqrls and dqrdc2 are not LINPACK
+    allowed <- c("dchdc", "dqrcf","dsvdc", "dtrco")
+
     find_bad_exprs <- function(e) {
         if(is.call(e) || is.expression(e)) {
             ## <NOTE>
@@ -1884,18 +1898,35 @@ function(package, dir, file, lib.loc = NULL,
             ## BDR 2002-11-28
             ## </NOTE>
             if(deparse(e[[1L]])[1L] %in% FF_funs) {
+                this <- ""
                 if(!is.character(e[[2L]])) parg <- "Called with symbol"
                 else {
-                    parg <- e[["PACKAGE"]]
+                    this <- parg <- e[["PACKAGE"]]
+                    if (!is.na(pkg) && is.character(parg) &&
+                        nzchar(parg) && parg != pkg &&
+                        (this != "base" || !e[[2L]] %in% allowed)
+                        ) {
+                        wrong_pkg <<- c(wrong_pkg, e)
+                        bad_pkg <<- c(bad_pkg, this)
+                    }
                     parg <- if(!is.null(parg) && (parg != "")) "OK"
+                    else if(identical(parg, "")) {
+                        empty_exprs <<- c(empty_exprs, e)
+                        "EMPTY"
+                    }
                     else if(!has_namespace) {
                         bad_exprs <<- c(bad_exprs, e)
                         "MISSING"
                     } else "MISSING but in a function in a namespace"
                 }
                 if(verbose)
-                    cat(deparse(e[[1L]]), "(", deparse(e[[2L]]),
-                        ", ...): ", parg, "\n", sep = "")
+                    if(is.null(this))
+                         cat(deparse(e[[1L]]), "(", deparse(e[[2L]]),
+                            ", ... ): ", parg, "\n", sep = "")
+                   else
+                        cat(deparse(e[[1L]]), "(", deparse(e[[2L]]),
+                            ", ..., PACKAGE = \"", this, "\"): ",
+                            parg, "\n", sep = "")
             }
             for(i in seq_along(e)) Recall(e[[i]])
         }
@@ -1936,6 +1967,21 @@ function(package, dir, file, lib.loc = NULL,
                                domain = NA, call. = FALSE))
     }
     for(i in seq_along(exprs)) find_bad_exprs(exprs[[i]])
+    attr(bad_exprs, "wrong_pkg") <- wrong_pkg
+    attr(bad_exprs, "bad_pkg") <- bad_pkg
+    attr(bad_exprs, "empty") <- empty_exprs
+    if (length(bad_pkg)) { # check against dependencies.
+        bases <- .get_standard_package_names()$base
+        bad <- bad_pkg[!bad_pkg %in% bases]
+        if (length(bad)) {
+            depends <- .get_requires_from_package_db(db, "Depends")
+            imports <- .get_requires_from_package_db(db, "Imports")
+            suggests <- .get_requires_from_package_db(db, "Suggests")
+            enhances <- .get_requires_from_package_db(db, "Enhances")
+            bad <- bad[!bad %in% c(depends, imports, suggests, enhances)]
+            attr(bad_exprs, "undeclared") <- bad
+       }
+    }
     class(bad_exprs) <- "checkFF"
     if(verbose)
         invisible(bad_exprs)
@@ -1946,22 +1992,62 @@ function(package, dir, file, lib.loc = NULL,
 format.checkFF <-
 function(x, ...)
 {
-    if(!length(x)) return(character())
+    xx <- attr(x, "empty")
+    y <- attr(x, "wrong_pkg")
+    z <- attr(x, "bad_pkg")
+    zz <- attr(x, "undeclared")
 
-    .fmt <- function(i) {
-        paste(deparse(x[[i]][[1L]]),
-              "(",
-              deparse(x[[i]][[2L]]),
-              ", ...)",
-              sep = "")
+    res <- character()
+    if (length(x)) {
+        .fmt <- function(x)
+            paste0("  ", deparse(x[[1L]]), "(", deparse(x[[2L]]), ", ...)")
+        msg <- ngettext(length(x),
+                        "Foreign function call without 'PACKAGE' argument:",
+                        "Foreign function calls without 'PACKAGE' argument:")
+        res <- c(msg, unlist(lapply(x, .fmt)))
+    }
+    if (length(xx)) {
+        .fmt <- function(x)
+            paste0("  ", deparse(x[[1L]]), "(", deparse(x[[2L]]), ", ...)")
+        msg <- ngettext(length(x),
+                        "Foreign function call with empty 'PACKAGE' argument:",
+                        "Foreign function calls with empty 'PACKAGE' argument:")
+       res <- c(res, msg, unlist(lapply(xx, .fmt)))
     }
 
-    c(gettextf("Foreign function calls without 'PACKAGE' argument:"),
-      ## <FIXME>
-      ## Should really iterate over x.
-      unlist(lapply(seq_along(x), .fmt))
-      ## </FIXME>
-      )
+    if (length(y)) {
+        bases <- .get_standard_package_names()$base
+        .fmt2 <- function(x, z)
+            paste0("  ", deparse(x[[1L]]), "(", deparse(x[[2L]]),
+                   ", ..., PACKAGE = \"", z, "\")")
+        base <- z %in% bases
+        if(any(base)) {
+            xx <- unlist(lapply(seq_along(y)[base],
+                                function(i) .fmt2(y[[i]], z[i])))
+            xx <- unique(xx)
+            msg <- ngettext(length(xx),
+                            "Foreign function call with 'PACKAGE' argument in a base package:",
+                            "Foreign function calls with 'PACKAGE' argument in a base package:")
+            res <- c(res, msg, sort(xx))
+        }
+        if(any(!base)) {
+            xx <-  unlist(lapply(seq_along(y)[!base],
+                                 function(i) .fmt2(y[[i]], z[i])))
+            xx <- unique(xx)
+            msg <- ngettext(length(xx),
+                            "Foreign function call with 'PACKAGE' argument in a different package:",
+                            "Foreign function calls with 'PACKAGE' argument in a different package:")
+            res <- c(res, msg, sort(xx))
+        }
+    }
+    if (length(zz)) {
+        zz <- unique(zz)
+        msg <- ngettext(length(zz),
+                        "Undeclared package in foreign function calls:",
+                        "Undeclared packages in foreign function calls:")
+        res <- c(res, msg, paste("  ", paste(sQuote(sort(zz)), collapse = ", ")))
+    }
+    res
 }
 
 print.checkFF <-
@@ -3756,23 +3842,28 @@ function(pkgDir, thorough = FALSE)
     if (sum(rdas$size) < 1e5 || # we don't report unless we get a 1e5 reduction
         any(rdas$compress %in% c("bzip2", "xz"))) # assume already optimized
         thorough <- FALSE
-    if (thorough &&
-        length(files <- Sys.glob(c(file.path(pkgDir, "data", "*.rda"),
-                                   file.path(pkgDir, "data", "*.RData"))))) {
-        cpdir <- tempfile('cp')
-        dir.create(cpdir)
-        file.copy(files, cpdir)
-        resaveRdaFiles(cpdir)
-        rdas2 <- checkRdaFiles(cpdir)
-        row.names(rdas2) <- basename(row.names(rdas2))
-        diff2 <- (rdas2$ASCII != rdas$ASCII) | (rdas2$compress != rdas$compress)
-        diff2 <- diff2 & (rdas$size > 1e4) & (rdas2$size < 0.9*rdas$size)
-        sizes <- c(sum(rdas$size), sum(rdas2$size))
-        improve <- data.frame(old_size = rdas$size,
-                              new_size = rdas2$size,
-                              compress = rdas2$compress,
-                              row.names = row.names(rdas))[diff2, ]
-    } else sizes <- improve <- NULL
+    sizes <- improve <- NULL
+    if (thorough) {
+        files <- Sys.glob(c(file.path(pkgDir, "data", "*.rda"),
+                            file.path(pkgDir, "data", "*.RData")))
+        ## Exclude .RData, which this may or may not match
+        files <- grep("/[.]RData$", files, value = TRUE, invert = TRUE)
+        if (length(files)) {
+            cpdir <- tempfile('cp')
+            dir.create(cpdir)
+            file.copy(files, cpdir)
+            resaveRdaFiles(cpdir)
+            rdas2 <- checkRdaFiles(cpdir)
+            row.names(rdas2) <- basename(row.names(rdas2))
+            diff2 <- (rdas2$ASCII != rdas$ASCII) | (rdas2$compress != rdas$compress)
+            diff2 <- diff2 & (rdas$size > 1e4) & (rdas2$size < 0.9*rdas$size)
+            sizes <- c(sum(rdas$size), sum(rdas2$size))
+            improve <- data.frame(old_size = rdas$size,
+                                  new_size = rdas2$size,
+                                  compress = rdas2$compress,
+                                  row.names = row.names(rdas))[diff2, ]
+        }
+    }
     structure(list(rdas = rdas[problems, 1:3], msg = msg,
                    sizes = sizes, improve = improve),
               class = "check_package_compact_datasets")
@@ -5239,6 +5330,7 @@ function(dir)
 
     meta <- .get_package_metadata(dir, FALSE)
     foss <- analyze_license(meta["License"])$is_verified
+    out$Maintainer <- meta["Maintainer"]
 
     urls <- .get_standard_repository_URLs()
     ## We do not want to use utils::available.packages() for now, as
@@ -5363,8 +5455,12 @@ function(dir)
     # There may be white space differences here
     m_m_1 <- gsub("[[:space:]]+", " ", m_m)
     m_d_1 <- gsub("[[:space:]]+", " ", m_d)
-    if(!all(m_m_1== m_d_1))
+    if(!all(m_m_1== m_d_1)) {
+        ## strwrap is used below, so we need to worry about encodings.
+        ## m_d is in UTF-8 already
+        if(Encoding(m_m) == "latin1") m_m <- iconv(m_m, "latin1")
         out$new_maintainer <- list(m_m, m_d)
+    }
 
     l_d <- db[db[, "Package"] == package, "License"]
     if(!foss && analyze_license(l_d)$is_verified)
@@ -5378,6 +5474,9 @@ format.check_package_CRAN_incoming <-
 function(x, ...)
 {
     c(character(),
+      if(length(x$Maintainer))
+          sprintf("Maintainer: %s", sQuote(paste(x$Maintainer, collapse = " ")))
+      else "No maintainer field in DESCRIPTION file",
       if(length(x$new_submission))
           "New submission",
       if(length(y <- x$bad_package))
@@ -5837,7 +5936,10 @@ function(f, env)
         ## This no longer works, so we exclude "at least" all methods
         ## with a namespace environment (as these cannot come from a
         ## package with no namespace).
-        namespace <- .get_namespace_from_package_env(env)
+
+        ## This was wrong, as some of the callers pass namespaces, not packages.
+        ## namespace <- .get_namespace_from_package_env(env)
+        namespace <- if(isNamespace(env)) env else .get_namespace_from_package_env(env)
         if(!is.null(namespace)) {
             mlist <- Filter(function(m)
                             identical(environment(m), namespace),

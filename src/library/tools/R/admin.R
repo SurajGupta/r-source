@@ -1,6 +1,8 @@
 #  File src/library/tools/R/admin.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -566,7 +568,7 @@ function(src_dir, out_dir, packages)
 ### * .install_package_vignettes
 
 ## called from src/library/Makefile[.win]
-## this is only used when building R, to build the 'grid' and 'utils' vignettes.
+## this is only used when building R
 .install_package_vignettes <-
 function(dir, outDir, keep.source = TRUE)
 {
@@ -585,9 +587,8 @@ function(dir, outDir, keep.source = TRUE)
                   sub("$", ".pdf",
                       basename(file_path_sans_ext(vigns$docs))))
     upToDate <- file_test("-nt", vignettePDFs, vigns$docs)
-    if(all(upToDate)) return(invisible())
 
-    ## The primary use of this function is to build and install
+    ## The primary use of this function is to build and install PDF
     ## vignettes in base packages.
     ## Hence, we build in a subdir of the current directory rather
     ## than a temp dir: this allows inspection of problems and
@@ -814,9 +815,12 @@ function(dir)
 
 checkRdaFiles <- function(paths)
 {
-    if(length(paths) == 1L && isTRUE(file.info(paths)$isdir))
+    if(length(paths) == 1L && isTRUE(file.info(paths)$isdir)) {
         paths <- Sys.glob(c(file.path(paths, "*.rda"),
                             file.path(paths, "*.RData")))
+        ## Exclude .RData, which this may or may not match
+        paths <- grep("/[.]RData$", paths, value = TRUE, invert = TRUE)
+    }
     res <- data.frame(size = NA_real_, ASCII = NA,
                       compress = NA_character_, version = NA_integer_,
                       stringsAsFactors = FALSE)

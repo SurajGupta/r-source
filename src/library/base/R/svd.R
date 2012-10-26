@@ -1,6 +1,8 @@
 #  File src/library/base/R/svd.R
 #  Part of the R package, http://www.R-project.org
 #
+#  Copyright (C) 1995-2012 The R Core Team
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -34,6 +36,7 @@ svd <- function(x, nu = min(n,p), nv = min(n,p), LINPACK = FALSE)
     }
 
     ## LINPACK only from here on.
+    warning("LINPACK = TRUE is deprecated", domain = NA)
     n <- as.integer(n)
     if(is.na(n)) stop("invalid nrow(x)")
     p <- as.integer(p)

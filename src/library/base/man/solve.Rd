@@ -46,11 +46,28 @@ solve(a, b, \dots)
   although \code{\link{qr.solve}} should be called in that case.
   \code{\link{qr.solve}} can handle non-square systems.
 }
+\source{
+  The defult method is an interface to the LAPACK routines \code{DGESV}
+  and \code{ZGESV}.
+  
+  LAPACK is from \url{http://www.netlib.org/lapack}.
+}
 \references{
+  Anderson. E. and ten others (1999)
+  \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
+  Available on-line at
+  \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
+  
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
 }
+
+\note{
+  \code{LINPACK = TRUE} (for compatibility with \R < 1.7.0) was formally
+  deprecated in \R 2.15.2.
+}
+
 \seealso{
   \code{\link{solve.qr}} for the \code{qr} method,
   \code{\link{chol2inv}} for inverting from the Choleski factor
