@@ -1,6 +1,6 @@
 % File src/library/stats/man/Weibull.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Weibull}
@@ -38,6 +38,14 @@ rweibull(n, shape, scale = 1)
   \code{rweibull} generates random deviates.
 
   Invalid arguments will result in return value \code{NaN}, with a warning.
+
+  The length of the result is determined by \code{n} for
+  \code{rweibull}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \details{
   The Weibull distribution with \code{shape} parameter \eqn{a} and
@@ -51,8 +59,10 @@ rweibull(n, shape, scale = 1)
 }
 \note{
   The cumulative hazard \eqn{H(t) = - \log(1 - F(t))}{H(t) = - log(1 - F(t))}
-  is \code{-pweibull(t, a, b, lower = FALSE, log = TRUE)} which is just
-  \eqn{H(t) = {(t/b)}^a}{H(t) = (t/b)^a}.
+  is
+\preformatted{-pweibull(t, a, b, lower = FALSE, log = TRUE)
+}
+  which is just \eqn{H(t) = {(t/b)}^a}{H(t) = (t/b)^a}.
 }
 \source{
   \code{[dpq]weibull} are calculated directly from the definitions.
@@ -68,12 +78,12 @@ rweibull(n, shape, scale = 1)
   the \link{Exponential} which is a special case of the Weibull distribution.
 }
 \examples{
-x <- c(0,rlnorm(50))
+x <- c(0, rlnorm(50))
 all.equal(dweibull(x, shape = 1), dexp(x))
 all.equal(pweibull(x, shape = 1, scale = pi), pexp(x, rate = 1/pi))
 ## Cumulative hazard H():
-all.equal(pweibull(x, 2.5, pi, lower.tail=FALSE, log.p=TRUE), -(x/pi)^2.5,
-          tol = 1e-15)
+all.equal(pweibull(x, 2.5, pi, lower.tail = FALSE, log.p = TRUE),
+          -(x/pi)^2.5, tol = 1e-15)
 all.equal(qweibull(x/11, shape = 1, scale = pi), qexp(x/11, rate = 1/pi))
 }
 \keyword{distribution}

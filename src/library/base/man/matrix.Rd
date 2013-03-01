@@ -64,12 +64,13 @@ is.matrix(x)
   specific classes of objects, see \link{InternalMethods}.
 
   \code{as.matrix} is a generic function.  The method for data frames
-  will return a character matrix if there is any
-  non-(numeric/logical/complex) column, applying \code{\link{format}} to
-  non-character columns.  Otherwise, the usual coercion hierarchy
-  (logical < integer < double < complex) will be used, e.g., all-logical
-  data frames will be coerced to a logical matrix, mixed logical-integer
-  will give a integer matrix, etc.
+  will return a character matrix if there is only atomic columns and any
+  non-(numeric/logical/complex) column, applying \code{\link{as.vector}}
+  to factors and \code{\link{format}} to other non-character columns.
+  Otherwise, the usual coercion hierarchy (logical < integer < double <
+  complex) will be used, e.g., all-logical data frames will be coerced
+  to a logical matrix, mixed logical-integer will give a integer matrix,
+  etc.
 
   The default method for \code{as.matrix} calls \code{as.vector(x)}, and
   hence e.g. coerces factors to character vectors.
@@ -99,12 +100,12 @@ will avoid duplicating \code{x}.
 }
 \examples{
 is.matrix(as.matrix(1:10))
-!is.matrix(warpbreaks)# data.frame, NOT matrix!
+!is.matrix(warpbreaks)  # data.frame, NOT matrix!
 warpbreaks[1:10,]
-as.matrix(warpbreaks[1:10,]) #using as.matrix.data.frame(.) method
+as.matrix(warpbreaks[1:10,])  # using as.matrix.data.frame(.) method
 
-# Example of setting row and column names
-mdat <- matrix(c(1,2,3, 11,12,13), nrow = 2, ncol=3, byrow=TRUE,
+## Example of setting row and column names
+mdat <- matrix(c(1,2,3, 11,12,13), nrow = 2, ncol = 3, byrow = TRUE,
                dimnames = list(c("row1", "row2"),
                                c("C.1", "C.2", "C.3")))
 mdat

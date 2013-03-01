@@ -66,8 +66,8 @@ with(anorexia, {
 
 
 aq <- within(airquality, {     # Notice that multiple vars can be changed
-    lOzone<-log(Ozone)
-    Month<-factor(month.abb[Month])
+    lOzone <- log(Ozone)
+    Month <- factor(month.abb[Month])
     cTemp <- round((Temp - 32) * 5/9, 1) # From Fahrenheit to Celsius
     rm(Day, Temp)
 })
@@ -85,7 +85,7 @@ with(ToothGrowth, {
             subset = (supp == "VC"), col = "yellow",
             main = "Guinea Pigs' Tooth Growth",
             xlab = "Vitamin C dose mg",
-            ylab = "tooth length", ylim = c(0,35))
+            ylab = "tooth length", ylim = c(0, 35))
     boxplot(len ~ dose, add = TRUE, boxwex = 0.25, at = 1:3 + 0.2,
             subset = supp == "OJ", col = "orange")
     legend(2, 9, c("Ascorbic acid", "Orange juice"),
@@ -97,7 +97,7 @@ with(subset(ToothGrowth, supp == "VC"),
      boxplot(len ~ dose, boxwex = 0.25, at = 1:3 - 0.2,
              col = "yellow", main = "Guinea Pigs' Tooth Growth",
              xlab = "Vitamin C dose mg",
-             ylab = "tooth length", ylim = c(0,35)))
+             ylab = "tooth length", ylim = c(0, 35)))
 with(subset(ToothGrowth,  supp == "OJ"),
      boxplot(len ~ dose, add = TRUE, boxwex = 0.25, at = 1:3 + 0.2,
              col = "orange"))

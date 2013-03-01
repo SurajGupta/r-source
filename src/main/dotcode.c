@@ -33,6 +33,7 @@
 
 #include <R_ext/GraphicsEngine.h> /* needed for GEDevDesc in do_Externalgr */
 
+#define IN_R
 #include <R_ext/RConverters.h>
 #include <R_ext/Riconv.h>
 
@@ -1383,7 +1384,7 @@ R_FindNativeSymbolFromDLL(char *name, DllReference *dll,
    RecordLinkage and locfit pass lists.
 */
 
-/* Will be defunct in 2.16.0 */
+/* Will be defunct in 3.0.0 */
 #define SUPPORT_CONVERTERS 1
 
 SEXP attribute_hidden do_dotCode(SEXP call, SEXP op, SEXP args, SEXP env)

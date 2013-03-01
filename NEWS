@@ -1,5 +1,180 @@
 R News
 
+CHANGES IN R VERSION 2.15.3:
+
+  NEW FEATURES:
+
+    o lgamma(x) for very small x (in the denormalized range) is no
+      longer Inf with a warning.
+
+    o image() now sorts an unsorted breaks vector, with a warning.
+
+    o The internal methods for tar() and untar() do a slightly more
+      general job for 'ustar'-style handling of paths of more than 100
+      bytes.
+
+    o Packages compiler and parallel have been added to the reference
+      index (refman.pdf).
+
+    o untar(tar = "internal") has some support for pax headers as
+      produced by e.g. gnutar --posix (which seems prevalent on
+      OpenSUSE 12.2) or bsdtar --format pax, including long path and
+      link names.
+
+    o sQuote() and dQuote() now handle 0-length inputs.  (Suggestion of
+      Ben Bolker.)
+
+    o summaryRprof() returns zero-row data frames rather than throw an
+      error if no events are recorded, for consistency.
+
+    o The included version of PCRE has been updated to 8.32.
+
+    o The tcltk namespace can now be re-loaded after unloading.
+
+      The Tcl/Tk event loop is inhibited in a forked child from package
+      parallel (as in e.g. mclapply()).
+
+    o parallel::makeCluster() recognizes the value random for the
+      environment variable R_PARALLEL_PORT: this chooses a random value
+      for the port and reduces the chance of conflicts when multiple
+      users start a cluster at the same time.
+
+  UTILITIES:
+
+    o The default for TAR on Windows for R CMD build has been changed
+      to be internal if no tar command is on the path.
+
+      This enables most packages to be built 'out of the box' without
+      Rtools: the main exceptions are those which need to be installed
+      to re-build vignettes and need Rtools for installation (usually
+      because they contain compiled code).
+
+  C-LEVEL FACILITIES:
+
+    o On a 64-bit Windows platform with enough RAM, R_alloc can now
+      allocate up to just under 32GB like other 64-bit platforms.
+
+  DEPRECATED AND DEFUNCT:
+
+    o Use of col2rgb(0) is deprecated (see the help page for its
+      limitations).
+
+    o The deprecated intensities component returned by hist() is no
+      longer recognized by the plot() method and will be removed in R
+      3.0.0.
+
+    o real(), as.real() and is.real() are now formally deprecated and
+      give a warning.
+
+    o This is formal notice that the non-API EISPACK entry points in R
+      will be removed shortly.
+
+  INSTALLATION:
+
+    o The configure tests for Objective C and Objective C++ now work on
+      Mac OS 10.8 with Xcode 4.5.2 (PR#15107).
+
+    o The cairo-based versions of X11() now work with current versions
+      of cairographics (e.g. 1.12.10).  (PR#15168)
+
+      A workaround for earlier versions of R is to use X11.options(type
+      = "nbcairo").
+
+    o Configuration and R CMD javareconf now come up with a smaller set
+      of library paths for Java on Oracle-format JDK (including
+      OpenJDK).  This helps avoid conflicts between libraries (such as
+      libjpeg) supplied in the JDK and system libraries.  This can
+      always be overridden if needed: see the 'R Installation and
+      Administration' manual.
+
+  BUG FIXES:
+
+    o beta(a, b) could overflow to infinity in its calculations when
+      one of a and b was less than one.  (PR#15075)
+
+    o lbeta(a, b) no longer gives NaN if a or b is very small (in the
+      denormalized range).
+
+    o bquote() is now able to substitute default arguments in
+      single-argument functions.  (PR#15077)
+
+    o browseEnv(html = FALSE) would segfault if called from R (not
+      R.app) on a CRAN-style Mac OS X build of R.
+
+    o [[<- for lists (generic vectors) needed to increment NAMED count
+      when RHS is used more than once. (PR#15098)
+
+    o On Windows, warnings about opening a file or pipe with a
+      non-ASCII description were sometimes output in UTF-8 rather than
+      in the current locale's character set.
+
+    o The call() function did not duplicate its arguments.  (PR#15115)
+
+    o TukeyHSD() could give NA results with some na.action methods such
+      as na.exclude().  (Hinted at on R-help by John Fox.)
+
+    o The deprecated svd(X, LINPACK = TRUE) could alter X in R
+      2.15.[12].  (Reported by Bill Dunlap.)
+
+    o Under Windows, file.link() and file.symlink() used the link name
+      twice, so would always fail. (Reported by Rui Barradas/Oliver
+      Soong).
+
+    o summaryRprof(memory = "both") mixed up the units of Vcells and
+      Ncells: it now works in bytes.  (PR#15138)
+
+    o tools::Rd2HTML() would sometimes delete text. (PR#15134)
+
+    o plot() failed for "table" objects containing just one entry.
+      (PR#15118)
+
+    o embedFonts() needed to quote some filepaths.  (PR#15149)
+
+    o parallel::mccollect() handled NULL returns incorrectly (removing
+      the element rather than setting it to NULL).
+
+    o The full reference index (fullrefman.pdf) was missing packages
+      compiler and parallel.
+
+    o The report for optim(method = "L-BFGS-B", control = list(trace =
+      1)) reported the last completed and not the current iteration,
+      unlike other methods and trace levels.  (PR#15103)
+
+    o qt(1e-12, 1.2) no longer gives NaN.
+
+    o dt(1e160, 1.2, log=TRUE) no longer gives -Inf.
+
+    o On Windows the untar() function now quotes the directory name
+      when using an external tar utility, so R CMD check will handle
+      pathnames containing spaces.
+
+    o The version for Windows 8 and Windows Server 2012 is now
+      displayed by win.version().  (Reported by Gabor Grothendieck.)
+
+    o The custom Windows installer target myR in the installer Makefile
+      did not work in 2.15.2.  (Reported by Erich Neuwirth.)
+
+    o aperm(matrix(1:6, 2, dimnames=list(A={}, B={})), "A") no longer
+      segfaults.
+
+    o Expressions involving user defined operators were not always
+      deparsed faithfully. (PR#15179)
+
+    o The enc2utf8() function converted NA_character_ to "NA" in
+      non-UTF-8 locales. (PR#15201)
+
+    o The exclude argument to xtabs() was ignored for "factor"
+      arguments.
+
+    o On Windows, work around an event-timing problem when the RGui
+      console was closed from the 'X' control and the closure
+      cancelled. (This would on some 64-bit systems crash R, typically
+      those with a slow GPU relative to the CPU.)
+
+    o On unix Rscript will pass the r_arch setting it was compiled with
+      on to the R process so that the architecture of Rscript and that
+      of R will match unless overridden.
+
 CHANGES IN R VERSION 2.15.2:
 
   NEW FEATURES:
@@ -164,7 +339,7 @@ CHANGES IN R VERSION 2.15.2:
     o R CMD check now checks for .C(), .Call(), .External() and
       .Fortran() calls in other packages, and gives a warning on those
       found from R itself (which are not part of the API and change
-      without notice: many will changed for R 2.16.0).
+      without notice: many will be changed for R 3.0.0).
 
   C-LEVEL FACILITIES:
 
@@ -192,7 +367,7 @@ CHANGES IN R VERSION 2.15.2:
       list so you may as well do that explicitly.
 
     o Entry point rcont2 is no longer part of the API, and will move to
-      package stats in R 2.16.0.
+      package stats in R 3.0.0.
 
     o The 'internal' graphics device invoked by
       .Call("R_GD_nullDevice", package = "grDevices") is about to be
@@ -298,17 +473,17 @@ CHANGES IN R VERSION 2.15.2:
     o file.copy(recursive = TRUE) did not always report FALSE for a
       failure two or more directories deep.
 
-    o qgeom() could return -1 for extremely small q. (PR#14967.)
+    o qgeom() could return -1 for extremely small q. (PR#14967)
 
     o smooth.spline() used DUP = FALSE which allowed its compiled C
       code to change the function: this was masked by the default
-      byte-compilation. (PR#14965.)
+      byte-compilation. (PR#14965)
 
     o In Windows, the GUI preferences for foreground color were not
       always respected.  (Reported by Benjamin Wells.)
 
     o On OS X, the Quartz versions of the bitmap devices did not
-      respect antialias = "none".  (PR#15006.)
+      respect antialias = "none".  (PR#15006)
 
     o unique() and similar would infinite-loop if called on a vector of
       length > 2^29 (but reported that the vector was too long for 2^30
@@ -366,10 +541,10 @@ CHANGES IN R VERSION 2.15.2:
       multiple packages (reported and fixed by Michael Lawrence).
 
     o The detection of the C stack direction is better protected
-      against compiler optimization. (PR#15011.)
+      against compiler optimization. (PR#15011)
 
     o Long custom line types would sometimes segfault on the
-      cairographics-based devices. (PR#15055.)
+      cairographics-based devices. (PR#15055)
 
     o tools::checkPoFile() unprotected too early in its C code and so
       segfaulted from time to time.
@@ -1062,10 +1237,10 @@ CHANGES IN R VERSION 2.15.0:
       "reached ... max.print .." messages are now consistently using
       single brackets.
 
-    o Closed the <li> tag in pages generated by Rd2HTML(). (PR#14841.)
+    o Closed the <li> tag in pages generated by Rd2HTML(). (PR#14841)
 
     o Axis tick marks could go out of range when a log scale was used.
-      (PR#14833.)
+      (PR#14833)
 
     o Signature objects in methods were not allocated as S4 objects
       (caused a problem with trace() reported by Martin Morgan).

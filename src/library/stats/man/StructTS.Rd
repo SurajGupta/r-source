@@ -83,8 +83,6 @@ StructTS(x, type = c("level", "trend", "BSM"), init = NULL,
     models are non-stationary this includes a diffuse prior for some
     observations and hence is not comparable to \code{\link{arima}}
     nor different types of structural models.}
-  \item{loglik0}{the maximized log-likelihood with the constant used
-    prior to \R 2.16.0, for backwards compatibility.}
   \item{data}{the time series \code{x}.}
   \item{residuals}{the standardized residuals.}
   \item{fitted}{a multiple time series with one component for the level,
@@ -132,7 +130,7 @@ StructTS(x, type = c("level", "trend", "BSM"), init = NULL,
 ## see also JohnsonJohnson, Nile and AirPassengers
 require(graphics)
 
-trees <- window(treering, start=0)
+trees <- window(treering, start = 0)
 (fit <- StructTS(trees, type = "level"))
 plot(trees)
 lines(fitted(fit), col = "green")
@@ -145,6 +143,6 @@ plot(cbind(fitted(fit), resids=resid(fit)), main = "UK gas consumption")
 
 ## keep some parameters fixed; trace optimizer:
 StructTS(log10(UKgas), type = "BSM", fixed = c(0.1,0.001,NA,NA),
-         optim.control = list(trace=TRUE))
+         optim.control = list(trace = TRUE))
 }
 \keyword{ts}

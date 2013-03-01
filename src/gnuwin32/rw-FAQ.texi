@@ -101,7 +101,7 @@ The information here applies only to recent versions of R for Windows,
 * How can I keep workspaces for different projects in different directories?::  
 * How do I print from R?::      
 * Can I use R CMD BATCH?::      
-* Can I use @RWVER@ with ESS and (X)emacs?::  
+* Can I use @RWVER@ with ESS and Emacs?::  
 * What are HOME and working directories?::  
 * How do I set environment variables?::  
 * R can't find my file::        
@@ -128,8 +128,7 @@ The information here applies only to recent versions of R for Windows,
 Go to any CRAN site (see @uref{http://cran.r-project.org/@/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win.exe} of about 48Mb.  This contains all the
-components and allows as complete as installation as you choose.
+installer @samp{@RWVER@-win.exe} of about 50Mb.
 
 There are also links on that page to the @samp{r-patched} and
 @samp{r-devel} snapshots.  These are frequently updated builds of
@@ -155,12 +154,12 @@ mainly 64-bit Windows 7 and Server 2008, but to a limited extent on
 
 Your file system must allow case-honouring long file names (as is likely
 except perhaps for some network-mounted systems).  A installation for
-one architecture takes about 75Mb of disk space, for both about 90Mb.
+one architecture takes about 75Mb of disk space, for both 90-100Mb.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
 with spaces in will probably work, but is little-tested.)  Users of
-Vista/Windows 7/Server 2008 installing for a single user using an
+Vista/Windows 7/8/Server 2008/2012 installing for a single user using an
 account with administrator rights@footnote{Non-administrator accounts
 will automatically be offered a default installation directory in the
 user area.} should consider installing into a non-system area (such as
@@ -278,11 +277,11 @@ without creating a shortcut starting in a writable folder.
 @section How do I UNinstall R?
 
 Normally you can do this from the @samp{Add/Remove Programs} (XP) or
-@samp{Programs and Features} (Vista/7) group in the Control Panel.  If
-it does not appear there, run @file{unins000.exe} in the top-level
-installation directory.  On recent versions of Windows you may well be
-asked to confirm that you wish to run a program from an `unknown' or
-`unidentified' publisher.
+@samp{Programs and Features} (Vista/7/8/Server 2008/2012) group in the
+Control Panel.  If it does not appear there, run @file{unins000.exe} in
+the top-level installation directory.  On recent versions of Windows you
+may well be asked to confirm that you wish to run a program from an
+`unknown' or `unidentified' publisher.
 
 Uninstalling R only removes files from the initial installation, not
 (for example) packages you have installed or updated.
@@ -379,7 +378,7 @@ can print help files by @code{help(fn_name, help_type="PDF")}.
 @end itemize
 
 
-@node Can I use R CMD BATCH?, Can I use @RWVER@ with ESS and (X)emacs?, How do I print from R?, Installation and Usage
+@node Can I use R CMD BATCH?, Can I use @RWVER@ with ESS and Emacs?, How do I print from R?, Installation and Usage
 @section Can I use @code{R CMD BATCH}?
 
 Yes: use @code{R CMD BATCH --help} or @code{?BATCH} for full details.
@@ -396,8 +395,8 @@ The purpose of @code{2>&1} is to redirect warnings and errors to the
 same file as normal output.
 
 
-@node Can I use @RWVER@ with ESS and (X)emacs?, What are HOME and working directories?, Can I use R CMD BATCH?, Installation and Usage
-@section Can I use @RWVER@ with ESS and (X)emacs?
+@node Can I use @RWVER@ with ESS and Emacs?, What are HOME and working directories?, Can I use R CMD BATCH?, Installation and Usage
+@section Can I use @RWVER@ with ESS and Emacs?
 
 Yes.  ESS has for a long time supported R under Windows: it does so by
 running @code{Rterm.exe} without a visible console.
@@ -406,7 +405,7 @@ For help with ESS, please send email to @email{ESS-help@@stat.ethz.ch},
 not the R mailing lists.
 
 
-@node What are HOME and working directories?, How do I set environment variables?, Can I use @RWVER@ with ESS and (X)emacs?, Installation and Usage
+@node What are HOME and working directories?, How do I set environment variables?, Can I use @RWVER@ with ESS and Emacs?, Installation and Usage
 @section What are HOME and working directories?
 
 Several places in the documentation use these terms.
@@ -422,9 +421,9 @@ variable @env{HOME} is set, its value is used.  After those two
 user-controllable settings, R tries to find system-defined home
 directories.  It first tries to use the Windows "personal" directory
 (typically @file{C:\Documents and Settings\username\My Documents} on
-Windows XP and @file{C:\Users\username\Documents} on Vista/Windows 7).
-If that fails, if both environment variables @env{HOMEDRIVE} and
-@env{HOMEPATH} are set (and they normally are), the value is
+Windows XP and @file{C:\Users\username\Documents} nowadays).  If that
+fails, if both environment variables @env{HOMEDRIVE} and @env{HOMEPATH}
+are set (and they normally are), the value is
 @file{$@{HOMEDRIVE@}$@{HOMEPATH@}}.  If all of these fail, the current
 working directory is used.
 
@@ -465,9 +464,9 @@ See @code{?Startup} for more details of environment files.
 For all applications via Windows.  How you set an environment variable
 is system specific: under Windows XP/Server 2003 you can use `System' in
 the control panel or the properties of `My Computer' (under the
-`Advanced' tab).  Under Vista/7/Server 2008, go to `User Accounts' in
-the Control Panel, and select your account and then `Change my
-environment variables'.
+`Advanced' tab).  Under recent versions of Windows, go to `User
+Accounts' in the Control Panel, and select your account and then `Change
+my environment variables'.
 @end enumerate
 
 The order of precedence for environmental variables is the order in
@@ -554,7 +553,7 @@ We have had several reports of this, although they do work for us on
 
 (a) Use the alternative @file{internet2.dll} by starting R with the flag
 @option{--internet2} (@pxref{How do I install R for Windows?}) or
-calling @code{setInternet2(TRUE)}, or setting the environnent variable
+calling @code{setInternet2(TRUE)}, or setting the environment variable
 @env{R_WIN_INTERNET2} to a non-empty value.  These cause R to use the
 Internet Explorer internals, which may already be configured for use
 with proxies.  Note that this does @emph{not} work with proxies that
@@ -631,18 +630,16 @@ This is a misreading of Windows' confusing Task Manager.  R's
 computation is single-threaded, and so it cannot use more than one CPU.
 What the task manager shows is not the usage in CPUs but the usage as a
 percentage of the apparent total number of CPUs.  We say `apparent' as
-it treats so-called `hyper-threaded' CPUs such as many Pentium 4s as two
-CPUs even though there is only one physical CPU.
+it treats so-called `hyper-threaded' CPUs such as two CPUs per core, and
+most modern CPUs have at least two cores.
 
-Hyper-threading has been re-introduced for some Intel i3/i5/i7, Atom and
-Xeon CPUs: these will usually be reported as 4 or more CPUs and so R
-will be shown as using 25% or less.  You can see how many `CPU's are
-assumed by looking at the number of graphs of `CPU Usage History' on the
-`Performance' tab of the Windows Task manager.
+You can see how many `CPU's are assumed by looking at the number of
+graphs of `CPU Usage History' on the `Performance' tab of the Windows
+Task manager.
 
 
 @node Does R run under Windows Vista?, Quotes don't come out right on the console/terminal/pager, Why does R never use more than 50% of my CPU?, Installation and Usage
-@section Does R run under Windows Vista/7/Server 2008?
+@section Does R run under Windows Vista/7/8/Server 2008?
 
 It does.  A few issues have been reported that are related to the way
 accounts and file permissions work.  (These are not specifically R
@@ -657,8 +654,8 @@ privileges into a system area.  Sysadmins could set policies for user
 accounts, and you might for example have needed to be a `Power User' to
 install software at all.
 
-Vista and later normally disable the Administrator account and expects
-software installation to done by an account which is in the local
+Vista and later normally disable the Administrator account and expect
+software installation to be done by an account which is in the local
 Administrator group with `admin approval mode' turned on.  (The
 Administrator account by default has it turned off.)  Unlike (say)
 Windows XP, such accounts do not run programs with full administrator
@@ -671,14 +668,14 @@ needs them you may be prompted with one or more security-check dialog
 boxes, and may be required to provide administrator credentials or
 confirm that you really want to take that action.
 
-Vista will report that the R installer has an `unidentified publisher'
-(Windows 7 uses `unknown publisher') and ask if it should be run.
-System administrators can disable installing applications from
-non-trusted sources, in which case you will have to persuade them that R
-is trustworthy, or digitally sign the R installer yourself, or (unless
-this is also disabled) run the installer from a standard account and
-install into your own file area.  (The same issues apply to the
-@file{.msi} version of the installer.)
+Vista and later will report that the R installer has an `unidentified
+publisher' or `unknown publisher' and ask if it should be run.  System
+administrators can disable installing applications from non-trusted
+sources, in which case you will have to persuade them that R is
+trustworthy, or digitally sign the R installer yourself, or (unless this
+is also disabled) run the installer from a standard account and install
+into your own file area.  (The same issues apply to the @file{.msi}
+version of the installer.)
 
 If you install R as a standard user into your own file space and use it
 under the same account, there are no known permission issues.
@@ -818,10 +815,9 @@ Windows) subsystem: they run in almost exactly the same way as on a
 process is 4GB (rather than 2GB or perhaps 3GB).
 
 When R is installed on 64-bit Windows there is the option of installing
-32- and/or 64-bit builds: the default is to install both.  The 64-bit
-build has 'x64' suffixed to its name on the Start menu and desktop
-shortcuts.  If you are using the 32-bit build, replace @samp{x64} by
-@samp{i386} in the examples in this FAQ.
+32- and/or 64-bit builds: the default is to install both. If you are
+using the 32-bit build, replace @samp{x64} by @samp{i386} in the
+examples in this FAQ.
 
 @node Should I run 32-bit or 64-bit R?, Can both 32- and 64-bit R be installed on the same machine?, Can I use R on 64-bit Windows?, Installation and Usage
 @section Should I run 32-bit or 64-bit R?
@@ -897,7 +893,7 @@ for 64-bit @command{Rcmd.exe}, replacing @code{x64} by @code{i386} for
 
 How you set the path depends on your OS version.  On Windows XP/Server
 2003 you can use `System' in the control panel or the properties of `My
-Computer' (under the `Advanced' tab).  Under Vista/7/Server 2008, go to
+Computer' (under the `Advanced' tab).  Under more recent versions, go to
 `User Accounts' in the Control Panel, and select your account and then
 `Change my environment variables'.  (System policies can prevent end
 users making changes.)
@@ -1124,7 +1120,7 @@ You can install binary packages either from a repository such as
 CRAN or from a local @code{.zip} file by using @code{install.packages}:
 see its help page.  There are menu items on the @code{Packages} menu to
 provide a point-and-click interface to package installation.  The
-packages for each minor (2.x) version will be stored in a separate area,
+packages for each minor (2.x.? or 3.x.?) version will be stored in a separate area,
 so for R 2.15.? the files are in @file{bin/windows/contrib/2.15}.
 
 Note that the binary versions on CRAN are unsupported: see
@@ -1244,10 +1240,10 @@ non-empty value, it is assumed that you want to use a different Tcl/Tk
 8.5.x installation with the path to its @file{bin} directory given by
 value of @env{MY_TCLTK}, and that this is set up correctly (with
 @env{TCL_LIBRARY} set if needed).  Note that you do need 8.5.x and not
-8.4.x nor (a pre-release of) 8.6.0, and you do need the architecture to
-match, that is a 32-bit or 64-bit build of Tcl/Tk to match the R build
-in use.  (There is no guarantee that a 64-bit build will work: it
-depends on the layout it uses.)
+8.4.x nor 8.6.0, and you do need the architecture to match, that is a
+32-bit or 64-bit build of Tcl/Tk to match the R build in use.  (There is
+no guarantee that a 64-bit build will work: it depends on the layout it
+uses.)
 
 In the past several package authors have suggested using ActiveTcl
 (@uref{http://www.activestate.com/@/Products/@/activetcl/}) as a way to
@@ -1262,7 +1258,7 @@ MY_TCLTK=c:/Tcl/bin
 @noindent
 @strong{but} current versions do not by default contain any extra
 extensions (although they may be downloaded via the @code{Teacup}
-facility).
+facility) and this only works for 32-bit R.
 
 
 @node  Hyperlinks in HTML do not work., update.packages() fails, Package TclTk does not work., Packages
@@ -1379,8 +1375,8 @@ than the one you are using.  You can check on the package's HTML page on
 CRAN, and update your R if needed.
 
 Your R might be too old.  Binary packages for the 2.x series are built
-(if possible) whilst 2.(x+1) is current, e.g.@: once 2.15.0 is released,
-binary packages for 2.13.x will be frozen.  You can always try
+(if possible) whilst 2.(x+1) is current, and once 3.0.0 is released,
+binary packages for 2.14.x will be frozen.  You can always try
 installing from the sources.
 
 @node No binary packages appear to be available for my version of R, How do I build my package for both 32- and 64-bit R?, Package xxx is out of date for Windows, Packages
@@ -1545,7 +1541,7 @@ paths.@footnote{It does not have a complete understanding of Windows
 file paths, but can complete most relative or absolute file paths,
 including drives and spaces. Relative paths on drives are not handled,
 for example.}  Otherwise, it is completing R expressions: most obviously
-it will match visible R object names and keywords, so @kbd{apr} folloed
+it will match visible R object names and keywords, so @kbd{apr} followed
 by @kbd{TAB} will (in a vanilla session) complete to @code{apropos}.
 After a function name and parenthesis (e.g.@: @kbd{apropos(}) it will
 complete argument names (and @kbd{=}), and after @kbd{$} or @kbd{@@} it
@@ -1709,7 +1705,8 @@ Just download the file @file{Rblas.dll} appropriate to your CPU and
 replace @file{@var{R_HOME}/bin/x64/Rblas.dll}.  (There is also a generic
 version called @samp{DYNAMIC_ARCH} that tries to adapt itself to the CPU
 found -- however if you know the exact CPU used it is better to download
-the CPU-specific version.)
+the CPU-specific version.  Note that development of that BLAS was frozen
+in 2010 so you will not find versions for recent CPUs.)
 
 Note that fast BLAS implementations may give different (and often
 slightly less accurate) results than the reference BLAS included in R.
@@ -1910,7 +1907,7 @@ call @code{R_ProcessEvents()} periodically from your compiled code.
 If you want output to be updated on the console, call
 @code{R_FlushConsole()} and then @code{R_ProcessEvents()}.
 
-@set LASTEDIT 2012-10-22
+@set LASTEDIT 2012-12-12
 @ifhtml
 @html
 <hr WIDTH="100%">

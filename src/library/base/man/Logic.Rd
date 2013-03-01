@@ -1,6 +1,6 @@
 % File src/library/base/man/Logic.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Logic}
@@ -24,12 +24,12 @@ isTRUE(x)
 \alias{Logic}
 \alias{isTRUE}
 \description{
-  These operators act on logical and number-like vectors.
+  These operators act on raw, logical and number-like vectors.
 }
 \arguments{
-  \item{x, y}{logical or \sQuote{number-like} vectors (i.e., of type
-    \code{\link{double}} (class \code{\link{numeric}}), \code{\link{integer}},
-    \code{\link{complex}} or \code{\link{raw}}), or objects for
+  \item{x, y}{raw or logical or \sQuote{number-like} vectors (i.e., of types
+    \code{\link{double}} (class \code{\link{numeric}}), \code{\link{integer}}
+    and \code{\link{complex}})), or objects for
     which methods have been written.}
 }
 \details{
@@ -110,7 +110,7 @@ isTRUE(x)
   \code{\link{Syntax}} for operator precedence.
 }
 \examples{
-y <- 1 + (x <- stats::rpois(50, lambda=1.5) / 4 - 1)
+y <- 1 + (x <- stats::rpois(50, lambda = 1.5) / 4 - 1)
 x[(x > 0) & (x < 1)]    # all x values between 0 and 1
 if (any(x == 0) || any(y == 0)) "zero encountered"
 
@@ -118,7 +118,7 @@ if (any(x == 0) || any(y == 0)) "zero encountered"
 
 x <- c(NA, FALSE, TRUE)
 names(x) <- as.character(x)
-outer(x, x, "&")## AND table
-outer(x, x, "|")## OR  table
+outer(x, x, "&") ## AND table
+outer(x, x, "|") ## OR  table
 }
 \keyword{logic}

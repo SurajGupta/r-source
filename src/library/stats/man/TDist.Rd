@@ -1,6 +1,6 @@
 % File src/library/stats/man/TDist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{TDist}
@@ -43,6 +43,14 @@ rt(n, df, ncp)
   \code{rt} generates random deviates.
 
   Invalid arguments will result in return value \code{NaN}, with a warning.
+
+  The length of the result is determined by \code{n} for
+  \code{rt}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \note{
   Supplying \code{ncp = 0} uses the algorithm for the non-central
@@ -136,16 +144,16 @@ require(graphics)
 1 - pt(1:5, df = 1)
 qt(.975, df = c(1:10,20,50,100,1000))
 
-tt <- seq(0,10, len=21)
-ncp <- seq(0,6, len=31)
-ptn <- outer(tt,ncp, function(t,d) pt(t, df = 3, ncp=d))
+tt <- seq(0, 10, len = 21)
+ncp <- seq(0, 6, len = 31)
+ptn <- outer(tt, ncp, function(t, d) pt(t, df = 3, ncp = d))
 t.tit <- "Non-central t - Probabilities"
-image(tt,ncp,ptn, zlim=c(0,1), main = t.tit)
-persp(tt,ncp,ptn, zlim=0:1, r=2, phi=20, theta=200, main=t.tit,
+image(tt, ncp, ptn, zlim = c(0,1), main = t.tit)
+persp(tt, ncp, ptn, zlim = 0:1, r = 2, phi = 20, theta = 200, main = t.tit,
       xlab = "t", ylab = "non-centrality parameter",
       zlab = "Pr(T <= t)")
 
 plot(function(x) dt(x, df = 3, ncp = 2), -3, 11, ylim = c(0, 0.32),
-     main="Non-central t - Density", yaxs="i")
+     main = "Non-central t - Density", yaxs = "i")
 }
 \keyword{distribution}

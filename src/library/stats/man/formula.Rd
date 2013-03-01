@@ -142,12 +142,12 @@ as.formula(object, env = parent.frame())
 \examples{
 class(fo <- y ~ x1*x2) # "formula"
 fo
-typeof(fo)# R internal : "language"
+typeof(fo)  # R internal : "language"
 terms(fo)
 
 environment(fo)
 environment(as.formula("y ~ x"))
-environment(as.formula("y ~ x", env=new.env()))
+environment(as.formula("y ~ x", env = new.env()))
 
 
 ## Create a formula for a model with a large number of variables:

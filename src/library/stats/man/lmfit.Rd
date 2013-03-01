@@ -30,7 +30,7 @@ lm.wfit(x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     specify an \emph{a priori} known component to be included in the
     linear predictor during fitting.}
 
-  \item{method}{currently, only \code{method="qr"} is supported.}
+  \item{method}{currently, only \code{method = "qr"} is supported.}
   
   \item{tol}{tolerance for the \code{\link{qr}} decomposition.  Default
     is 1e-7.}
@@ -65,13 +65,13 @@ require(utils)
 %% FIXME: Do something more sensible (non-random data) !!
 set.seed(129)
 n <- 7 ; p <- 2
-X <- matrix(rnorm(n * p), n,p) # no intercept!
+X <- matrix(rnorm(n * p), n, p) # no intercept!
 y <- rnorm(n)
 w <- rnorm(n)^2
 
-str(lmw <- lm.wfit(x=X, y=y, w=w))
+str(lmw <- lm.wfit(x = X, y = y, w = w))
 
-str(lm. <- lm.fit (x=X, y=y))
+str(lm. <- lm.fit (x = X, y = y))
 
 %% do an example which sets 'tol' and gives a difference!
 }

@@ -19,7 +19,8 @@ attach(what, pos = 2, name = deparse(substitute(what)),
     \sQuote{Details}.}
   \item{pos}{integer specifying position in \code{\link{search}()} where
     to attach.}
-  \item{name}{name to use for the attached database.}
+  \item{name}{name to use for the attached database. Names starting with
+    \code{package:} are reserved for \code{\link{library}}.}
   \item{warn.conflicts}{logical.  If \code{TRUE}, warnings are
     printed about \code{\link{conflicts}} from attaching the database,
     unless that database contains an object \code{.conflicts.OK}.  A
@@ -78,6 +79,27 @@ attach(what, pos = 2, name = deparse(substitute(what)),
   The \code{\link{environment}} is returned invisibly with a
   \code{"name"} attribute.
 }
+
+\section{Good practice}{
+  \code{attach} has the side effect of altering the search path and this
+  can easily lead to the wrong object of a particular name being found.
+  People do often forget to \code{\link{detach}} databases.
+
+  In interactive use, \code{\link{with}} is usually preferable to the
+  use of \code{attach}/\code{detach}.
+
+  In programming, functions should not change the search path unless
+  that is their purpose.  Often \code{\link{with}} can be used within a
+  function, but if not good practice is to
+  \itemize{
+    \item Always use a distinctive \code{name} argument, and
+    \item To immediately follow the \code{attach} call by an
+    \code{\link{on.exit}} call to \code{detach} using the distinctive name.
+  }
+  This ensures that the search path is left unchanged even if the
+  function is interrupted or if code after the \code{attach} call
+  changes the search path.
+}
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
@@ -106,6 +128,6 @@ detach("women")
 summary(women$height)   # unchanged
 
 \dontrun{## create an environment on the search path and populate it
-sys.source("myfuns.R", envir=attach(NULL, name="myfuns"))
+sys.source("myfuns.R", envir = attach(NULL, name = "myfuns"))
 }}
 \keyword{data}

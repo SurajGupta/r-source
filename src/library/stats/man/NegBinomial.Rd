@@ -1,6 +1,6 @@
 % File src/library/stats/man/NegBinomial.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{NegBinomial}
@@ -73,6 +73,14 @@ rnbinom(n, size, prob, mu)
 
   Invalid \code{size} or \code{prob} will result in return value
   \code{NaN}, with a warning.
+  
+  The length of the result is determined by \code{n} for
+  \code{rnbinom}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \source{
   \code{dnbinom} computes via binomial probabilities, using code
@@ -106,12 +114,12 @@ summary(1 - cumsum(dnbinom(x, size = 2, prob = 1/2)) /
 
 x <- 0:15
 size <- (1:20)/4
-persp(x,size, dnb <- outer(x, size, function(x,s) dnbinom(x,s, prob= 0.4)),
-      xlab = "x", ylab = "s", zlab="density", theta = 150)
+persp(x, size, dnb <- outer(x, size, function(x,s) dnbinom(x, s, prob = 0.4)),
+      xlab = "x", ylab = "s", zlab = "density", theta = 150)
 title(tit <- "negative binomial density(x,s, pr = 0.4)  vs.  x & s")
 
-image  (x,size, log10(dnb), main= paste("log [",tit,"]"))
-contour(x,size, log10(dnb),add=TRUE)
+image  (x, size, log10(dnb), main = paste("log [", tit, "]"))
+contour(x, size, log10(dnb), add = TRUE)
 
 ## Alternative parametrization
 x1 <- rnbinom(500, mu = 4, size = 1)

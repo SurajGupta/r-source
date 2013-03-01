@@ -1,6 +1,6 @@
 % File src/library/base/man/zpackages.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{zpackages}
@@ -32,13 +32,20 @@
   metadata match or \code{\link{installed.packages}} for a much slower
   but more comprehensive check of \sQuote{available} packages.
 }
+\note{
+   \code{.packages(all.available = TRUE)} is not a way to find out if a
+  small number of packages are available for use: not only is it
+  expensive when thousands of packages are installed, it is an
+  incomplete test.  See the help for \code{\link{find.package}} for why
+  \code{\link{require}} should be used.
+}
 \value{
   A character vector of package base names, invisible unless
   \code{all.available = TRUE}.
 }
 \author{
   R core;
-  Guido Masarotto for the \code{all.available=TRUE} part of
+  Guido Masarotto for the \code{all.available = TRUE} part of
   \code{.packages}.
 }
 \seealso{

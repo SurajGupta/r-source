@@ -1534,6 +1534,16 @@ static void tmp_cleanup(void *data)
 	R_SetVarLocValue(loc, __v__); \
     } while(0)
 
+/* This macro makes sure the RHS NAMED value is 0 or 2. This is
+   necessary to make sure the RHS value returned by the assignment
+   expression is correct when the RHS value is part of the LHS
+   object. */
+#define FIXUP_RHS_NAMED(r) do { \
+	SEXP __rhs__ = (r); \
+	if (NAMED(__rhs__) && NAMED(__rhs__) != 2) \
+	    SET_NAMED(__rhs__, 2); \
+    } while (0)
+
 #define ASSIGNBUFSIZ 32
 static R_INLINE SEXP installAssignFcnName(SEXP fun)
 {
@@ -1597,6 +1607,8 @@ static SEXP applydefine(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    that -- igraph is one).
 
 	    LT */
+
+    FIXUP_RHS_NAMED(rhs);
 
     if (rho == R_BaseNamespace)
 	errorcall(call, _("cannot do complex assignments in base namespace"));
@@ -2029,13 +2041,16 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     expr = CAR(args);
     env = CADR(args);
     encl = CADDR(args);
+    SEXPTYPE tEncl = TYPEOF(encl);
     if (isNull(encl)) {
 	/* This is supposed to be defunct, but has been kept here
 	   (and documented as such) */
 	encl = R_BaseEnv;
     } else if ( !isEnvironment(encl) &&
-		!isEnvironment((encl = simple_as_environment(encl))) )
-	error(_("invalid '%s' argument"), "enclos");
+		!isEnvironment((encl = simple_as_environment(encl))) ) {
+	error(_("invalid '%s' argument of type '%s'"), 
+	      "enclos", type2char(tEncl));
+    }
     if(IS_S4_OBJECT(env) && (TYPEOF(env) == S4SXP))
 	env = R_getS4DataSlot(env, ANYSXP); /* usually an ENVSXP */
     switch(TYPEOF(env)) {
@@ -2064,11 +2079,13 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error(_("numeric 'envir' arg not of length one"));
 	frame = asInteger(env);
 	if (frame == NA_INTEGER)
-	    error(_("invalid '%s' argument"), "envir");
+	    error(_("invalid '%s' argument of type '%s'"), 
+		  "envir", type2char(TYPEOF(env)));
 	PROTECT(env = R_sysframe(frame, R_GlobalContext));
 	break;
     default:
-	error(_("invalid '%s' argument"), "envir");
+	error(_("invalid '%s' argument of type '%s'"), 
+	      "envir", type2char(TYPEOF(env)));
     }
 
     /* isLanguage include NILSXP, and that does not need to be
@@ -4507,6 +4524,7 @@ static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
 	BCNPUSH(value);
 	BCNDUP2ND();
 	/* top three stack entries are now RHS value, LHS value, RHS value */
+	FIXUP_RHS_NAMED(GETSTACK(-1));
 	NEXT();
       }
     OP(ENDASSIGN, 1):
@@ -4672,6 +4690,7 @@ static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
 	BCNPUSH(getvar(symbol, ENCLOS(rho), FALSE, FALSE, NULL, 0));
 	BCNPUSH(value);
 	/* top three stack entries are now RHS value, LHS value, RHS value */
+	FIXUP_RHS_NAMED(value);
 	NEXT();
       }
     OP(ENDASSIGN2, 1):

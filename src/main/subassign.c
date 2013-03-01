@@ -417,6 +417,16 @@ static SEXP DeleteListElements(SEXP x, SEXP which)
     return xnew;
 }
 
+static R_INLINE SEXP VECTOR_ELT_FIX_NAMED(SEXP y, int i) {
+    /* if RHS (container or element) has NAMED > 0 set NAMED = 2.
+       Duplicating might be safer/more consistent (PR15098) */
+    SEXP val = VECTOR_ELT(y, i);
+    if ((NAMED(y) || NAMED(val)))
+	if (NAMED(val) < 2)
+	    SET_NAMED(val, 2);
+    return val;
+}
+
 static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 {
     SEXP dim, indx, newnames;
@@ -619,7 +629,13 @@ static SEXP VectorAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	    ii = INTEGER(indx)[i];
 	    if (ii == NA_INTEGER) continue;
 	    ii = ii - 1;
-	    SET_VECTOR_ELT(x, ii, VECTOR_ELT(y, i % ny));
+
+	    /* set NAMED on RHS value to 2 if used more than once
+	       (PR15098) */
+	    if (i >= ny && NAMED(VECTOR_ELT(y, i % ny)) < 2)
+		SET_NAMED(VECTOR_ELT(y, i % ny), 2);
+
+	    SET_VECTOR_ELT(x, ii, VECTOR_ELT_FIX_NAMED(y, i % ny));
 	}
 	break;
 
@@ -926,6 +942,13 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 	break;
     case 1919: /* vector <- vector */
 
+	/* set NAMED or RHS values to 2 if they might be used more
+	   than once (PR15098)*/
+	if (ny < ncs * nrs)
+	    for (int i = 0; i < ny; i++)
+		if (NAMED(VECTOR_ELT(y, i)) < 2)
+		    SET_NAMED(VECTOR_ELT(y, i), 2);
+
 	for (j = 0; j < ncs; j++) {
 	    jj = INTEGER(sc)[j];
 	    if (jj == NA_INTEGER) continue;
@@ -935,7 +958,7 @@ static SEXP MatrixAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 		if (ii == NA_INTEGER) continue;
 		ii = ii - 1;
 		ij = ii + jj * nr;
-		SET_VECTOR_ELT(x, ij, VECTOR_ELT(y, k));
+		SET_VECTOR_ELT(x, ij, VECTOR_ELT_FIX_NAMED(y, k));
 		k = (k + 1) % ny;
 	    }
 	}
@@ -1134,7 +1157,12 @@ static SEXP ArrayAssign(SEXP call, SEXP x, SEXP s, SEXP y)
 
 	case 1919: /* vector <- vector */
 
-	    SET_VECTOR_ELT(x, ii, VECTOR_ELT(y, i % ny));
+	    /* set NAMED on RHS value to 2 if used more than once
+	       (PR15098) */
+	    if (i >= ny && NAMED(VECTOR_ELT(y, i % ny)) < 2)
+		SET_NAMED(VECTOR_ELT(y, i % ny), 2);
+
+	    SET_VECTOR_ELT(x, ii, VECTOR_ELT_FIX_NAMED(y, i % ny));
 	    break;
 
 	case 2424: /* raw <- raw */

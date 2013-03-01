@@ -14,8 +14,9 @@
 }
 \usage{CO2}
 \format{
-  This object of class \code{c("nfnGroupedData", "nfGroupedData",
-    "groupedData", "data.frame")} containing the following columns:
+  An object of class
+  \code{c("nfnGroupedData", "nfGroupedData", "groupedData", "data.frame")} 
+  containing the following columns:
   \describe{
     \item{Plant}{
       an ordered factor with levels
@@ -67,7 +68,7 @@ require(stats); require(graphics)
 coplot(uptake ~ conc | Plant, data = CO2, show.given = FALSE, type = "b")
 ## fit the data for the first plant
 fm1 <- nls(uptake ~ SSasymp(conc, Asym, lrc, c0),
-   data = CO2, subset = Plant == 'Qn1')
+   data = CO2, subset = Plant == "Qn1")
 summary(fm1)
 ## fit each plant separately
 fmlist <- list()
@@ -76,6 +77,6 @@ for (pp in levels(CO2$Plant)) {
       data = CO2, subset = Plant == pp)
 }
 ## check the coefficients by plant
-print(sapply(fmlist, coef), digits=3)
+print(sapply(fmlist, coef), digits = 3)
 }
 \keyword{datasets}

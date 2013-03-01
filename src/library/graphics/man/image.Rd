@@ -1,6 +1,6 @@
 % File src/library/graphics/man/image.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -17,7 +17,7 @@ image(x, \dots)
       breaks, oldstyle = FALSE, useRaster, \dots)
 }
 \arguments{
-  \item{x,y}{locations of grid lines at which the values in \code{z} are
+  \item{x, y}{locations of grid lines at which the values in \code{z} are
     measured.  These must be finite, non-missing and in (strictly)
     ascending order.  By default, equally
     spaced values from 0 to 1 are used.  If \code{x} is a \code{list},
@@ -47,8 +47,9 @@ image(x, \dots)
   \item{xlab, ylab}{each a character string giving the labels for the x and
     y axis.  Default to the \sQuote{call names} of \code{x} or \code{y}, or to
     \code{""} if these were unspecified.}
-  \item{breaks}{a set of breakpoints for the colours: must give one more
-    breakpoint than colour and be sorted in increasing order.}
+  \item{breaks}{a set of finite numeric breakpoints for the colours:
+    must have one more breakpoint than colour and be in increasing
+    order.  Unsorted vectors will be sorted, with a warning.} 
   \item{oldstyle}{logical. If true the midpoints of the colour intervals
     are equally spaced, and \code{zlim[1]} and \code{zlim[2]} were taken
     to be midpoints.  The default is to have colour intervals of equal
@@ -90,7 +91,8 @@ image(x, \dots)
 
   If \code{breaks} is specified then \code{zlim} is unused and the
   algorithm used follows \code{\link{cut}}, so intervals are closed on
-  the right and open on the left except for the lowest interval.
+  the right and open on the left except for the lowest interval which is
+  closed at both ends.
 
   Notice that \code{image} interprets the \code{z} matrix as a table of
   \code{f(x[i], y[j])} values, so that the x axis corresponds to row
@@ -136,9 +138,9 @@ image(x, \dots)
 }
 \examples{
 require(grDevices) # for colours
-x <- y <- seq(-4*pi, 4*pi, len=27)
+x <- y <- seq(-4*pi, 4*pi, len = 27)
 r <- sqrt(outer(x^2, y^2, "+"))
-image(z = z <- cos(r^2)*exp(-r/6), col=gray((0:32)/32))
+image(z = z <- cos(r^2)*exp(-r/6), col  = gray((0:32)/32))
 image(z, axes = FALSE, main = "Math can be beautiful ...",
       xlab = expression(cos(r^2) * e^{-r/6}))
 contour(z, add = TRUE, drawlabels = FALSE)

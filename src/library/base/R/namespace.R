@@ -104,53 +104,13 @@ getExportedValue <- function(ns, name) {
 
 .Firstlib_as_onLoad <-
     c(## automatically detected as calls to library.dynam
-      "AnalyzeFMRI", "BAS", "BBMM", "BMA", "BPHO", "BTSPAS",
-      "BioPhysConnectoR", "Bmix", "BradleyTerry",
-      "CHsharp", "CPE", "CompQuadForm", "CompRandFld", "CorrBin",
-      "Covpath", "DAAGbio", "DAAGxtras", "DCluster", "DDHFm", "DIME",
-      "EMD", "ExPD2D", "FAmle", "FactoClass", "FracSim", "GEOmap",
-      "GWASExactHW", "GenKern", "Geneland", "HH", "HiddenMarkov", "ICE",
-      "IFP", "LogicReg", "LowRankQP", "MAMSE", "MHadaptive", "MISA",
-      "NORMT3", "OPE", "ORMDR", "OSACC", "PKfit", "POT", "PSCN", "PSM",
-      "Peaks", "QRMlib", "RANN", "RArcInfo", "RFA", "RSEIS",
-      "RSVGTipsDevice", "RSvgDevice", "ReadImages",
-      "Rsundials", "Rwave", "SigWinR", "SpatialEpi", "SpatialExtremes",
-      "SpherWave", "TAHMMAnnot", "WINRPACK", "WMTregions", "acepack",
-      "adaptivetau", "ade4", "adephylo", "alphahull", "analogue", "aod",
-      "aqp", "bclust", "bdoc", "bear", "bild", "binomSamSize", "bise",
-      "biseVec", "bisoreg", "bitops", "boolfun", "bootstrap", "bqtl",
-      "brainwaver", "caTools", "cat", "cclust", "changeLOS", "cheb",
-      "clusterSim", "codep", "coenoflex", "crosshybDetector", "crrSC",
-      "dblcens", "depth", "devEMF", "dixon",
-      "dynCorr", "dynamo", "ebdbNet", "ecespa", "energy", "envelope",
-      "epinet", "evd", "evdbayes", "exactLoglinTest", "fEcofin",
-      "fImport", "fMultivar", "fdim", "fdrtool", "forensim",
-      "fpow", "gRc", "gafit", "gdsfmt", "geepack", "gibbs.met",
-      "gld", "gllm", "glmmAK", "gss", "haplo.stats", "hapsim", "hbmem",
-      "hddplot", "hier.part", "hot", "ifs", "imputeMDR", "infotheo",
-      "intcox", "integrOmics", "ivivc", "kknn",
-      "knncat", "kohonen", "labeltodendro", "lago", "lasso2", "lazy",
-      "ljr", "locpol", "logspline", "lokern", "lpridge", "magnets",
-      "maxLinear", "mcga", "mclust", "mhsmm", "mixAK", "mixstock",
-      "mlbench", "mlegp", "moc", "mpa", "mra", "mspath", "mvgraph",
-      "mvnmle", "mvpart", "mvtnormpcs", "nbpMatching",
-      "ncomplete", "negenes", "nlstools", "norm", "noverlap", "npde",
-      "npst", "nsRFA", "onemap", "opefimor", "pamctdp", "panel",
-      "pbivnorm", "permax", "phybase", "pi0", "picante", "plugdensity",
-      "poibin", "polspline", "popgen", "ppMeasures", "predbayescor",
-      "predmixcor", "proptest", "ptw", "qp", "qtl", "ref",
-      "rich", "rimage", "ringscale", "rioja", "rjson", "robust", "rpvm",
-      "rqmcmb2", "rsdepth", "rvmbinary", "rworldmap", "sampfling",
-      "sampling", "seqCBS", "simba", "spc", "speedRlibTF", "speedRlibs",
-      "stab", "stepwise", "surv2sample",
-      "survPresmooth", "survivalROC", "svmpath", "tdm", "tdthap",
-      "tnet", "tweedie", "twopartqtl", "twslm", "ucminf", "uncompress",
-      "wavelets", "waveslim", "wccsom", "wombsoft",
+      "EMD","PKfit", "Peaks", "Rsundials", "SpherWave", "TAHMMAnnot",
+      "bear", "bise", "bisoreg", "gibbs.met", "integrOmics", "ivivc", "mpa",
+      "multic", "opefimor", "pamctdp","predmixcor", "realized", "ref",
+      "ringscale", "sampfling", "seqCBS", "stab", "survivalROC", "tdm",
+      "wombsoft",
       ## Manually checked
-      "CarbonEL", "JavaGD", "LogConcDEAD", "Rmpi", "Rniftilib", "akima",
-      "amei", "distory", "dynaTree", "ecodist", "ftnonpar", "glpk",
-      "iSubpathwayMiner", "ifultools", "mnormT", "monomvn", "rlecuyer",
-      "rngwell19937", "trex", "tripack", "udunits2", "wgaim")
+      "CarbonEL", "Rniftilib")
 
 attachNamespace <- function(ns, pos = 2, dataPath = NULL, depends = NULL)
 {
@@ -267,6 +227,8 @@ loadNamespace <- function (package, lib.loc = NULL,
                                 warn = FALSE)
                 if(grepl("# Default NAMESPACE created by R", ns[1L],
                          useBytes = TRUE)) {
+                    if (pkgname == Sys.getenv("R_INSTALL_PKG"))
+                        message(sprintf("running .First.lib() for namespace %s as .onLoad was not found", sQuote(pkgname)), domain = NA)
                     fn <- get(".First.lib", envir = env, inherits = FALSE)
                     fn(libname, pkgname)
                 }
@@ -1321,7 +1283,7 @@ parseNamespaceFile <- function(package, package.lib, mustExist = TRUE)
         parseDirective(e)
 
        # need to preserve the names on dynlibs, so unique() is not appropriate.
-    dynlibs <- dynlibs[!duplicated(dynlibs)]  
+    dynlibs <- dynlibs[!duplicated(dynlibs)]
     list(imports = imports, exports = exports, exportPatterns = exportPatterns,
          importClasses = importClasses, importMethods = importMethods,
          exportClasses = exportClasses,  exportMethods = exportMethods,

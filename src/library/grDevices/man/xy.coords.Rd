@@ -18,7 +18,7 @@ xy.coords(x, y = NULL, xlab = NULL, ylab = NULL, log = NULL,
 \arguments{
   \item{x, y}{the x and y coordinates of a set of points.
     Alternatively, a single argument \code{x} can be provided.}
-  \item{xlab,ylab}{names for the x and y variables to be extracted.}
+  \item{xlab, ylab}{names for the x and y variables to be extracted.}
   \item{log}{character, \code{"x"}, \code{"y"} or both, as for
     \code{\link{plot}}.  Sets negative values to \code{\link{NA}} and
     gives a warning.}
@@ -72,8 +72,8 @@ xy.coords(stats::fft(c(1:9)), NULL)
 
 with(cars, xy.coords(dist ~ speed, NULL)$xlab ) # = "speed"
 
-xy.coords(1:3, 1:2, recycle=TRUE)
-xy.coords(-2:10,NULL, log="y")
-##> warning: 3 y values <=0 omitted ..
+xy.coords(1:3, 1:2, recycle = TRUE)
+xy.coords(-2:10, NULL, log = "y")
+##> warning: 3 y values <= 0 omitted ..
 }
 \keyword{dplot}

@@ -74,10 +74,10 @@ package.skeleton(name = "anRpackage", list,
 }
 
 \references{
-  Read the \emph{Writing R Extensions} manual for more details.
+  Read the \sQuote{Writing R Extensions} manual for more details.
 
   Once you have created a \emph{source} package you need to install it:
-  see the \emph{R Installation and Administration} manual,
+  see the \sQuote{R Installation and Administration} manual,
   \code{\link{INSTALL}} and \code{\link{install.packages}}.
 }
 
@@ -89,15 +89,15 @@ package.skeleton(name = "anRpackage", list,
 \examples{
 require(stats)
 ## two functions and two "data sets" :
-f <- function(x,y) x+y
-g <- function(x,y) x-y
-d <- data.frame(a=1, b=2)
+f <- function(x, y) x+y
+g <- function(x, y) x-y
+d <- data.frame(a = 1, b = 2)
 e <- rnorm(1000)
 \dontshow{
   owd <- getwd()
   setwd(tempdir())
 }
-package.skeleton(list=c("f","g","d","e"), name="mypkg")
+package.skeleton(list = c("f","g","d","e"), name = "mypkg")
 \dontshow{ setwd(owd) }
 }
 \keyword{file}

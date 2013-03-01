@@ -53,8 +53,9 @@ R_runR <- function(cmd = NULL, Ropts = "", env = "",
     }
 }
 
-setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
-                     libdir = NULL, self = FALSE, self2 = TRUE)
+setRlibs <-
+    function(lib0 = "", pkgdir = ".", suggests = FALSE, libdir = NULL,
+             self = FALSE, self2 = TRUE, quote = FALSE)
 {
     WINDOWS <- .Platform$OS.type == "windows"
     useJunctions <- WINDOWS && !nzchar(Sys.getenv("R_WIN_NO_JUNCTIONS"))
@@ -149,6 +150,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
     rlibs <- tmplib
     if (nzchar(lib0)) rlibs <- c(lib0, rlibs)
     rlibs <- paste(rlibs, collapse = .Platform$path.sep)
+    if(quote) rlibs <- shQuote(rlibs)
     c(paste("R_LIBS", rlibs, sep = "="),
       if(WINDOWS) " R_ENVIRON_USER='no_such_file'" else "R_ENVIRON_USER=''",
       if(WINDOWS) " R_LIBS_USER='no_such_dir'" else "R_LIBS_USER=''",
@@ -655,7 +657,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
     {
         checkingLog(Log, "package subdirectories")
         any <- FALSE
-        if (haveR && !length(list_files_with_type("R", "code"))) {
+        if (haveR && !length(list_files_with_type("R", "code")) &&
+            !file.exists(file.path("R", "sysdata.rda"))) {
             haveR <- FALSE
             warningLog(Log, "Found directory 'R' with no source files.")
             any <- TRUE
@@ -1820,7 +1823,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             checkingLog(Log, "loading without being on the library search path")
             Rcmd <- sprintf("library(%s, lib.loc = '%s')", pkgname, libdir)
             opts <- if(nzchar(arch)) R_opts4 else R_opts2
-            env <- setRlibs(pkgdir = pkgdir, libdir = libdir, self2 = FALSE)
+            env <- setRlibs(pkgdir = pkgdir, libdir = libdir,
+                            self2 = FALSE, quote = TRUE)
             if(nzchar(arch)) env <- c(env, "R_DEFAULT_PACKAGES=NULL")
             out <- R_runR(Rcmd, opts, env, arch = arch)
             if (any(grepl("^Error", out))) {
@@ -1920,7 +1924,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 if(any(keep)) {
                     printLog(Log, "Examples with CPU or elapsed time > 5s\n")
                     times <- capture.output(format(times[keep, ]))
-                    printLog(Log, paste(times, collapse="\n"))
+                    printLog(Log, paste(times, collapse="\n"), "\n")
                 }
             }
             TRUE
@@ -2164,20 +2168,28 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                      "  Found 'inst/doc/makefile': should be 'Makefile' and will be ignored\n")
         }
         if ("Makefile" %in% dir(vigns$dir)) {
-            lines <- readLines(file.path(vigns$dir, "Makefile"), warn = FALSE)
+            f <- file.path(vigns$dir, "Makefile")
+            lines <- readLines(f, warn = FALSE)
             ## remove comment lines
             lines <- grep("^[[:space:]]*#", lines, invert = TRUE, value = TRUE)
             if(any(grepl("[^/]R +CMD", lines))) {
                 if(!any) warningLog(Log)
                 any <- TRUE
                 printLog(Log,
-                         "  Found 'R CMD' in 'inst/doc/Makefile': should be '\"$(R_HOME)/bin/R\" CMD'\n")
+                         "  Found 'R CMD' in Makefile: should be '\"$(R_HOME)/bin/R\" CMD'\n")
             }
+            contents <- readChar(f, file.info(f)$size, useBytes = TRUE)
+            if(any(grepl("\r", contents, fixed = TRUE, useBytes = TRUE))) {
+                if(!any) warningLog(Log)
+                any <- TRUE
+                printLog(Log, "Found Makefile with CR or CRLF line endings:\n")
+                printLog(Log, "some Unix 'make' programs require LF line endings.\n")
+           }
             if(any(grepl("[^/]Rscript", lines))) {
                 if(!any) warningLog(Log)
                 any <- TRUE
                 printLog(Log,
-                         "  Found 'Rscript' in 'inst/doc/Makefile': should be '\"$(R_HOME)/bin/Rscript\"'\n")
+                         "  Found 'Rscript' in Makefile: should be '\"$(R_HOME)/bin/Rscript\"'\n")
             }
         }
 
@@ -2262,7 +2274,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                     out2 <- R_runR(cmd, R_opts2)
                     if(length(out2)) {
                         print_time(t1b, t2b, NULL)
-                        cat(" differences from ", sQuote(basename(savefile)),
+                        cat("\ndifferences from ", sQuote(basename(savefile)),
                             "\n", sep = "")
                         writeLines(c(out2, ""))
                     } else {
@@ -2371,7 +2383,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
             if(file.exists(man_file)) unlink(man_file)
             args <- c( "Rd2pdf ", Rd2pdf_opts,
                       paste0("--build-dir=", shQuote(build_dir)),
-                      "--no-clean", "-o ", man_file , topdir)
+                      "--no-clean", "-o ", man_file , shQuote(topdir))
             res <- run_Rcmd(args,  "Rdlatex.log")
             latex_log <- file.path(build_dir, "Rd2.log")
             if (file.exists(latex_log))
@@ -2636,6 +2648,8 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
 
                 if (install != "check")
                     lines <- readLines(outfile, warn = FALSE)
+
+                lines0 <- lines
                 warn_re <- c("^WARNING:",
                              "^Warning:",
                              ## <FIXME>
@@ -2648,6 +2662,7 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                              ": warning: .* is used uninitialized",
                              ": warning: .* set but not used",
                              ": warning: unused",
+                             ": #warning",
                              "missing link\\(s\\):")
                 ## Warnings spotted by gcc with
                 ## '-Wimplicit-function-declaration', which is
@@ -2750,11 +2765,18 @@ setRlibs <- function(lib0 = "", pkgdir = ".", suggests = FALSE,
                 if (!config_val_to_logical(check_imports_flag))
                     lines <- grep("Warning: replacing previous import", lines,
                                   fixed = TRUE, invert = TRUE, value = TRUE)
-
-                if (length(lines)) {
-		    lines <- unique(lines)
+                ## look for notes with auto-generated NAMESPACE files.
+                ll <- grep("running .First.lib() for", lines0,
+                           fixed = TRUE, value = TRUE)
+                if (length(lines) || (length(ll) && as_cran)) {
+                    lines <- unique(c(lines, ll))
                     warningLog(Log, "Found the following significant warnings:")
                     printLog0(Log, .format_lines_with_indent(lines), "\n")
+                    printLog0(Log, sprintf("See %s for details.\n",
+                                           sQuote(outfile)))
+                } else if(length(ll)) {
+                    noteLog(Log, "Found the following significant note:")
+                    printLog0(Log, .format_lines_with_indent(ll), "\n")
                     printLog0(Log, sprintf("See %s for details.\n",
                                            sQuote(outfile)))
                 } else resultLog(Log, "OK")

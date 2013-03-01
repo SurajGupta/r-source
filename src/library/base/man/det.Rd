@@ -43,11 +43,11 @@ determinant(x, logarithm = TRUE, \dots)
     the determinant is positive or negative.}
 }
 \examples{
-(x <- matrix(1:4, ncol=2))
+(x <- matrix(1:4, ncol = 2))
 unlist(determinant(x))
 det(x)
 
-det(print(cbind(1,1:3,c(2,0,1))))
+det(print(cbind(1, 1:3, c(2,0,1))))
 }
 
 \keyword{array}

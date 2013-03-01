@@ -14,7 +14,7 @@
   Create a vector of \code{n} contiguous colors.
 }
 \usage{
-rainbow(n, s = 1, v = 1, start = 0, end = max(1,n - 1)/n, alpha = 1)
+rainbow(n, s = 1, v = 1, start = 0, end = max(1, n - 1)/n, alpha = 1)
 heat.colors(n, alpha = 1)
 terrain.colors(n, alpha = 1)
 topo.colors(n, alpha = 1)
@@ -23,7 +23,7 @@ cm.colors(n, alpha = 1)
 \arguments{
   \item{n}{the number of colors (\eqn{\ge 1}) to be in the
     palette.}
-  \item{s,v}{the \sQuote{saturation} and \sQuote{value} to be used
+  \item{s, v}{the \sQuote{saturation} and \sQuote{value} to be used
     to complete the HSV color descriptions.}
   \item{start}{the (corrected) hue in [0,1] at which the rainbow
     begins.}
@@ -34,7 +34,7 @@ cm.colors(n, alpha = 1)
 \details{
   Conceptually, all of these functions actually use (parts of) a line
   cut out of the 3-dimensional color space, parametrized by
-  \code{\link{hsv}(h,s,v)}, and hence,
+  \code{\link{hsv}(h, s, v)}, and hence
   equispaced hues in RGB space tend to cluster at
   the red, green and blue primaries.
 
@@ -45,13 +45,13 @@ cm.colors(n, alpha = 1)
   With \code{rainbow}, the parameters \code{start} and \code{end} can be used
   to specify particular subranges of hues.
   The following values can be used when generating such a subrange:
-  red=0, yellow=\eqn{\frac 1 6}{1/6}, green=\eqn{\frac 2 6}{2/6},
-  cyan=\eqn{\frac 3 6}{3/6}, blue=\eqn{\frac 4 6}{4/6}
-  and magenta=\eqn{\frac 5 6}{5/6}.
+  red = 0, yellow = \eqn{\frac 1 6}{1/6}, green = \eqn{\frac 2 6}{2/6},
+  cyan = \eqn{\frac 3 6}{3/6}, blue = \eqn{\frac 4 6}{4/6}
+  and magenta = \eqn{\frac 5 6}{5/6}.
 }
 \value{A character vector, \code{cv}, of color names.  This can be used
   either to create a user--defined color palette for subsequent
-  graphics by \code{\link{palette}(cv)}, a \code{col=} specification
+  graphics by \code{\link{palette}(cv)}, a \code{col =} specification
   in graphics functions or in \code{par}.
 }
 \seealso{
@@ -62,23 +62,23 @@ cm.colors(n, alpha = 1)
 \examples{
 require(graphics)
 # A Color Wheel
-pie(rep(1,12), col=rainbow(12))
+pie(rep(1, 12), col = rainbow(12))
 
 ##------ Some palettes ------------
 demo.pal <-
-  function(n, border = if (n<32) "light gray" else NA,
-           main = paste("color palettes;  n=",n),
+  function(n, border = if (n < 32) "light gray" else NA,
+           main = paste("color palettes;  n=", n),
            ch.col = c("rainbow(n, start=.7, end=.1)", "heat.colors(n)",
                       "terrain.colors(n)", "topo.colors(n)",
                       "cm.colors(n)"))
 {
     nt <- length(ch.col)
     i <- 1:n; j <- n / nt; d <- j/6; dy <- 2*d
-    plot(i,i+d, type="n", yaxt="n", ylab="", main=main)
+    plot(i, i+d, type = "n", yaxt = "n", ylab = "", main = main)
     for (k in 1:nt) {
         rect(i-.5, (k-1)*j+ dy, i+.4, k*j,
-             col = eval(parse(text=ch.col[k])), border = border)
-        text(2*j,  k * j +dy/4, ch.col[k])
+             col = eval(parse(text = ch.col[k])), border = border)
+        text(2*j,  k * j + dy/4, ch.col[k])
     }
 }
 n <- if(.Device == "postscript") 64 else 16

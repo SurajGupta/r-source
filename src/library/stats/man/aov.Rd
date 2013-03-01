@@ -88,24 +88,24 @@ aov(formula, data = NULL, projections = FALSE, qr = TRUE,
 }
 \examples{
 ## From Venables and Ripley (2002) p.165.
-utils::data(npk, package="MASS")
+utils::data(npk, package = "MASS")
 
 ## Set orthogonal contrasts.
-op <- options(contrasts=c("contr.helmert", "contr.poly"))
+op <- options(contrasts = c("contr.helmert", "contr.poly"))
 ( npk.aov <- aov(yield ~ block + N*P*K, npk) )
 \donttest{summary(npk.aov)}
 coefficients(npk.aov)
 
 ## to show the effects of re-ordering terms contrast the two fits
 aov(yield ~ block + N * P + K, npk)
-aov(terms(yield ~ block + N * P + K, keep.order=TRUE), npk)
+aov(terms(yield ~ block + N * P + K, keep.order = TRUE), npk)
 
 
 ## as a test, not particularly sensible statistically
 npk.aovE <- aov(yield ~  N*P*K + Error(block), npk)
 npk.aovE
 summary(npk.aovE)
-options(op)# reset to previous
+options(op)  # reset to previous
 }
 \keyword{models}
 \keyword{regression}

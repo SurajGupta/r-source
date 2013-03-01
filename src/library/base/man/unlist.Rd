@@ -1,6 +1,6 @@
 % File src/library/base/man/unlist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{unlist}
@@ -46,7 +46,7 @@ unlist(x, recursive = TRUE, use.names = TRUE)
   Where possible the list elements are coerced to a common mode during
   the unlisting, and so the result often ends up as a character
   vector.  Vectors will be coerced to the highest type of the components
-  in the hierarchy NULL < raw < logical < integer < real < complex < character
+  in the hierarchy NULL < raw < logical < integer < double < complex < character
   < list < expression: pairlists are treated as lists.
 
   A list is a (generic) vector, and the simplified vector might still be
@@ -61,7 +61,7 @@ unlist(x, recursive = TRUE, use.names = TRUE)
   hold the list components.
 
   The output type is determined from the highest type
-  of the components in the hierarchy NULL < raw < logical < integer < real <
+  of the components in the hierarchy NULL < raw < logical < integer < double <
   complex < character < list < expression, after coercion of pairlists
   to lists.
 }
@@ -75,15 +75,15 @@ unlist(x, recursive = TRUE, use.names = TRUE)
 }
 \examples{
 unlist(options())
-unlist(options(), use.names=FALSE)
+unlist(options(), use.names = FALSE)
 
 l.ex <- list(a = list(1:5, LETTERS[1:5]), b = "Z", c = NA)
 unlist(l.ex, recursive = FALSE)
 unlist(l.ex, recursive = TRUE)
 
-l1 <- list(a="a", b=2, c=pi+2i)
+l1 <- list(a = "a", b = 2, c = pi+2i)
 unlist(l1) # a character vector
-l2 <- list(a="a", b=as.name("b"), c=pi+2i)
+l2 <- list(a = "a", b = as.name("b"), c = pi+2i)
 unlist(l2) # remains a list
 }
 \keyword{list}

@@ -119,7 +119,7 @@ par(\dots, no.readonly = FALSE)
   Parameters are queried by giving one or more character vectors of
   parameter names to \code{par}.
 
-  \code{par()} (no arguments) or \code{par(no.readonly=TRUE)} is used to
+  \code{par()} (no arguments) or \code{par(no.readonly = TRUE)} is used to
   get \emph{all} the graphical parameters (as a named list).  Their
   names are currently taken from the unexported variable
   \code{graphics:::.Pars}.
@@ -217,7 +217,7 @@ par(\dots, no.readonly = FALSE)
     }
     \item{\code{bg}}{The color to be used for the background of the
       device region.  When called from \code{par()} it also sets
-      \code{new=FALSE}. See section \sQuote{Color Specification} for
+      \code{new = FALSE}. See section \sQuote{Color Specification} for
       suitable values.  For many devices the initial value is set from
       the \code{bg} argument of the device, and for the rest it is
       normally \code{"white"}.
@@ -286,7 +286,7 @@ par(\dots, no.readonly = FALSE)
       Note that \code{c(\link{strwidth}(ch), \link{strheight}(ch))} for
       a given string \code{ch} is usually much more precise.}
     \item{\code{din}}{\emph{\bold{R.O.}}; the device dimensions,
-      \code{(width,height)}, in inches.  See also
+      \code{(width, height)}, in inches.  See also
       \code{\link{dev.size}}, which is updated immediately when an
       on-screen device windows is re-sized.}
     \item{\code{err}}{(\emph{Unimplemented}; \R is silent when points
@@ -313,9 +313,9 @@ par(\dots, no.readonly = FALSE)
         y2)} which gives the (NDC) coordinates of the figure region in
       the display region of the device. If you set this, unlike S, you
       start a new plot, so to add to an existing plot use
-      \code{new=TRUE} as well.}
+      \code{new = TRUE} as well.}
     \item{\code{fin}}{The figure region dimensions,
-      \code{(width,height)}, in inches. If you set this, unlike S, you
+      \code{(width, height)}, in inches. If you set this, unlike S, you
       start a new plot.}
     \item{\code{font}}{An integer which specifies which font to use for
       text.  If possible, device drivers arrange so that 1 corresponds
@@ -479,7 +479,7 @@ par(\dots, no.readonly = FALSE)
       Some functions such as \code{\link{points}} accept a vector of values
       which are recycled.
     }
-    \item{\code{pin}}{The current plot dimensions, \code{(width,height)},
+    \item{\code{pin}}{The current plot dimensions, \code{(width, height)},
       in inches.}
     \item{\code{plt}}{A vector of the form \code{c(x1, x2, y1, y2)}
       giving the coordinates of the plot region as fractions of the
@@ -528,10 +528,10 @@ par(\dots, no.readonly = FALSE)
       \code{"usr"} coordinates are log10-transformed here!)
 
       \describe{
-        \item{n=1}{will produce tick marks at \eqn{10^j} for integer \eqn{j},}
-        \item{n=2}{gives marks  \eqn{k 10^j} with
+        \item{n = 1}{will produce tick marks at \eqn{10^j} for integer \eqn{j},}
+        \item{n = 2}{gives marks  \eqn{k 10^j} with
 	  \eqn{k \in \{1, 5\}}{k in {1,5}},}
-        \item{n=3}{gives marks  \eqn{k 10^j} with
+        \item{n = 3}{gives marks  \eqn{k 10^j} with
 	  \eqn{k \in \{1, 2, 5\}}{k in {1,2,5}}.}
       }
       See \code{\link{axTicks}()} for a pure \R implementation of this.
@@ -596,18 +596,23 @@ par(\dots, no.readonly = FALSE)
 }
 
 \section{Color Specification}{
+  
   Colors can be specified in several different ways. The simplest way is
   with a character string giving the color name (e.g., \code{"red"}).  A
   list of the possible colors can be obtained with the function
-  \code{\link{colors}}.  Alternatively, colors can be specified directly in
-  terms of their RGB components with a string of the form \code{"#RRGGBB"}
-  where each of the pairs \code{RR}, \code{GG}, \code{BB} consist of two
-  hexadecimal digits giving a value in the range \code{00} to \code{FF}.
-  Colors can also be specified by giving an index into a small table of
-  colors, the \code{\link{palette}}.  This provides compatibility with
-  S.  Index \code{0} corresponds to the background color.  (Because
-  apparently some people have been assuming it, it is also possible to
-  specify integers as character strings, e.g. \code{"3"}.)
+  \code{\link{colors}}.  Alternatively, colors can be specified directly
+  in terms of their RGB components with a string of the form
+  \code{"#RRGGBB"} where each of the pairs \code{RR}, \code{GG},
+  \code{BB} consist of two hexadecimal digits giving a value in the
+  range \code{00} to \code{FF}.  Colors can also be specified by giving
+  an index into a small table of colors, the \code{\link{palette}}:
+  indices wrap round so with the default palette of size 8, \code{10} is
+  the same as \code{2}.  This provides compatibility with S.  Index
+  \code{0} corresponds to the background color.  (Because apparently
+  some people have been assuming it, it was also possible to specify
+  integers as character strings, e.g. \code{"3"}.  This is now
+  deprecated.)  Note that the palette (apart from \code{0} which is
+  per-device) is a per-session setting.
 
   Additionally, \code{"transparent"} is \emph{transparent}, useful for
   filled areas (such as the background!), and just invisible for things
@@ -691,17 +696,17 @@ plot(1:2, xaxs = "i") # 'inner axis' w/o extra space
 par(c("usr", "xaxp"))
 
 ( nr.prof <-
-  c(prof.pilots=16,lawyers=11,farmers=10,salesmen=9,physicians=9,
-    mechanics=6,policemen=6,managers=6,engineers=5,teachers=4,
-    housewives=3,students=3,armed.forces=1))
+c(prof.pilots = 16, lawyers = 11, farmers = 10, salesmen = 9, physicians = 9,
+  mechanics = 6, policemen = 6, managers = 6, engineers = 5, teachers = 4,
+  housewives = 3, students = 3, armed.forces = 1))
 par(las = 3)
 barplot(rbind(nr.prof)) # R 0.63.2: shows alignment problem
-par(las = 0)# reset to default
+par(las = 0)  # reset to default
 
 require(grDevices) # for gray
 ## 'fg' use:
-plot(1:12, type = "b", main="'fg' : axes, ticks and box in gray",
-     fg = gray(0.7), bty="7" , sub=R.version.string)
+plot(1:12, type = "b", main = "'fg' : axes, ticks and box in gray",
+     fg = gray(0.7), bty = "7" , sub = R.version.string)
 
 ex <- function() {
    old.par <- par(no.readonly = TRUE) # all par settings which

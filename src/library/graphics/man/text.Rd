@@ -52,7 +52,7 @@ text(x, \dots)
 \description{
   \code{text} draws the strings given in the vector \code{labels} at the
   coordinates given by \code{x} and \code{y}.
-  \code{y} may be missing since \code{\link{xy.coords}(x,y)} is used for
+  \code{y} may be missing since \code{\link{xy.coords}(x, y)} is used for
   construction of the coordinates.
 }
 \details{
@@ -62,14 +62,15 @@ text(x, \dots)
   mathematical notation is available such as sub- and superscripts,
   greek letters, fractions, etc.
 
-  \code{adj} allows \emph{adj}ustment of the text with respect to \code{(x,y)}.
+  \code{adj} allows \emph{adj}ustment of the text with respect to
+  \code{(x, y)}.
   Values of 0, 0.5, and 1 specify left/bottom, middle and
   right/top alignment, respectively.  The default is for centered text, i.e.,
   \code{adj = c(0.5, NA)}.  Accurate vertical centering needs
   character metric information on individual characters which is
   only available on some devices.  Vertical alignment is done slightly
   differently for character strings and for expressions:
-  \code{adj=c(0,0)} means to left-justify and to align on the baseline
+  \code{adj = c(0,0)} means to left-justify and to align on the baseline
   for strings but on the bottom of the bounding box for expressions.
   This also affects vertical centering: for strings the centering
   excludes any descenders whereas for expressions it includes them.
@@ -134,14 +135,14 @@ text(x, \dots)
   mathematical annotation.
 }
 \examples{
-plot(-1:1,-1:1, type = "n", xlab = "Re", ylab = "Im")
+plot(-1:1, -1:1, type = "n", xlab = "Re", ylab = "Im")
 K <- 16; text(exp(1i * 2 * pi * (1:K) / K), col = 2)
 
 ## The following two examples use latin1 characters: these may not
 ## appear correctly (or be omitted entirely).
 plot(1:10, 1:10, main = "text(...) examples\n~~~~~~~~~~~~~~",
      sub = "R is GNU ©, but not ® ...")
-mtext("«Latin-1 accented chars»: éè øØ å<Å æ<Æ", side=3)
+mtext("«Latin-1 accented chars»: éè øØ å<Å æ<Æ", side = 3)
 points(c(6,2), c(2,1), pch = 3, cex = 4, col = "red")
 text(6, 2, "the text is CENTERED around (x,y) = (6,2) by default",
      cex = .8)
@@ -153,9 +154,9 @@ text(4, 8.4, "expression(hat(beta) == (X^t * X)^{-1} * X^t * y)",
 text(4, 7, expression(bar(x) == sum(frac(x[i], n), i==1, n)))
 
 ## Two more latin1 examples
-text(5,10.2,
+text(5, 10.2,
      "Le français, c'est façile: Règles, Liberté, Egalité, Fraternité...")
-text(5,9.8,
+text(5, 9.8,
      "Jetz no chli züritüütsch: (noch ein bißchen Zürcher deutsch)")
 }
 \keyword{aplot}

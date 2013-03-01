@@ -1,6 +1,7 @@
 % File src/library/base/man/Extract.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
+% Copyright 2002-2012 The R Foundation
 % Distributed under GPL 2 or later
 
 \name{Extract}
@@ -207,12 +208,12 @@ x$i <- value
 \section{Environments}{
   Both \code{$} and \code{[[} can be applied to environments.  Only
   character indices are allowed and no partial matching is done.  The
-  semantics of these operations are those of \code{get(i, env=x,
-    inherits=FALSE)}.  If no match is found then \code{NULL} is
+  semantics of these operations are those of \code{get(i, env = x,
+    inherits = FALSE)}.  If no match is found then \code{NULL} is
   returned.  The replacement versions, \code{$<-} and \code{[[<-}, can
   also be used.  Again, only character arguments are allowed.  The
-  semantics in this case are those of \code{assign(i, value, env=x,
-    inherits=FALSE)}.  Such an assignment will either create a new
+  semantics in this case are those of \code{assign(i, value, env = x,
+    inherits = FALSE)}.  Such an assignment will either create a new
   binding or change the existing binding in \code{x}.
 }
 
@@ -220,7 +221,7 @@ x$i <- value
   When extracting, a numerical, logical or character \code{NA} index picks
   an unknown element and so returns \code{NA} in the corresponding
   element of a logical, integer, numeric, complex or character result,
-  and \code{NULL} for a list.  (It returns \code{00} for a raw result.]
+  and \code{NULL} for a list.  (It returns \code{00} for a raw result.)
 
   When replacing (that is using indexing on the lhs of an
   assignment) \code{NA} does not select any element to be replaced.  As
@@ -232,8 +233,8 @@ x$i <- value
 \section{Argument matching}{
   Note that these operations do not match their index arguments in the
   standard way: argument names are ignored and positional matching only is
-  used.  So \code{m[j=2,i=1]} is equivalent to \code{m[2,1]} and
-  \strong{not} to \code{m[1,2]}.
+  used.  So \code{m[j = 2, i = 1]} is equivalent to \code{m[2, 1]} and
+  \strong{not} to \code{m[1, 2]}.
 
   This may not be true for methods defined for them; for example it is
   not true for the \code{data.frame} methods described in
@@ -272,7 +273,7 @@ x$i <- value
   Thus the default behaviour is to use partial matching only when
   extracting from recursive objects (except environments) by \code{$}.
   Even in that case, warnings can be switched on by
-  \code{\link{options}(warnPartialMatchAttr = TRUE)}.
+  \code{\link{options}(warnPartialMatchDollar = TRUE)}.
 
   Neither empty (\code{""}) nor \code{NA} indices match any names, not
   even empty nor missing names.  If any object has no names or
@@ -303,9 +304,9 @@ x$i <- value
   behaviour when applied to data.frame and factors.
 
   \code{\link{Syntax}} for operator precedence, and the
-  \emph{R Language} reference manual about indexing details.
-  
-  
+  \sQuote{R Language Definition} manual about indexing details.
+
+
   \code{\link{NULL}} for details of indexing null objects.
 }
 %% Fixme: Link (to html in 'help.start()', pdf from 'ref manual',
@@ -343,7 +344,7 @@ stopifnot(identical(names(nx[1]), "Abc"),
         is.null(names(nx[["Abc"]])), is.null(names(nx[[2]])))
 }
 ## recursive indexing into lists
-z <- list(a = list(b = 9, c = 'hello'), d = 1:5)
+z <- list(a = list(b = 9, c = "hello"), d = 1:5)
 unlist(z)
 z[[c(1, 2)]]
 z[[c(1, 2, 1)]]  # both "hello"
@@ -357,6 +358,14 @@ e1[["a"]]
 e1[["b"]] <- 20
 e1$b
 ls(e1)
+
+## partial matching - possibly with warning :
+stopifnot(identical(li$p, pi))
+op <- options(warnPartialMatchDollar = TRUE)
+stopifnot( identical(li$p, pi), #-- a warning
+  inherits(tryCatch (li$p, warning = identity), "warning"))
+## revert the warning option:
+if(is.null(op[[1]])) op[[1]] <- FALSE; options(op)
 }
 \keyword{array}
 \keyword{list}

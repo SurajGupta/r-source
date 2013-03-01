@@ -560,6 +560,10 @@ static Rboolean file_open(Rconnection con)
 	    Rf_utf8towcs(wname, name, n+1);
 	    mbstowcs(wmode, con->mode, 10);
 	    fp = _wfopen(wname, wmode);
+	    if(!fp) {
+		warning(_("cannot open file '%ls': %s"), wname, strerror(errno));
+		return FALSE;
+	    }
 	} else
 #endif
 	    fp = R_fopen(name, con->mode);
@@ -1042,6 +1046,10 @@ static Rboolean pipe_open(Rconnection con)
 	Rf_utf8towcs(wname, con->description, n+1);
 	mbstowcs(wmode, con->mode, 10);
 	fp = _wpopen(wname, wmode);
+	if(!fp) {
+	    warning(_("cannot pipe() cmd '%ls': %s"), wname, strerror(errno));
+	    return FALSE;
+	}
     } else
 #endif
 	fp = R_popen(con->description, mode);
@@ -4158,7 +4166,7 @@ SEXP attribute_hidden do_readchar(SEXP call, SEXP op, SEXP args, SEXP env)
     for(i = 0, m = 0; i < n; i++) {
 	len = INTEGER(nchars)[i];
 	if(len == NA_INTEGER || len < 0)
-	    error(_("invalid '%s' argument"), "nchar");
+	    error(_("invalid '%s' argument"), "nchars");
 	onechar = isRaw ? rawFixedString(bytes, len, nbytes, &np, useBytes)
 	    : readFixedString(con, len, useBytes);
 	if(onechar != R_NilValue) {
@@ -4239,7 +4247,7 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if (tlen > len) len = tlen;
 	    tlen = INTEGER(nchars)[i];
 	    if(tlen == NA_INTEGER || tlen < 0)
-		error(_("invalid '%s' argument"), "nchar");
+		error(_("invalid '%s' argument"), "nchars");
 	    if (tlen > len) len = tlen;
 	}
 	buf = (char *) R_alloc(len + slen, sizeof(char));

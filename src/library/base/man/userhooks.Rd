@@ -25,7 +25,7 @@ packageEvent(pkgname,
   \item{hookName}{character string: the hook name}
   \item{pkgname}{character string: the package/namespace name.}
   \item{event}{character string: an event for the package}
-  \item{value}{A function, or for \code{action="replace"}, \code{NULL}.}
+  \item{value}{A function, or for \code{action = "replace"}, \code{NULL}.}
   \item{action}{The action to be taken.  The names can be abbreviated.}
 }
 
@@ -104,6 +104,6 @@ packageEvent(pkgname,
 }
 \examples{
 setHook(packageEvent("grDevices", "onLoad"),
-        function(...) grDevices::ps.options(horizontal=FALSE)) 
+        function(...) grDevices::ps.options(horizontal = FALSE)) 
 }
 \keyword{utilities}

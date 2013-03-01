@@ -1,6 +1,6 @@
 % File src/library/stats/man/Beta.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Beta}
@@ -51,7 +51,7 @@ rbeta(n, shape1, shape2, ncp = 0)
   and 6.6.2 \eqn{I_x(a,b) = B_x(a,b) / B(a,b)} where
   \eqn{B(a,b) = B_1(a,b)} is the Beta function (\code{\link{beta}}).
 
-  \eqn{I_x(a,b)} is \code{pbeta(x,a,b)}.
+  \eqn{I_x(a,b)} is \code{pbeta(x, a, b)}.
 
   The noncentral Beta distribution (with \code{ncp} \eqn{ = \lambda})
   is defined (Johnson et al, 1995, pp. 502) as the distribution of
@@ -64,6 +64,14 @@ rbeta(n, shape1, shape2, ncp = 0)
   generates random deviates.
 
   Invalid arguments will result in return value \code{NaN}, with a warning.
+  
+  The length of the result is determined by \code{n} for
+  \code{rbeta}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \note{
   Supplying \code{ncp = 0} uses the algorithm for the non-central
@@ -79,7 +87,7 @@ rbeta(n, shape1, shape2, ncp = 0)
   mixture of betas (Johnson \emph{et al}, 1995, pp. 502--3).
 
   The central \code{pbeta} uses a C translation (and enhancement for
-  \code{log_p=TRUE}) of
+  \code{log_p = TRUE}) of
 
   Didonato, A. and Morris, A., Jr, (1992)
   Algorithm 708: Significant digit computation of the incomplete beta
@@ -136,7 +144,7 @@ rbeta(n, shape1, shape2, ncp = 0)
   \code{\link{beta}} for the Beta function.
 }
 \examples{
-x <- seq(0, 1, length=21)
+x <- seq(0, 1, length = 21)
 dbeta(x, 1, 1)
 pbeta(x, 1, 1)
 }

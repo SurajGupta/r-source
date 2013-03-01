@@ -1,6 +1,6 @@
 % File src/library/stats/man/Hypergeometric.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Hypergeometric}
@@ -41,6 +41,14 @@ rhyper(nn, m, n, k)
   \code{rhyper} generates random deviates.
 
   Invalid arguments will result in return value \code{NaN}, with a warning.
+
+  The length of the result is determined by \code{n} for
+  \code{rhyper}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \details{
   The hypergeometric distribution is used for sampling \emph{without}
@@ -84,8 +92,8 @@ rhyper(nn, m, n, k)
 m <- 10; n <- 7; k <- 8
 x <- 0:(k+1)
 rbind(phyper(x, m, n, k), dhyper(x, m, n, k))
-all(phyper(x, m, n, k) == cumsum(dhyper(x, m, n, k)))# FALSE
+all(phyper(x, m, n, k) == cumsum(dhyper(x, m, n, k)))  # FALSE
 \donttest{## but error is very small:
-signif(phyper(x, m, n, k) - cumsum(dhyper(x, m, n, k)), digits=3)
+signif(phyper(x, m, n, k) - cumsum(dhyper(x, m, n, k)), digits = 3)
 }}
 \keyword{distribution}

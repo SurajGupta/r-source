@@ -8,13 +8,283 @@
 
 <h2> R News</h2>
 
-<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.15.2</h3>
-
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.15.3</h3>
 
 
 
 <h4>NEW FEATURES</h4>
 
+
+<ul>
+<li> <p><code>lgamma(x)</code> for very small <code>x</code> (in the
+denormalized range) is no longer <code>Inf</code> with a warning.
+</p>
+</li>
+<li> <p><code>image()</code> now sorts an unsorted <code>breaks</code> vector,
+with a warning.
+</p>
+</li>
+<li><p> The internal methods for <code>tar()</code> and <code>untar()</code> do
+a slightly more general job for &lsquo;ustar&rsquo;-style handling of
+paths of more than 100 bytes.
+</p>
+</li>
+<li><p> Packages <span class="pkg">compiler</span> and <span class="pkg">parallel</span> have been added
+to the reference index (&lsquo;<span class="file">refman.pdf</span>&rsquo;).
+</p>
+</li>
+<li> <p><code>untar(tar = "internal")</code> has some support for
+<code>pax</code> headers as produced by e.g. <CODE>gnutar --posix</CODE>
+(which seems prevalent on OpenSUSE 12.2) or
+<CODE>bsdtar --format pax</CODE>, including long path and link names.
+</p>
+</li>
+<li> <p><code>sQuote()</code> and <code>dQuote()</code> now handle 0-length
+inputs.  (Suggestion of Ben Bolker.)
+</p>
+</li>
+<li> <p><code>summaryRprof()</code> returns zero-row data frames rather
+than throw an error if no events are recorded, for consistency.
+</p>
+</li>
+<li><p> The included version of PCRE has been updated to 8.32.
+</p>
+</li>
+<li><p> The <span class="pkg">tcltk</span> namespace can now be re-loaded after
+unloading.
+</p>
+<p>The Tcl/Tk event loop is inhibited in a forked child from package
+<span class="pkg">parallel</span> (as in e.g. <code>mclapply()</code>).
+</p>
+</li>
+<li> <p><code>parallel::makeCluster()</code> recognizes the value
+<span class="samp">random</span> for the environment variable <span class="env">R_PARALLEL_PORT</span>:
+this chooses a random value for the port and reduces the chance of
+conflicts when multiple users start a cluster at the same time.
+</p>
+</li></ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+<ul>
+<li><p> The default for <span class="env">TAR</span> on Windows for <CODE>R CMD
+	build</CODE> has been changed to be <span class="samp">internal</span> if no
+<CODE>tar</CODE> command is on the path.
+</p>
+<p>This enables most packages to be built &lsquo;out of the box&rsquo;
+without <CODE>Rtools</CODE>: the main exceptions are those which need
+to be installed to re-build vignettes and need <CODE>Rtools</CODE>
+for installation (usually because they contain compiled code).
+</p>
+</li></ul>
+
+
+
+
+<h4>C-LEVEL FACILITIES</h4>
+
+
+<ul>
+<li><p> On a 64-bit Windows platform with enough RAM, <code>R_alloc</code>
+can now allocate up to just under 32GB like other 64-bit
+platforms.
+</p>
+</li></ul>
+
+
+
+
+<h4>DEPRECATED AND DEFUNCT</h4>
+
+
+<ul>
+<li><p> Use of <code>col2rgb(0)</code> is deprecated (see the help page
+for its limitations).
+</p>
+</li>
+<li><p> The deprecated <code>intensities</code> component returned by
+<code>hist()</code> is no longer recognized by the <code>plot()</code> method
+and will be removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0.
+</p>
+</li>
+<li> <p><code>real()</code>, <code>as.real()</code> and <code>is.real()</code> are now
+formally deprecated and give a warning.
+</p>
+</li>
+<li><p> This is formal notice that the non-API EISPACK entry points
+in <font face="Courier New,Courier" color="#666666"><b>R</b></font> will be removed shortly.
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION</h4>
+
+
+<ul>
+<li><p> The <CODE>configure</CODE> tests for Objective C and Objective
+C++ now work on Mac OS 10.8 with Xcode 4.5.2 (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15107">PR#15107</a>).
+</p>
+</li>
+<li><p> The cairo-based versions of <code>X11()</code> now work with
+current versions of cairographics (e.g. 1.12.10).  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15168">PR#15168</a>)
+</p>
+<p>A workaround for earlier versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> is to use
+<code>X11.options(type = "nbcairo")</code>.
+</p>
+</li>
+<li><p> Configuration and <CODE>R CMD javareconf</CODE> now come up
+with a smaller set of library paths for Java on Oracle-format JDK
+(including OpenJDK).  This helps avoid conflicts between libraries
+(such as <code>libjpeg</code>) supplied in the JDK and system
+libraries.  This can always be overridden if needed: see the
+&lsquo;R Installation and Administration&rsquo; manual.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>beta(a, b)</code> could overflow to infinity in its
+calculations when one of <code>a</code> and <code>b</code> was less than one.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15075">PR#15075</a>)
+</p>
+</li>
+<li> <p><code>lbeta(a, b)</code> no longer gives <code>NaN</code> if <code>a</code> or
+<code>b</code> is very small (in the denormalized range).
+</p>
+</li>
+<li> <p><code>bquote()</code> is now able to substitute default arguments in
+single-argument functions.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15077">PR#15077</a>)
+</p>
+</li>
+<li> <p><code>browseEnv(html = FALSE)</code> would segfault if called from
+<font face="Courier New,Courier" color="#666666"><b>R</b></font> (not <CODE>R.app</CODE>) on a CRAN-style Mac OS X build of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+</p>
+</li>
+<li> <p><span class="samp">[[&lt;-</span> for lists (generic vectors) needed to increment
+<code>NAMED</code> count when RHS is used more than once. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15098">PR#15098</a>)
+</p>
+</li>
+<li><p> On Windows, warnings about opening a file or pipe with a
+non-ASCII description were sometimes output in UTF-8 rather than
+in the current locale's character set.
+</p>
+</li>
+<li><p> The <code>call()</code> function did not duplicate its arguments.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15115">PR#15115</a>)
+</p>
+</li>
+<li> <p><code>TukeyHSD()</code> could give <code>NA</code> results with some
+<span class="samp">na.action</span> methods such as <code>na.exclude()</code>.
+(Hinted at on R-help by John Fox.)
+</p>
+</li>
+<li><p> The deprecated <code>svd(X, LINPACK = TRUE)</code> could alter
+<code>X</code> in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.15.[12].  (Reported by Bill Dunlap.)
+</p>
+</li>
+<li><p> Under Windows, <code>file.link()</code> and <code>file.symlink()</code>
+used the link name twice, so would always fail. (Reported
+by Rui Barradas/Oliver Soong).
+</p>
+</li>
+<li> <p><code>summaryRprof(memory = "both")</code> mixed up the units of
+Vcells and Ncells: it now works in bytes.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15138">PR#15138</a>)
+</p>
+</li>
+<li> <p><code>tools::Rd2HTML()</code> would sometimes delete text. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15134">PR#15134</a>)
+</p>
+</li>
+<li> <p><code>plot()</code> failed for <code>"table"</code> objects containing
+just one entry.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15118">PR#15118</a>)
+</p>
+</li>
+<li> <p><code>embedFonts()</code> needed to quote some filepaths.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15149">PR#15149</a>)
+</p>
+</li>
+<li> <p><code>parallel::mccollect()</code> handled <code>NULL</code> returns
+incorrectly (removing the element rather than setting it to
+<code>NULL</code>).
+</p>
+</li>
+<li><p> The full reference index (&lsquo;<span class="file">fullrefman.pdf</span>&rsquo;) was missing
+packages <span class="pkg">compiler</span> and <span class="pkg">parallel</span>.
+</p>
+</li>
+<li><p> The report for
+<code>optim(method = "L-BFGS-B", control = list(trace = 1))</code>
+reported the last completed and not the current iteration, unlike
+other methods and trace levels.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15103">PR#15103</a>)
+</p>
+</li>
+<li> <p><code>qt(1e-12, 1.2)</code> no longer gives <code>NaN</code>.
+</p>
+</li>
+<li> <p><code>dt(1e160, 1.2, log=TRUE)</code> no longer gives <code>-Inf</code>.
+</p>
+</li>
+<li><p> On Windows the <code>untar()</code> function now quotes the
+directory name when using an external <CODE>tar</CODE> utility, so
+<code>R CMD check</code> will handle pathnames containing spaces.
+</p>
+</li>
+<li><p> The version for Windows 8 and Windows Server 2012 is now
+displayed by <code>win.version()</code>.  (Reported by Gabor
+Grothendieck.)
+</p>
+</li>
+<li><p> The custom Windows installer target <code>myR</code> in the
+installer &lsquo;<span class="file">Makefile</span>&rsquo; did not work in 2.15.2.  (Reported
+by Erich Neuwirth.)
+</p>
+</li>
+<li> <p><code>aperm(matrix(1:6, 2, dimnames=list(A={}, B={})), "A")</code>
+no longer segfaults.
+</p>
+</li>
+<li><p> Expressions involving user defined operators were not 
+always deparsed faithfully. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15179">PR#15179</a>)
+</p>
+</li>
+<li><p> The <code>enc2utf8()</code> function converted <code>NA_character_</code>
+to <code>"NA"</code> in non-UTF-8 locales. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15201">PR#15201</a>)
+</p>
+</li>
+<li><p> The <code>exclude</code> argument to <code>xtabs()</code> was ignored
+for <code>"factor"</code> arguments.
+</p>
+</li>
+<li><p> On Windows, work around an event-timing problem when
+the RGui console was closed from the &lsquo;X&rsquo; control and the closure
+cancelled. (This would on some 64-bit systems crash <font face="Courier New,Courier" color="#666666"><b>R</b></font>, typically
+those with a slow GPU relative to the CPU.)
+</p>
+</li>
+<li><p> On unix <code>Rscript</code> will pass the <code>r_arch</code> setting
+it was compiled with on to the R process so that the architecture
+of <code>Rscript</code> and that of <font face="Courier New,Courier" color="#666666"><b>R</b></font> will match unless overridden.
+</p>
+</li></ul>
+
+
+
+
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R VERSION 2.15.2</h3>
+
+
+
+<h4>NEW FEATURES</h4>
 
 
 <ul>
@@ -50,7 +320,7 @@ for years in spite of the help page claiming it did not.
 </li>
 <li> <p><code>qqline()</code> has new optional arguments
 <code>distribution</code>, <code>probs</code> and <code>qtype</code>, following the
-example of <span class="pkg">lattice</span>'s <code>panel.qqmathline()</code>.
+example of <a href="http://CRAN.R-project.org/package=lattice"><span class="pkg">lattice</span></a>'s <code>panel.qqmathline()</code>.
 </p>
 </li>
 <li><p> The handling of single quotes in the <code>en@quot</code>
@@ -161,7 +431,6 @@ has been 10MB since the days of 32MB RAM systems).
 <h4>PERFORMANCE IMPROVEMENTS</h4>
 
 
-
 <ul>
 <li> <p><code>array()</code> is now implemented in C code (for speed) when
 <code>data</code> is atomic or an unclassed list (so it is known that
@@ -201,7 +470,6 @@ the namespace does not have a DLL specified by a
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -245,7 +513,7 @@ top level), &lsquo;<span class="file">.deps</span>&rsquo; under &lsquo;<span cla
 <code>.Call()</code>, <code>.External()</code> and <code>.Fortran()</code> calls in
 other packages, and gives a warning on those found from <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself
 (which are not part of the API and change without notice: many
-will changed for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.16.0).
+will be changed for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0).
 </p>
 </li></ul>
 
@@ -253,7 +521,6 @@ will changed for <font face="Courier New,Courier" color="#666666"><b>R</b></font
 
 
 <h4>C-LEVEL FACILITIES</h4>
-
 
 
 <ul>
@@ -275,7 +542,6 @@ in <CODE>R CMD check</CODE>, and will be an error in future.
 <h4>DEPRECATED AND DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> Use of <code>array()</code> with a 0-length <code>dim</code> argument is
 deprecated with a warning (and was contrary to the documentation).
@@ -295,7 +561,7 @@ explicitly.
 </p>
 </li>
 <li><p> Entry point <code>rcont2</code> is no longer part of the API, and
-will move to package <span class="pkg">stats</span> in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.16.0.
+will move to package <span class="pkg">stats</span> in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0.
 </p>
 </li>
 <li><p> The &lsquo;internal&rsquo; graphics device invoked by
@@ -328,7 +594,6 @@ package <span class="pkg">methods</span> are on a help page describing them as
 <h4>PACKAGE INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> For a Windows or Mac OS X binary package install,
 <code>install.packages()</code> will check if a source package is
@@ -353,7 +618,6 @@ version should be installed).
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> There is a new <CODE>configure</CODE> option
 <span class="option">--with-libtiff</span> (mainly in case the system installation
@@ -372,7 +636,6 @@ needs to be avoided).
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -447,7 +710,7 @@ stack and crash <font face="Courier New,Courier" color="#666666"><b>R</b></font>
 </li>
 <li><p> When given a 0-byte file and asked to keep source
 references, <code>parse()</code> read input from <code>stdin()</code>
-instead.      
+instead.
 </p>
 </li>
 <li> <p><code>pdf(compress = TRUE)</code> did not delete temporary files
@@ -463,20 +726,20 @@ to a multiple-response linear model.  (<a href="https://bugs.R-project.org/bugzi
 </p>
 </li>
 <li> <p><code>qgeom()</code> could return <code>-1</code> for extremely small
-<code>q</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14967">PR#14967</a>.)
+<code>q</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14967">PR#14967</a>)
 </p>
 </li>
 <li> <p><code>smooth.spline()</code> used <code>DUP = FALSE</code> which allowed
 its compiled C code to change the function: this was masked by the
-default byte-compilation. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14965">PR#14965</a>.)
+default byte-compilation. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14965">PR#14965</a>)
 </p>
 </li>
-<li><p> In Windows, the GUI preferences for foreground color were 
+<li><p> In Windows, the GUI preferences for foreground color were
 not always respected.  (Reported by Benjamin Wells.)
 </p>
 </li>
 <li><p> On OS X, the Quartz versions of the bitmap devices did not
-respect <code>antialias = "none"</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15006">PR#15006</a>.)
+respect <code>antialias = "none"</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15006">PR#15006</a>)
 </p>
 </li>
 <li> <p><code>unique()</code> and similar would infinite-loop if called on
@@ -529,7 +792,7 @@ a &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file incorrectly contains 
 </p>
 </li>
 <li> <p><code>install.packages(type = "both")</code> could call
-<code>chooseCRANmirror()</code> twice.      
+<code>chooseCRANmirror()</code> twice.
 </p>
 </li>
 <li> <p><code>lm.wfit()</code> could segfault in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.15.1 if all the
@@ -556,11 +819,11 @@ Michael Lawrence).
 </p>
 </li>
 <li><p> The detection of the C stack direction is better protected
-against compiler optimization. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15011">PR#15011</a>.)
+against compiler optimization. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15011">PR#15011</a>)
 </p>
 </li>
 <li><p> Long custom line types would sometimes segfault on the
-cairographics-based devices. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15055">PR#15055</a>.)
+cairographics-based devices. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15055">PR#15055</a>)
 </p>
 </li>
 <li> <p><code>tools::checkPoFile()</code> unprotected too early in its C
@@ -587,8 +850,8 @@ corner cases (in part, <a href="https://bugs.R-project.org/bugzilla3/show_bug.cg
 models included an offset. (Reported by Søren Feodor Nielsen.)
 </p>
 </li>
-<li> <p><code>as.data.frame.matrix()</code> could return invalid data 
-frame with no <code>row.names</code> attribute for 0-row matrix. (Reported 
+<li> <p><code>as.data.frame.matrix()</code> could return invalid data
+frame with no <code>row.names</code> attribute for 0-row matrix. (Reported
 by Hervé Pagès.)
 </p>
 </li>
@@ -605,9 +868,7 @@ likely to be successful.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -684,7 +945,6 @@ the call to the closure and not that of the <code>.Internal</code>.
 <h4>PERFORMANCE IMPROVEMENTS</h4>
 
 
-
 <ul>
 <li><p> In package <span class="pkg">parallel</span>, <code>makeForkCluster()</code> and the
 multicore-based functions use native byte-order for serialization
@@ -726,7 +986,6 @@ functions such as <code>names()</code>, <code>attr()</code> and
 <h4>DEPRECATED AND DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> The converters for use with <code>.C()</code> (see
 <code>?getCConverterDescriptions</code>) are deprecated: use the
@@ -739,7 +998,6 @@ functions such as <code>names()</code>, <code>attr()</code> and
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -756,7 +1014,6 @@ variable <span class="env">R_WIN_NO_JUNCTIONS</span> to a non-empty value (e.g. 
 
 
 <h4>INSTALLATION</h4>
-
 
 
 <ul>
@@ -777,7 +1034,6 @@ for undeclared packages).
 <h4>C-LEVEL FACILITIES</h4>
 
 
-
 <ul>
 <li><p> C entry points <code>mkChar</code> and <code>mkCharCE</code> now check
 that the length of the string they are passed does not exceed
@@ -795,7 +1051,6 @@ debuggers access to the source references on the stack.
 
 
 <h4>WINDOWS-SPECIFIC CHANGES</h4>
-
 
 
 <ul>
@@ -820,7 +1075,6 @@ ignored.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -1030,9 +1284,7 @@ level combinations for the special case where all
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -1049,7 +1301,6 @@ junctions and symbolic links).
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -1259,7 +1510,6 @@ points than the degree.  (Requested by John Fox.)
 <h4>PACKAGE parallel</h4>
 
 
-
 <ul>
 <li><p> There is a new function <code>mcmapply()</code>, a parallel version
 of <code>mapply()</code>, and a wrapper <code>mcMap()</code>, a parallel
@@ -1290,7 +1540,6 @@ all big-endian).
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -1346,7 +1595,6 @@ test load on Unix-alikes as well as on Windows: suppress with
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -1422,7 +1670,6 @@ stale) &lsquo;<span class="file">MD5</span>&rsquo; file is removed.
 <h4>DEPRECATED AND DEFUNCT</h4>
 
 
-
 <ul>
 <li> <p><CODE>R CMD Rd2dvi</CODE> is now defunct: use <CODE>R CMD Rd2pdf</CODE>.
 </p>
@@ -1479,7 +1726,6 @@ rare cases where it is still needed.
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> Building with a positive value of
 <span class="option">--with-valgrind-instrumentation</span> now also instruments logical,
@@ -1491,7 +1737,6 @@ complex and raw vectors.
 
 
 <h4>C-LEVEL FACILITIES</h4>
-
 
 
 <ul>
@@ -1515,7 +1760,6 @@ documented and should not be used for new code.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -1606,11 +1850,11 @@ are now consistently using single brackets.
 </p>
 </li>
 <li><p> Closed the <span class="samp">&lt;li&gt;</span> tag in pages generated by <code>
-      Rd2HTML()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14841">PR#14841</a>.)
+      Rd2HTML()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14841">PR#14841</a>)
 </p>
 </li>
 <li><p> Axis tick marks could go out of range when a log scale was
-used.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14833">PR#14833</a>.)
+used.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14833">PR#14833</a>)
 </p>
 </li>
 <li><p> Signature objects in methods were not allocated as S4
@@ -1625,9 +1869,7 @@ objects (caused a problem with <code>trace()</code> reported by Martin Morgan).
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -1670,7 +1912,6 @@ with zero weight.  (Reported by Berwin Turlach.)
 <h4>UTILITIES</h4>
 
 
-
 <ul>
 <li> <p><CODE>R CMD check</CODE> now reports by default on licenses not
 according to the description in &lsquo;Writing R Extensions&rsquo;.
@@ -1686,7 +1927,6 @@ checks.
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -1707,7 +1947,6 @@ to <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.13.0.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -1834,9 +2073,7 @@ package installs going on in parallel.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -1895,7 +2132,6 @@ previously it might have generated invalid graphics files
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> On 64-bit Linux systems, <CODE>configure</CODE> now only sets
 <span class="samp">LIBnn</span> to <code>lib64</code> if &lsquo;<span class="file">/usr/lib64</span>&rsquo; exists.  This
@@ -1919,7 +2155,6 @@ warning, since it is needed for high-quality rendering of manuals).
 <h4>PACKAGE INSTALLATION</h4>
 
 
-
 <ul>
 <li> <p><CODE>R CMD INSTALL</CODE> will now do a test load for all
 sub-architectures for which code was compiled (rather than just
@@ -1931,7 +2166,6 @@ the primary sub-architecture).
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -1947,7 +2181,6 @@ expect their examples to be run in a clean directory ....
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -2056,9 +2289,7 @@ duplicate description sections were present.
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -2131,7 +2362,6 @@ satisfy the documented behavior and be consistent.
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -2613,7 +2843,6 @@ the extension will select a suitable mode.
 <h4>GRAPHICS DEVICES</h4>
 
 
-
 <ul>
 <li><p> The <code>pdf()</code> device makes use of Flate compression: this
 is controlled by the new logical argument <code>compress</code>, and is
@@ -2734,7 +2963,6 @@ so the argument is no longer used.
 <h4>SWEAVE &amp; VIGNETTES</h4>
 
 
-
 <ul>
 <li><p> Options <code>keep.source = TRUE, figs.only = FALSE</code>
 are now the default.
@@ -2797,7 +3025,6 @@ function.)
 <h4>C-LEVEL FACILITIES</h4>
 
 
-
 <ul>
 <li><p> Function <code>R_tmpnam2</code> has been added to the API to allow
 a temporary filename to include a specified extension.
@@ -2808,7 +3035,6 @@ a temporary filename to include a specified extension.
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -2869,7 +3095,6 @@ been preferred).
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -2949,7 +3174,6 @@ was the undocumented behaviour prior to <font face="Courier New,Courier" color="
 <h4>DEPRECATED AND DEFUNCT</h4>
 
 
-
 <ul>
 <li> <p><code>require()</code> no longer has a <code>save</code> argument.
 </p>
@@ -3011,7 +3235,6 @@ to the help page) is deprecated.  This also applies to
 <code>library.dynam.unload()</code> and <code>useDynLib</code> directives in
 &lsquo;<span class="file">NAMESPACE</span>&rsquo; files.
 </p>
-
 </li>
 <li><p> It is deprecated to use <code>mean(x)</code> and <code>sd(x)</code>
 directly on data frames (or also matrices, for <code>sd</code>)
@@ -3036,7 +3259,6 @@ lazy-loaded.
 
 
 <h4>INSTALLATION</h4>
-
 
 
 <ul>
@@ -3106,7 +3328,6 @@ variables instead) or site configuration settings.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -3266,9 +3487,7 @@ setting.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -3328,7 +3547,6 @@ symbol recognition issue.
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> It is possible to build in &lsquo;<span class="file">src/extra/xdr</span>&rsquo; on more
 platforms.  (Needed since glibc 2.14 hides its RPC implementation.)
@@ -3347,7 +3565,6 @@ Manual&rsquo;.
 <h4>PACKAGE INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> Using a broad <code>exportPattern</code> directive in a
 &lsquo;<span class="file">NAMESPACE</span>&rsquo; file is no longer allowed to export internal
@@ -3361,7 +3578,6 @@ objects such as <code>.onLoad</code> and <code>.__S3MethodsTable__.</code> .
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -3469,9 +3685,7 @@ vectors.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -3537,7 +3751,6 @@ errors such as calling <code>double(x)</code> instead of
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> Building the vignette PDFs in packages <span class="pkg">grid</span> and
 <span class="pkg">utils</span> is now part of running <CODE>make</CODE> from an SVN
@@ -3563,7 +3776,6 @@ objects/DLLs) to be installed in a multi-architecture setting.
 
 
 <h4>SWEAVE &amp; VIGNETTES</h4>
-
 
 
 <ul>
@@ -3610,7 +3822,6 @@ file.
 <h4>LICENCE</h4>
 
 
-
 <ul>
 <li><p> No parts of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are now licensed solely under GPL-2.  The
 licences for packages <a href="http://CRAN.R-project.org/package=rpart"><span class="pkg">rpart</span></a> and <a href="http://CRAN.R-project.org/package=survival"><span class="pkg">survival</span></a> have been
@@ -3623,7 +3834,6 @@ are GPL-2 | GPL-3.
 
 
 <h4>DEPRECATED AND DEFUNCT</h4>
-
 
 
 <ul>
@@ -3649,7 +3859,6 @@ deprecated.  In future all packages will be lazy-loaded.
 <h4>UTILITIES</h4>
 
 
-
 <ul>
 <li> <p><CODE>R CMD check</CODE> on a multi-architecture installation now
 skips the user's &lsquo;<span class="file">.Renviron</span>&rsquo; file for the
@@ -3669,7 +3878,6 @@ per-package overrides.  See &lsquo;Writing R Extensions&rsquo;.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -3787,9 +3995,7 @@ for raster images (in <font face="Courier New,Courier" color="#666666"><b>R</b><
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -3809,7 +4015,6 @@ This affects <EM>many</EM> &lsquo;<span class="file">*.Rout.save</span>&rsquo; c
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -4327,7 +4532,6 @@ have an unnamed first argument.
 <h4>SWEAVE CHANGES</h4>
 
 
-
 <ul>
 <li> <p><code>Sweave()</code> has options to produce PNG and JPEG figures,
 and to use a custom function to open a graphics device (see
@@ -4360,7 +4564,6 @@ Maindonald and others.)
 <h4>C-LEVEL FACILITIES</h4>
 
 
-
 <ul>
 <li><p> Because they use a C99 interface which a C++ compiler is not
 required to support, <code>Rvprintf</code> and <code>REvprintf</code> are only
@@ -4391,7 +4594,6 @@ protection issues.
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -4492,7 +4694,6 @@ file to &lsquo;<span class="file">inst/doc/Makefile</span>&rsquo;.
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> Installing <font face="Courier New,Courier" color="#666666"><b>R</b></font> no longer tries to find <CODE>perl</CODE>, and
 <CODE>R CMD</CODE> no longer tries to substitute a full path for
@@ -4540,7 +4741,6 @@ it to be more widely used in later versions of <font face="Courier New,Courier" 
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -4607,7 +4807,6 @@ allowed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14
 
 
 <h4>DEPRECATED &amp; DEFUNCT</h4>
-
 
 
 <ul>
@@ -4684,7 +4883,6 @@ fields).
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -4814,9 +5012,7 @@ zero rows.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -4832,7 +5028,6 @@ often defeated the code.)
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -4880,9 +5075,7 @@ macro was used.
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -4907,7 +5100,6 @@ on systems using <span class="samp">zlib 1.2.5</span>: see the INSTALLATION sect
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -4946,7 +5138,6 @@ Extensions&rsquo;.
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> The <span class="samp">zlib</span> sources in the distribution are now built
 with all symbols remapped: this is intended to avoid problems seen
@@ -4965,7 +5156,6 @@ with packages such as <a href="http://CRAN.R-project.org/package=XML"><span clas
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -4994,7 +5184,6 @@ from <code>Sweave</code> runs, and are often large.
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> The &lsquo;experimental&rsquo; alternative specification of a
 namespace via <code>.Export()</code> etc is now deprecated.
@@ -5015,7 +5204,6 @@ superseded it.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -5178,9 +5366,7 @@ Charlie Roosen.)
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -5226,7 +5412,6 @@ two seasons.  (Reported by Birgit Erni.)
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> The PDF reference manual is now built as PDF version 1.5
 with object compression, which on platforms for which this is not
@@ -5243,7 +5428,6 @@ with the Fortran 9x compiler.  (Needed with Solaris Studio 12.2.)
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -5419,9 +5603,7 @@ clipboard failed.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -5868,7 +6050,6 @@ additional quotes in, e.g., <code>TAR = "'/path with spaces/mytar'"</code>.
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> Supplying the parser with a character string containing both
 octal/hex and Unicode escapes is now an error.
@@ -5904,7 +6085,6 @@ removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.13
 <h4>PACKAGE INSTALLATION</h4>
 
 
-
 <ul>
 <li> <p><code>install.packages()</code> has a new argument
 <code>libs_only</code> to optionally pass <span class="option">--libs-only</span> to
@@ -5934,7 +6114,6 @@ restored unless <span class="option">--no-lock</span> is specified.
 
 
 <h4>UTILITIES</h4>
-
 
 
 <ul>
@@ -6015,7 +6194,6 @@ the environment setting of <span class="env">R_LIBS</span> will always be used.
 <h4>C-LEVEL FACILITIES</h4>
 
 
-
 <ul>
 <li> <p><code>lang5()</code> and <code>lang6()</code> (in addition to
 pre-existing <code>lang[1-4]()</code>) convenience functions for easier
@@ -6039,7 +6217,6 @@ respectively if included from a C++ source file.
 
 
 <h4>INSTALLATION</h4>
-
 
 
 <ul>
@@ -6086,7 +6263,6 @@ version.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -6329,9 +6505,7 @@ list.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -6357,7 +6531,6 @@ is used.
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> The use of Perl configuration variables for <CODE>R CMD
 	check</CODE> (as previously documented in &lsquo;Writing R
@@ -6371,7 +6544,6 @@ instead.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -6485,9 +6657,7 @@ were different but so close as to print identically.
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -6511,7 +6681,6 @@ multiple fitted models, analogously to <code>AIC()</code>.
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> Use of file extension &lsquo;<span class="file">.C</span>&rsquo; for C++ code in packages is now
 deprecated: it has caused problems for some <CODE>make</CODE>s on
@@ -6524,7 +6693,6 @@ with the recommended toolkits).
 
 
 <h4>INSTALLATION</h4>
-
 
 
 <ul>
@@ -6540,7 +6708,6 @@ reported to produce archives with illegal extensions to tar
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -6669,9 +6836,7 @@ longer segfaults. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -6703,7 +6868,6 @@ is now <code>quartz()</code> and not <code>X11()</code>.
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -7155,7 +7319,6 @@ than Pango (at least on Mac OS X).
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> Bundles of packages are defunct.
 </p>
@@ -7205,7 +7368,6 @@ now gives a warning and will become an error in <font face="Courier New,Courier"
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> UTF-8 is now used for the reference manual and package
 manuals.  This requires LaTeX &lsquo;2005/12/01&rsquo; or later.
@@ -7225,7 +7387,6 @@ to cause <CODE>Rdiff</CODE> to malfunction.
 
 
 <h4>PACKAGE INSTALLATION</h4>
-
 
 
 <ul>
@@ -7256,7 +7417,6 @@ building the DLL.  (Note: this can be any DLL, not just one named
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -7444,9 +7604,7 @@ message.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=13936">
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -7488,7 +7646,6 @@ character of a news section.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -7637,9 +7794,7 @@ undeclared dependence on <span class="pkg">methods</span> (introduced in 2.10.0)
 
 
 
-
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -7677,7 +7832,6 @@ Windows <code>select.list()</code> widget).
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li> <p><CODE>configure</CODE> will be able to find a usable
 <code>libtiff</code> in some rare circumstances where it did not
@@ -7696,7 +7850,6 @@ with <code>hyperref 6.79d</code> and later.
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li><p> The <code>extended</code> argument is deprecated in
 <code>strsplit()</code>, <code>grep()</code>, <code>grepl()</code>, <code>sub()</code>,
@@ -7710,7 +7863,6 @@ the value <code>extended = FALSE</code>) and will be removed in <font face="Cour
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>
@@ -7908,9 +8060,7 @@ specified.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14113
 
 
 
-
 <h4>SIGNIFICANT USER-VISIBLE CHANGES</h4>
-
 
 
 <ul>
@@ -7968,7 +8118,6 @@ has been much ignored).
 
 
 <h4>NEW FEATURES</h4>
-
 
 
 <ul>
@@ -8381,7 +8530,6 @@ already did).
 <h4>REGULAR EXPRESSIONS</h4>
 
 
-
 <ul>
 <li><p> A different regular expression engine is used for basic and
 extended regexps and is also for approximate matching.  This is
@@ -8446,7 +8594,6 @@ and should be consulted for details of the new implementations.
 
 
 <h4>HELP &amp; Rd FILE CHANGES</h4>
-
 
 
 <ul>
@@ -8555,7 +8702,6 @@ a quoted string in <font face="Courier New,Courier" color="#666666"><b>R</b></fo
 <h4>COMPRESSION</h4>
 
 
-
 <ul>
 <li><p> New function <code>untar()</code> to list or unpack tar archives,
 possibly compressed.  This uses either an external <CODE>tar</CODE>
@@ -8632,7 +8778,6 @@ that compressed files can be specified by file name (rather than
 <h4>DEPRECATED &amp; DEFUNCT</h4>
 
 
-
 <ul>
 <li> <p><code>png(type="cairo1")</code> is defunct: the value is no longer
 recognized.
@@ -8682,7 +8827,6 @@ directories of types other than <code>help</code>.
 <h4>INSTALLATION</h4>
 
 
-
 <ul>
 <li><p> cairo &gt;= 1.2 is now required (1.2.0 was released in July 2006)
 for cairo-based graphics devices (which remain optional).
@@ -8720,7 +8864,6 @@ variable <span class="env">TAR</span> to specify a particular <CODE>tar</CODE> c
 <h4>INTERNATIONALIZATION</h4>
 
 
-
 <ul>
 <li><p> There is some makefile support for adding/updating translations
 in packages: see <code>po/README</code> and &lsquo;Writing R Extensions&rsquo;.
@@ -8734,7 +8877,6 @@ translations in packages: see &lsquo;Writing R Extensions&rsquo;.
 
 
 <h4>BUG FIXES</h4>
-
 
 
 <ul>

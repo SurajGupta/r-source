@@ -1275,12 +1275,13 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
   AC_CACHE_CHECK([for ObjC runtime library], [r_cv_objc_runtime], [
     save_OBJCFLAGS="$OBJCFLAGS"
     save_LIBS="$LIBS"
-    r_cv_objc_runtime=none
+    r_cv_objc_runtime=
     for libobjc in objc objc-gnu objc-lf objc-lf2; do
       LIBS="${save_LIBS} -l${libobjc}"
       #OBJCFLAGS="$OBJCFLAGS $PTHREAD_CFLAGS -fgnu-runtime"
       AC_LINK_IFELSE([
 	AC_LANG_PROGRAM([
+#undef __OBJC2__
 #include <objc/Object.h>
 			], [
   @<:@Object class@:>@;
@@ -1296,7 +1297,7 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
 
   OBJC_LIBS="${r_cv_objc_runtime} ${OBJC_LIBS}"
 
-  if test "${r_cv_objc_runtime}" != none; then
+  if test "z${r_cv_objc_runtime}" != z; then
   AC_CACHE_CHECK([for ObjC runtime style], [r_cv_objc_runtime_style], [
     save_OBJCFLAGS="$OBJCFLAGS"
     save_LIBS="$LIBS"
@@ -1305,6 +1306,8 @@ AC_DEFUN([R_PROG_OBJC_RUNTIME],
     for objc_lookup_class in objc_lookup_class objc_lookUpClass; do
       AC_LINK_IFELSE([
         AC_LANG_PROGRAM([
+/* see PR#15107 */
+#undef __OBJC2__
 #include <objc/objc.h>
 #include <objc/objc-api.h>
 			], [
@@ -1345,7 +1348,9 @@ AC_DEFUN([R_PROG_OBJCXX_WORKS],
 [AC_MSG_CHECKING([whether $1 can compile ObjC++])
 ## we don't use AC_LANG_xx because ObjC++ is not defined as a language (yet)
 ## (the test program is from the gcc test suite)
+## but it needed an #undef (PR#15107)
 cat << \EOF > conftest.mm
+#undef __OBJC2__
 #include <objc/Object.h>
 #include <iostream>
 
@@ -2009,14 +2014,22 @@ if test "${use_libpng}" = yes; then
 fi
 if test "${use_libtiff}" = yes; then
   AC_CHECK_HEADERS(tiffio.h)
-  # may need to resolve jpeg routines
-  AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
   if test "x${ac_cv_header_tiffio_h}" = xyes ; then
+    # may need to resolve jpeg routines
+    AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [${BITMAP_LIBS}])
     if test "x${have_tiff}" = xyes; then
       AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
       BITMAP_LIBS="-ltiff ${BITMAP_LIBS}"
     else
-      have_tiff=no
+      # tiff 4.0.x may need lzma too: SU's static build does
+      unset ac_cv_lib_tiff_TIFFOpen
+      AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no], [-llzma ${BITMAP_LIBS} -llzma])
+      if test "x${have_tiff}" = xyes; then
+        AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
+        BITMAP_LIBS="-ltiff -llzma ${BITMAP_LIBS}"
+      else
+        have_tiff=no
+      fi
     fi
   fi
 fi

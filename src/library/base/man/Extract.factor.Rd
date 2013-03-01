@@ -26,7 +26,7 @@
     character.}
 }
 \value{
-  A factor with the same set of levels as \code{x} unless \code{drop=TRUE}.
+  A factor with the same set of levels as \code{x} unless \code{drop = TRUE}.
 }
 \details{
   When unused levels are dropped the ordering of the remaining levels is
@@ -36,7 +36,7 @@
   assigned with a warning.
   
   Any \code{\link{contrasts}} assigned to the factor are preserved
-  unless \code{drop=TRUE}.
+  unless \code{drop = TRUE}.
 
   The \code{[[} method supports argument \code{exact}.
 }
@@ -45,8 +45,8 @@
 }
 \examples{
 ## following example(factor)
-(ff <- factor(substring("statistics", 1:10, 1:10), levels=letters))
-ff[, drop=TRUE]
+(ff <- factor(substring("statistics", 1:10, 1:10), levels = letters))
+ff[, drop = TRUE]
 factor(letters[7:10])[2:3, drop = TRUE]
 }
 \keyword{category}

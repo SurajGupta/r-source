@@ -1,6 +1,6 @@
 % File src/library/stats/man/xtabs.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -50,7 +50,7 @@ xtabs(formula = ~., data = parent.frame(), subset, sparse = FALSE,
 }
 \details{
   There is a \code{summary} method for contingency table objects created
-  by \code{table} or \code{xtabs(*, sparse=FALSE)}, which gives basic
+  by \code{table} or \code{xtabs(*, sparse = FALSE)}, which gives basic
   information and performs a chi-squared test for independence of
   factors (note that the function \code{\link{chisq.test}} currently
   only handles 2-d tables).
@@ -58,13 +58,16 @@ xtabs(formula = ~., data = parent.frame(), subset, sparse = FALSE,
   If a left hand side is given in \code{formula}, its entries are simply
   summed over the cells corresponding to the right hand side; this also
   works if the lhs does not give counts.
+  
+  For variables in \code{formula} which are factors, \code{exclude}
+  must be specified explicitly; the default exclusions will not be used.  
 }
 \value{
-  By default, when \code{sparse=FALSE},
+  By default, when \code{sparse = FALSE},
   a contingency table in array representation of S3 class \code{c("xtabs",
     "table")}, with a \code{"call"} attribute storing the matched call.
 
-  When \code{sparse=TRUE}, a sparse numeric matrix, specifically an
+  When \code{sparse = TRUE}, a sparse numeric matrix, specifically an
   object of S4 class %\linkS4class{dgTMatrix}
   \code{\link[Matrix:dgTMatrix-class]{dgTMatrix}} from package
   \CRANpkg{Matrix}.
@@ -105,10 +108,10 @@ ftable(xtabs(breaks ~ wool + tension + replicate, data = warpbreaks))
 if(require("Matrix")) {
  ## similar to "nlme"s  'ergoStool' :
  d.ergo <- data.frame(Type = paste0("T", rep(1:4, 9*4)),
-                      Subj = gl(9,4, 36*4))
- print(xtabs(~ Type + Subj, data=d.ergo)) # 4 replicates each
+                      Subj = gl(9, 4, 36*4))
+ print(xtabs(~ Type + Subj, data = d.ergo)) # 4 replicates each
  set.seed(15) # a subset of cases:
- print(xtabs(~ Type + Subj, data=d.ergo[sample(36, 10),], sparse=TRUE))
+ print(xtabs(~ Type + Subj, data = d.ergo[sample(36, 10), ], sparse = TRUE))
 
  ## Hypothetical two level setup:
  inner <- factor(sample(letters[1:25], 100, replace = TRUE))

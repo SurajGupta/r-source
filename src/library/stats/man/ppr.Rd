@@ -21,8 +21,8 @@ ppr(x, \dots)
 \method{ppr}{formula}(formula, data, weights, subset, na.action,
     contrasts = NULL, \dots, model = FALSE)
 
-\method{ppr}{default}(x, y, weights = rep(1,n),
-    ww = rep(1,q), nterms, max.terms = nterms, optlevel = 2,
+\method{ppr}{default}(x, y, weights = rep(1, n),
+    ww = rep(1, q), nterms, max.terms = nterms, optlevel = 2,
     sm.method = c("supsmu", "spline", "gcvspline"),
     bass = 0, span = 0, df = 5, gcvpen = 1, \dots)
 }
@@ -128,7 +128,7 @@ method functions.
 \item{residuals}{the residuals, as a matrix if \code{q > 1}.}
 \item{smod}{internal work array, which includes the ridge functions
   evaluated at the training set points.}
-\item{model}{(only if \code{model=TRUE}) the model frame.}
+\item{model}{(only if \code{model = TRUE}) the model frame.}
 }
 \details{
   The basic method is given by Friedman (1984), and is essentially the
@@ -205,12 +205,12 @@ summary(rock.ppr)
 #    term 1    term 2
 # 1.6079271 0.5460971
 
-par(mfrow=c(3,2))# maybe: , pty="s")
-plot(rock.ppr, main="ppr(log(perm)~ ., nterms=2, max.terms=5)")
-plot(update(rock.ppr, bass=5), main = "update(..., bass = 5)")
-plot(update(rock.ppr, sm.method="gcv", gcvpen=2),
+par(mfrow = c(3,2))   # maybe: , pty = "s")
+plot(rock.ppr, main = "ppr(log(perm)~ ., nterms=2, max.terms=5)")
+plot(update(rock.ppr, bass = 5), main = "update(..., bass = 5)")
+plot(update(rock.ppr, sm.method = "gcv", gcvpen = 2),
      main = "update(..., sm.method=\"gcv\", gcvpen=2)")
-cbind(perm=rock$perm, prediction=round(exp(predict(rock.ppr)), 1))
+cbind(perm = rock$perm, prediction = round(exp(predict(rock.ppr)), 1))
 detach()
 }
 \keyword{regression}

@@ -1,6 +1,6 @@
 % File src/library/stats/man/Fdist.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{FDist}
@@ -39,6 +39,14 @@ rf(n, df1, df2, ncp)
   \code{rf} generates random deviates.
 
   Invalid arguments will result in return value \code{NaN}, with a warning.
+  
+  The length of the result is determined by \code{n} for
+  \code{rf}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \details{
   The F distribution with \code{df1 =} \eqn{n_1}{n1} and \code{df2 =}
@@ -105,12 +113,12 @@ rf(n, df1, df2, ncp)
 \examples{
 ## the density of the square of a t_m is 2*dt(x, m)/(2*x)
 # check this is the same as the density of F_{1,m}
-x <- seq(0.001, 5, len=100)
+x <- seq(0.001, 5, len = 100)
 all.equal(df(x^2, 1, 5), dt(x, 5)/x)
 
 ## Identity:  qf(2*p - 1, 1, df)) == qt(p, df)^2)  for  p >= 1/2
-p <- seq(1/2, .99, length=50); df <- 10
-rel.err <- function(x,y) ifelse(x==y,0, abs(x-y)/mean(abs(c(x,y))))
-\donttest{quantile(rel.err(qf(2*p - 1, df1=1, df2=df), qt(p, df)^2), .90)# ~= 7e-9}
+p <- seq(1/2, .99, length = 50); df <- 10
+rel.err <- function(x, y) ifelse(x == y, 0, abs(x-y)/mean(abs(c(x,y))))
+\donttest{quantile(rel.err(qf(2*p - 1, df1 = 1, df2 = df), qt(p, df)^2), .90)  # ~= 7e-9}
 }
 \keyword{distribution}

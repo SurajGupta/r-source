@@ -47,7 +47,7 @@ anyDuplicated(x, incomparables = FALSE, \dots)
        \code{x}.}
   \item{fromLast}{logical indicating if duplication should be considered
     from the reverse side, i.e., the last (or rightmost) of identical
-    elements would correspond to \code{duplicated=FALSE}.}
+    elements would correspond to \code{duplicated = FALSE}.}
   \item{\dots}{arguments for particular methods.}
   \item{MARGIN}{the array margin to be held fixed: see
     \code{\link{apply}}, and note that \code{MARGIN = 0} maybe useful.}
@@ -58,14 +58,14 @@ anyDuplicated(x, incomparables = FALSE, \dots)
 
   For the default methods, and whenever there are equivalent method
   definitions for \code{duplicated} and \code{anyDuplicated},
-  \code{anyDuplicated(x,...)} is a \dQuote{generalized} shortcut for
-  \code{any(duplicated(x,...))}, in the sense that it returns the
+  \code{anyDuplicated(x, ...)} is a \dQuote{generalized} shortcut for
+  \code{any(duplicated(x, ...))}, in the sense that it returns the
   \emph{index} \code{i} of the first duplicated entry \code{x[i]} if
   there is one, and \code{0} otherwise.  Their behaviours may be
   different when at least one of \code{duplicated} and
   \code{anyDuplicated} has a relevant method.
 
-  \code{duplicated(x, fromLast=TRUE)} is equivalent to but faster than
+  \code{duplicated(x, fromLast = TRUE)} is equivalent to but faster than
   \code{rev(duplicated(rev(x)))}.
 
   The data frame method works by pasting together a character
@@ -75,7 +75,7 @@ anyDuplicated(x, incomparables = FALSE, \dots)
 
   The array method calculates for each element of the sub-array
   specified by \code{MARGIN} if the remaining dimensions are identical
-  to those for an earlier (or later, when \code{fromLast=TRUE}) element
+  to those for an earlier (or later, when \code{fromLast = TRUE}) element
   (in row-major order).  This would most commonly be used to find
   duplicated rows (the default) or columns (with \code{MARGIN = 2}).
   Note that \code{MARGIN = 0} returns an array of the same

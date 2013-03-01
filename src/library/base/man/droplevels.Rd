@@ -15,7 +15,7 @@
   The function \code{droplevels} is used to drop unused levels from a factor or, more commonly, from factors in a data frame.
 }
 \usage{
-\S3method{droplevels}{factor}(x,\dots)
+\S3method{droplevels}{factor}(x, \dots)
 \S3method{droplevels}{data.frame}(x, except, \dots)
 }
 \arguments{
@@ -48,7 +48,7 @@
   \code{\link{[.factor}} for subsetting of factors.
 }
 \examples{
-aq <- transform(airquality, Month=factor(Month,labels=month.abb[5:9]))
+aq <- transform(airquality, Month = factor(Month, labels = month.abb[5:9]))
 aq <- subset(aq, Month != "Jul")
 table(aq$Month)
 table(droplevels(aq)$Month)

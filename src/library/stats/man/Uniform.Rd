@@ -1,27 +1,27 @@
 % File src/library/stats/man/Uniform.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Uniform}
 \alias{Uniform}
 \title{The Uniform Distribution}
 \usage{
-dunif(x, min=0, max=1, log = FALSE)
-punif(q, min=0, max=1, lower.tail = TRUE, log.p = FALSE)
-qunif(p, min=0, max=1, lower.tail = TRUE, log.p = FALSE)
-runif(n, min=0, max=1)
+dunif(x, min = 0, max = 1, log = FALSE)
+punif(q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+qunif(p, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE)
+runif(n, min = 0, max = 1)
 }
 \alias{dunif}
 \alias{punif}
 \alias{qunif}
 \alias{runif}
 \arguments{
-  \item{x,q}{vector of quantiles.}
+  \item{x, q}{vector of quantiles.}
   \item{p}{vector of probabilities.}
   \item{n}{number of observations. If \code{length(n) > 1}, the length
     is taken to be the number required.}
-  \item{min,max}{lower and upper limits of the distribution.  Must be finite.}
+  \item{min, max}{lower and upper limits of the distribution.  Must be finite.}
   \item{log, log.p}{logical; if TRUE, probabilities p are given as log(p).}
   \item{lower.tail}{logical; if TRUE (default), probabilities are
     \eqn{P[X \le x]}, otherwise, \eqn{P[X > x]}.}
@@ -49,6 +49,20 @@ runif(n, min=0, max=1)
   \code{max = min} or \code{max-min} is small compared to \code{min},
   and in particular not for the default arguments.
 }
+\value{
+  \code{dunif} gives the density,
+  \code{punif} gives the distribution function,
+  \code{qunif} gives the quantile function, and
+  \code{runif} generates random deviates.
+  
+  The length of the result is determined by \code{n} for
+  \code{runif}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
+}
 \note{The characteristics of output from pseudo-random number generators
   (such as precision and periodicity) vary widely.  See
   \code{\link{.Random.seed}} for more information on \R's random number
@@ -71,6 +85,6 @@ u <- runif(20)
 punif(u) == u
 dunif(u) == 1
 
-var(runif(10000))#- ~ = 1/12 = .08333
+var(runif(10000))  #- ~ = 1/12 = .08333
 }
 \keyword{distribution}

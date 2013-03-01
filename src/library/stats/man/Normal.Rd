@@ -1,6 +1,6 @@
 % File src/library/stats/man/Normal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Normal}
@@ -28,7 +28,7 @@ qnorm(p, mean = 0, sd = 1, lower.tail = TRUE, log.p = FALSE)
 rnorm(n, mean = 0, sd = 1)
 }
 \arguments{
-  \item{x,q}{vector of quantiles.}
+  \item{x, q}{vector of quantiles.}
   \item{p}{vector of probabilities.}
   \item{n}{number of observations. If \code{length(n) > 1}, the length
     is taken to be the number required.}
@@ -43,6 +43,14 @@ rnorm(n, mean = 0, sd = 1)
   \code{pnorm} gives the distribution function,
   \code{qnorm} gives the quantile function, and
   \code{rnorm} generates random deviates.
+  
+  The length of the result is determined by \code{n} for
+  \code{rnorm}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \details{
   If \code{mean} or \code{sd} are not specified they assume the default
@@ -93,23 +101,23 @@ rnorm(n, mean = 0, sd = 1)
 \examples{
 require(graphics)
 
-dnorm(0) == 1/ sqrt(2*pi)
-dnorm(1) == exp(-1/2)/ sqrt(2*pi)
-dnorm(1) == 1/ sqrt(2*pi*exp(1))
+dnorm(0) == 1/sqrt(2*pi)
+dnorm(1) == exp(-1/2)/sqrt(2*pi)
+dnorm(1) == 1/sqrt(2*pi*exp(1))
 
 ## Using "log = TRUE" for an extended range :
-par(mfrow=c(2,1))
-plot(function(x) dnorm(x, log=TRUE), -60, 50,
+par(mfrow = c(2,1))
+plot(function(x) dnorm(x, log = TRUE), -60, 50,
      main = "log { Normal density }")
-curve(log(dnorm(x)), add=TRUE, col="red",lwd=2)
-mtext("dnorm(x, log=TRUE)", adj=0)
-mtext("log(dnorm(x))", col="red", adj=1)
+curve(log(dnorm(x)), add = TRUE, col = "red", lwd = 2)
+mtext("dnorm(x, log=TRUE)", adj = 0)
+mtext("log(dnorm(x))", col = "red", adj = 1)
 
-plot(function(x) pnorm(x, log.p=TRUE), -50, 10,
+plot(function(x) pnorm(x, log.p = TRUE), -50, 10,
      main = "log { Normal Cumulative }")
-curve(log(pnorm(x)), add=TRUE, col="red",lwd=2)
-mtext("pnorm(x, log=TRUE)", adj=0)
-mtext("log(pnorm(x))", col="red", adj=1)
+curve(log(pnorm(x)), add = TRUE, col = "red", lwd = 2)
+mtext("pnorm(x, log=TRUE)", adj = 0)
+mtext("log(pnorm(x))", col = "red", adj = 1)
 
 ## if you want the so-called 'error function'
 erf <- function(x) 2 * pnorm(x * sqrt(2)) - 1

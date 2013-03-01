@@ -13,8 +13,9 @@
 }
 \usage{ChickWeight}
 \format{
-  This object of class \code{c("nfnGroupedData", "nfGroupedData",
-    "groupedData", "data.frame")} containing the following columns:
+  An object of class
+  \code{c("nfnGroupedData", "nfGroupedData", "groupedData", "data.frame")}
+  containing the following columns:
   \describe{
     \item{weight}{
       a numeric vector giving the body weight of the chick (gm).
@@ -32,7 +33,7 @@
       heaviest) within diet.
     }
     \item{Diet}{
-      a factor with levels 1,\dots,4 indicating which
+      a factor with levels 1, \dots, 4 indicating which
       experimental diet the chick received.
     }
   }

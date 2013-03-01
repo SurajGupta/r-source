@@ -1,6 +1,6 @@
 % File src/library/base/man/cbind.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{cbind}
@@ -29,7 +29,7 @@ rbind(\dots, deparse.level = 1)
     arguments to \code{\link{data.frame}} such as \code{stringsAsFactors}.)}
   \item{deparse.level}{integer controlling the construction of labels in
     the case of non-matrix-like arguments (for the default method):\cr
-    \code{deparse.level = 0} constructs no labels; the default,
+    \code{deparse.level = 0} constructs no labels; the default,\cr
     \code{deparse.level = 1 or 2} constructs labels from the argument
     names, see the \sQuote{Value} section below.}
 }
@@ -91,7 +91,7 @@ rbind(\dots, deparse.level = 1)
   the inputs are \code{NULL}, the value is \code{NULL}.)
 
   The type of a matrix result determined from the highest type of any of
-  the inputs in the hierarchy raw < logical < integer < real < complex <
+  the inputs in the hierarchy raw < logical < integer < double < complex <
   character < list .
 
   For \code{cbind} (\code{rbind}) the column (row) names are taken from
@@ -150,21 +150,21 @@ m <- cbind(1, 1:7) # the '1' (= shorter vector) is recycled
 m
 m <- cbind(m, 8:14)[, c(1, 3, 2)] # insert a column
 m
-cbind(1:7, diag(3))# vector is subset -> warning
+cbind(1:7, diag(3)) # vector is subset -> warning
 
 cbind(0, rbind(1, 1:3))
-cbind(I=0, X=rbind(a=1, b=1:3))  # use some names
-xx <- data.frame(I=rep(0,2))
-cbind(xx, X=rbind(a=1, b=1:3))   # named differently
+cbind(I = 0, X = rbind(a = 1, b = 1:3))  # use some names
+xx <- data.frame(I = rep(0,2))
+cbind(xx, X = rbind(a = 1, b = 1:3))   # named differently
 
-cbind(0, matrix(1, nrow=0, ncol=4))#> Warning (making sense)
-dim(cbind(0, matrix(1, nrow=2, ncol=0)))#-> 2 x 1
+cbind(0, matrix(1, nrow = 0, ncol = 4)) #> Warning (making sense)
+dim(cbind(0, matrix(1, nrow = 2, ncol = 0))) #-> 2 x 1
 
 ## deparse.level
 dd <- 10
-rbind(1:4, c=2, "a++" = 10, dd, deparse.level=0)# middle 2 rownames
-rbind(1:4, c=2, "a++" = 10, dd, deparse.level=1)# 3 rownames (default)
-rbind(1:4, c=2, "a++" = 10, dd, deparse.level=2)# 4 rownames
+rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 0) # middle 2 rownames
+rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 1) # 3 rownames (default)
+rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 2) # 4 rownames
 }
 \keyword{array}
 \keyword{manip}

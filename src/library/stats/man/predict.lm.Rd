@@ -1,6 +1,6 @@
 % File src/library/stats/man/predict.lm.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{predict.lm}
@@ -28,7 +28,8 @@
   \item{interval}{Type of interval calculation.}
   \item{level}{Tolerance/confidence level}
   \item{type}{Type of prediction (response or model term).}
-  \item{terms}{If \code{type="terms"}, which terms (default is all terms)}
+  \item{terms}{If \code{type = "terms"}, which terms (default is all
+    terms), a \code{\link{character}} vector.}
   \item{na.action}{function determining what should be done with missing
     values in \code{newdata}.  The default is to predict \code{NA}.}
   \item{pred.var}{the variance(s) for future observations to be assumed
@@ -57,11 +58,11 @@
 
   If \code{newdata} is omitted the predictions are based on the data
   used for the fit.  In that case how cases with missing values in the
-  original fit is determined by the \code{na.action} argument of that
+  original fit are handled is determined by the \code{na.action} argument of that
   fit.  If \code{na.action = na.omit} omitted cases will not appear in
-  the residuals, whereas if \code{na.action = na.exclude} they will
+  the predictions, whereas if \code{na.action = na.exclude} they will
   appear (in predictions, standard errors or interval limits),
-  with residual value \code{NA}.  See also \code{\link{napredict}}.
+  with value \code{NA}.  See also \code{\link{napredict}}.
 
   The prediction intervals are for a single observation at each case in
   \code{newdata} (or by default, the data used for the fit) with error
@@ -79,7 +80,11 @@
 \value{
   \code{predict.lm} produces a vector of predictions or a matrix of
   predictions and bounds with column names \code{fit}, \code{lwr}, and
-  \code{upr} if \code{interval} is set.  If \code{se.fit} is
+  \code{upr} if \code{interval} is set.  For \code{type = "terms"} this
+  is a matrix with a column per term and may have an attribute
+  \code{"constant"}.
+
+  If \code{se.fit} is
   \code{TRUE}, a list with the following components is returned:
   \item{fit}{vector or matrix as above}
   \item{se.fit}{standard error of predicted means}
@@ -117,10 +122,10 @@ y <- x + rnorm(15)
 predict(lm(y ~ x))
 new <- data.frame(x = seq(-3, 3, 0.5))
 predict(lm(y ~ x), new, se.fit = TRUE)
-pred.w.plim <- predict(lm(y ~ x), new, interval="prediction")
-pred.w.clim <- predict(lm(y ~ x), new, interval="confidence")
-matplot(new$x,cbind(pred.w.clim, pred.w.plim[,-1]),
-        lty=c(1,2,2,3,3), type="l", ylab="predicted y")
+pred.w.plim <- predict(lm(y ~ x), new, interval = "prediction")
+pred.w.clim <- predict(lm(y ~ x), new, interval = "confidence")
+matplot(new$x, cbind(pred.w.clim, pred.w.plim[,-1]),
+        lty = c(1,2,2,3,3), type = "l", ylab = "predicted y")
 
 ## Prediction intervals, special cases
 ##  The first three of these throw warnings

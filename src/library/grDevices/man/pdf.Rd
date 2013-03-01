@@ -84,7 +84,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
     font is one of the 14 guaranteed to be available in all PDF viewers,
     that guarantee is not always honoured.
 #ifdef unix
-    See the \sQuote{Note} for a possible fix for such viewers.
+    See the \sQuote{Note} for a possible fix for some viewers.
 #endif
     }
   \item{useKerning}{logical.  Should kerning corrections be included in
@@ -116,7 +116,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   \code{fonts} argument.
 
   If a device-independent \R graphics font family is specified (e.g., via
-  \code{par(family=)} in the graphics package), the PDF device makes use
+  \code{par(family = )} in the graphics package), the PDF device makes use
   of the PostScript font mappings to convert the \R graphics font family
   to a PDF-specific font family description.  (See the
   documentation for \code{\link{pdfFonts}}.)
@@ -159,8 +159,8 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   supported by Acrobat 5 in 2001; it is very unlikely not to be
   supported in a current viewer.)
 
-  Line widths as controlled by \code{par(lwd=)} are in multiples of
-  1/96 inch.  Multiples less than 1 are allowed.  \code{pch="."} with
+  Line widths as controlled by \code{par(lwd = )} are in multiples of
+  1/96 inch.  Multiples less than 1 are allowed.  \code{pch = "."} with
   \code{cex = 1} corresponds to a square of side 1/72 inch, which is
   also the \sQuote{pixel} size assumed for graphics parameters such as
   \code{"cra"}.
@@ -173,7 +173,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
   than \code{0.1} or too large to give a total margin of 0.5 inch, it is
   reset to the corresponding paper dimension minus 0.5.  Thus if you
   want the default behaviour of \code{\link{postscript}} use
-  \code{pdf(paper="a4r", width=0, height=0)} to centre the device region
+  \code{pdf(paper = "a4r", width = 0, height = 0)} to centre the device region
   on a landscape A4 page with 0.25 inch margins.
 
   When the background colour is fully transparent (as is the initial
@@ -222,9 +222,7 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 \section{Printing}{
   Except on Windows it is possible to print directly from \code{pdf} by
   something like (this is appropriate for a CUPS printing system):
-\preformatted{
-    pdf("|lp -o landscape", paper = "a4r")
-}
+\preformatted{    pdf("|lp -o landscape", paper = "a4r")}
   This forces \code{onefile = TRUE}.
 }
 
@@ -249,19 +247,17 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 
   Acrobat Reader can be extended by \sQuote{font packs}, and these will
   be needed for the full use of encodings other than Latin-1 (although
-  they may be downloaded as needed).  See
-  \url{http://www.adobe.com/downloads/updates} for Reader 9 and X, and
-  \url{http://www.adobe.com/products/acrobat/acrrasianfontpack.html} for
-  Reader 6 to 8.
+  they may be offered for download as needed).
 
 #ifdef unix
-  On some systems the default plotting character \code{pch = 1} is
+  On some systems the default plotting character \code{pch = 1} was
   displayed in some PDF viewers incorrectly as a \code{"q"}
   character.  (These seem to be viewers based on the \samp{poppler} PDF
   rendering library).  This may be due to incorrect or incomplete mapping
   of font names to those used by the system.  Adding the following lines
   to \file{~/.fonts.conf} or \file{/etc/fonts/local.conf} may circumvent
-  this problem.
+  this problem, although this has largely been corrected on the affected
+  systems.
 \preformatted{<fontconfig>    
 <alias binding="same">
   <family>ZapfDingbats</family>
@@ -275,11 +271,15 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 #endif
 #ifdef windows
   The TeXworks PDF viewer is one of those which has been seen to fail to
-  display Dingbats correctly.  Whereas on other platforms the problems
-  seen are incorrect output, on Windows points are silently omitted.  One
-  workaround is to use the argument \code{useDingbats = FALSE}: another
-  it to use a better PDF viewer.
+  display Dingbats (used \code{pch = 1}) correctly.  Whereas on
+  other platforms the problems seen were incorrect output, on Windows
+  points were silently omitted: however recent versions seem to manage
+  to display Dingbats.
 #endif
+
+  There is a different font bug in the \command{pdf.js} viewer included
+  in Firefox 19: that maps Dingbats to the Symbol font and so displays
+  \code{pch = 1} as lambda.
 }
 
 \seealso{
@@ -307,25 +307,25 @@ pdf(file = ifelse(onefile, "Rplots.pdf", "Rplot\%03d.pdf"),
 \examples{
 \dontrun{
 ## Test function for encodings
-TestChars <- function(encoding="ISOLatin1", ...)
+TestChars <- function(encoding = "ISOLatin1", ...)
 {
-    pdf(encoding=encoding, ...)
-    par(pty="s")
-    plot(c(-1,16), c(-1,16), type="n", xlab="", ylab="",
-         xaxs="i", yaxs="i")
+    pdf(encoding = encoding, ...)
+    par(pty = "s")
+    plot(c(-1,16), c(-1,16), type = "n", xlab = "", ylab = "",
+         xaxs = "i", yaxs = "i")
          title(paste("Centred chars in encoding", encoding))
-    grid(17, 17, lty=1)
+    grid(17, 17, lty = 1)
     for(i in c(32:255)) {
         x <- i \%\% 16
         y <- i \%/\% 16
-        points(x, y, pch=i)
+        points(x, y, pch = i)
     }
     dev.off()
 }
 ## there will be many warnings.
 TestChars("ISOLatin2")
 ## this does not view properly in older viewers.
-TestChars("ISOLatin2", family="URWHelvetica")
+TestChars("ISOLatin2", family = "URWHelvetica")
 ## works well for viewing in gs-based viewers, and often in xpdf.
 }}
 \keyword{device}

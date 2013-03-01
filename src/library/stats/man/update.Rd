@@ -21,7 +21,7 @@ getCall(x, \dots)
  \item{formula.}{Changes to the formula -- see \code{update.formula} for
    details.}
  \item{\dots}{Additional arguments to the call, or arguments with
-   changed values. Use \code{name=NULL} to remove the argument \code{name}.}
+   changed values. Use \code{name = NULL} to remove the argument \code{name}.}
  \item{evaluate}{If true evaluate the new call else return the call.}
 }
 \description{
@@ -64,7 +64,7 @@ lm.D9
 summary(lm.D90 <- update(lm.D9, . ~ . - 1))
 options(contrasts = c("contr.helmert", "contr.poly"))
 update(lm.D9)
-getCall(lm.D90)# "through the origin"
+getCall(lm.D90)  # "through the origin"
 
 options(oldcon)
 }

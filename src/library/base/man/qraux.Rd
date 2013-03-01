@@ -8,7 +8,7 @@
 \usage{
 qr.X(qr, complete = FALSE, ncol =)
 qr.Q(qr, complete = FALSE, Dvec =)
-qr.R(qr, complete = FALSE)
+qr.R(qr, complete = FALSE, \dots)
 }
 \alias{qr.X}
 \alias{qr.Q}
@@ -34,6 +34,8 @@ qr.R(qr, complete = FALSE)
   \item{Dvec}{vector (not matrix) of diagonal values.  Each column of
     the returned \eqn{\bold{Q}} will be multiplied by the corresponding
     diagonal value.  Defaults to all \code{1}s.}
+  \item{\dots}{potentially further arguments, passed potentially to
+    non-default methods.}
 }
 \description{
   Returns the original matrix from which the object was constructed or
@@ -63,20 +65,20 @@ qr.R(qr, complete = FALSE)
   \code{\link{qr.qy}}.
 }
 \examples{
-p <- ncol(x <- LifeCycleSavings[,-1]) # not the 'sr'
+p <- ncol(x <- LifeCycleSavings[, -1]) # not the 'sr'
 qrstr <- qr(x)   # dim(x) == c(n,p)
 qrstr $ rank # = 4 = p
 Q <- qr.Q(qrstr) # dim(Q) == dim(x)
 R <- qr.R(qrstr) # dim(R) == ncol(x)
 X <- qr.X(qrstr) # X == x
-range(X - as.matrix(x))# ~ < 6e-12
+range(X - as.matrix(x))  # ~ < 6e-12
 ## X == Q \%*\% R if there has been no pivoting, as here.
 Q \%*\% R
 
 # example of pivoting
 x <- cbind(int = 1,
-           b1=rep(1:0, each=3), b2=rep(0:1, each=3),
-           c1=rep(c(1,0,0), 2), c2=rep(c(0,1,0), 2), c3=rep(c(0,0,1),2))
+           b1 = rep(1:0, each = 3), b2 = rep(0:1, each = 3),
+           c1 = rep(c(1,0,0), 2), c2 = rep(c(0,1,0), 2), c3 = rep(c(0,0,1),2))
 x # is singular, columns "b2" and "c3" are "extra"
 a <- qr(x)
 zapsmall(qr.R(a)) # columns are int b1 c1 c2 b2 c3
@@ -84,8 +86,8 @@ a$pivot
 pivI <- sort.list(a$pivot) # the inverse permutation
 all.equal (x,            qr.Q(a) \%*\% qr.R(a)) # no, no
 stopifnot(
- all.equal(x[, a$pivot], qr.Q(a) \%*\% qr.R(a)),        # TRUE
- all.equal(x           , qr.Q(a) \%*\% qr.R(a)[, pivI]))# TRUE, too!
+ all.equal(x[, a$pivot], qr.Q(a) \%*\% qr.R(a)),          # TRUE
+ all.equal(x           , qr.Q(a) \%*\% qr.R(a)[, pivI]))  # TRUE too!
 }
 \keyword{algebra}
 \keyword{array}

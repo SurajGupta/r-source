@@ -24,7 +24,7 @@ bindtextdomain(domain, dirname = NULL)
   \item{domain}{The \sQuote{domain} for the translation.}
   \item{n}{a non-negative integer.}
   \item{msg1}{the message to be used in English for \code{n = 1}.}
-  \item{msg2}{the message to be used in English for \code{n = 0, 2, 3,\dots}.}
+  \item{msg2}{the message to be used in English for \code{n = 0, 2, 3, \dots}.}
   \item{dirname}{The directory in which to find translated message
     catalogs for the domain.}
 }
@@ -84,14 +84,14 @@ msgstr[1] ""
 
 miss <- c("one", "or", "another")
 cat(ngettext(length(miss), "variable", "variables"),
-    paste(sQuote(miss), collapse=", "),
+    paste(sQuote(miss), collapse = ", "),
     ngettext(length(miss), "contains", "contain"), "missing values\n")
 
 ## better for translators would be to use
 cat(sprintf(ngettext(length(miss),
                      "variable \%s contains missing values\n",
                      "variables \%s contain missing values\n"),
-            paste(sQuote(miss), collapse=", ")))
+            paste(sQuote(miss), collapse = ", ")))
 }
 \keyword{ utilities }
 \keyword{ character }

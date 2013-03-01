@@ -1,6 +1,6 @@
 % File src/library/stats/man/Binomial.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Binomial}
@@ -38,12 +38,20 @@ rbinom(n, size, prob)
   generates random deviates.
 
   If \code{size} is not an integer, \code{NaN} is returned.
+  
+  The length of the result is determined by \code{n} for
+  \code{rbinom}, and is the maximum of the lengths of the
+  numerical parameters for the other functions.  
+  
+  The numerical parameters other than \code{n} are recycled to the
+  length of the result.  Only the first elements of the logical
+  parameters are used.
 }
 \details{
   The binomial distribution with \code{size} \eqn{= n} and
   \code{prob} \eqn{= p} has density
   \deqn{p(x) = {n \choose x} {p}^{x} {(1-p)}^{n-x}}{
-    p(x) = choose(n,x) p^x (1-p)^(n-x)}
+    p(x) = choose(n, x) p^x (1-p)^(n-x)}
   for \eqn{x = 0, \ldots, n}.
   Note that binomial \emph{coefficients} can be computed by
   \code{\link{choose}} in \R.
@@ -88,12 +96,12 @@ sum(dbinom(46:54, 100, 0.5))
 ## Using "log = TRUE" for an extended range :
 n <- 2000
 k <- seq(0, n, by = 20)
-plot (k, dbinom(k, n, pi/10, log=TRUE), type='l', ylab="log density",
+plot (k, dbinom(k, n, pi/10, log = TRUE), type = "l", ylab = "log density",
       main = "dbinom(*, log=TRUE) is better than  log(dbinom(*))")
-lines(k, log(dbinom(k, n, pi/10)), col='red', lwd=2)
+lines(k, log(dbinom(k, n, pi/10)), col = "red", lwd = 2)
 ## extreme points are omitted since dbinom gives 0.
-mtext("dbinom(k, log=TRUE)", adj=0)
-mtext("extended range", adj=0, line = -1, font=4)
-mtext("log(dbinom(k))", col="red", adj=1)
+mtext("dbinom(k, log=TRUE)", adj = 0)
+mtext("extended range", adj = 0, line = -1, font = 4)
+mtext("log(dbinom(k))", col = "red", adj = 1)
 }
 \keyword{distribution}

@@ -19,7 +19,7 @@
   \item{x}{the object to be printed.}
   \item{digits}{a non-null value for \code{digits} specifies the minimum
     number of significant digits to be printed in values.  The default,
-    \code{NULL}, uses \code{\link{getOption}(digits)}.  (For the
+    \code{NULL}, uses \code{\link{getOption}("digits")}.  (For the
     interpretation for complex numbers see \code{\link{signif}}.)
     Non-integer values will be rounded down, and only values
     greater than or equal to 1 and no greater than 22 are accepted.
@@ -36,7 +36,7 @@
     right aligned.  The default is left alignment.}
   \item{max}{a non-null value for \code{max} specifies the approximate
     maximum number of entries to be printed.  The default, \code{NULL},
-    uses \code{\link{getOption}(max.print)}; see that help page for more
+    uses \code{\link{getOption}("max.print")}; see that help page for more
     details.}
   \item{useSource}{logical, indicating whether to use source
     references or copies rather than deparsing language objects.
@@ -141,7 +141,7 @@ print(LETTERS, quote = FALSE)
 
 M <- cbind(I = 1, matrix(1:10000, ncol = 10,
                          dimnames = list(NULL, LETTERS[1:10])))
-utils::head(M) # makes more sense than
-print(M, max = 1000)# prints 90 rows and a message about omitting 910
+utils::head(M)        # makes more sense than
+print(M, max = 1000)  # prints 90 rows and a message about omitting 910
 }
 \keyword{print}

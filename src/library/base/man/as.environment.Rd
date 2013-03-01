@@ -1,6 +1,6 @@
 % File src/library/base/man/as.environment.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{as.environment}
@@ -16,13 +16,14 @@ as.environment(x)
 }
 \arguments{
   \item{x}{an \R object to convert.  If it is already an
-    environment, just return it.  If it is a number, return the
-    environment corresponding to that position on the search list.  If
+    environment, just return it.  If it is a positive number, return the
+    environment corresponding to that position on the search list. If it
+    is \code{-1}, the environment it is called from.  If
     it is a character string, match the string to the names on the
     search list.
 
     If it is a list, the equivalent of \code{\link{list2env}(x,
-      parent=emptyenv())} is returned.
+      parent = emptyenv())} is returned.
 
     If \code{\link{is.object}(x)} is true and it has a \code{\link{class}}
     for which an \code{as.environment} method is found, that is used.

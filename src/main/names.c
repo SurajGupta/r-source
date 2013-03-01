@@ -29,6 +29,7 @@
 #include <Print.h>
 #include "arithmetic.h" /* for do_math[1234], do_cmathfuns */
 
+#define IN_R
 #include <R_ext/RConverters.h>
 
 #include <Rinterface.h>
@@ -485,6 +486,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"as.character",do_ascharacter,	0,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.integer",	do_ascharacter,	1,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.double",	do_ascharacter,	2,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.real",	do_ascharacter,	20,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.complex",	do_ascharacter,	3,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.logical",	do_ascharacter,	4,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.raw",	do_ascharacter,	5,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -547,7 +549,7 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"is.null",	do_is,		NILSXP,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.logical",	do_is,		LGLSXP,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.integer",	do_is,		INTSXP,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"is.real",	do_is,		REALSXP,1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"is.real",	do_is,		67,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.double",	do_is,		REALSXP,1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.complex",	do_is,		CPLXSXP,1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"is.character",do_is,		STRSXP,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -666,16 +668,11 @@ attribute_hidden FUNTAB R_FunTab[] =
 {"useInternet2",do_setInternet2,0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"mkjunction", do_mkjunction,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
-#if defined(__APPLE_CC__) && defined(HAVE_AQUA)
+#if defined(__APPLE__) && defined(HAVE_AQUA)
 // part of utils::browseEnv
 {"wsbrowser",	do_wsbrowser,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"select.list",	do_selectlist,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"flush.console",do_flushconsole,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
-// next four are ued in GUI-tools.R in the R.app sources
-{"pkgbrowser",	do_browsepkgs,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"data.manager",	do_datamanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"package.manager",	do_packagemanger,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
-{"hsbrowser",	do_hsbrowser,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 // used in utils::help and in GUI-tools.R
 {"aqua.custom.print", do_aqua_custom_print, 0, 11, 2,   {PP_FUNCALL, PREC_FN,   0}},
 #endif

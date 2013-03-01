@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997-2009  The R Core Team
+ *  Copyright (C) 1997-2012  The R Core Team
  *  Copyright (C) 2003	     The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,28 +67,28 @@ static unsigned int ScaleColor(double x)
 {
     if (!R_FINITE(x) || x < 0.0 || x > 1.0)
 	error(_("color intensity %g, not in [0,1]"), x);
-    return (unsigned int)(255*x + 0.5);
+    return (unsigned int) (255*x + 0.5);
 }
 
 static unsigned int CheckColor(int x)
 {
     if (x == NA_INTEGER || x < 0 || x > 255)
 	error(_("color intensity %d, not in 0:255"), x);
-    return (unsigned int)x;
+    return (unsigned int) x;
 }
 
 static unsigned int ScaleAlpha(double x)
 {
     if (!R_FINITE(x) || x < 0.0 || x > 1.0)
 	error(_("alpha level %g, not in [0,1]"), x);
-    return (unsigned int)(255*x + 0.5);
+    return (unsigned int) (255*x + 0.5);
 }
 
 static unsigned int CheckAlpha(int x)
 {
     if (x == NA_INTEGER || x < 0 || x > 255)
 	error(_("alpha level %d, not in 0:255"), x);
-    return (unsigned int)x;
+    return (unsigned int) x;
 }
 
 
@@ -385,27 +385,31 @@ SEXP attribute_hidden do_col2RGB(SEXP call, SEXP op, SEXP args, SEXP env)
     if(isString(colors)) {
 	for(i = i4 = 0; i < n; i++, i4 += 4) {
 	    col = str2col(CHAR(STRING_ELT(colors, i)), bg);
-	    if (col == BG_NEEDED)
+	    if (col == BG_NEEDED) {
+		warning("col2rgb(\"0\") is deprecated");
 	    	col = bg = dpptr(GEcurrentDevice())->bg;
-	    icol = (unsigned int)col;
-	    INTEGER(ans)[i4 +0] = R_RED(icol);
-	    INTEGER(ans)[i4 +1] = R_GREEN(icol);
-	    INTEGER(ans)[i4 +2] = R_BLUE(icol);
-	    INTEGER(ans)[i4 +3] = R_ALPHA(icol);
+	    }
+	    icol = (unsigned int) col;
+	    INTEGER(ans)[i4 + 0] = R_RED(icol);
+	    INTEGER(ans)[i4 + 1] = R_GREEN(icol);
+	    INTEGER(ans)[i4 + 2] = R_BLUE(icol);
+	    INTEGER(ans)[i4 + 3] = R_ALPHA(icol);
 	}
     } else {
 	for(i = i4 = 0; i < n; i++, i4 += 4) {
 	    col = INTEGER(colors)[i];
-	    if      (col == NA_INTEGER) col = R_TRANWHITE;
-	    else if (col == 0)          col = bg;
-	    else 		        col = R_ColorTable[(unsigned int)(col-1) % R_ColorTableSize];
-	    if (col == BG_NEEDED)
+	    if (col == NA_INTEGER) col = R_TRANWHITE;
+	    else if (col == 0) col = bg;
+	    else col = R_ColorTable[(unsigned int)(col-1) % R_ColorTableSize];
+	    if (col == BG_NEEDED) {
+		warning("col2rgb(0) is deprecated");
 	    	col = bg = dpptr(GEcurrentDevice())->bg;
-	    icol = (unsigned int)col;
-	    INTEGER(ans)[i4 +0] = R_RED(icol);
-	    INTEGER(ans)[i4 +1] = R_GREEN(icol);
-	    INTEGER(ans)[i4 +2] = R_BLUE(icol);
-	    INTEGER(ans)[i4 +3] = R_ALPHA(icol);
+	    }
+	    icol = (unsigned int) col;
+	    INTEGER(ans)[i4 + 0] = R_RED(icol);
+	    INTEGER(ans)[i4 + 1] = R_GREEN(icol);
+	    INTEGER(ans)[i4 + 2] = R_BLUE(icol);
+	    INTEGER(ans)[i4 + 3] = R_ALPHA(icol);
 	}
     }
     UNPROTECT(3);
@@ -1453,10 +1457,6 @@ const char *col2name(unsigned int col)
 static double str2col(const char *s, double bg)
 {
     if(s[0] == '#') return rgb2col(s);
-    /* This seems rather strange,
-       and made this depend on base graphics.
-       Looks like it was an artefact of conversion in col2rgb().
-    */
     else if(isdigit((int)s[0])) return number2col(s, bg);
     else return name2col(s);
 }
@@ -1464,20 +1464,20 @@ static double str2col(const char *s, double bg)
 /* used in grDevices, public */
 unsigned int R_GE_str2col(const char *s)
 {
-    return (unsigned int)str2col(s, R_TRANWHITE);
+    return (unsigned int) str2col(s, R_TRANWHITE);
 }
 
 /* Convert a sexp element to an R color desc */
 /* We Assume that Checks Have Been Done */
 
-/* used in grid/src/gpar.c */
+/* used in grid/src/gpar.c, with bg = R_TRANWHITE */
 unsigned int RGBpar3(SEXP x, int i, unsigned int bg)
 {
     int indx;
     switch(TYPEOF(x))
     {
     case STRSXP:
-	return (unsigned int)str2col(CHAR(STRING_ELT(x, i)), bg);
+	return (unsigned int) str2col(CHAR(STRING_ELT(x, i)), bg);
     case LGLSXP:
 	indx = LOGICAL(x)[i];
 	if (indx == NA_LOGICAL) return R_TRANWHITE;

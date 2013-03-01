@@ -121,7 +121,7 @@ persp(x, \dots)
   matrix is displayed at the left hand side, closest to the user.
 
   The sizes and fonts of the axis labels and the annotations for
-  \code{ticktype="detailed"} are controlled by graphics parameters
+  \code{ticktype = "detailed"} are controlled by graphics parameters
   \code{"cex.lab"}/\code{"font.lab"} and
   \code{"cex.axis"}/\code{"font.axis"} respectively.
 
@@ -153,7 +153,7 @@ require(grDevices) # for trans3d
 
 x <- seq(-10, 10, length= 30)
 y <- x
-f <- function(x,y) { r <- sqrt(x^2+y^2); 10 * sin(r)/r }
+f <- function(x, y) { r <- sqrt(x^2+y^2); 10 * sin(r)/r }
 z <- outer(x, y, f)
 z[is.na(z)] <- 1
 op <- par(bg = "white")
@@ -167,8 +167,8 @@ round(res, 3)
 # (2) Add to existing persp plot - using trans3d() :
 
 xE <- c(-10,10); xy <- expand.grid(xE, xE)
-points(trans3d(xy[,1], xy[,2], 6, pmat = res), col = 2, pch =16)
-lines (trans3d(x, y=10, z= 6 + sin(x), pmat = res), col = 3)
+points(trans3d(xy[,1], xy[,2], 6, pmat = res), col = 2, pch = 16)
+lines (trans3d(x, y = 10, z = 6 + sin(x), pmat = res), col = 3)
 
 phi <- seq(0, 2*pi, len = 201)
 r1 <- 7.725 # radius of 2nd maximum
@@ -192,7 +192,7 @@ persp(x, y, z, theta = 135, phi = 30, col = "green3", scale = FALSE,
 par(bg = "white")
 x <- seq(-1.95, 1.95, length = 30)
 y <- seq(-1.95, 1.95, length = 35)
-z <- outer(x, y, function(a,b) a*b^2)
+z <- outer(x, y, function(a, b) a*b^2)
 nrz <- nrow(z)
 ncz <- ncol(z)
 # Create a function interpolating colors in the range of specified colors
@@ -204,7 +204,7 @@ color <- jet.colors(nbcol)
 zfacet <- z[-1, -1] + z[-1, -ncz] + z[-nrz, -1] + z[-nrz, -ncz]
 # Recode facet z-values into color indices
 facetcol <- cut(zfacet, nbcol)
-persp(x, y, z, col=color[facetcol], phi=30, theta=-30)
+persp(x, y, z, col = color[facetcol], phi = 30, theta = -30)
 
 par(op)
 }

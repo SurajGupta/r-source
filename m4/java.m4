@@ -1,6 +1,6 @@
 ### java.m4 -- macros for Java environment detection    -*- Autoconf -*-
 ###
-### Copyright (C) 2005-7 R Core Team
+### Copyright (C) 2005-13 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -90,25 +90,6 @@ if test -n "${JAVAC}"; then
   rm -rf A.java A.class
 fi])
 
-AC_CACHE_CHECK([whether Java compiler works for version 1.4], [r_cv_javac14_works],
-[r_cv_javac14_works=no
-if test "${r_cv_javac_works}" = yes; then
-  rm -f A.java A.class
-  echo "public class A { }" > A.java
-  if "${JAVAC}" -source 1.4 -target 1.4 A.java 2>&AS_MESSAGE_LOG_FD; then
-    if test -f A.class; then
-      r_cv_javac14_works=yes
-    fi
-  fi
-  rm -rf A.java A.class
-fi
-])
-
-if test "${r_cv_javac14_works}" = yes; then
-  JAVAC14="${JAVAC} -source 1.4 -target 1.4"
-fi
-AM_CONDITIONAL(BUILD_JAVA14, [test "x${r_cv_javac14_works}" = xyes])
-
 ## this is where our test-class lives (in tools directory)
 getsp_cp=${ac_aux_dir}
 
@@ -163,8 +144,8 @@ if test ${r_cv_java_works} = yes; then
       darwin*)
         JAVA_LIBS="-framework JavaVM"
         JAVA_LIBS0="-framework JavaVM"
-	JAVA_CPPFLAGS="-I${JAVA_HOME}/include"
-	JAVA_CPPFLAGS0='-I$(JAVA_HOME)/include'
+        JAVA_CPPFLAGS="-I/System/Library/Frameworks/JavaVM.framework/Headers"
+        JAVA_CPPFLAGS0="-I/System/Library/Frameworks/JavaVM.framework/Headers"
         JAVA_LD_LIBRARY_PATH=
         ;;
       *)
@@ -176,7 +157,7 @@ if test ${r_cv_java_works} = yes; then
 	has_libjvm=no
 	save_IFS=$IFS; IFS=:
 	for dir in ${JAVA_LD_LIBRARY_PATH}; do
-	    if test -f "$dir/libjvm.so"; then
+	    if test -f "$dir/libjvm${DYLIB_EXT}"; then
 	        has_libjvm=yes
 	       	break
 	    fi
@@ -186,15 +167,9 @@ if test ${r_cv_java_works} = yes; then
 	     R_RUN_JAVA(boot_path, [-classpath ${getsp_cp} getsp sun.boot.library.path])
 	     if test -n "${boot_path}"; then
 	          for dir in "${boot_path}" "${boot_path}/client" "${boot_path}/server"; do
-	       	      if test -f "$dir/libjvm.so"; then
+	       	      if test -f "$dir/libjvm${DYLIB_EXT}"; then
 		          has_libjvm=yes
-			  # NOTE: we decided to ignore java.library.path altogether since it was bogus
-			  #       we could just append the newly found paths, though
-			  if test "${dir}" = "${boot_path}"; then
-			      JAVA_LD_LIBRARY_PATH="${dir}"
-			  else
-			      JAVA_LD_LIBRARY_PATH="${boot_path}:${dir}"
-			  fi
+			  JAVA_LD_LIBRARY_PATH="${dir}"
 			  break
 		       fi
 		  done
@@ -218,6 +193,7 @@ if test ${r_cv_java_works} = yes; then
 	   jmdirs=''
 	   ## put the most probable locations for each system in the first place
 	   case "${host_os}" in
+	     darwin*)  jmdirs=darwin;;
 	     linux*)   jmdirs=linux;;
 	     bsdi*)    jmdirs=bsdos;;
 	     osf*)     jmdirs=alpha;;
@@ -298,6 +274,13 @@ int main(void) {
       JAVA_LIBS0="${JAVA_LIBS0} -lpthread"
     fi
 
+    if test "${r_cv_jni}" = "no"; then
+        JAVA_LIBS=
+        JAVA_LIBS0=
+	JAVA_CPPFLAGS=
+	JAVA_CPPFLAGS0=
+        JAVA_LD_LIBRARY_PATH=
+    fi
     # cache all detected flags
       AC_CACHE_VAL([r_cv_JAVA_LIBS],[r_cv_JAVA_LIBS="${JAVA_LIBS0}"])
       AC_CACHE_VAL([r_cv_JAVA_CPPFLAGS],[r_cv_JAVA_CPPFLAGS="${JAVA_CPPFLAGS0}"])      
@@ -314,7 +297,6 @@ fi
 ## AC_SUBST(JAVA_HOME) # not needed? is precious now
 AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
-AC_SUBST(JAVAC14)
 AC_SUBST(JAVAH)
 AC_SUBST(JAR)
 AC_SUBST(JAVA_LD_LIBRARY_PATH)

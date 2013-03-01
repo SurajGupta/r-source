@@ -49,7 +49,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     the first element of \code{\link{.libPaths}()}.
   }
   \item{repos}{
-    character vector, the base URLs of the repositories
+    character vector, the base URL(s) of the repositories
     to use, e.g., the URL of a CRAN mirror such as
     \code{"http://cran.us.r-project.org"}.
     
@@ -58,10 +58,10 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   }
   \item{contriburl}{
     URL(s) of the contrib sections of the repositories.  Use this
-    argument only if your repository mirror is incomplete, e.g., because
-    you burned only the \file{contrib} section on a CD.  Overrides
-    argument \code{repos}.  As with \code{repos}, can also be \code{NULL}
-    to install from local files.
+    argument if your repository mirror is incomplete, e.g., because
+    you burned only the \file{contrib} section on a CD, or only have
+    binary packages.  Overrides argument \code{repos}.  As with
+    \code{repos}, can also be \code{NULL} to install from local files.
   }
   \item{method}{
     download method, see \code{\link{download.file}}.
@@ -221,9 +221,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   a source package on the same repository, and reports if the source
   package has a later version, or is available but no binary version
   is.  This check can be suppressed by
-\preformatted{
-      options(install.packages.check.source = "no")
-}
+\preformatted{    options(install.packages.check.source = "no")}
+  and should be if there is a partial repository containing only binary
+  files.
 }
 \value{
   Invisible \code{NULL}.
@@ -243,7 +243,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   single package, and for multiple packages when \code{Ncpus > 1L}.
   Finally locking (and restoration on error) can be suppressed by
   \option{--no-lock}.
-  % and also options(install.lock=FALSE) in an \R startup file.
+  % and also options(install.lock = FALSE) in an \R startup file.
   
   For a Mac OS X or Windows binary install, no locking is done by
   default.  Setting argument \code{lock} to \code{TRUE} (it defaults to
@@ -319,15 +319,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   set up a repository.
 }
 
-\examples{
-
-\dontrun{
-install.packages(
-    c("XML_0.99-5.tar.gz",
-      "../../Interfaces/Perl/RSPerl_0.8-0.tar.gz"),
-    repos = NULL,
-    configure.args = c(XML = '--with-xml-config=xml-config',
-                       RSPerl = "--with-modules='IO Fcntl'"))
-}
-}
+\examples{\dontrun{
+## A Linux example for Fedora's layout
+install.packages(c("ncdf4", "RNetCDF"),
+  configure.args = c(RNetCDF = "--with-netcdf-include=/usr/include/udunits2"))
+}}
 \keyword{utilities}

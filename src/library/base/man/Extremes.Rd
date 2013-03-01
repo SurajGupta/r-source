@@ -1,6 +1,6 @@
 % File src/library/base/man/Extremes.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Extremes}
@@ -89,7 +89,7 @@ pmin.int(\dots, na.rm = FALSE)
   length zero if one of the inputs had zero length.
 
   The type of the result will be that of the highest of the inputs in
-  the hierarchy integer < real < character.
+  the hierarchy integer < double < character.
 
   For \code{min} and \code{max} if there are only numeric inputs and all
   are empty (after possible removal of \code{NA}s), the result is double
@@ -129,13 +129,13 @@ pmin(5:1, pi) #->  5  numbers
 x <- sort(rnorm(100));  cH <- 1.35
 pmin(cH, quantile(x)) # no names
 pmin(quantile(x), cH) # has names
-plot(x, pmin(cH, pmax(-cH, x)), type='b', main= "Huber's function")
+plot(x, pmin(cH, pmax(-cH, x)), type = "b", main =  "Huber's function")
 
 cut01 <- function(x) pmax(pmin(x, 1), 0)
-curve(      x^2 - 1/4, -1.4, 1.5, col=2)
-curve(cut01(x^2 - 1/4), col="blue", add=TRUE, n=500)
+curve(      x^2 - 1/4, -1.4, 1.5, col = 2)
+curve(cut01(x^2 - 1/4), col = "blue", add = TRUE, n = 500)
 ## pmax(), pmin() preserve attributes of *first* argument
-D <- diag(x=(3:1)/4) ; n0 <- numeric()
+D <- diag(x = (3:1)/4) ; n0 <- numeric()
 stopifnot(identical(D,  cut01(D) ),
           identical(n0, cut01(n0)),
           identical(n0, cut01(NULL)),

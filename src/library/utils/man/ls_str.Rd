@@ -22,7 +22,8 @@ lsf.str(pos = -1, envir, \dots)
   applying \code{\link{str}()} to each matched name: see section Value.
 }
 \arguments{
-  \item{pos}{integer indicating \code{\link{search}} path position.}
+  \item{pos}{integer indicating \code{\link{search}} path position, or
+    \code{-1} for the current environment.}
   \item{name}{optional name indicating \code{\link{search}} path
     position, see \code{\link{ls}}.}
   \item{envir}{environment to use, see \code{\link{ls}}.}
@@ -58,8 +59,8 @@ lsf.str(pos = -1, envir, \dots)
 \examples{
 require(stats)
 
-lsf.str()#- how do the functions look like which I am using?
-ls.str(mode = "list") #- what are the structured objects I have defined?
+lsf.str()  #- how do the functions look like which I am using?
+ls.str(mode = "list")   #- what are the structured objects I have defined?
 
 ## create a few objects
 example(glm, echo = FALSE)
@@ -71,7 +72,7 @@ lsf.str(pos = length(search()), pattern = "file")
 
 ## demonstrating that  ls.str() works inside functions
 ## ["browser/debug mode"]:
-tt <- function(x, y=1) { aa <- 7; r <- x + y; ls.str() }
+tt <- function(x, y = 1) { aa <- 7; r <- x + y; ls.str() }
 (nms <- sapply(strsplit(capture.output(tt(2))," *: *"), `[`, 1))
 stopifnot(nms == c("aa", "r","x","y"))
 }

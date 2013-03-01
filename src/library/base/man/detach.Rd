@@ -1,6 +1,6 @@
 % File src/library/base/man/detach.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{detach}
@@ -30,7 +30,7 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE,
     will occur.
   }
   \item{character.only}{a logical indicating whether \code{name}
-    can be assumed to be character strings.}
+    can be assumed to be a character string.}
   \item{force}{logical: should a package be detached even though other
     attached packages depend on it?}
 }
@@ -46,7 +46,7 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE,
   quoted name of an item on the search list such as \code{package:tools}.
 
   If a package has a namespace, detaching it does not by default unload
-  the namespace (and may not even with \code{unload=TRUE}), and
+  the namespace (and may not even with \code{unload = TRUE}), and
   detaching will not in general unload any dynamically loaded compiled
   code (DLLs).  Further, registered S3 methods from the namespace will
   not be removed.  If you use \code{\link{library}} on a package whose
@@ -54,13 +54,23 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE,
   namespace.  So detaching and re-attaching a package may not refresh
   some or all components of the package, and is inadvisable.
 }
+\section{Good practice}{
+  \code{detach()} without an argument removes the first item on the
+  search path after the workspace.  It is all too easy to call it too
+  many or too few times, or to not notice that the search path has
+  changed since an \code{\link{attach}} call.
+
+  Use of \code{attach}/\code{detach} is best avoided in functions (see
+  the help for \code{\link{attach}}) and in interactive use and scripts
+  it is prudent to detach by name.
+}
 \note{
   You cannot detach either the workspace (position 1) nor the \pkg{base}
   package (the last item in the search list), and attempting to do so
   will throw an error.
   
   Unloading some namespaces has undesirable side effects:
-  e.g. unloading \pkg{grid} closes all graphics devices, and on most
+  e.g. unloading \pkg{grid} closes all graphics devices, and on some
   systems \pkg{tcltk} cannot be reloaded once it has been unloaded and
   may crash \R if this is attempted.
 }
@@ -87,7 +97,7 @@ detach(package:splines)
 library(splines)
 pkg <- "package:splines"
 \dontshow{
-stopifnot(inherits(tryCatch(detach(pkg), error=function(.).),  "error"))
+stopifnot(inherits(tryCatch(detach(pkg), error = function(.).),  "error"))
 }
 detach(pkg, character.only = TRUE)
 
@@ -97,13 +107,13 @@ detach(2) # 'pos' used for 'name'
 
 ## an example of the name argument to attach
 ## and of detaching a database named by a character vector
-attach_and_detach <- function(db, pos=2)
+attach_and_detach <- function(db, pos = 2)
 {
    name <- deparse(substitute(db))
-   attach(db, pos=pos, name=name)
+   attach(db, pos = pos, name = name)
    print(search()[pos])
    detach(name, character.only = TRUE)
 }
-attach_and_detach(women, pos=3)
+attach_and_detach(women, pos = 3)
 }
 \keyword{data}

@@ -136,11 +136,11 @@ nlminb(start = x0, sumsq, y = y)
 y <- c( 0, 2, 0, -2, 0)
 nlminb(start = x0, sumsq, lower = -1, upper = 1, y = y)
 # try using the gradient
-sumsq.g <- function(x,y) 2*(x-y)
+sumsq.g <- function(x, y) 2*(x-y)
 nlminb(start = x0, sumsq, sumsq.g,
        lower = -1, upper = 1, y = y)
 # now use the hessian, too
-sumsq.h <- function(x,y) diag(2, nrow = length(x))
+sumsq.h <- function(x, y) diag(2, nrow = length(x))
 nlminb(start = x0, sumsq, sumsq.g, sumsq.h,
        lower = -1, upper = 1, y = y)
 
@@ -165,11 +165,9 @@ flb <- function(x)
     { p <- length(x); sum(c(1, rep(4, p-1)) * (x - c(1, x[-p])^2)^2) }
 ## 25-dimensional box constrained
 ## par[24] is *not* at boundary
-nlminb(rep(3, 25), flb,
-          lower=rep(2, 25),
-          upper=rep(4, 25))
+nlminb(rep(3, 25), flb, lower = rep(2, 25), upper = rep(4, 25))
 ## trying to use a too small tolerance:
-r <- nlminb(rep(3, 25), flb, control = list(rel.tol=1e-16))
+r <- nlminb(rep(3, 25), flb, control = list(rel.tol = 1e-16))
 stopifnot(grepl("rel.tol", r$message))
 }}
 \keyword{optimize}

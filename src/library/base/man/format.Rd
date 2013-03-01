@@ -38,7 +38,7 @@ format(x, \dots)
     leading blanks for justification are suppressed.}
   \item{digits}{how many significant digits are to be used for
     numeric and complex \code{x}.  The default, \code{NULL}, uses
-    \code{\link{getOption}(digits)}.  This is a suggestion: enough decimal
+    \code{\link{getOption}("digits")}.  This is a suggestion: enough decimal
     places will be used so that the smallest (in magnitude) number has
     this many significant digits, and also to satisfy \code{nsmall}.
     (For the interpretation for complex numbers see \code{\link{signif}}.)}
@@ -148,7 +148,7 @@ format(x, \dots)
 format(1:10)
 format(1:10, trim = TRUE)
 
-zz <- data.frame("(row names)"= c("aaaaa", "b"), check.names=FALSE)
+zz <- data.frame("(row names)"= c("aaaaa", "b"), check.names = FALSE)
 format(zz)
 format(zz, justify = "left")
 
@@ -163,8 +163,8 @@ format(2^31-1)
 format(2^31-1, scientific = TRUE)
 
 ## a list
-z <- list(a=letters[1:3], b=(-pi+0i)^((-2:2)/2), c=c(1,10,100,1000),
-          d=c("a", "longer", "character", "string"))
+z <- list(a = letters[1:3], b = (-pi+0i)^((-2:2)/2), c = c(1,10,100,1000),
+          d = c("a", "longer", "character", "string"))
 format(z, digits = 2)
 format(z, digits = 2, justify = "left", trim = FALSE)
 }

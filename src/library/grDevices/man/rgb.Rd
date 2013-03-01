@@ -45,7 +45,7 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
 
   Semi-transparent colors (\code{0 < alpha < 1}) are supported only on
   some devices: at the time of writing on the \code{\link{pdf}},
-  \code{windows}, \code{quartz} and \code{X11(type="cairo")} devices and
+  \code{windows}, \code{quartz} and \code{X11(type = "cairo")} devices and
   associated bitmap devices (\code{jpeg}, \code{png}, \code{bmp},
   \code{tiff} and \code{bitmap}). They are supported by several
   third-party devices such as those in packages \CRANpkg{Cairo},
@@ -69,11 +69,11 @@ rgb(red, green, blue, alpha, names = NULL, maxColorValue = 1)
   \code{\link{gray}}.
 }
 \examples{
-rgb(0,1,0)
+rgb(0, 1, 0)
 
-rgb((0:15)/15, green=0, blue=0, names=paste("red",0:15,sep="."))
+rgb((0:15)/15, green = 0, blue = 0, names = paste("red", 0:15, sep = "."))
 
-rgb(0, 0:12, 0, max = 255)# integer input
+rgb(0, 0:12, 0, max = 255) # integer input
 
 ramp <- colorRamp(c("red", "white"))
 rgb( ramp(seq(0, 1, length = 5)), max = 255)

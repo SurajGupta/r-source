@@ -1,6 +1,6 @@
 % File src/library/utils/man/update.packages.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{update.packages}
@@ -41,18 +41,14 @@ new.packages(lib.loc = NULL, repos = getOption("repos"),
   \item{lib.loc}{character vector describing the location of R
     library trees to search through (and update packages therein), or
     \code{NULL} for all known trees (see \code{\link{.libPaths}}).}
-  \item{repos}{character vector, the base URL(s) of the repositories
-    to use, i.e., the URL of the CRAN master such as
-    \code{"http://cran.r-project.org"} or its Statlib mirror,
-    \code{"http://lib.stat.cmu.edu/R/CRAN"}.
-    Can be \code{NULL} to install from local files
-    (\file{.tar.gz} for source packages).
+  \item{repos}{
+    character vector, the base URL(s) of the repositories
+    to use, e.g., the URL of a CRAN mirror such as
+    \code{"http://cran.us.r-project.org"}.
   }
   \item{contriburl}{URL(s) of the contrib sections of the
-    repositories.  Use this argument only if your repository mirror is
-    incomplete, e.g., because you burned only the \file{contrib} section on a
-    CD.  Overrides argument \code{repos}.  As with \code{repos}, can
-    also be \code{NULL} to install from local files.
+    repositories.  Use this argument if your repository is
+    incomplete.  Overrides argument \code{repos}.
   }
   \item{method}{Download method, see \code{\link{download.file}}.}
   \item{instlib}{character string giving the library directory where to
@@ -71,7 +67,8 @@ new.packages(lib.loc = NULL, repos = getOption("repos"),
     makes an internal call to \code{available.packages}.
   }
   \item{checkBuilt}{If \code{TRUE}, a package built under an earlier
-    minor version of \R is considered to be \sQuote{old}.}
+    major.minor version of \R (e.g. \code{2.14}) is considered to be
+    \sQuote{old}.}
   \item{oldPkgs}{
     if specified as non-NULL, \code{update.packages()} only considers
     these packages for updating. This may be a character vector
@@ -79,7 +76,7 @@ new.packages(lib.loc = NULL, repos = getOption("repos"),
   }
   \item{instPkgs}{
     by default all installed packages,
-    \code{\link{installed.packages}(lib.loc=lib.loc)}.  A subset can be 
+    \code{\link{installed.packages}(lib.loc = lib.loc)}.  A subset can be 
     specified; currently this must be in the same (character matrix)
     format as returned by \code{installed.packages()}.
   }
@@ -155,15 +152,4 @@ new.packages(lib.loc = NULL, repos = getOption("repos"),
   set up a repository.
 }
 
-\examples{
-
-\dontrun{
-install.packages(
-    c("XML_0.99-5.tar.gz",
-      "../../Interfaces/Perl/RSPerl_0.8-0.tar.gz"),
-    repos = NULL,
-    configure.args = c(XML = '--with-xml-config=xml-config',
-                       RSPerl = "--with-modules='IO Fcntl'"))
-}
-}
 \keyword{utilities}

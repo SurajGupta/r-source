@@ -1,6 +1,6 @@
 % File src/library/stats/man/Tukey.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Tukey}
@@ -37,6 +37,11 @@ qtukey(p, nmeans, df, nranges = 1, lower.tail = TRUE, log.p = FALSE)
 \value{
   \code{ptukey} gives the distribution function and \code{qtukey} its
   inverse, the quantile function.
+  
+  The length of the result is the maximum of the lengths of the
+  numerical parameters.  The other numerical parameters are recycled
+  to that length.  Only the first elements of the logical parameters
+  are used.  
 }
 \note{
   A Legendre 16-point formula is used for the integral of \code{ptukey}.
@@ -65,10 +70,10 @@ qtukey(p, nmeans, df, nranges = 1, lower.tail = TRUE, log.p = FALSE)
 }
 \examples{
 if(interactive())
-  curve(ptukey(x, nm=6, df=5), from=-1, to=8, n=101)
-(ptt <- ptukey(0:10, 2, df= 5))
-(qtt <- qtukey(.95, 2, df= 2:11))
+  curve(ptukey(x, nm = 6, df = 5), from = -1, to = 8, n = 101)
+(ptt <- ptukey(0:10, 2, df =  5))
+(qtt <- qtukey(.95, 2, df =  2:11))
 ## The precision may be not much more than about 8 digits:
-\donttest{summary(abs(.95 - ptukey(qtt,2, df = 2:11)))}
+\donttest{summary(abs(.95 - ptukey(qtt, 2, df = 2:11)))}
 }
 \keyword{distribution}

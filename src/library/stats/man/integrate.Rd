@@ -76,11 +76,11 @@ integrate(f, lower, upper, \dots, subdivisions=100,
 
 \source{
   Based on QUADPACK routines \code{dqags} and \code{dqagi} by
-  R. Piessens and E. deDoncker-Kapenga, available from Netlib.
+  R. Piessens and E. deDoncker--Kapenga, available from Netlib.
 }
 
 \references{
-  R. Piessens, E. deDoncker-Kapenga, C. Uberhuber, D. Kahaner (1983)
+  R. Piessens, E. deDoncker--Kapenga, C. Uberhuber, D. Kahaner (1983)
   \emph{Quadpack: a Subroutine Package for Automatic Integration};
   Springer Verlag.
 }
@@ -104,12 +104,12 @@ integrate(Vectorize(f), 0, 1)  ## correct
 integrate(function(x) rep(2.0, length(x)), 0, 1)  ## correct
 
 ## integrate can fail if misused
-integrate(dnorm,0,2)
-integrate(dnorm,0,20)
-integrate(dnorm,0,200)
-integrate(dnorm,0,2000)
-integrate(dnorm,0,20000) ## fails on many systems
-integrate(dnorm,0,Inf)   ## works
+integrate(dnorm, 0, 2)
+integrate(dnorm, 0, 20)
+integrate(dnorm, 0, 200)
+integrate(dnorm, 0, 2000)
+integrate(dnorm, 0, 20000) ## fails on many systems
+integrate(dnorm, 0, Inf)   ## works
 }
 \keyword{math}
 \keyword{utilities}

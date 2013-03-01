@@ -32,7 +32,7 @@ mosaicplot(x, \dots)
     best created by the \code{table()} command.}
   \item{main}{character string for the mosaic title.}
   \item{sub}{character string for the mosaic sub-title (at bottom).}
-  \item{xlab,ylab}{x- and y-axis labels used for the plot; by default,
+  \item{xlab, ylab}{x- and y-axis labels used for the plot; by default,
     the first and second element of \code{names(dimnames(X))} (i.e., the
     name of the first and second variable in \code{X}).}
   \item{sort}{vector ordering of the variables, containing a permutation
@@ -49,8 +49,8 @@ mosaicplot(x, \dots)
     vertical split.}
   \item{color}{logical or (recycling) vector of colors for color
     shading, used only when \code{shade} is \code{FALSE}, or \code{NULL}
-    (default).  By default, grey boxes are drawn.  \code{color=TRUE}
-    uses a gamma-corrected grey palette.  \code{color=FALSE} gives empty
+    (default).  By default, grey boxes are drawn.  \code{color = TRUE}
+    uses a gamma-corrected grey palette.  \code{color = FALSE} gives empty
     boxes with no shading.}
   \item{shade}{a logical indicating whether to produce extended mosaic
     plots, or a numeric vector of at most 5 distinct positive numbers
