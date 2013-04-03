@@ -3,22 +3,10 @@ include ../gnuwin32/MkRules
 
 CPPFLAGS=-I../include -DHAVE_CONFIG_H -DR_DLL_BUILD
 CSOURCES = \
-	bakslv.c binning.c \
-	cpoly.c cumsum.c \
-	fft.c fmin.c integrate.c interv.c \
-	lbfgsb.c \
-	machar.c maxcol.c \
-	pretty.c \
-	rcont.c rowsum.c \
-	stem.c strsignif.c \
-	tabulate.c \
-	uncmin.c \
-	zeroin.c
+	integrate.c interv.c maxcol.c optim.c pretty.c uncmin.c
 FSOURCES = \
-	ch2inv.f chol.f \
 	dchdc.f dpbfa.f dpbsl.f dpoco.f dpodi.f dpofa.f dposl.f dqrdc.f \
-	dqrdc2.f dqrls.f dqrsl.f dqrutl.f dsvdc.f dtrco.f dtrsl.f \
-	eigen.f
+	dqrdc2.f dqrls.f dqrsl.f dqrutl.f dsvdc.f dtrco.f dtrsl.f
 OBJS=$(CSOURCES:.c=.o) $(FSOURCES:.f=.o)
 
 all: makeMakedeps libappl.a

@@ -31,7 +31,7 @@ polym(\dots, degree = 1, raw = FALSE)
  \item{raw}{if true, use raw and not orthogonal polynomials.}
  \item{object}{an object inheriting from class \code{"poly"}, normally
    the result of a call to \code{poly} with a single vector argument.}
- \item{\dots}{\code{poly, polym}: further vectors.\cr
+ \item{\dots}{\code{poly}, \code{polym}: further vectors.\cr
    \code{predict.poly}: arguments to be passed to or from other methods.
  }
 }
@@ -51,7 +51,7 @@ polym(\dots, degree = 1, raw = FALSE)
   Although formally \code{degree} should be named (as it follows
   \code{\dots}), an unnamed second argument of length 1 will be
   interpreted as the degree.
-  
+
   The orthogonal polynomial is summarized by the coefficients, which can
   be used to evaluate it via the three-term recursion given in Kennedy
   & Gentle (1980, pp. 343--4), and used in the \code{predict} part of

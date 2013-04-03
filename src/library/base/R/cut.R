@@ -20,7 +20,7 @@ cut <- function(x, ...) UseMethod("cut")
 
 cut.default <-
     function (x, breaks, labels = NULL, include.lowest = FALSE,
-              right = TRUE, dig.lab = 3, ordered_result = FALSE, ...)
+              right = TRUE, dig.lab = 3L, ordered_result = FALSE, ...)
 {
     if (!is.numeric(x)) stop("'x' must be numeric")
     if (length(breaks) == 1L) {
@@ -35,8 +35,8 @@ cut.default <-
     if (anyDuplicated(breaks)) stop("'breaks' are not unique")
     codes.only <- FALSE
     if (is.null(labels)) {#- try to construct nice ones ..
-	for(dig in dig.lab:max(12, dig.lab)) {
-	    ch.br <- formatC(breaks, digits=dig, width=1)
+	for(dig in dig.lab:max(12L, dig.lab)) {
+	    ch.br <- formatC(breaks, digits = dig, width = 1L)
 	    if(ok <- all(ch.br[-1L] != ch.br[-nb])) break
 	}
 	labels <-
@@ -54,7 +54,7 @@ cut.default <-
     } else if (is.logical(labels) && !labels)
         codes.only <- TRUE
     else if (length(labels) != nb - 1L)
-        stop("labels/breaks length conflict")
+        stop("lengths of 'breaks' and 'labels' differ")
     code <- .bincode(x, breaks, right, include.lowest)
     if(codes.only) code
     else factor(code, seq_along(labels), labels, ordered = ordered_result)
@@ -62,8 +62,5 @@ cut.default <-
 
 ## called from image.default and for use in packages.
 .bincode <- function(x, breaks, right = TRUE, include.lowest = FALSE)
-{
-    if(!is.double(x)) storage.mode(x) <- "double"
-    if(!is.double(breaks)) storage.mode(breaks) <- "double"
-    .Call("BinCode", x, breaks, right, include.lowest, PACKAGE = "base")
-}
+    .Internal(bincode(x, breaks, right, include.lowest))
+

@@ -7,6 +7,7 @@
 \alias{.onLoad}
 \alias{.onUnload}
 \alias{.onAttach}
+\alias{.onDetach}
 \alias{.Last.lib}
 \title{Hooks for Namespace Events}
 \description{
@@ -18,6 +19,7 @@
 .onLoad(libname, pkgname)
 .onAttach(libname, pkgname)
 .onUnload(libpath)
+.onDetach(libpath)
 .Last.lib(libpath)
 }
 \arguments{
@@ -36,16 +38,17 @@
   looked for and if found is called (with two unnamed arguments) before
   the package environment is sealed.
 
-  If a function \code{.Last.lib} is exported from the package, it will be
-  called (with a single argument) when the package is detached.  Beware
-  that it might be called if \code{.onAttach} has failed, so it should
-  be written defensively.  (It is called within \code{\link{tryCatch}},
-  so errors will not stop the package being detached.)
-  
+  If a function \code{.onDetach} (as from \R 3.0.0) is in the namespace
+  or \code{.Last.lib} is exported from the package, it will be called
+  (with a single argument) when the package is detached.  Beware that it
+  might be called if \code{.onAttach} has failed, so it should be
+  written defensively.  (It is called within \code{\link{tryCatch}}, so
+  errors will not stop the package being detached.)
+
   If a namespace is unloaded (via \code{\link{unloadNamespace}}), a hook
   function \code{.onUnload} is run (with a single argument) before final
   unloading.
-  
+
   Note that the code in \code{.onLoad} and \code{.onUnload} should not
   assume any package except the base package is on the search path.
   Objects in the current package will be visible (unless this is
@@ -55,7 +58,7 @@
   \code{.onLoad}, \code{.onUnload} and \code{.onAttach} are looked for
   as internal objects in the namespace and should not be exported
   (whereas \code{.Last.lib} should be).
-  
+
   Anything needed for the functioning of the namespace should be
   handled at load/unload times by the \code{.onLoad} and
   \code{.onUnload} hooks.  For example, DLLs can be loaded (unless done
@@ -81,11 +84,11 @@
   package should be achieved by (selectively) importing from the other
   package's namespace.
 
-  As from \R 2.14.0, uses of \code{library} with argument \code{help} to
-  display basic information about the package should use \code{format}
-  on the computed package information object and pass this to
+  Uses of \code{library} with argument \code{help} to display basic
+  information about the package should use \code{format} on the
+  computed package information object and pass this to
   \code{packageStartupMessage}.
-  
+
   There should be no calls to \code{\link{installed.packages}} in startup
   code: it is potentially very slow and may fail in versions of \R
   before 2.14.2 if package installation is going on in parallel.  See
@@ -95,12 +98,12 @@
   \code{\link{library.dynam}}) in \code{.onLoad} or a \code{useDynLib}
   directive in the \file{NAMESPACE} file, and not in \code{.onAttach}.
   Similarly, compiled code should not be unloaded (e.g. \emph{via}
-  \code{\link{library.dynam.unload}}) in \code{.Last.lib}, only in
-  \code{.onUnload}.
+  \code{\link{library.dynam.unload}}) in \code{.Last.lib} nor
+  \code{.onDetach}, only in \code{.onUnload}.
 }
 
 \seealso{
-  \code{\link{setHook}} shows how users can set hooks on the same events, and 
+  \code{\link{setHook}} shows how users can set hooks on the same events, and
   lists the sequence of events involving all of the hooks.
 }
 \keyword{utilities}

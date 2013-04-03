@@ -32,6 +32,7 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
 #include <Fileio.h>
 #include <Rmath.h> /* for fround */
 #include "Runix.h"
@@ -265,7 +266,7 @@ SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error(_("cannot popen '%s', probable reason '%s'"),
 		  cmd, strerror(errno));
 	for (i = 0; fgets(buf, INTERN_BUFSIZE, fp); i++) {
-	    int read = strlen(buf);
+	    size_t read = strlen(buf);
 	    if(read >= INTERN_BUFSIZE - 1)
 		warning(_("line %d may be truncated in call to system(, intern = TRUE)"), i + 1);
 	    if (read > 0 && buf[read-1] == '\n')
@@ -406,7 +407,7 @@ SEXP do_sysinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 DL_FUNC ptr_R_ProcessEvents;
 void R_ProcessEvents(void)
 {
-#if HAVE_AQUA
+#ifdef HAVE_AQUA
     /* disable ProcessEvents in child,
        since we can't call CoreFoundation there. */
     if (ptr_R_ProcessEvents && !R_isForkedChild) ptr_R_ProcessEvents();

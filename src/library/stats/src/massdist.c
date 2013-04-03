@@ -49,7 +49,7 @@ SEXP BinDist(SEXP sx, SEXP sw, SEXP slo, SEXP shi, SEXP sn)
 
     for(int i = 0; i < 2*n ; i++) y[i] = 0;
 
-    for(int i = 0; i < LENGTH(sx) ; i++) {
+    for(R_xlen_t i = 0; i < XLENGTH(sx) ; i++) {
 	if(R_FINITE(x[i])) {
 	    double xpos = (x[i] - xlo) / xdelta;
 	    int ix = (int) floor(xpos);

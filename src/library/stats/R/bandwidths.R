@@ -50,20 +50,19 @@ bw.SJ <- function(x, nb = 1000L, lower = 0.1*hmax, upper = hmax,
 
     method <- match.arg(method)
 
-    fSD <- function(h) ( c1/SDh(alph2 * h^(5/7)) )^(1/5) - h
-    SDh <- function(h)
-        .C(C_band_phi4_bin, n, nb, as.double(d), cnt, as.double(h), u = double(1L))$u
-    TDh <- function(h)
-        .C(C_band_phi6_bin, n, nb, as.double(d), cnt, as.double(h), u = double(1L))$u
+    fSD <- function(h) ( c1 / SDh(alph2 * h^(5/7)) )^(1/5) - h
+    SDh <- function(h) .Call(C_bw_phi4, n, d, cnt, as.double(h))
+    TDh <- function(h) .Call(C_bw_phi6, n, d, cnt, as.double(h))
 
-    Z <- .C(C_band_den_bin, n, nb, d = double(1L), x, cnt = integer(nb))
-    d <- Z$d; cnt <- Z$cnt
+    Z <- .Call(C_bw_den, nb, x)
+    d <- Z[[1L]]; cnt <- Z[[2L]]
     scale <- min(sd(x), IQR(x)/1.349)
     a <- 1.24 * scale * n^(-1/7)
     b <- 1.23 * scale * n^(-1/9)
     c1 <- 1/(2*sqrt(pi)*n)
     TD  <- -TDh(b)
-    if(!is.finite(TD) || TD <= 0) stop("sample is too sparse to find TD")
+    if(!is.finite(TD) || TD <= 0)
+        stop("sample is too sparse to find TD", domain = NA)
     if(method == "dpi")
         res <- (c1/SDh((2.394/(n * TD))^(1/7)))^(1/5)
     else {
@@ -72,7 +71,8 @@ bw.SJ <- function(x, nb = 1000L, lower = 0.1*hmax, upper = hmax,
             hmax <- 1.144 * scale * n^(-1/5)
         }
         alph2 <- 1.357*(SDh(a)/TD)^(1/7)
-        if(!is.finite(alph2)) stop("sample is too sparse to find alph2")
+        if(!is.finite(alph2))
+            stop("sample is too sparse to find alph2", domain  = NA)
         itry <- 1L
 	while (fSD(lower) * fSD(upper) > 0) {
 	    if(itry > 99L || !bnd.Miss) # 1.2 ^ 99 = 69'014'979 .. enough
@@ -100,13 +100,10 @@ bw.ucv <- function(x, nb = 1000L, lower = 0.1*hmax, upper = hmax,
     if (is.na(nb) || nb <= 0L) stop("invalid 'nb'")
     storage.mode(x) <- "double"
 
-    fucv <- function(h)
-        .C(C_band_ucv_bin, n, nb, as.double(d), cnt, as.double(h), u = double(1L))$u
-
     hmax <- 1.144 * sqrt(var(x)) * n^(-1/5)
-    Z <- .C(C_band_den_bin, n, nb, d = double(1L), x, cnt = integer(nb))
-    d <- Z$d; cnt <- Z$cnt
-    h <- optimize(fucv, c(lower, upper), tol=tol)$minimum
+    Z <- .Call(C_bw_den, nb, x); d <- Z[[1L]]; cnt <- Z[[2L]]
+    fucv <- function(h) .Call(C_bw_ucv, n, d, cnt, as.double(h))
+    h <- optimize(fucv, c(lower, upper), tol = tol)$minimum
     if(h < lower+tol | h > upper-tol)
         warning("minimum occurred at one end of the range")
     h
@@ -123,12 +120,9 @@ bw.bcv <- function(x, nb = 1000L, lower = 0.1*hmax, upper = hmax,
     if (is.na(nb) || nb <= 0L) stop("invalid 'nb'")
     storage.mode(x) <- "double"
 
-    fbcv <- function(h)
-        .C(C_band_bcv_bin, n, nb, as.double(d), cnt, as.double(h), u = double(1L))$u
-
     hmax <- 1.144 * sqrt(var(x)) * n^(-1/5)
-    Z <- .C(C_band_den_bin, n, nb, d = double(1L), x, cnt = integer(nb))
-    d <- Z$d; cnt <- Z$cnt
+    Z <- .Call(C_bw_den, nb, x); d <- Z[[1L]]; cnt <- Z[[2L]]
+    fbcv <- function(h) .Call(C_bw_bcv, n, d, cnt, as.double(h))
     h <- optimize(fbcv, c(lower, upper), tol = tol)$minimum
     if(h < lower+tol | h > upper-tol)
         warning("minimum occurred at one end of the range")

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2013-03-05 06:50\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,7 +20,7 @@ msgstr ""
 msgid "document not found"
 msgstr ""
 
-msgid "A search query has been submitted to"
+msgid "A search query has been submitted to %s"
 msgstr ""
 
 msgid "The results page should open in your browser shortly"
@@ -32,7 +32,7 @@ msgstr ""
 msgid "no Sweave file with name %s found"
 msgstr ""
 
-msgid "%d Sweave files for basename %s found:"
+msgid "%d Sweave files for basename %s found"
 msgstr ""
 
 msgid "more than one syntax specification found, using the first one"
@@ -44,7 +44,7 @@ msgstr ""
 msgid "recursive Sweave input %s in stack"
 msgstr ""
 
-msgid "target syntax not of class \"SweaveSyntax\""
+msgid "target syntax not of class %s"
 msgstr ""
 
 msgid "target syntax contains no translation table"
@@ -53,10 +53,13 @@ msgstr ""
 msgid "parse error or empty option in\n%s"
 msgstr ""
 
-msgid "Warning: unknown option"
+msgid "Warning: unknown option %s"
 msgstr ""
 
-msgid "Created PDF document"
+msgid "Created PDF document %s"
+msgstr ""
+
+msgid "Compacting PDF document"
 msgstr ""
 
 msgid "path to %s contains spaces,"
@@ -80,10 +83,7 @@ msgstr ""
 msgid "elements of 'what' after the first will be ignored"
 msgstr ""
 
-msgid "%d occurrences in %s"
-msgstr ""
-
-msgid "No suitable spell check program found."
+msgid "No suitable spell-checker program found"
 msgstr ""
 
 msgid "Filter '%s' is not available."
@@ -92,22 +92,25 @@ msgstr ""
 msgid "Invalid 'filter' argument."
 msgstr ""
 
+msgid "The following dictionaries were not found:\n%s"
+msgstr ""
+
 msgid "Processing file %s"
 msgstr ""
 
 msgid "Running aspell failed with diagnostics:\n%s"
 msgstr ""
 
+msgid "No suitable spell check program found."
+msgstr ""
+
 msgid "Use <code> %s </code> \n to list the vignettes in all <strong>available</strong> packages."
 msgstr ""
 
-msgid "No vignettes found by"
+msgid "No vignettes found by %s"
 msgstr ""
 
-msgid "call"
-msgstr ""
-
-msgid "Package %s: DESCRIPTION not found"
+msgid "Package %s: DESCRIPTION file not found"
 msgstr ""
 
 msgid "'file' must be NULL, a character string or a connection"
@@ -119,9 +122,6 @@ msgstr ""
 msgid "Not all arguments are of the same length, the following need to be recycled: %s"
 msgstr ""
 
-msgid ","
-msgstr ""
-
 msgid "Use either %s or %s/%s but not both."
 msgstr ""
 
@@ -131,19 +131,13 @@ msgstr ""
 msgid "Use either %s or %s but not both."
 msgstr ""
 
-msgid "Invalid role specification(s): %s."
-msgstr ""
-
 msgid "It is recommended to use %s/%s instead of %s/%s/%s."
 msgstr ""
 
-msgid "method is just applicable to %s objects"
+msgid "method is only applicable to %s objects"
 msgstr ""
 
-msgid "all arguments must be of class \"person\""
-msgstr ""
-
-msgid "at least one field has to be specified"
+msgid "all arguments must be of class %s"
 msgstr ""
 
 msgid "all fields have to be named"
@@ -152,13 +146,16 @@ msgstr ""
 msgid "%s has to be one of %s"
 msgstr ""
 
-msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
+msgid "subscript out of bounds"
 msgstr ""
 
 msgid "%s should be one of %s"
 msgstr ""
 
-msgid "A bibentry of bibtype %s has to specify the field(s): %s"
+msgid "A BibTeX entry for LaTeX users is"
+msgstr ""
+
+msgid "Dropping invalid entry %d:\n%s"
 msgstr ""
 
 msgid "package %s not found"
@@ -173,16 +170,16 @@ msgstr ""
 msgid "could not determine year for %s from package DESCRIPTION file"
 msgstr ""
 
-msgid "m < 0"
+msgid "To cite package %s in publications use:"
 msgstr ""
 
-msgid "n < m"
+msgid "ATTENTION: This citation information has been auto-generated from the package DESCRIPTION file and may need manual editing, see %s."
 msgstr ""
 
 msgid "'FUN' must be a function or NULL"
 msgstr ""
 
-msgid "Can't handle S4 methods yet"
+msgid "cannot handle S4 methods yet"
 msgstr ""
 
 msgid "'package' must be a character string or NULL"
@@ -218,13 +215,10 @@ msgstr ""
 msgid "could not restore type information"
 msgstr ""
 
-msgid "modes argument ignored"
+msgid "'modes' argument ignored"
 msgstr ""
 
 msgid "'names' argument ignored"
-msgstr ""
-
-msgid "'modes' argument ignored"
 msgstr ""
 
 msgid "could not restore variables properly"
@@ -236,7 +230,7 @@ msgstr ""
 msgid "Browsing in the environment with call:"
 msgstr ""
 
-msgid "'dump' is not an object of class 'dump.frames'"
+msgid "'dump' is not an object of class %s"
 msgstr ""
 
 msgid "Message:"
@@ -284,7 +278,7 @@ msgstr ""
 msgid "invalid input matrix"
 msgstr ""
 
-msgid "class(es) of 'name' will be discarded"
+msgid "class of 'name' will be discarded"
 msgstr ""
 
 msgid "cannot edit NULL row names"
@@ -305,10 +299,7 @@ msgstr ""
 msgid "'fix' requires a name"
 msgstr ""
 
-msgid "too many list items (at most up to number 26)"
-msgstr ""
-
-msgid "too many list items (at most up to number 3899)"
+msgid "too many list items (at most up to %d)"
 msgstr ""
 
 msgid "no vector columns were selected"
@@ -336,9 +327,6 @@ msgid "No documentation for %s in specified packages and libraries:"
 msgstr ""
 
 msgid "you could try %s"
-msgstr ""
-
-msgid "??"
 msgstr ""
 
 msgid "Help for topic %s is not in any loaded package but can be found in the following packages:"
@@ -374,7 +362,7 @@ msgstr ""
 msgid "creation of %s failed"
 msgstr ""
 
-msgid "Saving help page to"
+msgid "Saving help page to %s"
 msgstr ""
 
 msgid "argument %s must be a single character string"
@@ -392,49 +380,19 @@ msgstr ""
 msgid "argument 'help.db' is deprecated"
 msgstr ""
 
-msgid "Rebuilding the help.search() database"
-msgstr ""
-
-msgid "..."
-msgstr ""
-
-msgid "Packages {readRDS() sequentially}:"
-msgstr ""
-
-msgid "."
-msgstr ""
-
 msgid "could not find package %s"
 msgstr ""
 
 msgid "package %s has empty hsearch data - strangely"
 msgstr ""
 
-msgid "no hsearch.rds meta data for package"
-msgstr ""
-
-msgid "reencoding ..."
-msgstr ""
-
-msgid "done"
-msgstr ""
-
 msgid "removing all entries with invalid multi-byte character data"
-msgstr ""
-
-msgid "saving the database ..."
-msgstr ""
-
-msgid "... database rebuilt"
 msgstr ""
 
 msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
 msgstr ""
 
 msgid "incorrect 'agrep' specification"
-msgstr ""
-
-msgid "matched %d objects."
 msgstr ""
 
 msgid "invalid browser name, check options(\"browser\")."
@@ -473,16 +431,10 @@ msgstr ""
 msgid "DESCRIPTION file of package '%s' is missing or broken"
 msgstr ""
 
-msgid "package"
-msgstr ""
-
-msgid "not found"
-msgstr ""
-
 msgid "cannot update HTML package index"
 msgstr ""
 
-msgid "Making packages.html  ..."
+msgid "done"
 msgstr ""
 
 msgid "menu() cannot be used non-interactively"
@@ -545,13 +497,13 @@ msgstr ""
 msgid "directory '%s' already exists"
 msgstr ""
 
-msgid "Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use the code_files= argument"
+msgid "generic functions and other S4 objects (e.g., '%s') cannot be dumped; use the 'code_files' argument"
 msgstr ""
 
 msgid "unable to access index for repository %s"
 msgstr ""
 
-msgid "Invalid 'filters' argument."
+msgid "invalid 'filters' argument."
 msgstr ""
 
 msgid "package '%s' in library '%s' will not be updated"
@@ -560,7 +512,7 @@ msgstr ""
 msgid "invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
 msgstr ""
 
-msgid "illformed 'instPkgs' matrix"
+msgid "ill-formed 'instPkgs' matrix"
 msgstr ""
 
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
@@ -576,9 +528,6 @@ msgid "'priority' must be character or NULL"
 msgstr ""
 
 msgid "Updating HTML index of packages in '.Library'"
-msgstr ""
-
-msgid "Removing package(s) from %s\n(as %s is unspecified)"
 msgstr ""
 
 msgid "'destdir' is not a directory"
@@ -626,16 +575,13 @@ msgstr ""
 msgid "no packages were specified"
 msgstr ""
 
-msgid "Installing package(s) into %s\n(as %s is unspecified)"
-msgstr ""
-
 msgid "'lib = \"%s\"' is not writable"
 msgstr ""
 
 msgid "unable to install packages"
 msgstr ""
 
-msgid "unable to create"
+msgid "unable to create %s"
 msgstr ""
 
 msgid "inferring 'repos = NULL' from the file name"
@@ -648,9 +594,6 @@ msgid "type == \"both\" cannot be used if 'available' or 'contriburl' is specifi
 msgstr ""
 
 msgid "type == \"both\" cannot be used with 'repos = NULL'"
-msgstr ""
-
-msgid "Do you want to attempt to install from sources the package(s) which need compilation?"
 msgstr ""
 
 msgid "Do you want to attempt to install these from sources?"
@@ -671,10 +614,19 @@ msgstr ""
 msgid "This version of R is not set up to install source packages\nIf it was installed from an RPM, you may need the R-devel RPM"
 msgstr ""
 
+msgid "system (cmd0): %s"
+msgstr ""
+
 msgid "installation of package %s had non-zero exit status"
 msgstr ""
 
 msgid "unable to create temporary directory %s"
+msgstr ""
+
+msgid "foundpkgs: %s"
+msgstr ""
+
+msgid "files: %s"
 msgstr ""
 
 msgid "installation of one of more packages failed,\n  probably %s"
@@ -686,16 +638,19 @@ msgstr ""
 msgid "The namespace for package \"%s\" is locked; no changes in the global variables list may be made."
 msgstr ""
 
+msgid "'env' must be an environment"
+msgstr ""
+
 msgid "no object named '%s' to show"
 msgstr ""
 
 msgid "'file' must be \"\" or an open connection object"
 msgstr ""
 
-msgid "must have max > min"
+msgid "must have 'max' > 'min'"
 msgstr ""
 
-msgid "'pb' is not from class \"txtProgressBar\""
+msgid "'pb' is not from class %s"
 msgstr ""
 
 msgid "cannot determine a usable name"
@@ -791,16 +746,10 @@ msgstr ""
 msgid "invalid format"
 msgstr ""
 
-msgid "last record incomplete, %d lines discarded"
-msgstr ""
-
 msgid "transfer failure"
 msgstr ""
 
-msgid "HTTPUserAgent"
-msgstr ""
-
-msgid "option must be a length one character vector or NULL"
+msgid "%s option must be a length one character vector or NULL"
 msgstr ""
 
 msgid "'file' must be a character string or connection"
@@ -815,22 +764,13 @@ msgstr ""
 msgid "relist() requires recursively unlisted objects."
 msgstr ""
 
-msgid "The flesh argument does not contain a skeleton attribute."
+msgid "The 'flesh' argument does not contain a skeleton attribute."
 msgstr ""
 
 msgid "Either ensure you unlist a relistable object, or specify the skeleton separately."
 msgstr ""
 
 msgid "cannot coerce 'x' to roman"
-msgstr ""
-
-msgid "Invalid roman numeral(s): %s"
-msgstr ""
-
-msgid "length mismatch: bug in code!"
-msgstr ""
-
-msgid "Processing file"
 msgstr ""
 
 msgid "no valid packages were specified"
@@ -854,16 +794,16 @@ msgstr ""
 msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr ""
 
-msgid "invalid options('str') -- using defaults instead"
+msgid "invalid options(\"str\") -- using defaults instead"
 msgstr ""
 
-msgid "invalid components in options('str'):"
+msgid "invalid components in options(\"str\"): %s"
+msgstr ""
+
+msgid "'str.default': 'le' is NA, so taken as 0"
 msgstr ""
 
 msgid "'object' does not have valid levels()"
-msgstr ""
-
-msgid "'str.default': 'le' is NA"
 msgstr ""
 
 msgid "'digits' and 'digits.d' are both specified and the latter is not used"
@@ -873,6 +813,9 @@ msgid "no lines found in %s"
 msgstr ""
 
 msgid "profile does not contain memory information"
+msgstr ""
+
+msgid "profile does not contain line information"
 msgstr ""
 
 msgid "no events were recorded"
@@ -911,10 +854,7 @@ msgstr ""
 msgid "file '%s' not found"
 msgstr ""
 
-msgid "file path is too long"
-msgstr ""
-
-msgid "file size is limited to 2GB"
+msgid "file size is limited to 8GB"
 msgstr ""
 
 msgid "vignette %s found more than once,\nusing the one found in %s"
@@ -947,7 +887,7 @@ msgstr ""
 msgid "invalid 'quote' specification"
 msgstr ""
 
-msgid "col.names = NA makes no sense when row.names = FALSE"
+msgid "'col.names = NA' makes no sense when 'row.names = FALSE'"
 msgstr ""
 
 msgid "invalid 'col.names' specification"
@@ -995,13 +935,10 @@ msgstr ""
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr ""
 
-msgid "ERROR: failed to lock directory"
+msgid "ERROR: failed to lock directory %s for modifying\nTry removing %s"
 msgstr ""
 
-msgid "for modifying\nTry removing"
-msgstr ""
-
-msgid "ERROR: failed to create lock directory"
+msgid "ERROR: failed to create lock directory %s"
 msgstr ""
 
 msgid "restored %s"
@@ -1010,7 +947,7 @@ msgstr ""
 msgid "unable to move temporary installation %s to %s"
 msgstr ""
 
-msgid "cannot remove prior installation of package"
+msgid "cannot remove prior installation of package %s"
 msgstr ""
 
 msgid "The downloaded binary packages are in\n\t%s"
@@ -1028,7 +965,7 @@ msgstr ""
 msgid "If nothing happens, you should open\n%s yourself"
 msgstr ""
 
-msgid "zipfile %s not found"
+msgid "zip file %s not found"
 msgstr ""
 
 msgid "failed to create %s"
@@ -1037,25 +974,44 @@ msgstr ""
 msgid "there is no 'libs' directory in package %s"
 msgstr ""
 
-msgid "cannot remove prior installation of package %s"
-msgstr ""
-
 msgid "winDialog() cannot be used non-interactively"
 msgstr ""
 
 msgid "winDialogString() cannot be used non-interactively"
 msgstr ""
 
-msgid "'pb' is not from class \"winProgressBar\""
-msgstr ""
+msgid        "%d occurrence in %s"
+msgid_plural "%d occurrences in %s"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Invalid role specification: %s."
+msgid_plural "Invalid role specifications: %s."
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "A bibentry of bibtype %s has to specify the field: %s"
+msgid_plural "A bibentry of bibtype %s has to specify the fields: %s"
+msgstr[0]    ""
+msgstr[1]    ""
 
 msgid        "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0]    ""
 msgstr[1]    ""
 
+msgid        "matched %d object."
+msgid_plural "matched %d objects."
+msgstr[0]    ""
+msgstr[1]    ""
+
 msgid        "object '%s' not found"
 msgid_plural "objects '%s' not found"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Removing package from %s\n(as %s is unspecified)"
+msgid_plural "Removing packages from %s\n(as %s is unspecified)"
 msgstr[0]    ""
 msgstr[1]    ""
 
@@ -1074,6 +1030,11 @@ msgid_plural "also installing the dependencies %s"
 msgstr[0]    ""
 msgstr[1]    ""
 
+msgid        "Installing package into %s\n(as %s is unspecified)"
+msgid_plural "Installing packages into %s\n(as %s is unspecified)"
+msgstr[0]    ""
+msgstr[1]    ""
+
 msgid        "'lib' element %s is not a writable directory"
 msgid_plural "'lib' elements %s are not writable directories"
 msgstr[0]    ""
@@ -1081,6 +1042,16 @@ msgstr[1]    ""
 
 msgid        "There is a binary version available but the source version is later"
 msgid_plural "There are binary versions available but the source versions are later"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Do you want to install from sources the package which need compilation?"
+msgid_plural "Do you want to install from sources the packages which need compilation?"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "Package which are only available in source form, and may need compilation of C/C++/Fortran"
+msgid_plural "Packages which are only available in source form, and may need compilation of C/C++/Fortran"
 msgstr[0]    ""
 msgstr[1]    ""
 
@@ -1096,6 +1067,16 @@ msgstr[1]    ""
 
 msgid        "There is a binary version available (and will be installed) but the source version is later"
 msgid_plural "There are binary versions available (and will be installed) but the source versions are later"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "last record incomplete, %d line discarded"
+msgid_plural "last record incomplete, %d lines discarded"
+msgstr[0]    ""
+msgstr[1]    ""
+
+msgid        "invalid roman numeral: %s"
+msgid_plural "invalid roman numerals: %s"
 msgstr[0]    ""
 msgstr[1]    ""
 

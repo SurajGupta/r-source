@@ -204,7 +204,7 @@ print.dendrogram <- function(x, digits = getOption("digits"), ...)
 {
     cat("'dendrogram' ")
     if(is.leaf(x))
-	cat("leaf '", format(attr(x, "label"), digits = digits),"'", sep='')
+	cat("leaf '", format(attr(x, "label"), digits = digits),"'", sep = "")
     else
 	cat("with", length(x), "branches and",
 	    attr(x,"members"), "members total")
@@ -214,7 +214,7 @@ print.dendrogram <- function(x, digits = getOption("digits"), ...)
 }
 
 str.dendrogram <-
-function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
+function (object, max.level = NA, digits.d = 3L, give.attr = FALSE,
           wid = getOption("width"), nest.lev = 0, indent.str = "",
           last.str = getOption("str.dendrogram.last"), stem = "--", ...)
 {
@@ -226,13 +226,13 @@ function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
     pasteLis <- function(lis, dropNam, sep = " = ") {
 	## drop uninteresting "attributes" here
 	lis <- lis[!(names(lis) %in% dropNam)]
-	fl <- sapply(lis, format, digits=digits.d)
-	paste(paste(names(fl), fl, sep=sep), collapse = ", ")
+	fl <- sapply(lis, format, digits = digits.d)
+	paste(paste(names(fl), fl, sep = sep), collapse = ", ")
     }
 
     ## when  indent.str  ends in a blank, i.e. "last" (see below)
     istr <- sub(" $", last.str, indent.str)
-    cat(istr, stem, sep="")
+    cat(istr, stem, sep = "")
 
     at <- attributes(object)
     memb <- at[["members"]]
@@ -244,26 +244,27 @@ function (object, max.level = NA, digits.d = 3, give.attr = FALSE,
 		at <- paste(",", at)
 	}
 	cat("[dendrogram w/ ", le, " branches and ", memb, " members at h = ",
-            format(hgt, digits=digits.d), if(give.attr) at,
-            "]", if(!is.na(max.level) && nest.lev == max.level)" ..", "\n", sep="")
+            format(hgt, digits = digits.d), if(give.attr) at,
+            "]", if(!is.na(max.level) && nest.lev == max.level)" ..", "\n",
+            sep = "")
 	if (is.na(max.level) || nest.lev < max.level) {
 	    for(i in 1L:le) {
-		##cat(indent.str, nam.ob[i], ":", sep="")
+		##cat(indent.str, nam.ob[i], ":", sep = "")
 		str(object[[i]], nest.lev = nest.lev + 1,
-		    indent.str= paste(indent.str, if(i < le) " |" else "  "),
-                    last.str=last.str, stem=stem,
-		    max.level=max.level, digits.d=digits.d,
-		    give.attr= give.attr, wid=wid)
+		    indent.str = paste(indent.str, if(i < le) " |" else "  "),
+                    last.str = last.str, stem = stem,
+		    max.level = max.level, digits.d = digits.d,
+		    give.attr = give.attr, wid = wid)
 	    }
 	}
     } else { ## leaf
 	cat("leaf",
-	    if(is.character(at$label)) paste("",at$label,"",sep='"') else
-	    format(object, digits=digits.d),"")
+	    if(is.character(at$label)) paste("", at$label,"", sep = '"') else
+	    format(object, digits = digits.d),"")
 	any.at <- hgt != 0
-	if(any.at) cat("(h=",format(hgt, digits=digits.d))
+	if(any.at) cat("(h=",format(hgt, digits = digits.d))
 	if(memb != 1) #MM: when can this happen?
-	    cat(if(any.at)", " else {any.at <- TRUE; "("}, "memb= ",memb,sep="")
+	    cat(if(any.at)", " else {any.at <- TRUE; "("}, "memb= ", memb, sep = "")
 	at <- pasteLis(at, c("class", "height", "members", "leaf", "label"))
 	if(any.at || nzchar(at)) cat(if(!any.at)"(", at, ")")
 	cat("\n")
@@ -352,9 +353,9 @@ plotNode <-
     if(getOption("verbose")) {
 	cat(if(inner)"inner node" else "leaf", ":")
 	if(!is.null(nPar)) { cat(" with node pars\n"); str(nPar) }
-	cat(if(inner)paste(" height", formatC(yTop),"; "),
-	    "(x1,x2)= (",formatC(x1,width=4),",",formatC(x2,width=4),")",
-	    "--> xTop=", formatC(xTop, width=8),"\n", sep="")
+	cat(if(inner )paste(" height", formatC(yTop),"; "),
+	    "(x1,x2)= (", formatC(x1, width = 4), ",", formatC(x2, width = 4), ")",
+	    "--> xTop=", formatC(xTop, width = 8), "\n", sep = "")
     }
 
     Xtract <- function(nam, L, default, indx)
@@ -464,20 +465,20 @@ plotNode <-
                 p.lty <- Xtract("p.lty", ePar, default = lty, i)
                 t.col <- Xtract("t.col", ePar, default = col, i)
                 t.cex <- Xtract("t.cex", ePar, default =  1,  i)
-                t.font<- Xtract("t.font",ePar, default= par("font"), i)
+                t.font <- Xtract("t.font", ePar, default = par("font"), i)
 
 		vlm <- strheight(c(edgeText,"h"), cex = t.cex)/2
 		hlm <- strwidth (c(edgeText,"m"), cex = t.cex)/2
 		hl3 <- c(hlm[1L], hlm[1L] + hlm[2L], hlm[1L])
                 if(horiz) {
                     polygon(my+ c(-hl3, hl3), mx + sum(vlm)*c(-1L:1L, 1L:-1L),
-                            col = p.col, border= p.border,
+                            col = p.col, border = p.border,
                             lty = p.lty, lwd = p.lwd)
                     text(my, mx, edgeText, cex = t.cex, col = t.col,
                          font = t.font)
                 } else {
                     polygon(mx+ c(-hl3, hl3), my + sum(vlm)*c(-1L:1L, 1L:-1L),
-                            col = p.col, border= p.border,
+                            col = p.col, border = p.border,
                             lty = p.lty, lwd = p.lwd)
                     text(mx, my, edgeText, cex = t.cex, col = t.col,
                          font = t.font)
@@ -582,7 +583,7 @@ reorder <- function(x, ...) UseMethod("reorder")
 reorder.dendrogram <- function(x, wts, agglo.FUN = sum, ...)
 {
     if( !inherits(x, "dendrogram") )
-	stop("we require a dendrogram")
+	stop("'reorder.dendrogram' requires a dendrogram")
     agglo.FUN <- match.fun(agglo.FUN)
     oV <- function(x, wts) {
 	if(is.leaf(x)) {
@@ -629,11 +630,11 @@ merge.dendrogram <- function(x, y, ..., height) {
     if(length(xtr <- list(...))) {
 	xpr <- substitute(c(...))
 	if(!all(is.d <- vapply(xtr, inherits, NA, what="dendrogram"))) {
-	    nms <- sapply(xpr[-1][!is.d], deparse, nlines=1L)
+	    nms <- sapply(xpr[-1][!is.d], deparse, nlines = 1L)
             ## do not simplify: xgettext needs this form
             msg <- ngettext(length(nms),
-                            "extra argument %s is not a \"%s\"",
-                            "extra arguments %s are not \"%s\"s")
+                            "extra argument %s is not of class \"%s\"",
+                            "extra arguments %s are not of class \"%s\"s")
 	    stop(sprintf(msg, paste(nms, collapse=", "), "dendrogram"),
                  domain = NA)
 	}
@@ -812,9 +813,11 @@ function (x, Rowv=NULL, Colv=if(symm)"Rowv" else NULL,
 
     image(1L:nc, 1L:nr, x, xlim = 0.5+ c(0, nc), ylim = 0.5+ c(0, nr),
 	  axes = FALSE, xlab = "", ylab = "", ...)
-    axis(1, 1L:nc, labels= labCol, las= 2, line= -0.5, tick= 0, cex.axis= cexCol)
+    axis(1, 1L:nc, labels = labCol, las = 2, line = -0.5, tick = 0,
+         cex.axis = cexCol)
     if(!is.null(xlab)) mtext(xlab, side = 1, line = margins[1L] - 1.25)
-    axis(4, iy, labels= labRow, las= 2, line= -0.5, tick= 0, cex.axis= cexRow)
+    axis(4, iy, labels = labRow, las = 2, line = -0.5, tick = 0,
+         cex.axis = cexRow)
     if(!is.null(ylab)) mtext(ylab, side = 4, line = margins[2L] - 1.25)
 
     if (!missing(add.expr))

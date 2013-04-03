@@ -86,14 +86,13 @@ image.default <- function (x = seq(0, 1, length.out = nrow(z)),
 	if (length(breaks) != length(col) + 1)
 	    stop("must have one more break than colour")
 	if (any(!is.finite(breaks)))
-	    stop("breaks must all be finite")
+	    stop("'breaks' must all be finite")
         if (is.unsorted(breaks)) {
             warning("unsorted 'breaks' will be sorted before use")
             breaks <- sort(breaks)
         }
-        ## spatstat passes a factor matrix here.
-        z1 <- if (!is.double(z)) as.double(z) else z
-        zi <- .bincode(z1, breaks, TRUE, TRUE) - 1L
+        ## spatstat passes a factor matrix here, but .bincode converts to double
+        zi <- .bincode(z, breaks, TRUE, TRUE) - 1L
     }
     if (!add)
 	plot(NA, NA, xlim = xlim, ylim = ylim, type = "n", xaxs = xaxs,
@@ -119,26 +118,29 @@ image.default <- function (x = seq(0, 1, length.out = nrow(z)),
            useRaster <- FALSE
            ras <- dev.capabilities("raster")
            if(identical(ras, "yes")) useRaster <- TRUE
-           if(identical(ras, "non-missing"))
-               useRaster <- all(!is.na(zi))
+           if(identical(ras, "non-missing")) useRaster <- all(!is.na(zi))
        }
     }
     if (useRaster) {
          if(check_irregular(x,y))
-            stop("useRaster=TRUE can only be used with a regular grid")
-        # this should be mostly equivalent to RGBpar3 with bg=NA
+            stop(gettextf("%s can only be used with a regular grid",
+                          sQuote("useRaster = TRUE")),
+                 domain = NA)
+        # this should be mostly equivalent to RGBpar3 with bg = R_TRANWHITE
         if (!is.character(col)) {
-            p <- palette()
-            pl <- length(p)
             col <- as.integer(col)
+            if (any(!is.na(col) & col < 0L))
+                stop("integer colors must be non-negative")
             col[col < 1L] <- NA_integer_
-            col <- p[((col - 1L) %% pl) + 1L]
+            p <- palette()
+            col <- p[((col - 1L) %% length(p)) + 1L]
         }
         zc <- col[zi + 1L]
         dim(zc) <- dim(z)
-        zc <- t(zc)[ncol(zc):1L,, drop=FALSE]
+        zc <- t(zc)[ncol(zc):1L,, drop = FALSE]
         rasterImage(as.raster(zc),
                     min(x), min(y), max(x), max(y),
-                    interpolate=FALSE)
-    } else .Internal(image(as.double(x), as.double(y), as.integer(zi), col))
+                    interpolate = FALSE)
+     } else .External.graphics(C_image, x, y, zi, col)
+    invisible()
 }

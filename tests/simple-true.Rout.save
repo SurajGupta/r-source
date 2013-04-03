@@ -1,7 +1,6 @@
 
-R version 2.15.0 alpha (2012-03-02 r58556)
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -50,7 +49,7 @@ non-integer value 1e-3 qualified with L; using numeric value
 Warning message:
 integer literal 1.L contains unnecessary decimal point 
 > try(parse(text = "12iL")) # gives syntax error
-Error in parse(text = "12iL") : 1:4: unexpected symbol
+Error in parse(text = "12iL") : <text>:1:4: unexpected symbol
 1: 12iL
       ^
 > 

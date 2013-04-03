@@ -12,7 +12,7 @@
 }
 \usage{
 grepRaw(pattern, x, offset = 1L, ignore.case = FALSE,
-        value = FALSE, fixed = FALSE, all = FALSE, invert = FALSE) 
+        value = FALSE, fixed = FALSE, all = FALSE, invert = FALSE)
 }
 \arguments{
   \item{pattern}{raw vector containing a \link{regular expression}
@@ -20,7 +20,8 @@ grepRaw(pattern, x, offset = 1L, ignore.case = FALSE,
     given raw vector.  Coerced by \code{\link{charToRaw}} to a character
     string if possible.}
   \item{x}{a raw vector where matches are sought, or an object which can
-    be coerced by \code{charToRaw} to a raw vector.}
+    be coerced by \code{charToRaw} to a raw vector.  \link{Long vectors}
+    are not supported.}
   \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
       sensitive} and if \code{TRUE}, case is ignored during matching.}
   \item{offset}{An integer specifying the offset from
@@ -76,7 +77,7 @@ grepRaw(pattern, x, offset = 1L, ignore.case = FALSE,
 \seealso{
   \link{regular expression} (aka \code{\link{regexp}}) for the details
   of the pattern specification.
-  
+
   \code{\link{grep}} for matching character vectors.
 }
 \keyword{utilities}

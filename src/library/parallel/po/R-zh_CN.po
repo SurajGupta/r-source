@@ -1,13 +1,13 @@
 # Chinese translations for R package
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
-# 陈斐 <feic@avaya.com>, 2006.
-# 
+# 陈斐 <feic@normipaiva.com>, 2006.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
+"POT-Creation-Date: 2013-02-19 07:12\n"
 "PO-Revision-Date: 2012-02-29 14:00+0000\n"
 "Last-Translator: Fei Chen <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
@@ -23,7 +23,7 @@ msgstr "'seed'的值不对"
 msgid "need at least one argument"
 msgstr "至少需要一个参数"
 
-msgid "Zero-length inputs cannot be mixed with those of non-zero length"
+msgid "zero-length inputs cannot be mixed with those of non-zero length"
 msgstr "非零长度的输入和长度为零的输入不能同时混用"
 
 msgid "dim(X) must have a positive length"
@@ -35,8 +35,8 @@ msgstr "'X'必需有名字的dimnames"
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr "'MARGIN'所有的元素都必需是尺寸的名字"
 
-msgid "no cluster supplied and none is registered"
-msgstr "没有提供集群也没有注册"
+msgid "no cluster 'cl' supplied and none is registered"
+msgstr "没有提供'cl'集群也没有注册"
 
 msgid "not a valid cluster"
 msgstr "群集不对"
@@ -44,20 +44,11 @@ msgstr "群集不对"
 msgid "unknown cluster type"
 msgstr "未知的集群类型"
 
-msgid "socket cluster with %d nodes on hosts %s"
-msgstr "主机%2$s上%1$d个节点的插座集群"
-
-msgid ","
-msgstr ",，"
-
-msgid "socket cluster with %d nodes on host %s"
-msgstr "主机%2$s上%1$d个节点的插座集群"
-
 msgid "node of a socket cluster on host %s with pid %d"
 msgstr "pid是%2$d的在主机%1$s上插座集群的节点"
 
-msgid "host"
-msgstr "主机"
+msgid "PORT must be specified"
+msgstr ""
 
 msgid "'nnodes' must be >= 1"
 msgstr "'nnodes'必需>=1"
@@ -68,8 +59,8 @@ msgstr "'child'参数不对"
 msgid "'children' must be a list of processes or a single process"
 msgstr "'children'要么是进程列表，要么是一个单一的进程"
 
-msgid "'process' must be of the class \"process\""
-msgstr "'process'的类别必需是\"process\""
+msgid "'process' must be of class %s"
+msgstr "'process'的类别必需是%s"
 
 msgid "'child' must be a valid child process"
 msgstr "'child'必须是有效的子进程"
@@ -86,6 +77,9 @@ msgstr "%d个函数调用导致错误"
 msgid "all scheduled cores encountered errors in user code"
 msgstr "用户代码中所有预定的核心都出了错"
 
+msgid "Zero-length inputs cannot be mixed with those of non-zero length"
+msgstr "非零长度的输入和长度为零的输入不能同时混用"
+
 msgid "invalid 'jobs' argument"
 msgstr "'jobs'参数不对"
 
@@ -101,6 +95,11 @@ msgstr "Windows不支持分叉集群"
 msgid "'mc.cores' > 1 is not supported on Windows"
 msgstr " Windows不支持'mc.cores' > 1"
 
+msgid "socket cluster with %d nodes on host %s"
+msgid_plural "socket cluster with %d nodes on hosts %s"
+msgstr[0] "主机%2$s上%1$d个节点的插座集群"
+msgstr[1] "主机%2$s上%1$d个节点的插座集群"
+
 msgid ""
 "scheduled core %s encountered error in user code, all values of the job will "
 "be affected"
@@ -109,3 +108,12 @@ msgid_plural ""
 "will be affected"
 msgstr[0] "预定内核%s的用户代码中出了错，所有作业值都将受到影响"
 msgstr[1] "预定内核%s的用户代码中出了错，所有作业值都将受到影响"
+
+#~ msgid "socket cluster with %d nodes on hosts %s"
+#~ msgstr "主机%2$s上%1$d个节点的插座集群"
+
+#~ msgid ","
+#~ msgstr ",，"
+
+#~ msgid "host"
+#~ msgstr "主机"

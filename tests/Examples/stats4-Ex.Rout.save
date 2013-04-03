@@ -1,7 +1,6 @@
 
-R version 2.15.2 Patched (2012-11-27 r61171) -- "Trick or Treat"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -23,7 +22,7 @@ Type 'q()' to quit R.
 > options(warn = 1)
 > library('stats4')
 > 
-> assign(".oldSearch", search(), pos = 'CheckExEnv')
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
 > cleanEx()
 > nameEx("mle")
 > ### * mle
@@ -183,8 +182,8 @@ Coefficients:
 > 
 > ### * <FOOTER>
 > ###
-> cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.761 0.006 0.773 0 0 
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.465 0.004 0.471 0 0 
 > grDevices::dev.off()
 null device 
           1 

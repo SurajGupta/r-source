@@ -41,8 +41,10 @@ stopifnot <- function(...)
 	if(!(is.logical(r <- ll[[i]]) && !any(is.na(r)) && all(r))) {
 	    ch <- deparse(mc[[i+1]], width.cutoff = 60L)
 	    if(length(ch) > 1L) ch <- paste(ch[1L], "....")
-	    stop(paste0(ch, " is not ", if(length(r) > 1L)"all ", "TRUE"),
-		 call.= FALSE)
+            stop(sprintf(ngettext(length(r),
+                                  "%s is not TRUE",
+                                  "%s are not all TRUE"),
+                         ch), call. = FALSE, domain = NA)
 	}
     invisible()
 }
@@ -54,7 +56,7 @@ warning <- function(..., call. = TRUE, immediate. = FALSE, domain = NULL)
         cond <- args[[1L]]
         if(nargs() > 1L)
             cat(gettext("additional arguments ignored in warning()"),
-                "\n", sep="", file = stderr())
+                "\n", sep = "", file = stderr())
         message <- conditionMessage(cond)
         call <- conditionCall(cond)
         withRestarts({

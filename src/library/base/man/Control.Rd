@@ -51,10 +51,10 @@ next
   inner-most loop. \code{next} halts the processing of the current
   iteration and advances the looping index.  Both \code{break} and
   \code{next} apply only to the innermost of nested loops.
-  
+
   Note that it is a common mistake to forget to put braces (\code{\{ .. \}})
   around your statements, e.g., after \code{if(..)} or \code{for(....)}.
-  In particular, you should not have a newline between \code{\}} and 
+  In particular, you should not have a newline between \code{\}} and
   \code{else} to avoid a syntax error in entering a \code{if ... else}
   construct at the keyboard or via \code{source}.
   For that reason, one (somewhat extreme) attitude of defensive programming
@@ -90,14 +90,14 @@ next
 \seealso{
   \code{\link{Syntax}} for the basic \R syntax and operators,
   \code{\link{Paren}} for parentheses and braces.
-  
+
   \code{\link{ifelse}}, \code{\link{switch}} for other ways to control flow.
 }
 \examples{
 for(i in 1:5) print(1:i)
 for(n in c(2,5,10,20,50)) {
    x <- stats::rnorm(n)
-   cat(n,":", sum(x^2),"\n")
+   cat(n, ": ", sum(x^2), "\n", sep = "")
 }
 f <- factor(sample(letters[1:5], 10, replace = TRUE))
 for(i in unique(f)) print(i)

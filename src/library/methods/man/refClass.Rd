@@ -15,6 +15,7 @@
 \alias{uninitializedField-class}
 \alias{refClassRepresentation-class}
 \alias{refObjectGenerator-class}
+\alias{refGeneratorSlot-class}
 \alias{refClass-class}
 \alias{refObject-class}
 \alias{refMethodDef-class}
@@ -72,8 +73,11 @@ used by accessor functions.
 
 Note that fields are distinct from
 the slots, if any, in the object.  Slots are, as always, handled by
-standard \R{} object management.  Slots for the class can be included
-(as the \code{representation=} argument) in the \dots argument.
+standard \R{} object management.  
+It is not generally a good idea to mix slots and fields in the same
+class; this confuses the distinction in behavior between reference
+classes and regular S4 classes.  See the comments in the
+\dQuote{Implementation} section.
 }
   \item{contains}{
 optional vector of superclasses for this class.  If a superclass is
@@ -97,7 +101,9 @@ in the object is discarded by the garbage collector. See the matrix
 viewer example for both initialize and finalize methods.}
 
   \item{where}{
-the environment in which to store the class definition.  Defaults to
+the environment in which to store the class definition (or to begin the
+search for it, in
+the case of \code{getRefClass()}).  Defaults to
 the package namespace or environment for code that is part of an \R{}
 package, and to the global environment for code sourced directly at
 the session top level.
@@ -107,13 +113,82 @@ other arguments to be passed to \code{\link{setClass}}.
 }
 }
 
+\value{
+  \code{setRefClass()} returns a generator function suitable for
+  creating objects from the class, invisibly.  A call to this function
+  takes any number of arguments,
+  which will be passed on to the initialize method.  If no
+  \code{initialize} method is defined for the class or one of its
+  superclasses, the default method expects named arguments with the
+  name of one of the fields and unnamed arguments, if any, that are
+  objects from one of the superclasses of this class (but only
+  superclasses that are themselves reference classes have any effect).
+
+  The generator function is similar to the S4 generator function
+  returned by \code{\link{setClass}}. In addition to being a generator
+  function, however, it is also a reference class generator object,
+  with reference class methods for various utilities.  See the section
+  on reference class generator objects below.
+
+If the class has a method defined for \code{$initialize()}, %$
+this method will be called once the reference object has been
+created.  You should write such a method for a class that needs to do
+some special initialization.
+In particular, a reference method is recommended rather than a method
+for the S4 generic function \code{initialize()}, because some special initialization is
+required for reference objects \emph{before} the initialization of
+fields.
+As with S4 classes, methods are written for \code{$initialize()} %$
+and not for \code{$new()}, %$
+both for the previous reason and also because \code{$new()} %$
+is invoked on the generator object and would be a method for that class.
+
+The default method for \code{$initialize()} %$
+is equivalent to invoking the method \code{$initFields(...)}. %$
+Named arguments assign initial values to the corresponding fields.
+Unnamed arguments must be objects from this class or a reference
+superclass of this class.
+Fields will be initialized to the contents of the fields in such
+objects, but named arguments override the corresponding inherited
+fields.
+Note that fields are simply assigned.  If the field is itself a
+reference object, that object is not copied.
+The new and previous object will share the reference.
+Also, a field assigned from an unnamed argument counts as an
+assignment for locked fields.
+To override an inherited value for a locked field, the new value must
+be one of the named arguments in the initializing call.
+A later assignment of the field will result in an error.
+
+For technical reasons, the
+default method does not currently appear explicitly, but can be
+invoked by \code{$callSuper(...)} %$
+from a method for \code{$initialize()}. %$
+Initialization methods need some care in design, as they do for S4
+classes.
+In particular, remember that others may subclass your class and pass
+through field assignments or other arguments.  Therefore, your method
+should normally include \dots as an argument, all other arguments
+should have defaults or check for missingness, and your method should
+pass all initialized values on via \code{$callSuper()} or \code{$initFields()} if
+you know that your superclasses have no initialization methods.
+
+\code{getRefClass()} also returns the generator function for the
+class.  Note that the package slot in the value is the correct package
+from the class definition, regardless of  the \code{where} argument,
+which is used only to
+find the class if necessary.
+}
+
+
 \section{Reference Objects}{
 Normal objects in \R are passed as arguments in function calls consistently with
 functional programming semantics; that is, changes made to an object
 passed as an argument are local to the function call.  The object that
 supplied the argument is unchanged.
 
-The functional model (sometimes called pass-by-value) is
+The functional model (sometimes called pass-by-value, although this is
+inaccurate for \R) is
 suitable for many statistical computations and is implicit, for
 example, in the basic \R software for fitting statistical models.
 In some other situations, one would like all the code dealing with an
@@ -127,7 +202,7 @@ others, support a version of classes and methods assuming reference
 semantics.
 The corresponding programming mechanism
 is to invoke a method on an object.
-In the \R syntax that we use \code{"$"} %$
+In the \R syntax we use \code{"$"} %$
 for this operation; one invokes a method,
 \code{m1} say, on an object \code{x} by the expression
 \code{x$m1(...)}. %$
@@ -169,7 +244,8 @@ in the method definition.
 The implementation uses \R environments to make fields and methods
 available by name.
 Additional special fields allow reference to the complete object and
-to the definition of the class.  See the section on \dQuote{Inheritance}.
+to the definition of the class.  See the section on \dQuote{Writing
+  Reference Methods}.
 
 The goal of the software described here is to provide a uniform
 programming style in \R for software dealing with reference classes, whether
@@ -220,20 +296,19 @@ The special object \code{.refClassDef} contains the definition of the
 class of the object.
 These fields are read-only (it makes no sense to modify these
 references), with one exception.
-The \code{.self} field can be modified in the \code{$initialize} %$
+In principal, the \code{.self} field can be modified in the \code{$initialize} %$
 method, because the object is still being created at this stage.
-(Assignments to this field, as to all fields, need to use the
-non-local assignment operator.)
-This is the preferred way to assign S4-style attributes to the object,
-if you need to do so; but remember that these attributes will not
-behave according to reference semantics, unlike fields.
+This is definitely not recommended, unless to set some
+non-reference properties of the object defined for this class, which
+is itself not recommended if it mixes slots and fields.
+
 
 The methods available include methods inherited from superclasses, as
 discussed in the next section.
 
 Only methods actually used will be included in the environment
-corresponding to an individual object.  If a method requires a
-particular other method, then the first method should include a call
+corresponding to an individual object.  To declare that a method requires a
+particular other method, the first method should include a call
 to \code{$usingMethods()} %$
 with the name of the other method as an argument.
 Declaring the methods this way is essential if the other method is used indirectly (e.g., via \code{\link{sapply}()}
@@ -257,14 +332,11 @@ See the method definitions in the example.
 Reference classes inherit from other reference classes by using the
 standard \R inheritance; that is, by including the superclasses in the
 \code{contains=} argument when creating the new class.
-Non-reference classes can also be included in the \code{contains=} argument.  The class definition
-mechanism treats reference and non-reference superclasses slightly differently.
-If the contained reference classes themselves have reference
-superclasses, these will be moved ahead of any non-reference
-superclasses in the class definition (otherwise the ordering of
-superclasses may be ambiguous).
 The names of the reference superclasses are in slot
 \code{refSuperClasses} of the class definition.
+Reference classes can inherit from ordinary S4 classes also, but this
+is usually a bad idea if it mixes reference fields and non-reference slots.
+See the comments in the section on \dQuote{Implementation}.
 
 Class fields are inherited.  A class definition can override a field
 of the same name in a superclass only if the overriding class is a
@@ -409,65 +481,34 @@ implementation may use such names for special purposes.
 
 }
 
-\section{Reference Class Generator Objects}{
+\section{Reference Class Generators}{
 The call to \code{setRefClass} defines the specified class and
-returns a \dQuote{generator} object for that class.
-The generator object is itself a reference object (of class
-\code{"refObjectGenerator"}).
-Its fields are \code{def}, the class definition, and \code{className},
-the character string name of the class.
+returns a \dQuote{generator function} object for that class.
+This object has class \code{"refObjectGenerator"}; it inherits
+from \code{"function"} via \code{"classGeneratorFunction"} and can be
+called to generate new objects from the reference class.
 
-Methods for generator objects exist to generate objects
+The returned object is also a reference class object, although not of
+the standard construction.
+It can be used to invoke reference methods and access fields in the usual way, but
+instead of being implemented directly as an environment it has a
+subsidiary generator object as a slot, a
+standard reference object (of class
+\code{"refGeneratorSlot"}).
+Note that if one wanted to extend the reference class generator
+capability with a subclass, this should be done by subclassing
+\code{"refGeneratorSlot"}, not \code{"refObjectGenerator"}.
+
+The fields are \code{def}, the class definition, and \code{className},
+the character string name of the class.
+Methods generate objects
 from the class, to access help on reference methods, and to
 define new reference methods for the class.
 The currently available methods are:
 \describe{
 \item{\code{$new(...)}}{ %$
-This method is equivalent to the function \code{\link{new}} with the
-class name as an argument.  The \dots arguments are values for the
-named fields.
-If the class has a method defined for \code{$initialize()}, %$
-this method will be called once the reference object has been
-created.  You should write such a method for a class that needs to do
-some special initialization.
-In particular, a reference method is recommended rather than a method
-for the S4 generic function \code{initialize()}, because some special initialization is
-required for reference objects \emph{before} the initialization of
-fields.
-As with S4 classes, methods are written for \code{$initialize()} %$
-and not for \code{$new()}, %$
-both for the previous reason and also because \code{$new()} %$
-is invoked on the generator object and would be a method for that class.
-
-The default method for \code{$initialize()} %$
-is equivalent to invoking the method \code{$initFields(...)}. %$
-Named arguments assign initial values to the corresponding fields.
-Unnamed arguments must be objects from this class or a reference
-superclass of this class.
-Fields will be initialized to the contents of the fields in such
-objects, but named arguments override the corresponding inherited
-fields.
-Note that fields are simply assigned.  If the field is itself a
-reference object, that object is not copied.
-The new and previous object will share the reference.
-Also, a field assigned from an unnamed argument counts as an
-assignment for locked fields.
-To override an inherited value for a locked field, the new value must
-be one of the named arguments in the initializing call.
-A later assignment of the field will result in an error.
-
-For technical reasons, the
-default method does not currently appear explicitly, but can be
-invoked by \code{$callSuper(...)} %$
-from a method for \code{$initialize()}. %$
-Initialization methods need some care in design, as they do for S4
-classes.
-In particular, remember that others may subclass your class and pass
-through field assignments or other arguments.  Therefore, your method
-should normally include \dots as an argument, all other arguments
-should have defaults or check for missingness, and your method should
-pass all initialized values on via \code{$callSuper()} or \code{$initFields()} if
-you know that your superclasses have no initialization methods.
+This method is equivalent to calling the generator function returned
+by \code{setRefClass}.
 }
 
 \item{\code{$help(topic)}}{ %$
@@ -549,7 +590,7 @@ tracing applies to all objects, not just the one on which the trace
 method is invoked.
 
 Second, the optional argument \code{classMethod = TRUE} allows tracing
-on the methods of the generator object itself, such as \code{$new()}.%$
+on the methods of the generator object itself.
 By default, \code{what} is interpreted as the name of a method in the
 class for which this object is the generator.
 }
@@ -559,13 +600,15 @@ A number of
 systems using the OOP programming paradigm recommend or enforce
 \emph{getter and setter methods}
 corresponding to each field, rather than direct access by name.
-In the \R version presented here (and fairly often elsewhere
-as well), a field named \code{abc} of an object \code{x} would be
-extracted by \code{x$getAbc()} and assigned by
-\code{x$setAbc(value)}.
-The \code{$accessors} %$}
-method is a convenience function that creates getter and setter methods for the
+If you like this style and want to  extract a field named \code{abc}
+by \code{x$getAbc()} and assign it by
+\code{x$setAbc(value)},
+the \code{$accessors} %$}
+method is a convenience function that creates such getter and setter methods for the
 specified fields.
+Otherwise there is no reason to use this mechanism.  In particular, it
+has nothing to do with the general ability to define fields by
+functions as described in the section on \dQuote{Reference Objects}.
 }
 } %% end of \describe
 } %% end of \section
@@ -573,11 +616,10 @@ specified fields.
 \section{Implementation}{
 Reference classes are implemented as S4 classes with a data part of
 type \code{"environment"}.
-An object generated from a reference class has this type.
 Fields correspond to named objects in the environment.
-A field associated with an accessor function is implemented as an
+A field associated with a function is implemented as an
 \link[=bindenv]{active binding}.
-In addition, fields with a specified class are implemented as a
+In particular, fields with a specified class are implemented as a
 special form of active binding to enforce valid assignment to the
 field.
 A field, say \code{data}, can be accessed generally by an expression
@@ -598,6 +640,19 @@ will call that function.
 When a method is invoked on an object, the function defining the method is
 installed in the object's environment, with the same environment as the
 environment of the function.
+
+Because of the implementation, new reference classes can inherit from
+non-reference S4 classes as well as reference classes.
+This is usually a bad idea, if the slots from the non-reference
+class are thought of as alternatives to fields.
+Unless there is some special argument in favor, mixing the functional
+and reference paradigms for properties of the same object is
+conceptually unclear.
+In addition, the initialization method for the class will have to sort
+out fields from slots, with a good chance of creating anomalous
+behavior for subclasses of this class.
+Better in general to define fields analogous to the slots in the S4
+class, and to initialize those from an S4 object of that class.
 
 }
 
@@ -634,22 +689,22 @@ directly in \R.
 For an inter-system interface using this approach, see the code for package \code{Rcpp}, version
 0.8.7 or later.
 }
-\value{
-\code{setRefClass} and \code{getRefClass} both return a generator object for the class. This is
-itself a reference object, with methods to generate objects from the
-class and also for defining new methods and for help-style
-documentation. See the
-section on \dQuote{Reference Class Generator Objects} for details.
-Note that \code{Class} in the call to \code{getRefClass()} can be an
-object from the corresponding class, and that a similar reference
-class method \code{$getRefClass()} %$
-is available as well.
+% \value{
+% \code{setRefClass()} and \code{getRefClass()} both return a generator object for the class. This is
+% itself a reference object, with methods to generate objects from the
+% class and also for defining new methods and for help-style
+% documentation. See the
+% section on \dQuote{Reference Class Generator Objects} for details.
+% Note that \code{Class} in the call to \code{getRefClass()} can be an
+% object from the corresponding class, and that a similar reference
+% class method \code{$getRefClass()} %$
+% is available as well.
 
-\code{setRefClass} defines the class and stores its class definition.
-\code{getRefClass} requires that the class has been defined as a
-reference class.
+% \code{setRefClass} defines the class and stores its class definition.
+% \code{getRefClass} requires that the class has been defined as a
+% reference class.
 
-}
+% }
 \section{Debugging}{
 The standard \R{} debugging and tracing facilities can be applied to
 reference methods.
@@ -667,9 +722,9 @@ Using \code{$trace()} on an object sets up a tracing
 version for future invocations of the specified method for that
 object.
 Using \code{$trace()} on the generator for the class sets up a
-tracing version for all future objects from that class (and for all
-existing objects that have not yet invoked the traced method, because
-reference methods are cached lazily in the object when first invoked).
+tracing version for all future objects from that class (and sometimes for
+existing objects from the class if the method is not declared or
+previously invoked).
 
 In either case, all the arguments to the standard  \code{\link{trace}}
 function are available, except for \code{signature=} which is
@@ -724,7 +779,7 @@ mEdit <- setRefClass("mEdit",
      ))
 
 xMat <- matrix(1:12,4,3)
-xx <- mEdit$new(data = xMat)
+xx <- mEdit(data = xMat)
 xx$edit(2, 2, 0)
 xx
 xx$undo()

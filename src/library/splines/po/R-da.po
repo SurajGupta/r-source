@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
+"POT-Creation-Date: 2012-09-24 08:30\n"
 "PO-Revision-Date: 2012-01-28 15:52+0200\n"
 "Last-Translator: Joe <joedalton2@yahoo.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,17 +22,17 @@ msgstr "længden for »drivs« skal matche længden for »x«"
 msgid "'ord' must be positive integer, at most the number of knots"
 msgstr "»ord« skal være et positivt heltal, højst antallet af knob"
 
-msgid "need at least 2*ord -1 (=%d) knots"
+#, fuzzy
+msgid "need at least %s (=%d) knots"
 msgstr "skal mindst være 2*ord -1 (=%d) knob"
 
-msgid ""
-"the 'x' data must be in the range %g to %g unless you set 'outer.ok = TRUE'"
+#, fuzzy
+msgid "the 'x' data must be in the range %g to %g unless you set '%s'"
 msgstr ""
 "»x-dataene« skal være i intervallet %g til %g med mindre du angiver »outer."
 "ok = TRUE«"
 
-msgid ""
-"splineDesign(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgid "%s needs package 'Matrix' correctly installed"
 msgstr ""
 
 msgid "values of 'x' must be distinct"
@@ -71,7 +71,8 @@ msgstr "kurve skal være monoton"
 msgid "'degree' must be integer >= 1"
 msgstr "»degree« skal være heltal >= 1"
 
-msgid "'df' was too small; have used"
+#, fuzzy
+msgid "'df' was too small; have used %d"
 msgstr "»df« var for lille; har brugt"
 
 msgid "some 'x' values beyond boundary knots may cause ill-conditioned bases"

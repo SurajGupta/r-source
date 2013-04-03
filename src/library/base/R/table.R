@@ -70,11 +70,12 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
                 else {
                     ## The logic here is tricky because it tries to do
                     ## something sensible if both 'exclude' and
-                    ## 'useNA' is set. A non-null setting of 'exclude'
-                    ## sets the excluded levels to missing, which is
-                    ## different from the <NA> factor level. Excluded
-                    ## levels are NOT tabulated, even if 'useNA' is
-                    ## set.
+                    ## 'useNA' are set.
+                    ##
+                    ## A non-null setting of 'exclude' sets the
+                    ## excluded levels to missing, which is different
+                    ## from the <NA> factor level. Excluded levels are
+                    ## NOT tabulated, even if 'useNA' is set.
                     if (is.null(exclude) && useNA != "no")
                         addNA(a, ifany = (useNA == "ifany"))
                     else {
@@ -86,7 +87,7 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
                     }
                 }
             }
-            else {
+            else { # NB: this excludes first, unlike the case above.
                 a <- factor(a, exclude = exclude)
                 if (useNA != "no")
                     addNA(a, ifany = (useNA == "ifany"))
@@ -111,21 +112,22 @@ table <- function (..., exclude = if (useNA=="no") c(NA, NaN),
     y
 }
 
-## From  1999-12-19 till 2003-03-27:
-## print.table <-
-## function(x, digits = getOption("digits"), quote = FALSE, na.print = "", ...)
-## {
-##     print.default(unclass(x), digits = digits, quote = quote,
-## 		  na.print = na.print, ...)
-##     ## this does *not* return x !
-## }
 
-## Better (NA in dimnames *should* be printed):
+## NB: NA in dimnames should be printed.
 print.table <-
 function (x, digits = getOption("digits"), quote = FALSE, na.print = "",
 	  zero.print = "0",
 	  justify = "none", ...)
 {
+    ## tables with empty extents have no contents and are hard to
+    ## output in a readable way, so just say something descriptive and
+    ## return.
+    d <- dim(x) 
+    if (any(d == 0)) {
+        cat ("< table of extent", paste(d, collapse=" x "), ">\n")
+        return ( invisible(x) )
+    }
+
     xx <- format(unclass(x), digits = digits, justify = justify)
     ## na.print handled here
     if(any(ina <- is.na(x)))
@@ -147,7 +149,9 @@ function (x, digits = getOption("digits"), quote = FALSE, na.print = "",
 summary.table <- function(object, ...)
 {
     if(!inherits(object, "table"))
-	stop("'object' must inherit from class \"table\"")
+	stop(gettextf("'object' must inherit from class %s",
+                      dQuote("table")),
+             domain = NA)
     n.cases <- sum(object)
     n.vars <- length(dim(object))
     y <- list(n.vars = n.vars,
@@ -172,10 +176,12 @@ summary.table <- function(object, ...)
 }
 
 print.summary.table <-
-function(x, digits = max(1, getOption("digits") - 3), ...)
+function(x, digits = max(1L, getOption("digits") - 3L), ...)
 {
     if(!inherits(x, "summary.table"))
-	stop("'x' must inherit from class \"summary.table\"")
+	stop(gettextf("'x' must inherit from class %s",
+                      dQuote("summary.table")),
+             domain = NA)
     if(!is.null(x$call)) {
 	cat("Call: "); print(x$call)
     }
@@ -198,9 +204,9 @@ as.data.frame.table <-
     function(x, row.names = NULL, ..., responseName = "Freq",
              stringsAsFactors = TRUE)
 {
-    x <- as.table(x)
     ex <- quote(data.frame(do.call("expand.grid",
-                                   c(dimnames(x),
+				   c(dimnames(provideDimnames(x)),
+				     KEEP.OUT.ATTRS = FALSE,
                                      stringsAsFactors = stringsAsFactors)),
                            Freq = c(x),
                            row.names = row.names))
@@ -212,26 +218,12 @@ is.table <- function(x) inherits(x, "table")
 as.table <- function(x, ...) UseMethod("as.table")
 as.table.default <- function(x, ...)
 {
-    if(is.table(x))
-	return(x)
+    if(is.table(x)) return(x)
     else if(is.array(x) || is.numeric(x)) {
 	x <- as.array(x)
-	if(any(dim(x) == 0L))
-	    stop("cannot coerce into a table")
-	## Try providing dimnames where missing.
-	dnx <- dimnames(x)
-	if(is.null(dnx))
-	    dnx <- vector("list", length(dim(x)))
-	for(i in which(vapply(dnx, is.null, NA)))
-	    dnx[[i]] <-
-                make.unique(LETTERS[seq.int(from=0, length.out = dim(x)[i]) %% 26 + 1],
-                            sep = "")
-	dimnames(x) <- dnx
-	class(x) <- c("table", oldClass(x))
-	return(x)
-    }
-    else
-	stop("cannot coerce into a table")
+	if(any(dim(x) == 0L)) stop("cannot coerce to a table")
+	structure(class = c("table", oldClass(x)), provideDimnames(x))
+    } else stop("cannot coerce to a table")
 }
 
 prop.table <- function(x, margin = NULL)

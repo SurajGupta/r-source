@@ -85,10 +85,11 @@ tar(tarfile, files = NULL,
     way by POSIX \command{tar} and in another by GNU \command{tar} and
     yet another by the POSIX \command{pax} command which
     recent\command{tar} programs often support.  The internal
-    implementation uses the \sQuote{ustar} way from the 1998 POSIX
+    implementation warns on paths of more than 100 bytes,
+    uses the \sQuote{ustar} way from the 1998 POSIX
     standard which supports up to 256 bytes (depending on the path: in
-    particular the final component is limited to 100 bytes), and warns
-    on paths of more than 100 bytes.
+    particular the final component is limited to 100 bytes) if possible,
+    or the GNU way (which is widely supported).
 
     Most formats do not record the encoding of file paths.
 
@@ -113,8 +114,7 @@ tar(tarfile, files = NULL,
     not comply.
 
     \item File sizes.  The \sQuote{ustar} format is restricted to 8GB
-    per (uncompressed) file, and the internal method is currently
-    limited to 2GB.
+    per (uncompressed) file.
   }
   For portability, avoid file paths of more than 100 bytes and all links
   (especially hard links and symbolic links to directories).

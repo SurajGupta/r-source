@@ -1,8 +1,7 @@
 
-R version 2.13.0 Patched (2011-04-13 r55430)
-Copyright (C) 2011 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
-Platform: x86_64-apple-darwin9.8.0/x86_64 (64-bit)
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -2383,7 +2382,7 @@ IS: [1] TRUE
 +    } else   !isall.equal(x, res)})
 IS: [1] "Attributes: < names for target but not for current >"             
 [2] "Attributes: < Length mismatch: comparison on first 0 components >"
-Error: x is not all TRUE
+Error: x are not all TRUE
 > res <- try(as.logical( x ), silent = TRUE)
 > if(!inherits(res, 'try-error'))
 +    report({if(is.logical(x)) { cat('IS: ');all.equal(x, res, tol=0)
@@ -2563,6 +2562,6 @@ In as.dist.default(x) : non-square matrix
 > f <- try(as.ts( x ), silent = TRUE)
 >   if(!inherits(f, 'try-error')) report(identical(f, as.ts( f )))
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.181 0.015 0.198 0 0 
+Time elapsed:  0.421 0.008 0.431 0 0 
 > 
 > 

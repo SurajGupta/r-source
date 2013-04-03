@@ -1,16 +1,14 @@
 # German translation of 
 # src/library/graphics/po/grid.pot
-# Copyright (C) 2009-2010 The R Foundation
+# Copyright (C) 2009-2013 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2009-2010.
-#
-#
+# Detlef Steuer <steuer@hsu-hh.de>, 2009-2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: R-2.12.0\n"
+"Project-Id-Version: R-3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:07+0100\n"
-"PO-Revision-Date: 2010-09-21 14:36+0200\n"
+"POT-Creation-Date: 2012-10-02 09:51+0100\n"
+"PO-Revision-Date: 2013-03-01 15:06+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team:  <R-core@r-project.org>\n"
 "Language: \n"
@@ -20,38 +18,36 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
 
 #: grid.c:214
-msgid "Cannot clip to rotated viewport"
-msgstr "Kann rotierten Viewport nicht beschneiden"
+msgid "cannot clip to rotated viewport"
+msgstr "kann rotierten Viewport nicht beschneiden"
 
 #: grid.c:673 grid.c:678 grid.c:767 grid.c:772
-msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
-msgstr ""
-"Kann den obersten viewport nicht vom Stack werfen (grid und graphics "
-"Ausgaben gemischt?)"
+msgid "cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"
+msgstr "kann den obersten viewport nicht vom Stack werfen ('grid' und 'graphics' Ausgaben gemischt?)"
 
 #: grid.c:952
 msgid "attempt to plot on null device"
 msgstr "Versuch in das NUll-Gerät zu zeichnen"
 
 #: grid.c:1232
-msgid "There is no layout defined"
-msgstr "Kein Layout definiert"
+msgid "there is no layout defined"
+msgstr "kein Layout definiert"
 
 #: grid.c:1452
-msgid "Polygon edge not found (zero-width or zero-height?)"
-msgstr "Polygonkante nicht gefunden (Nullbreite oder Nulllänge?)"
+msgid "polygon edge not found (zero-width or zero-height?)"
+msgstr "Polygonkante nicht gefunden (Breite oder Länge 0?)"
 
 #: grid.c:1461
-msgid "Polygon edge not found"
+msgid "polygon edge not found"
 msgstr "Polygonkante nicht gefunden"
 
 #: grid.c:1615
-msgid "Require at least two points to draw arrow"
-msgstr "Mindestens zwei Punkte nötig, um einen Pfeil zu zeichnen"
+msgid "require at least two points to draw arrow"
+msgstr "mindestens zwei Punkte nötig, um einen Pfeil zu zeichnen"
 
 #: grid.c:1931
-msgid "Non-finite control point in Xspline"
-msgstr "Nicht-endlicher Kontrollpunkt in Xspline"
+msgid "non-finite control point in Xspline"
+msgstr "nicht-endlicher Kontrollpunkt in Xspline"
 
 #: grid.c:2796
 msgid "non-finite x or y in graphics path"
@@ -62,45 +58,45 @@ msgid "invalid plotting symbol"
 msgstr "unzulässiges Plotsymbol"
 
 #: grid.c:3372
-msgid "Unable to clip to rotated rectangle"
-msgstr "Kann nicht auf das rotierte Rechteck zurechtschneiden"
+msgid "unable to clip to rotated rectangle"
+msgstr "kann nicht auf das rotierte Rechteck zurechtschneiden"
 
-#: layout.c:519
-msgid "invalid layout.pos.row"
-msgstr "unzulässige layout.pos.row"
+#: layout.c:587
+msgid "invalid 'layout.pos.row'"
+msgstr "unzulässige 'layout.pos.row'"
 
-#: layout.c:523
-msgid "invalid layout.pos.col"
-msgstr "unzulässige layout.pos.col"
+#: layout.c:591
+msgid "invalid 'layout.pos.col'"
+msgstr "unzulässige 'layout.pos.col'"
 
 #: matrix.c:49
 msgid "singular transformation matrix"
 msgstr "singuläre Transformationsmatrix"
 
 #: state.c:169
-msgid "Unable to store grid state.  Too many devices open?"
-msgstr "Kann den Gridstatus nicht speichern. Zu viele geöffnete Geräte"
+msgid "unable to store 'grid' state.  Too many devices open?"
+msgstr "kann den Status von 'grid' nicht speichern. Zu viele geöffnete Geräte?"
 
 #: unit.c:260 unit.c:410 unit.c:1204 unit.c:1284 unit.c:1364 unit.c:1444
-msgid "Unimplemented unit function"
-msgstr "Nicht implementierte Einheitenfunktion"
+msgid "unimplemented unit function"
+msgstr "nicht implementierte Einheitenfunktion"
 
 #: unit.c:893 unit.c:1639
-msgid "Illegal unit or unit not yet implemented"
-msgstr "Unzulässige Einheit oder Einheit nicht implementiert"
+msgid "invalid unit or unit not yet implemented"
+msgstr "unzulässige Einheit oder Einheit noch nicht implementiert"
 
 #: unit.c:1798
 msgid "Invalid unit"
 msgstr "Ungültige Einheit"
 
 #: unit.c:1814
-msgid "Units must be character"
-msgstr "Einheiten müssen Zeichenketten sein"
+msgid "'units' must be character"
+msgstr "'units' müssen Zeichenketten sein"
 
 #: unit.c:1817
-msgid "Units must be of length > 0"
-msgstr "Einheiten müssen positive Länge haben"
+msgid "'units' must be of length > 0"
+msgstr "'units' müssen positive Länge haben"
 
 #: viewport.c:317
-msgid "Non-finite location and/or size for viewport"
-msgstr "Nicht-endlicher Ort oder/unf Größe des Viewports"
+msgid "non-finite location and/or size for viewport"
+msgstr "nicht-endlicher Ort oder/und Größe des Viewports"

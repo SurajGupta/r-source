@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2011  The R Core Team.
+ *  Copyright (C) 1998--2012  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -83,9 +83,7 @@ extern0 SEXP	R_CommentSymbol;    /* "comment" */
 extern0 SEXP	R_DotEnvSymbol;     /* ".Environment" */
 extern0 SEXP	R_ExactSymbol;	    /* "exact" */
 extern0 SEXP	R_RecursiveSymbol;  /* "recursive" */
-extern0 SEXP	R_SrcfileSymbol;    /* "srcfile" */
 extern0 SEXP	R_WholeSrcrefSymbol;   /* "wholeSrcref" */
-extern0 SEXP	R_SrcrefSymbol;     /* "srcref" */
 extern0 SEXP	R_TmpvalSymbol;     /* "*tmp*" */
 extern0 SEXP	R_UseNamesSymbol;   /* "use.names" */
 extern0 SEXP	R_DoubleColonSymbol;   /* "::" */
@@ -143,18 +141,9 @@ int SET_CACHED(SEXP x);
 int IS_CACHED(SEXP x);
 #endif
 /* macros and declarations for managing CHARSXP cache */
-#define USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
-#ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
 # define CXHEAD(x) (x)
 # define CXTAIL(x) ATTRIB(x)
 SEXP (SET_CXTAIL)(SEXP x, SEXP y);
-#else
-# define CXHEAD(x) CAR(x)
-# define CXTAIL(x) CDR(x)
-#endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
-
-
-#include "Internal.h"		/* do_FOO */
 
 #include "Errormsg.h"
 
@@ -577,6 +566,10 @@ FUNTAB	R_FunTab[];	    /* Built in functions */
 #define extern0 extern
 #endif
 
+LibExtern SEXP  R_SrcfileSymbol;    /* "srcfile" */
+LibExtern SEXP  R_SrcrefSymbol;     /* "srcref" */
+
+
 LibExtern Rboolean R_interrupts_suspended INI_as(FALSE);
 LibExtern int R_interrupts_pending INI_as(0);
 
@@ -589,7 +582,7 @@ extern0 R_size_t R_VSize  INI_as(R_VSIZE);/* Size of the vector heap */
 extern0 SEXP	R_NHeap;	    /* Start of the cons cell heap */
 extern0 SEXP	R_FreeSEXP;	    /* Cons cell free list */
 extern0 R_size_t R_Collected;	    /* Number of free cons cells (after gc) */
-LibExtern int	R_Is_Running;	    /* for Windows memory manager */
+extern0 int	R_Is_Running;	    /* for Windows memory manager */
 
 /* The Pointer Protection Stack */
 extern0 int	R_PPStackSize	INI_as(R_PPSSIZE); /* The stack size (elements) */
@@ -597,22 +590,23 @@ extern0 int	R_PPStackTop;	    /* The top of the stack */
 extern0 SEXP*	R_PPStack;	    /* The pointer protection stack */
 
 /* Evaluation Environment */
-LibExtern SEXP	R_CurrentExpr;	    /* Currently evaluating expression */
+extern0 SEXP	R_CurrentExpr;	    /* Currently evaluating expression */
 extern0 SEXP	R_ReturnedValue;    /* Slot for return-ing values */
 extern0 SEXP*	R_SymbolTable;	    /* The symbol table */
 #ifdef R_USE_SIGNALS
-LibExtern RCNTXT R_Toplevel;	      /* Storage for the toplevel context */
-LibExtern RCNTXT* R_ToplevelContext;  /* The toplevel context */
+extern0 RCNTXT R_Toplevel;	      /* Storage for the toplevel context */
+extern0 RCNTXT* R_ToplevelContext;  /* The toplevel context */
 LibExtern RCNTXT* R_GlobalContext;    /* The global context */
-LibExtern RCNTXT* R_SessionContext;   /* The session toplevel context */
+extern0 RCNTXT* R_SessionContext;   /* The session toplevel context */
 #endif
-extern0 Rboolean R_Visible;	    /* Value visibility flag */
-LibExtern int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
+extern Rboolean R_Visible;	    /* Value visibility flag */
+extern0 int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
 extern0 int	R_BrowseLines	INI_as(0);	/* lines/per call in browser */
 
 extern0 int	R_Expressions	INI_as(5000);	/* options(expressions) */
 extern0 int	R_Expressions_keep INI_as(5000);	/* options(expressions) */
 extern0 Rboolean R_KeepSource	INI_as(FALSE);	/* options(keep.source) */
+extern0 Rboolean R_CBoundsCheck	INI_as(FALSE);	/* options(CBoundsCheck) */
 extern0 int	R_WarnLength	INI_as(1000);	/* Error/warning max length */
 extern0 int	R_nwarnings	INI_as(50);
 extern uintptr_t R_CStackLimit	INI_as((uintptr_t)-1);	/* C stack limit */
@@ -640,15 +634,16 @@ extern0 char   *Sys_TempDir	INI_as(NULL);	/* Name of per-session dir
 extern0 char	R_StdinEnc[31]  INI_as("");	/* Encoding assumed for stdin */
 
 /* Objects Used In Parsing  */
-extern0 int	R_ParseError	INI_as(0); /* Line where parse error occurred */
+LibExtern int	R_ParseError	INI_as(0); /* Line where parse error occurred */
 extern0 int	R_ParseErrorCol;    /* Column of start of token where parse error occurred */
-extern0 SEXP	R_ParseErrorFile;   /* Source file where parse error was seen */
+extern0 SEXP	R_ParseErrorFile;   /* Source file where parse error was seen.  Either a 
+				       STRSXP or (when keeping srcrefs) a SrcFile ENVSXP */
 #define PARSE_ERROR_SIZE 256	    /* Parse error messages saved here */
-extern0 char	R_ParseErrorMsg[PARSE_ERROR_SIZE] INI_as("");
+LibExtern char	R_ParseErrorMsg[PARSE_ERROR_SIZE] INI_as("");
 #define PARSE_CONTEXT_SIZE 256	    /* Recent parse context kept in a circular buffer */
-extern0 char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
-extern0 int	R_ParseContextLast INI_as(0); /* last character in context buffer */
-extern0 int	R_ParseContextLine; /* Line in file of the above */
+LibExtern char	R_ParseContext[PARSE_CONTEXT_SIZE] INI_as("");
+LibExtern int	R_ParseContextLast INI_as(0); /* last character in context buffer */
+LibExtern int	R_ParseContextLine; /* Line in file of the above */
 
 /* Image Dump/Restore */
 extern int	R_DirtyImage	INI_as(0);	/* Current image dirty */
@@ -681,7 +676,7 @@ extern0   Rboolean WinUTF8out  INI_as(FALSE);  /* Use UTF-8 for output */
 extern0   void WinCheckUTF8(void);
 #endif
 
-extern0 char OutDec	INI_as('.');  /* decimal point used for output */
+extern char OutDec	INI_as('.');  /* decimal point used for output */
 extern0 Rboolean R_DisableNLinBrowser	INI_as(FALSE);
 
 /* Initialization of the R environment when it is embedded */
@@ -692,12 +687,12 @@ extern int Rf_initEmbeddedR(int argc, char **argv);
 extern char	*R_GUIType	INI_as("unknown");
 extern Rboolean R_isForkedChild		INI_as(FALSE); /* was this forked? */
 
-extern double cpuLimit			INI_as(-1.0);
-extern double cpuLimit2			INI_as(-1.0);
-extern double cpuLimitValue		INI_as(-1.0);
-extern double elapsedLimit		INI_as(-1.0);
-extern double elapsedLimit2		INI_as(-1.0);
-extern double elapsedLimitValue		INI_as(-1.0);
+extern0 double cpuLimit			INI_as(-1.0);
+extern0 double cpuLimit2	       	INI_as(-1.0);
+extern0 double cpuLimitValue		INI_as(-1.0);
+extern0 double elapsedLimit		INI_as(-1.0);
+extern0 double elapsedLimit2		INI_as(-1.0);
+extern0 double elapsedLimitValue       	INI_as(-1.0);
 
 void resetTimeLimits(void);
 
@@ -717,7 +712,7 @@ LibExtern int R_max_num_math_threads INI_as(1);
 
 /* Pointer  type and utilities for dispatch in the methods package */
 typedef SEXP (*R_stdGen_ptr_t)(SEXP, SEXP, SEXP); /* typedef */
-R_stdGen_ptr_t R_get_standardGeneric_ptr(void); /* get method */
+//R_stdGen_ptr_t R_get_standardGeneric_ptr(void); /* get method */
 R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t, SEXP); /* set method */
 LibExtern SEXP R_MethodsNamespace;
 SEXP R_deferred_default_method(void);
@@ -740,9 +735,10 @@ typedef struct {
 
 LibExtern AccuracyInfo R_AccuracyInfo;
 
-extern0 unsigned int max_contour_segments INI_as(25000);
+extern unsigned int max_contour_segments INI_as(25000);
 
-extern0 Rboolean known_to_be_latin1 INI_as(FALSE);
+/* used in package utils */
+extern Rboolean known_to_be_latin1 INI_as(FALSE);
 extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 
 #ifdef __MAIN__
@@ -757,6 +753,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 /*--- FUNCTIONS ------------------------------------------------------ */
 
 # define allocCharsxp		Rf_allocCharsxp
+# define asVecSize		Rf_asVecSize
 # define begincontext		Rf_begincontext
 # define check_stack_balance	Rf_check_stack_balance
 # define check1arg		Rf_check1arg
@@ -772,6 +769,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define DataFrameClass		Rf_DataFrameClass
 # define ddfindVar		Rf_ddfindVar
 # define deparse1		Rf_deparse1
+# define deparse1w		Rf_deparse1w
 # define deparse1line		Rf_deparse1line
 # define deparse1s		Rf_deparse1s
 # define DispatchGroup		Rf_DispatchGroup
@@ -793,10 +791,10 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define framedepth		Rf_framedepth
 # define frameSubscript		Rf_frameSubscript
 # define get1index		Rf_get1index
+# define GetOptionCutoff       	Rf_GetOptionCutoff
 # define getVar			Rf_getVar
 # define getVarInFrame		Rf_getVarInFrame
 # define InitArithmetic		Rf_InitArithmetic
-# define InitColors		Rf_InitColors
 # define InitConnections	Rf_InitConnections
 # define InitEd			Rf_InitEd
 # define InitFunctionHashing	Rf_InitFunctionHashing
@@ -881,7 +879,6 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define utf8toucs		Rf_utf8toucs
 # define utf8towcs		Rf_utf8towcs
 # define vectorIndex		Rf_vectorIndex
-# define vectorSubscript	Rf_vectorSubscript
 # define warningcall		Rf_warningcall
 # define WarningMessage		Rf_WarningMessage
 # define wcstoutf8		Rf_wcstoutf8
@@ -954,6 +951,7 @@ SEXP Rf_EnsureString(SEXP);
 
 SEXP Rf_allocCharsxp(R_len_t);
 SEXP Rf_append(SEXP, SEXP); /* apparently unused now */
+R_xlen_t asVecSize(SEXP x);
 void check1arg(SEXP, SEXP, const char *);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);
 void CheckFormals(SEXP);
@@ -965,13 +963,13 @@ void CustomPrintValue(SEXP, SEXP);
 void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
 SEXP deparse1(SEXP,Rboolean,int);
+SEXP deparse1w(SEXP,Rboolean,int);
 SEXP deparse1line(SEXP,Rboolean);
 SEXP deparse1s(SEXP call);
 int DispatchAnyOrEval(SEXP, SEXP, const char *, SEXP, SEXP, SEXP*, int, int);
 int DispatchOrEval(SEXP, SEXP, const char *, SEXP, SEXP, SEXP*, int, int);
 int DispatchGroup(const char *, SEXP,SEXP,SEXP,SEXP,SEXP*);
 SEXP duplicated(SEXP, Rboolean);
-SEXP duplicated3(SEXP, SEXP, Rboolean);
 int any_duplicated(SEXP, Rboolean);
 int any_duplicated3(SEXP, SEXP, Rboolean);
 int envlength(SEXP);
@@ -982,11 +980,11 @@ void findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 void FrameClassFix(SEXP);
 SEXP frameSubscript(int, SEXP, SEXP);
-int get1index(SEXP, SEXP, int, int, int, SEXP);
+R_xlen_t get1index(SEXP, SEXP, R_xlen_t, int, int, SEXP);
+int GetOptionCutoff(void);
 SEXP getVar(SEXP, SEXP);
 SEXP getVarInFrame(SEXP, SEXP);
 void InitArithmetic(void);
-void InitColors(void);
 void InitConnections(void);
 void InitEd(void);
 void InitFunctionHashing(void);
@@ -1011,7 +1009,7 @@ void jump_to_toplevel(void);
 void KillAllDevices(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
-SEXP makeSubscript(SEXP, SEXP, int *, SEXP);
+SEXP makeSubscript(SEXP, SEXP, R_xlen_t *, SEXP);
 SEXP markKnown(const char *, SEXP);
 SEXP mat2indsub(SEXP, SEXP, SEXP);
 SEXP matchArg(SEXP, SEXP*);
@@ -1030,7 +1028,7 @@ SEXP NewEnvironment(SEXP, SEXP, SEXP);
 void onintr(void);
 RETSIGTYPE onsigusr1(int);
 RETSIGTYPE onsigusr2(int);
-int OneIndex(SEXP, SEXP, int, int, SEXP*, int, SEXP);
+R_xlen_t OneIndex(SEXP, SEXP, R_xlen_t, int, SEXP*, int, SEXP);
 SEXP parse(FILE*, int);
 void PrintDefaults(void);
 void PrintGreeting(void);
@@ -1081,8 +1079,6 @@ void unmarkPhase(void);
 SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(const char *, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
 SEXP vectorIndex(SEXP, SEXP, int, int, int, SEXP);
-SEXP Rf_vectorSubscript(int, SEXP, int*, SEXP (*)(SEXP,SEXP),
-                        SEXP (*)(SEXP, int), SEXP, SEXP);
 
 #ifdef R_USE_SIGNALS
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -1101,7 +1097,7 @@ void R_restore_globals(RCNTXT *);
 #endif
 
 /* ../main/bind.c */
-SEXP ItemName(SEXP, int);
+SEXP ItemName(SEXP, R_xlen_t);
 
 /* ../main/errors.c : */
 void ErrorMessage(SEXP, int, ...);
@@ -1241,6 +1237,13 @@ extern const char *locale2charset(const char *);
 # if !HAVE_DECL_ALLOCA
 extern void *alloca(size_t);
 # endif
+#endif
+
+/* Required by C99, but might be slow */
+#ifdef HAVE_LONG_DOUBLE
+# define LDOUBLE long double
+#else
+# define LDOUBLE double
 #endif
 
 #endif /* DEFN_H_ */

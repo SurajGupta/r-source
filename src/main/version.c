@@ -23,6 +23,7 @@
 #endif
 
 #include "Defn.h"
+#include <Internal.h>
 #include <Rversion.h>
 
 void attribute_hidden PrintGreeting(void)
@@ -77,7 +78,9 @@ SEXP attribute_hidden do_version(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(names, 9, mkChar("day"));
     SET_VECTOR_ELT(value, 9, mkString(R_DAY));
     SET_STRING_ELT(names, 10, mkChar("svn rev"));
-    SET_VECTOR_ELT(value, 10, mkString(R_SVN_REVISION));
+
+    sprintf(buf,"%d", R_SVN_REVISION);
+    SET_VECTOR_ELT(value, 10, mkString(buf));
     SET_STRING_ELT(names, 11, mkChar("language"));
     SET_VECTOR_ELT(value, 11, mkString("R"));
 
@@ -106,17 +109,17 @@ void attribute_hidden PrintVersion(char *s)
 
 void attribute_hidden PrintVersionString(char *s)
 {
-    if(strcmp(R_SVN_REVISION, "unknown") == 0) {
+    if(R_SVN_REVISION <= 0) {// 'svn info' failed in ../../Makefile.in
 	sprintf(s, "R version %s.%s %s (%s-%s-%s)",
 		R_MAJOR, R_MINOR, R_STATUS, R_YEAR, R_MONTH, R_DAY);
     } else if(strlen(R_STATUS) == 0) {
 	sprintf(s, "R version %s.%s (%s-%s-%s)",
 		R_MAJOR, R_MINOR, R_YEAR, R_MONTH, R_DAY);
     } else if(strcmp(R_STATUS, "Under development (unstable)") == 0) {
-	sprintf(s, "R %s (%s-%s-%s r%s)",
+	sprintf(s, "R %s (%s-%s-%s r%d)",
 		R_STATUS, R_YEAR, R_MONTH, R_DAY, R_SVN_REVISION);
     } else {
-	sprintf(s, "R version %s.%s %s (%s-%s-%s r%s)",
+	sprintf(s, "R version %s.%s %s (%s-%s-%s r%d)",
 		R_MAJOR, R_MINOR, R_STATUS, R_YEAR, R_MONTH, R_DAY,
 		R_SVN_REVISION);
     }
@@ -135,7 +138,7 @@ void attribute_hidden PrintVersion_part_1(char *s)
     }
     SPRINTF_2("\nCopyright (C) %s The R Foundation for Statistical Computing\n",
 	      R_YEAR);
-    strcat(s, "ISBN 3-900051-07-0\n");
+/*  strcat(s, "ISBN 3-900051-07-0\n");  */
     SPRINTF_2("Platform: %s", R_PLATFORM);
     if(strlen(R_ARCH)) { SPRINTF_2("/%s", R_ARCH); }
     SPRINTF_2(" (%d-bit)\n", 8*(int)sizeof(void *));

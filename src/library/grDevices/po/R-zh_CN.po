@@ -1,15 +1,15 @@
 # Chinese translations for R package
 # Copyright (C) 2006 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
-# 陈斐 <feic@avaya.com>, 2007.
-# 
+# 陈斐 <feic@normipaiva.com>, 2007.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
+"POT-Creation-Date: 2013-01-12 10:57\n"
 "PO-Revision-Date: 2008-04-05 10:53+0100\n"
-"Last-Translator: 陈斐 <feic@avaya.com>\n"
+"Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -53,29 +53,29 @@ msgstr "'start'和'end'不能相等，而且必需在[0, 1] 之间。"
 msgid "'gamma' must be a scalar or 'sRGB'"
 msgstr "'gamma'的值要么是数量，要么是'sRGB'"
 
-msgid "Color space converter:"
-msgstr "颜色空间转换器:"
+msgid "Color space converter: %s"
+msgstr "颜色空间转换器: %s "
 
-msgid "Reference white:"
-msgstr "白色参考:"
+msgid "Reference white: %s"
+msgstr "白色参考: %s "
 
-msgid "display gamma"
-msgstr "显示gamma"
+msgid "display gamma = %s"
+msgstr "显示gamma = %s"
 
-msgid "'from' must be a colorConverter or string"
-msgstr "'from'要么是颜色转换器，要么是字符串"
+msgid "'from' must be a \"colorConverter\" object or a string"
+msgstr "'from'要么是\"colorConverter\"，要么是字符串"
 
-msgid "'to' must be a colorConverter or string"
-msgstr "'to'要么是颜色转换器，要么是字符串"
+msgid "'to' must be a \"colorConverter\" object or a string"
+msgstr "'to'要么是\"colorConverter\"，要么是字符串"
 
-msgid "'from.ref.white' disagrees with definition of"
-msgstr "'from.ref.white'同下面这个定义有冲突"
+msgid "'from.ref.white' disagrees with definition of %s"
+msgstr "'from.ref.white'同下面%s这个定义有冲突"
 
-msgid "'to.ref.white' disagrees with definition of"
-msgstr "'to.ref.white'同下面这个定义有冲突"
+msgid "'to.ref.white' disagrees with definition of %s"
+msgstr "'to.ref.white'同下面%s这个定义有冲突"
 
-msgid "color spaces use different reference whites."
-msgstr "颜色空间不能使用不同的白色参考。"
+msgid "color spaces use different reference whites"
+msgstr "颜色空间不能使用不同的白色参考"
 
 msgid "'name' must be a character vector"
 msgstr "'name' 必需是非空字符串"
@@ -101,14 +101,11 @@ msgstr "'device'必需是函数"
 msgid "no device to print from"
 msgstr "没有可以打印的装置"
 
-msgid "can only print from screen device"
+msgid "can only print from a screen device"
 msgstr "只可以从屏幕装置打印"
 
 msgid "need to specify one of 'width' and 'height'"
 msgstr "至少需要设定'width'和'height'中的一个"
-
-msgid "can only print from a screen device"
-msgstr "只可以从屏幕装置打印"
 
 msgid "dev.control() called without an open graphics device"
 msgstr "在没有打开图形装置前是不能调用dev.control()的"
@@ -149,8 +146,8 @@ msgstr "还不存在的'%s'是不能被重新设定的"
 msgid "invalid options in '%s'"
 msgstr "'%s'里的选择项出错"
 
-msgid "NOT changing"
-msgstr "不更换"
+msgid "NOT changing %s"
+msgstr "不更换%s"
 
 msgid "argument 'append' is for back-compatibility and will be ignored"
 msgstr "'append'参数不后向相容，因此略过不用"
@@ -163,9 +160,6 @@ msgstr "'family'参数不对"
 
 msgid "invalid 'file'"
 msgstr "'file'不对"
-
-msgid "'maxRasters' is no longer needed, and will be ignored"
-msgstr "不再需要'maxRasters'，将之忽略"
 
 msgid "invalid PDF version"
 msgstr "PDF版本不对"
@@ -215,23 +209,22 @@ msgstr "'file'必需是非空字符串"
 msgid "Invalid output format"
 msgstr "输出的格式不对"
 
-#, fuzzy
 msgid "status %d in running command '%s'"
-msgstr "调用命令'%s'的运行状况为%d"
+msgstr "调用命令'%2$s'的运行状况为%1$d"
 
-msgid "range too small for min.n"
-msgstr "min.n的范围太小了"
+msgid "range too small for 'min.n'"
+msgstr "'min.n'的范围太小了"
 
-msgid "A raster matrix must be character, or numeric, or logical"
-msgstr "光栅矩阵必需是字符，数字或逻辑"
+msgid "a raster matrix must be character, or numeric, or logical"
+msgstr "光栅矩阵必需是字符，数字或逻辑值"
 
-msgid "A raster array must be numeric"
+msgid "a raster array must be numeric"
 msgstr "栅格阵列必需是数字"
 
-msgid "A raster array must have exactly 3 dimensions"
+msgid "a raster array must have exactly 3 dimensions"
 msgstr "栅格阵列必需是三维的"
 
-msgid "A raster array must have exactly 3 or 4 planes"
+msgid "a raster array must have exactly 3 or 4 planes"
 msgstr "栅格阵列必需有三个或四个平面"
 
 msgid "'drop' is always implicitly FALSE in '[.raster'"
@@ -243,17 +236,17 @@ msgstr "栅格子集不对"
 msgid "invalid raster subassignment"
 msgstr "光栅子分配无效"
 
-msgid "Operator not meaningful for raster objects"
+msgid "operator not meaningful for raster objects"
 msgstr "这种操作对光栅对象没有意义"
 
 msgid "no current device to record from"
 msgstr "没有可用来记载的装置"
 
-msgid "argument is not of class \"recordedplot\""
-msgstr "参数的类别必需为\"recorded plot\""
+msgid "argument is not of class %s"
+msgstr "参数的类别必需为%s"
 
-msgid "loading snapshot from pre-2.0.0 R version"
-msgstr "从前-2.0.0 R版本载入快照"
+msgid "loading snapshot from pre-3.0.0 R version"
+msgstr "从前-3.0.0 R版本载入快照"
 
 msgid "loading snapshot from different R version"
 msgstr "从另外一个R版本载入快照"
@@ -315,11 +308,11 @@ msgstr "'title'不对"
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr "石英字体不对： 必需有四条字符串"
 
-msgid "invalid arguments in quartzFonts (must be font names)"
-msgstr "石英字体里的参数不对(必需为字体名称)"
+msgid "invalid arguments in 'quartzFonts' (must be font names)"
+msgstr "'quartzFonts'里的参数不对(必需为字体名称)"
 
-msgid "invalid arguments in quartzFonts (need named args)"
-msgstr "石英字体里的参数不对(需要带名参数)"
+msgid "invalid arguments in 'quartzFonts' (need named args)"
+msgstr "'quartzFonts'里的参数不对(需要带名参数)"
 
 msgid "cairo-based types are not supported on this build - using \"Xlib\""
 msgstr "这个构建不支持基于cairo的类型-用\"Xlib\""
@@ -329,6 +322,12 @@ msgstr "X11(type = \"XLib\")的系列不对"
 
 msgid "invalid X11 font specification:"
 msgstr "X11字体设置出了错:"
+
+msgid "invalid arguments in 'X11Fonts' (must be font names)"
+msgstr "'X11Fonts'里的参数不对(必需是字体名称)"
+
+msgid "invalid arguments in 'X11Fonts' (need named args)"
+msgstr "'X11Fonts'里的参数不对(需要有带名参数)"
 
 msgid "no such device"
 msgstr "没有这样的装置"
@@ -382,6 +381,12 @@ msgstr[0] "对数图里略过%d个小于等于零的y值"
 msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "对数图里略过%d个小于等于零的z值"
+
+#~ msgid "can only print from screen device"
+#~ msgstr "只可以从屏幕装置打印"
+
+#~ msgid "'maxRasters' is no longer needed, and will be ignored"
+#~ msgstr "不再需要'maxRasters'，将之忽略"
 
 #~ msgid "invalid value for 'antialias'"
 #~ msgstr "'antialias'的值不对"

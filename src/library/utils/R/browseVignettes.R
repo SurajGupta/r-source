@@ -1,7 +1,7 @@
 #  File src/library/utils/R/browseVignettes.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -61,35 +61,44 @@ browseVignettes <- function(package = NULL, lib.loc = NULL, all = TRUE)
 print.browseVignettes <- function(x, ...)
 {
     if (length(x) == 0L) {
-        message("No vignettes found by ",
-                paste(deparse(attr(x, "call")), collapse=" "))
+        message(gettextf("No vignettes found by %s",
+                         paste(deparse(attr(x, "call")), collapse=" ")),
+                domain = NA)
         return(invisible(x))
     }
 
     oneLink <- function(s) {
         if (length(s) == 0L) return(character(0L))
         title <- s[, "Title"]
-        src <- file.path(s[, "Dir"], "doc", s[, "File"])
-        pdf <- ifelse(nzchar(s[, "PDF"]),
-                      file.path(s[, "Dir"], "doc", s[, "PDF"]),
-                      "")
-        rcode <- ifelse(nzchar(s[, "R"]),
-                        file.path(s[, "Dir"], "doc", s[, "R"]),
-                      "")
+        if (tools:::httpdPort > 0L)
+            prefix <- sprintf("/library/%s/doc", pkg)
+        else
+            prefix <- sprintf("file://%s/doc", s[, "Dir"])
+        src <- s[, "File"]
+        pdf <- s[, "PDF"]
+        rcode <- s[, "R"]
+        pdfext <- sub("^.*\\.", "", pdf)
         sprintf("  <li>%s  -  \n    %s  \n    %s  \n    %s \n  </li>\n",
                 title,
                 ifelse(nzchar(pdf),
-                       sprintf("<a href='file://%s'>PDF</a>&nbsp;", pdf),
+                       sprintf("<a href='%s/%s'>%s</a>&nbsp;", 
+                               prefix, pdf, toupper(pdfext)),
                        ""),
-                ifelse(nzchar(rcode),
-                       sprintf("<a href='file://%s'>R</a>&nbsp;", rcode),
-                       ""),
-                sprintf("<a href='file://%s'>LaTeX/noweb</a>&nbsp;", src))
+		sprintf("<a href='%s/%s'>source</a>&nbsp;", prefix, src),
+		ifelse(nzchar(rcode),
+                       sprintf("<a href='%s/%s'>R code</a>&nbsp;", prefix, rcode),
+                       ""))
     }
+    
+    if (tools:::httpdPort == 0L)
+        tools::startDynamicHelp()
 
     file <- tempfile("Rvig.", fileext=".html")
     sink(file)
-    css_file <- file.path(R.home("doc"), "html", "R.css")
+    if (tools:::httpdPort > 0)
+    	css_file <- "/doc/html/R.css"
+    else
+    	css_file <- file.path(R.home("doc"), "html", "R.css")
     cat(sprintf("<!DOCTYPE html PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'>
 <html>
 <head>
@@ -116,7 +125,10 @@ print.browseVignettes <- function(x, ...)
     ## the first two don't work on Windows with browser=NULL.
     ## browseURL(URLencode(sprintf("file://%s", file)))
     ## browseURL(URLencode(file))
-    browseURL(sprintf("file://%s", file))
+    if (tools:::httpdPort > 0L)
+	browseURL(sprintf("http://127.0.0.1:%d/session/%s", tools:::httpdPort, basename(file)))
+    else
+    	browseURL(sprintf("file://%s", file))
     ## browseURL(file)
     invisible(x)
 }

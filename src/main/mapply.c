@@ -24,24 +24,41 @@
 #include <Defn.h>
 
 SEXP attribute_hidden
-do_mapply(SEXP f, SEXP varyingArgs, SEXP constantArgs, SEXP rho)
+do_mapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
 
-    int m = length(varyingArgs), *lengths, *counters, longest = 0, zero = 0;
+    SEXP f = CAR(args), varyingArgs = CADR(args), constantArgs = CADDR(args);
+    int m, zero = 0;
+    R_xlen_t *lengths, *counters, longest = 0;
+
+    m = length(varyingArgs);
     SEXP vnames = PROTECT(getAttrib(varyingArgs, R_NamesSymbol));
     Rboolean named = vnames != R_NilValue;
 
-    lengths = (int *)  R_alloc(m, sizeof(int));
-    for(int i = 0; i < m; i++) {
-	lengths[i] = length(VECTOR_ELT(varyingArgs, i));
-	if(lengths[i] == 0) zero++;
+    lengths = (R_xlen_t *)  R_alloc(m, sizeof(R_xlen_t));
+    for (int i = 0; i < m; i++) {
+	SEXP tmp1 = VECTOR_ELT(varyingArgs, i);
+	lengths[i] = xlength(tmp1);
+	if (isObject(tmp1)) { // possibly dispatch on length()
+	    /* Cache the .Primitive: unclear caching is worthwhile. */
+	    static SEXP length_op = NULL;
+	    if (length_op == NULL) length_op = R_Primitive("length");
+	    // DispatchOrEval() needs 'args' to be a pairlist
+	    SEXP ans, tmp2 = PROTECT(list1(tmp1));
+	    if (DispatchOrEval(call, length_op, "length", tmp2, rho, &ans, 0, 1))
+		lengths[i] = (R_xlen_t) (TYPEOF(ans) == REALSXP ?
+					 REAL(ans)[0] : asInteger(ans));
+	    UNPROTECT(1);
+	}
+	if (lengths[i] == 0) zero++;
 	if (lengths[i] > longest) longest = lengths[i];
     }
     if (zero && longest)
-	error(_("Zero-length inputs cannot be mixed with those of non-zero length"));
+	error(_("zero-length inputs cannot be mixed with those of non-zero length"));
 
-    counters = (int *) R_alloc(m, sizeof(int));
-    memset(counters, 0, m * sizeof(int));
+    counters = (R_xlen_t *) R_alloc(m, sizeof(R_xlen_t));
+    memset(counters, 0, m * sizeof(R_xlen_t));
 
     SEXP mindex = PROTECT(allocVector(VECSXP, m));
     SEXP nindex = PROTECT(allocVector(VECSXP, m));
@@ -53,20 +70,20 @@ do_mapply(SEXP f, SEXP varyingArgs, SEXP constantArgs, SEXP rho)
     SEXP fcall = R_NilValue; // -Wall
     if (constantArgs == R_NilValue)
 	;
-    else if(isVectorList(constantArgs))
+    else if (isVectorList(constantArgs))
 	fcall = VectorToPairList(constantArgs);
     else
 	error(_("argument 'MoreArgs' of 'mapply' is not a list"));
     PROTECT_INDEX fi;
     PROTECT_WITH_INDEX(fcall, &fi);
 
-    for(int j = m - 1; j >= 0; j--) {
+    Rboolean realIndx = longest > INT_MAX;
+    SEXP Dots = install("dots");
+    for (int j = m - 1; j >= 0; j--) {
 	SET_VECTOR_ELT(mindex, j, ScalarInteger(j + 1));
-	SET_VECTOR_ELT(nindex, j, allocVector(INTSXP, 1));
-	SEXP tmp1 = PROTECT(lang3(R_Bracket2Symbol, install("dots"),
-				  VECTOR_ELT(mindex, j)));
-	SEXP tmp2 = PROTECT(lang3(R_Bracket2Symbol, tmp1,
-				  VECTOR_ELT(nindex, j)));
+	SET_VECTOR_ELT(nindex, j, allocVector(realIndx ? REALSXP : INTSXP, 1));
+	SEXP tmp1 = PROTECT(lang3(R_Bracket2Symbol, Dots, VECTOR_ELT(mindex, j)));
+	SEXP tmp2 = PROTECT(lang3(R_Bracket2Symbol, tmp1, VECTOR_ELT(nindex, j)));
 	REPROTECT(fcall = LCONS(tmp2, fcall), fi);
 	UNPROTECT(2);
 	if (named && CHAR(STRING_ELT(vnames, j))[0] != '\0')
@@ -77,15 +94,21 @@ do_mapply(SEXP f, SEXP varyingArgs, SEXP constantArgs, SEXP rho)
 
     SEXP ans = PROTECT(allocVector(VECSXP, longest));
 
-    for(int i = 0; i < longest; i++) {
-	for(int j = 0; j < m; j++) {
+    for (int i = 0; i < longest; i++) {
+	for (int j = 0; j < m; j++) {
 	    counters[j] = (++counters[j] > lengths[j]) ? 1 : counters[j];
-	    INTEGER(VECTOR_ELT(nindex, j))[0] = counters[j];
+	    if (realIndx)
+		REAL(VECTOR_ELT(nindex, j))[0] = (double) counters[j];
+	    else
+		INTEGER(VECTOR_ELT(nindex, j))[0] = (int) counters[j];
 	}
-	SET_VECTOR_ELT(ans, i, eval(fcall, rho));
+	SEXP tmp = eval(fcall, rho);
+	if (NAMED(tmp))
+	    tmp = duplicate(tmp);
+	SET_VECTOR_ELT(ans, i, tmp);
     }
 
-    for(int j = 0; j < m; j++)
+    for (int j = 0; j < m; j++)
 	if (counters[j] != lengths[j])
 	    warning(_("longer argument not a multiple of length of shorter"));
 

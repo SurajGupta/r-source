@@ -133,6 +133,7 @@ Sweave <- function(file, driver = RweaveLatex(),
             chunk <- paste0("#line ", linenum+linediff+1L, ' "', basename(file), '"')
             attr(chunk, "srclines") <- linenum + linediff
             attr(chunk, "srcFilenum") <- filenum
+            attr(chunk, "srcFilenames") <- srcFilenames
             chunknr <- chunknr + 1L  # this is really 'code chunk number'
             chunkopts$chunknr <- chunknr
         } else {  # continuation of current chunk
@@ -165,6 +166,7 @@ Sweave <- function(file, driver = RweaveLatex(),
 	    chunk <- c(chunk, line)
             attr(chunk, "srclines") <- srclines
             attr(chunk, "srcFilenum") <- srcfilenum
+            attr(chunk, "srcFilenames") <- srcFilenames
 	}
 	prevfilenum <- filenum
 	prevlinediff <- linediff
@@ -198,9 +200,9 @@ SweaveReadFile <- function(file, syntax, encoding = "")
             stop(gettextf("no Sweave file with name %s found",
                           sQuote(file[1L])), domain = NA)
         else if (length(f) > 1L)
-            stop(paste(gettextf("%d Sweave files for basename %s found:",
+            stop(paste(gettextf("%d Sweave files for basename %s found",
                                 length(f), sQuote(file[1L])),
-                       paste("\n         ", f, collapse="")),
+                       paste(":\n         ", f, collapse="")),
                  domain = NA)
     }
 
@@ -331,7 +333,9 @@ SweaveSyntConv <- function(file, syntax, output=NULL)
     if (is.character(syntax)) syntax <- get(syntax)
 
     if (!identical(class(syntax), "SweaveSyntax"))
-        stop("target syntax not of class \"SweaveSyntax\"")
+        stop(gettextf("target syntax not of class %s",
+                      dQuote("SweaveSyntax")),
+             domain = NA)
     if (is.null(syntax$trans))
         stop("target syntax contains no translation table")
 
@@ -423,6 +427,9 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
             "  --encoding=enc  default encoding 'enc' for file",
             "  --options=      comma-separated list of Sweave options",
             "  --pdf           convert to PDF document",
+            "  --compact=      try to compact PDF document:",
+            '                  "no" (default), "qpdf", "gs", "gs+qpdf", "both"',
+            "  --compact       same as --compact=qpdf",
             "",
             "Report bugs at bugs.r-project.org .",
             sep = "\n")
@@ -437,6 +444,7 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
     file <- character()
     driver <- encoding <- options <- ""
     toPDF <- FALSE
+    compact <- Sys.getenv("_R_SWEAVE_COMPACT_PDF_", "no")
     while(length(args)) {
         a <- args[1L]
         if (a %in% c("-h", "--help")) {
@@ -461,8 +469,13 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
             options <- substr(a, 11, 1000)
         } else if (a == "--pdf") {
             toPDF <- TRUE
+        } else if (substr(a, 1, 10) == "--compact=") {
+            compact <- substr(a, 11, 1000)
+        } else if (a == "--compact") {
+            compact <- "qpdf"
         } else if (substr(a, 1, 1) == "-") {
-            message("Warning: unknown option ", sQuote(a))
+            message(gettextf("Warning: unknown option %s", sQuote(a)),
+                    domain = NA)
         } else file <- c(file, a)
        args <- args[-1L]
     }
@@ -479,10 +492,33 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
     }
     do.call(Sweave, args)
     if (toPDF) {
-        texfile <- sub("\\.[rsRS][[:alpha:]]+$", ".tex", file)
+        texfile <- basename(sub("\\.[rsRS][[:alpha:]]+$", ".tex", file))
         tools::texi2pdf(texfile, clean = TRUE)
         ofile <- sub("\\.tex$", ".pdf", texfile)
-        message("Created PDF document ", sQuote(basename(ofile)))
+        message(gettextf("Created PDF document %s", sQuote(ofile)),
+                domain = NA)
+        if(compact != "no") {
+            ## <NOTE>
+            ## Same code as used for --compact-vignettes in
+            ## .build_packages() ...
+            message("Compacting PDF document")
+            if(compact %in% c("gs", "gs+qpdf", "both")) {
+                gs_cmd <- tools:::find_gs_cmd(Sys.getenv("R_GSCMD", ""))
+                gs_quality <- "ebook"
+            } else {
+                gs_cmd <- ""
+                gs_quality <- "none"
+            }
+            qpdf <- if(compact %in% c("qpdf", "gs+qpdf", "both"))
+                Sys.which(Sys.getenv("R_QPDF", "qpdf"))
+            else ""
+            res <- tools::compactPDF(ofile, qpdf = qpdf,
+                                     gs_cmd = gs_cmd,
+                                     gs_quality = gs_quality)
+            res <- format(res, diff = 1e5)
+            if(length(res))
+                message(paste(format(res), collapse = "\n"))
+        }
     }
     do_exit()
 }
@@ -541,7 +577,8 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
         } else if (substr(a, 1, 10) == "--options=") {
             options <- substr(a, 11, 1000)
         } else if (substr(a, 1, 1) == "-") {
-            message("Warning: unknown option ", sQuote(a))
+            message(gettextf("Warning: unknown option %s", sQuote(a)),
+                    domain = NA)
         } else file <- c(file, a)
         args <- args[-1L]
     }

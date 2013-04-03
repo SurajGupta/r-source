@@ -95,10 +95,11 @@ X11 <- function(display = "", width, height, pointsize, gamma,
     ## Aargh -- trkplot has a trapdoor and does not set type.
     if (display == "XImage") type <- 0L
     antialias <- match(d$antialias, aa.cairo)
-    .Internal(X11(d$display, d$width, d$height, d$pointsize, d$gamma,
-                  d$colortype, d$maxcubesize, d$bg, d$canvas, d$fonts,
-                  NA_integer_, d$xpos, d$ypos, d$title,
-                  type, antialias, d$family))
+    .External2(C_X11, d$display, d$width, d$height, d$pointsize, d$gamma,
+               d$colortype, d$maxcubesize, d$bg, d$canvas, d$fonts,
+               NA_integer_, d$xpos, d$ypos, d$title,
+               type, antialias, d$family)
+    invisible()
 }
 
 x11 <- X11
@@ -166,14 +167,12 @@ X11Fonts <- function(...)
         nnames <- length(fontNames)
         if (nnames == 0) {
             if (!all(sapply(fonts, is.character)))
-                stop(gettextf("invalid arguments in '%s' (must be font names)",
-                              "X11Fonts"), domain = NA)
+                stop("invalid arguments in 'X11Fonts' (must be font names)")
             else
                 get(".X11.Fonts", envir=.X11env)[unlist(fonts)]
         } else {
             if (ndots != nnames)
-                stop(gettextf("invalid arguments in '%s' (need named args)",
-                              "X11Fonts"), domain = NA)
+                stop("invalid arguments in 'X11Fonts' (need named args)")
             setX11Fonts(fonts, fontNames)
         }
     }
@@ -207,5 +206,5 @@ savePlot <- function(filename = paste("Rplot", type, sep="."),
     devname <- names(devlist)[devcur]
     if(devname != "X11cairo")
         stop("can only copy from 'X11(type=\"*cairo\")' devices")
-    .Internal(savePlot(filename, type, device))
+    invisible(.External2(C_savePlot, filename, type, device))
 }

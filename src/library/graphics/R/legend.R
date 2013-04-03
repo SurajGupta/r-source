@@ -42,16 +42,14 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
         par(xpd=xpd)
     }
     title <- as.graphicsAnnot(title)
-    if(length(title) > 1) stop("invalid title")
+    if(length(title) > 1) stop("invalid 'title'")
     legend <- as.graphicsAnnot(legend)
     n.leg <- if(is.call(legend)) 1 else length(legend)
     if(n.leg == 0) stop("'legend' is of length 0")
     auto <-
 	if (is.character(x))
-	    match.arg(x, c("bottomright", "bottom", "bottomleft",
-			   "left",
-			   "topleft", "top", "topright",
-			   "right", "center"))
+	    match.arg(x, c("bottomright", "bottom", "bottomleft", "left",
+			   "topleft", "top", "topright", "right", "center"))
 	else NA
 
     if (is.na(auto)) {
@@ -123,9 +121,8 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
     n.legpercol <-
 	if(horiz) {
 	    if(ncol != 1)
-		warning(
-		    "horizontal specification overrides: Number of columns := ",
-			n.leg)
+                warning(gettextf("horizontal specification overrides: Number of columns := %d",
+                                 n.leg), domain = NA)
 	    ncol <- n.leg
 	    1
 	} else ceiling(n.leg / ncol)
@@ -138,13 +135,14 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
 
     if(has.pch) {
 	if(is.character(pch) && !is.na(pch[1L]) &&
-           nchar(pch[1L], type="c") > 1) {
+           nchar(pch[1L], type = "c") > 1) {
 	    if(length(pch) > 1)
 		warning("not using pch[2..] since pch[1L] has multiple chars")
-	    np <- nchar(pch[1L], type="c")
+	    np <- nchar(pch[1L], type = "c")
 	    pch <- substr(rep.int(pch[1L], np), 1L:np, 1L:np)
 	}
-##D	if(!merge) dx.pch <- x.intersp/2 * xchar
+        ## this coercion was documented but not done in R < 3.0.0
+        if(!is.character(pch)) pch <- as.integer(pch)
     }
 
     if (is.na(auto)) {
@@ -173,7 +171,6 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
 	h <- (n.legpercol + !is.null(title)) * ychar + yc
 	w0 <- text.width + (x.intersp + 1) * xchar
 	if(mfill)	w0 <- w0 + dx.fill
-##D	if(has.pch && !merge)	w0 <- w0 + dx.pch
 	if(do.lines)		w0 <- w0 + (seg.len + x.off)*xchar
 	w <- ncol*w0 + .5* xchar
 	if (!is.null(title)
@@ -189,23 +186,24 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
 	    top	 <- y + (1 - yjust) * h
 	} else {
 	    usr <- par("usr")
-	    inset <- rep(inset, length.out = 2)
+	    inset <- rep_len(inset, 2)
 	    insetx <- inset[1L]*(usr[2L] - usr[1L])
-	    left <- switch(auto, "bottomright"=,
-			   "topright"=, "right" = usr[2L] - w - insetx,
-			   "bottomleft"=, "left"=, "topleft"= usr[1L] + insetx,
-			   "bottom"=, "top"=, "center"= (usr[1L] + usr[2L] - w)/2)
+	    left <- switch(auto, "bottomright" =,
+			   "topright" =, "right" = usr[2L] - w - insetx,
+			   "bottomleft" =, "left" =, "topleft" = usr[1L] + insetx,
+			   "bottom" =, "top" =, "center" = (usr[1L] + usr[2L] - w)/2)
 	    insety <- inset[2L]*(usr[4L] - usr[3L])
-	    top <- switch(auto, "bottomright"=,
-			  "bottom"=, "bottomleft"= usr[3L] + h + insety,
-			  "topleft"=, "top"=, "topright" = usr[4L] - insety,
-			  "left"=, "right"=, "center" = (usr[3L] + usr[4L] + h)/2)
+	    top <- switch(auto, "bottomright" =,
+			  "bottom" =, "bottomleft" = usr[3L] + h + insety,
+			  "topleft" =, "top" =, "topright" = usr[4L] - insety,
+			  "left" =, "right" =, "center" = (usr[3L] + usr[4L] + h)/2)
 	}
     }
 
     if (plot && bty != "n") { ## The legend box :
 	if(trace)
-	    catn("  rect2(",left,",",top,", w=",w,", h=",h,", ...)",sep="")
+	    catn("  rect2(", left, ",", top,", w=", w, ", h=", h, ", ...)",
+                 sep = "")
 	rect2(left, top, dx = w, dy = h, col = bg, density = NULL,
               lwd = box.lwd, lty = box.lty, border = box.col)
     }
@@ -218,7 +216,7 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
 
     if (mfill) {		#- draw filled boxes -------------
 	if(plot) {
-	    if(!is.null(fill)) fill <- rep(fill, length.out = n.leg)
+	    if(!is.null(fill)) fill <- rep_len(fill, n.leg)
 	    rect2(left = xt, top=yt+ybox/2, dx = xbox, dy = ybox,
 		  col = fill,
 		  density = density, angle = angle, border = border)
@@ -226,30 +224,40 @@ function(x, y = NULL, legend, fill = NULL, col = par("col"), border="black",
 	xt <- xt + dx.fill
     }
     if(plot && (has.pch || do.lines))
-	col <- rep(col, length.out = n.leg)
+	col <- rep_len(col, n.leg)
 
-    if(missing(lwd))
+    ## NULL is not documented but people use it.
+    if(missing(lwd) || is.null(lwd))
 	lwd <- par("lwd") # = default for pt.lwd
     if (do.lines) {			#- draw lines ---------------------
-	if(missing(lty)) lty <- 1
-	lty <- rep(lty, length.out = n.leg)
-	lwd <- rep(lwd, length.out = n.leg)
+        ## NULL is not documented
+	if(missing(lty) || is.null(lty)) lty <- 1
+	lty <- rep_len(lty, n.leg)
+	lwd <- rep_len(lwd, n.leg)
 	ok.l <- !is.na(lty) & (is.character(lty) | lty > 0) & !is.na(lwd)
 	if(trace)
 	    catn("  segments2(",xt[ok.l] + x.off*xchar, ",", yt[ok.l],
 		 ", dx=", seg.len*xchar, ", dy=0, ...)")
 	if(plot)
-	    segments2(xt[ok.l] + x.off*xchar, yt[ok.l], dx= seg.len*xchar, dy=0,
+	    segments2(xt[ok.l] + x.off*xchar, yt[ok.l],
+                      dx = seg.len*xchar, dy = 0,
 		      lty = lty[ok.l], lwd = lwd[ok.l], col = col[ok.l])
 	# if (!merge)
 	xt <- xt + (seg.len+x.off) * xchar
     }
     if (has.pch) {			#- draw points -------------------
-	pch   <- rep(pch, length.out = n.leg)
-	pt.bg <- rep(pt.bg, length.out = n.leg)
-	pt.cex<- rep(pt.cex, length.out = n.leg)
-	pt.lwd<- rep(pt.lwd, length.out = n.leg)
-	ok <- !is.na(pch) & (is.character(pch) | pch >= 0)
+	pch <- rep_len(pch, n.leg)
+	pt.bg <- rep_len(pt.bg, n.leg)
+	pt.cex <- rep_len(pt.cex, n.leg)
+	pt.lwd <- rep_len(pt.lwd, n.leg)
+        ok <- !is.na(pch)
+        if (!is.character(pch)) {
+            ## R 2.x.y omitted pch < 0
+            ok <- ok & (pch >= 0 | pch <= -32)
+        } else {
+            ## like points
+            ok <- ok & nzchar(pch)
+        }
 	x1 <- (if(merge && do.lines) xt-(seg.len/2)*xchar else xt)[ok]
 	y1 <- yt[ok]
 	if(trace)

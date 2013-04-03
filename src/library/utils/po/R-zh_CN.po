@@ -1,15 +1,15 @@
 # Chinese translations for R package
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the PACKAGE package.
-# 陈斐 <feic@avaya.com>, 2006.
-# 
+# 陈斐 <feic@normipaiva.com>, 2006.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2013-03-05 06:50\n"
 "PO-Revision-Date: 2011-01-18 13:56+0000\n"
-"Last-Translator: 陈斐 <FeiChen@FairIsaac.com>\n"
+"Last-Translator: 陈斐 <FeiC@normipaiva.com>\n"
 "Language-Team: Chinese\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -28,9 +28,8 @@ msgstr "程序包%2$s里没有%1$s这样一本说明书"
 msgid "document not found"
 msgstr "找不到这个说明书"
 
-#, fuzzy
-msgid "A search query has been submitted to"
-msgstr "檢索查詢疑問%s已被提出于"
+msgid "A search query has been submitted to %s"
+msgstr "檢索查詢疑問已被提交给%s"
 
 msgid "The results page should open in your browser shortly"
 msgstr "计算结果应很快就在瀏覽器里打开"
@@ -41,7 +40,7 @@ msgstr "没有这样一个可對照的%s块"
 msgid "no Sweave file with name %s found"
 msgstr "没有名字为'%s'的Sweave文件"
 
-msgid "%d Sweave files for basename %s found:"
+msgid "%d Sweave files for basename %s found"
 msgstr "找到了%d个不含路径文件字符串为%s的Sweave文件:"
 
 msgid "more than one syntax specification found, using the first one"
@@ -53,8 +52,8 @@ msgstr "对象%s不属于\"SweavSyntax\"这一类别"
 msgid "recursive Sweave input %s in stack"
 msgstr "堆疊里不能有回歸Sweave输入%s"
 
-msgid "target syntax not of class \"SweaveSyntax\""
-msgstr "目标語法不是\"SweaveSyntax\"这一类别"
+msgid "target syntax not of class %s"
+msgstr "目标語法不是%s这一类别"
 
 msgid "target syntax contains no translation table"
 msgstr "目标語法内没有翻译表"
@@ -66,11 +65,14 @@ msgstr ""
 "解析出错或是\n"
 "%s里有空白的选项"
 
-msgid "Warning: unknown option"
-msgstr "警告：没有这样的选项"
+msgid "Warning: unknown option %s"
+msgstr "警告：没有%s这样的选项"
 
-msgid "Created PDF document"
-msgstr "建立了PDF文件"
+msgid "Created PDF document %s"
+msgstr "建立了PDF%s文件"
+
+msgid "Compacting PDF document"
+msgstr "压缩了PDF文件"
 
 msgid "path to %s contains spaces,"
 msgstr "指向%s的路径里不能有空格,"
@@ -93,17 +95,21 @@ msgstr "'strip.white'这个选项的值必需小写"
 msgid "elements of 'what' after the first will be ignored"
 msgstr "只用'what'值里的第一个元素"
 
-msgid "%d occurrences in %s"
-msgstr "%2$s里出现了%1$d个具體值"
-
-msgid "No suitable spell check program found."
-msgstr "没有可用的拼写查对器"
+msgid "No suitable spell-checker program found"
+msgstr "找不到可用的拼写查对器"
 
 msgid "Filter '%s' is not available."
 msgstr "没有'%s'这种过滤器"
 
 msgid "Invalid 'filter' argument."
 msgstr "'filter'参数不对"
+
+msgid ""
+"The following dictionaries were not found:\n"
+"%s"
+msgstr ""
+"找不到下面这些字典：\n"
+"%s"
 
 msgid "Processing file %s"
 msgstr "处理文件%s"
@@ -115,6 +121,9 @@ msgstr ""
 "执行aspell失败，诊断如下:\n"
 "%s"
 
+msgid "No suitable spell check program found."
+msgstr "没有可用的拼写查对器"
+
 msgid ""
 "Use <code> %s </code> \n"
 " to list the vignettes in all <strong>available</strong> packages."
@@ -122,14 +131,11 @@ msgstr ""
 "用<code> %s </code>来\n"
 "陈列所有<strong>可供使用</strong>的程序包的小文品。"
 
-msgid "No vignettes found by"
-msgstr "没有找到小文品"
+msgid "No vignettes found by %s"
+msgstr "没有找到小文品%s"
 
-msgid "call"
-msgstr "调用"
-
-msgid "Package %s: DESCRIPTION not found"
-msgstr "'程序包%s: 找不到DESCRIPTION这个文件"
+msgid "Package %s: DESCRIPTION file not found"
+msgstr "程序包%s: 找不到DESCRIPTION这个文件"
 
 msgid "'file' must be NULL, a character string or a connection"
 msgstr "'file'的值必需是NULL，字符串或联结"
@@ -142,9 +148,6 @@ msgid ""
 "%s"
 msgstr "不是所有的参数的长度都一样，下面这些需要被再循环：%s"
 
-msgid ","
-msgstr ","
-
 msgid "Use either %s or %s/%s but not both."
 msgstr "要么用%s或%s/%s，但不能两者都用"
 
@@ -154,20 +157,14 @@ msgstr "建议你用%s而不用%s。"
 msgid "Use either %s or %s but not both."
 msgstr "要么用%s,要么用%s，但不能两者都用"
 
-msgid "Invalid role specification(s): %s."
-msgstr "角色设定得不对: %s"
-
 msgid "It is recommended to use %s/%s instead of %s/%s/%s."
 msgstr "建议你用%s/%s而不用%s/%s/%s。"
 
-msgid "method is just applicable to %s objects"
+msgid "method is only applicable to %s objects"
 msgstr "这个方法只适用于%s目标对象"
 
-msgid "all arguments must be of class \"person\""
-msgstr "所有的参数都必需是\"person\"类别"
-
-msgid "at least one field has to be specified"
-msgstr "你至少需要填一项"
+msgid "all arguments must be of class %s"
+msgstr "所有的参数都必需是%s类别"
 
 msgid "all fields have to be named"
 msgstr "所有的项都必需有名字"
@@ -175,14 +172,21 @@ msgstr "所有的项都必需有名字"
 msgid "%s has to be one of %s"
 msgstr "%s必需是%s这些中的一个"
 
-msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
-msgstr "bibtype %s的条目必需正确地设定这些项：%s"
+msgid "subscript out of bounds"
+msgstr "标出界"
 
 msgid "%s should be one of %s"
 msgstr "%s必需是%s这些中的一个"
 
-msgid "A bibentry of bibtype %s has to specify the field(s): %s"
-msgstr "bibtype %s的条目必需设定这些项：%s"
+msgid "A BibTeX entry for LaTeX users is"
+msgstr "LaTeX的用户的BibTeX条目是"
+
+msgid ""
+"Dropping invalid entry %d:\n"
+"%s"
+msgstr ""
+"删除无效的条目%d:\n"
+"%s"
 
 msgid "package %s not found"
 msgstr "没有%s这一个程序包"
@@ -196,16 +200,19 @@ msgstr "程序包%s里的DESCRIPTION文件中没有日期这一域"
 msgid "could not determine year for %s from package DESCRIPTION file"
 msgstr "无法从程序包的DESCRIPTION文件中为%s确定年份"
 
-msgid "m < 0"
-msgstr "m < 0"
+msgid "To cite package %s in publications use:"
+msgstr "在出版物中使用程序包时引用%s:"
 
-msgid "n < m"
-msgstr "n < m"
+msgid ""
+"ATTENTION: This citation information has been auto-generated from the "
+"package DESCRIPTION file and may need manual editing, see %s."
+msgstr ""
+"注意：此引文信息是从软件包描述文件自动生成的，可能需要手工编辑，请参见%s。"
 
 msgid "'FUN' must be a function or NULL"
 msgstr "'FUN'的值必需是函数或NULL"
 
-msgid "Can't handle S4 methods yet"
+msgid "cannot handle S4 methods yet"
 msgstr "还不能处理S4方法"
 
 msgid "'package' must be a character string or NULL"
@@ -227,7 +234,7 @@ msgid "data set %s not found"
 msgstr "没有%s这个数据集"
 
 msgid "only 'html = TRUE' is supported on this platform"
-msgstr ""
+msgstr "本平台只支持'html = TRUE'"
 
 msgid "kind '%s' not yet implemented"
 msgstr "'%s'这一类还没有被实现"
@@ -241,14 +248,11 @@ msgstr "'dataentry'的参数不对"
 msgid "could not restore type information"
 msgstr "无法恢復种类的信息"
 
-msgid "modes argument ignored"
-msgstr "基本模式参数略过不用"
+msgid "'modes' argument ignored"
+msgstr "'modes'参数略过不用"
 
 msgid "'names' argument ignored"
 msgstr "'names'参数略过不用"
-
-msgid "'modes' argument ignored"
-msgstr "'modes'参数略过不用"
 
 msgid "could not restore variables properly"
 msgstr "无法正确恢复变量"
@@ -259,8 +263,8 @@ msgstr "assign()没有用到"
 msgid "Browsing in the environment with call:"
 msgstr "在調用环境里浏览:"
 
-msgid "'dump' is not an object of class 'dump.frames'"
-msgstr "'dump'必需是类别为'dump.框s'的对象"
+msgid "'dump' is not an object of class %s"
+msgstr "'dump'必需是类别为%s的对象"
 
 msgid "Message:"
 msgstr "訊息:"
@@ -311,7 +315,7 @@ msgstr "改过的行名中含有重复的名字，因此略过不用"
 msgid "invalid input matrix"
 msgstr "输入矩阵不对"
 
-msgid "class(es) of 'name' will be discarded"
+msgid "class of 'name' will be discarded"
 msgstr "'name'的类别将被略过不用"
 
 msgid "cannot edit NULL row names"
@@ -332,11 +336,8 @@ msgstr "缺少行数"
 msgid "'fix' requires a name"
 msgstr "'fix'需要名字值"
 
-msgid "too many list items (at most up to number 26)"
-msgstr "串列项太多(最多只能有26项)"
-
-msgid "too many list items (at most up to number 3899)"
-msgstr "串列项太多(最多只能有3899项("
+msgid "too many list items (at most up to %d)"
+msgstr "串列项太多(最多只能有%d项)"
 
 msgid "no vector columns were selected"
 msgstr "没有选择向量列"
@@ -364,9 +365,6 @@ msgstr "在指定的程序包和图书馆里没有与%s有关的说明书:"
 
 msgid "you could try %s"
 msgstr "你可以用用%s"
-
-msgid "??"
-msgstr "??"
 
 msgid ""
 "Help for topic %s is not in any loaded package but can be found in the "
@@ -405,8 +403,8 @@ msgstr "有%s这样一个程序包但没有在R >= 2.10.0下安装，因此不�
 msgid "creation of %s failed"
 msgstr "制造%s时出了问题"
 
-msgid "Saving help page to"
-msgstr "保存帮助页到"
+msgid "Saving help page to %s"
+msgstr "保存帮助页到%s"
 
 msgid "argument %s must be a single character string"
 msgstr "参数%s必需是单字符串"
@@ -423,50 +421,20 @@ msgstr "域设定得不对"
 msgid "argument 'help.db' is deprecated"
 msgstr "参数'help.db'已经不再用了"
 
-msgid "Rebuilding the help.search() database"
-msgstr "重建help.search()数据库"
-
-msgid "..."
-msgstr "…"
-
-msgid "Packages {readRDS() sequentially}:"
-msgstr "程序包{顺序readRDS()}:"
-
-msgid "."
-msgstr "."
-
 msgid "could not find package %s"
 msgstr "找不到程序包%s"
 
 msgid "package %s has empty hsearch data - strangely"
 msgstr "程序包%s的hsearch数据是空的-很奇怪"
 
-msgid "no hsearch.rds meta data for package"
-msgstr "程序包里没有hsearch.rds样的隐喻数据"
-
-msgid "reencoding ..."
-msgstr "重新编码"
-
-msgid "done"
-msgstr "做完了。"
-
 msgid "removing all entries with invalid multi-byte character data"
 msgstr "删除所有多字節字符数据出错的分錄"
-
-msgid "saving the database ..."
-msgstr "保存到数据库…"
-
-msgid "... database rebuilt"
-msgstr "…重新建立数据库"
 
 msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
 msgstr "数据库里没有关于程序包%s的信息：是不是需要设定'rebuild = TRUE'？"
 
 msgid "incorrect 'agrep' specification"
 msgstr "'agrep'设定得不对"
-
-msgid "matched %d objects."
-msgstr "%d个匹配对象"
 
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "浏览器的名字不对，请检查options(\"browser\")的设置。"
@@ -511,17 +479,11 @@ msgstr "'DESCRIPTION'文件有'Encoding'这个域但重新編碼是不可能的"
 msgid "DESCRIPTION file of package '%s' is missing or broken"
 msgstr "程序包'%s'里要么没有DESCRIPTION这个文件，要么出了错"
 
-msgid "package"
-msgstr "程序包"
-
-msgid "not found"
-msgstr "找不到"
-
 msgid "cannot update HTML package index"
 msgstr "无法更新HTML程序包索引"
 
-msgid "Making packages.html  ..."
-msgstr "制造packages.html …"
+msgid "done"
+msgstr "做完了。"
 
 msgid "menu() cannot be used non-interactively"
 msgstr "menu()不能在非互交形式下使用"
@@ -584,26 +546,25 @@ msgid "directory '%s' already exists"
 msgstr "已经有了'%s'这样一个目录"
 
 msgid ""
-"Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
-"the code_files= argument"
-msgstr "泛型函数和其他S4对象（例如'%s'）不能被转储出来；用code_files=参数"
+"generic functions and other S4 objects (e.g., '%s') cannot be dumped; use "
+"the 'code_files' argument"
+msgstr "泛型函数和其他S4对象（例如'%s'）不能被转储出来；用'code_files'这个参数"
 
 msgid "unable to access index for repository %s"
 msgstr "无法在貯藏處%s中读写索引"
 
-msgid "Invalid 'filters' argument."
-msgstr "'filters'参数不对"
+msgid "invalid 'filters' argument."
+msgstr "'filters'参数不对。"
 
-#, fuzzy
 msgid "package '%s' in library '%s' will not be updated"
-msgstr "正在使用%s这个程序包，因此不会被安装"
+msgstr "程序库'%2$s'里'%1$s'这个程序包将不会被更新"
 
 msgid ""
 "invalid 'oldPkgs'; must be a character vector or a result from old.packages()"
 msgstr "'oldPkgs'的值不对；必需字符矢量或从old.packages()得到的结果"
 
-msgid "illformed 'instPkgs' matrix"
-msgstr "'instPkgs'矩阵有错"
+msgid "ill-formed 'instPkgs' matrix"
+msgstr "'instPkgs'矩阵不对"
 
 msgid "no installed packages for (invalid?) 'lib.loc=%s'"
 msgstr "'lib.loc=%s'里没有已经安装好了的程序包"
@@ -619,13 +580,6 @@ msgstr "'priority'的值要么是字符要么为NULL"
 
 msgid "Updating HTML index of packages in '.Library'"
 msgstr "更新'.Library'里的HTML程序包列表"
-
-msgid ""
-"Removing package(s) from %s\n"
-"(as %s is unspecified)"
-msgstr ""
-"从%s中删除程序包\n"
-"(因为没有指定%s)"
 
 msgid "'destdir' is not a directory"
 msgstr "'destdir'不是目录"
@@ -676,21 +630,14 @@ msgstr ""
 msgid "no packages were specified"
 msgstr "没有设定程序包"
 
-msgid ""
-"Installing package(s) into %s\n"
-"(as %s is unspecified)"
-msgstr ""
-"将程序包安装入%s\n"
-"(因为%s没有被指定)"
-
 msgid "'lib = \"%s\"' is not writable"
 msgstr "'lib=\"%s\"'不可写"
 
 msgid "unable to install packages"
 msgstr "无法安装程序包"
 
-msgid "unable to create"
-msgstr "无法建立"
+msgid "unable to create %s"
+msgstr "无法建立%s"
 
 msgid "inferring 'repos = NULL' from the file name"
 msgstr "从文件名字推断'repos = NULL'"
@@ -707,16 +654,11 @@ msgstr ""
 msgid "type == \"both\" cannot be used with 'repos = NULL'"
 msgstr "设定了'repos = NULL'后就不能再设定type == \"both\""
 
-msgid ""
-"Do you want to attempt to install from sources the package(s) which need "
-"compilation?"
-msgstr ""
-
 msgid "Do you want to attempt to install these from sources?"
-msgstr ""
+msgstr "你想从源代码尝试安装这些"
 
 msgid "source repository is unavailable to check versions"
-msgstr ""
+msgstr "无法用代码源库来检查版本"
 
 msgid "cannot install MacOS X binary packages on Windows"
 msgstr "无法在Windows下安装MacOS X二元程序包"
@@ -734,11 +676,20 @@ msgstr ""
 "本版本的R不能安装程序包的原始程序\n"
 "如果它是从RPM上安装来的话你可能需要R-devel的RPM文件"
 
+msgid "system (cmd0): %s"
+msgstr "系统(cmd0): %s"
+
 msgid "installation of package %s had non-zero exit status"
 msgstr "安装程序包%s时退出狀態的值不是0"
 
 msgid "unable to create temporary directory %s"
 msgstr "无法建立临时目录%s"
+
+msgid "foundpkgs: %s"
+msgstr "foundpkgs: %s"
+
+msgid "files: %s"
+msgstr "文件: %s"
 
 msgid ""
 "installation of one of more packages failed,\n"
@@ -757,7 +708,10 @@ msgstr ""
 msgid ""
 "The namespace for package \"%s\" is locked; no changes in the global "
 "variables list may be made."
-msgstr ""
+msgstr "程序包\"%s\"的名字空间被锁定了；全局变量列表没有改变。"
+
+msgid "'env' must be an environment"
+msgstr "'env'必需是环境"
 
 msgid "no object named '%s' to show"
 msgstr "找不到名字为'%s'的对象"
@@ -765,11 +719,11 @@ msgstr "找不到名字为'%s'的对象"
 msgid "'file' must be \"\" or an open connection object"
 msgstr "'file'必需是\"\"或打开的联结"
 
-msgid "must have max > min"
-msgstr "一定得满足max > min这个条件"
+msgid "must have 'max' > 'min'"
+msgstr "一定得满足'max' > 'min'这个条件"
 
-msgid "'pb' is not from class \"txtProgressBar\""
-msgstr "'pb'不属于\"txtProgressBar\"这一类别"
+msgid "'pb' is not from class %s"
+msgstr "'pb'不属于%s这一类别"
 
 msgid "cannot determine a usable name"
 msgstr "无法指定一个可以用的名字"
@@ -866,17 +820,11 @@ msgstr "某些域缺少长度值"
 msgid "invalid format"
 msgstr "格式不对"
 
-msgid "last record incomplete, %d lines discarded"
-msgstr "最后一个记录不完全，%d行略不不用"
-
 msgid "transfer failure"
 msgstr "转移时出了错"
 
-msgid "HTTPUserAgent"
-msgstr "HTTPUserAgent"
-
-msgid "option must be a length one character vector or NULL"
-msgstr "选项的值必需是字符串或NULL"
+msgid "%s option must be a length one character vector or NULL"
+msgstr "%s选项的值必需是长度为一的字符串或NULL"
 
 msgid "'file' must be a character string or connection"
 msgstr "'file'的值必需是字符串或联结"
@@ -890,8 +838,8 @@ msgstr "开头五行都是空白的：停止运行"
 msgid "relist() requires recursively unlisted objects."
 msgstr "relist()需要递归解串列目标对象"
 
-msgid "The flesh argument does not contain a skeleton attribute."
-msgstr "親屬参数不包含骨架属性"
+msgid "The 'flesh' argument does not contain a skeleton attribute."
+msgstr "'flesh'参数不包含骨架属性"
 
 msgid ""
 "Either ensure you unlist a relistable object, or specify the skeleton "
@@ -901,15 +849,6 @@ msgstr ""
 
 msgid "cannot coerce 'x' to roman"
 msgstr "无法将'x'转变成罗马数"
-
-msgid "Invalid roman numeral(s): %s"
-msgstr "罗马数字不对：%s"
-
-msgid "length mismatch: bug in code!"
-msgstr "长度不对：程序里有虫!"
-
-msgid "Processing file"
-msgstr "处理文件"
 
 msgid "no valid packages were specified"
 msgstr "没有设定程序包"
@@ -932,17 +871,17 @@ msgstr "套介面还没有建立"
 msgid "str.data.frame() called with non-data.frame -- coercing to one."
 msgstr "str.data.frame()被調用时使用了非数据的框--将之強制改变。"
 
-msgid "invalid options('str') -- using defaults instead"
-msgstr "options('str')不对，使用默认值"
+msgid "invalid options(\"str\") -- using defaults instead"
+msgstr "options(\"str\")不对--使用默认值"
 
-msgid "invalid components in options('str'):"
-msgstr "options('str')内元件无效："
+msgid "invalid components in options(\"str\"): %s"
+msgstr "options(\"str\")内元件无效：%s"
+
+msgid "'str.default': 'le' is NA, so taken as 0"
+msgstr "'str.default': 'le'的值是NA，当零来用"
 
 msgid "'object' does not have valid levels()"
 msgstr "'object'的levels()的值不对"
-
-msgid "'str.default': 'le' is NA"
-msgstr "'str.default': 'le'的值是NA"
 
 msgid "'digits' and 'digits.d' are both specified and the latter is not used"
 msgstr "'digits'和'digits.d'两个都设定了，但后者没有用"
@@ -952,6 +891,9 @@ msgstr "%s里找不到信息"
 
 msgid "profile does not contain memory information"
 msgstr "程序资料不包含内存信息"
+
+msgid "profile does not contain line information"
+msgstr "程序资料不包含行信息"
 
 msgid "no events were recorded"
 msgstr "没有记录下任何事件"
@@ -975,7 +917,7 @@ msgid "incomplete block on file"
 msgstr "不完全文件锁"
 
 msgid "invalid name field in tarball"
-msgstr ""
+msgstr "tarball里的名字域不对"
 
 msgid "checksum error for entry '%s'"
 msgstr "项目'%s'检查和错误"
@@ -989,19 +931,15 @@ msgstr "不支持这一项目种类"
 msgid "file '%s' not found"
 msgstr "找不到'%s'这一文件"
 
-msgid "file path is too long"
-msgstr "文件通路太长"
+msgid "file size is limited to 8GB"
+msgstr "文件大小限制为8GB"
 
-msgid "file size is limited to 2GB"
-msgstr ""
-
-#, fuzzy
 msgid ""
 "vignette %s found more than once,\n"
 "using the one found in %s"
 msgstr ""
-"有多个%d小文品，\n"
-"用's里的那一个"
+"小文品%s有多个，\n"
+"用%s里的那一个"
 
 msgid "vignette %s not found"
 msgstr "没有找到小文品%s"
@@ -1031,7 +969,7 @@ msgstr "'quote'里有不适当的数字"
 msgid "invalid 'quote' specification"
 msgstr "'quote'设定得不对"
 
-msgid "col.names = NA makes no sense when row.names = FALSE"
+msgid "'col.names = NA' makes no sense when 'row.names = FALSE'"
 msgstr "row.names=FALSE时col.name=NA没有意义"
 
 msgid "invalid 'col.names' specification"
@@ -1075,23 +1013,20 @@ msgid "'tar' returned non-zero exit code %d"
 msgstr "'tar'退出码为%d"
 
 msgid "file %s is not an OS X binary package"
-msgstr ""
+msgstr "文件%s不是OS ​​X的二进制软件包"
 
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "程序包%s打开成功，MD5和检查也通过"
 
-msgid "ERROR: failed to lock directory"
-msgstr "错误：不能打开锁定目录"
-
 msgid ""
-"for modifying\n"
-"Try removing"
+"ERROR: failed to lock directory %s for modifying\n"
+"Try removing %s"
 msgstr ""
-"修改\n"
-"试试删除"
+"错误：不能锁定目录%s进行修改\n"
+"尝试删除%s"
 
-msgid "ERROR: failed to create lock directory"
-msgstr "错误：无法建立锁定目录'"
+msgid "ERROR: failed to create lock directory %s"
+msgstr "错误：无法建立锁定目录%s "
 
 msgid "restored %s"
 msgstr "回复了%s"
@@ -1099,8 +1034,8 @@ msgstr "回复了%s"
 msgid "unable to move temporary installation %s to %s"
 msgstr "无法将临时安装%s搬到%s"
 
-msgid "cannot remove prior installation of package"
-msgstr "无法拆除原来安装的程序包"
+msgid "cannot remove prior installation of package %s"
+msgstr "无法将拆除原来安装的程序包%s"
 
 msgid ""
 "The downloaded binary packages are in\n"
@@ -1123,7 +1058,7 @@ msgid ""
 "%s yourself"
 msgstr "如果什么都不发生的话，你应该自己打开%s"
 
-msgid "zipfile %s not found"
+msgid "zip file %s not found"
 msgstr "找不到%s这一zip文件"
 
 msgid "failed to create %s"
@@ -1132,25 +1067,45 @@ msgstr "无法建立%s"
 msgid "there is no 'libs' directory in package %s"
 msgstr "在程序包%s里找不到'libs'这个目录"
 
-msgid "cannot remove prior installation of package %s"
-msgstr "无法将拆除原来安装的程序包%s"
-
 msgid "winDialog() cannot be used non-interactively"
 msgstr "winDialog()不能在非互交形式下使用"
 
 msgid "winDialogString() cannot be used non-interactively"
 msgstr "winDialogString()不能在非互交形式下使用"
 
-msgid "'pb' is not from class \"winProgressBar\""
-msgstr "'pb'不属于\"winProgressBar\"这一类别"
+msgid "%d occurrence in %s"
+msgid_plural "%d occurrences in %s"
+msgstr[0] "%2$s里%1$d出现"
+
+msgid "Invalid role specification: %s."
+msgid_plural "Invalid role specifications: %s."
+msgstr[0] "角色设定得不对: %s"
+
+msgid "A bibentry of bibtype %s has to specify the field: %s"
+msgid_plural "A bibentry of bibtype %s has to specify the fields: %s"
+msgstr[0] "bibtype%s的条目必需设定这些项：%s"
 
 msgid "class discarded from column %s"
 msgid_plural "classes discarded from columns %s"
 msgstr[0] "放弃不用列%s的类别"
 
+msgid "matched %d object."
+msgid_plural "matched %d objects."
+msgstr[0] "%d个匹配对象。"
+
 msgid "object '%s' not found"
 msgid_plural "objects '%s' not found"
 msgstr[0] "找不到'%s'这个对象"
+
+msgid ""
+"Removing package from %s\n"
+"(as %s is unspecified)"
+msgid_plural ""
+"Removing packages from %s\n"
+"(as %s is unspecified)"
+msgstr[0] ""
+"从%s中删除程序包\n"
+"(因为没有指定%s)"
 
 msgid "package %s is not available (for %s)"
 msgid_plural "packages %s are not available (for %s)"
@@ -1164,6 +1119,16 @@ msgid "also installing the dependency %s"
 msgid_plural "also installing the dependencies %s"
 msgstr[0] "还安装相依关系%s"
 
+msgid ""
+"Installing package into %s\n"
+"(as %s is unspecified)"
+msgid_plural ""
+"Installing packages into %s\n"
+"(as %s is unspecified)"
+msgstr[0] ""
+"将程序包安装入%s\n"
+"(因为%s没有被指定)"
+
 msgid "'lib' element %s is not a writable directory"
 msgid_plural "'lib' elements %s are not writable directories"
 msgstr[0] "'lib'元素%s不是可写目录"
@@ -1171,7 +1136,20 @@ msgstr[0] "'lib'元素%s不是可写目录"
 msgid "There is a binary version available but the source version is later"
 msgid_plural ""
 "There are binary versions available but the source versions are later"
-msgstr[0] ""
+msgstr[0] "有二进制版本的，但源代码版本是后来的"
+
+msgid "Do you want to install from sources the package which need compilation?"
+msgid_plural ""
+"Do you want to install from sources the packages which need compilation?"
+msgstr[0] "你想从源代码安装的需要编译的程序包？"
+
+msgid ""
+"Package which are only available in source form, and may need compilation of "
+"C/C++/Fortran"
+msgid_plural ""
+"Packages which are only available in source form, and may need compilation "
+"of C/C++/Fortran"
+msgstr[0] "程序包只以源代码的形式提供，有可能需要通过C/C++/Fortran语言编译"
 
 msgid "installing the source package %s"
 msgid_plural "installing the source packages %s"
@@ -1179,7 +1157,7 @@ msgstr[0] "安装源码包%s"
 
 msgid "package %s is available as a source package but not as a binary"
 msgid_plural "packages %s are available as source packages but not as binaries"
-msgstr[0] ""
+msgstr[0] "程序包%s是源码包，但不是二进制包"
 
 msgid ""
 "There is a binary version available (and will be installed) but the source "
@@ -1187,14 +1165,114 @@ msgid ""
 msgid_plural ""
 "There are binary versions available (and will be installed) but the source "
 "versions are later"
-msgstr[0] ""
+msgstr[0] "有二进制版本（将被安装），但源代码版本是后来的"
+
+msgid "last record incomplete, %d line discarded"
+msgid_plural "last record incomplete, %d lines discarded"
+msgstr[0] "最后一个记录不完全，%d行略过不用"
+
+msgid "invalid roman numeral: %s"
+msgid_plural "invalid roman numerals: %s"
+msgstr[0] "罗马数字不对：%s"
 
 msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "正在使用%s这个程序包，因此不会被安装"
 
+#~ msgid "%d): succeeded '%s'"
+#~ msgstr "%d): 成功'%s'"
+
+#~ msgid "file path is too long"
+#~ msgstr "文件通路太长"
+
 #~ msgid "linked path is too long"
 #~ msgstr "链结的通路太长"
+
+#~ msgid "at least one field has to be specified"
+#~ msgstr "你至少需要填一项"
+
+#, fuzzy
+#~ msgid "classes of 'name' will be discarded"
+#~ msgstr "'name'的类别将被略过不用"
+
+#~ msgid "m < 0"
+#~ msgstr "m < 0"
+
+#~ msgid "n < m"
+#~ msgstr "n < m"
+
+#~ msgid "modes argument ignored"
+#~ msgstr "基本模式参数略过不用"
+
+#~ msgid "too many list items (at most up to number 3899)"
+#~ msgstr "串列项太多(最多只能有3899项("
+
+#~ msgid "Packages {readRDS() sequentially}:"
+#~ msgstr "程序包{顺序readRDS()}:"
+
+#~ msgid "."
+#~ msgstr "."
+
+#~ msgid "reencoding ..."
+#~ msgstr "重新编码"
+
+#~ msgid "saving the database ..."
+#~ msgstr "保存到数据库…"
+
+#~ msgid "... database rebuilt"
+#~ msgstr "…重新建立数据库"
+
+#~ msgid "Making packages.html  ..."
+#~ msgstr "制造packages.html …"
+
+#~ msgid "length mismatch: bug in code!"
+#~ msgstr "长度不对：程序里有虫!"
+
+#~ msgid "??"
+#~ msgstr "??"
+
+#~ msgid "call"
+#~ msgstr "调用"
+
+#~ msgid "Rebuilding the help.search() database"
+#~ msgstr "重建help.search()数据库"
+
+#~ msgid "..."
+#~ msgstr "…"
+
+#~ msgid "no hsearch.rds meta data for package"
+#~ msgstr "程序包里没有hsearch.rds样的隐喻数据"
+
+#~ msgid "package"
+#~ msgstr "程序包"
+
+#~ msgid "not found"
+#~ msgstr "找不到"
+
+#~ msgid ","
+#~ msgstr ","
+
+#~ msgid "HTTPUserAgent"
+#~ msgstr "HTTPUserAgent"
+
+#~ msgid "Processing file"
+#~ msgstr "处理文件"
+
+#~ msgid ""
+#~ "for modifying\n"
+#~ "Try removing"
+#~ msgstr ""
+#~ "修改\n"
+#~ "试试删除"
+
+#~ msgid "cannot remove prior installation of package"
+#~ msgstr "无法拆除原来安装的程序包"
+
+#~ msgid "A bibentry of bibtype %s has to correctly specify the field(s): %s"
+#~ msgstr "bibtype %s的条目必需正确地设定这些项：%s"
+
+#~ msgid "'pb' is not from class \"winProgressBar\""
+#~ msgstr "'pb'不属于\"winProgressBar\"这一类别"
 
 #~ msgid "cannot turn off locale-specific chars via LC_CTYPE"
 #~ msgstr "无法通过LC_CTYPE关闭与地点有关的字符"

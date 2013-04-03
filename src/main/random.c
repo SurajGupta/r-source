@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2010  The R Core Team
+ *  Copyright (C) 1997--2012  The R Core Team
  *  Copyright (C) 2003--2008  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,20 +25,24 @@
 
 #include <Defn.h>
 #include <R_ext/Random.h>
-#include <R_ext/Applic.h>	/* for rcont2() */
+#include <R_ext/RS.h>		/* for Calloc() */
 #include <Rmath.h>		/* for rxxx functions */
 #include <errno.h>
 
+/* Code down to do_random3 (inclusive) can be removed once the byte
+  compiler knows how to optimize to .External rather than .Internal */
+#include <Internal.h>
 static void invalid(SEXP call)
 {
     error(_("invalid arguments"));
 }
 
-static Rboolean random1(double (*f) (double), double *a, int na, double *x, int n)
+static Rboolean 
+random1(double (*f) (double), double *a, R_xlen_t na, double *x, R_xlen_t n)
 {
     Rboolean naflag = FALSE;
     double ai;
-    int i;
+    R_xlen_t i;
     errno = 0;
     for (i = 0; i < n; i++) {
 	ai = a[i % na];
@@ -60,22 +64,29 @@ static Rboolean random1(double (*f) (double), double *a, int na, double *x, int 
 SEXP attribute_hidden do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a;
-    int i, n, na;
+    R_xlen_t i, n, na;
     checkArity(op, args);
     if (!isVector(CAR(args)) || !isNumeric(CADR(args)))
 	invalid(call);
-    if (LENGTH(CAR(args)) == 1) {
+    if (XLENGTH(CAR(args)) == 1) {
+#ifdef LONG_VECTOR_SUPPORT
+	double dn = asReal(CAR(args));
+	if (ISNAN(dn) || dn < 0 || dn > R_XLEN_T_MAX)
+	    invalid(call);
+	n = (R_xlen_t) dn;
+#else
 	n = asInteger(CAR(args));
 	if (n == NA_INTEGER || n < 0)
 	    invalid(call);
+#endif
     }
-    else n = LENGTH(CAR(args));
+    else n = XLENGTH(CAR(args));
     PROTECT(x = allocVector(REALSXP, n));
     if (n == 0) {
 	UNPROTECT(1);
 	return(x);
     }
-    na = LENGTH(CADR(args));
+    na = XLENGTH(CADR(args));
     if (na < 1) {
 	for (i = 0; i < n; i++)
 	    REAL(x)[i] = NA_REAL;
@@ -93,7 +104,7 @@ SEXP attribute_hidden do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    RAND1(4, rt);
 	    RAND1(5, rsignrank);
 	default:
-	    error(_("internal error in do_random1"));
+	    error("internal error in do_random1");
 	}
 	if (naflag)
 	    warning(_("NAs produced"));
@@ -105,10 +116,11 @@ SEXP attribute_hidden do_random1(SEXP call, SEXP op, SEXP args, SEXP rho)
     return x;
 }
 
-static Rboolean random2(double (*f) (double, double), double *a, int na, double *b, int nb,
-		    double *x, int n)
+static Rboolean random2(double (*f) (double, double),
+			double *a, R_xlen_t na, double *b, R_xlen_t nb,
+			double *x, R_xlen_t n)
 {
-    double ai, bi; int i;
+    double ai, bi; R_xlen_t i;
     Rboolean naflag = FALSE;
     errno = 0;
     for (i = 0; i < n; i++) {
@@ -131,25 +143,32 @@ static Rboolean random2(double (*f) (double, double), double *a, int na, double 
 SEXP attribute_hidden do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a, b;
-    int i, n, na, nb;
+    R_xlen_t i, n, na, nb;
     checkArity(op, args);
     if (!isVector(CAR(args)) ||
 	!isNumeric(CADR(args)) ||
 	!isNumeric(CADDR(args)))
 	invalid(call);
-    if (LENGTH(CAR(args)) == 1) {
+    if (XLENGTH(CAR(args)) == 1) {
+#ifdef LONG_VECTOR_SUPPORT
+	double dn = asReal(CAR(args));
+	if (ISNAN(dn) || dn < 0 || dn > R_XLEN_T_MAX)
+	    invalid(call);
+	n = (R_xlen_t) dn;
+#else
 	n = asInteger(CAR(args));
 	if (n == NA_INTEGER || n < 0)
 	    invalid(call);
+#endif
     }
-    else n = LENGTH(CAR(args));
+    else n = XLENGTH(CAR(args));
     PROTECT(x = allocVector(REALSXP, n));
     if (n == 0) {
 	UNPROTECT(1);
 	return(x);
     }
-    na = LENGTH(CADR(args));
-    nb = LENGTH(CADDR(args));
+    na = XLENGTH(CADR(args));
+    nb = XLENGTH(CADDR(args));
     if (na < 1 || nb < 1) {
 	for (i = 0; i < n; i++)
 	    REAL(x)[i] = NA_REAL;
@@ -176,7 +195,7 @@ SEXP attribute_hidden do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    RAND2(12, rnchisq);
 	    RAND2(13, rnbinom_mu);
 	default:
-	    error(_("internal error in do_random2"));
+	    error("internal error in do_random2");
 	}
 	if (naflag)
 	    warning(_("NAs produced"));
@@ -188,11 +207,13 @@ SEXP attribute_hidden do_random2(SEXP call, SEXP op, SEXP args, SEXP rho)
     return x;
 }
 
-static Rboolean random3(double (*f) (double, double, double), double *a, int na, double *b, int nb,
-			double *c, int nc, double *x, int n)
+static Rboolean 
+random3(double (*f) (double, double, double), double *a, 
+	R_xlen_t na, double *b, R_xlen_t nb, double *c, R_xlen_t nc,
+	double *x, R_xlen_t n)
 {
     double ai, bi, ci;
-    int i;
+    R_xlen_t i;
     Rboolean naflag = FALSE;
     errno = 0;
     for (i = 0; i < n; i++) {
@@ -217,15 +238,22 @@ static Rboolean random3(double (*f) (double, double, double), double *a, int na,
 SEXP attribute_hidden do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP x, a, b, c;
-    int i, n, na, nb, nc;
+    R_xlen_t i, n, na, nb, nc;
     checkArity(op, args);
     if (!isVector(CAR(args))) invalid(call);
     if (LENGTH(CAR(args)) == 1) {
+#ifdef LONG_VECTOR_SUPPORT
+	double dn = asReal(CAR(args));
+	if (ISNAN(dn) || dn < 0 || dn > R_XLEN_T_MAX)
+	    invalid(call);
+	n = (R_xlen_t) dn;
+#else
 	n = asInteger(CAR(args));
 	if (n == NA_INTEGER || n < 0)
 	    invalid(call);
+#endif
     }
-    else n = LENGTH(CAR(args));
+    else n = XLENGTH(CAR(args));
     PROTECT(x = allocVector(REALSXP, n));
     if (n == 0) {
 	UNPROTECT(1);
@@ -237,9 +265,9 @@ SEXP attribute_hidden do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
     args = CDR(args); c = CAR(args);
     if (!isNumeric(a) || !isNumeric(b) || !isNumeric(c))
 	invalid(call);
-    na = LENGTH(a);
-    nb = LENGTH(b);
-    nc = LENGTH(c);
+    na = XLENGTH(a);
+    nb = XLENGTH(b);
+    nc = XLENGTH(c);
     if (na < 1 || nb < 1 || nc < 1) {
 	for (i = 0; i < n; i++)
 	    REAL(x)[i] = NA_REAL;
@@ -254,7 +282,7 @@ SEXP attribute_hidden do_random3(SEXP call, SEXP op, SEXP args, SEXP rho)
 	switch (PRIMVAL(op)) {
 	    RAND3(0, rhyper);
 	default:
-	    error(_("internal error in do_random3"));
+	    error("internal error in do_random3");
 	}
 	if (naflag)
 	    warning(_("NAs produced"));
@@ -332,10 +360,10 @@ walker_ProbSampleReplace(int n, double *p, int *a, int nans, int *ans)
        By rounding error we could have q[i] < 1. or > 1. for all entries.
      */
     if(n <= SMALL) {
+	R_CheckStack2(n *(sizeof(int) + sizeof(double)));
 	/* might do this repeatedly, so speed matters */
-	HL = (int *)alloca(n * sizeof(int));
+	HL = (int *) alloca(n * sizeof(int));
 	q = (double *) alloca(n * sizeof(double));
-	R_CheckStack();
     } else {
 	/* Slow enough anyway not to risk overflow */
 	HL = Calloc(n, int);
@@ -406,29 +434,6 @@ static void ProbSampleNoReplace(int n, double *p, int *perm,
     }
 }
 
-/* Equal probability sampling; with-replacement case */
-
-static void SampleReplace(int k, int n, int *y)
-{
-    int i;
-    for (i = 0; i < k; i++)
-	y[i] = n * unif_rand() + 1;
-}
-
-/* Equal probability sampling; without-replacement case */
-
-static void SampleNoReplace(int k, int n, int *y, int *x)
-{
-    int i, j;
-    for (i = 0; i < n; i++)
-	x[i] = i;
-    for (i = 0; i < k; i++) {
-	j = n * unif_rand();
-	y[i] = x[j] + 1;
-	x[j] = x[--n];
-    }
-}
-
 void FixupProb(double *p, int n, int require_k, Rboolean replace)
 {
     double sum;
@@ -451,38 +456,44 @@ void FixupProb(double *p, int n, int require_k, Rboolean replace)
 	p[i] /= sum;
 }
 
+/* Our PRNGs have at most 32 bit of precision, and all have at least 25 */
+static R_INLINE double ru()
+{
+    double U = 33554432.0;
+    return (floor(U*unif_rand()) + unif_rand())/U;
+}
+
 /* do_sample - probability sampling with/without replacement.
    .Internal(sample(n, size, replace, prob))
 */
 SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP x, y, prob, sreplace;
-    int k, n, replace;
-    double *p;
+    SEXP x, y, sn, sk, prob, sreplace;
 
     checkArity(op, args);
-    n = asInteger(CAR(args)); args = CDR(args);
-    k = asInteger(CAR(args)); args = CDR(args); /* size */
+    sn = CAR(args); args = CDR(args);
+    sk = CAR(args); args = CDR(args); /* size */
     sreplace = CAR(args); args = CDR(args);
     if(length(sreplace) != 1)
 	 error(_("invalid '%s' argument"), "replace");
-    replace = asLogical(sreplace);
+    int replace = asLogical(sreplace);
     prob = CAR(args);
     if (replace == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "replace");
-    if (n == NA_INTEGER || n < 0 || (k > 0 && n == 0))
-	error(_("invalid first argument"));
-    if (k == NA_INTEGER || k < 0)
-	error(_("invalid '%s' argument"), "size");
-    if (!replace && k > n)
-	error(_("cannot take a sample larger than the population when 'replace = FALSE'"));
     GetRNGstate();
-    PROTECT(y = allocVector(INTSXP, k));
     if (!isNull(prob)) {
+	int n = asInteger(sn), k = asInteger(sk);
+	if (n == NA_INTEGER || n < 0 || (k > 0 && n == 0))
+	    error(_("invalid first argument"));
+	if (k == NA_INTEGER || k < 0)
+	    error(_("invalid '%s' argument"), "size");
+	if (!replace && k > n)
+	    error(_("cannot take a sample larger than the population when 'replace = FALSE'"));
+	PROTECT(y = allocVector(INTSXP, k));
 	prob = coerceVector(prob, REALSXP);
 	if (NAMED(prob)) prob = duplicate(prob);
 	PROTECT(prob);
-	p = REAL(prob);
+	double *p = REAL(prob);
 	if (length(prob) != n)
 	    error(_("incorrect number of probabilities"));
 	FixupProb(p, n, k, (Rboolean)replace);
@@ -498,115 +509,53 @@ SEXP attribute_hidden do_sample(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ProbSampleNoReplace(n, p, INTEGER(x), k, INTEGER(y));
 	UNPROTECT(2);
     }
-    else {
-	/* avoid allocation for a single sample */
-	if (replace || k < 2) SampleReplace(k, n, INTEGER(y));
-	else {
-	    x = allocVector(INTSXP, n);
-	    SampleNoReplace(k, n, INTEGER(y), INTEGER(x));
+    else {  // uniform sampling
+	double dn = asReal(sn);
+	R_xlen_t k = asVecSize(sk);
+	if (!R_FINITE(dn) || dn < 0 || dn > 4.5e15 || (k > 0 && dn == 0)) 
+	    error(_("invalid first argument"));
+	if (k < 0) error(_("invalid '%s' argument"), "size");
+	if (!replace && k > dn)
+	    error(_("cannot take a sample larger than the population when 'replace = FALSE'"));
+	if (dn > INT_MAX || k > INT_MAX) {
+	    PROTECT(y = allocVector(REALSXP, k));
+	    if (replace) {
+		double *ry = REAL(y);
+		for (R_xlen_t i = 0; i < k; i++) ry[i] = floor(dn * ru() + 1);
+	    } else {
+#ifdef LONG_VECTOR_SUPPORT
+		R_xlen_t n = (R_xlen_t) dn;
+		double *x = (double *)R_alloc(n, sizeof(double));
+		double *ry = REAL(y);
+		for (R_xlen_t i = 0; i < n; i++) x[i] = (double) i;
+		for (R_xlen_t i = 0; i < k; i++) {
+		    R_xlen_t j = (R_xlen_t)floor(n * ru());
+		    ry[i] = x[j] + 1;
+		    x[j] = x[--n];
+		}
+#else
+		error(_("n >= 2^31, replace = FALSE is only supported on 64-bit platforms"));
+#endif
+	    }
+	} else {
+	    int n = (int) dn;
+	    PROTECT(y = allocVector(INTSXP, k));
+	    int *iy = INTEGER(y);
+	    /* avoid allocation for a single sample */
+	    if (replace || k < 2) {
+		for (int i = 0; i < k; i++) iy[i] = (int)(dn * unif_rand() + 1);
+	    } else {
+		int *x = (int *)R_alloc(n, sizeof(int));
+		for (int i = 0; i < n; i++) x[i] = i;
+		for (int i = 0; i < k; i++) {
+		    int j = (int)(n * unif_rand());
+		    iy[i] = x[j] + 1;
+		    x[j] = x[--n];
+		}
+	    }
 	}
     }
     PutRNGstate();
     UNPROTECT(1);
     return y;
-}
-
-SEXP attribute_hidden do_rmultinom(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP prob, ans, nms;
-    int n, size, k, i, ik;
-    checkArity(op, args);
-    n	 = asInteger(CAR(args)); args = CDR(args);/* n= #{samples} */
-    size = asInteger(CAR(args)); args = CDR(args);/* X ~ Multi(size, prob) */
-    if (n == NA_INTEGER || n < 0)
-	error(_("invalid first argument 'n'"));
-    if (size == NA_INTEGER || size < 0)
-	error(_("invalid second argument 'size'"));
-    prob = CAR(args);
-    prob = coerceVector(prob, REALSXP);
-    k = length(prob);/* k = #{components or classes} = X-vector length */
-    if (NAMED(prob)) prob = duplicate(prob);/*as `do_sample' -- need this line? */
-    PROTECT(prob);
-    /* check and make sum = 1: */
-    FixupProb(REAL(prob), k, /*require_k = */ 0, TRUE);
-    GetRNGstate();
-    PROTECT(ans = allocMatrix(INTSXP, k, n));/* k x n : natural for columnwise store */
-    for(i=ik = 0; i < n; i++, ik += k)
-	rmultinom(size, REAL(prob), k, &INTEGER(ans)[ik]);
-    PutRNGstate();
-    if(!isNull(nms = getAttrib(prob, R_NamesSymbol))) {
-	SEXP dimnms;
-	PROTECT(nms);
-	PROTECT(dimnms = allocVector(VECSXP, 2));
-	SET_VECTOR_ELT(dimnms, 0, nms);
-	setAttrib(ans, R_DimNamesSymbol, dimnms);
-	UNPROTECT(2);
-    }
-    UNPROTECT(2);
-    return ans;
-}
-
-SEXP
-R_r2dtable(SEXP n, SEXP r, SEXP c)
-{
-    int nr, nc, *row_sums, *col_sums, i, *jwork;
-    int n_of_samples, n_of_cases;
-    double *fact;
-    SEXP ans, tmp;
-    const void *vmax = vmaxget();
-
-    nr = length(r);
-    nc = length(c);
-
-    /* Note that the R code in r2dtable() also checks for missing and
-       negative values.
-       Should maybe do the same here ...
-    */
-    if(!isInteger(n) || (length(n) == 0) ||
-       !isInteger(r) || (nr <= 1) ||
-       !isInteger(c) || (nc <= 1))
-	error(_("invalid arguments"));
-
-    n_of_samples = INTEGER(n)[0];
-    row_sums = INTEGER(r);
-    col_sums = INTEGER(c);
-
-    /* Compute total number of cases as the sum of the row sums.
-       Note that the R code in r2dtable() also checks whether this is
-       the same as the sum of the col sums.
-       Should maybe do the same here ...
-    */
-    n_of_cases = 0;
-    jwork = row_sums;
-    for(i = 0; i < nr; i++)
-	n_of_cases += *jwork++;
-
-    /* Log-factorials from 0 to n_of_cases.
-       (I.e., lgamma(1), ..., lgamma(n_of_cases + 1).)
-    */
-    fact = (double *) R_alloc(n_of_cases + 1, sizeof(double));
-    fact[0] = 0.;
-    for(i = 1; i <= n_of_cases; i++)
-	fact[i] = lgammafn((double) (i + 1));
-
-    jwork = (int *) R_alloc(nc, sizeof(int));
-
-    PROTECT(ans = allocVector(VECSXP, n_of_samples));
-
-    GetRNGstate();
-
-    for(i = 0; i < n_of_samples; i++) {
-	PROTECT(tmp = allocMatrix(INTSXP, nr, nc));
-	rcont2(&nr, &nc, row_sums, col_sums, &n_of_cases, fact,
-	       jwork, INTEGER(tmp));
-	SET_VECTOR_ELT(ans, i, tmp);
-	UNPROTECT(1);
-    }
-
-    PutRNGstate();
-
-    UNPROTECT(1);
-    vmaxset(vmax);
-
-    return(ans);
 }

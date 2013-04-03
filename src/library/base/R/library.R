@@ -33,11 +33,8 @@ function(built, run)
 library <-
 function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
          logical.return = FALSE, warn.conflicts = TRUE,
-	 quietly = FALSE, keep.source = getOption("keep.source.pkgs"),
-         verbose = getOption("verbose"))
+	 quietly = FALSE, verbose = getOption("verbose"))
 {
-    if (!missing(keep.source))
-        warning("'keep.source' is deprecated and will be ignored")
     testRversion <- function(pkgInfo, pkgname, pkgpath)
     {
         if(is.null(built <- pkgInfo$Built))
@@ -46,10 +43,9 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                  call. = FALSE, domain = NA)
 
         ## which version was this package built under?
-        ## must be >= 2.10.0 (new help system)
         R_version_built_under <- as.numeric_version(built$R)
-        if(R_version_built_under < "2.10.0")
-            stop(gettextf("package %s was built before R 2.10.0: please re-install it",
+        if(R_version_built_under < "3.0.0")
+            stop(gettextf("package %s was built before R 3.0.0: please re-install it",
                           sQuote(pkgname)), call. = FALSE, domain = NA)
 
         current <- getRversion()
@@ -58,14 +54,16 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         if(length(Rdeps <- pkgInfo$Rdepends2)) {
             for(dep in Rdeps)
                 if(length(dep) > 1L) {
-                    res <- if(is.character(target <- dep$version)) {
-                        ver <- R.version
-                        do.call(dep$op,
-                                list(as.numeric(ver[["svn rev"]]),
+                    target <- dep$version
+                    res <- if(is.character(target)) {
+                        do.call(dep$op, # these are both strings
+                                list(as.numeric(R.version[["svn rev"]]),
                                      as.numeric(sub("^r", "", dep$version))))
                     } else {
                         do.call(dep$op,
                                 list(current, as.numeric_version(target)))
+##                        target <- as.numeric_version(dep$version)
+##                        eval(parse(text=paste("current", dep$op, "target")))
                     }
                     if(!res)
                         stop(gettextf("This is R %s, package %s needs %s %s",
@@ -102,7 +100,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
         if(nzchar(r_arch)
            && file.exists(file.path(pkgpath, "libs"))
            && !file.exists(file.path(pkgpath, "libs", r_arch)))
-            stop(gettextf("package %s is not installed for 'arch=%s'",
+            stop(gettextf("package %s is not installed for 'arch = %s'",
                           sQuote(pkgname), r_arch),
                  call. = FALSE, domain = NA)
     }
@@ -124,7 +122,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             lfiles <- file.path(pkgpath, c("LICENSE", "LICENCE"))
             lfiles <- lfiles[file.exists(lfiles)]
             if(length(lfiles)) {
-                message(gettextf("Package %s has a license that you need to accept after viewing", sQuote(pkg)), domain = NA)
+                message(gettextf("package %s has a license that you need to accept after viewing", sQuote(pkg)), domain = NA)
                 readline("press RETURN to view license")
                 encoding <- pkgInfo$DESCRIPTION["Encoding"]
                 if(is.na(encoding)) encoding <- ""
@@ -132,13 +130,13 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 if(encoding == "latin1") encoding <- "cp1252"
                 file.show(lfiles[1L], encoding = encoding)
             } else {
-                message(gettextf("Package %s has a license that you need to accept:\naccording to the DESCRIPTION file it is", sQuote(pkg)), domain = NA)
+                message(gettextf("package %s has a license that you need to accept:\naccording to the DESCRIPTION file it is", sQuote(pkg)), domain = NA)
                 message(pkgInfo$DESCRIPTION["License"], domain = NA)
             }
             choice <- menu(c("accept", "decline"),
                            title = paste("License for", sQuote(pkg)))
             if(choice != 1)
-                stop(gettextf("License for package %s not accepted",
+                stop(gettextf("license for package %s not accepted",
                               sQuote(package)), domain = NA, call. = FALSE)
             dir.create(dirname(personal_file), showWarnings=FALSE)
             writeLines(c(agreed, pkg), personal_file)
@@ -162,7 +160,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     checkConflicts <- function(package, pkgname, pkgpath, nogenerics, env)
     {
         dont.mind <- c("last.dump", "last.warning", ".Last.value",
-                       ".Random.seed", ".First.lib", ".Last.lib",
+                       ".Random.seed", ".Last.lib", ".onDetach",
                        ".packageName", ".noGenerics", ".required",
                        ".no_S3_generics", ".Depends", ".requireCachedGenerics")
         sp <- search()
@@ -174,8 +172,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## from another package.  A better test would be to move this
             ## down into the loop and test against specific other package name
             ## but subtle conflicts like that are likely to be found elsewhere
-            these <- objects(lib.pos, all.names = TRUE)
-            these <- these[substr(these, 1L, 6L) == ".__T__"]
+	    these <- ob[substr(ob, 1L, 6L) == ".__T__"]
             gen <- gsub(".__T__(.*):([^:]+)", "\\1", these)
             from <- gsub(".__T__(.*):([^:]+)", "\\2", these)
             gen <- gen[from != package]
@@ -197,17 +194,17 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 		    vapply(same, exists, NA,
                            where = where, mode = "function", inherits = FALSE)
 		same <- same[same.isFn(i) == same.isFn(lib.pos)]
-		## if a package imports, and re-exports, there's no problem
-		not.Ident <- function(ch, TRAFO=identity)
-		    vapply(ch, function(.) !identical(TRAFO(get(., i)),
-						      TRAFO(get(., lib.pos))), NA)
+		## if a package imports and re-exports, there's no problem
+		not.Ident <- function(ch, TRAFO=identity, ...)
+		    vapply(ch, function(.)
+                           !identical(TRAFO(get(., i)),
+                                      TRAFO(get(., lib.pos)), ...),
+                           NA)
 		if(length(same)) same <- same[not.Ident(same)]
 		## if the package is 'base' it cannot be imported and re-exported,
 		## allow a "copy":
-		if(length(same) && identical(sp[i], "package:base")) {
-		    unenv <- function(x) { environment(x) <- emptyenv(); x }
-		    same <- same[not.Ident(same, TRAFO = unenv)]
-		}
+		if(length(same) && identical(sp[i], "package:base"))
+		    same <- same[not.Ident(same, ignore.environment = TRUE)]
                 if(length(same)) {
                     if (fst) {
                         fst <- FALSE
@@ -218,21 +215,15 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
 
                     objs <- strwrap(paste(same, collapse=", "), indent=4,
                                     exdent=4)
-                    msg <- sprintf("The following object(s) are masked %s %s:\n\n%s\n",
+                    msg <- sprintf(ngettext(length(objs),
+                                            "The following object is masked %s %s:\n\n%s\n",
+                                            "The following objects are masked %s %s:\n\n%s\n"),
                                    if (i < lib.pos) "_by_" else "from",
                                    sQuote(sp[i]), paste(objs, collapse="\n"))
 		    packageStartupMessage(msg)
                 }
             }
         }
-    }
-
-    bindTranslations <- function(pkgname, pkgpath)
-    {
-        popath <- file.path(pkgpath, "po")
-        if(!file.exists(popath)) return()
-        bindtextdomain(pkgname, popath)
-        bindtextdomain(paste("R", pkgname, sep="-"), popath)
     }
 
     if(verbose && quietly)
@@ -303,14 +294,12 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             if (packageHasNamespace(package, which.lib.loc)) {
                 tt <- try({
                     ns <- loadNamespace(package, c(which.lib.loc, lib.loc))
-                    dataPath <- file.path(which.lib.loc, package, "data")
-                    env <- attachNamespace(ns, pos = pos,
-                                           dataPath = dataPath, deps)
+                    env <- attachNamespace(ns, pos = pos, deps)
                 })
                 if (inherits(tt, "try-error"))
                     if (logical.return)
                         return(FALSE)
-                    else stop(gettextf("package/namespace load failed for %s",
+                    else stop(gettextf("package or namespace load failed for %s",
                                        sQuote(package)),
                               call. = FALSE, domain = NA)
                 else {
@@ -330,7 +319,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                         return(invisible(.packages()))
                 }
             } else
-            stop(gettextf("package %s does not have a NAMESPACE and should be re-installed",
+            stop(gettextf("package %s does not have a namespace and should be re-installed",
                           sQuote(package)), domain = NA)
 	}
 	if (verbose && !newpackage)
@@ -587,11 +576,8 @@ function(chname, libpath, verbose = getOption("verbose"),
 
 require <-
 function(package, lib.loc = NULL, quietly = FALSE, warn.conflicts = TRUE,
-         keep.source = getOption("keep.source.pkgs"),
          character.only = FALSE)
 {
-    if (!missing(keep.source))
-        warning("'keep.source' is deprecated and will be ignored")
     if(!character.only)
         package <- as.character(substitute(package)) # allowing "require(eda)"
     loaded <- paste("package", package, sep = ":") %in% search()
@@ -684,10 +670,10 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
                       "splines", "stats4", "tcltk"))
         return(file.path(.Library, package))
 
-    use_attached <- FALSE
+    use_loaded <- FALSE
     if(is.null(package)) package <- .packages()
     if(is.null(lib.loc)) {
-        use_attached <- TRUE
+        use_loaded <- TRUE
         lib.loc <- .libPaths()
     }
 
@@ -709,18 +695,10 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
                             file.exists(file.path(dirs,
                                                   "DESCRIPTION"))])
         }
-        if(use_attached
-           && length(pos <- grep(paste0("^package:", pkg, "$"),
-                                 search()))) {
-            dirs <- sapply(pos, function(i) {
-                if(identical(env <- as.environment(i), baseenv()))
-                    system.file()
-                else
-                    attr(env, "path")
-            })
-            ## possibly NULL if no path attribute.
-            dirs <- dirs[!vapply(dirs, is.null, NA)]
-            paths <- c(as.character(dirs), paths)
+        if(use_loaded && pkg %in% loadedNamespaces()) {
+            dir <- if (pkg == "base") system.file()
+            else getNamespaceInfo(pkg, "path")
+            paths <- c(dir, paths)
         }
         ## trapdoor for tools:::setRlibs
         if(length(paths) &&
@@ -862,6 +840,7 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                         if(length(z) > 1L) {
                             target <- as.numeric_version(z$version)
                             if (!do.call(z$op, list(as.numeric_version(current), target)))
+##                            if (!eval(parse(text=paste("current", z$op, "target"))))
                                 stop(gettextf("package %s %s was found, but %s %s is required by %s",
                                               sQuote(pkg), current, z$op,
                                               target, sQuote(pkgname)),
@@ -886,6 +865,7 @@ function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
                         if (length(z) > 1L) {
                             target <- as.numeric_version(z$version)
                             if (!do.call(z$op, list(as.numeric_version(current), target)))
+##                            if (!eval(parse(text=paste("current", z$op, "target"))))
                                 stop(gettextf("package %s %s is loaded, but %s %s is required by %s",
                                               sQuote(pkg), current, z$op,
                                               target, sQuote(pkgname)),

@@ -40,8 +40,8 @@
    */
 /* #undef HAVE_ALLOCA_H */
 
-/* Define if you have the Aqua headers and libraries, and want the Aqua GUI
-   components and quartz() device to be built. */
+/* Define if you have the Aqua headers and libraries, and want to include
+   support for R.app and for the quartz() device to be built. */
 /* #undef HAVE_AQUA */
 
 /* Define to 1 if you have the `argz_count' function. */
@@ -414,6 +414,9 @@
 /* Define to 1 if you have the `readline' library (-lreadline). */
 /* #undef HAVE_LIBREADLINE */
 
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
+
 /* Define to 1 if you have the `termcap' library (-ltermcap). */
 /* #undef HAVE_LIBTERMCAP */
 
@@ -438,10 +441,13 @@
 /* Define to 1 if you have the `log1p' function. */
 #define HAVE_LOG1P 1
 
+/* Define to 1 if you have the `log1pl' function. */
+#define HAVE_LOG1PL 1
+
 /* Define to 1 if you have the `log2' function. */
 #define HAVE_LOG2 1
 
-/* Define if you have the 'long double' type. (For intl) */
+/* Define if you wish to use the 'long double' type. */
 #define HAVE_LONG_DOUBLE 1
 
 /* Define to 1 if the system has the type `long long int'. (For intl) */
@@ -585,6 +591,15 @@
 
 /* Define to 1 if you have the `rl_completion_matches' function. */
 /* #undef HAVE_RL_COMPLETION_MATCHES */
+
+/* Define to 1 if you have the `sched_getaffinity' function. */
+#undef HAVE_SCHED_GETAFFINITY
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#undef HAVE_SCHED_SETAFFINITY
 
 /* Define to 1 if you have the `setenv' function. */
 /* #undef HAVE_SETENV */
@@ -979,11 +994,8 @@
 #define SIZEOF_LONG_LONG 8
 
 /* The size of `size_t', as computed by sizeof. */
-#ifdef WIN64
-#define SIZEOF_SIZE_T 8
-#else
-#define SIZEOF_SIZE_T 4
-#endif
+#define SIZEOF_SIZE_T @ST@
+
 
 /* Define as the maximum value of type 'size_t', if the system doesn't define
    it. (For intl) */
@@ -1040,6 +1052,28 @@
    made weak. (For intl) */
 /* #undef USE_SOLARIS_THREADS_WEAK */
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
 /* Define if the Win32 multithreading API can be used. (For intl) */
 /* #undef USE_WIN32_THREADS */
 
@@ -1061,6 +1095,11 @@
 
 /* Define to 1 if the X Window System is missing or not being used. */
 #define X_DISPLAY_MISSING 1
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

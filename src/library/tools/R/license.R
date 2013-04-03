@@ -19,18 +19,37 @@
 ## <NOTE>
 ## We want *standardized* license specs so that we can compute on them.
 ## In particular, we want to know whether licenses are recognizable as
-## free (FSF) or open source (OSI) licenses.
-## With the current standardization scheme, standardized license specs
-## specify free or open source software licenses or refer to LICENSE or
-## LICENCE files (requiring inspection by maintainers or installers).
-## AGPL is a particular nuisance: the FSF considers it a free software
-## license, but additional (e.g., attribution) clauses make it necessary
-## for installers to inspect these.
-## The R distribution contains a basic free or open source software
-## license db, but it would be good to have a more extensible mechanism
-## eventually.
+## FOSS (http://en.wikipedia.org/wiki/Free_and_open-source_software)
+## licenses.
 ##
-## See in particular
+## A license spec is standardized ("canonical") if it is an alternative
+## of component specs which are one of the following:
+##
+## A. "Unlimited"
+## B. "file LICENSE" or "file LICENCE"
+## C. A specification based on the R license db
+##    * A standard short specification (SSS field)
+##    * The name or abbreviation of an unversioned license
+##    * The name of abbreviation of a versioned license, optionally
+##      followed by a version spec
+##    * The name of a versioned license followed by the version
+##    * The abbrevation of a versioned license combined with '-',
+##   optionally followed by an extension spec as in B (in principle,
+##   only if the base license is extensible).
+##
+## A license spec is standardizable if we know to transform it to
+## standardized form.
+##
+## Note that the R license db also contains non-FOSS licenses, and hence
+## information (FOSS field) on the FOSS status of the licenses.
+## Ideally, a license taken as FOSS would be approved as free by the FSF
+## and as open by the OSI: we also take licenses as FOSS when approved
+## by the FSF (and not rejected by the OSI).
+##
+## See
+##   http://www.gnu.org/licenses/license-list.html
+##   http://opensource.org/licenses/alphabetical
+## fot the FSF and OSI license lists, and also
 ##   http://www.fsf.org/licensing/licenses
 ##   http://en.wikipedia.org/wiki/List_of_FSF_approved_software_licences
 ##   http://en.wikipedia.org/wiki/List_of_OSI_approved_software_licences
@@ -55,79 +74,99 @@ function(s, group = TRUE) {
         paste(s, collapse = "|")
 }
 
-.make_license_regexps <-
+.make_R_license_db <-
 function()
 {
-    ## Build license regexps according to the specs.
+    ldb <- read.dcf(file.path(R.home("share"), "licenses", "license.db"))
+    ldb[is.na(ldb)] <- ""
+    ## (Could also keeps NAs and filter on is.finite() in subsequent
+    ## computations.)
+    ## FOSS == "yes" implues Restricts_use = "no":
+    ldb[ldb[, "FOSS"] == "yes", "Restricts_use"] <- "no"
+    data.frame(ldb, stringsAsFactors = FALSE)
+}
 
-    ## Read in the license data base, and precompute some variables.
-    license_db <-
-        read.dcf(file.path(R.home("share"), "licenses", "license.db"))
-    license_db[is.na(license_db)] <- ""
-    ## (Could also keeps NAs and filter on is.finite().)
-    license_db <- data.frame(license_db, stringsAsFactors = FALSE)
+R_license_db <- .make_R_license_db()
 
-    has_abbrev <- nzchar(license_db$Abbrev)
-    has_version <- nzchar(license_db$Version)
+.make_R_license_db_vars <-
+function()
+{
+    ## Build license regexps and tables according to the specs.
 
-    license_short_specs <-
-        unique(c(Filter(nzchar, license_db$SSS),
-                 do.call(paste,
-                         c(license_db[has_abbrev & has_version,
-                                      c("Abbrev", "Version")],
-                           list(sep = "-")))))
-    license_names_or_abbrevs_without_version <-
-        Filter(nzchar,
-               unlist(license_db[license_db$Version == "",
-                                 c("Name", "Abbrev")],
-                      use.names = FALSE))
-    license_names_or_abbrevs_with_version <-
-        unique(Filter(nzchar,
-                      unlist(license_db[license_db$Version != "",
-                                    c("Name", "Abbrev")],
-                             use.names = FALSE)))
+    ## Standard short specification (SSS field) from the R license db.
+    pos <- which(nzchar(R_license_db$SSS))
+    names(pos) <- R_license_db$SSS[pos]
+    tab_sss <- pos
+
+    has_version <- nzchar(R_license_db$Version)
+    has_abbrev <- nzchar(R_license_db$Abbrev)
+
+    ## Name or abbreviation of an unversioned license from the R license
+    ## db.
+    pos <- which(!has_version)
+    names(pos) <- R_license_db$Name[pos]
+    tab_unversioned <- pos
+    pos <- which(has_abbrev & !has_version)
+    tab_unversioned[R_license_db$Abbrev[pos]] <- pos
+
+    ## Versioned licenses from the R license db.
+    ## Style A: Name of abbreviation of a versioned license, optionally
+    ##   followed by a version spec
+    ## Style B: Name of a versioned license followed by the version.
+    ## Style C: Abbrevation of a versioned license combined with '-'.
+    pos <- which(has_version)
+    names(pos) <- R_license_db$Name[pos]
+    tab_versioned_style_A <- split(pos, names(pos))
+    tab_versioned_style_B <- pos
+    names(tab_versioned_style_B) <-
+        paste(names(pos), R_license_db$Version[pos])
+    pos <- which(has_version & has_abbrev)
+    tab_versioned_style_A <-
+        c(tab_versioned_style_A, split(pos, R_license_db$Abbrev[pos]))
+    tab_versioned_style_C <- pos
+    names(tab_versioned_style_C) <-
+        sprintf("%s-%s",
+                R_license_db$Abbrev[pos],
+                R_license_db$Version[pos])
 
     operators <- c("<", "<=", ">", ">=", "==", "!=")
-    re_for_numeric_version <- .standard_regexps()$valid_numeric_version
-    re_for_single_version_spec <-
-        paste("[[:space:]]*",
-              re_or(operators),
-              "[[:space:]]*",
-              re_for_numeric_version,
-              "[[:space:]]*",
-              sep = "")
-    re_for_version_spec <-
-        paste("\\(",
-              paste0("(", re_for_single_version_spec, ",)*"),
-              re_for_single_version_spec,
-              "\\)",
-              sep = "")
-    re_for_free_or_open_software_spec <-
-        re_or(c(re_or(license_names_or_abbrevs_without_version),
-                ## We currently considers names or abbrevs of versioned
-                ## licenses, *possibly* followed by a version spec, as
-                ## canonical.  This is not quite perfect, as ideally a
-                ## version spec should be provided in case it matters.
-                ## Let us use the interpretation that no version spec
-                ## means "any version" (which is correct for GPL).
-                paste(re_or(license_names_or_abbrevs_with_version),
-                      "[[:space:]]*",
-                      paste0("(", re_for_version_spec, ")*"),
-                      sep = ""),
-                ## Also allow for things like
-                ##   GNU General Public License version 2
-                ##   Apache License Version 2.0
-                ## as one can argue that these are really the full names
-                ## of these licenses.
-                re_or(paste(license_db$Name[has_version],
-                            "[[:space:]]+([Vv]ersion[[:space:]]+)?",
-                            license_db$Version[has_version],
-                            sep = ""))))
+    re_numeric_version <- .standard_regexps()$valid_numeric_version
+    re_single_version_spec <-
+        paste0("[[:space:]]*",
+               re_or(operators),
+               "[[:space:]]*",
+               re_group(re_numeric_version),
+               "[[:space:]]*")
+    re_version_spec <-
+        paste0("\\(",
+               paste0("(", re_single_version_spec, ",)*"),
+               re_single_version_spec,
+               "\\)")
 
-    re_for_license_short_spec <- re_or(license_short_specs)
-    re_for_license_file <- "file LICEN[CS]E"
-    re_for_license_extension <-
-        sprintf("[[:space:]]*\\+[[:space:]]*%s", re_for_license_file)
+    re_sss <- re_or(names(tab_sss))
+    re_unversioned <- re_or(names(tab_unversioned))
+    re_versioned_style_A <-
+        paste0(re_or(names(tab_versioned_style_A)),
+               "[[:space:]]*",
+               paste0("(", re_version_spec, ")*"))
+    ## Let's be nice ...
+    re_versioned_style_B <-
+        re_or(paste0(R_license_db$Name[has_version],
+                     "[[:space:]]+([Vv]ersion[[:space:]]+)?",
+                     R_license_db$Version[has_version]))
+    re_versioned_style_C <- re_or(names(tab_versioned_style_C))
+
+    re_license_in_db <-
+        re_or(c(re_sss,
+                re_unversioned,
+                re_versioned_style_A,
+                re_versioned_style_B,
+                re_versioned_style_C))
+
+    re_license_file <- "file LICEN[CS]E"
+    re_license_extension <-
+        sprintf("[[:space:]]*\\+[[:space:]]*%s", re_license_file)
+
     ## <NOTE>
     ## Many standard licenses actually do not allow extensions.
     ## Ideally, we would only allow the extension markup for extensible
@@ -138,25 +177,37 @@ function()
     ## Hence, for now allow the extension markup with all standard
     ## licenses.
     ## </NOTE>
-    re_for_component <-
+
+    re_component <-
         re_anchor(re_or(c(sprintf("%s(%s)?",
-                                  re_or(c(re_for_license_short_spec,
-                                          re_for_free_or_open_software_spec)),
-                                  re_for_license_extension),
-                          re_for_license_file,
+                                  re_license_in_db,
+                                  re_license_extension),
+                          re_license_file,
                           "Unlimited")))
-    list(re_for_component = re_for_component,
-         re_for_license_file = re_for_license_file)
+    list(re_component = re_component,
+         re_license_file = re_license_file,
+         re_license_extension = re_license_extension,
+         re_single_version_spec = re_single_version_spec,
+         re_sss = re_sss,
+         re_unversioned = re_unversioned,
+         re_versioned_style_A = re_versioned_style_A,
+         re_versioned_style_B = re_versioned_style_B,
+         re_versioned_style_C = re_versioned_style_C,
+         tab_sss = tab_sss,
+         tab_unversioned = tab_unversioned,
+         tab_versioned_style_A = tab_versioned_style_A,
+         tab_versioned_style_B = tab_versioned_style_B,
+         tab_versioned_style_C = tab_versioned_style_C)
 }
 
-license_regexps <- .make_license_regexps()
+R_license_db_vars <- .make_R_license_db_vars()
 
-## Standardizable and other free or open source software license specs:
+## Standardizable license specs:
 
 ## License specifications found on CRAN/BioC/Omegahat and manually
-## classified as standardizable (hence currently free or open source)
-## software licenses (even though not standardized/canonical), provided
-## as a list of license specs named by the respective standardizations.
+## classified as standardizable software licenses (even though not
+## standardized/canonical), provided as a list of license specs named by
+## the respective standardizations.
 ## With ongoing standardization this should gradually be eliminated.
 ## Last updated: 2009-02-19.
 
@@ -347,26 +398,6 @@ data.frame(ispecs =
                           length)),
            stringsAsFactors = FALSE)
 
-## These used to be in .safe_license_specs_in_standard_repositories:
-##    "Artistic",
-##    "GPL AFFERO 3.0 (with citation)",
-##    "caBIG"
-##    "Unlimited distribution.",
-## These are safe from a distribution point of view, but clearly not
-## standardizable ... hence:
-## A list of license specs we cannot standardize, but safely classify as
-## free or open source software licenses:
-.other_free_or_open_license_specs <-
-c("Artistic",
-  "GPL AFFERO 3.0 (with citation)",
-  ## https://cabig-kc.nci.nih.gov/CTMS/KC/index.php/C3PR_caBIG_License
-  "caBIG"
-  )
-
-.safe_license_specs <-
-    c(.standardizable_license_specs_db$ispecs,
-      .other_free_or_open_license_specs)
-
 analyze_license <-
 function(x)
 {
@@ -376,16 +407,20 @@ function(x)
                               is_standardizable = FALSE,
                               is_verified = FALSE,
                               standardization = NA_character_,
-                              is_extended = NA,
-                              pointers = NULL)
+                              extensions = NULL,
+                              pointers = NULL,
+                              is_FOSS = NA,
+                              restricts_use = NA)
         list(is_empty = is_empty,
              is_canonical = is_canonical,
              bad_components = bad_components,
              is_standardizable = is_standardizable,
              is_verified = is_verified,
              standardization = standardization,
-             is_extended = is_extended,
-             pointers = pointers)
+             extensions = extensions,
+             pointers = pointers,
+             is_FOSS = is_FOSS,
+             restricts_use = restricts_use)
 
 
     x <- .strip_whitespace(x)
@@ -396,30 +431,25 @@ function(x)
         return(.make_results(is_empty = TRUE))
     }
 
+    pointers <- NULL
+    extensions <- NULL
+    is_verified <- FALSE
+    is_FOSS <- NA
+    restricts_use <- NA
+
     ## Try splitting into the individual components.
     components <-
         .strip_whitespace(unlist(strsplit(x, "|", fixed = TRUE)))
 
     ## Now analyze the individual components.
-    ok <- grepl(license_regexps$re_for_component, components)
+    ok <- grepl(R_license_db_vars$re_component, components)
     bad_components <- components[!ok]
-
-    ## Is the license specification "safe" in the sense of automatically
-    ## verifiable as a free or open source software license?
-    ## For the time being, test whether the spec is canonical and
-    ## different from just a pointer to a license file, or in the list
-    ## of safe specifications derived from license specifications in the
-    ## standard repositories.
-    is_verified <-
-        ((all(ok)
-          && !all(grepl(re_anchor(license_regexps$re_for_license_file),
-                        components)))
-         || all(components %in% .safe_license_specs))
+    is_canonical <- all(ok)
 
     ## Is the license specification standardizable?
     standardizable <-
         components %in% .standardizable_license_specs_db$ispecs
-    is_standardizable <- (all(ok) || all(standardizable))
+    is_standardizable <- (is_canonical || all(standardizable))
 
     standardization <- if(is_standardizable) {
         ## Standardize the ones which are standardizable but not yet
@@ -446,32 +476,85 @@ function(x)
         paste(components, collapse = " | ")
     } else NA_character_
 
-    pointers <- NULL
-    is_extended <- NA
     ## Analyze components provided that we know we can standardize.
     if(is_standardizable) {
-        components <-
-            .strip_whitespace(unlist(strsplit(standardization, "|",
-                                              fixed = TRUE)))
-        ind <- grep(sprintf("%s$",
-                            license_regexps$re_for_license_file),
-                     components)
-        if(length(ind)) {
-            pointers <- sub(".*file ", "", components[ind])
-            is_extended <-
-                any(grepl("+", components[ind], fixed = TRUE))
-        } else {
-            is_extended <- FALSE
+        verifiable <- function(x, v = "yes")
+            !is.null(x) && all(!is.na(x) & (x == v))
+        ## (More generally we could test for positive length of x: but
+        ## a length test is needed because all(NULL) |=> TRUE.)
+        
+        expansions <- lapply(components,
+                             expand_license_spec_component_from_db)
+
+        ## The license is FOSS if there is one component which is
+        ## "Unlimited" or has a positive number of expansions all of
+        ## which are FOSS.
+        ## If all components have a positive number of expansions where
+        ## at least one is not FOSS, the license is not FOSS.
+        ## Otherwise we do not know.
+        is_FOSS <- if(any(components == "Unlimited")) {
+            TRUE
+        } else if(any(sapply(expansions,
+                             function(e) verifiable(e$FOSS)))) {
+            TRUE
+        } else if(all(sapply(expansions,
+                             function(e) any(e$FOSS == "no")))) {
+            FALSE
+        } else
+            NA
+
+        ## The license is verified (as FOSS) if it was verified as FOSS.
+        is_verified <- !is.na(is_FOSS) && is_FOSS
+
+        ## The license does not restrict use if it is verified as FOSS,
+        ## or if there is one component with a positive number of
+        ## expansions all of which do not restrict use.
+        ## If all components have a positive number of expansions where
+        ## at least one of which restricts use, the license restricts
+        ## use.
+        ## Otherwise, we do not know.
+        restricts_use <- if(is_verified) {
+            FALSE
+        } else if(any(sapply(expansions,
+                             function(e)
+                             (length(e) &&
+                              all(e$Restricts_use == "no"))))) {
+            FALSE
+        } else if(all(sapply(expansions,
+                             function(e)
+                             any(e$Restricts_use == "yes")))) {
+            TRUE
+        } else
+            NA
+
+        pos <- grep(sprintf("%s$", R_license_db_vars$re_license_file),
+                    components)
+        if(length(pos)) {
+            components <- components[pos]
+            ## Components with license file pointers.
+            pointers <- sub(".*file ", "", components)
+            ## Components with license extensions.
+            ind <- grepl("+", components, fixed = TRUE)
+            if(any(ind))
+                extensions <-
+                    data.frame(components = components[ind],
+                               extensible =
+                               sapply(expansions[pos[ind]],
+                                      function(e)
+                                      verifiable(e$Extensible)),
+                               stringsAsFactors = FALSE)
         }
     }
 
-    .make_results(is_canonical = all(ok),
+    .make_results(is_canonical = is_canonical,
                   bad_components = bad_components,
                   is_standardizable = is_standardizable,
-                  is_verified = is_verified,
                   standardization = standardization,
-                  is_extended = is_extended,
-                  pointers = pointers)
+                  is_verified = is_verified,
+                  extensions = extensions,
+                  pointers = pointers,
+                  is_FOSS = is_FOSS,
+                  restricts_use = restricts_use)
 }
 
 .standardize_license_components <-
@@ -482,35 +565,56 @@ function(x)
 }
 
 analyze_licenses <-
-function(x)
+function(x, db = NULL)
 {
     x <- as.character(x)
     if(!length(x)) return(NULL)
     ## As analyzing licenses is costly, only analyze the unique specs.
     v <- unique(x)
-    status <- lapply(v, analyze_license)
-    ## And now turn into a data frame.
-    out <- data.frame(matrix(0, length(v), 0L))
-    for(j in seq_along(status[[1L]]))
-        out[[j]] <- sapply(status, "[[", j)
-    names(out) <- names(status[[1L]])
+    out <- as.data.frame(do.call(rbind, lapply(v, analyze_license)),
+                         stringsAsFactors = FALSE)
+    pos <- match(c("is_empty", "is_canonical", "is_standardizable",
+                   "is_verified", "standardization", "is_FOSS",
+                   "restricts_use"),
+                 names(out))
+    out[pos] <- lapply(out[pos], unlist)
     ## And re-match specs to the unique specs.
     out <- out[match(x, v), ]
     rownames(out) <- NULL
+    if(!is.null(db)) {
+        ## db should be a package db (data frame or character matrix)
+        ## with rows corresponding to the elements of x.
+        cnms <- colnames(db)
+        if(!is.na(pos <- match("License_is_FOSS", cnms))) {
+            lif <- db[, pos]
+            pos <- which(!is.na(lif))
+            out$is_FOSS[pos] <- out$is_verified[pos] <-
+                (lif[pos] == "yes")
+            ## is_FOSS implies !restricts_use:
+            pos <- pos[lif[pos] == "yes"]
+            out$restricts_use[pos] <- FALSE
+        }
+        if(!is.na(pos <- match("License_restricts_use", cnms))) {
+            lru <- db[, pos]
+            pos <- which(!is.na(lru))
+            out$restricts_use[pos] <- (lru[pos] == "yes")
+            ## restricts_use implies !is_FOSS:
+            pos <- pos[lru[pos] == "yes"]
+            out$is_FOSS[pos] <- out$is_verified[pos] <- FALSE
+        }
+    }
     out
 }
 
 build_license_db <-
 function(dir, unpacked = FALSE)
 {
-    ## Note that currently (2007-10-20), the license info is *NOT*
-    ## written into the repository db (file 'PACKAGES') anymore.
-
     CRAN <- getOption("repos")["CRAN"]
     if(missing(dir) && substring(CRAN, 1L, 7L) == "file://")
         dir <- file.path(substring(CRAN, 8L), "src", "contrib")
 
-    fields <- c("License", "Maintainer")
+    fields <- c("License", "License_is_FOSS", "License_restricts_use",
+                "Maintainer")
     db <- .build_repository_package_db(dir, fields, unpacked = unpacked)
     ## Actually, for Omegehat this is not a good idea as this retains
     ## old versions in the "main" src/contrib directory.  But let's not
@@ -525,7 +629,13 @@ function(dir, unpacked = FALSE)
 
 analyze_licenses_in_license_db <-
 function(db)
-    cbind(db, analyze_licenses(db$License))
+{
+    results <- cbind(db, analyze_licenses(db$License, db))
+    ## Keep License_is_FOSS and License_restricts_use columns for now,
+    ## so that we can identify the is_FOSS and restricts_use values
+    ## obtained from these.
+    results
+}
 
 analyze_licenses_in_repository <-
 function(dir, unpacked = FALSE, full = TRUE)
@@ -559,17 +669,75 @@ function(db)
     invisible(out)
 }
 
-find_unused_safe_license_specs <-
-function(...)
+expand_license_spec_component_from_db <-
+function(x)
 {
-    ldb <- do.call("rbind", list(...))
-    .safe_license_specs %w/o% unique(ldb$License)
+    ## Determine the license from the db matching a license spec
+    ## component.
+
+    if(x == "Unlimited" ||
+       grepl(x, R_license_db_vars$re_license_file))
+        return(NULL)
+
+    ## Drop possible license extension.
+    x <- sub(R_license_db_vars$re_license_extension, "", x)
+
+    if(grepl(re_anchor(R_license_db_vars$re_sss), x)) {
+        pos <- R_license_db_vars$tab_sss[x]
+        R_license_db[pos, ]
+    }
+    else if(grepl(re_anchor(R_license_db_vars$re_unversioned), x)) {
+        pos <- R_license_db_vars$tab_unversioned[x]
+        R_license_db[pos, ]
+    }
+    else if(grepl(re <-
+                  re_anchor(R_license_db_vars$re_versioned_style_A),
+                  x)) {
+        ## Extract name/abbrev and version spec.
+        v <- sub(re, "\\2", x)
+        x <- sub(re, "\\1", x)
+        ## First, find the matching entries matching the name/abbrev.
+        pos <- R_license_db_vars$tab_versioned_style_A[[x]]
+        entries <- R_license_db[pos, ]
+        ## Now determine the entries satisfying the version spec.
+        v <- sub("[[:space:]]*\\((.*)\\)[[:space:]]*", "\\1", v)
+        if(v != "") {
+            constraints <-
+                unlist(strsplit(v, "[[:space:]]*,[[:space:]]*"))
+            entries <-
+                entries[sapply(entries$Version,
+                               .numeric_version_meets_constraints_p,
+                               constraints), ]
+        }
+        entries
+    }
+    else if(grepl(re_anchor(R_license_db_vars$re_versioned_style_B),
+                  x)) {
+        re <- sprintf("[[:space:]]+([Vv]ersion[[:space:]]+)?(%s)",
+                      .standard_regexps()$valid_numeric_version)
+        x <- sub(re, " \\2", x)
+        pos <- R_license_db_vars$tab_versioned_style_B[x]
+        R_license_db[pos, ]
+    }
+    else if(grepl(re_anchor(R_license_db_vars$re_versioned_style_C),
+                  x)) {
+        pos <- R_license_db_vars$tab_versioned_style_C[x]
+        R_license_db[pos, ]
+    }
+
 }
 
-find_canonical_safe_license_specs <-
-function()
+.numeric_version_meets_constraints_p <-
+function(version, constraints)
 {
-    grep(license_regexps$re_for_component,
-         .safe_license_specs,
-         value = TRUE)
+    version <- as.numeric_version(version)
+    for(term in constraints) {
+        re <- R_license_db_vars$re_single_version_spec
+        op <- sub(re, "\\1", term)
+        target <- sub(re, "\\2", term)
+        if(!eval(parse(text = paste("version", op, "target"))))
+            return(FALSE)
+    }
+    TRUE
 }
+

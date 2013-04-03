@@ -1,7 +1,7 @@
 #  File src/library/tools/R/utils.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -162,9 +162,8 @@ function(x)
     asc <- iconv(x, "latin1", "ASCII")
     ind <- is.na(asc) | asc != x
     if(any(ind))
-        cat(paste(which(ind), ": ",
-                  iconv(x[ind], "latin1", "ASCII", sub="byte"), sep=""),
-            sep="\n")
+        cat(paste0(which(ind), ": ", iconv(x[ind], "latin1", "ASCII", sub = "byte")),
+            sep = "\n")
     invisible(x[ind])
 }
 
@@ -214,7 +213,8 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             out_file <- paste(basename(file_path_sans_ext(file)),
                               if(pdf) "pdf" else "dvi",
                               sep = ".")
-            files <- list.files(all.files = TRUE) %w/o% c(".", "..", out_file)
+            files <- setdiff(list.files(all.files = TRUE),
+                             c(".", "..", out_file))
             file.remove(files[file_test("-nt", files, ".timestamp")])
         }
 
@@ -272,7 +272,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         opt_pdf <- if(pdf) "--pdf" else ""
         opt_quiet <- if(quiet) "--quiet" else ""
         opt_extra <- ""
-        out <- .shell_with_capture(paste(shQuote(texi2dvi), "--help"))
+        out <- .system_with_capture(texi2dvi, "--help")
         if(length(grep("--no-line-error", out$stdout)))
             opt_extra <- "--no-line-error"
         ## (Maybe change eventually: the current heuristics for finding
@@ -283,10 +283,10 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         ## https://stat.ethz.ch/pipermail/r-devel/2011-March/060262.html
         ## That has [A-Za-z], earlier versions [A-z], both of which may be
         ## invalid in some locales.
-        out <- .shell_with_capture(paste("LC_COLLATE=C",
-                                         shQuote(texi2dvi), opt_pdf,
-                                         opt_quiet, opt_extra,
-                                         shQuote(file)))
+        out <- .system_with_capture(texi2dvi,
+                                    c(opt_pdf, opt_quiet, opt_extra,
+                                      shQuote(file)),
+                                    env = "LC_COLLATE=C")
 
         ## We cannot necessarily rely on out$status, hence let us
         ## analyze the log files in any case.
@@ -441,7 +441,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.11")
+    numeric_version("2.12")
 ## Things are more complicated from R-2.15.x with still two BioC
 ## releases a year, so we do need to set this manually.
 
@@ -528,8 +528,6 @@ function(val) {
     }
 }
 
-
-
 ### ** .eval_with_capture
 
 .eval_with_capture <-
@@ -578,30 +576,76 @@ function(file1, file2)
 {
     ## Use a fast version of file.append() that ensures LF between
     ## files.
-    .Internal(codeFiles.append(file1, file2))
+    .Call(codeFilesAppend, file1, file2)
+}
+
+### ** .file_path_relative_to_dir
+
+.file_path_relative_to_dir <-
+function(x, dir)
+{
+    if(any(ind <- (substring(x, 1L, nchar(dir)) == dir))) {
+        ## Assume .Platform$file.sep is a single character.
+        x[ind] <- substring(x, nchar(dir) + 2L)
+    }
+    x
 }
 
 ### ** .find_calls
 
 .find_calls <-
-function(x, f = NULL, recursive = FALSE)
+function(x, predicate = NULL, recursive = FALSE)
 {
     x <- as.list(x)
 
-    predicate <- if(is.null(f))
+    f <- if(is.null(predicate))
         function(e) is.call(e)
     else
-        function(e) is.call(e) && f(e)
+        function(e) is.call(e) && predicate(e)
 
-    if(!recursive) return(Filter(predicate, x))
+    if(!recursive) return(Filter(f, x))
 
     calls <- list()
     gatherer <- function(e) {
-        if(predicate(e)) calls <<- c(calls, list(e))
+        if(f(e)) calls <<- c(calls, list(e))
         if(is.recursive(e))
             for(i in seq_along(e)) gatherer(e[[i]])
     }
     gatherer(x)
+
+    calls
+}
+
+### ** .find_calls_in_file
+
+.find_calls_in_file <-
+function(file, encoding = NA, predicate = NULL, recursive = FALSE)
+{
+    .find_calls(.parse_code_file(file, encoding), predicate, recursive)
+}
+
+### ** .find_calls_in_package_code
+
+.find_calls_in_package_code <-
+function(dir, predicate = NULL, recursive = FALSE, .worker = NULL)
+{
+    dir <- file_path_as_absolute(dir)
+
+    dfile <- file.path(dir, "DESCRIPTION")
+    encoding <- if(file.exists(dfile))
+        .read_description(dfile)["Encoding"] else NA
+
+    if(is.null(.worker))
+        .worker <- function(file, encoding)
+            .find_calls_in_file(file, encoding, predicate, recursive)
+
+    code_files <-
+        list_files_with_type(file.path(dir, "R"), "code",
+                             OS_subdirs = c("unix", "windows"))
+    calls <- lapply(code_files, .worker, encoding)
+    names(calls) <-
+        .file_path_relative_to_dir(code_files, dirname(dir))
+
     calls
 }
 
@@ -808,7 +852,7 @@ function(dir, installed = TRUE, primitive = FALSE)
             reqs <- intersect(c(depends, imports), loadedNamespaces())
             if(length(reqs))
                 env_list <- c(env_list, lapply(reqs, getNamespace))
-            reqs <- intersect(depends %w/o% loadedNamespaces(),
+            reqs <- intersect(setdiff(depends, loadedNamespaces()),
                               .packages())
             if(length(reqs))
                 env_list <- c(env_list, lapply(reqs, .package_env))
@@ -891,16 +935,24 @@ function()
             .expand_BioC_repository_URLs(strsplit(repos, " +")[[1L]])
     } else {
         nms <- c("CRAN", "BioCsoft", "BioCann", "BioCexp")
-        p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
-        repos <- if(file_test("-f", p)) {
-            a <- .read_repositories(p)
-            a[nms, "URL"]
-        } else {
-            a <- .read_repositories(file.path(R.home("etc"),
-                                              "repositories"))
-            c("http://CRAN.R-project.org", a[nms[-1L], "URL"])
+        repos <- getOption("repos")
+        ## This is set by utils:::.onLoad(), hence may be NULL.
+        if(!is.null(repos) &&
+           !any(is.na(repos[nms])) &&
+           (repos["CRAN"] != "@CRAN@"))
+            repos <- repos[nms]
+        else {
+            p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
+            repos <- if(file_test("-f", p)) {
+                a <- .read_repositories(p)
+                a[nms, "URL"]
+            } else {
+                a <- .read_repositories(file.path(R.home("etc"),
+                                                  "repositories"))
+                c("http://CRAN.R-project.org", a[nms[-1L], "URL"])
+            }
+            names(repos) <- nms
         }
-        names(repos) <- nms
     }
     repos
 }
@@ -908,10 +960,94 @@ function()
 ### ** .get_standard_repository_db_fields
 
 .get_standard_repository_db_fields <-
-function()
+function(type = c("source", "mac.binary", "win.binary")) {
+    type <- match.arg(type)
     c("Package", "Version", "Priority",
       "Depends", "Imports", "LinkingTo", "Suggests", "Enhances",
-      "OS_type", "License", "Archs")
+      "License", "License_is_FOSS", "License_restricts_use",
+      "OS_type", "Archs", "MD5sum",
+      if(type == "source") "NeedsCompilation"
+      )
+}
+
+### ** .get_standard_DESCRIPTION_fields
+
+.get_standard_DESCRIPTION_fields <-
+function()
+{
+    unique(c(.get_standard_repository_db_fields(),
+             ## Extract from R-exts via
+             ## .get_DESCRIPTION_fields_in_R_exts():
+             c("Author",
+               "Authors@R",
+               "Biarch",
+               "BugReports",
+               "BuildKeepEmpty",
+               "BuildManual",
+               "BuildResaveData",
+               "BuildVignettes",
+               "Built",
+               "ByteCompile",
+               "Classification/ACM",
+               "Classification/JEL",
+               "Classification/MSC",
+               "Collate",
+               "Collate.unix",
+               "Collate.windows",
+               "Contact",
+               "Copyright",
+               "Date",
+               "Depends",
+               "Description",
+               "Encoding",
+               "Enhances",
+               "Imports",
+               "KeepSource",
+               "Language",
+               "LazyData",
+               "LazyDataCompression",
+               "LazyLoad",
+               "License",
+               "LinkingTo",
+               "MailingList",
+               "Maintainer",
+               "Note",
+               "OS_type",
+               "Package",
+               "Packaged",
+               "Priority",
+               "Suggests",
+               "SystemRequirements",
+               "Title",
+               "Type",
+               "URL",
+               "Version",
+               "VignetteBuilder",
+               "ZipData"),
+             ## Others: adjust as needed.
+             c("Repository",
+               "Path",
+               "Date/Publication",
+               "LastChangedDate",
+               "LastChangedRevision",
+               "RcmdrModels",
+               "RcppModules",
+               "biocViews")
+             ))
+}
+
+### ** .get_DESCRIPTION_fields_in_R_exts
+
+.get_DESCRIPTION_fields_in_R_exts <-
+function(texi = NULL)
+{
+    if(is.null(texi))
+        texi <- file.path(.R_top_srcdir_from_Rd(),
+                          "doc", "manual", "R-exts.texi")
+    lines <- readLines(texi)
+    re <- "^@c DESCRIPTION field "
+    sort(unique(sub(re, "", lines[grepl(re, lines)])))
+}
 
 ### ** .is_ASCII
 
@@ -1054,7 +1190,7 @@ function(type = c("code", "data", "demo", "docs", "vignette"))
            demo = c("R", "r"),
            docs = c("Rd", "rd", "Rd.gz", "rd.gz"),
            vignette = c(outer(c("R", "r", "S", "s"), c("nw", "tex"),
-                              paste, sep = "")))
+                              paste, sep = ""), "Rmd"))
 }
 
 ### ** .make_S3_group_generic_env
@@ -1220,6 +1356,26 @@ function(packages = NULL, FUN, ...)
     out
 }
 
+### .parse_code_file
+
+.parse_code_file <-
+function(file, encoding = NA)
+{
+    if(!file.info(file)$size) return()
+    suppressWarnings({
+        if(!is.na(encoding) &&
+           !(Sys.getlocale("LC_CTYPE") %in% c("C", "POSIX"))) {
+            ## Previous use of con <- file(file, encoding = encoding)
+            ## was intolerant so do what .install_package_code_files()
+            ## does.
+            lines <- iconv(readLines(file, warn = FALSE),
+                           from = encoding, to = "", sub = "byte")
+            parse(text = lines)
+        } else parse(file)
+    })
+}
+
+
 ### ** .read_Rd_lines_quietly
 
 .read_Rd_lines_quietly <-
@@ -1252,7 +1408,7 @@ function(txt)
 ### ** .read_description
 
 .keep_white_description_fields <-
-    c("Description", "Author", "Built", "Packaged")
+    c("Description", "Authors@R", "Author", "Built", "Packaged")
 
 .read_description <-
 function(dfile)
@@ -1344,40 +1500,21 @@ function(x)
 .expand_package_description_db_R_fields <-
 function(x)
 {
+    enc <- x["Encoding"]
     y <- character()
     if(!is.na(aar <- x["Authors@R"])) {
         aar <- utils:::.read_authors_at_R_field(aar)
-        if(is.na(x["Author"]))
-            y["Author"] <-
-                utils:::.format_authors_at_R_field_for_author(aar)
+        if(is.na(x["Author"])) {
+            tmp <- utils:::.format_authors_at_R_field_for_author(aar)
+            ## uses strwrap, so will be in current locale
+            if(!is.na(enc)) tmp <- iconv(tmp, "", enc)
+            y["Author"] <- tmp
+        }
         if(is.na(x["Maintainer"]))
             y["Maintainer"] <-
                 utils:::.format_authors_at_R_field_for_maintainer(aar)
     }
     y
-}
-
-### ** .shell_with_capture
-
-.shell_with_capture <-
-function(command, input = NULL)
-{
-    ## Invoke a system command using a shell and capture its status,
-    ## stdout and stderr into separate components.
-
-    ## Should try some sanity checking that there is no redirection in
-    ## command thus far ...
-    outfile <- tempfile("xshell")
-    errfile <- tempfile("xshell")
-    on.exit(unlink(c(outfile, errfile)))
-    status <- if(.Platform$OS.type == "windows")
-        shell(sprintf("%s > %s 2> %s", command, outfile, errfile),
-              input = input, shell = "cmd.exe")
-    else system(sprintf("%s > %s 2> %s", command, outfile, errfile),
-                input = input)
-    list(status = status,
-         stdout = readLines(outfile, warn = FALSE),
-         stderr = readLines(errfile, warn = FALSE))
 }
 
 ### ** .source_assignments
@@ -1484,6 +1621,26 @@ function(x)
     x
 }
 
+### ** .system_with_capture
+
+.system_with_capture <-
+function(command, args = character(), env = character(),
+         stdin = "", input = NULL)
+{
+    ## Invoke a system command and capture its status, stdout and stderr
+    ## into separate components.
+
+    outfile <- tempfile("xshell")
+    errfile <- tempfile("xshell")
+    on.exit(unlink(c(outfile, errfile)))
+    status <- system2(command, args, env = env,
+                      stdout = outfile, stderr = errfile,
+                      stdin = stdin, input = input)
+    list(status = status,
+         stdout = readLines(outfile, warn = FALSE),
+         stderr = readLines(errfile, warn = FALSE))
+}
+
 ### ** .try_quietly
 
 .try_quietly <-
@@ -1521,6 +1678,26 @@ function(expr)
     if(inherits(yy, "error"))
         stop(yy)
     yy
+}
+
+### ** .unpacked_source_repository_apply
+
+.unpacked_source_repository_apply <-
+function(dir, fun, ..., verbose = FALSE)
+{
+    dir <- file_path_as_absolute(dir)
+
+    dfiles <- Sys.glob(file.path(dir, "*", "DESCRIPTION"))
+
+    results <-
+        lapply(dirname(dfiles),
+               function(dir) {
+                   if(verbose)
+                       message(sprintf("processing %s", basename(dir)))
+                   fun(dir, ...)
+               })
+    names(results) <- basename(dirname(dfiles))
+    results
 }
 
 ### ** .wrong_args

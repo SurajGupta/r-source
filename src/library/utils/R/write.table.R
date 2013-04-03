@@ -90,7 +90,7 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
 
     if(is.logical(col.names)) {
         if(!rn && is.na(col.names))
-            stop("col.names = NA makes no sense when row.names = FALSE")
+            stop("'col.names = NA' makes no sense when 'row.names = FALSE'")
         col.names <- if(is.na(col.names) && rn) c("", d[[2L]])
         else if(col.names) d[[2L]] else NULL
     } else {
@@ -137,8 +137,8 @@ function (x, file = "", append = FALSE, quote = TRUE, sep = " ",
         })
     }
 
-    .Internal(write.table(x, file, nrow(x), p, rnames, sep, eol, na, dec,
-                          as.integer(quote), qmethod != "double"))
+    invisible(.External2(C_writetable, x, file, nrow(x), p, rnames, sep, eol,
+                         na, dec, as.integer(quote), qmethod != "double"))
 }
 
 write.csv <- function(...)

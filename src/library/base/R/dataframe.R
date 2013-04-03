@@ -30,8 +30,11 @@
 ## As from 2.5.0 c(NA, n > 0) indicates deliberately assigned row names,
 ## and c(NA, n < 0) automatic row names.
 
+## We cannot allow long vectors as elements until we can handle
+## duplication of row names.
+
 .row_names_info <- function(x, type = 1L)
-    .Call("R_shortRowNames", x, type, PACKAGE = "base")
+    .Internal(shortRowNames(x, type))
 
 row.names <- function(x) UseMethod("row.names")
 row.names.data.frame <- function(x) as.character(attr(x, "row.names"))
@@ -135,7 +138,7 @@ as.data.frame <- function(x, row.names = NULL, optional = FALSE, ...)
 }
 
 as.data.frame.default <- function(x, ...)
-    stop(gettextf("cannot coerce class '%s' into a data.frame",
+    stop(gettextf("cannot coerce class \"%s\" to a data.frame",
                   deparse(class(x))),
          domain = NA)
 
@@ -152,8 +155,11 @@ as.data.frame.data.frame <- function(x, row.names = NULL, ...)
         nr <- .row_names_info(x, 2L)
 	if(length(row.names) == nr)
 	    attr(x, "row.names") <- row.names
-	else stop(gettextf("invalid 'row.names', length %d for a data frame with %d rows",
-                           length(row.names), nr), domain = NA)
+	else
+            stop(sprintf(ngettext(nr,
+                                  "invalid 'row.names', length %d for a data frame with %d row",
+                                  "invalid 'row.names', length %d for a data frame with %d rows"),
+                         length(row.names), nr), domain = NA)
     }
     x
 }
@@ -177,8 +183,10 @@ as.data.frame.list <-
     if(!is.null(row.names)) {
 	# row.names <- as.character(row.names)
 	if(length(row.names) != dim(x)[[1L]])
-            stop(gettextf("supplied %d row names for %d rows",
-                          length(row.names), dim(x)[[1L]]), domain = NA)
+            stop(sprintf(ngettext(length(row.names),
+                                  "supplied %d row name for %d rows",
+                                  "supplied %d row names for %d rows"),
+                         length(row.names), dim(x)[[1L]]), domain = NA)
 	attr(x, "row.names") <- row.names
     }
     x
@@ -286,7 +294,9 @@ as.data.frame.model.matrix <-
     if(!is.null(row.names)) {
 	row.names <- as.character(row.names)
 	if(length(row.names) != nrows)
-            stop(gettextf("supplied %d row names for %d rows",
+            stop(sprintf(ngettext(length(row.names),
+                                  "supplied %d row name for %d rows",
+                                  "supplied %d row names for %d rows"),
                           length(row.names), nrows), domain = NA)
     }
     else row.names <- .set_row_names(nrows)
@@ -370,9 +380,9 @@ data.frame <-
 	else function(current, new, i) {
 	    if(is.null(current)) {
 		if(anyDuplicated(new)) {
-		    warning("some row.names duplicated: ",
-                            paste(which(duplicated(new)), collapse=","),
-                            " --> row.names NOT used")
+		    warning(gettextf("some row.names duplicated: %s --> row.names NOT used",
+                                     paste(which(duplicated(new)), collapse=",")),
+                            domain = NA)
 		    current
 		} else new
 	    } else current
@@ -389,9 +399,10 @@ data.frame <-
             if(any(is.na(row.names)))
                 stop("row names contain missing values")
             if(anyDuplicated(row.names))
-                stop("duplicate row.names: ",
-                     paste(unique(row.names[duplicated(row.names)]),
-                           collapse = ", "))
+                stop(gettextf("duplicate row.names: %s",
+                              paste(unique(row.names[duplicated(row.names)]),
+                                    collapse = ", ")),
+                     domain = NA)
         } else row.names <- integer()
 	return(structure(list(), names = character(),
                          row.names = row.names,
@@ -452,11 +463,11 @@ data.frame <-
                 xi1 <- xi[[j]]
                 if(is.vector(xi1) || is.factor(xi1))
                     xi[[j]] <- rep(xi1, length.out = nr)
-                else if(is.character(xi1) && class(xi1) == "AsIs")
+		else if(is.character(xi1) && inherits(xi1, "AsIs"))
                     xi[[j]] <- structure(rep(xi1, length.out = nr),
                                          class = class(xi1))
                 else if(inherits(xi1, "Date") || inherits(xi1, "POSIXct"))
-                    xi[[j]] <-rep(xi1, length.out = nr)
+                    xi[[j]] <- rep(xi1, length.out = nr)
                 else {
                     fixed <- FALSE
                     break
@@ -467,8 +478,9 @@ data.frame <-
                 next
             }
         }
-	stop("arguments imply differing number of rows: ",
-             paste(unique(nrows), collapse = ", "))
+        stop(gettextf("arguments imply differing number of rows: %s",
+                      paste(unique(nrows), collapse = ", ")),
+             domain = NA)
     }
     value <- unlist(vlist, recursive=FALSE, use.names=FALSE)
     ## unlist() drops i-th component if it has 0 columns
@@ -485,7 +497,7 @@ data.frame <-
                 row.names <- match(row.names, vnames, 0L)
             if(length(row.names) != 1L ||
                row.names < 1L || row.names > length(vnames))
-                stop("row.names should specify one of the variables")
+                stop("'row.names' should specify one of the variables")
             i <- row.names
             row.names <- value[[i]]
             value <- value[ - i]
@@ -503,9 +515,10 @@ data.frame <-
         if(any(is.na(row.names)))
             stop("row names contain missing values")
         if(anyDuplicated(row.names))
-            stop("duplicate row.names: ",
-                 paste(unique(row.names[duplicated(row.names)]),
-                       collapse = ", "))
+            stop(gettextf("duplicate row.names: %s",
+                          paste(unique(row.names[duplicated(row.names)]),
+                                collapse = ", ")),
+                 domain = NA)
     }
     attr(value, "row.names") <- row.names
     attr(value, "class") <- "data.frame"
@@ -527,7 +540,7 @@ data.frame <-
         warning("named arguments other than 'drop' are discouraged")
 
     if(Narg < 3L) {  # list-like indexing or matrix indexing
-        if(!mdrop) warning("drop argument will be ignored")
+        if(!mdrop) warning("'drop' argument will be ignored")
 	if(missing(i)) return(x)
 	if(is.matrix(i))
 	    return(as.matrix(x)[i])  # desperate measures
@@ -587,7 +600,7 @@ data.frame <-
     ## make a shallow copy
     x <- vector("list", length(x))
     ## attributes(x) <- attributes(xx) expands row names
-    x <- .Call("R_copyDFattr", xx, x, PACKAGE="base")
+    x <- .Internal(copyDFattr(xx, x))
     oldClass(x) <- attr(x, "row.names") <- NULL
 
     if(has.j) { # df[i, j]
@@ -706,7 +719,23 @@ data.frame <-
             if(is.null(value)) return(x[logical()])
         } else { # case df[ind]
             ## really ambiguous, but follow common use as if list
-            ## except for a full-sized logical matrix
+            ## except for two column numeric matrix or full-sized logical matrix
+            if(is.numeric(i) && is.matrix(i) && ncol(i) == 2) {
+                # Rewrite i as a logical index
+                index <- rep(FALSE, prod(dim(x)))
+                dim(index) <- dim(x)
+                tryCatch(index[i] <- TRUE,
+                         error = function(e) stop(conditionMessage(e), call.=FALSE))
+                # Put values in the right order
+                o <- order(i[,2], i[,1])
+                N <- length(value)
+                if (length(o) %% N != 0L)
+                    warning("number of items to replace is not a multiple of replacement length")
+                if (N < length(o))
+                    value <- rep(value, length.out=length(o))
+                value <- value[o]
+                i <- index
+            }
             if(is.logical(i) && is.matrix(i) && all(dim(i) == dim(x))) {
                 nreplace <- sum(i, na.rm=TRUE)
                 if(!nreplace) return(x) # nothing to replace
@@ -715,7 +744,7 @@ data.frame <-
                 if(N > 1L && N < nreplace && (nreplace %% N) == 0L)
                     value <- rep(value, length.out = nreplace)
                 if(N > 1L && (length(value) != nreplace))
-                    stop("rhs is the wrong length for indexing by a logical matrix")
+                    stop("'value' is the wrong length")
                 n <- 0L
                 nv <- nrow(x)
                 for(v in seq_len(dim(i)[2L])) {
@@ -732,7 +761,7 @@ data.frame <-
                 return(x)
             }  # end of logical matrix
             if(is.matrix(i))
-                stop("only logical matrix subscripts are allowed in replacement")
+                stop("unsupported matrix index in replacement")
             j <- i
             i <- NULL
             has.i <- FALSE
@@ -832,20 +861,26 @@ data.frame <-
         if(p == 1L) {
             N <- NROW(value)
             if(N > n)
-                stop(gettextf("replacement has %d rows, data has %d", N, n),
-                     domain = NA)
+                stop(sprintf(ngettext(N,
+                                      "replacement has %d row, data has %d",
+                                      "replacement has %d rows, data has %d"),
+                             N, n), domain = NA)
             if(N < n && N > 0L)
                 if(n %% N == 0L && length(dim(value)) <= 1L)
                     value <- rep(value, length.out = n)
                 else
-                    stop(gettextf("replacement has %d rows, data has %d", N, n),
-                         domain = NA)
+                    stop(sprintf(ngettext(N,
+                                          "replacement has %d row, data has %d",
+                                          "replacement has %d rows, data has %d"),
+                                 N, nrows), domain = NA)
             if (!is.null(names(value))) names(value) <- NULL
             value <- list(value)
          } else {
             if(m < n*p && (m == 0L || (n*p) %% m))
-                stop(gettextf("replacement has %d items, need %d", m, n*p),
-                     domain = NA)
+                stop(sprintf(ngettext(m,
+                                      "replacement has %d item, need %d",
+                                      "replacement has %d items, need %d"),
+                             m, n*p), domain = NA)
             value <- matrix(value, n, p)  ## will recycle
             value <- split(value, col(value))
         }
@@ -858,16 +893,23 @@ data.frame <-
         for(k in seq_along(lens)) {
             N <- lens[k]
             if(n != N && length(dim(value[[k]])) == 2L)
-                stop(gettextf("replacement element %d is a matrix/data frame of %d rows, need %d", k, N, n),
+                stop(sprintf(ngettext(N,
+                                      "replacement element %d is a matrix/data frame of %d row, need %d",
+                                      "replacement element %d is a matrix/data frame of %d rows, need %d"),
+                             k, N, n),
                      domain = NA)
             if(N > 0L && N < n && n %% N)
-                stop(gettextf("replacement element %d has %d rows, need %d",
-                              k, N, n), domain = NA)
+                stop(sprintf(ngettext(N,
+                                      "replacement element %d has %d row, need %d",
+                                      "replacement element %d has %d rows, need %d"),
+                             k, N, n), domain = NA)
             ## these fixing-ups will not work for matrices
             if(N > 0L && N < n) value[[k]] <- rep(value[[k]], length.out = n)
             if(N > n) {
-                warning(gettextf("replacement element %d has %d rows to replace %d rows",
-                                 k, N, n), domain = NA)
+                warning(sprintf(ngettext(N,
+                                         "replacement element %d has %d row to replace %d rows",
+                                         "replacement element %d has %d rows to replace %d rows"),
+                                k, N, n), domain = NA)
                 value[[k]] <- value[[k]][seq_len(n)]
             }
         }
@@ -877,18 +919,25 @@ data.frame <-
     if(nrowv < n && nrowv > 0L) {
 	if(n %% nrowv == 0L)
 	    value <- value[rep(seq_len(nrowv), length.out = n),,drop = FALSE]
-	else stop(gettextf("%d rows in value to replace %d rows", nrowv, n),
-                  domain = NA)
+	else
+            stop(sprintf(ngettext(nrowv,
+                                  "%d row in value to replace %d rows",
+                                  "%d rows in value to replace %d rows"),
+                         nrowv, n), domain = NA)
     }
     else if(nrowv > n)
-	warning(gettextf("replacement data has %d rows to replace %d rows",
-                         nrowv, n), domain = NA)
+        warning(sprintf(ngettext(nrowv,
+                                 "replacement data has %d row to replace %d rows",
+                                 "replacement data has %d rows to replace %d rows"),
+                        nrowv, n), domain = NA)
     ncolv <- dimv[2L]
     jvseq <- seq_len(p)
     if(ncolv < p) jvseq <- rep(seq_len(ncolv), length.out = p)
     else if(ncolv > p) {
-	warning(gettextf("provided %d variables to replace %d variables",
-                         ncolv, p), domain = NA)
+        warning(sprintf(ngettext(ncolv,
+                                 "provided %d variable to replace %d variables",
+                                 "provided %d variables to replace %d variables"),
+                        ncolv, p), domain = NA)
         new.cols <- new.cols[seq_len(p)]
     }
     if(length(new.cols)) {
@@ -964,14 +1013,18 @@ data.frame <-
 	if(!is.null(value)) {
             N <- NROW(value)
             if(N > nrows)
-                stop(gettextf("replacement has %d rows, data has %d", N, nrows),
-                     domain = NA)
+                stop(sprintf(ngettext(N,
+                                      "replacement has %d row, data has %d",
+                                      "replacement has %d rows, data has %d"),
+                             N, nrows), domain = NA)
             if(N < nrows)
                 if(N > 0L && (nrows %% N == 0L) && length(dim(value)) <= 1L)
                     value <- rep(value, length.out = nrows)
                 else
-                    stop(gettextf("replacement has %d rows, data has %d",
-                                  N, nrows), domain = NA)
+                    stop(sprintf(ngettext(N,
+                                          "replacement has %d row, data has %d",
+                                          "replacement has %d rows, data has %d"),
+                                 N, nrows), domain = NA)
 	}
 	x[[i]] <- value
         ## added in 1.8.0 -- make sure there is a name
@@ -1022,15 +1075,16 @@ data.frame <-
         if("" %in% j) stop("column name \"\" cannot match any column")
 	jseq <- match(j, names(x))
 	if(any(is.na(jseq)))
-	    stop("replacing element in non-existent column: ", j[is.na(jseq)])
+            stop(gettextf("replacing element in non-existent column: %s",
+                          j[is.na(jseq)]), domain = NA)
     }
     else if(is.logical(j) || min(j) < 0L)
 	jseq <- seq_along(x)[j]
     else {
 	jseq <- j
 	if(max(jseq) > nvars)
-	    stop("replacing element in non-existent column: ",
-                 jseq[jseq>nvars])
+            stop(gettextf("replacing element in non-existent column: %s",
+                          jseq[jseq > nvars]), domain = NA)
     }
     if(length(iseq) > 1L || length(jseq) > 1L)
 	stop("only a single element should be replaced")
@@ -1052,14 +1106,18 @@ data.frame <-
     if(!is.null(value)) {
         N <- NROW(value)
         if(N > nrows)
-            stop(gettextf("replacement has %d rows, data has %d", N, nrows),
-                 domain = NA)
+            stop(sprintf(ngettext(N,
+                                  "replacement has %d row, data has %d",
+                                  "replacement has %d rows, data has %d"),
+                         N, nrows), domain = NA)
         if (N < nrows)
             if (N > 0L && (nrows %% N == 0L) && length(dim(value)) <= 1L)
                 value <- rep(value, length.out = nrows)
             else
-                stop(gettextf("replacement has %d rows, data has %d", N, nrows),
-                     domain = NA)
+                stop(sprintf(ngettext(N,
+                                      "replacement has %d row, data has %d",
+                                      "replacement has %d rows, data has %d"),
+                             N, nrows), domain = NA)
         if(is.atomic(value) && !is.null(names(value))) names(value) <- NULL
     }
     x[[name]] <- value
@@ -1316,7 +1374,7 @@ print.data.frame <-
 	cat(gettext("<0 rows> (or 0-length row.names)\n"))
     } else {
 	## format.<*>() : avoiding picking up e.g. format.AsIs
-	m <- as.matrix(format.data.frame(x, digits=digits, na.encode=FALSE))
+	m <- as.matrix(format.data.frame(x, digits = digits, na.encode = FALSE))
 	if(!isTRUE(row.names))
 	    dimnames(m)[[1L]] <- if(identical(row.names,FALSE))
 		rep.int("", n) else row.names
@@ -1464,7 +1522,7 @@ Ops.data.frame <- function(e1, e2 = NULL)
     }
     for(j in seq_along(cn)) {
 	left <- if(!lscalar) e1[[j]] else e1
-	right <-if(!rscalar) e2[[j]] else e2
+	right <- if(!rscalar) e2[[j]] else e2
 	value[[j]] <- eval(f)
     }
     if(.Generic %in% c("+","-","*","/","%%","%/%") ) {

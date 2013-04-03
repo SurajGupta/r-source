@@ -1,6 +1,6 @@
 % File src/library/base/man/Memory-limits.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Memory-limits}
@@ -19,8 +19,8 @@
   32- or 64-bit builds of \R.  The memory limits depends mainly on the
   build, but for a 32-bit build of \R on Windows they also depend on the
   underlying OS version.
-  
-  \R holds all objects in memory, and there are limits based on the
+
+  \R holds all objects in virtual memory, and there are limits based on the
   amount of memory that can be used by all objects:
   \itemize{
     \item There may be limits on the size of the heap and the number of
@@ -39,14 +39,12 @@
   there may well be enough free memory available, but not a large enough
   contiguous block of address space into which to map it.
 
-  There are also limits on individual objects.  On all builds of \R,
-  the maximum length (number of elements) of a vector is
-  \eqn{2^{31} - 1 \approx 2\thinspace 10^9}{2^31 - 1 ~ 2*10^9}, as
-  lengths are stored as signed integers.  In addition, the storage space
+  There are also limits on individual objects. The storage space
   cannot exceed the address limit, and if you try to exceed that limit,
   the error message begins \code{cannot allocate vector of length}.
   The number of bytes in a character string is limited to
-  \eqn{2^{31} - 1 \approx 2\thinspace 10^9}{2^31 - 1 ~ 2*10^9}.
+  \eqn{2^{31} - 1 \approx 2\thinspace 10^9}{2^31 - 1 ~ 2*10^9},
+  which is also the limit on each dimension of an array.
 }
 \section{Unix}{
   The address-space limit is system-specific: 32-bit OSes
@@ -81,7 +79,7 @@ limit vmemoryuse 4096m
   It is not normally possible to allocate as much as 2Gb to a single
   vector in a 32-bit build of \R even on 64-bit Windows because of
   preallocations by Windows in the middle of the address space.
- 
+
   Under Windows, \R imposes limits on the total memory allocation
   available to a single session as the OS provides no way to do so: see
   \code{\link{memory.size}} and \code{\link{memory.limit}}.

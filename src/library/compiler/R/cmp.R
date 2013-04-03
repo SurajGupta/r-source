@@ -68,17 +68,6 @@ is.ddsym <- function(name) {
     length(grep("^\\.\\.[0-9]+$", as.character(name))) != 0
 }
 
-## We need our own version of base::asS4 that differs only from the one
-## in base by using methods:::as instead of methods::as.  This is needed
-## to JIT compile methods as the lazy loading mechanism used there does
-## it's thing during the first namespace load at a point where exports
-## are not yet set up.
-asS4 <- function(object, flag = TRUE, complete = TRUE) {
-    flag <- methods:::as(flag, "logical")
-    if(length(flag) != 1L || is.na(flag))
-        stop("expected a single logical value for the S4 state flag")
-    .Call("R_setS4Object", object, flag, complete, PACKAGE = "base")
-}
 
 missingArgs <- function(args) {
     val <- logical(length(args))
@@ -2154,8 +2143,6 @@ setInlineHandler("is.null", function(e, cb, cntxt)
     cmpIs(ISNULL.OP, e, cb, cntxt))
 setInlineHandler("is.object", function(e, cb, cntxt)
     cmpIs(ISOBJECT.OP, e, cb, cntxt))
-setInlineHandler("is.real", function(e, cb, cntxt)
-    cmpIs(ISDOUBLE.OP, e, cb, cntxt))
 setInlineHandler("is.symbol", function(e, cb, cntxt)
     cmpIs(ISSYMBOL.OP, e, cb, cntxt))
 
@@ -2544,7 +2531,7 @@ notifyBadAssignFun <- function(fun, cntxt) {
 
 notifyMultipleSwitchDefaults <- function(ndflt, cntxt)
     if (! suppressAll(cntxt))
-        cntxt$warn(gettext("more than one default provided in switch call"),
+        cntxt$warn(gettext("more than one default provided in switch() call"),
                    cntxt)
 
 

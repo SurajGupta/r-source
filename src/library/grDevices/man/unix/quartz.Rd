@@ -1,11 +1,12 @@
 % File src/library/grDevices/man/unix/quartz.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{quartz}
 \alias{quartz}
 \alias{quartz.options}
+\alias{quartz.save}
 
 \title{MacOS X Quartz Device}
 \description{
@@ -14,10 +15,12 @@
   graphics file formats.
 }
 \usage{
-quartz(title, width, height, pointsize, family, fontsmooth,
-       antialias, type, file = NULL, bg, canvas, dpi)
+quartz(title, width, height, pointsize, family, antialias, type,
+      file = NULL, bg, canvas, dpi)
 
 quartz.options(\dots, reset = FALSE)
+
+quartz.save(file, type = "png", device = dev.cur(), dpi = 100, ...)
 }
 \arguments{
   \item{title}{title for the Quartz window (applies to on-screen output
@@ -29,8 +32,6 @@ quartz.options(\dots, reset = FALSE)
   \item{pointsize}{the default pointsize to be used.  Default \code{12}.}
   \item{family}{this is the family name of the font
     that will be used by the device.  Default \code{"Helvetica"}.}
-  \item{fontsmooth}{logical specifying if fonts should be
-    smoothed. Default \code{TRUE}.  Currently unused.}
   \item{antialias}{whether to use antialiasing.  Default \code{TRUE}.}
   \item{type}{the type of output to use.  See \sQuote{Details} for
     more information.  Default \code{"native"}.}
@@ -48,6 +49,7 @@ quartz.options(\dots, reset = FALSE)
     the main screen, and to 72 dpi otherwise.  See \sQuote{Details}.}
   \item{\dots}{Any of the arguments to \code{quartz} except \code{file}.}
   \item{reset}{logical: should the defaults be reset to their defaults?}
+  \item{device}{device number to copy from.}
 }
 \details{
   The defaults for all but one of the arguments of \code{quartz} are set
@@ -67,9 +69,9 @@ quartz.options(\dots, reset = FALSE)
   bitmap), \code{"sgi"} and \code{"pict"}.  (The availability of some
   formats is OS-version-dependent.)
 
-  To reproduce the default of older Quartz devices on-screen, set
-  \code{dpi = 72} (for a permanent solution set
-  \code{quartz.options(dpi = 72)}).
+%   To reproduce the default of older Quartz devices on-screen, set
+%   \code{dpi = 72} (for a permanent solution set
+%   \code{quartz.options(dpi = 72)}).
 
   The \code{file} argument is used for off-screen drawing.  The actual
   file is only created when the device is closed (e.g. using
@@ -103,15 +105,19 @@ quartz.options(\dots, reset = FALSE)
   character string with an optional integer printf-style format that
   will be substituted by the device number.  It is also optionally used
   (without a format) to give a title to a PDF file.
-    
+
   Calling \code{quartz()} sets \code{\link{.Device}} to \code{"quartz"}
   for on-screen devices and to \code{"quartz_off_screen"} otherwise.
-  
+
   The font family chosen needs to cover the characters to be used:
   characters not in the font are rendered as empty oblongs.  For
   non-Western-European languages something other than the default of
   \code{"Helvetica"} is likely to be needed---one choice for Chinese is
   \code{"MingLiU"}.
+
+  \code{quartz.save} is a modified version of \code{\link{dev.copy2pdf}}
+  to copy the plot from the current screen device to a \code{quartz}
+  device, by default to a PNG file.
 }
 \section{Conventions}{
   This section describes the implementation of the conventions for

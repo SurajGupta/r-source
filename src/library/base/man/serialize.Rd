@@ -37,7 +37,7 @@ unserialize(connection, refhook = NULL)
   connection.  If \code{connection} is \code{NULL} then \code{object} is
   serialized to a raw vector, which is returned as the result of
   \code{serialize}.
-  
+
   Sharing of reference objects is preserved within the object but not
   across separate calls to \code{serialize}.
 
@@ -57,7 +57,7 @@ unserialize(connection, refhook = NULL)
   to \code{TRUE}: only ASCII representations can be written to text-mode
   connections and attempting to use \code{ascii = FALSE} will throw an
   error.
-  
+
   The format consists of a single line followed by the data: the first
   line contains a single character: \code{X} for binary serialization
   and \code{A} for ASCII serialization, followed by a new line.  (The
@@ -76,9 +76,9 @@ unserialize(connection, refhook = NULL)
   versions of \R, so this interface should not be used for long-term
   storage of \R objects.
 
-  A raw vector is limited to \eqn{2^{31} - 1}{2^31 - 1} bytes, but \R
-  objects can exceed this and their serializations will normally be
-  larger than the objects.
+  On 32-bit platforms a raw vector is limited to \eqn{2^{31} - 1}{2^31 -
+  1} bytes, but \R objects can exceed this and their serializations will
+  normally be larger than the objects.
 }
 \value{
   For \code{serialize}, \code{NULL} unless \code{connection = NULL}, when

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2009-11 The R Core Team.
+ *  Copyright (C) 2009-12 The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -168,9 +168,15 @@ static struct sockaddr *build_sin(struct sockaddr_in *sa, const char *ip, int po
 
 struct buffer {
     struct buffer *next, *prev;
-    int size, length;
+    size_t size, length;
     char data[1];
 };
+
+/* we have to protect re-entrance and not continue processing if there is
+   a worker inside R already. If we did not then another client connection
+   would trigger handler and pile up eval on top of the stack, leading to
+   exhaustion very quickly and a big mess */
+static int in_process;
 
 /* --- connection/worker structure holding all data for an active connection --- */
 typedef struct httpd_conn {
@@ -184,7 +190,7 @@ typedef struct httpd_conn {
     char line_buf[LINE_BUF_SIZE];  /* line buffer (used for request and headers) */
     char *url, *body;              /* URL and request body */
     char *content_type;            /* content type (if set) */
-    unsigned int line_pos, body_pos; /* positions in the buffers */
+    size_t line_pos, body_pos; /* positions in the buffers */
     long content_length;           /* desired content length */
     char part, method, attr;       /* request part, method and connection attributes */
     struct buffer *headers;        /* buffer holding header lines */
@@ -351,14 +357,14 @@ extern int R_ignore_SIGPIPE; /* defined in src/main/main.c on unix */
 static int R_ignore_SIGPIPE; /* for simplicity of the code below */
 #endif
 
-static int send_response(SOCKET s, const char *buf, unsigned int len)
+static int send_response(SOCKET s, const char *buf, size_t len)
 {
     unsigned int i = 0;
     /* we have to tell R to ignore SIGPIPE otherwise it can raise an error
        and get us into deep trouble */
     R_ignore_SIGPIPE = 1;
     while (i < len) {
-	int n = send(s, buf + i, len - i, 0);
+	ssize_t n = send(s, buf + i, len - i, 0);
 	if (n < 1) {
 	    R_ignore_SIGPIPE = 0;
 	    return -1;
@@ -373,7 +379,8 @@ static int send_response(SOCKET s, const char *buf, unsigned int len)
 static int send_http_response(httpd_conn_t *c, const char *text) {
     char buf[96];
     const char *s = HTTP_SIG(c);
-    int l = strlen(text), res;
+    size_t l = strlen(text);
+    ssize_t res;
     /* reduce the number of packets by sending the payload en-block from buf */
     if (l < sizeof(buf) - 10) {
 	strcpy(buf, s);
@@ -546,8 +553,9 @@ static SEXP handler_for_path(const char *path) {
 }
 
 /* process a request by calling the httpd() function in R */
-static void process_request(httpd_conn_t *c)
+static void process_request_(void *ptr)
 {
+    httpd_conn_t *c = (httpd_conn_t*) ptr;
     const char *ct = "text/html";
     char *query = 0, *s;
     SEXP sHeaders = R_NilValue;
@@ -667,7 +675,7 @@ static void process_request(httpd_conn_t *c)
 			fbuf = (char*) malloc(32768);
 			if (fbuf) {
 			    while (fsz > 0 && !feof(f)) {
-				int rd = (fsz > 32768) ? 32768 : fsz;
+				size_t rd = (fsz > 32768) ? 32768 : fsz;
 				if (fread(fbuf, 1, rd, f) != rd) {
 				    free(fbuf);
 				    UNPROTECT(7);
@@ -730,6 +738,16 @@ static void process_request(httpd_conn_t *c)
     c->attr |= CONNECTION_CLOSE; /* force close */
 }
 
+/* wrap the actual call with ToplevelExec since we need to have a guaranteed
+   return so we can track the presence of a worker code inside R to prevent
+   re-entrance from other clients */
+static void process_request(httpd_conn_t *c)
+{
+    in_process = 1;
+    R_ToplevelExec(process_request_, c);
+    in_process = 0;
+}
+
 #ifdef WIN32
 #undef process_request
 #endif
@@ -738,10 +756,11 @@ static void process_request(httpd_conn_t *c)
  * connection socket and process it */
 static void worker_input_handler(void *data) {
     httpd_conn_t *c = (httpd_conn_t*) data;
-    int n;
 
     DBG(printf("worker_input_handler, data=%p\n", data));
     if (!c) return;
+
+    if (in_process) return; /* we don't allow recursive entrance */
 
     DBG(printf("input handler for worker %p (sock=%d, part=%d, method=%d, line_pos=%d)\n", (void*) c, (int)c->sock, (int)c->part, (int)c->method, (int)c->line_pos));
 
@@ -757,7 +776,8 @@ static void worker_input_handler(void *data) {
      * into one packet. */
     if (c->part < PART_BODY) {
 	char *s = c->line_buf;
-	n = recv(c->sock, c->line_buf + c->line_pos, LINE_BUF_SIZE - c->line_pos - 1, 0);
+	ssize_t n = recv(c->sock, c->line_buf + c->line_pos, 
+			 LINE_BUF_SIZE - c->line_pos - 1, 0);
 	DBG(printf("[recv n=%d, line_pos=%d, part=%d]\n", n, c->line_pos, (int)c->part));
 	if (n < 0) { /* error, scrape this worker */
 	    remove_worker(c);
@@ -851,7 +871,7 @@ static void worker_input_handler(void *data) {
 		    DBG(printf("complete line: {%s}\n", bol));
 		    if (c->part == PART_REQUEST) {
 			/* --- process request line --- */
-			unsigned int rll = strlen(bol); /* request line length */
+			size_t rll = strlen(bol); /* request line length */
 			char *url = bol + 5;
 			if (rll < 14 || strncmp(bol + rll - 9, " HTTP/1.", 8)) { /* each request must have at least 14 characters [GET / HTTP/1.0] and have HTTP/1.x */
 			    send_response(c->sock, "HTTP/1.0 400 Bad Request\r\n\r\n", 28);
@@ -877,10 +897,10 @@ static void worker_input_handler(void *data) {
 			if (!c->headers)
 			    c->headers = alloc_buffer(1024, NULL);
 			if (c->headers) { /* record the header line in the buffer */
-			    int l = strlen(bol);
+			    size_t l = strlen(bol);
 			    if (l) { /* this should be really always true */
 				if (c->headers->length + l + 1 > c->headers->size) { /* not enough space? */
-				    int fits = c->headers->size - c->headers->length;
+				    size_t fits = c->headers->size - c->headers->length;
 				    if (fits) memcpy(c->headers->data + c->headers->length, bol, fits);
 				    if (alloc_buffer(2048, c->headers)) {
 					c->headers = c->headers->next;
@@ -939,7 +959,8 @@ static void worker_input_handler(void *data) {
     if (c->part == PART_BODY && c->body) { /* BODY  - this branch always returns */
 	if (c->body_pos < c->content_length) { /* need to receive more ? */
 	    DBG(printf("BODY: body_pos=%d, content_length=%ld\n", c->body_pos, c->content_length));
-	    n = recv(c->sock, c->body + c->body_pos, c->content_length - c->body_pos, 0);
+	    ssize_t n = recv(c->sock, c->body + c->body_pos, 
+			    c->content_length - c->body_pos, 0);
 	    DBG(printf("      [recv n=%d - had %u of %lu]\n", n, c->body_pos, c->content_length));
 	    c->line_pos = 0;
 	    if (n < 0) { /* error, scrap this worker */
@@ -1009,7 +1030,8 @@ static void worker_input_handler(void *data) {
 		return;
 	    }
 	}
-	n = recv(c->sock, c->line_buf + c->line_pos, LINE_BUF_SIZE - c->line_pos - 1, 0);
+	ssize_t n = recv(c->sock, c->line_buf + c->line_pos, 
+			 LINE_BUF_SIZE - c->line_pos - 1, 0);
 	if (n < 0) { /* error, scrap this worker */
 	    remove_worker(c);
 	    return;

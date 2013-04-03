@@ -15,9 +15,7 @@
 get(x, pos = -1, envir = as.environment(pos), mode = "any",
     inherits = TRUE)
 
-mget(x, envir, mode = "any",
-     ifnotfound = list(function(x)
-         stop(paste0("value for '", x, "' not found"), call. = FALSE)),
+mget(x, envir = as.environment(-1), mode = "any", ifnotfound,
      inherits = FALSE)
 }
 \arguments{
@@ -25,11 +23,9 @@ mget(x, envir, mode = "any",
     string).\cr
     For \code{mget}, a character vector of object names.
   }
-  \item{pos}{where to look for the object (see \sQuote{Details}); if
-    omitted (for \code{get}), the function will search as if the name of
-    the object appeared unquoted in an expression.}
-  \item{envir}{an alternative way to specify an environment to look in;
-    see the \sQuote{Details} section.}
+  \item{pos, envir}{where to look for the object (see \sQuote{Details}); if
+    omitted search as if the name of the object appeared unquoted in an
+    expression.}
   \item{mode}{the mode or type of object sought: see the
     \sQuote{Details} section.}
   \item{inherits}{should the enclosing frames of the environment be

@@ -28,7 +28,6 @@
 #include <R.h>
 #include <Rmath.h>
 #include <float.h>
-#include "mva.h"
 #include "stats.h"
 #ifdef HAVE_OPENMP
 # include <R_ext/MathThreads.h>
@@ -275,16 +274,19 @@ SEXP Cdist(SEXP x, SEXP smethod, SEXP attrs, SEXP p)
 {
     SEXP ans;
     int nr = nrows(x), nc = ncols(x), method = asInteger(smethod);
-    int N, diag = 0;
+    int diag = 0;
+    R_xlen_t N;
     double rp = asReal(p);
-    N = (double)nr * (nr-1)/2; /* avoid overflow for N ~ 50,000 */
+    N = (R_xlen_t)nr * (nr-1)/2; /* avoid int overflow for N ~ 50,000 */
     PROTECT(ans = allocVector(REALSXP, N));
+    if(TYPEOF(x) != REALSXP) x = coerceVector(x, REALSXP);
+    PROTECT(x);
     R_distance(REAL(x), &nr, &nc, REAL(ans), &diag, &method, &rp);
     /* tack on attributes */
     SEXP names = getAttrib(attrs, R_NamesSymbol);
     for (int i = 0; i < LENGTH(attrs); i++)
 	setAttrib(ans, install(translateChar(STRING_ELT(names, i))),
 		  VECTOR_ELT(attrs, i));
-    UNPROTECT(1);
+    UNPROTECT(2);
     return ans;
 }

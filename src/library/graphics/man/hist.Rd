@@ -27,12 +27,15 @@ hist(x, \dots)
   \item{breaks}{one of:
     \itemize{
       \item a vector giving the breakpoints between histogram cells,
+      \item a function to compute the vector of breakpoints,
       \item a single number giving the number of cells for the histogram,
       \item a character string naming an algorithm to compute the
       number of cells (see \sQuote{Details}),
       \item a function to compute the number of cells.
     }
-    In the last three cases the number is a suggestion only.
+    In the last three cases the number is a suggestion only.  If
+     \code{breaks} is a function, the \code{x} vector is supplied to it
+     as the only argument. 
   }
   \item{freq}{logical; if \code{TRUE}, the histogram graphic is a
     representation of frequencies, the \code{counts} component of
@@ -73,8 +76,8 @@ hist(x, \dots)
     of bars, if not \code{FALSE}; see \code{\link{plot.histogram}}.}
   \item{nclass}{numeric (integer).  For S(-PLUS) compatibility only,
     \code{nclass} is equivalent to \code{breaks} for a scalar or
-    character argument.}  
-  \item{warn.unused}{logical.  If \code{plot = FALSE} and 
+    character argument.}
+  \item{warn.unused}{logical.  If \code{plot = FALSE} and
     \code{warn.unused = TRUE}, a warning will be issued when graphical
     parameters are passed to \code{hist.default()}.}
   \item{\dots}{further arguments and \link{graphical parameters} passed to
@@ -119,7 +122,8 @@ hist(x, \dots)
   \code{\link{nclass.scott}} and \code{\link{nclass.FD}}).
   Case is ignored and partial matching is used.
   Alternatively, a function can be supplied which
-  will compute the intended number of breaks as a function of \code{x}.
+  will compute the intended number of breaks or the actual breakpoints
+  as a function of \code{x}.
 }
 \value{
   an object of class \code{"histogram"} which is a list with components:
@@ -132,12 +136,13 @@ hist(x, \dots)
     relative frequencies \code{counts/n} and in general satisfy
     \eqn{\sum_i \hat f(x_i) (b_{i+1}-b_i) = 1}{sum[i; f^(x[i])
       (b[i+1]-b[i])] = 1}, where \eqn{b_i}{b[i]} = \code{breaks[i]}.}
-  \item{intensities}{same as \code{density}.  Deprecated, but retained
-    for compatibility until \R 3.0.0.}
   \item{mids}{the \eqn{n} cell midpoints.}
   \item{xname}{a character string with the actual \code{x} argument name.}
   \item{equidist}{logical, indicating if the distances between
     \code{breaks} are all the same.}
+
+  Prior to \R 3.0.0 there was a component \code{intensities}, the same
+  as \code{density}, for long-term back compatibility.
 }
 
 \references{

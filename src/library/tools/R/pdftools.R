@@ -50,11 +50,10 @@ pdf_bytes_digits <-
     charToRaw("0123456789")
 
 pdf_bytes_in_keywords <-
-    charToRaw(paste("*'\"",
+    charToRaw(paste0("*'\"",
                     "0123456789",
                     paste(LETTERS, collapse = ""),
-                    paste(letters, collapse = ""),
-                    sep = ""))
+                    paste(letters, collapse = "")))
 
 pdf_bytes_in_numerics_not_digits <-
     charToRaw("+-.")
@@ -73,7 +72,7 @@ do.call(rbind,
              "B5" =        c( 516L,  729L),
              "letter" =    c( 612L,  792L),
              "tabloid" =   c( 792L, 1224L),
-             "ledger"=     c(1224L,  792L),
+             "ledger" =    c(1224L,  792L),
              "legal" =     c( 612L, 1008L),
              "statement" = c( 396L,  612L),
              "executive" = c( 540L,  720L),
@@ -151,7 +150,7 @@ function(file, cache = TRUE)
     startxref <- suppressWarnings(as.integer(rawToChar(bytes)))
     bytes <- read_prev_bytes_after_bytes(con, pdf_bytes_whitespaces)
     if(substring(rawToChar(bytes), 1L, 9L) != "startxref")
-        stop("cannot find startxref")
+        stop("cannot find 'startxref' keyword")
 
     xref_tabs <-
         matrix(integer(), nrow = 0L, ncol = 4L,
@@ -612,13 +611,6 @@ function(x, ...)
              ...)
 }
 
-print.pdf_info <-
-function(x, ...)
-{
-    writeLines(format(x, ...))
-    invisible(x)
-}
-
 ## * Object readers
 
 pdf_read_object <-
@@ -853,13 +845,6 @@ function(x, ...)
     sprintf("PDF_String(<%s>)", paste(as.character(x), collapse = ""))
 }
 
-print.PDF_String <-
-function(x, ...)
-{
-    writeLines(format(x))
-    invisible(x)
-}
-
 ## PDF name objects.
 
 pdf_read_object_name <-
@@ -939,13 +924,6 @@ format.PDF_Array <-
 function(x, ...)
 {
     sprintf("PDF_Array(%d)", length(x))
-}
-
-print.PDF_Array <-
-function(x, ...)
-{
-    writeLines(format(x))
-    invisible(x)
 }
 
 pdf_read_object_dictionary_or_stream <-
@@ -1028,14 +1006,6 @@ function(x, ...)
             paste(names(x), collapse = ","))
 }
 
-print.PDF_Dictionary <-
-print.PDF_Stream <-
-function(x, ...)
-{
-    writeLines(format(x))
-    invisible(x)
-}
-
 ## Experimental summary methods.
 ## Cannot easily make this the print method, because PDF dictionary
 ## and stream objects can be recursive ...
@@ -1087,13 +1057,6 @@ format.PDF_Indirect_Reference <-
 function(x, ...)
 {
     sprintf("PDF_Indirect_Reference(%d,%d)", x["num"], x["gen"])
-}
-
-print.PDF_Indirect_Reference <-
-function(x, ...)
-{
-    writeLines(format(x))
-    invisible(x)
 }
 
 pdf_dereference_maybe <-
@@ -1600,7 +1563,8 @@ function(x, params)
     if(is.null(predictor) || (predictor == 1L))
         return(m)
     if((predictor < 10L) && (predictor > 15L)) {
-        stop(gettextf("unsupported flatedecode predictor %d",
+        stop(gettextf("unsupported %s predictor %d",
+                      "flatedecode",
                       predictor),
              domain = NA)
     }

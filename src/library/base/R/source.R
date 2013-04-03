@@ -98,22 +98,19 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
     	lines <- readLines(file, warn = FALSE)
     	if (isTRUE(keep.source))
     	    srcfile <- srcfilecopy(deparse(substitute(file)), lines)
+    	else
+    	    srcfile <- deparse(substitute(file))
     }
 
-    ## parse() uses this option in the C code.
-    if (!isTRUE(keep.source)) {
-        op <- options(keep.source = FALSE)
-        on.exit(options(op), add = TRUE)
-    } else op <- NULL
     exprs <- if (!from_file) {
         if (length(lines))  # there is a C-level test for this
             .Internal(parse(stdin(), n = -1, lines, "?", srcfile, encoding))
         else expression()
     } else
     	.Internal(parse(file, n = -1, NULL, "?", srcfile, encoding))
+
     on.exit()
     if (from_file) close(file)
-    if (!is.null(op)) options(op)
 
     Ne <- length(exprs)
     if (verbose)
@@ -141,8 +138,7 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	## odd-number-of-str.del needed, when truncating below
 	sd <- "\""
 	nos <- "[^\"]*"
-	oddsd <- paste("^", nos, sd, "(", nos, sd, nos, sd, ")*",
-		       nos, "$", sep = "")
+	oddsd <- paste0("^", nos, sd, "(", nos, sd, nos, sd, ")*", nos, "$")
         ## A helper function for echoing source.  This is simpler than the
         ## same-named one in Sweave
 	trySrcLines <- function(srcfile, showfrom, showto) {
@@ -162,29 +158,24 @@ function(file, local = FALSE, echo = verbose, print.eval = echo,
 	    ei <- exprs[i]
 	}
 	if (echo) {
-	    srcref <- NULL
 	    nd <- 0
-	    if (tail)
-	    	srcref <- attr(exprs, "wholeSrcref")
-	    else if (i <= length(srcrefs))
-	    	srcref <- srcrefs[[i]]
+	    srcref <- if(tail) attr(exprs, "wholeSrcref") else
+		if(i <= length(srcrefs)) srcrefs[[i]] # else NULL
  	    if (!is.null(srcref)) {
 	    	if (i == 1) lastshown <- min(skip.echo, srcref[3L]-1)
 	    	if (lastshown < srcref[3L]) {
 	    	    srcfile <- attr(srcref, "srcfile")
 	    	    dep <- trySrcLines(srcfile, lastshown+1, srcref[3L])
 	    	    if (length(dep)) {
-			if (tail)
-			    leading <- length(dep)
-			else
-			    leading <- srcref[1L]-lastshown
+			leading <- if(tail) length(dep) else srcref[1L]-lastshown
 			lastshown <- srcref[3L]
 			while (length(dep) && length(grep("^[[:blank:]]*$", dep[1L]))) {
 			    dep <- dep[-1L]
 			    leading <- leading - 1L
 			}
-			dep <- paste(rep.int(c(prompt.echo, continue.echo), c(leading, length(dep)-leading)),
-				    dep, sep="", collapse="\n")
+			dep <- paste0(rep.int(c(prompt.echo, continue.echo),
+					      c(leading, length(dep)-leading)),
+				      dep, collapse="\n")
 			nd <- nchar(dep, "c")
 		    } else
 		    	srcref <- NULL  # Give up and deparse
@@ -252,9 +243,9 @@ function(file, envir = baseenv(), chdir = FALSE,
     if (keep.source) {
     	lines <- readLines(file, warn = FALSE)
     	srcfile <- srcfilecopy(file, lines, file.info(file)[1,"mtime"], isFile = TRUE)
-    	exprs <- parse(text = lines, srcfile = srcfile)
+    	exprs <- parse(text = lines, srcfile = srcfile, keep.source = TRUE)
     } else
-    	exprs <- parse(n = -1, file = file)
+    	exprs <- parse(n = -1, file = file, srcfile = NULL, keep.source = FALSE)
     if (length(exprs) == 0L)
 	return(invisible())
     if (chdir && (path <- dirname(file)) != ".") {

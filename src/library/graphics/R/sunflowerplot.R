@@ -19,7 +19,7 @@
 sunflowerplot <- function(x, ...) UseMethod("sunflowerplot")
 
 sunflowerplot.default <-
-    function(x, y = NULL, number, log = "", digits = 6,
+    function(x, y = NULL, number, log = "", digits = 6L,
              xlab = NULL, ylab = NULL, xlim = NULL, ylim = NULL,
              add = FALSE, rotate = FALSE,
              pch = 16, cex = 0.8, cex.fact =  1.5, col = par("col"), bg = NA,
@@ -60,13 +60,13 @@ sunflowerplot.default <-
     dev.hold(); on.exit(dev.flush())
     if(!add)
         plot(x, y, xlab = xlab, ylab = ylab,
-             xlim=xlim, ylim=ylim, log=log, type = "n", ...)
+             xlim = xlim, ylim = ylim, log = log, type = "n", ...)
 
     n.is1 <- number == 1
     if(any(n.is1))
-        points(x[ n.is1], y[ n.is1], pch=pch, col=col, bg=bg, cex= cex)
+        points(x[ n.is1], y[ n.is1], pch = pch, col = col, bg = bg, cex = cex)
     if(any(!n.is1)) {
-        points(x[!n.is1], y[!n.is1], pch=pch, col=col, bg=bg, cex= cex/cex.fact)
+        points(x[!n.is1], y[!n.is1], pch = pch, col = col, bg = bg, cex = cex/cex.fact)
         i.multi <- (1L:n)[number > 1]
         ppin <- par("pin")
         pusr <- par("usr")

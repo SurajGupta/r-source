@@ -1,6 +1,6 @@
 % File src/library/base/man/numeric.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{numeric}
@@ -33,8 +33,7 @@ is.numeric(x)
   element equal to \code{0}.
 
   \code{as.numeric} is a generic function, but S3 methods must be
-  written for \code{\link{as.double}}.  It is identical to
-  \code{as.double} (and \code{as.real}).
+  written for \code{\link{as.double}}.  It is identical to \code{as.double}.
 
   \code{is.numeric} is an \link{internal generic} \code{primitive}
   function: you can write methods to handle specific classes of objects,
@@ -50,7 +49,7 @@ is.numeric(x)
 }
 \value{
   for \code{numeric} and \code{as.numeric} see \code{\link{double}}.
-  
+
   The default method for \code{is.numeric} returns \code{TRUE}
   if its argument is of \link{mode} \code{"numeric"}
   (\link{type} \code{"double"} or type \code{"integer"}) and not a
@@ -62,20 +61,18 @@ is.numeric(x)
   \code{as.numeric} and \code{is.numeric} are internally S4 generic and
   so methods can be set for them \emph{via} \code{setMethod}.
 
-  To ensure that \code{as.numeric}, \code{as.double} and \code{as.real}
+  To ensure that \code{as.numeric} and \code{as.double}
   remain identical, S4 methods can only be set for \code{as.numeric}.
 }
 %% keep next the same in double.Rd & numeric.Rd
 \section{Note on names}{
-  It is a historical anomaly that \R has three names for its
-  floating-point vectors, \code{\link{double}}, \code{\link{numeric}}
-  and \code{\link{real}}.
+  It is a historical anomaly that \R has two names for its
+  floating-point vectors, \code{\link{double}} and \code{\link{numeric}}
+  (and formerly had \code{real}).
 
   \code{double} is the name of the \link{type}.
   \code{numeric} is the name of the \link{mode} and also of the implicit
   \link{class}.  As an S4 formal class, use \code{"numeric"}.
-
-  \code{real} is deprecated and should not be used in new code.
 
   The potential confusion is that \R has used \emph{\link{mode}}
   \code{"numeric"} to mean \sQuote{double or integer}, which conflicts

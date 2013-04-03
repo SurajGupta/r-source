@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2011   The R Core Team.
+ *  Copyright (C) 1998-2012   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #endif
 
 #include "Defn.h"
+#include <Internal.h>
 #include "Print.h"
 
 /* The global var. R_Expressions is in Defn.h */
@@ -140,7 +141,19 @@ int GetOptionDigits(void)
     return d;
 }
 
+attribute_hidden
+int GetOptionCutoff(void)
+{
+    int w;
+    w = asInteger(GetOption1(install("deparse.cutoff")));
+    if (w == NA_INTEGER || w <= 0) {
+	warning(_("invalid 'deparse.cutoff', used 60"));
+	w = 60;
+    }
+    return w;
+}
 
+attribute_hidden
 Rboolean Rf_GetOptionDeviceAsk(void)
 {
     int ask;
@@ -225,9 +238,9 @@ void attribute_hidden InitOptions(void)
     char *p;
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
-    PROTECT(v = val = allocList(15));
+    PROTECT(v = val = allocList(17));
 #else
-    PROTECT(v = val = allocList(14));
+    PROTECT(v = val = allocList(16));
 #endif
 
     SET_TAG(v, install("prompt"));
@@ -244,6 +257,10 @@ void attribute_hidden InitOptions(void)
 
     SET_TAG(v, install("width"));
     SETCAR(v, ScalarInteger(80));
+    v = CDR(v);
+
+    SET_TAG(v, install("deparse.cutoff"));
+    SETCAR(v, ScalarInteger(60));
     v = CDR(v);
 
     SET_TAG(v, install("digits"));
@@ -287,6 +304,13 @@ void attribute_hidden InitOptions(void)
 
     SET_TAG(v, install("browserNLdisabled"));
     SETCAR(v, ScalarLogical(FALSE));
+    v = CDR(v);
+
+    p = getenv("R_C_BOUNDS_CHECK");
+    R_CBoundsCheck = (p && (strcmp(p, "yes") == 0)) ? 1 : 0;
+
+    SET_TAG(v, install("CBoundsCheck"));
+    SETCAR(v, ScalarLogical(R_CBoundsCheck));
     v = CDR(v);
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
@@ -397,6 +421,10 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (k < R_MIN_WIDTH_OPT || k > R_MAX_WIDTH_OPT)
 		    error(_("invalid 'width' parameter, allowed %d...%d"),
 			  R_MIN_WIDTH_OPT, R_MAX_WIDTH_OPT);
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
+	    }
+	    else if (streql(CHAR(namei), "deparse.cutoff")) {
+		k = asInteger(argi);
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarInteger(k)));
 	    }
 	    else if (streql(CHAR(namei), "digits")) {
@@ -582,6 +610,13 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		if (k == NA_LOGICAL)
 		    error(_("invalid value for '%s'"), CHAR(namei));
 		R_DisableNLinBrowser = k;
+		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
+	    }
+	    else if (streql(CHAR(namei), "CBoundsCheck")) {
+		if (TYPEOF(argi) != LGLSXP || LENGTH(argi) != 1)
+		    error(_("invalid value for '%s'"), CHAR(namei));
+		k = asLogical(argi);
+		R_CBoundsCheck = k;
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else {

@@ -19,7 +19,7 @@ printCoefmat(x, digits = max(3, getOption("digits") - 2),
              signif.legend = signif.stars,
              dig.tst = max(1, min(5, digits - 1)),
              cs.ind = 1L:k, tst.ind = k + 1L,
-             zap.ind = integer(0), P.values = NULL,
+             zap.ind = integer(), P.values = NULL,
              has.Pvalue = nc >= 4L &&
                           substr(colnames(x)[nc], 1L, 3L) == "Pr(",
              eps.Pvalue = .Machine$double.eps,
@@ -33,7 +33,7 @@ printCoefmat(x, digits = max(3, getOption("digits") - 2),
     encoded visually as \sQuote{significance stars} in order to help scanning
     of long coefficient tables.  It defaults to the
     \code{show.signif.stars} slot of \code{\link{options}}.}
-  \item{signif.legend}{logical; if \code{TRUE}, a legend for the 
+  \item{signif.legend}{logical; if \code{TRUE}, a legend for the
     \sQuote{significance stars} is printed provided \code{signif.stars =
       TRUE}.}
   \item{dig.tst}{minimum number of significant digits for the test statistics,

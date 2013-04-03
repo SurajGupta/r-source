@@ -19,13 +19,12 @@ export(
        "gpar", "get.gpar",
        "grid.collection",
        "grid.copy", "grid.display.list", "grid.draw",
-       "grid.record", "grid.DLapply",
+       "grid.record", "grid.delay", "grid.DLapply",
        "grid.grill",
        "grid.layout", "grid.locator",
        "grid.newpage",
        "grid.plot.and.legend",
        "grid.pretty",
-       "grid.prompt",
        "grid.refresh",
        "grid.show.layout", "grid.show.viewport",
 
@@ -38,7 +37,7 @@ export(
        "absolute.size",
 
        "valid.just",
-       
+
        "viewport", "vpList", "vpStack", "vpTree", "vpPath",
        "pop.viewport", "push.viewport",
        "popViewport", "pushViewport",
@@ -46,6 +45,7 @@ export(
        "downViewport", "upViewport", "seekViewport",
        "showViewport",
 
+       "makeContext", "makeContent",
        "drawDetails", "preDrawDetails", "postDrawDetails",
        "editDetails",
        "validDetails",
@@ -66,22 +66,24 @@ export(
        "getGrob", "setGrob", "addGrob", "removeGrob", "editGrob",
        "gEdit", "gEditList", "applyEdit", "applyEdits",
        "grid.grab", "grid.grabExpr",
+       "grid.force", "grid.revert",
+       "grid.reorder", "reorderGrob",
        "grid.cap",
        "setChildren",
        "showGrob",
-       
+
        # Listing grobs and viewports
        "grid.ls",
        "nestedListing", "pathListing", "grobPathListing",
        # Deprecated
-       "getNames", "childNames", 
-       
+       "getNames", "childNames",
+
        # Creating and drawing predefined grobs and gTrees
        "grid.abline",
        "grid.arrows", "grid.circle", "grid.clip", "grid.curve",
        "grid.function",
-       "grid.line.to", "grid.lines", "grid.move.to", "grid.null", 
-       "grid.points", "grid.path", "grid.polygon", "grid.polyline", 
+       "grid.line.to", "grid.lines", "grid.move.to", "grid.null",
+       "grid.points", "grid.path", "grid.polygon", "grid.polyline",
        "grid.raster", "grid.rect", "grid.roundrect",
        "grid.segments", "grid.text", "grid.xspline", "grid.bezier",
        "arrowsGrob", "circleGrob", "clipGrob", "curveGrob",
@@ -91,9 +93,9 @@ export(
        "rasterGrob", "rectGrob", "roundrectGrob",
        "segmentsGrob", "textGrob", "xsplineGrob", "bezierGrob",
        "xsplinePoints", "bezierPoints",
-       
+
        "grid.xaxis", "grid.yaxis",
-       "xaxisGrob", "yaxisGrob", 
+       "xaxisGrob", "yaxisGrob",
 
        # Frames and packing
        "grid.frame", "grid.pack", "grid.place",
@@ -151,8 +153,6 @@ S3method("downViewport", "vpPath")
 
 S3method("drawDetails", "arrows")
 S3method("drawDetails", "circle")
-S3method("drawDetails", "curve")
-S3method("drawDetails", "functiongrob")
 S3method("drawDetails", "grob")
 S3method("drawDetails", "line.to")
 S3method("drawDetails", "lines")
@@ -162,13 +162,9 @@ S3method("drawDetails", "pathgrob")
 S3method("drawDetails", "polygon")
 S3method("drawDetails", "polyline")
 S3method("drawDetails", "xspline")
-S3method("drawDetails", "beziergrob")
 S3method("drawDetails", "rect")
-S3method("drawDetails", "roundrect")
 S3method("drawDetails", "segments")
 S3method("drawDetails", "text")
-S3method("drawDetails", "xaxis")
-S3method("drawDetails", "yaxis")
 
 S3method("editDetails", "default")
 S3method("editDetails", "xaxis")
@@ -193,8 +189,6 @@ S3method("gridList", "vpTree")
 S3method("gridList", "vpPath")
 S3method("gridList", "pop")
 S3method("gridList", "up")
-S3method("gridList", "frame")
-S3method("gridList", "cellGrob")
 
 S3method("grobHeight", "grob")
 S3method("grobHeight", "gList")
@@ -246,10 +240,8 @@ S3method("preDraw", "grob")
 S3method("preDraw", "gTree")
 
 S3method("preDrawDetails", "grob")
-S3method("preDrawDetails", "roundrect")
 
 S3method("postDrawDetails", "grob")
-S3method("postDrawDetails", "roundrect")
 
 S3method("record", "default")
 S3method("record", "grob")
@@ -336,12 +328,14 @@ S3method("drawVP", "viewport")
 S3method("drawVP", "vpList")
 S3method("drawVP", "vpStack")
 S3method("drawVP", "vpTree")
+S3method("drawVP", "vpPath")
 S3method("labelGrob", "grob")
 S3method("labelGrob", "gTree")
 S3method("leafPaths", "viewport")
 S3method("leafPaths", "vpList")
 S3method("leafPaths", "vpStack")
 S3method("leafPaths", "vpTree")
+S3method("leafPaths", "vpPath")
 S3method("pushgrobvp", "viewport")
 S3method("pushgrobvp", "vpPath")
 S3method("popgrobvp", "viewport")
@@ -355,14 +349,35 @@ S3method("push.vp", "viewport")
 S3method("push.vp", "vpList")
 S3method("push.vp", "vpStack")
 S3method("push.vp", "vpTree")
+S3method("push.vp", "vpPath")
 
 # S3 method for generic dim (in base)
 S3method("dim", "layout")
 
 # S3 method for generic rep (in base)
 S3method("rep", "unit")
+S3method("rep", "arrow")
 
 # S3 method for generic length (in base)
 S3method("length", "unit")
 S3method("length", "unit.arithmetic")
 S3method("length", "unit.list")
+S3method("length", "arrow")
+
+S3method("makeContent", "beziergrob")
+S3method("makeContent", "roundrect")
+S3method("makeContent", "curve")
+S3method("makeContent", "functiongrob")
+S3method("makeContent", "delayedgrob")
+S3method("makeContent", "xaxis")
+S3method("makeContent", "yaxis")
+S3method("makeContent", "forcedgrob")
+
+S3method("makeContext", "roundrect")
+S3method("makeContext", "frame")
+S3method("makeContext", "cellGrob")
+S3method("makeContext", "forcedgrob")
+
+S3method("force", "default")
+S3method("force", "grob")
+S3method("force", "gTree")

@@ -17,16 +17,18 @@ S
 @acronym{HTML}
 @end macro
 
-@macro eqn {t, a}
 @iftex
+@macro eqn {t, a}
 @tex
 $\t\$%
 @end tex
+@end macro
 @end iftex
 @ifnottex
+@macro eqn {t, a}
 \a\@c
-@end ifnottex
 @end macro
+@end ifnottex
 
 @macro pkg {p}
 @strong{\p\}
@@ -42,7 +44,7 @@ $\t\$%
 
 @c -- edit these here alone -- in order keep consistency
 @macro Rcopyright{year}
-Copyright @copyright{} \year\--2012 R Core Team
+Copyright @copyright{} \year\--2013 R Core Team
 @end macro
 
 @macro permission{}
@@ -61,11 +63,11 @@ except that this permission notice may be stated in a translation
 approved by the R Core Team.
 @end macro
 
-@set ISBN-FAQ ISBN 3-900051-08-9
-@set ISBN-admin ISBN 3-900051-09-7
-@set ISBN-data ISBN 3-900051-10-0
-@set ISBN-exts ISBN 3-900051-11-9
-@set ISBN-intro ISBN 3-900051-12-7
-@set ISBN-lang ISBN 3-900051-13-5
-@set ISBN-ints ISBN 3-900051-14-3
+@set ISBN-FAQ 
+@set ISBN-admin 
+@set ISBN-data 
+@set ISBN-exts 
+@set ISBN-intro 
+@set ISBN-lang 
+@set ISBN-ints 
 

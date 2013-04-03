@@ -20,7 +20,7 @@
 ## A copy of the GNU General Public License is available at
 ## http://www.r-project.org/Licenses/
 
-revision='$Revision: 59038 $'
+revision='$Revision: 59036 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 

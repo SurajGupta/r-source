@@ -1,7 +1,6 @@
 
-R version 2.15.2 Patched (2012-11-27 r61171) -- "Trick or Treat"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -23,7 +22,7 @@ Type 'q()' to quit R.
 > options(warn = 1)
 > library('graphics')
 > 
-> assign(".oldSearch", search(), pos = 'CheckExEnv')
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
 > cleanEx()
 > nameEx("abline")
 > ### * abline
@@ -773,8 +772,7 @@ temperature no yes
 > plot (chippy, -8, -5)
 > 
 > for(ll in c("", "x", "y", "xy"))
-+    curve(log(1+x), 1, 100, log = ll,
-+          sub = paste("log= '", ll, "'", sep = ""))
++    curve(log(1+x), 1, 100, log = ll, sub = paste0("log = '", ll, "'"))
 > par(op)
 > 
 > 
@@ -963,14 +961,13 @@ Female Yes                89  17 202 131  94  24
 > op <- par(mfrow = c(2, 2))
 > hist(islands)
 > utils::str(hist(islands, col = "gray", labels = TRUE))
-List of 7
- $ breaks     : num [1:10] 0 2000 4000 6000 8000 10000 12000 14000 16000 18000
- $ counts     : int [1:9] 41 2 1 1 1 1 0 0 1
- $ intensities: num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
- $ density    : num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
- $ mids       : num [1:9] 1000 3000 5000 7000 9000 11000 13000 15000 17000
- $ xname      : chr "islands"
- $ equidist   : logi TRUE
+List of 6
+ $ breaks  : num [1:10] 0 2000 4000 6000 8000 10000 12000 14000 16000 18000
+ $ counts  : int [1:9] 41 2 1 1 1 1 0 0 1
+ $ density : num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
+ $ mids    : num [1:9] 1000 3000 5000 7000 9000 11000 13000 15000 17000
+ $ xname   : chr "islands"
+ $ equidist: logi TRUE
  - attr(*, "class")= chr "histogram"
 > 
 > hist(sqrt(islands), breaks = 12, col = "lightblue", border = "pink")
@@ -979,8 +976,8 @@ List of 7
 +           col = "blue1")
 > text(r$mids, r$density, r$counts, adj = c(.5, -.5), col = "blue3")
 > sapply(r[2:3], sum)
-     counts intensities 
-  48.000000    0.215625 
+   counts   density 
+48.000000  0.215625 
 > sum(r$density * diff(r$breaks)) # == 1
 [1] 1
 > lines(r, lty = 3, border = "purple") # -> lines.histogram(*)
@@ -988,30 +985,28 @@ List of 7
 > 
 > require(utils) # for str
 > str(hist(islands, breaks = 12, plot =  FALSE)) #-> 10 (~= 12) breaks
-List of 7
- $ breaks     : num [1:10] 0 2000 4000 6000 8000 10000 12000 14000 16000 18000
- $ counts     : int [1:9] 41 2 1 1 1 1 0 0 1
- $ intensities: num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
- $ density    : num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
- $ mids       : num [1:9] 1000 3000 5000 7000 9000 11000 13000 15000 17000
- $ xname      : chr "islands"
- $ equidist   : logi TRUE
+List of 6
+ $ breaks  : num [1:10] 0 2000 4000 6000 8000 10000 12000 14000 16000 18000
+ $ counts  : int [1:9] 41 2 1 1 1 1 0 0 1
+ $ density : num [1:9] 4.27e-04 2.08e-05 1.04e-05 1.04e-05 1.04e-05 ...
+ $ mids    : num [1:9] 1000 3000 5000 7000 9000 11000 13000 15000 17000
+ $ xname   : chr "islands"
+ $ equidist: logi TRUE
  - attr(*, "class")= chr "histogram"
 > str(hist(islands, breaks = c(12,20,36,80,200,1000,17000), plot = FALSE))
-List of 7
- $ breaks     : num [1:7] 12 20 36 80 200 1000 17000
- $ counts     : int [1:6] 12 11 8 6 4 7
- $ intensities: num [1:6] 0.03125 0.014323 0.003788 0.001042 0.000104 ...
- $ density    : num [1:6] 0.03125 0.014323 0.003788 0.001042 0.000104 ...
- $ mids       : num [1:6] 16 28 58 140 600 9000
- $ xname      : chr "islands"
- $ equidist   : logi FALSE
+List of 6
+ $ breaks  : num [1:7] 12 20 36 80 200 1000 17000
+ $ counts  : int [1:6] 12 11 8 6 4 7
+ $ density : num [1:6] 0.03125 0.014323 0.003788 0.001042 0.000104 ...
+ $ mids    : num [1:6] 16 28 58 140 600 9000
+ $ xname   : chr "islands"
+ $ equidist: logi FALSE
  - attr(*, "class")= chr "histogram"
 > 
 > hist(islands, breaks = c(12,20,36,80,200,1000,17000), freq = TRUE,
 +      main = "WRONG histogram") # and warning
 Warning in plot.histogram(r, freq = freq1, col = col, border = border, angle = angle,  :
-  the AREAS in the plot are wrong -- rather use freq=FALSE
+  the AREAS in the plot are wrong -- rather use 'freq = FALSE'
 > 
 > require(stats)
 > set.seed(14)
@@ -1189,10 +1184,10 @@ Warning in plot.histogram(r, freq = freq1, col = col, border = border, angle = a
 > plot(x, sin(x), type = "l", ylim = c(-1.2, 1.8), col = 3, lty = 2)
 > points(x, cos(x), pch = 3, col = 4)
 > lines(x, tan(x), type = "b", lty = 1, pch = 4, col = 6)
-> title("legend(..., lty = c(2, -1, 1), pch = c(-1, 3, 4), merge = TRUE)",
+> title("legend(..., lty = c(2, -1, 1), pch = c(NA, 3, 4), merge = TRUE)",
 +       cex.main = 1.1)
 > legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3, 4, 6),
-+        text.col = "green4", lty = c(2, -1, 1), pch = c(-1, 3, 4),
++        text.col = "green4", lty = c(2, -1, 1), pch = c(NA, 3, 4),
 +        merge = TRUE, bg = "gray90")
 > 
 > ## right-justifying a set of labels: thanks to Uwe Ligges
@@ -1212,13 +1207,13 @@ Warning in plot.histogram(r, freq = freq1, col = col, border = border, angle = a
 > 
 > par(mfrow = c(2, 2))
 > for(ll in c("","x","y","xy")) {
-+   plot(2:10, log = ll, main = paste("log = '",ll,"'", sep = ""))
-+   abline(1,1)
-+   lines(2:3,3:4, col = 2) #
-+   points(2,2, col = 3)    #
-+   rect(2,3,3,2, col = 4)
-+   text(c(3,3),2:3, c("rect(2,3,3,2, col=4)",
-+                      "text(c(3,3),2:3,\"c(rect(...)\")"), adj = c(0, 0.3))
++   plot(2:10, log = ll, main = paste0("log = '", ll, "'"))
++   abline(1, 1)
++   lines(2:3, 3:4, col = 2)
++   points(2, 2, col = 3)
++   rect(2, 3, 3, 2, col = 4)
++   text(c(3,3), 2:3, c("rect(2,3,3,2, col=4)",
++                       "text(c(3,3),2:3,\"c(rect(...)\")"), adj = c(0, 0.3))
 +   legend(list(x = 2,y = 8), legend = leg.txt, col = 2:3, pch = 1:2,
 +          lty = 1, merge = TRUE)   #, trace = TRUE)
 + }
@@ -1419,7 +1414,7 @@ List of 2
 > 
 > mosaicplot(HairEyeColor, shade = TRUE)
 > ## Independence model of hair and eye color and sex.  Indicates that
-> ## there are more blue eyed blonde females than expected in the case 
+> ## there are more blue eyed blonde females than expected in the case
 > ## of independence and too few brown eyed blonde females.
 > ## The corresponding model is:
 > fm <- loglin(HairEyeColor, list(1, 2, 3))
@@ -1493,6 +1488,8 @@ List of 2
 +       subset = Education < 20, main = "Swiss data, Education < 20")
 > 
 > pairs(USJudgeRatings)
+> ## show only lower triangle (and suppress labeling for whatever reason):
+> pairs(USJudgeRatings, text.panel = NULL, upper.panel = NULL)
 > 
 > ## put histograms on the diagonal
 > panel.hist <- function(x, ...)
@@ -1516,11 +1513,14 @@ List of 2
 +     par(usr = c(0, 1, 0, 1))
 +     r <- abs(cor(x, y))
 +     txt <- format(c(r, 0.123456789), digits = digits)[1]
-+     txt <- paste(prefix, txt, sep = "")
++     txt <- paste0(prefix, txt)
 +     if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
 +     text(0.5, 0.5, txt, cex = cex.cor * r)
 + }
 > pairs(USJudgeRatings, lower.panel = panel.smooth, upper.panel = panel.cor)
+> 
+> pairs(iris[-5], log = "xy") # plot all variables on log scale
+> pairs(iris, log = 1:4) # log the first four
 > 
 > 
 > 
@@ -1614,6 +1614,23 @@ armed.forces
 + }
 > ex()
 > 
+> ## Line types
+> showLty <- function(ltys, xoff = 0, ...) {
++    stopifnot((n <- length(ltys)) >= 1)
++    op <- par(mar = rep(.5,4)); on.exit(par(op))
++    plot(0:1, 0:1, type = "n", axes = FALSE, ann = FALSE)
++    y <- (n:1)/(n+1)
++    clty <- as.character(ltys)
++    mytext <- function(x,y, txt) text(x, y, txt, adj = c(0, -.3), cex = 0.8, ...)
++    abline(h = y, lty = ltys, ...); mytext(xoff, y, clty)
++    y <- y - 1/(3*(n+1))
++    abline(h = y, lty = ltys, lwd = 2, ...); mytext(1/8+xoff, y, paste(clty," lwd = 2"))
++ }
+> showLty(c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash"))
+> par(new = TRUE)  # the same:
+> showLty(c("solid", "44", "13", "1343", "73", "2262"), xoff = .2, col = 2)
+> showLty(c("11", "22", "33", "44",   "12", "13", "14",   "21", "31"))
+> 
 > 
 > 
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
@@ -1687,7 +1704,7 @@ armed.forces
 > nrz <- nrow(z)
 > ncz <- ncol(z)
 > # Create a function interpolating colors in the range of specified colors
-> jet.colors <- colorRampPalette( c("blue", "green") ) 
+> jet.colors <- colorRampPalette( c("blue", "green") )
 > # Generate the desired number of colors from this palette
 > nbcol <- 100
 > color <- jet.colors(nbcol)
@@ -1814,11 +1831,10 @@ armed.forces
 > y <- sin(pi/5 * x)
 > op <- par(mfrow = c(3,3), mar = .1+ c(2,2,3,1))
 > for (tp in c("p","l","b",  "c","o","h",  "s","S","n")) {
-+    plot(y ~ x, type = tp,
-+         main = paste("plot(*, type = \"",tp,"\")", sep = ""))
++    plot(y ~ x, type = tp, main = paste0("plot(*, type = \"", tp, "\")"))
 +    if(tp == "S") {
 +       lines(x, y, type = "s", col = "red", lty = 2)
-+       mtext("lines(*, type = \"s\", ...)", col = "red", cex = .8)
++       mtext("lines(*, type = \"s\", ...)", col = "red", cex = 0.8)
 +    }
 + }
 > par(op)
@@ -1865,7 +1881,7 @@ wool         1    451   450.7   3.339 0.07361 .
 tension      2   2034  1017.1   7.537 0.00138 **
 Residuals   50   6748   135.0                   
 ---
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1 
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 > plot.design(       Form, data = warpbreaks, col = 2)  # same as above
 > 
 > ## More than one y :
@@ -2008,7 +2024,7 @@ N
 > points.default # to see how it calls "plot.xy(xy.coords(x, y), ...)"
 function (x, y = NULL, type = "p", ...) 
 plot.xy(xy.coords(x, y), type = type, ...)
-<bytecode: 0x22569d0>
+<bytecode: 0x3eabef0>
 <environment: namespace:graphics>
 > 
 > 
@@ -2032,10 +2048,6 @@ $breaks
 
 $counts
  [1] 3 1 2 2 1 1 2 1 1 1
-
-$intensities
- [1] 0.04000000 0.01333333 0.02666667 0.02666667 0.01333333 0.01333333
- [7] 0.02666667 0.01333333 0.01333333 0.01333333
 
 $density
  [1] 0.04000000 0.01333333 0.02666667 0.02666667 0.01333333 0.01333333
@@ -2661,11 +2673,11 @@ temperature no yes
 > text(m, 0.85, "stripchart(round(x,1), \"jitter\")")
 > 
 > stripchart(decrease ~ treatment,
-+     main = "stripchart(OrchardSprays)", 
++     main = "stripchart(OrchardSprays)",
 +     vertical = TRUE, log = "y", data = OrchardSprays)
 > 
 > stripchart(decrease ~ treatment, at = c(1:8)^2,
-+     main = "stripchart(OrchardSprays)", 
++     main = "stripchart(OrchardSprays)",
 +     vertical = TRUE, log = "y", data = OrchardSprays)
 > 
 > 
@@ -2908,11 +2920,11 @@ List of 3
 function (xy = 1, warn.log = TRUE) 
 {
     if (warn.log && (par("xlog") || par("ylog"))) 
-        warning("log scale:  xyinch() is non-sense")
+        warning("log scale:  xyinch() is nonsense")
     u <- par("usr")
     xy * c(u[2L] - u[1L], u[4L] - u[3L])/par("pin")
 }
-<bytecode: 0x2be6d58>
+<bytecode: 0x4ac9758>
 <environment: namespace:graphics>
 > 
 > ## plot labels offset 0.12 inches to the right
@@ -2990,8 +3002,8 @@ function (xy = 1, warn.log = TRUE)
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > ### * <FOOTER>
 > ###
-> cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  5.371 0.114 7.931 0 0 
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  3.682 0.065 3.76 0 0 
 > grDevices::dev.off()
 null device 
           1 

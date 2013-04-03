@@ -18,10 +18,10 @@
 
 untar <- function(tarfile, files = NULL, list = FALSE, exdir = ".",
                   compressed = NA, extras = NULL, verbose = FALSE,
-                  tar = Sys.getenv("TAR"))
+                  restore_times = TRUE, tar = Sys.getenv("TAR"))
 {
     if (inherits(tarfile, "connection") || identical(tar, "internal"))
-        return(untar2(tarfile, files, list, exdir))
+        return(untar2(tarfile, files, list, exdir, restore_times))
 
     if (!(is.character(tarfile) && length(tarfile) == 1L))
         stop("invalid 'tarfile' argument")
@@ -46,6 +46,7 @@ untar <- function(tarfile, files = NULL, list = FALSE, exdir = ".",
             else if(rawToChar(magic[1:5]) == "\xFD7zXZ") cflag <- "J"
         } else if (compressed) cflag <- "z"
     } else stop("'compressed' must be logical or character")
+    if (!restore_times) cflag <- paste0(cflag, "m")
 
     gzOK <- .Platform$OS.type == "windows"
     if (!gzOK ) {
@@ -105,7 +106,8 @@ untar <- function(tarfile, files = NULL, list = FALSE, exdir = ".",
     }
 }
 
-untar2 <- function(tarfile, files = NULL, list = FALSE, exdir = ".")
+untar2 <- function(tarfile, files = NULL, list = FALSE, exdir = ".",
+                   restore_times = TRUE)
 {
     ## might be used with len = 12, so result of more than max int
     getOctD <- function(x, offset, len)
@@ -212,7 +214,7 @@ untar2 <- function(tarfile, files = NULL, list = FALSE, exdir = ".")
             if(dothis) {
                 close(out)
                 Sys.chmod(name, mode, FALSE) # override umask
-                Sys.setFileTime(name, ft)
+                if(restore_times) Sys.setFileTime(name, ft)
             }
         } else if(ctype %in% c("1", "2")) {
             ## hard and symbolic links
@@ -359,6 +361,8 @@ tar <- function(tarfile, files = NULL,
     } else if(inherits(tarfile, "connection")) con <- tarfile
     else stop("'tarfile' must be a character string or a connection")
 
+    ## FIXME: eventually we should use the pax extension, but
+    ## that was first supported in R 2.15.3.
     GNUname <- function(name, link = FALSE)
     {
         header <- raw(512L)
@@ -392,18 +396,26 @@ tar <- function(tarfile, files = NULL,
         if(info$isdir && !grepl("/$", f)) f <- paste0(f, "/")
         name <- charToRaw(f)
         if(length(name) > 100L) {
+            OK <- TRUE
             ## best possible case: 155+/+100
-            if(length(name) > 256L) stop("file path is too long")
-            ## do not want to split on terminal /
-            m <- length(name)
-            s <- max(which(name[1:min(156, m - 1L)] == charToRaw("/")))
-            if(is.infinite(s) || s + 100L < length(name))
-                stop("file path is too long")
+            if(length(name) > 256L) OK <- FALSE
+            else {
+                ## do not want to split on terminal /
+                m <- length(name)
+                s <- max(which(name[1:min(156, m - 1L)] == charToRaw("/")))
+                if(is.infinite(s) || s + 100L < length(name)) OK <- FALSE
+            }
             warning("storing paths of more than 100 bytes is not portable:\n  ",
                     sQuote(f), domain = NA)
-            prefix <- name[1:(s-1L)]
-            name <- name[-(1:s)]
-            header[345L+seq_along(prefix)] <- prefix
+            if (OK) {
+                prefix <- name[1:(s-1L)]
+                name <- name[-(1:s)]
+                header[345L+seq_along(prefix)] <- prefix
+            } else {
+                GNUname(name)
+                name <- charToRaw("dummy")
+                warn1 <- c(warn1, "using GNU extension for long pathname")
+            }
         }
         header[seq_along(name)] <- name
         header[101:107] <- charToRaw(sprintf("%07o", info$mode))
@@ -433,9 +445,8 @@ tar <- function(tarfile, files = NULL,
         }
         ## size is 0 for directories and it seems for links.
         size <- ifelse(info$isdir, 0, info$size)
-        ## we can't use sprintf over 2GB
-        if (size > 2^31 -1) stop("file size is limited to 2GB")
-        header[125:135] <- charToRaw(sprintf("%011o", as.integer(size)))
+        if(size >= 8^11) stop("file size is limited to 8GB")
+        header[125:135] <- .Call(C_octsize, size)
         ## the next two are what POSIX says, not what GNU tar does.
         header[258:262] <- charToRaw("ustar")
         header[264:265] <- charToRaw("0")

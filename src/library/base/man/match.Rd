@@ -21,8 +21,10 @@ match(x, table, nomatch = NA_integer_, incomparables = NULL)
 x \%in\% table
 }
 \arguments{
-  \item{x}{vector or \code{NULL}: the values to be matched.}
-  \item{table}{vector or \code{NULL}: the values to be matched against.}
+  \item{x}{vector or \code{NULL}: the values to be matched.
+    \link{Long vectors} are supported.}
+  \item{table}{vector or \code{NULL}: the values to be matched against.
+    \link{Long vectors} are not supported.}
   \item{nomatch}{the value to be returned in the case when no match is
     found.  Note that it is coerced to \code{integer}.}
   \item{incomparables}{a vector of values that cannot be matched.  Any
@@ -62,7 +64,7 @@ x \%in\% table
   For all types, \code{NA} matches \code{NA} and no other value.
   For real and complex values, \code{NaN} values are regarded
   as matching any other \code{NaN} value, but not matching \code{NA}.
-  
+
   That \code{\%in\%} never returns \code{NA} makes it particularly
   useful in \code{if} conditions.
 

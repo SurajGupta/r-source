@@ -52,9 +52,11 @@ function(file, encoding = "unknown")
     Rd_name <- .Rd_get_name(Rd)
     if(!length(Rd_name)) {
         msg <-
-            c(gettextf("missing/empty \\name field in '%s'",
+            c(gettextf("missing/empty %s field in '%s'",
+                       "\\name",
                        description),
-              gettext("Rd files must have a non-empty \\name."),
+              gettextf("Rd files must have a non-empty %s.",
+                       "\\name"),
               gettext("See chapter 'Writing R documentation' in manual 'Writing R Extensions'."))
         stop(paste(msg, collapse = "\n"), domain = NA)
     }
@@ -152,10 +154,9 @@ function(contents, packageName, outFile)
     ## <NOTE>
     ## This has 'html' hard-wired.
     ## Note that slashes etc. should be fine for URLs.
-    URLs <- paste("../../../library/", packageName, "/html/",
-                  file_path_sans_ext(contents[ , "File"]),
-                  ".html",
-                  sep = "")
+    URLs <- paste0("../../../library/", packageName, "/html/",
+                   file_path_sans_ext(contents[ , "File"]),
+                   ".html")
     ## </NOTE>
 
     if(is.data.frame(contents))
@@ -286,7 +287,7 @@ function(package, dir, lib.loc = NULL)
         ## with a DB of the parsed (and platform processed, see
         ## above) Rd objects.
         db_file <- file.path(dir, "help", package)
-        if(file_test("-f", paste(db_file, "rdx", sep="."))) {
+        if(file_test("-f", paste(db_file, "rdx", sep = "."))) {
             db <- fetchRdDB(db_file)
             pathfile <- file.path(dir, "help", "paths.rds")
             if(file.exists(pathfile)) names(db) <- readRDS(pathfile)
@@ -759,9 +760,10 @@ function(db)
             stop("cannot deal with Rd objects with missing/empty names")
         }
         else {
-            stop(paste(gettext("missing/empty \\name field in Rd file(s)"),
-                       paste(" ", Rd_paths[idx], collapse = "\n"),
-                       sep = "\n"),
+            stop(sprintf(ngettext(sum(idx),
+                                  "missing/empty \\name field in Rd file\n%s",
+                                  "missing/empty \\name field in Rd files\n%s"),
+                         paste(" ", Rd_paths[idx], collapse = "\n")),
                  call. = FALSE, domain = NA)
         }
     }

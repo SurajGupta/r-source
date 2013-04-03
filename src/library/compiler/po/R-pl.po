@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
+"POT-Creation-Date: 2012-12-10 18:35\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -12,30 +12,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "na-Revision-Date: 2012-05-29 07:55+0100\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2)\n"
+"|| n%100>=20) ? 1 : 2);\n"
 "X-Poedit-SourceCharset: iso-8859-1\n"
+"X-Generator: Poedit 1.5.5\n"
 
-# compiler/noweb/compiler.nw: 4929
-# stop("expected a single logical value for the S4 state flag")
-# compiler/R/cmp.R: 79
-# stop("expected a single logical value for the S4 state flag")
-msgid "expected a single logical value for the S4 state flag"
-msgstr "oczekiwano pojedynczej wartości logicznej dla flagi stanu S4"
-
-# compiler/noweb/compiler.nw: 4963
+# compiler/noweb/compiler.nw: 4939
 # stop("not a proper evaluation environment")
-# compiler/noweb/compiler.nw: 4975
+# compiler/noweb/compiler.nw: 4951
 # stop("not a proper evaluation environment")
-# compiler/R/cmp.R: 108
+# compiler/R/cmp.R: 97
 # stop("not a proper evaluation environment")
-# compiler/R/cmp.R: 116
+# compiler/R/cmp.R: 105
 # stop("not a proper evaluation environment")
 msgid "not a proper evaluation environment"
 msgstr "nieodpowiednie środowisko obliczeniowe"
 
-# compiler/noweb/compiler.nw: 5030
+# compiler/noweb/compiler.nw: 5006
 # stop("'ns' must be a namespace or a namespace imports environment")
-# compiler/R/cmp.R: 139
+# compiler/R/cmp.R: 128
 # stop("'ns' must be a namespace or a namespace imports environment")
 msgid "'ns' must be a namespace or a namespace imports environment"
 msgstr ""
@@ -53,34 +47,34 @@ msgstr ""
 # compiler/noweb/compiler.nw: 1520
 # stop(gettextf("bad assignment: %s", pasteExpr(e)),
 #                  domain = NA)
-# compiler/R/cmp.R: 205
+# compiler/R/cmp.R: 194
 # stop(gettextf("bad assignment: %s", pasteExpr(e)),
 #              domain = NA)
-# compiler/R/cmp.R: 212
+# compiler/R/cmp.R: 201
 # stop(gettextf("bad assignment: %s", pasteExpr(e)),
 #                      domain = NA)
-# compiler/R/cmp.R: 216
+# compiler/R/cmp.R: 205
 # stop(gettextf("bad assignment: %s", pasteExpr(e)),
 #                      domain = NA)
-# compiler/R/cmp.R: 220
+# compiler/R/cmp.R: 209
 # stop(gettextf("bad assignment: %s", pasteExpr(e)),
 #                  domain = NA)
 msgid "bad assignment: %s"
 msgstr "złe przypisanie: %s"
 
-# compiler/noweb/compiler.nw: 4357
+# compiler/noweb/compiler.nw: 4355
 # stop(gettext("cannot constant fold literal promises"),
 #                    cntxt)
-# compiler/R/cmp.R: 484
+# compiler/R/cmp.R: 473
 # stop(gettext("cannot constant fold literal promises"),
 #                    cntxt)
 msgid "cannot constant fold literal promises"
 msgstr "nie można ukryć stałych z dosłownymi obietnicami"
 
-# compiler/noweb/compiler.nw: 4360
+# compiler/noweb/compiler.nw: 4358
 # stop(gettext("cannot constant fold literal bytecode objects"),
 #                    cntxt)
-# compiler/R/cmp.R: 487
+# compiler/R/cmp.R: 476
 # stop(gettext("cannot constant fold literal bytecode objects"),
 #                    cntxt)
 msgid "cannot constant fold literal bytecode objects"
@@ -89,7 +83,7 @@ msgstr "nie można ukryć stałych dosłownych obiektów kodu bajtowego"
 # compiler/noweb/compiler.nw: 883
 # stop(gettextf("no offset recorded for label \"%s\"", lbl),
 #                  domain = NA)
-# compiler/R/cmp.R: 769
+# compiler/R/cmp.R: 758
 # stop(gettextf("no offset recorded for label \"%s\"", lbl),
 #                      domain = NA)
 msgid "no offset recorded for label \"%s\""
@@ -101,13 +95,13 @@ msgstr "nie zarejestrowano przesunięcia dla etykiety \"%s\""
 # compiler/noweb/compiler.nw: 666
 # stop(gettext("cannot compile byte code literals in code"),
 #                cntxt)
-# compiler/R/cmp.R: 886
+# compiler/R/cmp.R: 875
 # stop(gettext("cannot compile byte code literals in code"),
 #                        cntxt)
-# compiler/R/cmp.R: 1002
+# compiler/R/cmp.R: 991
 # stop(gettext("cannot compile byte code literals in code"),
 #                        cntxt)
-# compiler/R/cmp.R: 1984
+# compiler/R/cmp.R: 1973
 # stop(gettext("cannot compile byte code literals in code"),
 #                        cntxt)
 msgid "cannot compile byte code literals in code"
@@ -119,13 +113,13 @@ msgstr "nie można skompilować dosłownych bajtów kodu w kod"
 # compiler/noweb/compiler.nw: 669
 # stop(gettext("cannot compile promise literals in code"),
 #                cntxt)
-# compiler/R/cmp.R: 889
+# compiler/R/cmp.R: 878
 # stop(gettext("cannot compile promise literals in code"),
 #                        cntxt)
-# compiler/R/cmp.R: 1005
+# compiler/R/cmp.R: 994
 # stop(gettext("cannot compile promise literals in code"),
 #                        cntxt)
-# compiler/R/cmp.R: 1987
+# compiler/R/cmp.R: 1976
 # stop(gettext("cannot compile promise literals in code"),
 #                        cntxt)
 msgid "cannot compile promise literals in code"
@@ -134,7 +128,7 @@ msgstr "nie można skompilować dosłownych obietnic w kod"
 # compiler/noweb/compiler.nw: 587
 # gettextf("possible error in '%s': %s",
 #                              deparse(call, 20)[1], msg)
-# compiler/R/cmp.R: 1049
+# compiler/R/cmp.R: 1038
 # gettextf("possible error in '%s': %s",
 #                              deparse(call, 20)[1], msg)
 msgid "possible error in '%s': %s"
@@ -142,46 +136,46 @@ msgstr "prawdopodobny błąd w '%s': %s"
 
 # compiler/noweb/compiler.nw: 1822
 # stop(gettext("bad namespace import frame"))
-# compiler/R/cmp.R: 1141
+# compiler/R/cmp.R: 1130
 # stop(gettext("bad namespace import frame"))
 msgid "bad namespace import frame"
 msgstr "zła przestrzeń nazw importowanej ramki"
 
-# compiler/noweb/compiler.nw: 3942
+# compiler/noweb/compiler.nw: 3940
 # stop("bad assignment 1")
-# compiler/R/cmp.R: 1387
+# compiler/R/cmp.R: 1376
 # stop("bad assignment 1")
 msgid "bad assignment 1"
 msgstr "złe przypisanie 1"
 
-# compiler/noweb/compiler.nw: 3949
+# compiler/noweb/compiler.nw: 3947
 # stop("bad assignment 2")
-# compiler/R/cmp.R: 1394
+# compiler/R/cmp.R: 1383
 # stop("bad assignment 2")
 msgid "bad assignment 2"
 msgstr "złe przypisanie 2"
 
 # compiler/noweb/compiler.nw: 1207
 # gettext("invalid function in complex assignment")
-# compiler/noweb/compiler.nw: 3996
+# compiler/noweb/compiler.nw: 3994
 # stop(gettext("invalid function in complex assignment"))
-# compiler/R/cmp.R: 1505
+# compiler/R/cmp.R: 1494
 # stop(gettext("invalid function in complex assignment"))
-# compiler/R/cmp.R: 2542
+# compiler/R/cmp.R: 2529
 # gettext("invalid function in complex assignment")
 msgid "invalid function in complex assignment"
 msgstr "niepoprawna funkcja w zespolonym przypisaniu"
 
 # compiler/noweb/compiler.nw: 1958
 # stop(gettext("missing arguments are not allowed"), cntxt)
-# compiler/R/cmp.R: 1980
+# compiler/R/cmp.R: 1969
 # stop(gettext("missing arguments are not allowed"), cntxt)
 msgid "missing arguments are not allowed"
 msgstr "brakujące argumenty nie są dozwolone"
 
-# compiler/noweb/compiler.nw: 3567
+# compiler/noweb/compiler.nw: 3565
 # stop("empty alternative in numeric switch")
-# compiler/R/cmp.R: 2386
+# compiler/R/cmp.R: 2373
 # stop("empty alternative in numeric switch")
 msgid "empty alternative in numeric switch"
 msgstr "pusta alternatywa w numerycznej instrukcji 'switch'"
@@ -189,7 +183,7 @@ msgstr "pusta alternatywa w numerycznej instrukcji 'switch'"
 # compiler/noweb/compiler.nw: 1120
 # gettextf("no visible global function definition for '%s'",
 #                         as.character(fun))
-# compiler/R/cmp.R: 2494
+# compiler/R/cmp.R: 2481
 # gettextf("no visible global function definition for '%s'",
 #                         as.character(fun))
 msgid "no visible global function definition for '%s'"
@@ -198,7 +192,7 @@ msgstr "brak widocznej globalnej definicji funkcji dla '%s'"
 # compiler/noweb/compiler.nw: 1129
 # gettextf("no visible binding for global variable '%s'",
 #                         as.character(var))
-# compiler/R/cmp.R: 2502
+# compiler/R/cmp.R: 2489
 # gettextf("no visible binding for global variable '%s'",
 #                         as.character(var))
 msgid "no visible binding for global variable '%s'"
@@ -207,7 +201,7 @@ msgstr "brak widocznego wiązania dla zmiennej globalnej '%s'"
 # compiler/noweb/compiler.nw: 1194
 # gettextf("no visible binding for '<<-' assignment to '%s'",
 #                         as.character(symbol))
-# compiler/R/cmp.R: 2510
+# compiler/R/cmp.R: 2497
 # gettextf("no visible binding for '<<-' assignment to '%s'",
 #                         as.character(symbol))
 msgid "no visible binding for '<<-' assignment to '%s'"
@@ -216,95 +210,95 @@ msgstr "brak widocznego wiązania dla przypisania '<<-' do '%s'"
 # compiler/noweb/compiler.nw: 1160
 # gettextf("wrong number of arguments to '%s'",
 #                             as.character(fun))
-# compiler/R/cmp.R: 2518
+# compiler/R/cmp.R: 2505
 # gettextf("wrong number of arguments to '%s'",
 #                             as.character(fun))
 msgid "wrong number of arguments to '%s'"
 msgstr "błędna liczba argumentów w '%s'"
 
 # compiler/noweb/compiler.nw: 1218
-# gettext("more than one default provided in switch call")
-# compiler/R/cmp.R: 2547
-# gettext("more than one default provided in switch call")
-msgid "more than one default provided in switch call"
-msgstr "więcej niż jedna wartość domyślna dostarczona w wywołaniu 'switch'"
+# gettext("more than one default provided in switch() call")
+# compiler/R/cmp.R: 2534
+# gettext("more than one default provided in switch() call")
+msgid "more than one default provided in switch() call"
+msgstr "więcej niż jedna wartość domyślna dostarczona w wywołaniu 'switch()'"
 
-# compiler/noweb/compiler.nw: 4505
+# compiler/noweb/compiler.nw: 4503
 # stop("cannot compile a non-function")
-# compiler/R/cmp.R: 2578
+# compiler/R/cmp.R: 2565
 # stop("cannot compile a non-function")
 msgid "cannot compile a non-function"
 msgstr "nie można skompilować nie-funkcji"
 
-# compiler/noweb/compiler.nw: 4620
+# compiler/noweb/compiler.nw: 4618
 # gettextf("compiling '%s'", f)
-# compiler/R/cmp.R: 2599
+# compiler/R/cmp.R: 2586
 # gettextf("compiling '%s'", f)
 msgid "compiling '%s'"
 msgstr "kompilowanie '%s'"
 
-# compiler/noweb/compiler.nw: 4555
+# compiler/noweb/compiler.nw: 4553
 # gettextf("saving to file \"%s\" ... ", outfile)
-# compiler/noweb/compiler.nw: 4625
+# compiler/noweb/compiler.nw: 4623
 # gettextf("saving to file \"%s\" ... ", file)
-# compiler/R/cmp.R: 2604
+# compiler/R/cmp.R: 2591
 # gettextf("saving to file \"%s\" ... ", file)
-# compiler/R/cmp.R: 2658
+# compiler/R/cmp.R: 2645
 # gettextf("saving to file \"%s\" ... ", outfile)
 msgid "saving to file \"%s\" ..."
 msgstr "zapisywanie do pliku \"%s\" ..."
 
-# compiler/noweb/compiler.nw: 4557
+# compiler/noweb/compiler.nw: 4555
 # gettext("done")
-# compiler/noweb/compiler.nw: 4627
+# compiler/noweb/compiler.nw: 4625
 # gettext("done")
-# compiler/R/cmp.R: 2606
+# compiler/R/cmp.R: 2593
 # gettext("done")
-# compiler/R/cmp.R: 2660
+# compiler/R/cmp.R: 2647
 # gettext("done")
 msgid "done"
 msgstr "wykonano"
 
-# compiler/noweb/compiler.nw: 4527
+# compiler/noweb/compiler.nw: 4525
 # stop("'env' must be a top level environment")
-# compiler/R/cmp.R: 2626
+# compiler/R/cmp.R: 2613
 # stop("'env' must be a top level environment")
 msgid "'env' must be a top level environment"
 msgstr "'env' musi być środowiskiem o najwyższym poziomie"
 
-# compiler/noweb/compiler.nw: 4576
+# compiler/noweb/compiler.nw: 4574
 # stop("input and output file names are the same")
-# compiler/R/cmp.R: 2632
+# compiler/R/cmp.R: 2619
 # stop("input and output file names are the same")
 msgid "input and output file names are the same"
 msgstr "nazwy plików wejścia i wyjścia są takie same"
 
-# compiler/noweb/compiler.nw: 4559
+# compiler/noweb/compiler.nw: 4557
 # warning("empty input file; no output written")
-# compiler/R/cmp.R: 2662
+# compiler/R/cmp.R: 2649
 # warning("empty input file; no output written")
 msgid "empty input file; no output written"
 msgstr "pusty plik wejściowy; brak zapisanego wyjścia"
 
-# compiler/noweb/compiler.nw: 4585
+# compiler/noweb/compiler.nw: 4583
 # stop(gettextf("file '%s' does not exist", file), domain = NA)
-# compiler/R/cmp.R: 2668
+# compiler/R/cmp.R: 2655
 # stop(gettextf("file '%s' does not exist", file), domain = NA)
 msgid "file '%s' does not exist"
 msgstr "plik '%s' nie istnieje"
 
-# compiler/noweb/compiler.nw: 4669
+# compiler/noweb/compiler.nw: 4667
 # stop(gettextf("'%s' is not a valid compiler option", n),
 #                  domain = NA)
-# compiler/R/cmp.R: 2694
+# compiler/R/cmp.R: 2681
 # stop(gettextf("'%s' is not a valid compiler option", n),
 #                  domain = NA)
 msgid "'%s' is not a valid compiler option"
 msgstr "'%s' nie jest prawidłową opcją kompilatora"
 
-# compiler/noweb/compiler.nw: 4734
+# compiler/noweb/compiler.nw: 4732
 # stop("function is not compiled")
-# compiler/R/cmp.R: 2769
+# compiler/R/cmp.R: 2756
 # stop("function is not compiled")
 msgid "function is not compiled"
 msgstr "funkcja nie jest skompilowana"
@@ -313,7 +307,7 @@ msgstr "funkcja nie jest skompilowana"
 # ngettext(sum(rdsf),
 #                                 "local assignment to syntactic function: ",
 #                                 "local assignments to syntactic functions: ")
-# compiler/R/cmp.R: 280
+# compiler/R/cmp.R: 269
 # ngettext(sum(rdsf),
 #                                 "local assignment to syntactic function: ",
 #                                 "local assignments to syntactic functions: ")
@@ -322,3 +316,6 @@ msgid_plural "local assignments to syntactic functions: "
 msgstr[0] "lokalne przypisanie do funkcji syntaktycznej:"
 msgstr[1] "lokalne przypisania do funkcji syntaktycznych:"
 msgstr[2] "lokalne przypisania do funkcji syntaktycznych:"
+
+#~ msgid "expected a single logical value for the S4 state flag"
+#~ msgstr "oczekiwano pojedynczej wartości logicznej dla flagi stanu S4"

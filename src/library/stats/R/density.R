@@ -26,8 +26,7 @@ density.default <-
 	     give.Rkern = FALSE,
 	     n = 512, from, to, cut = 3, na.rm = FALSE, ...)
 {
-    if(length(list(...)))
-	warning("non-matched further arguments are disregarded")
+    if(!missing(...)) warning("non-matched further arguments are disregarded")
     if(!missing(window) && missing(kernel))
 	kernel <- window
     kernel <- match.arg(kernel)
@@ -36,11 +35,11 @@ density.default <-
         return(switch(kernel,
                       gaussian = 1/(2*sqrt(pi)),
                       rectangular = sqrt(3)/6,
-                      triangular  = sqrt(6)/9,
-                      epanechnikov= 3/(5*sqrt(5)),
-                      biweight    = 5*sqrt(7)/49,
-                      cosine      = 3/4*sqrt(1/3 - 2/pi^2),
-                      optcosine   = sqrt(1-8/pi^2)*pi^2/16
+                      triangular = sqrt(6)/9,
+                      epanechnikov = 3/(5*sqrt(5)),
+                      biweight = 5*sqrt(7)/49,
+                      cosine = 3/4*sqrt(1/3 - 2/pi^2),
+                      optcosine = sqrt(1-8/pi^2)*pi^2/16
                       ))
 
     if (!is.numeric(x))
@@ -52,7 +51,8 @@ density.default <-
         if (na.rm) x <- x[!x.na]
         else stop("'x' contains missing values")
     }
-    N <- nx <- length(x)
+    N <- nx <- as.integer(length(x))
+    if(is.na(N)) stop("invalid value of length(x)")
     x.finite <- is.finite(x)
     if(any(!x.finite)) {
         x <- x[x.finite]

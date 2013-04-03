@@ -1,90 +1,90 @@
-# File R_HOME/src/library/grid/po/ko.po
-# Korean translations for R-Base
-# Copyright (C) 2012 THE R'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the R package
-# Maintainer: Chel Hee Lee (Korean, R Development Translation Team)
-# Email: <gnustats@gmail.com> or <chl948@mail.usask.ca>
+# Korean translation for R grid package
+# src/library/grid/po/ko.po
+# Copyright (C) 1995-2013 The R Core Team
+# This file is distributed under the same license as the R grid package.
+# R Development Translation Team - Korean
+# Chel Hee Lee <gnustats@korea.gnu.org>, 2008-2013.
+# Chel Hee Lee <gnustats@gmail.com>, 2008-2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:07+0100\n"
-"PO-Revision-Date: 2012-09-25 11:29-0600\n"
+"POT-Creation-Date: 2012-12-10 18:35+0000\n"
+"PO-Revision-Date: 2013-02-21 22:26-0600\n"
 "Last-Translator: Chel Hee Lee <gnustats@gmail.com>\n"
-"Language-Team:  <gnustats@gmail.com>\n"
+"Language-Team: R Development Translation Teams (Korean) <gnustats@korea.gnu.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Pootle 2.1.6\n"
 "X-Poedit-Language: Korean\n"
 "X-Poedit-Country: KOREA, REPUBLIC OF\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
 #: grid.c:214
-msgid "Cannot clip to rotated viewport"
-msgstr "회전된 뷰어포트에 고정할 수 없습니다"
+msgid "cannot clip to rotated viewport"
+msgstr "회전된 뷰포트에 고정 할 수 없습니다"
 
 #: grid.c:673
 #: grid.c:678
 #: grid.c:767
 #: grid.c:772
-msgid "Cannot pop the top-level viewport (grid and graphics output mixed?)"
-msgstr "최상위 뷰어포트를 띄울 수 없습니다 (grid와 graphics 결과물을 혼용하고 있지 않나요?)"
+msgid "cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"
+msgstr "최상단 뷰포트를 띄울 수 없습니다 ('grid'와 'graphics' 출력을 혼용하고 있나요?)"
 
 #: grid.c:952
 msgid "attempt to plot on null device"
-msgstr "null 장치에 플랏을 시도합니다"
+msgstr "null 장치위에 플랏을 시도합니다"
 
 #: grid.c:1232
-msgid "There is no layout defined"
+msgid "there is no layout defined"
 msgstr "정의된 레이아웃이 없습니다"
 
 #: grid.c:1452
-msgid "Polygon edge not found (zero-width or zero-height?)"
-msgstr "다각형의 정점을 찾을 수 없습니다 (너비 혹은 높이가 0 인가요?)"
+msgid "polygon edge not found (zero-width or zero-height?)"
+msgstr "다각형의 끝점을 찾을 수 없습니다 (혹시 너비 또는 높이가 0인가요?)"
 
 #: grid.c:1461
-msgid "Polygon edge not found"
-msgstr "다각형의 정점을 찾을 수 없습니다"
+msgid "polygon edge not found"
+msgstr "다각형의 끝점을 찾을 수 없습니다"
 
 #: grid.c:1615
-msgid "Require at least two points to draw arrow"
-msgstr "화살표를 그리기 위해서는 최소한 2개의 점이 필요합니다"
+msgid "require at least two points to draw arrow"
+msgstr "화살표를 그리기 위해서는 최소한 두개의 점이 필요합니다"
 
 #: grid.c:1931
-msgid "Non-finite control point in Xspline"
-msgstr "Xspline에서 비정형 컨트롤 포인트입니다"
+msgid "non-finite control point in Xspline"
+msgstr "Xspline에서 유한하지 않은 컨트롤 포인트입니다"
 
 #: grid.c:2796
 msgid "non-finite x or y in graphics path"
-msgstr "그래픽 경로에 비정형 x 또는 y가 있습니다"
+msgstr "그래픽 패스에 유한하지 않은 x 또는 y가 있습니다"
 
 #: grid.c:3286
 msgid "invalid plotting symbol"
-msgstr "잘못된 플랏 기호입니다"
+msgstr "유효하지 않은 플랏팅 기호입니다"
 
 #: grid.c:3372
-msgid "Unable to clip to rotated rectangle"
-msgstr "회전된 사각형에 고정시킬 수 없습니다"
+msgid "unable to clip to rotated rectangle"
+msgstr "회전된 사각형을 고정할 수 없습니다"
 
-#: layout.c:519
-msgid "invalid layout.pos.row"
-msgstr "layout.pos.row가 잘못되었습니다"
+#: layout.c:587
+msgid "invalid 'layout.pos.row'"
+msgstr "유효하지 않은 'layout.pos.row'입니다"
 
-#: layout.c:523
-msgid "invalid layout.pos.col"
-msgstr "layout.pos.col이 잘못되었습니다"
+#: layout.c:591
+msgid "invalid 'layout.pos.col'"
+msgstr "유효하지 않은 'layout.pos.col'입니다"
 
 #: matrix.c:49
 msgid "singular transformation matrix"
-msgstr "singular transformation matrix"
+msgstr ""
 
 #: state.c:169
-msgid "Unable to store grid state.  Too many devices open?"
-msgstr "그리드 상태를 저장할 수 없습니다. 너무 많은 장치들을 열고 있는 것은 아닌가요?"
+msgid "unable to store 'grid' state.  Too many devices open?"
+msgstr "'grid'상태를 저장할 수 없는데 혹시 너무 많은 장치가 열려있나요?"
 
 #: unit.c:260
 #: unit.c:410
@@ -92,30 +92,27 @@ msgstr "그리드 상태를 저장할 수 없습니다. 너무 많은 장치들�
 #: unit.c:1284
 #: unit.c:1364
 #: unit.c:1444
-msgid "Unimplemented unit function"
-msgstr "구현되지 않은 unit 함수"
+msgid "unimplemented unit function"
+msgstr "구현되지 않은 유닛함수입니다"
 
 #: unit.c:893
 #: unit.c:1639
-msgid "Illegal unit or unit not yet implemented"
-msgstr "unit의 잘못된 사용이거나, 아직 구현되지 않은 unit 입니다"
+msgid "invalid unit or unit not yet implemented"
+msgstr "유효하지 않은 유닛이거나 아직 구현되지 않은 유닛입니다"
 
 #: unit.c:1798
 msgid "Invalid unit"
-msgstr "유효하지 않은 unit"
+msgstr "유효하지 않은 유닛입니다"
 
 #: unit.c:1814
-msgid "Units must be character"
-msgstr "Units은 반드시 문자이어야 합니다"
+msgid "'units' must be character"
+msgstr "'units'은 반드시 문자이어야 합니다"
 
 #: unit.c:1817
-msgid "Units must be of length > 0"
-msgstr "Units의 길이는 반드시 0 보다 커야 합니다"
+msgid "'units' must be of length > 0"
+msgstr "유닛은 반드시 길이가 0 보다 커야 합니다"
 
 #: viewport.c:317
-msgid "Non-finite location and/or size for viewport"
-msgstr "뷰어포트에 비정형 위치 및/혹은 크기입니다"
+msgid "non-finite location and/or size for viewport"
+msgstr "뷰포트의 위치 그리고/또는 크기가 유한하지 않습니다"
 
-#~ msgid "Invalid circle radius (must be non-negative)"
-#~ msgstr ""
-#~ "부적절한 circle의 반경입니다(non-negative가 나오지 않으면 되지 않습니다)"

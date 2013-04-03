@@ -44,7 +44,7 @@
     }
     if(missing(fdef)) {
         if(missing(fdefault))
-            stop(gettextf("Must supply either a generic function or a function as default for %s",
+            stop(gettextf("must supply either a generic function or a function as default for %s",
                           sQuote(f)),
                  domain = NA)
         else if(is.primitive(fdefault)) {
@@ -82,9 +82,11 @@
     if(is.null(signature))
         signature <- args
     else if(any(is.na(match(signature, args))))
-        stop(gettextf("non-arguments found in the signature: %s",
-                      paste(signature[is.na(match(signature, args))],
-                            collapse = ", ")), domain = NA)
+        stop(sprintf(ngettext(sum(is.na(match(signature, args))),
+                              "non-argument found in the signature: %s",
+                              "non-arguments found in the signature: %s"),
+                     paste(signature[is.na(match(signature, args))], collapse = ", ")),
+             domain = NA)
     dots <- match("...", signature)
     if(!is.na(dots)) { # remove "..." unless it is the only element of the signature
         if(length(signature) > 1L)
@@ -101,8 +103,9 @@
         fdefault <- checkTrace(fdefault)
         if(!identical(formalArgs(fdefault), formalArgs(fdef)) &&
            !is.primitive(fdefault))
-            stop(gettextf("the formal arguments of the generic function for %s (%s) differ from those of the non-generic to be used as the default (%s)",
-                          sQuote(f),
+            stop(sprintf(ngettext(length(fdef),
+                                  "the formal argument of the generic function for %s (%s) differs from that of the non-generic to be used as the default (%s)",
+                                  "the formal arguments of the generic function for %s (%s) differ from those of the non-generic to be used as the default (%s)"),
                           paste(formalArgs(fdef), collapse = ", "),
                           paste(formalArgs(fdefault), collapse = ", ")),
                  domain = NA)
@@ -119,16 +122,12 @@
 }
 
 ## stripped down version of asS4 in base (asS4 can't be used until the methods
-## namespace is available)
+## namespace is available -- no longer true)
 .asS4 <- function (object)
-{
-    .Call("R_setS4Object", object, TRUE, 0L, PACKAGE = "base")
-}
+    asS4(object, TRUE, 0L)
 
 .notS4 <- function (object)
-{
-    .Call("R_setS4Object", object, FALSE, 0L, PACKAGE = "base")
-}
+    asS4(object, FALSE, 0L)
 
 
 ## the bootstrap version: "#----" brackets lines that replace parts of the real version
@@ -162,9 +161,11 @@ makeGeneric <-
     if(is.null(signature))
         signature <- args
     else if(any(is.na(match(signature, args))))
-        stop(gettextf("non-arguments found in the signature: %s",
-                      paste(signature[is.na(match(signature, args))],
-                            collapse = ", ")), domain = NA)
+        stop(sprintf(ngettext(sum(is.na(match(signature, args))),
+                              "non-argument found in the signature: %s",
+                              "non-arguments found in the signature: %s"),
+                     paste(signature[is.na(match(signature, args))], collapse = ", ")),
+             domain = NA)
     attr(signature, "simpleOnly") <- simpleInheritanceOnly # usually NULL
     dots <- match("...", signature)
     if(!is.na(dots)) ## ... is not currently supported in method signatures
@@ -448,7 +449,7 @@ getGeneric <-
         else if(is.primitive(f))
             return(genericForPrimitive(.primname(f)))
         else
-            stop("Argument f must be a string, generic function, or primitive: got an ordinary function")
+            stop("argument 'f' must be a string, generic function, or primitive: got an ordinary function")
     }
     value <- if(missing(where))
 	.getGeneric(f, , package) else
@@ -499,13 +500,12 @@ getGeneric <-
     else
         value <- NULL
     if(is.null(value)) {
-        if(is.character(f) && f %in% c("as.double", "as.real")) f <- "as.numeric"
+        if(is.character(f) && f %in% "as.double") f <- "as.numeric"
         if(is.character(f) && !nzchar(f)) {
             message("Empty function name in .getGeneric")
             dput(sys.calls())
         }
-        value <- .Call("R_getGeneric", f, FALSE, as.environment(where), package,
-                       PACKAGE = "methods")
+        value <- .Call(C_R_getGeneric, f, FALSE, as.environment(where), package)
         ## cache public generics (usually these will have been cached already
         ## and we get to this code for non-exported generics)
         if(!is.null(value) && exists(f, .GlobalEnv) &&
@@ -722,8 +722,8 @@ getMethodsMetaData <- function(f, where = topenv(parent.frame()))
     if(is.null(fdef))
         return(NULL)
     if(.noMlists()) {
-        warning(gettextf("Methods list objects are not maintained in this version of R:  request for function %s may return incorrect information",
-                         sQuote(fdef@generic)),
+        warning(sprintf("Methods list objects are not maintained in this version of R:  request for function %s may return incorrect information",
+                        sQuote(fdef@generic)),
                 domain = NA)
     }
     mname <- methodsPackageMetaName("M",fdef@generic, fdef@package)
@@ -810,7 +810,7 @@ getGenerics <- function(where, searchForm = FALSE)
     funNames <- gsub(".__T__(.*):([^:]+)", "\\1", these)
     if(length(funNames) == 0L &&
        length(these[substr(these, 1L, 6L) == ".__M__"]))
-        warning(gettextf("Package %s seems to have out-of-date methods; need to reinstall from source",
+        warning(sprintf("package %s seems to have out-of-date methods; need to reinstall from source",
                          sQuote(getPackageName(where[[1L]]))))
     packageNames <- gsub(".__T__(.*):([^:]+(.*))", "\\2", these)
     attr(funNames, "package") <- packageNames
@@ -939,14 +939,14 @@ cacheGenericsMetaData <- function(f, fdef, attach = TRUE,
 
 setPrimitiveMethods <-
   function(f, fdef, code, generic, mlist = get(".Methods", envir = environment(generic)))
-    .Call("R_M_setPrimitiveMethods", f, fdef, code, generic, mlist, PACKAGE="methods")
+    .Call(C_R_M_setPrimitiveMethods, f, fdef, code, generic, mlist)
 
 ### utility to turn ALL primitive methods on or off (to avoid possible inf. recursion)
 .allowPrimitiveMethods <-
   function(onOff) {
       if(onOff) code <- "SET"
       else code <- "CLEAR"
-      .Call("R_M_setPrimitiveMethods", "", NULL, code, NULL, NULL, PACKAGE = "methods")
+      .Call(C_R_M_setPrimitiveMethods, "", NULL, code, NULL, NULL)
   }
 
 
@@ -999,7 +999,7 @@ MethodAddCoerce <- function(method, argName, thisClass, methodClass)
 }
 
 missingArg <- function(symbol, envir = parent.frame(), eval = FALSE)
-    .Call("R_missingArg", if(eval) symbol else substitute(symbol), envir, PACKAGE = "methods")
+    .Call(C_R_missingArg, if(eval) symbol else substitute(symbol), envir)
 
 balanceMethodsList <- function(mlist, args, check = TRUE)
 {
@@ -1227,7 +1227,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
         else if(is(mi, "MethodsList"))
             mi <- Recall(mi, f)
         else
-            stop(gettextf("internal error: Bad methods list object in fixing methods for primitive function %s",
+            stop(sprintf("internal error: Bad methods list object in fixing methods for primitive function %s",
                           sQuote(f)),
                  domain = NA)
         methods[[i]] <- mi
@@ -1257,7 +1257,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 .ChangeFormals <- function(def, defForArgs, msg = "<unidentified context>")
 {
     if(!is(def, "function"))
-        stop(gettextf("trying to change the formal arguments in %s, in an object of class %s; expected a function definition",
+        stop(gettextf("trying to change the formal arguments in %s in an object of class %s; expected a function definition",
                       msg, dQuote(class(def))),
              domain = NA)
     if(!is(defForArgs, "function"))
@@ -1305,7 +1305,7 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
         value <- list(env)
         repeat {
             if(identical(env, emptyenv()))
-                stop("botched namespace: failed to find 'base' namespace in its parents")
+                stop("botched namespace: failed to find 'base' namespace in its parents", domain = NA)
             env <- parent.env(env)
             value <- c(value, list(env))
             if(isBaseNamespace(env))
@@ -1406,12 +1406,8 @@ metaNameUndo <- function(strings, prefix, searchForm = FALSE)
 .identC <- function(c1 = NULL, c2 = NULL)
 {
     ## are the two objects identical class or genric function string names?
-    .Call("R_identC", c1, c2, PACKAGE="methods")
+    .Call(C_R_identC, c1, c2)
 }
-
-## a version of match that avoids the is.factor() junk: faster & safe for bootstrapping
-## This cannot work: wrong number of args.
-## .matchBasic <- function(x, table, nomatch = NA) .Internal(match(x, table, nomatch))
 
 ## match default exprs in the method to those in the generic
 ## if the method does not itself specify a default, and the
@@ -1481,7 +1477,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
                 else if(is(x, "genericFunction"))
                     x@generic
                 else
-		    stop(gettextf("invalid element in the groupMembers slot (class %s)",
+		    stop(gettextf("invalid element in the \"groupMembers\" slot (class %s)",
 				  dQuote(class(x))),
                          domain = NA)
             })
@@ -1494,7 +1490,7 @@ getGroupMembers <- function(group, recursive = FALSE, character = TRUE)
 {
     ## the primitive name is 'as.double', but S4 methods are
     ## traditionally set on 'as.numeric'
-    f <- .Call("R_get_primname", object, PACKAGE = "base")
+    f <- .Call(C_R_get_primname, object)
     if(f == "as.double") "as.numeric" else f
 }
 
@@ -1586,9 +1582,9 @@ utils::globalVariables(c(".MTable", ".AllMTable", ".dotsCall"))
     env <- sys.frame(sys.parent())
     dots <- eval(quote(list(...)), env)
     classes <- unique(unlist(lapply(dots, methods:::.class1)))
-    method <-methods:::.selectDotsMethod(classes, .MTable, .AllMTable)
+    method <- methods:::.selectDotsMethod(classes, .MTable, .AllMTable)
     if(is.null(method))
-        stop(gettextf("No method or default matching the \"...\" arguments in %s",
+        stop(gettextf("no method or default matching the \"...\" arguments in %s",
                       deparse(sys.call(sys.parent()), nlines = 1)), domain = NA)
     assign(".Method", method, envir = env)
     eval(.dotsCall, env)
@@ -1620,7 +1616,7 @@ utils::globalVariables(c(".MTable", ".AllMTable", ".dotsCall"))
     direct <- match(classes, methods, 0L) > 0L
     if(all(direct)) {
         if(length(classes) > 1L) {
-            warning("multiple direct matches: ", .pasteC(classes), "; using the first of these")
+            warning(gettextf("multiple direct matches: %s; using the first of these", .pasteC(classes)), domain = NA)
             classes <- classes[1L]
         }
         else if(length(classes) == 0L)
@@ -1666,7 +1662,8 @@ utils::globalVariables(c(".MTable", ".AllMTable", ".dotsCall"))
     else {
         classes <- found[which.min(distances)]
         if(length(classes) > 1L) {
-            warning("multiple equivalent inherited matches: ", .pasteC(classes), "; using the first of these")
+            warning(gettextf("multiple equivalent inherited matches: %s; using the first of these",
+                             .pasteC(classes)), domain = NA)
             classes <- classes[1L]
         }
         method <- get(classes,envir = mtable)
@@ -1747,14 +1744,14 @@ if(FALSE) {
                 ## this is only a warning because it just might
                 ## be the result of identical class defs (e.g., from setOldClass()
                 msgs <- c(msgs,
-                          gettextf("Multiple definitions exist for class %s, but the supplied package (%s) is not one of them (%s)",
+                          gettextf("multiple definitions exist for class %s, but the supplied package (%s) is not one of them (%s)",
                                    dQuote(classi), sQuote(pkgi),
                                    paste(dQuote(get(classi, envir = .classTable)), collapse = ", ")))
                 level <- c(level, 2) #warn
             }
             else {
                 msgs <- c(msgs,
-                          gettextf("Multiple definitions exist for class %s; should specify one of them (%s), e.g. by className()",
+                          gettextf("multiple definitions exist for class %s; should specify one of them (%s), e.g. by className()",
                                    dQuote(classi),
                                    paste(dQuote(get(classi, envir = .classTable)), collapse = ", ")))
             }
@@ -1769,7 +1766,7 @@ if(FALSE) {
             }
             if(is.null(classDefi)) {
                 classDefi <- getClassDef
-                msgi <- gettextf("No definition found for class %s",
+                msgi <- gettextf("no definition found for class %s",
                                  dQuote(classi))
                 ## ensure only one error message
                 if(length(level) && any(level == 3))
@@ -1816,13 +1813,13 @@ if(FALSE) {
     actions <- get(actionListName, envir = where)
     ## check sanity:  methods must be loaded
     if(! "package:methods" %in% search()) {
-        warning("Trying to execute load actions without methods package")
+        warning("trying to execute load actions without 'methods' package")
         library(methods)
     }
     for(what in actions) {
         aname <- .actionMetaName(what)
         if(!exists(aname, envir = where, inherits = FALSE)) {
-            warning(gettextf("Missing  function for load action: %s", what))
+            warning(gettextf("missing function for load action: %s", what))
             next
         }
         f <- get(aname, envir = where)
@@ -1830,7 +1827,7 @@ if(FALSE) {
                             list(FUN = f, WHERE = where)), where)
         if(is(value, "error")) {
             callString <- deparse(value$call)[[1]]
-            stop(gettextf("Error in load action %s for package %s: %s: %s",
+            stop(gettextf("error in load action %s for package %s: %s: %s",
                           aname, getPackageName(where), callString, value$message))
         }
     }
@@ -1910,7 +1907,9 @@ getLoadActions <- function(where = topenv(parent.frame())) {
     if(length(actions)) {
         allExists <- sapply(actions, function(what) exists(.actionMetaName(what), envir = where, inherits = FALSE))
         if(!all(allExists)) {
-            warning(gettextf("Some actions missing: %s", paste(actions[!allExists], collapse =", ")))
+            warning(gettextf("some actions are missing: %s",
+                             paste(actions[!allExists], collapse =", ")),
+                    domain = NA)
             actions <- actions[allExists]
         }
         allFuns <- lapply(actions, function(what) get(.actionMetaName(what), envir = where))

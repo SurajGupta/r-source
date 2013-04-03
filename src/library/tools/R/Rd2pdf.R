@@ -761,7 +761,7 @@ setEncoding2, "
         } else if (substr(a, 1, 17) == "--outputEncoding=") {
             outenc <- substr(a, 18, 1000)
         } else if (substr(a, 1, 12) == "--build-dir=") {
-            build_dir<- substr(a, 13, 1000)
+            build_dir <- substr(a, 13, 1000)
         } else if (a == "--no-index") {
             index <- FALSE
         } else if (a == "--no-description") {
@@ -829,7 +829,7 @@ setEncoding2, "
 
     res <- try(texi2pdf('Rd2.tex', quiet = FALSE, index = index))
     if (inherits(res, "try-error")) {
-        message("Error in running tools::texi2pdf")
+        message("Error in running tools::texi2pdf()")
         do_cleanup()
         q("no", status = 1L, runLast = FALSE)
     }

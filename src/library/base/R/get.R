@@ -17,16 +17,16 @@
 #  http://www.r-project.org/Licenses/
 
 get <-
-    function (x, pos = -1, envir = as.environment(pos), mode = "any",
+    function (x, pos = -1L, envir = as.environment(pos), mode = "any",
               inherits = TRUE)
     .Internal(get(x, envir, mode, inherits))
 
-mget <- function(x, envir, mode = "any",
-                 ifnotfound= list(function(x)
-				stop(paste0("value for '", x, "' not found"),
-				     call.=FALSE)),
-          inherits = FALSE)
-     .Internal(mget(x, envir, mode, ifnotfound, inherits))
+mget <- function(x, envir = as.environment(-1L), mode = "any",
+                 ifnotfound, inherits = FALSE)
+    .Internal(mget(x, envir, mode,
+                   if(missing(ifnotfound))
+                   list(function(x) stop(gettextf("value for %s not found", sQuote(x)), call. = FALSE)) else ifnotfound,
+                   inherits))
 
 ## DB's proposed name "getSlotOrComponent" is more precise but harder to type
 getElement <- function(object, name) {

@@ -37,7 +37,8 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
             if(any(x > .Machine$integer.max))
                 stop("'x' has entries too large to be integer")
             if(!identical(TRUE, (ax <- all.equal(xo, x))))
-                warning("'x' has been rounded to integer: ", ax)
+                warning(gettextf("'x' has been rounded to integer: %d", ax),
+                        domain = NA)
             storage.mode(x) <- "integer"
         }
     }
@@ -94,52 +95,19 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
                 stop("need 2 or more non-zero column marginals")
             METHOD <- paste(METHOD, "with simulated p-value\n\t (based on", B,
 			     "replicates)")
-            sr <- rowSums(x)
-            sc <- colSums(x)
-            n <- sum(sc)
             STATISTIC <- -sum(lfactorial(x))
-	    tmp <- .C(C_fisher_sim,
-		      nr,
-                      nc,
-		      as.integer(sr),
-		      as.integer(sc),
-		      as.integer(n),
-		      as.integer(B),
-		      integer(nr * nc), # checked for overflow above
-		      double(n + 1L),
-		      integer(nc),
-		      results = double(B))$results
+            tmp <- .Call(C_Fisher_sim, rowSums(x), colSums(x), B)
 	    ## use correct significance level for a Monte Carlo test
             almost.1 <- 1 + 64 * .Machine$double.eps
             ## PR#10558: STATISTIC is negative
 	    PVAL <- (1 + sum(tmp <= STATISTIC/almost.1)) / (B + 1)
         } else if(hybrid) {
-            PVAL <- .C(C_fexact,
-                       nr,
-                       nc,
-                       x,
-                       nr,
-                       ## Cochran condition for asym.chisq. decision:
-                       as.double(5), #  expect
-                       as.double(80),#  percnt
-                       as.double(1), #  emin
-                       double(1L),   #  prt
-                       p = double(1L),
-                       as.integer(workspace),
-                       mult = as.integer(mult))$p
-        } else
-            PVAL <- .C(C_fexact,
-                       nr,
-                       nc,
-                       x,
-                       nr,
-                       as.double(-1),#  expect < 0 : exact
-                       as.double(100),
-                       as.double(0),
-                       double(1L), #   prt
-                       p = double(1L),
-                       as.integer(workspace),
-                       mult = as.integer(mult))$p
+            ## Cochran condition for asym.chisq. decision:
+            PVAL <- .Call(C_Fexact, x, c(5, 180, 1), workspace, mult)
+         } else {
+            ##  expect < 0 : exact
+            PVAL <- .Call(C_Fexact, x, c(-1, 100, 0), workspace, mult)
+        }
 
         RVAL <- list(p.value = max(0, min(1, PVAL)))
     }
@@ -152,8 +120,7 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
         x <- x[1L, 1L]
         lo <- max(0L, k - n)
         hi <- min(k, m)
-        NVAL <- or
-        names(NVAL) <- "odds ratio"
+        NVAL <- c("odds ratio" = or)
 
         ## Note that in general the conditional distribution of x given
         ## the marginals is a non-central hypergeometric distribution H
@@ -229,8 +196,7 @@ function(x, y = NULL, workspace = 200000, hybrid = FALSE,
             else
                 1
         }
-        ESTIMATE <- mle(x)
-        names(ESTIMATE) <- "odds ratio"
+        ESTIMATE <- c("odds ratio" = mle(x))
 
         if(conf.int) {
             ## Determine confidence intervals for the odds ratio.

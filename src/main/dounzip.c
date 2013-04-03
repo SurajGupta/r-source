@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file dounzip.c
- *  first part Copyright (C) 2002-11  The R Core Team
+ *  first part Copyright (C) 2002-12  The R Core Team
  *  second part Copyright (C) 1998-2010 Gilles Vollant
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -259,7 +259,7 @@ static SEXP ziplist(const char *zipname)
     err = unzGetGlobalInfo64 (uf, &gi);
     if (err != UNZ_OK)
         error("error %d with zipfile in unzGetGlobalInfo", err);
-    nfiles = gi.number_entry;
+    nfiles = (int) gi.number_entry;
     /* name, length, datetime */
     PROTECT(ans = allocVector(VECSXP, 3));
     SET_VECTOR_ELT(ans, 0, names = allocVector(STRSXP, nfiles));
@@ -299,7 +299,7 @@ static SEXP ziplist(const char *zipname)
 }
 
 
-SEXP attribute_hidden do_unzip(SEXP call, SEXP op, SEXP args, SEXP env)
+SEXP Runzip(SEXP args)
 {
     SEXP  fn, ans, names = R_NilValue;
     char  zipname[PATH_MAX], dest[PATH_MAX];
@@ -368,7 +368,7 @@ SEXP attribute_hidden do_unzip(SEXP call, SEXP op, SEXP args, SEXP env)
 	    break;
 	case UNZ_PARAMERROR:
 	case UNZ_INTERNALERROR:
-	    warning(_("internal error in unz code"));
+	    warning("internal error in 'unz' code");
 	    break;
 	case -200:
 	    warning(_("write error in extracting from zip file"));
@@ -409,7 +409,7 @@ static Rboolean unz_open(Rconnection con)
     strcpy(path, tmp);
     p = Rf_strrchr(path, ':');
     if(!p) {
-	warning(_("invalid description of unz connection"));
+	warning(_("invalid description of 'unz' connection"));
 	return FALSE;
     }
     *p = '\0';
@@ -458,7 +458,7 @@ static size_t unz_read(void *ptr, size_t size, size_t nitems,
 		       Rconnection con)
 {
     unzFile uf = ((Runzconn)(con->private))->uf;
-    return unzReadCurrentFile(uf, ptr, size*nitems)/size;
+    return unzReadCurrentFile(uf, ptr, (unsigned int)(size*nitems))/size;
 }
 
 static int null_vfprintf(Rconnection con, const char *format, va_list ap)
@@ -490,17 +490,17 @@ R_newunz(const char *description, const char *const mode)
 {
     Rconnection new;
     new = (Rconnection) malloc(sizeof(struct Rconn));
-    if(!new) error(_("allocation of unz connection failed"));
+    if(!new) error(_("allocation of 'unz' connection failed"));
     new->class = (char *) malloc(strlen("unz") + 1);
     if(!new->class) {
 	free(new);
-	error(_("allocation of unz connection failed"));
+	error(_("allocation of 'unz' connection failed"));
     }
     strcpy(new->class, "unz");
     new->description = (char *) malloc(strlen(description) + 1);
     if(!new->description) {
 	free(new->class); free(new);
-	error(_("allocation of unz connection failed"));
+	error(_("allocation of 'unz' connection failed"));
     }
     init_con(new, description, CE_NATIVE, mode);
 
@@ -517,7 +517,7 @@ R_newunz(const char *description, const char *const mode)
     new->private = (void *) malloc(sizeof(struct unzconn));
     if(!new->private) {
 	free(new->description); free(new->class); free(new);
-	error(_("allocation of unz connection failed"));
+	error(_("allocation of 'unz' connection failed"));
     }
     return new;
 }
@@ -1993,14 +1993,14 @@ static int unzReadCurrentFile  (unzFile file, voidp buf, unsigned len)
             pfile_in_zip_read_info->bstream.avail_in       = 
 		pfile_in_zip_read_info->stream.avail_in;
             pfile_in_zip_read_info->bstream.total_in_lo32  = 
-		pfile_in_zip_read_info->stream.total_in;
+		(unsigned int) pfile_in_zip_read_info->stream.total_in;
             pfile_in_zip_read_info->bstream.total_in_hi32  = 0;
             pfile_in_zip_read_info->bstream.next_out       = 
 		(char*)pfile_in_zip_read_info->stream.next_out;
             pfile_in_zip_read_info->bstream.avail_out      = 
 		pfile_in_zip_read_info->stream.avail_out;
             pfile_in_zip_read_info->bstream.total_out_lo32 = 
-		pfile_in_zip_read_info->stream.total_out;
+		(unsigned int) pfile_in_zip_read_info->stream.total_out;
             pfile_in_zip_read_info->bstream.total_out_hi32 = 0;
 
             uTotalOutBefore = pfile_in_zip_read_info->bstream.total_out_lo32;

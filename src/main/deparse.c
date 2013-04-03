@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2011  The R Core Team
+ *  Copyright (C) 1997--2012  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,6 +91,7 @@
 
 #define R_USE_SIGNALS 1
 #include <Defn.h>
+#include <Internal.h>
 #include <float.h> /* for DBL_DIG */
 #include <Print.h>
 #include <Fileio.h>
@@ -108,7 +109,7 @@ typedef R_StringBuffer DeparseBuffer;
 
 typedef struct {
     int linenumber;
-    int len;
+    int len; // FIXME: size_t
     int incurly;
     int inlist;
     Rboolean startline; /* = TRUE; */
@@ -155,7 +156,7 @@ SEXP attribute_hidden do_deparse(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isNull(CAR(args))) {
 	cut0 = asInteger(CAR(args));
 	if(cut0 == NA_INTEGER|| cut0 < MIN_Cutoff || cut0 > MAX_Cutoff) {
-	    warning(_("invalid 'cutoff' for deparse, using default"));
+	    warning(_("invalid 'cutoff' value for 'deparse', using default"));
 	    cut0 = DEFAULT_Cutoff;
 	}
     }
@@ -178,6 +179,15 @@ SEXP deparse1(SEXP call, Rboolean abbrev, int opts)
 {
     Rboolean backtick = TRUE;
     return deparse1WithCutoff(call, abbrev, DEFAULT_Cutoff, backtick,
+			      opts, -1);
+}
+
+/* used for language objects in print() */
+attribute_hidden
+SEXP deparse1w(SEXP call, Rboolean abbrev, int opts)
+{
+    Rboolean backtick = TRUE;
+    return deparse1WithCutoff(call, abbrev, R_print.cutoff, backtick,
 			      opts, -1);
 }
 
@@ -259,13 +269,14 @@ SEXP deparse1line(SEXP call, Rboolean abbrev)
 			     SIMPLEDEPARSE, -1));
     if ((lines = length(temp)) > 1) {
 	char *buf;
-	int i, len;
+	int i;
+	size_t len;
 	const void *vmax;
 	cetype_t enc = CE_NATIVE;
-	for (len=0, i = 0; i < length(temp); i++) {
+	for (len = 0, i = 0; i < length(temp); i++) {
 	    SEXP s = STRING_ELT(temp, i);
 	    cetype_t thisenc = getCharCE(s);
-	    len += strlen(CHAR(s));
+	    len += strlen(CHAR(s));  // FIXME: check for overflow?
 	    if (thisenc != CE_NATIVE) 
 	    	enc = thisenc; /* assume only one non-native encoding */ 
 	}    
@@ -380,7 +391,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error( _("character arguments expected"));
     nobjs = length(names);
     if(nobjs < 1 || length(file) < 1)
-	error(_("zero length argument"));
+	error(_("zero-length argument"));
     source = CADDR(args);
     if (source != R_NilValue && TYPEOF(source) != ENVSXP)
 	error(_("invalid '%s' argument"), "envir");
@@ -662,6 +673,40 @@ static const char * quotify(SEXP name, int quote)
     if (isValidName(s) || *s == '\0') return s;
 
     return EncodeString(name, 0, quote, Rprt_adj_none);
+}
+
+/* check for whether we need to parenthesize a caller.  The unevaluated ones
+   are tricky:
+   We want
+     x$f(z)
+     x[n](z)
+     base::mean(x)
+   but
+     (f+g)(z)
+     (function(x) 1)(x)
+     etc.
+*/
+static Rboolean parenthesizeCaller(SEXP s)
+{   
+    SEXP op, sym;
+    if (TYPEOF(s) == LANGSXP) { /* unevaluated */
+    	op = CAR(s);
+    	if (TYPEOF(op) == SYMSXP) {
+    	    if (isUserBinop(op)) return TRUE;   /* %foo% */
+    	    sym = SYMVALUE(op);
+    	    if (TYPEOF(sym) == BUILTINSXP
+    	        || TYPEOF(sym) == SPECIALSXP) {
+    	        if (PPINFO(sym).precedence >= PREC_DOLLAR
+    	            || PPINFO(sym).kind == PP_FUNCALL
+    	            || PPINFO(sym).kind == PP_PAREN
+    	            || PPINFO(sym).kind == PP_CURLY) return FALSE; /* x$f(z) or x[n](z) or f(z) or (f) or {f} */
+    	        else return TRUE;		/* (f+g)(z) etc. */
+    	    }
+    	    return FALSE;			/* regular function call */
+    	 } else
+	    return TRUE; 			/* something strange, like (1)(x) */
+    } else 
+        return TYPEOF(s) == CLOSXP;
 }
 
 /* This is the recursive part of deparsing. */
@@ -1094,13 +1139,23 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	}
 	else if (TYPEOF(CAR(s)) == CLOSXP || TYPEOF(CAR(s)) == SPECIALSXP
 		 || TYPEOF(CAR(s)) == BUILTINSXP) {
-	    deparse2buff(CAR(s), d);
+	    if (parenthesizeCaller(CAR(s))) {
+	    	print2buff("(", d);
+	    	deparse2buff(CAR(s), d);
+	    	print2buff(")", d);
+	    } else
+	    	deparse2buff(CAR(s), d);
 	    print2buff("(", d);
 	    args2buff(CDR(s), 0, 0, d);
 	    print2buff(")", d);
 	}
 	else { /* we have a lambda expression */
-	    deparse2buff(CAR(s), d);
+	    if (parenthesizeCaller(CAR(s))) {
+	    	print2buff("(", d);
+	    	deparse2buff(CAR(s), d);
+	    	print2buff(")", d);
+	    } else
+	    	deparse2buff(CAR(s), d);
 	    print2buff("(", d);
 	    args2buff(CDR(s), 0, 0, d);
 	    print2buff(")", d);
@@ -1179,7 +1234,7 @@ static void print2buff(const char *strng, LocalParseData *d)
     bufflen = strlen(d->buffer.data);
     R_AllocStringBuffer(bufflen + tlen, &(d->buffer));
     strcat(d->buffer.data, strng);
-    d->len += tlen;
+    d->len += (int) tlen;
 }
 
 static void vector2buff(SEXP vector, LocalParseData *d)

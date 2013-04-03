@@ -149,11 +149,11 @@ x <- seq(0.1, 4, length.out = 201); dx <- diff(x)[1]
 par(mfrow = c(2, 3))
 for (ch in c("", "l","di","tri","tetra","penta")) {
   is.deriv <- nchar(ch) >= 2
-  nm <- paste(ch, "gamma", sep = "")
+  nm <- paste0(ch, "gamma")
   if (is.deriv) {
     dy <- diff(y) / dx # finite difference
     der <- which(ch == c("di","tri","tetra","penta")) - 1
-    nm2 <- paste("psigamma(*, deriv = ", der,")", sep = "")
+    nm2 <- paste0("psigamma(*, deriv = ", der,")")
     nm  <- if(der >= 2) nm2 else paste(nm, nm2, sep = " ==\n")
     y <- psigamma(x, deriv = der)
   } else {
@@ -167,7 +167,10 @@ par(mfrow = c(1, 1))
 
 ## "Extended" Pascal triangle:
 fN <- function(n) formatC(n, width=2)
-for (n in -4:10) cat(fN(n),":", fN(choose(n, k = -2:max(3, n+2))), "\n")
+for (n in -4:10) {
+    cat(fN(n),":", fN(choose(n, k = -2:max(3, n+2))))
+    cat("\n")
+}
 
 ## R code version of choose()  [simplistic; warning for k < 0]:
 mychoose <- function(r, k)

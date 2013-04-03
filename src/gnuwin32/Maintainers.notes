@@ -139,9 +139,19 @@ for methods
 
 set_R_Tcldo
 unset_R_Tcldo
-wtransChar
+Rf_wtransChar
 
 for tcltk
+
+R_fixbackslash
+consolefn
+freeConsoleData
+freemenuitems
+lzma_crc64
+orderVector1
+wgl_histadd etc
+
+for utils
 
 
 R_gl_tab_set
@@ -162,44 +172,13 @@ localeCP
 
 for graphapp.dll
 
-
-R_cumsum
-
-for package DCluster
-
-
-fft_factor
-fft_work
-
-for package RandomFields
-
 setup_term_ui
 
 for package Rserve
 
-Brent_fmin
-R_tabulate
-R_zeroin
-
-for package ape (at the time)
-
-findInterval
-
-for package eco
-
-chol_
 optif9
-rs_
 
 for package nlme
-
-balanc_
-balbak_
-elmhes_
-eltran_
-hqr2_
-
-for package panel
 
 
 BDR 2007-08-20

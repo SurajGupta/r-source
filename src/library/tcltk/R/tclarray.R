@@ -27,8 +27,8 @@ tclArray <- function() {
 "[[.tclArray" <- function(x, ...) {
     name <- as.character(x)
     i <- paste(...,sep=",")
-    rval <- .External("RTcl_GetArrayElem", name, i, PACKAGE = "tcltk")
-    if (!is.null(rval)) class(rval)<-"tclObj"
+    rval <- .External(.C_RTcl_GetArrayElem, name, i)
+    if (!is.null(rval)) class(rval) <- "tclObj"
     rval
 }
 
@@ -36,10 +36,10 @@ tclArray <- function() {
     name <- as.character(x)
     i <- paste(..., sep=",")
     if (is.null(value))
-        .External("RTcl_RemoveArrayElem", name, i, PACKAGE = "tcltk")
+        .External(.C_RTcl_RemoveArrayElem, name, i)
     else {
         value <- as.tclObj(value)
-        .External("RTcl_SetArrayElem", name, i, value, PACKAGE = "tcltk")
+        .External(.C_RTcl_SetArrayElem, name, i, value)
     }
     x
 }
@@ -47,8 +47,8 @@ tclArray <- function() {
 "$.tclArray" <- function(x, i) {
     name <- as.character(x)
     i <- as.character(i)
-    rval <- .External("RTcl_GetArrayElem", name, i, PACKAGE = "tcltk")
-    if (!is.null(rval)) class(rval)<-"tclObj"
+    rval <- .External(.C_RTcl_GetArrayElem, name, i)
+    if (!is.null(rval)) class(rval) <- "tclObj"
     rval
 }
 
@@ -56,10 +56,10 @@ tclArray <- function() {
     name <- as.character(x)
     i <- as.character(i)
     if (is.null(value))
-        .External("RTcl_RemoveArrayElem", name, i, PACKAGE = "tcltk")
+        .External(.C_RTcl_RemoveArrayElem, name, i)
     else {
         value <- as.tclObj(value)
-        .External("RTcl_SetArrayElem", name, i, value, PACKAGE = "tcltk")
+        .External(.C_RTcl_SetArrayElem, name, i, value)
     }
     x
 }

@@ -21,7 +21,7 @@ hist <- function(x, ...) UseMethod("hist")
 hist.default <-
     function (x, breaks = "Sturges", freq = NULL,
 	      probability = !freq, include.lowest= TRUE,
-	      right= TRUE, density = NULL, angle = 45,
+	      right = TRUE, density = NULL, angle = 45,
 	      col = NULL, border = NULL,
 	      main = paste("Histogram of" , xname),
 	      xlim = range(breaks), ylim = NULL,
@@ -63,12 +63,23 @@ hist.default <-
 	} else if(is.function(breaks)) {
 	    breaks <- breaks(x)
 	}
-	if(!is.numeric(breaks) || !is.finite(breaks) || breaks < 1L)
-	    stop("invalid number of 'breaks'")
-	breaks <- pretty (range(x), n = breaks, min.n = 1)
-	nB <- length(breaks)
-	if(nB <= 1) ##-- Impossible !
-	    stop("hist.default: pretty() error, breaks=", format(breaks))
+        if (length(breaks) == 1) {
+            if(!is.numeric(breaks) || !is.finite(breaks) || breaks < 1L)
+                stop("invalid number of 'breaks'")
+            breaks <- pretty (range(x), n = breaks, min.n = 1)
+            nB <- length(breaks)
+            if(nB <= 1) ##-- Impossible !
+                stop(gettextf("hist.default: pretty() error, breaks=%s",
+                              format(breaks)), domain = NA)
+        }
+        else {
+            if(!is.numeric(breaks) || length(breaks) <= 1)
+                stop(gettextf("Invalid breakpoints produced by 'breaks(x)': %s",
+                              format(breaks)), domain = NA)
+            breaks <- sort(breaks)
+            nB <- length(breaks)
+            use.br <- TRUE # To allow equidist=FALSE below (FIXME: Find better way?)
+        }
     }
     nB <- as.integer(nB)
     if(is.na(nB)) stop("invalid length(breaks)")
@@ -101,12 +112,9 @@ hist.default <-
     fuzzybreaks <- breaks + fuzz
     h <- diff(fuzzybreaks)
 
-    storage.mode(x) <- "double"
-    storage.mode(fuzzybreaks) <- "double"
     ## With the fuzz adjustment above, the "right" and "include"
-    ## arguments are often irrelevant (not with integer data!)
-    counts <- .Call("BinCount", x, fuzzybreaks, right, include.lowest,
-                    PACKAGE = "base")
+    ## arguments are often irrelevant (but not with integer data!)
+    counts <- .Call(C_BinCount, x, fuzzybreaks, right, include.lowest)
     if (any(counts < 0L))
 	stop("negative 'counts'. Internal Error.", domain = NA)
     if (sum(counts) < n)
@@ -114,7 +122,6 @@ hist.default <-
     dens <- counts/(n*diff(breaks)) # use un-fuzzed intervals
     mids <- 0.5 * (breaks[-1L] + breaks[-nB])
     r <- structure(list(breaks = breaks, counts = counts,
-			intensities = dens,
 			density = dens, mids = mids,
 			xname = xname, equidist = equidist),
 		   class = "histogram")
@@ -158,7 +165,7 @@ plot.histogram <-
 	if(is.logical(x$equidist)) x$equidist
 	else { h <- diff(x$breaks) ; diff(range(h)) < 1e-7 * mean(h) }
     if(freq && !equidist)
-	warning("the AREAS in the plot are wrong -- rather use freq=FALSE")
+	warning("the AREAS in the plot are wrong -- rather use 'freq = FALSE'")
 
     y <- if (freq) x$counts else x$density
     nB <- length(x$breaks)

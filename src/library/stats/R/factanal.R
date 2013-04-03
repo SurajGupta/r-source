@@ -93,8 +93,10 @@ factanal <-
     if(p < 3) stop("factor analysis requires at least three variables")
     dof <- 0.5 * ((p - factors)^2 - p - factors)
     if(dof < 0)
-        stop(gettextf("%d factors is too many for %d variables", factors, p),
-             domain = NA)
+        stop(sprintf(ngettext(factors,
+                              "%d factor is too many for %d variables",
+                              "%d factors are too many for %d variables"),
+                     factors, p), domain = NA)
     sds <- sqrt(diag(cv))
     cv <- cv/(sds %o% sds)
 
@@ -110,10 +112,12 @@ factanal <-
     }
     start <- as.matrix(start)
     if(nrow(start) != p)
-        stop(gettextf("'start' must have %d rows", p), domain = NA)
+    stop(sprintf(ngettext(p,
+                       "'start' must have %d row",
+                       "'start' must have %d rows"),
+                 p), domain = NA)
     nc <- ncol(start)
     if(nc < 1) stop("no starting values supplied")
-
     best <- Inf
     for (i in 1L:nc) {
         nfit <- factanal.fit.mle(cv, factors, start[, i],
@@ -126,7 +130,11 @@ factanal <-
             best <- fit$criteria[1L]
         }
     }
-    if(best == Inf) stop("unable to optimize from these starting value(s)")
+    if(best == Inf)
+        stop(ngettext(nc,
+                      "unable to optimize from this starting value",
+                      "unable to optimize from these starting values"),
+             domain = NA)
     load <- fit$loadings
     if(rotation != "none") {
         rot <- do.call(rotation, c(list(load), cn$rotate))
@@ -216,8 +224,7 @@ factanal.fit.mle <-
                              paste0("Factor", 1L:factors))
     p <- ncol(cmat)
     dof <- 0.5 * ((p - factors)^2 - p - factors)
-    un <- res$par
-    names(un) <- colnames(cmat)
+    un <- setNames(res$par, colnames(cmat))
     class(Lambda) <- "loadings"
     ans <- list(converged = res$convergence == 0,
                 loadings = Lambda, uniquenesses = un,
@@ -228,7 +235,7 @@ factanal.fit.mle <-
     ans
 }
 
-print.loadings <- function(x, digits = 3, cutoff = 0.1, sort = FALSE, ...)
+print.loadings <- function(x, digits = 3L, cutoff = 0.1, sort = FALSE, ...)
 {
     Lambda <- unclass(x)
     p <- nrow(Lambda)
@@ -240,8 +247,7 @@ print.loadings <- function(x, digits = 3, cutoff = 0.1, sort = FALSE, ...)
         Lambda <- Lambda[order(mx, 1L:p),]
     }
     cat("\nLoadings:\n")
-    fx <- format(round(Lambda, digits))
-    names(fx) <- NULL
+    fx <- setNames(format(round(Lambda, digits)), NULL)
     nc <- nchar(fx[1L], type="c")
     fx[abs(Lambda) < cutoff] <- paste(rep(" ", nc), collapse = "")
     print(fx, quote = FALSE, ...)

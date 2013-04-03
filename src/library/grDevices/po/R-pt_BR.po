@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
+"POT-Creation-Date: 2013-01-12 10:57\n"
 "PO-Revision-Date: 2011-03-26 08:56-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -49,28 +49,36 @@ msgstr "'stard' e 'end' devem ser distintos e em [0,1]"
 msgid "'gamma' must be a scalar or 'sRGB'"
 msgstr "'gamma' deve ser um escalar ou 'sRGB'"
 
-msgid "Color space converter:"
+#, fuzzy
+msgid "Color space converter: %s"
 msgstr "Conversor de espaço de cor:"
 
-msgid "Reference white:"
+#, fuzzy
+msgid "Reference white: %s"
 msgstr "Referencia branca:"
 
-msgid "display gamma"
+#, fuzzy
+msgid "display gamma = %s"
 msgstr "exibição gama"
 
-msgid "'from' must be a colorConverter or string"
+#, fuzzy
+msgid "'from' must be a \"colorConverter\" object or a string"
 msgstr "'from' deve ser colorConverter ou cadeia de caracter"
 
-msgid "'to' must be a colorConverter or string"
+#, fuzzy
+msgid "'to' must be a \"colorConverter\" object or a string"
 msgstr "'to' deve ser um colorConverter ou uma cadeia de caracter"
 
-msgid "'from.ref.white' disagrees with definition of"
+#, fuzzy
+msgid "'from.ref.white' disagrees with definition of %s"
 msgstr "'from.ref.white' discorda com a definição de"
 
-msgid "'to.ref.white' disagrees with definition of"
+#, fuzzy
+msgid "'to.ref.white' disagrees with definition of %s"
 msgstr "'to.ref.white' discorda com a definição de"
 
-msgid "color spaces use different reference whites."
+#, fuzzy
+msgid "color spaces use different reference whites"
 msgstr "espaços de cores usam diferentes brancos de referência"
 
 msgid "'name' must be a character vector"
@@ -97,14 +105,11 @@ msgstr "'device' deve ser uma função"
 msgid "no device to print from"
 msgstr "nenhum dispositivo disponível para imprimir"
 
-msgid "can only print from screen device"
-msgstr "é possível imprimir somente do dispositivo da tela"
+msgid "can only print from a screen device"
+msgstr "é possível imprimir somente de um dispositivo da tela"
 
 msgid "need to specify one of 'width' and 'height'"
 msgstr "é preciso especificar um de 'width' e 'height'"
-
-msgid "can only print from a screen device"
-msgstr "é possível imprimir somente de um dispositivo da tela"
 
 msgid "dev.control() called without an open graphics device"
 msgstr "dev.control() chamado sem um dispositivo gráfico aberto"
@@ -146,7 +151,8 @@ msgid "invalid options in '%s'"
 msgstr "opções inválidas em '%s'"
 
 # NOT é acrônimo, NOT não é NÃO!?
-msgid "NOT changing"
+#, fuzzy
+msgid "NOT changing %s"
 msgstr "NOT mudando"
 
 #, fuzzy
@@ -161,9 +167,6 @@ msgstr "argumento 'family' inválido"
 
 msgid "invalid 'file'"
 msgstr "'file' inválido"
-
-msgid "'maxRasters' is no longer needed, and will be ignored"
-msgstr ""
 
 msgid "invalid PDF version"
 msgstr "versão PDF inválida"
@@ -216,19 +219,24 @@ msgstr "formato de saída inválido"
 msgid "status %d in running command '%s'"
 msgstr "estado %d em executar comando '%s'"
 
-msgid "range too small for min.n"
+#, fuzzy
+msgid "range too small for 'min.n'"
 msgstr "faixa pequena demais para min.n"
 
-msgid "A raster matrix must be character, or numeric, or logical"
+#, fuzzy
+msgid "a raster matrix must be character, or numeric, or logical"
 msgstr "Uma matriz raster deve ser caractere, ou numérica, ou lógica"
 
-msgid "A raster array must be numeric"
+#, fuzzy
+msgid "a raster array must be numeric"
 msgstr "Um array raster deve ser numérico"
 
-msgid "A raster array must have exactly 3 dimensions"
+#, fuzzy
+msgid "a raster array must have exactly 3 dimensions"
 msgstr "Um array raster deve ter exatamente 3 dimensões"
 
-msgid "A raster array must have exactly 3 or 4 planes"
+#, fuzzy
+msgid "a raster array must have exactly 3 or 4 planes"
 msgstr "Um array raster deve ter exatamente 3 ou 4 planos"
 
 msgid "'drop' is always implicitly FALSE in '[.raster'"
@@ -240,16 +248,19 @@ msgstr ""
 msgid "invalid raster subassignment"
 msgstr ""
 
-msgid "Operator not meaningful for raster objects"
+#, fuzzy
+msgid "operator not meaningful for raster objects"
 msgstr "Operador não tem significância para objetos raster"
 
 msgid "no current device to record from"
 msgstr "nenhum dispositivo atual disponível do qual gravar"
 
-msgid "argument is not of class \"recordedplot\""
+#, fuzzy
+msgid "argument is not of class %s"
 msgstr "argumento não é da classe \"recordedplot\""
 
-msgid "loading snapshot from pre-2.0.0 R version"
+#, fuzzy
+msgid "loading snapshot from pre-3.0.0 R version"
 msgstr "carregando snapshot de versão R pré-2.0.0"
 
 msgid "loading snapshot from different R version"
@@ -312,10 +323,12 @@ msgstr "'title' inválido"
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr "fonte Quartz inválido: deve ser 4 cadeias"
 
-msgid "invalid arguments in quartzFonts (must be font names)"
+#, fuzzy
+msgid "invalid arguments in 'quartzFonts' (must be font names)"
 msgstr "argumentos inválidos em quartzFonts (devem ser nomes de fontes)"
 
-msgid "invalid arguments in quartzFonts (need named args)"
+#, fuzzy
+msgid "invalid arguments in 'quartzFonts' (need named args)"
 msgstr "argumentos inválidos em quartzFonts (precisa de argumentos nomeados)"
 
 msgid "cairo-based types are not supported on this build - using \"Xlib\""
@@ -326,6 +339,14 @@ msgstr ""
 
 msgid "invalid X11 font specification:"
 msgstr "especificação de fonte X11 inválido:"
+
+#, fuzzy
+msgid "invalid arguments in 'X11Fonts' (must be font names)"
+msgstr "argumentos inválidos em '%s' (devem ser nomes de fontes)"
+
+#, fuzzy
+msgid "invalid arguments in 'X11Fonts' (need named args)"
+msgstr "argumentos inválidos em '%s' (precisa-se de argumentos nomeados)"
 
 msgid "no such device"
 msgstr "dispositivo não existe"
@@ -385,6 +406,9 @@ msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] "valores %d z <= 0 omitidos do gráfico logarítmico"
 msgstr[1] ""
+
+#~ msgid "can only print from screen device"
+#~ msgstr "é possível imprimir somente do dispositivo da tela"
 
 #~ msgid "The 'gamma' argument is deprecated and has no effect"
 #~ msgstr "O argumento 'gamma' é obsoleto e não tem mais efeito"

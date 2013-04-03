@@ -26,7 +26,7 @@ outer <- function (X, Y, FUN = "*", ...)
         nx <- dimnames(X)
         no.nx <- is.null(nx)
     } else { # a vector
-        dX <- length(X)
+        dX <- length(X)  # cannot be long, as form a matrix below
         no.nx <- is.null(names(X))
         if(!no.nx) nx <- list(names(X))
     }
@@ -40,6 +40,7 @@ outer <- function (X, Y, FUN = "*", ...)
         if(!no.ny) ny <- list(names(Y))
     }
     if (is.character(FUN) && FUN=="*") {
+        if(!missing(...)) stop('using ... with FUN = "*" is an error')
         # this is for numeric vectors, so dropping attributes is OK
         robj <- as.vector(X) %*% t(as.vector(Y))
         dim(robj) <- c(dX, dY)

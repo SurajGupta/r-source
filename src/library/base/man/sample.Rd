@@ -1,6 +1,6 @@
 % File src/library/base/man/sample.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -34,23 +34,23 @@ sample.int(n, size = n, replace = FALSE, prob = NULL)
   \code{sample} takes place from \code{1:x}.  \emph{Note} that this
   convenience feature may lead to undesired behaviour when \code{x} is
   of varying length in calls such as \code{sample(x)}.  See the examples.
-  
+
   Otherwise \code{x} can be any \R object for which \code{length} and
   subsetting by integers make sense: S3 or S4 methods for these
   operations will be dispatched as appropriate.
-  
+
   For \code{sample} the default for \code{size} is the number of items
   inferred from the first argument, so that \code{sample(x)} generates a
   random permutation of the elements of \code{x} (or \code{1:x}).
-  
+
   As from \R 2.11.0 it is allowed to ask for \code{size = 0} samples
   with \code{n = 0} or a length-zero \code{x}, but otherwise \code{n >
   0} or positive \code{length(x)} is required.
 
   Non-integer positive numerical values of \code{n} or \code{x} will be
   truncated to the next smallest integer, which has to be no larger than
-  \code{\link{.Machine}$integer.max}. 
-  
+  \code{\link{.Machine}$integer.max}.
+
   The optional \code{prob} argument can be used to give a vector of
   weights for obtaining the elements of the vector being sampled.  They
   need not sum to one, but they should be non-negative and not all zero.
@@ -63,9 +63,14 @@ sample.int(n, size = n, replace = FALSE, prob = NULL)
   sequentially, that is the probability of choosing the next item is
   proportional to the weights amongst the remaining items.  The number
   of nonzero weights must be at least \code{size} in this case.
-  
+
   \code{sample.int} is a bare interface in which both \code{n} and
   \code{size} must be supplied as integers.
+
+  As from \R 3.0.0, \code{n} can be larger than the largest integer of
+  type \code{integer}, up to the largest representable integer in type
+  \code{double}.  Only uniform sampling is supported.  Two
+  random numbers are used to ensure uniform sampling of large integers.
 }
 
 \value{
@@ -73,7 +78,8 @@ sample.int(n, size = n, replace = FALSE, prob = NULL)
   drawn from either \code{x} or from the integers \code{1:x}.
 
   For \code{sample.int}, an integer vector of length \code{size} with
-  elements from \code{1:n},
+  elements from \code{1:n}, or a double vector if
+  \eqn{n \ge 2^{31}}{n >= 2^31}.
 }
 
 \references{
@@ -108,10 +114,13 @@ x <- 1:10
     sample(x[x >  9]) # oops -- length 10!
     sample(x[x > 10]) # length 0
 
-## For R >= 2.11.0 only
 resample <- function(x, ...) x[sample.int(length(x), ...)]
 resample(x[x >  8]) # length 2
 resample(x[x >  9]) # length 1
 resample(x[x > 10]) # length 0
+
+## R 3.x.y only
+sample.int(1e10, 12, replace = TRUE)
+sample.int(1e10, 12) # not that there is much chance of duplicates
 }
 \keyword{distribution}

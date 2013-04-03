@@ -44,8 +44,7 @@ TukeyHSD.aov <-
         tabs <- tabs[!nn_na]
         nn <- nn[!nn_na]
     }
-    out <- vector("list", length(tabs))
-    names(out) <- names(tabs)
+    out <- setNames(vector("list", length(tabs)), names(tabs))
     MSE <- sum(x$residuals^2)/x$df.residual
     for (nm in names(tabs)) {
         tab <- tabs[[nm]]
@@ -95,7 +94,7 @@ print.TukeyHSD <- function(x, digits = getOption("digits"), ...)
     attr(xx, "orig.call") <- attr(xx, "conf.level") <- attr(xx, "ordered") <- NULL
     xx[] <- lapply(xx, function(z, digits)
                {z[, "p adj"] <- round(z[, "p adj"], digits); z},
-                   digits=digits)
+                   digits = digits)
     print.default(xx, digits, ...)
     invisible(x)
 }

@@ -1,7 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 2.15.2013-02-08
-ISBN 3-900051-08-9
+Version 3.0.2013-03-31
 Kurt Hornik
 
 
@@ -160,13 +159,12 @@ site (*note What is CRAN?::).
 ========================
 
 In publications, please refer to this FAQ as Hornik (2013), "The R FAQ",
-and give the above, _official_ URL and the ISBN 3-900051-08-9:
+and give the above, _official_ URL:
 
      @Misc{,
        author        = {Kurt Hornik},
        title         = {The {R} {FAQ}},
        year          = {2013},
-       note          = {{ISBN} 3-900051-08-9},
        url           = {http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
      }
 
@@ -258,7 +256,7 @@ i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 2.15.3.  Based on this
+The current released version is 3.0.0.  Based on this
 `major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release (`r-patched') and
 one working towards the next minor or eventually major (`r-devel') releases
@@ -531,7 +529,6 @@ To cite R in publications, use
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
        year         = 2013,
-       note         = {{ISBN} 3-900051-07-0},
        url          = {http://www.R-project.org}
      }
 
@@ -613,8 +610,8 @@ The "Comprehensive R Archive Network" (CRAN) is a collection of sites which
 carry identical material, consisting of the R distribution(s), the
 contributed extensions, documentation for R, and binaries.
 
-   The CRAN master site at Wirtschaftsuniversität Wien, Austria, can be
-found at the URL
+   The CRAN master site at WU (Wirtschaftsuniversität Wien) in Austria can
+be found at the URL
 
      `http://CRAN.R-project.org/'
 
@@ -644,17 +641,6 @@ tar files, a wealth of additional contributed code, as well as prebuilt
 binaries for various operating systems (Linux, Mac OS Classic, Mac OS X,
 and MS Windows).  CRAN also provides access to documentation on R, existing
 mailing lists and the R Bug Tracking system.
-
-   To "submit" to CRAN, check that your submission meets the CRAN
-Repository Policy (http://CRAN.R-project.org/web/packages/policies.html),
-upload to `ftp://CRAN.R-project.org/incoming/' and send an email to
-<CRAN@R-project.org>.  Note that CRAN generally does not accept submissions
-of precompiled binaries due to security reasons.  In particular, binary
-packages for Windows and Mac OS X are provided by the respective binary
-package maintainers.
-
-     Note: It is very important that you indicate the copyright (license)
-     information (GPL-2, GPL-3, BSD, Artistic, ...) in your submission.
 
    Please always use the URL of the master site when referring to CRAN.
 

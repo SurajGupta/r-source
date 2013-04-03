@@ -19,7 +19,7 @@ DISTFILES = \
 	README \
 	Makefile.in Makefile.win \
 	R-defs.texi dir epsf.tex pdfcolor.tex \
-	$(SOURCES_TEXI) \
+	$(SOURCES_TEXI) rw-FAQ.texi \
 	resources.texi \
 	R-exts.R R-exts.c R-intro.R \
 	refman.top refman.bot \
@@ -54,8 +54,6 @@ R_RD4PDF = @R_RD4PDF@
 
 texinputs_BASE = $(R_PKGS_BASE:=-pkg.tex)
 texinputs_RECOMMENDED = $(R_PKGS_RECOMMENDED:=-pkg.tex)
-R_PKGS_refman = base compiler datasets grDevices graphics grid methods parallel splines stats stats4 tcltk tools utils
-refman_TEXINPUTS = $(R_PKGS_refman:=-pkg.tex)
 refman_DEPENDENCIES = version.tex $(top_srcdir)/share/texmf/tex/latex/Rd.sty
 fullrefman_TEXINPUTS = $(texinputs_BASE) @USE_RECOMMENDED_PACKAGES_TRUE@ $(texinputs_RECOMMENDED)
 SVN_REV = $(top_builddir)/SVN-REVISION
@@ -184,7 +182,7 @@ R-intro.info: $(texiincludes)
 R-ints.info: $(texiincludes)
 R-lang.info: $(texiincludes)
 
-pdf: refman.pdf $(OBJECTS_PDF)
+pdf: fullrefman.pdf $(OBJECTS_PDF)
 refman.pdf: $(refman_DEPENDENCIES) $(texinputs_BASE)
 	@if test -z "$(PDFLATEX)"; then \
 	  $(ECHO) "ERROR: 'pdflatex' needed but missing on your system."; \
@@ -201,7 +199,7 @@ refman.pdf: $(refman_DEPENDENCIES) $(texinputs_BASE)
 	  $(ECHO) "\\usepackage[$${opt}]{Rd}"; \
 	  $(ECHO) "\\usepackage[utf8]{inputenc}"; \
 	  cat $(srcdir)/refman.top; \
-	  texinputs=`(for f in $(refman_TEXINPUTS); \
+	  texinputs=`(for f in $(texinputs_BASE); \
 	    do $(ECHO) $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do $(ECHO) "\\input{$${f}}"; done; \
 	  cat $(srcdir)/refman.bot) > refman.tex

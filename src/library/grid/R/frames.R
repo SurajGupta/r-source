@@ -40,14 +40,15 @@ grid.frame <- function(layout=NULL, name=NULL, gp=gpar(), vp=NULL,
   invisible(fg)
 }
 
-preDrawDetails.frame <- function(x) {
-  if (!is.null(x$framevp))
-    pushViewport(x$framevp, recording=FALSE)
-}
-
-postDrawDetails.frame <- function(x) {
-  if (!is.null(x$framevp))
-    upViewport(recording=FALSE)
+makeContext.frame <- function(x) {
+    if (!is.null(x$framevp)) {
+        if (!is.null(x$vp)) {
+            x$vp <- vpStack(x$vp, x$framevp)
+        } else {
+            x$vp <- x$framevp
+        }
+    }
+    x
 }
 
 widthDetails.frame <- function(x) {
@@ -72,74 +73,6 @@ frameDim <- function(frame) {
       layout.ncol(viewport.layout(frame$framevp)))
 }
 
-# Get the framevp slot to show up in grid.ls() output
-# Minor mod of gridList.gTree() with childrenvp actions
-# replaced by framevp actions
-gridList.frame <- function(x, grobs=TRUE, viewports=FALSE,
-                           fullNames=FALSE, recursive=TRUE) {
-    if (fullNames) {
-        name <- as.character(x)
-    } else {
-        name <- x$name
-    }
-    class(name) <- c("grobListing", "gridVectorListing", "gridListing")
-    if (recursive) {
-        # Allow for grobs=FALSE but viewports=TRUE
-        result <- gridList(x$children,
-                          grobs=grobs, viewports=viewports,
-                          fullNames=fullNames, recursive=recursive)
-        if (viewports && !is.null(x$framevp)) {
-            # Bit dodgy this bit
-            # Emulates an "upViewport" on the DL
-            n <- depth(x$framevp)
-            class(n) <- "up"
-            result <- list(gridList(x$framevp,
-                                    grobs=grobs, viewports=viewports,
-                                    fullNames=fullNames,
-                                    recursive=recursive),
-                           result,
-                           gridList(n,
-                                    grobs=grobs, viewports=viewports,
-                                    fullNames=fullNames,
-                                    recursive=recursive))
-            class(result) <- c("gridListListing", "gridListing")
-        }
-        if (grobs) {
-            result <- list(parent=name,
-                           children=result)
-            class(result) <- c("gTreeListing", "gridTreeListing",
-                               "gridListing")
-        } else if (!viewports) {
-            result <- character()
-            class(result) <- "gridListing"
-        }
-    } else {
-        if (grobs) {
-            result <- name
-        } else {
-            result <- character()
-            class(result) <- "gridListing"
-        }
-    }
-    if (viewports && !is.null(x$vp)) {
-        # Bit dodgy this bit
-        # Emulates an "upViewport" on the DL
-        n <- depth(x$vp)
-        class(n) <- "up"
-        result <- list(gridList(x$vp,
-                                grobs=grobs, viewports=viewports,
-                                fullNames=fullNames,
-                                recursive=recursive),
-                       result,
-                       gridList(n, 
-                                grobs=grobs, viewports=viewports,
-                                fullNames=fullNames,
-                                recursive=recursive))
-        class(result) <- c("gridListListing", "gridListing")
-    }
-    result
-}
-
 ################
 # cellGrob class
 ################
@@ -160,14 +93,15 @@ cellGrob <- function(col, row, border, grob, dynamic, vp) {
         children=gList(grob), cellvp=vp, cl="cellGrob")
 }
 
-preDrawDetails.cellGrob <- function(x) {
-  if (!is.null(x$cellvp))
-    pushViewport(x$cellvp, recording=FALSE)
-}
-
-postDrawDetails.cellGrob <- function(x) {
-  if (!is.null(x$cellvp))
-    upViewport(depth(x$cellvp), recording=FALSE)
+makeContext.cellGrob <- function(x) {
+    if (!is.null(x$cellvp)) {
+        if (!is.null(x$vp)) {
+            x$vp <- vpStack(x$vp, x$cellvp)
+        } else {
+            x$vp <- x$cellvp
+        }
+    }
+    x
 }
 
 # For dynamically packed grobs, need to be able to
@@ -184,15 +118,6 @@ heightDetails.cellGrob <- function(x) {
     unit(1, "grobheight", gPath(x$children[[1L]]$name))
   else
     unit(1, "grobheight", x$children[[1L]])
-}
-
-# Get the cellvp slot to show up in grid.ls() output
-gridList.cellGrob <- function(x, grobs=TRUE, viewports=FALSE,
-                              fullNames=FALSE, recursive=TRUE) {
-    # Hack:  replace the (unused) vp slot with the cellvp slot
-    # THEN call gridList.gTree()
-    x$vp <- x$cellvp
-    gridList.gTree(x, grobs, viewports, fullNames, recursive)
 }
 
 ################
@@ -212,9 +137,9 @@ grid.place <- function(gPath, grob,
 placeGrob <- function(frame, grob,
                       row=NULL, col=NULL) {
   if (!inherits(frame, "frame"))
-    stop("Invalid 'frame'")
+    stop("invalid 'frame'")
   if (!is.grob(grob))
-    stop("Invalid 'grob'")
+    stop("invalid 'grob'")
   dim <- frameDim(frame)
   if (is.null(row))
     row <- c(1, dim[1L])
@@ -226,7 +151,7 @@ placeGrob <- function(frame, grob,
     col <- rep(col, 2)
   if (min(row) < 1 || max(row) > dim[1L] ||
       min(col) < 1 || max(col) > dim[2L])
-    stop("Invalid 'row' and/or 'col' (no such cell in frame layout)")
+    stop("invalid 'row' and/or 'col' (no such cell in frame layout)")
   cgrob <- cellGrob(col, row, NULL, grob, FALSE,
                     cellViewport(col, row, NULL))
   addGrob(frame, cgrob)
@@ -271,7 +196,7 @@ new.col <- function(side, col, col.before, col.after, ncol) {
     # It is also an error to specify a single col outside 1..ncol+1
     else
       if (col < 1 || col > ncol + 1)
-        stop("Invalid 'col' specification")
+        stop("invalid 'col' specification")
       else
         result <- col == ncol+1
   }
@@ -314,7 +239,7 @@ new.row <- function(side, row, row.before, row.after, nrow) {
     # It is also an error to specify a single row outside 1..nrow+1
     else
       if (row < 1 || row > nrow + 1)
-        stop("Invalid 'row' specification")
+        stop("invalid 'row' specification")
       else
         result <- row == nrow+1
   }
@@ -403,9 +328,9 @@ packGrob <- function(frame, grob,
                      force.width=FALSE, force.height=FALSE,
                      border=NULL, dynamic=FALSE) {
   if (!inherits(frame, "frame"))
-    stop("Invalid 'frame'")
+    stop("invalid 'frame'")
   if (!is.grob(grob))
-    stop("Invalid 'grob'")
+    stop("invalid 'grob'")
   # col/row can be given as a range, but I only want to know
   # about the min and max
   if (!is.null(col) & length(col) > 1) {
@@ -448,7 +373,7 @@ packGrob <- function(frame, grob,
     ncs <- 1
   }
   if (ncs != 1)
-    stop("Cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col.before', or 'col.after'")
+    stop("cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col.before', or 'col.after'")
   nrs <- num.row.specs(side, row, row.before, row.after)
   # If user does not specify a row, assume it is all rows
   if (nrs == 0) {
@@ -462,7 +387,7 @@ packGrob <- function(frame, grob,
     nrs <- 1
   }
   if (nrs != 1)
-    stop("Must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'")
+    stop("must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'")
 
   # (ii) Determine that location and check that it is valid
   new.col <- new.col(side, col, col.before, col.after, ncol)

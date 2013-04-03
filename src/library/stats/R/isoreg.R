@@ -18,7 +18,7 @@
 
 ### Isotonic Regression --- original code is simplification of MASS' Shepard():
 ##
-isoreg <- function(x, y=NULL)
+isoreg <- function(x, y = NULL)
 {
     xy <- xy.coords(x,y)
     x <- xy$x
@@ -31,7 +31,7 @@ isoreg <- function(x, y=NULL)
 	ord <- order(x, -y) ## 'increasing in x, decreasing in y'
 	y <- y[ord]
     }
-    z <- .Call(C_R_isoreg, if(isOrd)xy$y else y)
+    z <- .Call(C_isoreg, if(isOrd)xy$y else y)
     structure(c(xy[c("x","y")], z[c("yf","yc","iKnots")],
                 list(isOrd = isOrd, ord = if(!isOrd) ord,
                      call = match.call())),
@@ -48,12 +48,12 @@ residuals.isoreg <- function(object, ...) object$y - fitted(object)
 
 print.isoreg <- function(x, digits = getOption("digits"), ...)
 {
-  cat("Isotonic regression from ", deparse(x$call), ",\n", sep="")
+  cat("Isotonic regression from ", deparse(x$call), ",\n", sep = "")
   cat("  with", length(x$iKnots), "knots / breaks at obs.nr.", x$iKnots, ";\n")
   if(x$isOrd) cat("  initially ordered 'x'\n")
   else { cat("  (x,y) ordering:"); str(x$ord) }
   cat("  and further components ")
-  str(x[1L:4], digits.d = 3 + max(0,digits - 7))
+  str(x[1L:4], digits.d = 3L + max(0L, digits - 7L))
   invisible(x)
 }
 
@@ -70,12 +70,12 @@ lines.isoreg <- function(x, col = "red", lwd = 1.5,
 plot.isoreg <-
     function(x, plot.type = c("single", "row.wise", "col.wise"),
 	     main = paste("Isotonic regression", deparse(x$call)),
-	     main2= "Cumulative Data and Convex Minorant",
+	     main2 = "Cumulative Data and Convex Minorant",
 	     xlab = "x0", ylab = "x$y",
 	     par.fit = list(col = "red", cex = 1.5, pch = 13, lwd = 1.5),
 	     mar = if(both) .1 + c(3.5,2.5,1,1) else par("mar"),
 	     mgp = if(both) c(1.6, 0.7, 0) else par("mgp"),
-	     grid = length(x$x) < 12,
+	     grid = length(x$x) < 12L,
 	     ...)
 {
     plot.type <- match.arg(plot.type)

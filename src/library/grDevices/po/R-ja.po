@@ -2,8 +2,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.0 \n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
-"PO-Revision-Date: 2012-09-13 06:08+0200 \n"
+"POT-Creation-Date: 2013-01-12 10:57\n"
+"PO-Revision-Date: 2013-02-28 05:58+0200 \n"
 "Last-Translator: Triad sou <triadsou@gmail.com> \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "Language: ja \n"
@@ -32,7 +32,7 @@ msgid "'bias' must be positive"
 msgstr " 'bias' は正の値でなければなりません "
 
 msgid "at least 3 columns needed"
-msgstr " 少なくとも三つ列が必要です "
+msgstr " 少なくとも 3 つ列が必要です "
 
 msgid "rgb matrix must be numeric"
 msgstr " rgb 行列は数値でなければなりません "
@@ -45,46 +45,48 @@ msgstr " rgb 値の範囲は [0, maxColorValue] でなければなりません "
 
 msgid "'start' and 'end' must be distinct and in [0, 1]."
 msgstr ""
-" 'start' と 'end' の値は異なり，どちらも範囲 [0, 1] 内になければなりません "
+" 'start' と 'end' の値は異なり、どちらも範囲 [0, 1] 内になければなりません。 "
 
 msgid "'gamma' must be a scalar or 'sRGB'"
 msgstr " 'gamma' はスカラーまたは 'sRGB' でなければなりません "
 
-msgid "Color space converter:"
-msgstr " 色空間変換器: "
+msgid "Color space converter: %s"
+msgstr " 色空間変換ユーティリティ: %s "
 
-msgid "Reference white:"
-msgstr " 基準白色: "
+msgid "Reference white: %s"
+msgstr " 基準白色: %s "
 
-msgid "display gamma"
-msgstr " ガンマ補正 "
+msgid "display gamma = %s"
+msgstr " ディスプレイガンマ = %s "
 
-msgid "'from' must be a colorConverter or string"
-msgstr " 'from' は colorConverter または文字列でなければなりません "
+msgid "'from' must be a \"colorConverter\" object or a string"
+msgstr ""
+" 'from' は \"colorConverter\" オブジェクトまたは文字列でなければなりません "
 
-msgid "'to' must be a colorConverter or string"
-msgstr " 'to' は colorConverter または文字列でなければなりません "
+msgid "'to' must be a \"colorConverter\" object or a string"
+msgstr ""
+" 'to' は \"colorConverter\" オブジェクトまたは文字列でなければなりません "
 
-msgid "'from.ref.white' disagrees with definition of"
-msgstr " 'from.ref.white' が以下の定義と一致しません:  "
+msgid "'from.ref.white' disagrees with definition of %s"
+msgstr " 'from.ref.white' が %s の定義と一致しません "
 
-msgid "'to.ref.white' disagrees with definition of"
-msgstr " 'to.ref.white' が以下の定義と一致しません： "
+msgid "'to.ref.white' disagrees with definition of %s"
+msgstr " 'to.ref.white' が %s の定義と一致しません "
 
-msgid "color spaces use different reference whites."
-msgstr " 色空間(color spaces)は異なった基準白色を使っています "
+msgid "color spaces use different reference whites"
+msgstr " 色空間 (color spaces) は異なった基準白色を使っています "
 
 msgid "'name' must be a character vector"
 msgstr " 'name' は文字列でなければなりません "
 
 msgid "cannot shut down device 1 (the null device)"
-msgstr " デバイス 1 をシャットダウンすることが出来ません（NULL デバイスです） "
+msgstr " デバイス 1 をシャットダウンすることが出来ません (NULL デバイスです) "
 
 msgid "cannot supply 'which' and 'device' at the same time"
 msgstr " 同時に 'which' と 'device' を与えることは出来ません "
 
 msgid "cannot copy from the null device"
-msgstr " nullデバイスからコピーすることは出来ません "
+msgstr " null デバイスからコピーすることは出来ません "
 
 msgid "cannot copy to the null device"
 msgstr " NULL デバイスにコピーすることは出来ません "
@@ -96,16 +98,13 @@ msgid "'device' should be a function"
 msgstr " 'device' は関数でなければなりません "
 
 msgid "no device to print from"
-msgstr " 以下からプリントするためのデバイスがありません:  "
-
-msgid "can only print from screen device"
-msgstr " スクリーンデバイスからしかプリントすることが出来ません "
-
-msgid "need to specify one of 'width' and 'height'"
-msgstr " 'width' と 'height' のどちらか一つを指定する必要があります "
+msgstr " 以下からプリントするためのデバイスがありません: "
 
 msgid "can only print from a screen device"
 msgstr " スクリーンデバイスからは印刷しか出来ません "
+
+msgid "need to specify one of 'width' and 'height'"
+msgstr " 'width' と 'height' のどちらか一つを指定する必要があります "
 
 msgid "dev.control() called without an open graphics device"
 msgstr ""
@@ -120,25 +119,25 @@ msgstr ""
 "た "
 
 msgid "invalid setting for 'getOption(\"device\")'"
-msgstr " 'getOption(\"device\")'の設定が不正です "
+msgstr " 'getOption(\"device\")' の設定が不正です "
 
 msgid "device '%s' not found"
 msgstr " デバイス '%s' が見つかりません "
 
 msgid "no suitable unused file name for pdf()"
-msgstr " pdf()に適した未使用のファイル名がありません "
+msgstr " pdf() に適した未使用のファイル名がありません "
 
 msgid "dev.new(): using pdf(file=\"%s\")"
-msgstr " dev.new(): pdf(file=\"%s\")を使用します "
+msgstr " dev.new(): pdf(file=\"%s\") を使用します "
 
 msgid "no suitable unused file name for postscript()"
-msgstr " postscript()に適した未使用のファイル名がありません "
+msgstr " postscript() に適した未使用のファイル名がありません "
 
 msgid "dev.new(): using postscript(file=\"%s\")"
-msgstr " dev.new(): postscript(file=\"%s\")を使用します "
+msgstr " dev.new(): postscript(file=\"%s\") を使用します "
 
 msgid "invalid arguments in '%s' (need named args)"
-msgstr " '%s' 中に不正な引数があります（名前付き引数が必要です） "
+msgstr " '%s' 中に不正な引数があります (名前付き引数が必要です) "
 
 msgid "'name.opt' must be character, name of an existing list"
 msgstr " 'name.opt' は既存のリストの名前である文字列でなければなりません "
@@ -147,25 +146,22 @@ msgid "cannot reset non-existent '%s'"
 msgstr " 存在しない '%s' をリセットすることは出来ません "
 
 msgid "invalid options in '%s'"
-msgstr " '%s' 中に不正なオプションがあります  "
+msgstr " '%s' 中に不正なオプションがあります "
 
-msgid "NOT changing"
-msgstr " 変更しません "
+msgid "NOT changing %s"
+msgstr " %s を変更しません "
 
 msgid "argument 'append' is for back-compatibility and will be ignored"
 msgstr " 引数 'append' は下位互換のためのもので、今後は無視されます "
 
 msgid "unknown family '%s'"
-msgstr " フォントファミリー'%s'は未知です "
+msgstr " フォントファミリー '%s' は未知です "
 
 msgid "invalid 'family' argument"
 msgstr " 不正な 'family' 引数です "
 
 msgid "invalid 'file'"
 msgstr " 不正な 'file' です "
-
-msgid "'maxRasters' is no longer needed, and will be ignored"
-msgstr " 'maxRasters'はもう不要です。今後は無視されます。 "
 
 msgid "invalid PDF version"
 msgstr " 不正な PDF のバージョンです "
@@ -183,7 +179,7 @@ msgid "invalid encoding in font specification"
 msgstr " フォント指定中に不正なエンコーディングがあります "
 
 msgid "Not a CID font"
-msgstr "  CID フォントではありません "
+msgstr " CID フォントではありません "
 
 msgid "invalid CMap name in font specification"
 msgstr " フォント指定中に不正な CMap 名があります "
@@ -201,7 +197,7 @@ msgid "font %s already in use"
 msgstr " フォント %s は既に使われています "
 
 msgid "invalid arguments in '%s' (must be font names)"
-msgstr " '%s' 中の不正な引数です（フォント名が必要です） "
+msgstr " '%s' 中の不正な引数です (フォント名が必要です) "
 
 msgid "unknown font"
 msgstr " 未知のフォントです "
@@ -218,20 +214,20 @@ msgstr " 不正な出力書式です "
 msgid "status %d in running command '%s'"
 msgstr " 状態 %d が命令 '%s' 実行中に起きました "
 
-msgid "range too small for min.n"
-msgstr " min.n に対しては小さすぎるレンジです "
+msgid "range too small for 'min.n'"
+msgstr " 'min.n' に対して範囲が小さすぎます "
 
-msgid "A raster matrix must be character, or numeric, or logical"
+msgid "a raster matrix must be character, or numeric, or logical"
 msgstr " ラスター行列は文字、数値もしくは論理値でなければなりません "
 
-msgid "A raster array must be numeric"
+msgid "a raster array must be numeric"
 msgstr " ラスター配列は数値でなければなりません "
 
-msgid "A raster array must have exactly 3 dimensions"
-msgstr " ラスター配列は丁度3つの次元を持つ必要があります "
+msgid "a raster array must have exactly 3 dimensions"
+msgstr " ラスター配列は丁度 3 つの次元を持つ必要があります "
 
-msgid "A raster array must have exactly 3 or 4 planes"
-msgstr " ラスター配列は丁度3か4の平面(plane)を持つ必要があります "
+msgid "a raster array must have exactly 3 or 4 planes"
+msgstr " ラスター配列は丁度 3 か 4 の平面 (plane) を持つ必要があります "
 
 msgid "'drop' is always implicitly FALSE in '[.raster'"
 msgstr " '[.raster' では引数 'drop' は常に暗黙のうちに FALSE です "
@@ -242,23 +238,23 @@ msgstr " 無効なラスターの部分設定 "
 msgid "invalid raster subassignment"
 msgstr " 無効なラスターの部分代入 "
 
-msgid "Operator not meaningful for raster objects"
+msgid "operator not meaningful for raster objects"
 msgstr " ラスターオブジェクトには無意味な操作です "
 
 msgid "no current device to record from"
-msgstr " 現在，以下のものから記録することが出来るデバイスはありません:  "
+msgstr " 現在、以下のものから記録することが出来るデバイスはありません: "
 
-msgid "argument is not of class \"recordedplot\""
-msgstr " 引数はクラス \"recordedplot\" ではありません "
+msgid "argument is not of class %s"
+msgstr " 引数はクラス %s ではありません "
 
-msgid "loading snapshot from pre-2.0.0 R version"
-msgstr " R2.0.0以前のバージョンからのスナップショットが読み込まれています "
+msgid "loading snapshot from pre-3.0.0 R version"
+msgstr " R-3.0.0 以前のバージョンからのスナップショットが読み込まれています "
 
 msgid "loading snapshot from different R version"
 msgstr " 異なった R バージョンからのスナップショットが読み込まれています "
 
 msgid "'nbin' must be numeric of length 1 or 2"
-msgstr " 'rbin' は長さ1または2の数値でなければなりません "
+msgstr " 'nbin' は長さ 1 または 2 の数値でなければなりません "
 
 msgid "'bandwidth' must be numeric"
 msgstr " 'bandwidth' は数値でなければなりません "
@@ -267,7 +263,7 @@ msgid "'bandwidth' must be positive"
 msgstr " 'bandwidth' は正の値でなければなりません "
 
 msgid "'r' must be a \"range\", hence of length 2"
-msgstr " 'r' は範囲でなければなりません. 従って長さは2です "
+msgstr " 'r' は範囲でなければなりません、従って長さは 2 でなければなりません "
 
 msgid "invalid first argument"
 msgstr " 最初の引数が無効です "
@@ -282,13 +278,13 @@ msgid "invalid first argument [bad language object]"
 msgstr " 最初の引数が無効です [誤った言語オブジェクトです] "
 
 msgid "at least 2 columns needed"
-msgstr " 少なくとも二つの列が必要です "
+msgstr " 少なくとも 2 つの列が必要です "
 
 msgid "'x' is a list, but does not have components 'x', 'y'  and 'z'"
-msgstr " 'x' はリストですが，成分 'x' と 'y' そして 'z' を持ちません "
+msgstr " 'x' はリストですが、成分 'x' と 'y' そして 'z' を持ちません "
 
 msgid "'x', 'y' and 'z' lengths differ"
-msgstr " 'x','y' そして 'z' の長さが異なります "
+msgstr " 'x', 'y' そして 'z' の長さが異なります "
 
 msgid "'file' is missing with no default"
 msgstr " 'file' はデフォルトなしで欠損となっています "
@@ -314,22 +310,28 @@ msgstr " 不正な 'title' です "
 msgid "invalid Quartz font:  must be 4 strings"
 msgstr " 不正な Quartz font です: 4 つの文字列でなければなりません "
 
-msgid "invalid arguments in quartzFonts (must be font names)"
-msgstr " quartzFonts 中の不正な引数です（フォント名が必要です） "
+msgid "invalid arguments in 'quartzFonts' (must be font names)"
+msgstr " 'quartzFonts' 中の不正な引数です (フォント名が必要です) "
 
-msgid "invalid arguments in quartzFonts (need named args)"
-msgstr " quartzFonts 中の不正な引数です（名前がついた引数が必要です） "
+msgid "invalid arguments in 'quartzFonts' (need named args)"
+msgstr " 'quartzFonts' 中の不正な引数です (名前がついた引数が必要です) "
 
 msgid "cairo-based types are not supported on this build - using \"Xlib\""
 msgstr ""
-" このビルドではcarioベースのデバイスはサポートされていません。Xlibを使いま"
-"す。 "
+" このビルドでは cario ベースのデバイスはサポートされていません。\"Xlib\" を使"
+"います。 "
 
 msgid "unknown family for X11(type = \"XLib\")"
-msgstr "X11(type = \"XLib\")に対して、未知のファミリーです "
+msgstr " X11(type = \"XLib\") に対して、未知のファミリーです "
 
 msgid "invalid X11 font specification:"
 msgstr " 不正な X11 フォントの指定方法です "
+
+msgid "invalid arguments in 'X11Fonts' (must be font names)"
+msgstr " 'X11Fonts' 中の不正な引数です (フォント名が必要です) "
+
+msgid "invalid arguments in 'X11Fonts' (need named args)"
+msgstr " 'X11Fonts' 中の不正な引数です (名前がついた引数が必要です) "
 
 msgid "no such device"
 msgstr " そのようなデバイスはありません "
@@ -360,14 +362,14 @@ msgstr ""
 " 不正な Windows フォントです: 単一のフォントファミリー名でなければなりません "
 
 msgid "invalid arguments in 'windowsFonts' (must be font names)"
-msgstr " 'windowsFonts' 中の引数が不正です（フォント名が必要です） "
+msgstr " 'windowsFonts' 中の引数が不正です (フォント名が必要です) "
 
 msgid "invalid arguments in 'windowsFonts' (need named args)"
-msgstr " 'windowsFonts' 中の不正な引数です（名前がついた引数が必要です） "
+msgstr " 'windowsFonts' 中の不正な引数です (名前がついた引数が必要です) "
 
 msgid "invalid argument name %s in '%s'"
 msgid_plural "invalid argument names %s in '%s'"
-msgstr[0] " %2$s 中の %1$s は不正な引数名です "
+msgstr[0] " '%2$s' 中の %1$s は不正な引数名です "
 
 msgid "differs between new and previous"
 msgid_plural "differ between new and previous"
@@ -384,6 +386,12 @@ msgstr[0] " %d 個の正でない y の値が対数プロットから除かれ�
 msgid "%d z value <= 0 omitted from logarithmic plot"
 msgid_plural "%d z values <= 0 omitted from logarithmic plot"
 msgstr[0] " %d 個の正でない x の値が対数プロットから除かれました "
+
+#~ msgid "can only print from screen device"
+#~ msgstr " スクリーンデバイスからしかプリントすることが出来ません "
+
+#~ msgid "'maxRasters' is no longer needed, and will be ignored"
+#~ msgstr " 'maxRasters'はもう不要です。今後は無視されます。 "
 
 #~ msgid "The 'gamma' argument is deprecated and has no effect"
 #~ msgstr " 引数 'gamma' は廃止予定です、適用されません "

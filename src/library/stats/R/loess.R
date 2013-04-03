@@ -42,8 +42,7 @@ function(formula, data, weights, subset, na.action, model = FALSE,
     if(any(sapply(x, is.factor))) stop("predictors must all be numeric")
     x <- as.matrix(x)
     D <- ncol(x)
-    nmx <- colnames(x)
-    names(nmx) <- nmx
+    nmx <- setNames(nm = colnames(x))
     drop.square <- match(nmx, nmx[drop.square], 0L) > 0L
     parametric <- match(nmx, nmx[parametric], 0L) > 0L
     if(!match(degree, 0L:2L, 0L)) stop("'degree' must be 0, 1 or 2")
@@ -108,7 +107,7 @@ simpleLoess <-
     storage.mode(weights) <- "double"
     max.kd <-  max(N, 200)
     robust <- rep(1, N)
-    divisor<- rep(1, D)
+    divisor <- rep(1, D)
     if(normalize && D > 1L) {
 	trim <- ceiling(0.1 * N)
 	divisor <-
@@ -135,7 +134,7 @@ simpleLoess <-
 	else if(surface == "interpolate" && statistics == "approximate")
 	    statistics <- if(trace.hat == "exact") "1.approx"
             else "2.approx" # trace.hat == "approximate"
-	surf.stat <- paste(surface, statistics, sep="/")
+	surf.stat <- paste(surface, statistics, sep = "/")
         if (length(span) != 1L) stop("invalid argument 'span'")
         if (length(cell) != 1L) stop("invalid argument 'cell'")
         if (length(degree) != 1L) stop("invalid argument 'degree'")
@@ -171,8 +170,8 @@ simpleLoess <-
     }
     if(surface == "interpolate")
     {
-	pars <- z$parameter
-	names(pars) <- c("d", "n", "vc", "nc", "nv", "liv", "lv")
+	pars <- setNames(z$parameter,
+			 c("d", "n", "vc", "nc", "nv", "liv", "lv"))
 	enough <- (D + 1L) * pars["nv"]
 	fit.kd <- list(parameter=pars, a=z$a[1L:pars[4L]], xi=z$xi[1L:pars[4L]],
 		       vert=z$vert, vval=z$vval[1L:enough])
@@ -241,12 +240,11 @@ predict.loess <-
         as.matrix(model.frame(delete.response(terms(object)), newdata,
                               na.action = na.action))
     else as.matrix(newdata) # this case is undocumented
-    res <- predLoess(object$y, object$x, newx, object$s, object$weights,
-		     object$pars$robust, object$pars$span, object$pars$degree,
-		     object$pars$normalize, object$pars$parametric,
-		     object$pars$drop.square, object$pars$surface,
-		     object$pars$cell, object$pars$family,
-		     object$kd, object$divisor, se=se)
+    res <-
+        with(object, predLoess(y, x, newx, s, weights, pars$robust,
+                               pars$span, pars$degree, pars$normalize,
+                               pars$parametric, pars$drop.square, pars$surface,
+                               pars$cell, pars$family, kd, divisor, se = se))
     if(!is.null(out.attrs <- attr(newdata, "out.attrs"))) { # expand.grid used
         if(se) {
             res$fit <- array(res$fit, out.attrs$dim, out.attrs$dimnames)
@@ -380,14 +378,14 @@ pointwise <- function(results, coverage)
     list(fit = fit, lower = fit - lim, upper = fit + lim)
 }
 
-print.loess <- function(x, digits=max(3, getOption("digits")-3), ...)
+print.loess <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     if(!is.null(cl <- x$call)) {
 	cat("Call:\n")
 	dput(cl, control=NULL)
     }
     cat("\nNumber of Observations:", x$n, "\n")
-    cat("Equivalent Number of Parameters:", format(round(x$enp, 2)), "\n")
+    cat("Equivalent Number of Parameters:", format(round(x$enp, 2L)), "\n")
     cat("Residual",
 	if(x$pars$family == "gaussian")"Standard Error:" else "Scale Estimate:",
 	format(signif(x$s, digits)), "\n")
@@ -400,7 +398,8 @@ summary.loess <- function(object, ...)
     object
 }
 
-print.summary.loess <- function(x, digits=max(3, getOption("digits")-3), ...)
+print.summary.loess <-
+    function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     if(!is.null(cl <- x$call)) {
 	cat("Call:\n")
@@ -411,7 +410,7 @@ print.summary.loess <- function(x, digits=max(3, getOption("digits")-3), ...)
     if(x$pars$family == "gaussian")
 	cat("Residual Standard Error:", format(signif(x$s, digits)), "\n")
     else cat("Residual Scale Estimate:", format(signif(x$s, digits)), "\n")
-    cat("Trace of smoother matrix:", format(round(x$trace.hat, 2)), "\n")
+    cat("Trace of smoother matrix:", format(round(x$trace.hat, 2L)), "\n")
     cat("\nControl settings:\n")
     cat("  normalize: ", x$pars$normalize, "\n")
     cat("  span	    : ", format(x$pars$span), "\n")
@@ -430,8 +429,8 @@ scatter.smooth <-
     function(x, y = NULL, span = 2/3, degree = 1,
 	     family = c("symmetric", "gaussian"),
 	     xlab = NULL, ylab = NULL,
-	     ylim = range(y, prediction$y, na.rm = TRUE),
-             evaluation = 50, ...)
+	     ylim = range(y, pred$y, na.rm = TRUE),
+             evaluation = 50, ..., lpars = list())
 {
     xlabel <- if (!missing(x)) deparse(substitute(x))
     ylabel <- if (!missing(y)) deparse(substitute(y))
@@ -440,9 +439,9 @@ scatter.smooth <-
     y <- xy$y
     xlab <- if (is.null(xlab)) xy$xlab else xlab
     ylab <- if (is.null(ylab)) xy$ylab else ylab
-    prediction <- loess.smooth(x, y, span, degree, family, evaluation)
+    pred <- loess.smooth(x, y, span, degree, family, evaluation)
     plot(x, y, ylim = ylim, xlab = xlab, ylab = ylab, ...)
-    lines(prediction)
+    do.call(lines, c(list(pred), lpars))
     invisible()
 }
 
@@ -481,9 +480,9 @@ anova.loess <- function(object, ...)
     ## calculate the number of models
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
-	warning("models with response ",
-                sQuote(deparse(responses[!sameresp])),
-                "removed because response differs from model 1")
+        warning(gettextf("models with response %s removed because response differs from model 1",
+                         sQuote(deparse(responses[!sameresp]))),
+                domain = NA)
     }
     nmodels <- length(objects)
     if(nmodels <= 1L) stop("no models to compare")
@@ -505,8 +504,8 @@ anova.loess <- function(object, ...)
     ans <- data.frame(ENP = round(enp,2L), RSS = rss, "F-value" = Fvalue,
 		      "Pr(>F)" = pr, check.names = FALSE)
     attr(ans, "heading") <-
-	paste(descr, "\n\n", "Analysis of Variance:   denominator df ",
-	      format(round(dfden, 2L)), "\n", sep = "")
+	paste0(descr, "\n\n", "Analysis of Variance:   denominator df ",
+               format(round(dfden, 2L)), "\n")
     class(ans) <- c("anova", "data.frame")
     ans
 }

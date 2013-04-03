@@ -19,16 +19,16 @@
 summary <- function (object, ...) UseMethod("summary")
 
 summary.default <-
-    function(object, ..., digits = max(3, getOption("digits") - 3))
+    function(object, ..., digits = max(3L, getOption("digits") - 3L))
 {
     if(is.factor(object))
 	return(summary.factor(object, ...))
     else if(is.matrix(object))
 	return(summary.matrix(object, digits = digits, ...))
 
-    value <- if(is.logical(object))# scalar or array!
+    value <- if(is.logical(object)) # scalar or array!
 	c(Mode = "logical",
-          {tb <- table(object, exclude=NULL)# incl. NA s
+          {tb <- table(object, exclude = NULL) # incl. NA s
            if(!is.null(n <- dimnames(tb)[[1L]]) && any(iN <- is.na(n)))
                dimnames(tb)[[1L]][iN] <- "NA's"
            tb
@@ -43,7 +43,7 @@ summary.default <-
 	    c(qq, "NA's" = sum(nas))
 	else qq
     } else if(is.recursive(object) && !is.language(object) &&
-	      (n <- length(object))) {
+	      (n <- length(object))) { # do not allow long dims
 	sumry <- array("", c(n, 3L), list(names(object),
                                           c("Length", "Class", "Mode")))
 	ll <- numeric(n)
@@ -57,7 +57,7 @@ summary.default <-
 	sumry[, 1L] <- format(as.integer(ll))
 	sumry
     }
-    else c(Length= length(object), Class= class(object), Mode= mode(object))
+    else c(Length = length(object), Class = class(object), Mode = mode(object))
     class(value) <- c("summaryDefault", "table")
     value
 }
@@ -115,7 +115,7 @@ summary.matrix <- function(object, ...) {
 }
 
 summary.data.frame <-
-    function(object, maxsum = 7, digits = max(3, getOption("digits") - 3), ...)
+    function(object, maxsum = 7L, digits = max(3L, getOption("digits") - 3L), ...)
 {
     ncw <- function(x) {
         z <- nchar(x, type="w")
@@ -127,7 +127,7 @@ summary.data.frame <-
     }
     # compute results to full precision.
     z <- lapply(X = as.list(object), FUN = summary,
-                maxsum = maxsum, digits = 12, ...)
+                maxsum = maxsum, digits = 12L, ...)
     nv <- length(object)
     nm <- names(object)
     lw <- numeric(nv)
@@ -149,8 +149,8 @@ summary.data.frame <-
             wcn <- ncw(cn)
             pad0 <- floor((wid - wcn)/2)
             pad1 <- wid - wcn - pad0
-            cn <- paste(substring(blanks, 1L, pad0), cn,
-                        substring(blanks, 1L, pad1), sep = "")
+            cn <- paste0(substring(blanks, 1L, pad0), cn,
+                         substring(blanks, 1L, pad1))
             nm[i] <- paste(cn, collapse="  ")
             z[[i]] <- sms
         } else {

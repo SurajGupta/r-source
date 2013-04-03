@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2008  R Core Team
+ *  Copyright (C) 1998--2012  R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,12 +31,12 @@
 #define R_GRAPHICS 1
 #include <Rgraphics.h> /* RUnit */
 
-typedef unsigned int rcolor;
+//typedef unsigned int rcolor;
 
 /* base.c, graphics.c, par.c */
-#define MAX_LAYOUT_ROWS 50
-#define MAX_LAYOUT_COLS 50
-#define MAX_LAYOUT_CELLS 500 /* must be less than 65535, 
+#define MAX_LAYOUT_ROWS 200
+#define MAX_LAYOUT_COLS 200
+#define MAX_LAYOUT_CELLS 10007 /* must be less than 65535,
 				3 copies, 3bytes each */
 
 typedef struct {
@@ -48,16 +48,16 @@ typedef struct {
 
 typedef struct {
     /* Plot State */
-    /* 
+    /*
        When the device driver is started this is 0
        After the first call to plot.new/perps it is 1
        Every graphics operation except plot.new/persp
-       should fail if state = 0 
+       should fail if state = 0
        This is checked at the highest internal function
-       level (e.g., do_lines, do_axis, do_plot_xy, ...) 
+       level (e.g., do_lines, do_axis, do_plot_xy, ...)
     */
 
-    int	state;		/* plot state: 1 if GNewPlot has been called 
+    int	state;		/* plot state: 1 if GNewPlot has been called
 			   (by plot.new or persp) */
     Rboolean valid;	/* valid layout ?  Used in GCheckState & do_playDL */
 
@@ -70,7 +70,7 @@ typedef struct {
     double adj;		/* String adjustment */
     Rboolean ann;	/* Should annotation take place */
     rcolor bg;		/* **R ONLY** Background color */
-    int	bty;		/* Box type */
+    char bty;		/* Box type */
     double cex;		/* Character expansion */
     double lheight;     /* Line height
 			   The height of a line of text is:
@@ -80,7 +80,7 @@ typedef struct {
     double din[2];	/* device size in inches */
     int	err;		/* Error repporting level */
     rcolor fg;		/* **R ONLY** Foreground Color */
-    char family[201];  /* **R ONLY** Font family 
+    char family[201];  /* **R ONLY** Font family
 			   Simple name which is mapped by device-specific
 			   font database to device-specific name.
 			   Only used if not "".
@@ -116,23 +116,23 @@ typedef struct {
 			/* [1] = coordinate of upper tick */
 			/* [2] = num tick intervals */
 			/* almost always used internally */
-    int	xaxs;		/* X Axis style */
-    int	xaxt;		/* X Axis type */
+    char xaxs;		/* X Axis style */
+    char xaxt;		/* X Axis type */
     Rboolean xlog;	/* Log Axis for X */
     int	xpd;		/* Clip to plot region indicator */
     int	oldxpd;
     double yaxp[3];	/* Y Axis annotation */
-    int	yaxs;		/* Y Axis style */
-    int	yaxt;		/* Y Axis type */
+    char yaxs;		/* Y Axis style */
+    char yaxt;		/* Y Axis type */
     Rboolean ylog;	/* Log Axis for Y */
 
     /* Annotation Parameters */
 
-    float cexbase;	/* Base character size */
-    float cexmain;	/* Main title size */
-    float cexlab;	/* xlab and ylab size */
-    float cexsub;	/* Sub title size */
-    float cexaxis;	/* Axis label size */
+    double cexbase;	/* Base character size */
+    double cexmain;	/* Main title size */
+    double cexlab;	/* xlab and ylab size */
+    double cexsub;	/* Sub title size */
+    double cexaxis;	/* Axis label size */
 
     int	fontmain;	/* Main title font */
     int	fontlab;	/* Xlab and ylab font */
@@ -196,7 +196,7 @@ typedef struct {
 			/* [0] = bottom, [1] = left */
 			/* [2] = top, [3] = right */
     GUnit oUnits;	/* outer margin units */
-    int	pty;		/* Plot type */
+    char pty;		/* Plot type */
 
     /* Layout parameters which can be set by the user, but */
     /* almost always get automatically calculated anyway */
@@ -281,7 +281,7 @@ void copyGPar(GPar *, GPar *);
 double R_Log10(double);
 
 /* from par.c, called in plot.c, plot3d.c */
-void ProcessInlinePars(SEXP, pGEDevDesc, SEXP call);
+void ProcessInlinePars(SEXP, pGEDevDesc);
 
 /* from device.c */
 void recordGraphicOperation(SEXP, SEXP, pGEDevDesc);
@@ -293,7 +293,7 @@ SEXP FixupLwd(SEXP, double);
 SEXP FixupVFont(SEXP);
 SEXP labelformat(SEXP);
 
-/* 
+/*
  * Function to generate an R_GE_gcontext from Rf_gpptr info
  *
  * from graphics.c, used in plot.c, plotmath.c

@@ -46,18 +46,22 @@ function (x, labels, panel = points, ...,
           diag.panel = NULL, text.panel = textPanel,
           label.pos = 0.5 + has.diag/3,
           cex.labels = NULL, font.labels = 1,
-          row1attop = TRUE, gap = 1)
+          row1attop = TRUE, gap = 1, log = "")
 {
-    textPanel <-
-        function(x = 0.5, y = 0.5, txt, cex, font)
-            text(x, y, txt, cex = cex, font = font)
+    if(doText <- missing(text.panel) || is.function(text.panel))
+	textPanel <-
+	    function(x = 0.5, y = 0.5, txt, cex, font)
+		text(x, y, txt, cex = cex, font = font)
 
     localAxis <- function(side, x, y, xpd, bg, col=NULL, main, oma, ...) {
       ## Explicitly ignore any color argument passed in as
       ## it was most likely meant for the data points and
       ## not for the axis.
-        if(side %%2 == 1) Axis(x, side=side, xpd=NA, ...)
-        else Axis(y, side=side, xpd=NA, ...)
+        xpd <- NA
+        if(side %% 2L == 1L && xl[j]) xpd <- FALSE
+        if(side %% 2L == 0L && yl[i]) xpd <- FALSE
+        if(side %% 2L == 1L) Axis(x, side = side, xpd = xpd, ...)
+        else Axis(y, side = side, xpd = xpd, ...)
     }
 
     localPlot <- function(..., main, oma, font.main, cex.main) plot(...)
@@ -94,46 +98,51 @@ function (x, labels, panel = points, ...,
 
     nc <- ncol(x)
     if (nc < 2) stop("only one column in the argument to 'pairs'")
-    has.labs <- TRUE
-    if (missing(labels)) {
-        labels <- colnames(x)
-        if (is.null(labels)) labels <- paste("var", 1L:nc)
+    if(doText) {
+	if (missing(labels)) {
+	    labels <- colnames(x)
+	    if (is.null(labels)) labels <- paste("var", 1L:nc)
+	}
+	else if(is.null(labels)) doText <- FALSE
     }
-    else if(is.null(labels)) has.labs <- FALSE
-    oma <- if("oma" %in% nmdots) dots$oma else NULL
-    main <- if("main" %in% nmdots) dots$main else NULL
-    if (is.null(oma)) {
-        oma <- c(4, 4, 4, 4)
-        if (!is.null(main)) oma[3L] <- 6
-    }
+    oma <- if("oma" %in% nmdots) dots$oma
+    main <- if("main" %in% nmdots) dots$main
+    if (is.null(oma))
+	oma <- c(4, 4, if(!is.null(main)) 6 else 4, 4)
     opar <- par(mfrow = c(nc, nc), mar = rep.int(gap/2, 4), oma = oma)
     on.exit(par(opar))
     dev.hold(); on.exit(dev.flush(), add = TRUE)
 
+    xl <- yl <- logical(nc)
+    if (is.numeric(log)) xl[log] <- yl[log] <- TRUE
+    else {xl[] <- grepl("x", log); yl[] <- grepl("y", log)}
     for (i in if(row1attop) 1L:nc else nc:1L)
         for (j in 1L:nc) {
+            l <- paste0(ifelse(xl[j], "x", ""), ifelse(yl[i], "y", ""))
             localPlot(x[, j], x[, i], xlab = "", ylab = "",
-                      axes = FALSE, type = "n", ...)
+                      axes = FALSE, type = "n", ..., log = l)
             if(i == j || (i < j && has.lower) || (i > j && has.upper) ) {
                 box()
-                if(i == 1  && (!(j %% 2) || !has.upper || !has.lower ))
-                    localAxis(1 + 2*row1attop, x[, j], x[, i], ...)
-                if(i == nc && (  j %% 2  || !has.upper || !has.lower ))
-                    localAxis(3 - 2*row1attop, x[, j], x[, i], ...)
-                if(j == 1  && (!(i %% 2) || !has.upper || !has.lower ))
-                    localAxis(2, x[, j], x[, i], ...)
-                if(j == nc && (  i %% 2  || !has.upper || !has.lower ))
-                    localAxis(4, x[, j], x[, i], ...)
+                if(i == 1  && (!(j %% 2L) || !has.upper || !has.lower ))
+                    localAxis(1L + 2L*row1attop, x[, j], x[, i], ...)
+                if(i == nc && (  j %% 2L  || !has.upper || !has.lower ))
+                    localAxis(3L - 2L*row1attop, x[, j], x[, i], ...)
+                if(j == 1  && (!(i %% 2L) || !has.upper || !has.lower ))
+                    localAxis(2L, x[, j], x[, i], ...)
+                if(j == nc && (  i %% 2L  || !has.upper || !has.lower ))
+                    localAxis(4L, x[, j], x[, i], ...)
                 mfg <- par("mfg")
                 if(i == j) {
                     if (has.diag) localDiagPanel(as.vector(x[, i]), ...)
-                    if (has.labs) {
+		    if (doText) {
                         par(usr = c(0, 1, 0, 1))
                         if(is.null(cex.labels)) {
                             l.wid <- strwidth(labels, "user")
                             cex.labels <- max(0.8, min(2, .9 / max(l.wid)))
                         }
-                        text.panel(0.5, label.pos, labels[i],
+                        xlp <- if(xl[i]) 10^0.5 else 0.5
+                        ylp <- if(yl[j]) 10^label.pos else label.pos
+                        text.panel(xlp, ylp, labels[i],
                                    cex = cex.labels, font = font.labels)
                     }
                 } else if(i < j)

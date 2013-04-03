@@ -1,6 +1,6 @@
 % File src/library/base/man/base-defunct.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{base-defunct}
@@ -61,16 +61,18 @@
 \alias{.readRDS}
 \alias{.saveRDS}
 \alias{Sys.putenv}
+\alias{real}
+\alias{as.real}
+\alias{is.real}
 %
 \description{
   The functions or variables listed here are no longer part of \R as
   they are no longer needed.
 }
 \usage{
-%--- oldfun(.)
+# Defunct in 1.x
 Version()
 provide(package)
-% Removed in 1.2.0
 .Provided
 category(\dots)
 print.anova.glm(.)
@@ -79,88 +81,83 @@ print.tabular(.)
 print.plot(.)
 save.plot(.)
 system.test(.)
-% </Removed 1.2.0>
-% Removed in 1.3.0
 getenv(\dots)
-% </Removed 1.3.0>
-% Removed in 1.4.0
 read.table.url(url, method, \dots)
 scan.url(url, file = tempfile(), method, \dots)
 source.url(url, file = tempfile(), method, \dots)
-httpclient(url, port = 80, error.is.fatal = TRUE, check.MIME.type = TRUE,
-           file = tempfile(), drop.ctrl.z = TRUE)
-parse.dcf(text = NULL, file = "", fields = NULL, versionfix = FALSE)
-% </Removed 1.4.0>
-% Removed in 1.5.0
+httpclient(url, port = 80, error.is.fatal = TRUE,
+           check.MIME.type = TRUE, file = tempfile(),
+           drop.ctrl.z = TRUE)
+parse.dcf(text = NULL, file = "", fields = NULL,
+          versionfix = FALSE)
 .Alias(expr)
-% </Removed 1.5.0>
-% Removed in 1.6.0
 print.ordered(.)
 .Dyn.libs
 .lib.loc
-% </Removed 1.6.0>
-% Removed in 1.7.0
 machine()
 Machine()
 Platform()
 restart()
-% </Removed 1.7.0>
-% Removed in 1.8.0
 printNoClass(x, digits = NULL, quote = TRUE, na.print = NULL,
              print.gap = NULL, right = FALSE, \dots)
-% </Removed 1.8.0>
-% Removed in 1.9.0
 codes(x, \dots)
 codes(x, \dots) <- value
-% print.atomic(x, quote = TRUE, \dots)
-% </Removed 1.9.0>
-% Removed in 2.0.0
-La.eigen(x, symmetric, only.values = FALSE, method = c("dsyevr", "dsyev"))
+
+# Defunct in 2.0.0
+La.eigen(x, symmetric, only.values = FALSE,
+         method = c("dsyevr", "dsyev"))
 tetragamma(x)
 pentagamma(x)
 package.description(pkg, lib.loc = NULL, fields = NULL)
-% </Removed 2.0.0>
-% Removed in 2.2.0
+
+# Defunct in 2.2.0
 loadURL(url, envir = parent.frame(), quiet = TRUE, \dots)
 delay(x, env = .GlobalEnv)
-% </Removed 2.2.0>
-% Removed in 2.3.0
+
+# Defunct in 2.3.0
 format.char(x, width = NULL, flag = "-")
-% </Removed 2.3.0>
-% Removed in 2.4.0
+
+# Defunct in 2.4.0
 La.chol(x)
 La.chol2inv(x, size = ncol(x))
-% </Removed 2.4.0>
-% Removed in 2.4.0
+
+# Defunct in 2.4.0
 symbol.C(name)
 symbol.For(name)
-% </Removed 2.4.0>
-% Removed in 2.5.0
+
+# Defunct in 2.5.0
 unix(call, intern = FALSE)
-% </Removed 2.5.0>
-% Removed in 2.8.0
+
+# Defunct in 2.8.0
 gammaCody(x)
-% </Removed 2.8.0>
-% Removed in 2.9.0
+
+# Defunct in 2.9.0
 manglePackageName(pkgName, pkgVersion)
-% </Removed 2.9.0>
-% Removed in 2.13.0
+
+# Defunct in 2.13.0
 .Import(...)
 .ImportFrom(name, ...)
 .Export(...)
 .S3method(generic, class, method)
-% </Removed 2.13.0>
-% Removed in 2.14.0
+
+# Defunct in 2.14.0
 .First.lib(lib, pkg)
-% </Removed 2.14.0>
-% Removed in 2.15.0
+
+# Defunct in 2.15.0
 mem.limits(nsize = NA, vsize = NA)
 .saveRDS(\dots)
 .readRDS(\dots)
 Sys.putenv(\dots)
-% </Removed 2.15.0>
+
+# Defunct in 3.0.0
+real(length = 0)
+as.real(x, \dots)
+is.real(x)
 }
 \details{
+  Some of these have stubs which report that they are defunct, but most
+  have been removed completely (apart from being documented here).
+  
   \code{category} has been an old-S function before there were factors;
   should be replaced by \code{\link{factor}} throughout!
 
@@ -168,8 +165,8 @@ Sys.putenv(\dots)
   plots to a file or printing them.
 
   \code{provide} and its object \code{.Provided} have been removed.
-  They were never used for their intended purpose, to allow one
-  package to subsume another.
+  Their intended purpose was to allow one package to subsume another,
+  but this was never used.
 
   \code{getenv} has been replaced by \code{\link{Sys.getenv}}.
 
@@ -218,11 +215,11 @@ Sys.putenv(\dots)
   \code{\link{psigamma}}.
 
   \code{package.description} has been replaced by
-  \code{\link{packageDescription}} in \pkg{utils}.
+  \code{\link{packageDescription}} in package \pkg{utils}.
 
   \code{loadURL} has been superseded by \code{\link{load}(url())}.
-  
-  \code{delay} has been replaced by \code{\link{delayedAssign}}. 
+
+  \code{delay} has been replaced by \code{\link{delayedAssign}}.
   Unevaluated promises should never be visible.
 
   \code{write.table0} was an \R-level version of \code{write.table}
@@ -234,20 +231,18 @@ Sys.putenv(\dots)
   \code{La.chol} and \code{La.chol2inv} became the default methods for
   \code{\link{chol}} and \code{\link{chol2inv}}.
 
-  Functions \code{symbol.C} and \code{symbol.For} were for historical
-  compatibility with S.  \code{symbol.C} just returns its argument
-  unchanged, whereas \code{symbol.For} will map to lower case and
-  append an underscore on those platforms (almost all) which do so for
-  Fortran symbols.  These are no longer of any use in \R.
+  Functions \code{symbol.C} and \code{symbol.For} were provided for
+  historical compatibility with S.  \code{symbol.C} just returns its
+  argument unchanged, whereas \code{symbol.For} will map to lower case
+  and append an underscore on those platforms (almost all) which do so
+  for Fortran symbols.  These are no longer of any use in \R.
 
   \code{unix} was a \emph{deprecated} (since the 1990s) alternative to
-  \code{\link{system}}, available for backwards compatibility.
-  
+  \code{\link{system}}, available for backwards compatibility with S.
+
   \code{gammaCody} was the \eqn{(\Gamma)} function from the Specfun
-  package used at C level in the Bessel code.  It may have been
-  somewhat faster but less precise and/or robust than \R's standard
-  \code{\link{gamma}}.  The \R-level interface was here for experimental
-  purposes.
+  package used at C level in the Bessel code. The \R-level interface was
+  here for experimental purposes.
 
   \code{manglePackageName} was part of the defunct support for versioned
   installs.
@@ -258,17 +253,20 @@ Sys.putenv(\dots)
 
   \code{.First.lib} was the load/attach hook for packages without
   namespaces: use \code{\link{.onLoad}} or \code{\link{.onAttach}} instead.
-  
+
   \code{mem.limits} reported on the old-style limits on the number of
   cons cells and size of the vector heap.  These are no longer limited
   except by overall memory limits.
-  
+
   \code{.readRDS} and \code{.saveRDS}, were internal-only versions (and
   the only versions available prior to \R 2.13.0) of
   \code{\link{.readRDS}} and \code{\link{.saveRDS}}.
 
   \code{Sys.putenv} was a synonym for \code{\link{Sys.setenv}},
   deprecated since \R 2.5.0.
+
+  \code{real}, \code{as.real} and \code{is.real} were long-deprecated
+  synonyms for the \code{double} versions.
 }
 \seealso{
   \code{\link{Defunct}}, \code{\link{base-deprecated}}

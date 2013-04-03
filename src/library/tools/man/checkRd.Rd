@@ -1,6 +1,6 @@
 % File src/library/tools/man/checkRd.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2008-9 R Core Team
+% Copyright 2008-13 R Core Team
 % Distributed under GPL 2 or later
 
 \name{checkRd}
@@ -43,7 +43,7 @@ checkRd(Rd, defines = .Platform$OS.type, stages = "render",
 
   An Rd object is passed through \code{prepare_Rd}, but it may already
   have been (and installed Rd objects have).
-  
+
   Warnings are given a \sQuote{level}: those from \code{prepare_Rd} have
   level 0.  These include
   \tabular{l}{
@@ -68,8 +68,9 @@ checkRd(Rd, defines = .Platform$OS.type, stages = "render",
     5 \tab Title of \verb{\section} must be non-empty plain text\cr
     5 \tab \verb{\title} content must be plain text\cr
     3 \tab Empty section \var{tag name}\cr
+    3 \tab \verb{\synopsis} will be removed in R 3.1.0\cr
     -1 \tab Non-ASCII contents without declared encoding\cr
-    -1 \tab Non-ASCII contents in second part of \verb{\enc}\cr 
+    -1 \tab Non-ASCII contents in second part of \verb{\enc}\cr
     -3 \tab Tag \verb{\ldots} is not valid in a code block\cr
     -3 \tab Apparent non-ASCII contents without declared encoding\cr
     -3 \tab Apparent non-ASCII contents in second part of \verb{\enc}\cr

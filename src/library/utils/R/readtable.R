@@ -26,14 +26,14 @@ function(file, sep = "", quote = "\"'", skip = 0,
     }
     if(!inherits(file, "connection"))
         stop("'file' must be a character string or connection")
-    .Internal(count.fields(file, sep, quote, skip, blank.lines.skip,
-                           comment.char))
+    .External(C_countfields, file, sep, quote, skip, blank.lines.skip,
+              comment.char)
 }
 
 
 type.convert <-
 function(x, na.strings = "NA", as.is = FALSE, dec = ".")
-    .Internal(type.convert(x, na.strings, as.is, dec))
+    .External2(C_typeconvert, x, na.strings, as.is, dec)
 
 
 read.table <-
@@ -67,8 +67,8 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
     ## read a few lines to determine header, no of cols.
     nlines <- n0lines <- if (nrows < 0L) 5 else min(5L, (header + nrows))
 
-    lines <- .Internal(readTableHead(file, nlines, comment.char,
-                                     blank.lines.skip, quote, sep))
+    lines <- .External(C_readtablehead, file, nlines, comment.char,
+                       blank.lines.skip, quote, sep)
     nlines <- length(lines)
     if(!nlines) {
         if(missing(col.names)) stop("no lines available in input")
@@ -78,7 +78,7 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
         if(all(!nzchar(lines))) stop("empty beginning of file")
         if(nlines < n0lines && file == 0L)  { # stdin() has reached EOF
             pushBack(c(lines, lines, ""), file)
-            on.exit(.Internal(clearPushBack(stdin())))
+            on.exit((clearPushBack(stdin())))
         } else pushBack(c(lines, lines), file)
         first <- scan(file, what = "", sep = sep, quote = quote,
                       nlines = 1, quiet = TRUE, skip = 0,
@@ -109,8 +109,8 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
 
         if (header) {
             ## skip over header
-           .Internal(readTableHead(file, 1L, comment.char,
-                                   blank.lines.skip, quote, sep))
+           .External(C_readtablehead, file, 1L, comment.char,
+                     blank.lines.skip, quote, sep)
             if(missing(col.names)) col.names <- first
             else if(length(first) != length(col.names))
                 warning("header and 'col.names' are of different lengths")
@@ -132,9 +132,9 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
     nmColClasses <- names(colClasses)
     if(length(colClasses) < cols)
         if(is.null(nmColClasses)) {
-            colClasses <- rep(colClasses, length.out=cols)
+            colClasses <- rep_len(colClasses, cols)
         } else {
-            tmp <- rep(NA_character_, length.out=cols)
+            tmp <- rep_len(NA_character_, cols)
             names(tmp) <- col.names
             i <- match(nmColClasses, col.names, 0L)
             if(any(i <= 0L))
@@ -179,7 +179,7 @@ function(file, header = FALSE, sep = "", quote = "\"'", dec = ".",
     }
 
     if(is.logical(as.is)) {
-	as.is <- rep(as.is, length.out=cols)
+	as.is <- rep_len(as.is, cols)
     } else if(is.numeric(as.is)) {
 	if(any(as.is < 1 | as.is > cols))
 	    stop("invalid numeric 'as.is' expression")

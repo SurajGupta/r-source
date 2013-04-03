@@ -32,9 +32,11 @@ load <- function (file, envir = parent.frame())
             if(grepl("RD[ABX][12]\r", magic))
                 stop("input has been corrupted, with LF replaced by CR")
             ## Not a version 2 magic number, so try the pre-R-1.4.0 code
-            warning(gettextf("file %s has magic number '%s'\n   Use of save versions prior to 2 is deprecated",
-                             sQuote(basename(file)),
-                             gsub("[\n\r]*", "", magic)),
+            warning(sprintf("file %s has magic number '%s'\n",
+                            sQuote(basename(file)),
+                            gsub("[\n\r]*", "", magic)),
+                    "  ",
+                    "Use of save versions prior to 2 is deprecated",
                     domain = NA, call. = FALSE)
             return(.Internal(load(file, envir)))
         }
@@ -59,7 +61,7 @@ save <- function(..., list = character(),
         ascii <- opts$ascii
     if (missing(version)) version <- opts$version
     if (!is.null(version) && version < 2)
-        warning("Use of save versions prior to 2 is deprecated")
+        warning("Use of save versions prior to 2 is deprecated", domain = NA)
 
     if(missing(list) && !length(list(...)))
 	warning("nothing specified to be save()d")
@@ -154,7 +156,8 @@ save.image <- function (file = ".RData", version = NULL, ascii = FALSE,
     if (safe)
         if (! file.rename(outfile, file)) {
             on.exit()
-            stop("image could not be renamed and is left in ", outfile)
+            stop(gettextf("image could not be renamed and is left in %s",
+                          outfile), domain = NA)
         }
     on.exit()
 }
@@ -184,6 +187,6 @@ findPackageEnv <- function(info)
     pkg <- substr(info, 9L, 1000L)
     if(require(pkg, character.only=TRUE, quietly = TRUE))
         return(as.environment(info))
-    message("not found: using .GlobalEnv instead")
-    return(.GlobalEnv)
+    message("Specified environment not found: using '.GlobalEnv' instead")
+    .GlobalEnv
 }

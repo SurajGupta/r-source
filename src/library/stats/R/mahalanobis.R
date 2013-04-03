@@ -23,9 +23,8 @@ mahalanobis. <- function(x, center, cov, inverted=FALSE, ...)
     ## save speed in customary case:
     ## if(any(center != 0))
     x <- t(sweep(x, 2, center))# = (x - center)
-    retval <- colSums(x * if(inverted) cov%*%x else solve(cov, x, ...))
-    names(retval) <- rownames(x)
-    retval
+    setNames(colSums(x * if(inverted) cov%*%x else solve(cov, x, ...)),
+	     rownames(x))
 }
 
 
@@ -43,7 +42,5 @@ mahalanobis <- function(x, center, cov, inverted=FALSE, ...)
     ## retval <- colSums(x * if(inverted) cov %*% x else solve(cov,x, ...))
     if(!inverted)
 	cov <- solve(cov, ...)
-    retval <- rowSums((x%*%cov) * x)
-    names(retval) <- rownames(x)
-    retval
+    setNames(rowSums((x%*%cov) * x), rownames(x))
 }

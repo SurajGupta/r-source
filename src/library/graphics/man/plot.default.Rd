@@ -25,7 +25,7 @@
     following values are possible, for details, see \code{\link{plot}}:
     \code{"p"} for points, \code{"l"} for lines,
     \code{"b"} for both points and lines,
-    \code{"c"} for empty points joined by lines,    
+    \code{"c"} for empty points joined by lines,
     \code{"o"} for overplotted points and lines,
     \code{"s"} and \code{"S"} for stair steps and
     \code{"h"} for histogram-like vertical lines.  Finally,
@@ -59,7 +59,7 @@
     that this works by lazy evaluation: passing this argument from other
     \code{plot} methods may well not work since it may be evaluated too
     early.}
-  
+
   \item{panel.last}{an expression to be evaluated after plotting has
     taken place but before the axes, title and box are added.  See the
     comments about \code{panel.first}.}
@@ -132,11 +132,10 @@ x <- 0:12
 y <- sin(pi/5 * x)
 op <- par(mfrow = c(3,3), mar = .1+ c(2,2,3,1))
 for (tp in c("p","l","b",  "c","o","h",  "s","S","n")) {
-   plot(y ~ x, type = tp,
-        main = paste("plot(*, type = \"",tp,"\")", sep = ""))
+   plot(y ~ x, type = tp, main = paste0("plot(*, type = \"", tp, "\")"))
    if(tp == "S") {
       lines(x, y, type = "s", col = "red", lty = 2)
-      mtext("lines(*, type = \"s\", ...)", col = "red", cex = .8)
+      mtext("lines(*, type = \"s\", ...)", col = "red", cex = 0.8)
    }
 }
 par(op)

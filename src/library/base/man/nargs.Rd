@@ -10,7 +10,7 @@
 \description{
   When used inside a function body, \code{nargs} returns the number of
   arguments supplied to that function, \emph{including} positional
-  arguments left blank. 
+  arguments left blank.
 }
 \details{
   The count includes empty (missing) arguments, so that \code{foo(x,,z)}
@@ -18,7 +18,7 @@
   This can occur in rather indirect ways, so for example \code{x[]}
   might dispatch a call to \code{`[.some_method`(x, )} which is
   considered to have two arguments.
-  
+
   This is a \link{primitive} function.
 }
 \references{
@@ -36,7 +36,7 @@ tst(clicketyclack) # 1 (even non-existing)
 tst(c1, a2, rr3) # 3
 
 foo <- function(x, y, z, w) {
-   cat("call was", deparse(match.call()), "\n")
+   cat("call was ", deparse(match.call()), "\n", sep = "")
    nargs()
 }
 foo()      # 0

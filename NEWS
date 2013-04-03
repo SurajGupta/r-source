@@ -1,5 +1,939 @@
 R News
 
+CHANGES IN R 3.0.0:
+
+  SIGNIFICANT USER-VISIBLE CHANGES:
+
+    o Packages need to be (re-)installed under this version (3.0.0) of
+      R.
+
+    o There is a subtle change in behaviour for numeric index values
+      2^31 and larger.  These never used to be legitimate and so were
+      treated as NA, sometimes with a warning.  They are now legal for
+      long vectors so there is no longer a warning, and x[2^31] <- y
+      will now extend the vector on a 64-bit platform and give an error
+      on a 32-bit one.
+
+    o It is now possible for 64-bit builds to allocate amounts of
+      memory limited only by the OS.  It may be wise to use OS
+      facilities (e.g. ulimit in a bash shell, limit in csh), to set
+      limits on overall memory consumption of an R process,
+      particularly in a multi-user environment.  A number of packages
+      need a limit of at least 4GB of virtual memory to load.
+
+      64-bit Windows builds of R are by default limited in memory usage
+      to the amount of RAM installed: this limit can be changed by
+      command-line option --max-mem-size or setting environment
+      variable R_MAX_MEM_SIZE.
+
+    o Negative numbers for colours are consistently an error:
+      previously they were sometimes taken as transparent, sometimes
+      mapped into the current palette and sometimes an error.
+
+  NEW FEATURES:
+
+    o identical() has a new argument, ignore.environment, used when
+      comparing functions (with default FALSE as before).
+
+    o There is a new option, options(CBoundsCheck=), which controls how
+      .C() and .Fortran() pass arguments to compiled code.  If true
+      (which can be enabled by setting the environment variable
+      R_C_BOUNDS_CHECK to yes), raw, integer, double and complex
+      arguments are always copied, and checked for writing off either
+      end of the array on return from the compiled code (when a second
+      copy is made).  This also checks individual elements of character
+      vectors passed to .C().
+
+      This is not intended for routine use, but can be very helpful in
+      finding segfaults in package code.
+
+    o In layout(), the limits on the grid size have been raised
+      (again).
+
+    o New simple provideDimnames() utility function.
+
+    o Where methods for length() return a double value which is
+      representable as an integer (as often happens for package
+      Matrix), this is converted to an integer.
+
+    o Matrix indexing of dataframes by two-column numeric indices is
+      now supported for replacement as well as extraction.
+
+    o setNames() now has a default for its object argument, useful for
+      a character result.
+
+    o StructTS() has a revised additive constant in the loglik
+      component of the result: the previous definition is returned as
+      the loglik0 component.  However, the help page has always warned
+      of a lack of comparability of log-likelihoods for non-stationary
+      models.  (Suggested by Jouni Helske.)
+
+    o The logic in aggregate.formula() has been revised.  It is now
+      possible to use a formula stored in a variable; previously, it
+      had to be given explicitly in the function call.
+
+    o install.packages() has a new argument quiet to reduce the amount
+      of output shown.
+
+    o Setting an element of the graphics argument lwd to a negative or
+      infinite value is now an error.  Lines corresponding to elements
+      with values NA or NaN are silently omitted.
+
+      Previously the behaviour was device-dependent.
+
+    o Setting graphical parameters cex, col, lty, lwd and pch in par()
+      now requires a length-one argument.  Previously some silently
+      took the first element of a longer vector, but not always when
+      documented to do so.
+
+    o Sys.which() when used with inputs which would be unsafe in a
+      shell (e.g. absolute paths containing spaces) now uses
+      appropriate quoting.
+
+    o as.tclObj() has been extended to handle raw vectors.  Previously,
+      it only worked in the other direction.  (Contributed by Charlie
+      Friedemann, PR#14939.)
+
+    o New functions cite() and citeNatbib() have been added, to allow
+      generation of in-text citations from "bibentry" objects.  A
+      cite() function may be added to bibstyle() environments.
+
+    o A sort() method has been added for "bibentry" objects.
+
+    o The bibstyle() function now defaults to setting the default
+      bibliography style. The getBibstyle() function has been added to
+      report the name of the current default style.
+
+    o scatter.smooth() now has an argument lpars to pass arguments to
+      lines().
+
+    o pairs() has a new log argument, to allow some or all variables to
+      be plotted on logarithmic scale.  (In part, wish of PR#14919.)
+
+    o split() gains a sep argument.
+
+    o termplot() does a better job when given a model with interactions
+      (and no longer attempts to plot interaction terms).
+
+    o The parser now incorporates code from Romain Francois' parser
+      package, to support more detailed computation on the code, such
+      as syntax highlighting, comment-based documentation, etc.
+      Functions getParseData() and getParseText() access the data.
+
+    o There is a new function rep_len() analogous to rep.int() for when
+      speed is required (and names are not).
+
+    o The undocumented use rep(NULL, length.out = n) for n > 0 (which
+      returns NULL) now gives a warning.
+
+    o demo() gains an encoding argument for those packages with
+      non-ASCII demos: it defaults to the package encoding where there
+      is one.
+
+    o strwrap() converts inputs with a marked encoding to the current
+      locale: previously it made some attempt to pass through as bytes
+      inputs invalid in the current locale.
+
+    o Specifying both rate and scale to [dpqr]gamma is a warning (if
+      they are essentially the same value) or an error.
+
+    o merge() works in more cases where the data frames include
+      matrices.  (Wish of PR#14974.)
+
+    o optimize() and uniroot() no longer use a shared parameter object
+      across calls.  (nlm(), nlminb() and optim() with numerical
+      derivatives still do, as documented.)
+
+    o The all.equal() method for date-times is now documented: times
+      are regarded as equal (by default) if they differ by up to 1
+      msec.
+
+    o duplicated() and unique() gain a nmax argument which can be used
+      to make them much more efficient when it is known that there are
+      only a small number of unique entries.  This is done
+      automatically for factors.
+
+    o Functions rbinom(), rgeom(), rhyper(), rpois(), rnbinom(),
+      rsignrank() and rwilcox() now return integer (not double)
+      vectors.  This halves the storage requirements for large
+      simulations.
+
+    o sort(), sort.int() and sort.list() now use radix sorting for
+      factors of less than 100,000 levels when method is not supplied.
+      So does order() if called with a single factor, unless na.last =
+      NA.
+
+    o diag() as used to generate a diagonal matrix has been re-written
+      in C for speed and less memory usage.  It now forces the result
+      to be numeric in the case diag(x) since it is said to have 'zero
+      off-diagonal entries'.
+
+    o backsolve() (and forwardsolve()) are now internal functions, for
+      speed and support for large matrices.
+
+    o More matrix algebra functions (e.g. chol() and solve()) accept
+      logical matrices (and coerce to numeric).
+
+    o sample.int() has some support for n >= 2^31: see its help for the
+      limitations.
+
+      A different algorithm is used for (n, size, replace = FALSE, prob
+      = NULL) for n > 1e7 and size <= n/2.  This is much faster and
+      uses less memory, but does give different results.
+
+    o approxfun() and splinefun() now return a wrapper to an internal
+      function in the stats namespace rather than a .C() or .Call()
+      call.  This is more likely to work if the function is saved and
+      used in a different session.
+
+    o The functions .C(), .Call(), .External() and .Fortran() now give
+      an error (rather than a warning) if called with a named first
+      argument.
+
+    o Sweave() by default now reports the locations in the source
+      file(s) of each chunk.
+
+    o clearPushBack() is now a documented interface to a long-existing
+      internal call.
+
+    o aspell() gains filters for R code, Debian Control Format and
+      message catalog files, and support for R level dictionaries.  In
+      addition, package utils now provides functions
+      aspell_package_R_files() and aspell_package_C_files() for spell
+      checking R and C level message strings in packages.
+
+    o bibentry() gains some support for "incomplete" entries with a
+      crossref field.
+
+    o gray() and gray.colors() finally allow alpha to be specified.
+
+    o monthplot() gains parameters to control the look of the reference
+      lines.  (Suggestion of Ian McLeod.)
+
+    o Added support for new %~% relation ("is distributed as") in
+      plotmath.
+
+    o domain = NA is accepted by gettext() and ngettext(), analogously
+      to stop() etc.
+
+    o termplot() gains a new argument plot = FALSE which returns
+      information to allow the plots to be modified for use as part of
+      other plots, but does not plot them.  (Contributed by Terry
+      Therneau, PR#15076.)
+
+    o quartz.save(), formerly an undocumented part of R.app, is now
+      available to copy a device to a quartz() device.  dev.copy2pdf()
+      optionally does this for PDF output: quartz.save() defaults to
+      PNG.
+
+    o The default method of pairs() now allows text.panel = NULL and
+      the use of <foo>.panel = NULL is now documented.
+
+    o setRefClass() and getRefClass() now return class generator
+      functions, similar to setClass(), but still with the reference
+      fields and methods as before (suggestion of Romain Francois).
+
+    o New functions bitwNot(), bitwAnd(), bitwOr() and bitwXor(), using
+      the internal interfaces previously used for classes "octmode" and
+      "hexmode".
+
+      Also bitwShiftL() and bitwShiftR() for shifting bits in elements
+      of integer vectors.
+
+    o New option "deparse.cutoff" to control the deparsing of language
+      objects such as calls and formulae when printing.  (Suggested by
+      a comment of Sarah Goslee.)
+
+    o colors() gains an argument distinct.
+
+    o New demo(colors) and demo(hclColors), with utility functions.
+
+    o list.files() (aka dir()) gains a new optional argument no.. which
+      allows to exclude "." and ".." from listings.
+
+    o Multiple time series are also of class "matrix"; consequently,
+      head(), e.g., is more useful.
+
+    o encodeString() preserves UTF-8 marked encodings.  Thus if factor
+      levels are marked as UTF-8 an attempt is made to print them in
+      UTF-8 in RGui on Windows.
+
+    o readLines() and scan() (and hence read.table()) in a UTF-8 locale
+      now discard a UTF-8 byte-order-mark (BOM).  Such BOMs are allowed
+      but not recommended by the Unicode Standard: however Microsoft
+      applications can produce them and so they are sometimes found on
+      websites.
+
+      The encoding name "UTF-8-BOM" for a connection will ensure that a
+      UTF-8 BOM is discarded.
+
+    o mapply(FUN, a1, ..) now also works when a1 (or a further such
+      argument) needs a length() method (which the documented arguments
+      never do).  (Requested by Herv'e Pag`es; with a patch.)
+
+    o .onDetach() is supported as an alternative to .Last.lib.  Unlike
+      .Last.lib, this does not need to be exported from the package's
+      namespace.
+
+    o The srcfile argument to parse() may now be a character string, to
+      be used in error messages.
+
+    o The format() method for ftable objects gains a method argument,
+      propagated to write.ftable() and print(), allowing more compact
+      output, notably for LaTeX formatting, thanks to Marius Hofert.
+
+    o The utils::process.events() function has been added to trigger
+      immediate event handling.
+
+    o Sys.which() now returns NA (not "") for NA inputs (related to
+      PR#15147).
+
+    o The print() method for class "htest" gives fewer trailing spaces
+      (wish of PR#15124).
+
+      Also print output from HoltWinters(), nls() and others.
+
+    o loadNamespace() allows a version specification to be given, and
+      this is used to check version specifications given in the Imports
+      field when a namespace is loaded.
+
+    o setClass() has a new argument, slots, clearer and less ambiguous
+      than representation.  It is recommended for future code, but
+      should be back-compatible.  At the same time, the allowed slot
+      specification is slightly more general.  See the documentation
+      for details.
+
+    o mget() now has a default for envir (the frame from which it is
+      called), for consistency with get() and assign().
+
+    o close() now returns an integer status where available, invisibly.
+      (Wish of PR#15088.)
+
+    o The internal method of tar() can now store paths too long for the
+      ustar format, using the (widely supported) GNU extension.  It can
+      also store long link names, but these are much less widely
+      supported.  There is support for larger files, up to the ustar
+      limit of 8GB.
+
+    o Local reference classes have been added to package methods.
+      These are a technique for avoiding unneeded copying of large
+      components of objects while retaining standard R functional
+      behavior.  See ?LocalReferenceClasses.
+
+    o untar() has a new argument restore_times which if false (not the
+      default) discards the times in the tarball.  This is useful if
+      they are incorrect (some tarballs submitted to CRAN have times in
+      a local timezone or many years in the past even though the
+      standard required them to be in UTC).
+
+    o replayplot() cannot (and will not attempt to) replay plots
+      recorded under R < 3.0.0.  It may crash the R session if an
+      attempt is made to replay plots created in a different build of R
+      >= 3.0.0.
+
+    o Palette changes get recorded on the display list, so replaying
+      plots (including when resizing screen devices and using
+      dev.copy()) will work better when the palette is changed during a
+      plot.
+
+    o chol(pivot = TRUE) now defaults to LAPACK, not LINPACK.
+
+    o The parse() function has a new parameter keep.source, which
+      defaults to options("keep.source").
+
+    o Profiling via Rprof() now optionally records information at the
+      statement level, not just the function level.
+
+    o The Rprof() function now quotes function names in in its output
+      file on Windows, to be consistent with the quoting in Unix.
+
+    o Profiling via Rprof() now optionally records information about
+      time spent in GC.
+
+    o The HTML help page for a package now displays non-vignette
+      documentation files in a more accessible format.
+
+    o To support options(stringsAsFactors = FALSE), model.frame(),
+      model.matrix() and replications() now automatically convert
+      character vectors to factors without a warning.
+
+    o The print method for objects of class "table" now detects tables
+      with 0-extents and prints the results as, e.g., < table of extent
+      0 x 1 x 2 >. (Wish of PR#15198.)
+
+    o Deparsing involving calls to anonymous functions and has been
+      made closer to reversible by the addition of extra parentheses.
+
+    o The function utils::packageName() has been added as a lightweight
+      version of methods::getPackageName().
+
+    o find.package(lib.loc = NULL) now treats loaded namespaces
+      preferentially in the same way as attached packages have been for
+      a long time.
+
+    o In Windows, the Change Directory dialog now defaults to the
+      current working directory, rather than to the last directory
+      chosen in that dialog.
+
+    o available.packages() gains a "license/restricts_use" filter which
+      retains only packages for which installation can proceed solely
+      based on packages which are guaranteed not to restrict use.
+
+    o New check_packages_in_dir() function in package tools for
+      conveniently checking source packages along with their reverse
+      dependencies.
+
+    o R's completion mechanism has been improved to handle help
+      requests (starting with a question mark).  In particular, help
+      prefixes are now supported, as well as quoted help topics.  To
+      support this, completion inside quotes are now handled by R by
+      default on all platforms.
+
+    o The memory manager now allows the strategy used to balance
+      garbage collection and memory growth to be controlled by setting
+      the environment variable R_GC_MEM_GROW. See ?Memory for more
+      details.
+
+    o ('For experts only', as the introductory manual says.)  The use
+      of environment variables R_NSIZE and R_VSIZE to control the
+      initial (= minimum) garbage collection trigger for number of cons
+      cels and size of heap has been restored: they can be overridden
+      by the command-line options --min-nsize and --min-vsize; see
+      ?Memory.
+
+    o On Windows, the device name for bitmap devices as reported by
+      .Device and .Devices no longer includes the file name.  This is
+      for consistency with other platforms and was requested by the
+      lattice maintainer.
+
+      win.metafile() still uses the file name: the exact form is used
+      by package tkrplot.
+
+    o set.seed(NULL) re-initializes .Random.seed as done at the
+      beginning of the session if not already set.  (Suggestion of Bill
+      Dunlap.)
+
+    o The breaks argument in hist.default() can now be a function that
+      returns the breakpoints to be used (previously it could only
+      return the suggested number of breakpoints).
+
+    o File share/licenses/licenses.db has some clarifications,
+      especially as to which variants of 'BSD' and 'MIT' is intended
+      and how to apply them to packages.  The problematic licence
+      'Artistic-1.0' has been removed.
+
+  LONG VECTORS:
+
+  This section applies only to 64-bit platforms.
+
+    o There is support for vectors longer than 2^31 - 1 elements.  This
+      applies to raw, logical, integer, double, complex and character
+      vectors, as well as lists.  (Elements of character vectors remain
+      limited to 2^31 - 1 bytes.)
+
+    o Most operations which can sensibly be done with long vectors
+      work: others may return the error 'long vectors not supported
+      yet'.  Most of these are because they explicitly work with
+      integer indices (e.g. anyDuplicated() and match()) or because
+      other limits (e.g. of character strings or matrix dimensions)
+      would be exceeded or the operations would be extremely slow.
+
+    o length() returns a double for long vectors, and lengths can be
+      set to 2^31 or more by the replacement function with a double
+      value.
+
+    o Most aspects of indexing are available.  Generally double-valued
+      indices can be used to access elements beyond 2^31 - 1.
+
+    o There is some support for matrices and arrays with each dimension
+      less than 2^31 but total number of elements more than that.  Only
+      some aspects of matrix algebra work for such matrices, often
+      taking a very long time.  In other cases the underlying Fortran
+      code has an unstated restriction (as was found for complex
+      svd()).
+
+    o dist() can produce dissimilarity objects for more than 65536 rows
+      (but for example hclust() cannot process such objects).
+
+    o serialize() to a raw vector is unlimited in size (except by
+      resources).
+
+    o The C-level function R_alloc can now allocate 2^35 or more bytes.
+
+    o agrep() and grep() will return double vectors of indices for long
+      vector inputs.
+
+    o Many calls to .C() have been replaced by .Call() to allow long
+      vectors to be supported (now or in the future).  Regrettably
+      several packages had copied the non-API .C() calls and so failed.
+
+    o .C() and .Fortran() do not accept long vector inputs.  This is a
+      precaution as it is very unlikely that existing code will have
+      been written to handle long vectors (and the R wrappers often
+      assume that length(x) is an integer).
+
+    o Most of the methods for sort() work for long vectors.
+
+      rank(), sort.list() and order() support long vectors (slowly
+      except for radix sorting).
+
+    o sample() can do uniform sampling from a long vector.
+
+  PERFORMANCE IMPROVEMENTS:
+
+    o More use has been made of R objects representing registered entry
+      points, which is more efficient as the address is provided by the
+      loader once only when the package is loaded.
+
+      This has been done for packages base, methods, splines and tcltk:
+      it was already in place for the other standard packages.
+
+      Since these entry points are always accessed by the R entry
+      points they do not need to be in the load table which can be
+      substantially smaller and hence searched faster.  This does mean
+      that .C / .Fortran / .Call calls copied from earlier versions of
+      R may no longer work - but they were never part of the API.
+
+    o Many .Call() calls in package base have been migrated to
+      .Internal() calls.
+
+    o solve() makes fewer copies, especially when b is a vector rather
+      than a matrix.
+
+    o eigen() makes fewer copies if the input has dimnames.
+
+    o Most of the linear algebra functions make fewer copies when the
+      input(s) are not double (e.g. integer or logical).
+
+    o A foreign function call (.C() etc) in a package without a PACKAGE
+      argument will only look in the first DLL specified in the
+      NAMESPACE file of the package rather than searching all loaded
+      DLLs.  A few packages needed PACKAGE arguments added.
+
+    o The @<- operator is now implemented as a primitive, which should
+      reduce some copying of objects when used.  Note that the operator
+      object must now be in package base: do not try to import it
+      explicitly from package methods.
+
+  PACKAGE INSTALLATION:
+
+    o The transitional support for installing packages without
+      namespaces (required since R 2.14.0) has been removed.  R CMD
+      build will still add a namespace, but a .First.lib() function
+      will need to be converted.
+
+      R CMD INSTALL no longer adds a namespace (so installation will
+      fail), and a .First.lib() function in a package will be ignored
+      (with an installation warning for now).
+
+      As an exception, packages without a R directory and no NAMESPACE
+      file can still be installed.
+
+    o Packages can specify in their DESCRIPTION file a line like
+      
+           Biarch: yes
+
+      to be installed on Windows with --force-biarch.
+
+    o Package vignettes can now be processed by other engines besides
+      Sweave; see 'Writing R Extensions' and the tools::vignetteEngine
+      help topic for details.
+
+    o The *.R tangled source code for vignettes is now included in
+      tarballs when R CMD build is used to produce them.  In R 3.0.0,
+      *.R files not in the sources will be produced at install time,
+      but eventually this will be dropped.
+
+    o The package type "mac.binary" now looks in a path in the
+      repository without any Mac subtype (which used to be universal or
+      leopard): it looks in bin/macosx/contrib/3.0 rather than
+      bin/macosx/leopard/contrib/2.15).  This is the type used for the
+      CRAN binary distribution for OS X as from R 3.0.0.
+
+    o File etc/Makeconf makes more use of the macros $(CC), $(CXX),
+      $(F77) and $(FC), so the compiler in use can be changed by
+      setting just these (and if necessary the corresponding flags and
+      FLIBS) in file ~/.R/Makevars.
+
+      This is convenient for those working with binary distributions of
+      R, e.g. on OS X.
+
+  UTILITIES:
+
+    o R CMD check now gives a warning rather than a note if it finds
+      calls to abort, assert or exit in compiled code, and has been
+      able to find the .o file in which the calls occur.
+
+      Such calls can terminate the R process which loads the package.
+
+    o The location of the build and check environment files can now be
+      specified by the environment variables R_BUILD_ENVIRON and
+      R_CHECK_ENVIRON, respectively.
+
+    o R CMD Sweave gains a --compact option to control possibly
+      reducing the size of the PDF file it creates when --pdf is given.
+
+    o R CMD build now omits Eclipse's .metadata directories, and R CMD
+      check warns if it finds them.
+
+    o R CMD check now does some checks on functions defined within
+      reference classes, including of .Call() etc calls.
+
+    o R CMD check --as-cran notes assignments to the global
+      environment, calls to data() which load into the global
+      environment, and calls to attach().
+
+    o R CMD build by default uses the internal method of tar() to
+      prepare the tarball.  This is more likely to produce a tarball
+      compatible with R CMD INSTALL and R CMD check: an external tar
+      program, including options, can be specified _via_ the
+      environment variable R_BUILD_TAR.
+
+    o tools::massageExamples() is better protected against packages
+      which re-define base functions such as cat() and get() and so can
+      cause R CMD check to fail when checking examples.
+
+    o R CMD javareconf has been enhanced to be more similar to the code
+      used by configure.
+
+      There is now a test that a JNI program can be compiled (like
+      configure did) and only working settings are used.
+
+      It makes use of custom settings from configuration recorded in
+      etc/javaconf.
+
+    o The --no-vignettes argument of R CMD build has been renamed to
+      the more accurate --no-build-vignettes: its action has always
+      been to (re)build vignettes and never omitted them.
+
+      R CMD check accepts --no-build-vignettes as a preferred synonym
+      for --no-rebuild-vignettes.
+
+  DEPRECATED AND DEFUNCT:
+
+    o The ENCODING argument to .C() is defunct.  Use iconv() instead.
+
+    o The .Internal(eval.with.vis) non-API function has been removed.
+
+    o Support for the converters for use with .C() has been removed,
+      including the oft misused non-API header R_ext/RConverters.h.
+
+    o The previously deprecated uses of array() with a 0-length dim
+      argument and tapply() with a 0-length INDEX list are now errors.
+
+    o Translation packages are defunct.
+
+    o Calling rep() or rep.int() on a pairlist or other non-vector
+      object is now an error.
+
+    o Several non-API entry points have been transferred to packages
+      (e.g. R_zeroin2) or replaced by different non-API entry points
+      (e.g. R_tabulate).
+
+    o The 'internal' graphics device invoked by
+      .Call("R_GD_nullDevice", package = "grDevices") has been removed:
+      use pdf(file = NULL) instead.
+
+    o The .Fortran() entry point "dqrls" which has not been used by R
+      since version 2.15.1 is no longer available.
+
+    o Functions traceOn() and traceOff() in package methods are now
+      defunct.
+
+    o Function CRAN.packages() is finally defunct.
+
+    o Use of col2rgb(0) is defunct: use par("bg") or NA instead.
+
+    o The long-defunct functions Rd_parse(), anovalist.lm(),
+      categpry(), clearNames(), gammaCody(), glm.fit.null(),
+      lm.fit.null(), lm.wfit.null(), manglePackageNames(),
+      mauchley.test(), package.contents(), print.coefmat(),
+      reshapeLong(), reshapeWide(), tkclose(), tkcmd(), tkfile.dir(),
+      tkfile.tail(), tkopen(), tkputs(), tkread(), trySilent() and
+      zip.file.extract() have been removed entirely (but are still
+      documented in the help system).
+
+    o The unused dataPath argument to attachNamespace() has been
+      removed.
+
+    o grid.prompt() has been removed: use devAskNewPage() instead.
+
+    o The long-deprecated intensities component is no longer returned
+      by hist().
+
+    o mean() for data frames and sd() for data frames and matrices are
+      defunct.
+
+    o chol(pivot = FALSE, LINPACK = TRUE), ch2inv(LINPACK = TRUE),
+      eigen(EISPACK = TRUE), solve(LINPACK = TRUE) and svd(LINPACK =
+      TRUE) are defunct: LAPACK will be used, with a warning.
+
+    o The keep.source argument to library() and require() is defunct.
+      This option needs to be set at install time.
+
+    o Documentation for real(), as.real() and is.real() has been moved
+      to 'defunct' and the functions removed.
+
+    o The maxRasters argument of pdf() (unused since R 2.14.0) has been
+      removed.
+
+    o The unused fontsmooth argument has been removed from the quartz()
+      device.
+
+    o All the (non-API) EISPACK entry points in R have been removed.
+
+    o chol(pivot = TRUE, LINPACK = TRUE) is deprecated.
+
+    o The long-deprecated use of \synopsis in the Usage section of .Rd
+      files will be removed in R 3.1.0.
+
+    o .find.package() and .path.package() are deprecated: only the
+      public versions without the dot have ever been in the API.
+
+    o In a package's DESCRIPTION file,
+      
+          License: X11
+
+      is deprecated, since it includes 'Copyright (C) 1996 X
+      Consortium' which cannot be appropriate for a current R package.
+      Use 'MIT' or 'BSD_2_clause' instead.
+
+  CODE MIGRATION:
+
+    o The C code underlying base graphics has been migrated to the
+      graphics package (and hence no longer uses .Internal() calls).
+
+    o Most of the .Internal() calls used in the stats package have been
+      migrated to C code in that package.
+
+      This means that a number of .Internal() calls which have been
+      used by packages no longer exist, including .Internal(cor)
+      .Internal(cov), .Internal(optimhess) and
+      .Internal(update.formula).
+
+    o Some .External() calls to the base package (really to the R
+      executable or shared library) have been moved to more appropriate
+      packages.  Packages should not have been using such calls, but
+      some did (mainly those used by integrate()).
+
+  PACKAGE parallel:
+
+    o There is a new function mcaffinity() which allows getting or
+      setting the CPU affinity mask for the current R process on
+      systems that supports this (currently only Linux has been tested
+      successfully).  It has no effect on systems which do not support
+      process affinity.  Users are not expected to use this function
+      directly (with the exception of fixing libraries that break
+      affinity settings like OpenBLAS) - the function is rather
+      intended to support affinity control in high-level parallel
+      functions.  In the future, R may supplement lack of affinity
+      control in the OS by its own bookkeeping via mcaffinity() related
+      to processes and threads it spawns.
+
+    o mcparallel() has a new argument mc.affinity which attempts to set
+      the affinity of the child process according to the specification
+      contained therein.
+
+    o The port used by socket clusters is chosen randomly: this should
+      help to avoid clashes observed when two users of a multi-user
+      machine try to create a cluster at the same time.  To reproduce
+      the previous behaviour set environment variable R_PARALLEL_PORT
+      to 10187.
+
+  C-LEVEL FACILITIES:
+
+    o There has been some minor re-organization of the non-API header
+      files.  In particular, Rinternals.h no longer includes the
+      non-API header R_exts/PrtUtil.h, and that no longer includes
+      R_exts/Print.h.
+
+    o Passing NULL to .C() is now an error.
+
+    o .C() and .Fortran() now warn if "single" arguments are used with
+      DUP = FALSE, as changes to such arguments are not returned to the
+      caller.
+
+    o C entry points R_qsort and R_qsort_I now have start and end as
+      size_t to allow them to work with longer vectors on 64-bit
+      platforms.  Code using them should be recompiled.
+
+    o A few recently added C entry points were missing the remapping to
+      Rf_, notably [dpq]nbinom_mu.
+
+    o Some of the interface pointers formerly available only to R.app
+      are now available to front-ends on all Unix-alikes: one has been
+      added for the interface to View().
+
+    o PACKAGE = "" is now an error in .C() etc calls: it was always
+      contrary to the documentation.
+
+    o Entry point rcont2 has been migrated to package stats and so is
+      no longer available.
+
+    o R_SVN_REVISION in Rversion.h is now an integer (rather than a
+      string) and hence usable as e.g.  #if R_SVN_REVISION < 70000.
+
+    o The entry points rgb2hsv and hsv2rgb have been migrated to
+      package grDevices and so are no longer available.
+
+    o R_GE_version has been increased to 10 and name2col removed (use
+      R_GE_str2col instead).  R internal colour codes are now defined
+      using the typedef rcolor.
+
+    o The REPROTECT macro now checks that the protect index is valid.
+
+    o Several non-API entry points no longer used by R have been
+      removed, including the Fortran entry points chol, chol2inv, cg,
+      ch and rg, and the C entry points Brent_fmin, fft_factor and
+      fft_work.
+
+    o If a .External call is registered with a number of arguments
+      (other than -1), the number of arguments passed is checked for
+      each call (as for other foreign function calls).
+
+    o It is now possible to write custom connection implementations
+      outside core R using R_ext/Connections.h.  Please note that the
+      implementation of connections is still considered internal and
+      may change in the future (see the above file for details).
+
+  INTERNATIONALIZATION:
+
+    o The management of translations has been converted to R code: see
+      ?tools::update_pkg_po.
+
+    o The translations for the R interpreter and RGui.exe are now part
+      of the base package (rather than having sources in directory po
+      and being installed to share/locale).  Thus the base package
+      supports three translation domains, R-base, R and RGui.
+
+    o The compiled translations which ship with R are all installed to
+      the new package translations for easier updating.  The first
+      package of that name found on .libPaths() at the start of the R
+      session will be used.  (It is possible messages will be used
+      before .libPaths() is set up in which case the default
+      translations will be used: set environment variable
+      R_TRANSLATIONS to point to the location of the intended
+      translations package to use this right from the start.)
+
+    o The translations form a separate group in the Windows installer,
+      so can be omitted if desired.
+
+    o The markup for many messages has been changed to make them easier
+      to translate, incorporating suggestions from Lukasz Daniel.
+
+  INSTALLATION:
+
+    o There is again support for building without using the C 'long
+      double' type.  This is required by C99, but system
+      implementations can be slow or flawed.  Use configure option
+      --disable-long-double.
+
+    o make pdf and make install-pdf now make and install the full
+      reference index (including all base and recommended packages).
+
+    o The 'reference manual' on the Windows GUI menu and included in
+      the installer is now the full reference index, including all base
+      and recommended packages.
+
+    o R help pages and manuals have no ISBNs because ISBN rules no
+      longer allow constantly changing content to be assigned an ISBN.
+
+    o The Windows installer no longer installs a Start Menu link to the
+      static help pages; as most pages are generated dynamically, this
+      led to a lot of broken links.
+
+    o Any custom settings for Java configuration are recorded in file
+      etc/javaconf for subsequent use by R CMD javareconf.
+
+    o There is now support for makeinfo version 5.0 (which requires a
+      slightly different .texi syntax).
+
+    o The minimum versions for --use-system-zlib and --use-system-pcre
+      are now tested as 1.2.5 and 8.10 respectively.
+
+    o On Windows, the stack size is reduced to 16MB on 32-bit systems:
+      misguided users were launching many threads without controlling
+      the stack size.
+
+    o configure no longer looks for file ~/.Rconfig: ~/.R/config has
+      long been preferred.
+
+  BUG FIXES:
+
+    o When R CMD build is run in an encoding other than the one
+      specified in the package's DESCRIPTION file it tries harder to
+      expand the authors@R field in the specified encoding.  (PR#14958)
+
+    o If R CMD INSTALL is required to expand the authors@R field of the
+      DESCRIPTION file, it tries harder to do so in the encoding
+      specified for the package (rather than using ASCII escapes).
+
+    o Fix in package grid for pushing a viewport into a layout cell,
+      where the layout is within a viewport that has zero physical
+      width OR where the layout has zero total relative width (likewise
+      for height).  The layout column widths (or row heights) in this
+      case were being calculated with non-finite values.  (Reported by
+      Winston Chang.)
+
+    o solve(A, b) for a vector b gave the answer names from colnames(A)
+      for LINPACK = TRUE but not in the default case.
+
+    o La.svd() accepts logical matrices (as documented, and as svd()
+      did).
+
+    o legend() now accepts negative pch values, in the same way
+      points() long has.
+
+    o Parse errors when installing files now correctly display the name
+      of the file containing the bad code.
+
+    o In Windows, tcltk windows were not always properly constructed.
+      (PR#15150)
+
+    o The internal functions implementing parse(), tools::parseLatex()
+      and tools::parse_Rd() were not reentrant, leading to errors in
+      rare circumstances such as a garbage collection triggering a
+      recursive call.
+
+    o Field assignments in reference class objects via $<- were not
+      being checked because the magic incantation to turn methods on
+      for that primitive operator had been inadvertently omitted.
+
+    o setHook(hookname, value, action="replace") set the hook to be the
+      value, rather than a list containing the value as documented.
+      (PR#15167)
+
+    o If a package used a NEWS.Rd file, the main HTML package index
+      page did not link to it.  (Reported by Dirk Eddelbuettel.)
+
+    o The primitive implementation of @<- was not checking the class of
+      the replacement.  It now does a check, quicker but less general
+      than slot<-. See the help.
+
+    o split(x, f) now recycles classed objects x in the same way as
+      vectors.  (Reported by Martin Morgan.)
+
+    o pbeta(.28, 1/2, 2200, lower.tail=FALSE, log.p=TRUE) is no longer
+      -Inf; ditto for corresponding pt() and pf() calls, such as pt(45,
+      df=5000, lower.tail=FALSE, log.p=TRUE). (PR#15162)
+
+    o The Windows graphics device would crash R if a user attempted to
+      load the graphics history from a variable that was not a saved
+      history. (PR#15230)
+
+    o The workspace size for the predict() method for loess() could
+      exceed the maximum integer size.  (Reported by Hiroyuki
+      Kawakatsu.)
+
+    o ftable(x, row.vars, col.vars) now also works when the *.vars
+      arguments are (integer or character vectors) of length zero.
+
+    o Calling cat() on a malformed UTF-8 string could cause the Windows
+      GUI to lock up. (PR#15227)
+
+    o removeClass(cc) gave "node stack overflow" for some class
+      definitions containing "array" or "matrix".
+
 CHANGES IN R VERSION 2.15.3:
 
   NEW FEATURES:
@@ -174,6 +1108,10 @@ CHANGES IN R VERSION 2.15.3:
     o On unix Rscript will pass the r_arch setting it was compiled with
       on to the R process so that the architecture of Rscript and that
       of R will match unless overridden.
+
+    o On Windows, basename(), dirname() and file.choose() have more
+      support for long non-ASCII file names with 260 or more bytes when
+      expressed in UTF-8.
 
 CHANGES IN R VERSION 2.15.2:
 

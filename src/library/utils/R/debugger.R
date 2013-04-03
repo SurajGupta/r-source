@@ -26,7 +26,7 @@ dump.frames <- function(dumpto = "last.dump", to.file = FALSE)
     class(last.dump) <- "dump.frames"
     if(dumpto != "last.dump") assign(dumpto, last.dump)
     if (to.file) # compress=TRUE is now the default.
-        save(list=dumpto, file = paste(dumpto, "rda", sep="."))
+        save(list=dumpto, file = paste(dumpto, "rda", sep = "."))
     else assign(dumpto, last.dump, envir=.GlobalEnv)
     invisible()
 }
@@ -40,12 +40,13 @@ debugger <- function(dump = last.dump)
             tryCatch(assign(.obj, get(.obj, envir=dump[[.selection]])),
                      error=function(e) {})
         cat(gettext("Browsing in the environment with call:\n   "),
-            calls[.selection], "\n", sep="")
+            calls[.selection], "\n", sep = "")
         rm(.obj, .selection)
         browser()
     }
-    if (class(dump) != "dump.frames") {
-        cat(gettext("'dump' is not an object of class 'dump.frames'\n"))
+    if (!inherits(dump, "dump.frames")) {
+        cat(gettextf("'dump' is not an object of class %s\n",
+                     dQuote("dump.frames")))
         return(invisible())
     }
     err.action <- getOption("error")
@@ -56,10 +57,10 @@ debugger <- function(dump = last.dump)
     calls <- names(dump)
     repeat {
         cat(gettext("Available environments had calls:\n"))
-        cat(paste0(1L:n, ": ", calls), sep="\n")
+        cat(paste0(1L:n, ": ", calls), sep = "\n")
         cat(gettext("\nEnter an environment number, or 0 to exit  "))
         repeat {
-            ind <- .Internal(menu(as.character(calls)))
+            ind <- .Call(C_menu, as.character(calls))
             if(ind <= n) break
         }
         if(ind == 0L) return(invisible())

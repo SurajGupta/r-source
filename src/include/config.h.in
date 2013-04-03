@@ -39,8 +39,8 @@
    */
 #undef HAVE_ALLOCA_H
 
-/* Define if you have the Aqua headers and libraries, and want the Aqua GUI
-   components and quartz() device to be built. */
+/* Define if you have the Aqua headers and libraries, and want to include
+   support for R.app and for the quartz() device to be built. */
 #undef HAVE_AQUA
 
 /* Define to 1 if you have the `argz_count' function. */
@@ -438,10 +438,13 @@
 /* Define to 1 if you have the `log1p' function. */
 #undef HAVE_LOG1P
 
+/* Define to 1 if you have the `log1pl' function. */
+#undef HAVE_LOG1PL
+
 /* Define to 1 if you have the `log2' function. */
 #undef HAVE_LOG2
 
-/* Define if you have the 'long double' type. (For intl) */
+/* Define if you wish to use the 'long double' type. */
 #undef HAVE_LONG_DOUBLE
 
 /* Define to 1 if the system has the type `long long int'. (For intl) */
@@ -580,6 +583,15 @@
 
 /* Define to 1 if you have the `rl_completion_matches' function. */
 #undef HAVE_RL_COMPLETION_MATCHES
+
+/* Define to 1 if you have the `sched_getaffinity' function. */
+#undef HAVE_SCHED_GETAFFINITY
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have the `sched_setaffinity' function. */
+#undef HAVE_SCHED_SETAFFINITY
 
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV

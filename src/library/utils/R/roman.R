@@ -47,7 +47,7 @@ function(x, ...)
 print.roman <-
 function(x, ...)
 {
-    print(noquote(as.character(x)))
+    print(noquote(as.character(x)), ...)
     invisible(x)
 }
 
@@ -111,8 +111,11 @@ function(x)
         y <- gsub("IV", "IIII", y)
         ok <- grepl("^M{,3}D?C{,4}L?X{,4}V?I{,4}$", y)
         if(any(!ok)) {
-            warning(gettextf("Invalid roman numeral(s): %s",
-                             paste(x[!ind][!ok], collapse = " ")))
+            warning(sprintf(ngettext(sum(!ok),
+                                     "invalid roman numeral: %s",
+                                     "invalid roman numerals: %s"),
+                            paste(x[!ind][!ok], collapse = " ")),
+                    domain = NA)
             out[!ind][!ok] <- NA
         }
         if(any(ok))

@@ -1,4 +1,3 @@
-
 % File src/library/base/man/options.Rd
 % Part of the R package, http://www.R-project.org
 % Copyright 1995-2013 R Core Team
@@ -76,6 +75,13 @@ getOption(x, default = NULL)
       vector (atomic or \code{\link{list}}) is extended, by something
       like \code{x <- 1:3; x[5] <- 6}.}
 
+    \item{\code{CBoundsCheck}:}{logical, controlling whether
+      \code{\link{.C}} and \code{\link{.Fortran}} make copies to check for
+      array over-runs on the atomic vector arguments.
+
+      Initially set from value of the environment variable
+      \env{R_C_BOUNDS_CHECK} (set to \code{yes} to enable).}
+
     \item{\code{continue}:}{a non-empty string setting the prompt used
       for lines which continue over one line.}
 
@@ -89,6 +95,11 @@ getOption(x, default = NULL)
       \code{options} should be in your \file{.Rprofile} file to ensure
       that the change takes effect before the base package is
       initialized (see \code{\link{Startup}}).}
+
+    \item{\code{deparse.cutoff}:}{integer value controlling the
+      printing of language constructs which are \code{\link{deparse}}d.
+      Default \code{60}.
+    }
 
     \item{\code{deparse.max.lines}:}{controls the number of lines used
       when deparsing in \code{\link{traceback}}, \code{\link{browser}},
@@ -254,13 +265,13 @@ getOption(x, default = NULL)
       source location that is highest on the stack (the most recent
       call) will be printed.  \code{"bottom"} will print the location
       of the earliest call found on the stack.
-      
+
       Integer values can select other entries.  The value \code{0}
       corresponds to \code{"top"} and positive values count down the
       stack from there.  The value \code{-1} corresponds to
-      \code{"bottom"} and negative values count up from there.  
+      \code{"bottom"} and negative values count up from there.
       }
-      
+
     \item{\code{show.error.messages}:}{a logical.  Should error messages
       be printed?  Intended for use with \code{\link{try}} or a
       user-installed error handler.}
@@ -325,7 +336,7 @@ getOption(x, default = NULL)
     \item{\code{nwarnings}:}{the limit for the number of warnings kept
       when \code{warn = 0}, default 50.  This will discard messages if
       called whilst they are being collected.}
-    
+
     \item{\code{width}:}{controls the maximum number of columns on a
       line used in printing vectors, matrices and arrays, and when
       filling by \code{\link{cat}}.
@@ -473,6 +484,10 @@ getOption(x, default = NULL)
     \item{\code{ccaddress}:}{default Cc: address used by
       \code{\link{create.post}} (and hence\code{\link{bug.report}} and
       \code{\link{help.request}}).  Can be \code{FALSE} or \code{""}.}
+
+    \item{\code{citation.bibtex.max}:}{default 1; the maximal number of
+      bibentries (\code{\link{bibentry}}) in a \code{\link{citation}} for
+      which the bibtex version is printed in addition to the text one.}
 
     \item{\code{de.cellwidth}:}{integer: the cell widths (number of
       characters) to be used in the data editor \code{\link{dataentry}}.

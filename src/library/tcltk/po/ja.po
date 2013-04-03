@@ -8,16 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.5.0 \n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-13 10:32+0100\n"
-"PO-Revision-Date: 2009-10-07 13:46+0900 \n"
-"Last-Translator: ei-ji nakama <nakama@ki.rim.or.jp> \n"
+"POT-Creation-Date: 2013-02-19 07:12+0000\n"
+"PO-Revision-Date: 2013-02-23 17:50+0200 \n"
+"Last-Translator: Triad sou <triadsou@gmail.com> \n"
 "Language-Team: Japanese <translation-team-ja@lists.sourceforge.net> \n"
-"Language: \n"
+"Language: ja \n"
 "MIME-Version: 1.0 \n"
 "Content-Type: text/plain; charset=UTF-8 \n"
 "Content-Transfer-Encoding: 8bit \n"
 "Plural-Forms: nplurals=1; plural=0; \n"
-"X-Generator: Pootle 1.1.0 \n"
+"X-Generator: Pootle 2.0.5 \n"
 
 #: tcltk.c:63
 msgid "parse error in R expression"
@@ -27,7 +27,7 @@ msgstr " R expression 内に構文エラー "
 msgid "tcl error.\n"
 msgstr " tcl エラー \n"
 
-#: tcltk.c:187 tcltk.c:700
+#: tcltk.c:187 tcltk.c:714
 msgid "invalid argument"
 msgstr " 不正な引数 "
 
@@ -35,26 +35,25 @@ msgstr " 不正な引数 "
 msgid "invalid tclObj -- perhaps saved from another session?"
 msgstr " 不正な tclObj - おそらく、別のセッションから保存された？ "
 
-#: tcltk.c:575
+#: tcltk.c:589
 msgid "argument list is too long in tcltk internal function 'callback_closure'"
-msgstr " 引数リストはtcltkの内部関数 `callback_closure' において長過ぎます "
+msgstr " 引数リストは tcltk の内部関数 'callback_closure' において長過ぎます "
 
-#: tcltk.c:608
+#: tcltk.c:622
 msgid "argument is not of correct type"
 msgstr " 引数は正しいタイプではありません "
 
-#: tcltk.c:659
+#: tcltk.c:673
 msgid "no DISPLAY variable so Tk is not available"
-msgstr " DISPLAY環境変数が無いのでTkは利用出来ません "
+msgstr " DISPLAY 環境変数が無いので Tk は利用出来ません "
 
-#: tcltk_unix.c:86
-msgid "Tcl already loaded"
-msgstr " 既にTclはロード済です "
-
-#: tcltk_unix.c:107
+#: tcltk_unix.c:94
 msgid "Tcl is not loaded"
-msgstr " Tclはロード出来ません "
+msgstr " Tcl はロード出来ません "
 
-#: tcltk_unix.c:115
+#: tcltk_unix.c:98
 msgid "Tcl is not last loaded handler"
-msgstr " Tclはロードした最後のハンドラーではありません "
+msgstr " Tcl はロードした最後のハンドラーではありません "
+
+#~ msgid "Tcl already loaded"
+#~ msgstr " 既にTclはロード済です "

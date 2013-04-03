@@ -71,12 +71,13 @@ approxfun(x, y = NULL,       method = "linear",
   The function \code{approxfun} returns a function performing (linear or
   constant) interpolation of the given data points.  For a given set of
   \code{x} values, this function will return the corresponding
-  interpolated values.  This is often more useful than \code{approx}.
+  interpolated values.  It uses data stored in its environment when it
+  was created, the details of which are subject to change.
 }
 \section{Warning}{
   The value returned by \code{approxfun} contains references to the code
   in the current version of \R: it is not intended to be saved and
-  loaded into a different \R session.
+  loaded into a different \R session.  This is safer for \R >= 3.0.0.
 }
 \seealso{
   \code{\link{spline}} and \code{\link{splinefun}} for spline

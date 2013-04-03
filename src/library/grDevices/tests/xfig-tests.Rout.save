@@ -1,7 +1,7 @@
 
-R version 2.9.0 Under development (unstable) (2009-01-21 r47661)
-Copyright (C) 2009 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -100,3 +100,6 @@ Type 'q()' to quit R.
 > unlink("xfig-tests.fig")
 > 
 > 
+> proc.time()
+   user  system elapsed 
+  0.167   0.016   0.173 

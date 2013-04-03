@@ -62,6 +62,7 @@
 #endif
 
 #include "Defn.h"
+#include <Internal.h>
 #include "Print.h"
 #include "Fileio.h"
 #include "Rconnections.h"
@@ -69,7 +70,7 @@
 
 
 /* Global print parameter struct: */
-attribute_hidden R_print_par_t R_print;
+R_print_par_t R_print;
 
 static void printAttributes(SEXP, SEXP, Rboolean);
 static void PrintSpecial(SEXP);
@@ -81,7 +82,8 @@ static char tagbuf[TAGBUFLEN + 5];
 
 
 /* Used in X11 module for dataentry */
-/* 'rho' is unused */
+/* NB this is called by R.app even though it is in no public header, so 
+   alter there if you alter this */
 void PrintDefaults(void)
 {
     R_print.na_string = NA_STRING;
@@ -99,6 +101,7 @@ void PrintDefaults(void)
     R_print.gap = 1;
     R_print.width = GetOptionWidth();
     R_print.useSource = USESOURCE;
+    R_print.cutoff = GetOptionCutoff();
 }
 
 SEXP attribute_hidden do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
@@ -187,7 +190,7 @@ static void PrintLanguageEtc(SEXP s, Rboolean useSource, Rboolean isClosure)
     int i;
     SEXP t = getAttrib(s, R_SrcrefSymbol);
     if (!isInteger(t) || !useSource)
-	t = deparse1(s, 0, useSource | DEFAULTDEPARSE);
+	t = deparse1w(s, 0, useSource | DEFAULTDEPARSE);
     else {
         PROTECT(t = lang2(install("as.character"), t));
         t = eval(t, R_BaseEnv);
@@ -205,11 +208,13 @@ static void PrintLanguageEtc(SEXP s, Rboolean useSource, Rboolean isClosure)
     }
 }
 
+static
 void PrintClosure(SEXP s, Rboolean useSource)
 {
     PrintLanguageEtc(s, useSource, TRUE);
 }
 
+static
 void PrintLanguage(SEXP s, Rboolean useSource)
 {
     PrintLanguageEtc(s, useSource, FALSE);
@@ -631,7 +636,7 @@ static void PrintExpression(SEXP s)
     SEXP u;
     int i, n;
 
-    u = deparse1(s, 0, R_print.useSource | DEFAULTDEPARSE);
+    u = deparse1w(s, 0, R_print.useSource | DEFAULTDEPARSE);
     n = LENGTH(u);
     for (i = 0; i < n; i++)
 	Rprintf("%s\n", CHAR(STRING_ELT(u, i))); /*translated */
@@ -1010,7 +1015,7 @@ int F77_NAME(dblep0) (const char *label, int *nchar, double *data, int *ndata)
 
     if(nc < 0) nc = (int) strlen(label);
     if(nc > 255) {
-	warning(_("invalid character length in dblepr"));
+	warning(_("invalid character length in 'dblepr'"));
 	nc = 0;
     } else if(nc > 0) {
 	for (k = 0; k < nc; k++)
@@ -1028,7 +1033,7 @@ int F77_NAME(intpr0) (const char *label, int *nchar, int *data, int *ndata)
 
     if(nc < 0) nc = (int) strlen(label);
     if(nc > 255) {
-	warning(_("invalid character length in intpr"));
+	warning(_("invalid character length in 'intpr'"));
 	nc = 0;
     } else if(nc > 0) {
 	for (k = 0; k < nc; k++)
@@ -1047,7 +1052,7 @@ int F77_NAME(realp0) (const char *label, int *nchar, float *data, int *ndata)
 
     if(nc < 0) nc = (int) strlen(label);
     if(nc > 255) {
-	warning(_("invalid character length in realpr"));
+	warning(_("invalid character length in 'realpr'"));
 	nc = 0;
     }
     else if(nc > 0) {
@@ -1057,7 +1062,7 @@ int F77_NAME(realp0) (const char *label, int *nchar, float *data, int *ndata)
     }
     if(nd > 0) {
 	ddata = (double *) malloc(nd*sizeof(double));
-	if(!ddata) error(_("memory allocation error in realpr"));
+	if(!ddata) error(_("memory allocation error in 'realpr'"));
 	for (k = 0; k < nd; k++) ddata[k] = (double) data[k];
 	printRealVector(ddata, nd, 1);
 	free(ddata);

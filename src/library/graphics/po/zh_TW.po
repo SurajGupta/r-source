@@ -1,0 +1,619 @@
+# Traditional Chinese translations for R.
+# Copyright (C) 2005, 06 The R Foundation
+# This file is distributed under the same license as the R package.
+# 陈斐 <FeiChen@FairIsaac.com>, 2005.
+# Wei-Lun Chao <chaoweilun@gmail.com>, 2005, 06, 11.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: R 2.14.0\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-12-16 08:17+0000\n"
+"PO-Revision-Date: 2011-10-13 17:30+0800\n"
+"Last-Translator: Wei-Lun Chao <chaoweilun@gmail.com>\n"
+"Language-Team: Chinese (traditional) <zh-l10n@linux.org.tw>\n"
+"Language: zh_TW\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: base.c:38
+msgid "no base graphics system is registered"
+msgstr ""
+
+#: base.c:328 base.c:335 base.c:343
+#, fuzzy
+msgid "the base graphics system is not registered"
+msgstr "登記了太多的繪圖系統"
+
+#: graphics.c:289
+#, c-format
+msgid "bad units specified in '%s'"
+msgstr "在 '%s' 中指定了不當的單位"
+
+#: graphics.c:1778 graphics.c:1800
+msgid "attempt to plot on null device"
+msgstr "試圖於 null 裝置上繪圖"
+
+#: graphics.c:1830
+#, fuzzy
+msgid "outer margins too large (figure region too small)"
+msgstr "外側版邊太大 (fig.region 太小)"
+
+#: graphics.c:1832
+msgid "figure region too large"
+msgstr "圖區太大"
+
+#: graphics.c:1834
+msgid "figure margins too large"
+msgstr "圖版邊太大"
+
+#: graphics.c:1836
+msgid "plot region too large"
+msgstr "繪圖區太大"
+
+#: graphics.c:1883
+#, fuzzy, c-format
+msgid "relative range of values (%4.0f * EPS) is small (axis %d)"
+msgstr "相對範圍值 =%4.0f * EPS太小 (座標 %d)"
+
+#: graphics.c:1935
+#, c-format
+msgid "nonfinite axis limits [GScale(%g,%g,%d, .); log=%d]"
+msgstr "座標範圍不能無限大 [GScale(%g,%g,%d, .); log=%d]"
+
+#: graphics.c:1965
+#, c-format
+msgid "axis style \"%c\" unimplemented"
+msgstr "座標形式 \"%c\" 尚未實作"
+
+#: graphics.c:2203
+#, fuzzy
+msgid "no graphics device is active"
+msgstr "沒有活動中的繪圖裝置"
+
+#: graphics.c:2398
+msgid "plot.new has not been called yet"
+msgstr "plot.new 還沒有被呼叫"
+
+#: graphics.c:2400
+msgid "invalid graphics state"
+msgstr "繪圖狀態不正確"
+
+#: graphics.c:2561
+msgid "No graphics device is active"
+msgstr "沒有活動中的繪圖裝置"
+
+#: graphics.c:3020
+msgid "zero-length arrow is of indeterminate angle and so skipped"
+msgstr "零長度箭頭的角度不定，因此忽略不用"
+
+#: graphics.c:3101
+#, c-format
+msgid "invalid par(\"bty\") = '%c'; no box() drawn"
+msgstr "par(\"bty\")='%c' 不正確; 取消繪製 box()"
+
+#: graphics.c:3118
+msgid "invalid argument to GBox"
+msgstr "GBox 引數不正確"
+
+#: graphics.c:3363
+#, fuzzy
+msgid "metric information not available for this device"
+msgstr "無法取得這個裝置的度量資訊"
+
+#: par-common.c:138
+msgid "graphical parameter 'family' has a maximum length of 200 bytes"
+msgstr "繪圖參數 'family' 具有最大為 200 位元組的長度"
+
+#: par.c:158
+#, c-format
+msgid "invalid value specified for graphical parameter \"%s\""
+msgstr "繪圖參數 \"%s\" 的值設得不正確"
+
+#: par.c:165
+#, c-format
+msgid "graphical parameter \"%s\" has the wrong length"
+msgstr "繪圖參數 \"%s\" 的長度不正確"
+
+#: par.c:260 par.c:670
+#, c-format
+msgid "graphical parameter \"%s\" cannot be set"
+msgstr "無法設定繪圖參數 \"%s\""
+
+#: par.c:432
+msgid "parameter \"mfg\" has the wrong length"
+msgstr "參數 \"mfg\" 的長度不正確"
+
+#: par.c:440
+msgid "parameter \"i\" in \"mfg\" is out of range"
+msgstr "\"mfg\" 中的參數 \"i\" 超出範圍"
+
+#: par.c:442
+msgid "parameter \"j\" in \"mfg\" is out of range"
+msgstr "\"mfg\" 中的參數 \"j\" 超出範圍"
+
+#: par.c:447
+#, fuzzy
+msgid "value of 'nr' in \"mfg\" is wrong and will be ignored"
+msgstr "\"mfg\" 中的 nr 值不正確，忽略不用"
+
+#: par.c:449
+#, fuzzy
+msgid "value of 'nc' in \"mfg\" is wrong and will be ignored"
+msgstr "\"mfg\" 中的 nc 值不正確，忽略不用"
+
+#: par.c:475
+msgid "calling par(new=TRUE) with no plot"
+msgstr "呼叫 par(new=TRUE) 而不繪圖"
+
+#: par.c:662 par.c:1046
+#, c-format
+msgid "graphical parameter \"%s\" is obsolete"
+msgstr "繪圖參數 \"%s\" 已過時"
+
+#: par.c:666 par.c:1050
+#, c-format
+msgid "\"%s\" is not a graphical parameter"
+msgstr "\"%s\" 不是一個繪圖參數"
+
+#: par.c:1103
+msgid "invalid argument passed to par()"
+msgstr "傳給 par() 的引數無效"
+
+#: par.c:1147
+#, c-format
+msgid "too many rows in layout, limit %d"
+msgstr "layout 中的列數太多, 極值為 %d"
+
+#: par.c:1153
+#, c-format
+msgid "too many columns in layout, limit %d"
+msgstr "layout 中的行數太多, 極值為 %d"
+
+#: par.c:1155
+#, c-format
+msgid "too many cells in layout, limit %d"
+msgstr "layout 中的元素太多, 極值為 %d"
+
+#: plot.c:75
+#, fuzzy
+msgid "invalid color specification"
+msgstr "字型設定不正確"
+
+#: plot.c:141
+msgid "only NA allowed in logical plotting symbol"
+msgstr "邏輯繪圖符號中只允許用 NA"
+
+#: plot.c:143
+msgid "invalid plotting symbol"
+msgstr "繪圖符號不正確"
+
+#: plot.c:232
+msgid "invalid font specification"
+msgstr "字型設定不正確"
+
+#: plot.c:291 plot.c:305 plot.c:496 plot.c:501 plot.c:2124 plot.c:2131
+#: plot.c:3148 plot.c:3150 plot.c:3152 plot.c:3304 plot3d.c:1155 plot3d.c:1159
+#: plot3d.c:1161 plot3d.c:1895
+#, c-format
+msgid "invalid '%s' value"
+msgstr "'%s' 值不正確"
+
+#: plot.c:308
+#, fuzzy, c-format
+msgid "invalid 'vfont' value [typeface %d]"
+msgstr "'vfont' 值不正確 [typeface]"
+
+#: plot.c:332
+#, c-format
+msgid "invalid 'vfont' value [typeface = %d, fontindex = %d]"
+msgstr "無效的 'vfont' 值 [typeface = %d，fontindex = %d]"
+
+#: plot.c:406
+msgid "invalid graphics parameter"
+msgstr "繪圖參數不正確"
+
+#: plot.c:492
+msgid "at least 3 arguments required"
+msgstr "至少需要三個引數"
+
+#: plot.c:507
+msgid "\"log=\" specification must be character"
+msgstr "\"log=\" 必須設定成字元"
+
+#: plot.c:518
+#, c-format
+msgid "invalid \"log=%s\" specification"
+msgstr "\"log=%s\" 設定不正確"
+
+#: plot.c:533
+msgid "NAs not allowed in 'xlim'"
+msgstr "'xlim' 中不允許 NA"
+
+#: plot.c:539
+msgid "need finite 'xlim' values"
+msgstr "'xlim' 值不能是無限的"
+
+#: plot.c:545
+msgid "NAs not allowed in 'ylim'"
+msgstr "'ylim' 中不允許 NA"
+
+#: plot.c:551
+msgid "need finite 'ylim' values"
+msgstr "'ylim' 值不能是無限的"
+
+#: plot.c:557
+msgid "Logarithmic axis must have positive limits"
+msgstr "對數座標不能有負的極值"
+
+#: plot.c:679
+msgid "invalid type for axis labels"
+msgstr "座標標記類型不正確"
+
+#: plot.c:780 plot.c:1313 plot.c:1634 plot.c:1699 plot.c:1774 plot.c:1840
+#: plot.c:1913 plot.c:2008 plot.c:2084 plot.c:2362 plot.c:2536 plot.c:2752
+#: plot.c:3286 plot.c:3413 plot.c:3489 plot.c:3655 plot.c:3935 plot3d.c:1864
+msgid "too few arguments"
+msgstr "引數數目太少"
+
+#: plot.c:791
+#, c-format
+msgid "invalid axis number %d"
+msgstr "座標數目 %d 不正確"
+
+#: plot.c:881
+msgid "'hadj' must be of length one"
+msgstr "'hadj' 的長度必須是 1"
+
+#: plot.c:888 plot.c:2096 plot.c:2373 plot.c:2379 plot.c:2386 plot.c:2394
+#: plot.c:2401 plot.c:2408 plot.c:2415 plot.c:2422 plot.c:2430 plot.c:2437
+#: plot.c:3155
+#, fuzzy, c-format
+msgid "zero-length '%s' specified"
+msgstr "'side' 長度不能設成零"
+
+#: plot.c:957
+msgid "'labels' is supplied and not 'at'"
+msgstr "'labels' 已提供而非 'at'"
+
+#: plot.c:961
+#, c-format
+msgid "'at' and 'labels' lengths differ, %d != %d"
+msgstr "'at' 和 'labels' 長度不同，%d != %d"
+
+#: plot.c:978
+msgid "no locations are finite"
+msgstr "不存在有限的位置"
+
+#: plot.c:1329
+msgid "invalid plotting structure"
+msgstr "繪圖結構不正確"
+
+#: plot.c:1331
+#, c-format
+msgid "'x' and 'y' lengths differ in %s()"
+msgstr "%s() 中的 'x' 和 'y' 的長度不一樣"
+
+#: plot.c:1342
+#, c-format
+msgid "plot type '%s' will be truncated to first character"
+msgstr "繪圖類型 '%s' 被截短成第一個字元"
+
+#: plot.c:1346 plot.c:3013
+msgid "invalid plot type"
+msgstr "繪圖類型不正確"
+
+#: plot.c:1546
+#, c-format
+msgid "invalid plot type '%c'"
+msgstr "繪圖類型 '%c' 不正確"
+
+#: plot.c:1589
+msgid "invalid first argument"
+msgstr "第一個引數不正確"
+
+#: plot.c:1596
+msgid "invalid second argument"
+msgstr "第二個引數不正確"
+
+#: plot.c:1604
+msgid "invalid third argument"
+msgstr "第三個引數不正確"
+
+#: plot.c:1612
+msgid "invalid fourth argument"
+msgstr "第四個引數不正確"
+
+#: plot.c:1620
+msgid "cannot mix zero-length and non-zero-length coordinates"
+msgstr "無法將長度為零與非零的座標混合"
+
+#: plot.c:1926
+msgid "invalid arrow head length"
+msgstr "箭頭長度不正確"
+
+#: plot.c:1931
+msgid "invalid arrow head angle"
+msgstr "箭頭角度不正確"
+
+#: plot.c:1936
+msgid "invalid arrow head specification"
+msgstr "箭頭設定不正確"
+
+#: plot.c:2170
+msgid "no coordinates were supplied"
+msgstr "沒有座標"
+
+#: plot.c:2793
+msgid "invalid a=, b= specification"
+msgstr "a=, b= 設定不正確"
+
+#: plot.c:2802
+msgid "'a' and 'b' must be finite"
+msgstr "'a' 和 'b' 的值必須是有限的"
+
+#: plot.c:2937 plot.c:4055 plot.c:4059 plot.c:4062 plot.c:4082 plot.c:4086
+#: plot.c:4089 plot3d.c:1077 plot3d.c:1081 plot3d.c:1086 plot3d.c:1090
+#: plot3d.c:1094 plot3d.c:1098 stem.c:159 stem.c:160 stem.c:162 stem.c:163
+#: stem.c:209 stem.c:210
+#, c-format
+msgid "invalid '%s' argument"
+msgstr "'%s' 引數不正確"
+
+#: plot.c:3008 plot.c:3144
+#, fuzzy, c-format
+msgid "invalid number of points in %s"
+msgstr "locator() 中點的數目不正確"
+
+#: plot.c:3146
+msgid "incorrect argument type"
+msgstr "引數類型不正確"
+
+#: plot.c:3158
+msgid "different argument lengths"
+msgstr "引數長度不一樣"
+
+#: plot.c:3160
+msgid "more 'labels' than points"
+msgstr "'labels' 數量比點更多"
+
+#: plot.c:3209
+#, c-format
+msgid "warning: no point within %.2f inches\n"
+msgstr "警告：沒有在 %.2f 英吋之內的點\n"
+
+#: plot.c:3215
+msgid "warning: nearest point already identified\n"
+msgstr "警告: 已經找到了最近的點\n"
+
+#: plot.c:3297
+msgid "invalid units"
+msgstr "單位不正確"
+
+#: plot.c:3473 plot.c:3580
+msgid "invalid dendrogram input"
+msgstr "dendrogram 輸入不正確"
+
+#: plot.c:3637
+msgid "invalid symbol parameter vector"
+msgstr "符號參數向量不正確"
+
+#: plot.c:3660
+msgid "invalid symbol coordinates"
+msgstr "符號座標不正確"
+
+#: plot.c:3668
+msgid "x/y/parameter length mismatch"
+msgstr "x/y/ 參數長度不一樣"
+
+#: plot.c:3687
+msgid "invalid circles data"
+msgstr "圓形資料不正確"
+
+#: plot.c:3689 plot.c:3710 plot.c:3735 plot.c:3765
+msgid "invalid symbol parameter"
+msgstr "符號參數不正確"
+
+#: plot.c:3708
+msgid "invalid squares data"
+msgstr "正方形資料不正確"
+
+#: plot.c:3733
+msgid "invalid rectangles data (need 2 columns)"
+msgstr "長方形資料不正確 (需要兩欄)"
+
+#: plot.c:3763
+msgid "invalid stars data"
+msgstr "星形資料不正確"
+
+#: plot.c:3805
+msgid "invalid thermometers data (need 3 or 4 columns)"
+msgstr "溫度計資料不正確 (需要三或四欄)"
+
+#: plot.c:3808
+#, fuzzy, c-format
+msgid "invalid 'thermometers[, %s]'"
+msgstr "溫度計[,%s] 不正確"
+
+#: plot.c:3811
+#, fuzzy, c-format
+msgid "'thermometers[, %s]' not in [0,1] -- may look funny"
+msgstr "溫度計[,%s] 在 [0,1] 範圍外 -- 看起來會有點不正確"
+
+#: plot.c:3814
+#, fuzzy
+msgid "invalid 'thermometers[, 1:2]'"
+msgstr "溫度計[,1:2]"
+
+#: plot.c:3853
+#, fuzzy
+msgid "invalid 'boxplots' data (need 5 columns)"
+msgstr "boxplots 資料不正確 (需要五欄)"
+
+#: plot.c:3862
+#, fuzzy
+msgid "'boxplots[, 5]' outside [0,1] -- may look funny"
+msgstr "boxplots[,5] 在 [0,1] 範圍外 -- 看起來會有點不正確"
+
+#: plot.c:3864
+#, fuzzy
+msgid "invalid 'boxplots[, 1:4]'"
+msgstr "boxplots[, 1:4] 不正確"
+
+#: plot.c:3910
+msgid "invalid symbol type"
+msgstr "符號類型不正確"
+
+#: plot.c:3948 plot.c:3950 plot.c:3955 plot.c:3957
+#, c-format
+msgid "incorrect length for '%s' argument"
+msgstr "'%s' 引數的長度不正確"
+
+#: plot3d.c:181 plot3d.c:1921
+msgid "insufficient 'x' or 'y' values"
+msgstr "'x' 或 'y' 值大小不夠"
+
+#: plot3d.c:185 plot3d.c:1924
+msgid "dimension mismatch"
+msgstr "維度不相符"
+
+#: plot3d.c:193 plot3d.c:1927
+msgid "no contour values"
+msgstr "無等高值"
+
+#: plot3d.c:255
+msgid "invalid x / y values or limits"
+msgstr "x/y 的值或極值不正確"
+
+#: plot3d.c:257
+msgid "invalid contour levels: must be strictly increasing"
+msgstr "等高層次不正確: 必須嚴格增加"
+
+#: plot3d.c:1041 plot3d.c:1054
+msgid "Axis orientation not calculated"
+msgstr "無法計算座標方位"
+
+#: plot3d.c:1074
+msgid "too few parameters"
+msgstr "參數太少"
+
+#: plot3d.c:1104
+msgid "invalid 'x' limits"
+msgstr "'x' 極值不正確"
+
+#: plot3d.c:1106
+msgid "invalid 'y' limits"
+msgstr "'y' 極值不正確"
+
+#: plot3d.c:1108
+msgid "invalid 'z' limits"
+msgstr "'z' 極值不正確"
+
+#: plot3d.c:1129
+msgid "'xlab' must be a character vector of length 1"
+msgstr "'xlab' 必須是長度為 1 的字元向量"
+
+#: plot3d.c:1131
+msgid "'ylab' must be a character vector of length 1"
+msgstr "'ylab' 必須是長度為 1 的字元向量"
+
+#: plot3d.c:1133
+msgid "'zlab' must be a character vector of length 1"
+msgstr "'zlab' 必須是長度為 1 的字元向量"
+
+#: plot3d.c:1153
+msgid "invalid viewing parameters"
+msgstr "viewing 參數不正確"
+
+#: plot3d.c:1171 plot3d.c:1175
+#, c-format
+msgid "invalid '%s' specification"
+msgstr "'%s' 設定不正確"
+
+#: plot3d.c:1521
+#, c-format
+msgid "contour(): circular/long seglist -- set %s > %d?"
+msgstr "contour()：環/長 seglist -- 設定 %s > %d？"
+
+#: plot3d.c:1931
+msgid "missing 'x' values"
+msgstr "缺少 'x' 值"
+
+#: plot3d.c:1933
+msgid "increasing 'x' values expected"
+msgstr "'x' 值應加大"
+
+#: plot3d.c:1938
+msgid "missing 'y' values"
+msgstr "缺少 'y' 值"
+
+#: plot3d.c:1940
+msgid "increasing 'y' values expected"
+msgstr "'y' 值應加大"
+
+#: plot3d.c:1945
+msgid "invalid NA contour values"
+msgstr "NA 等高值不正確"
+
+#: plot3d.c:1957
+msgid "all z values are equal"
+msgstr "所有的 z 值都一樣"
+
+#: plot3d.c:1959
+msgid "all z values are NA"
+msgstr "所有的 z 值都是 NA"
+
+#: stem.c:156
+#, c-format
+msgid "long vector '%s' is not supported"
+msgstr ""
+
+#~ msgid "unable to allocate memory (in GPolygon)"
+#~ msgstr "無法配置記憶體 (GPolygon)"
+
+#~ msgid "invalid number of points in identify()"
+#~ msgstr "identify() 中點的數目不正確"
+
+#~ msgid "Event GE_ScalePS requires a single numeric value"
+#~ msgstr "事件 GE_ScalePS 需要單一數值"
+
+#~ msgid "zero length 'padj' specified"
+#~ msgstr "'padj' 長度不能為零"
+
+#~ msgid "unable to allocate memory (in GPath)"
+#~ msgstr "無法配置記憶體 (在 GPath 中)"
+
+#~ msgid "invalid x or y (in GPath)"
+#~ msgstr "無效的 x 或 y (在 GPath 中)"
+
+#~ msgid "zero length 'labels'"
+#~ msgstr "'labels' 的長度不能為零"
+
+#~ msgid "zero length 'text' specified"
+#~ msgstr "'text' 長度不能設成零"
+
+#~ msgid "zero length 'line' specified"
+#~ msgstr "'line' 長度不能設成零"
+
+#~ msgid "zero length 'outer' specified"
+#~ msgstr "'outer' 長度不能設成零"
+
+#~ msgid "zero length 'at' specified"
+#~ msgstr "'at' 長度不能設成零"
+
+#~ msgid "zero length 'adj' specified"
+#~ msgstr "'adj' 長度不能設成零"
+
+#~ msgid "zero length 'cex' specified"
+#~ msgstr "'cex' 長度不能設成零"
+
+#~ msgid "zero length 'col' specified"
+#~ msgstr "'col' 長度不能設成零"
+
+#~ msgid "zero length 'font' specified"
+#~ msgstr "'font' 長度不能設成零"
+
+#~ msgid "unable to allocate memory (in xspline)"
+#~ msgstr "無法配置記憶體 (在 xspline 中)"

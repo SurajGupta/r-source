@@ -61,10 +61,12 @@ assign(".Fortran",
 assign(".Call", function(.NAME, ..., PACKAGE) NULL, envir = .ArgsEnv)
 assign(".Call.graphics", function(.NAME, ..., PACKAGE) NULL, envir = .ArgsEnv)
 assign(".External", function(.NAME, ..., PACKAGE) NULL, envir = .ArgsEnv)
+assign(".External2", function(.NAME, ..., PACKAGE) NULL, envir = .ArgsEnv)
 assign(".External.graphics", function(.NAME, ..., PACKAGE) NULL,
        envir = .ArgsEnv)
 assign(".Internal", function(call) NULL, envir = .ArgsEnv)
 assign(".Primitive", function(name) NULL, envir = .ArgsEnv)
+assign(".isMethodsDispatchOn", function(x, onOff = NULL) NULL, envir = .ArgsEnv)
 assign(".primTrace", function(obj) NULL, envir = .ArgsEnv)
 assign(".primUntrace", function(obj) NULL, envir = .ArgsEnv)
 assign(".subset", function(x, ...) NULL, envir = .ArgsEnv)
@@ -109,10 +111,10 @@ assign("is.null", function(x) NULL, envir = .ArgsEnv)
 assign("is.object", function(x) NULL, envir = .ArgsEnv)
 assign("is.pairlist", function(x) NULL, envir = .ArgsEnv)
 assign("is.raw", function(x) NULL, envir = .ArgsEnv)
-assign("is.real", function(x) NULL, envir = .ArgsEnv)
 assign("is.recursive", function(x) NULL, envir = .ArgsEnv)
 assign("is.single", function(x) NULL, envir = .ArgsEnv)
 assign("is.symbol", function(x) NULL, envir = .ArgsEnv)
+assign("isS4", function(object) NULL, envir = .ArgsEnv)
 assign("list", function(...) NULL, envir = .ArgsEnv)
 assign("lazyLoadDBfetch", function(key, file, compressed, hook) NULL,
        envir = .ArgsEnv)
@@ -139,7 +141,7 @@ assign("untracemem", function(x) NULL, envir = .ArgsEnv)
 
 .S3PrimitiveGenerics <-
   c("as.character", "as.complex", "as.double", "as.environment",
-    "as.integer", "as.logical", "as.numeric", "as.raw", "as.real",
+    "as.integer", "as.logical", "as.numeric", "as.raw",
     "c", "dim", "dim<-", "dimnames", "dimnames<-",
     "is.array", "is.finite",
     "is.infinite", "is.matrix", "is.na", "is.nan", "is.numeric",
@@ -200,9 +202,6 @@ assign("as.character", function(x, ...) UseMethod("as.character"),
 assign("as.complex", function(x, ...) UseMethod("as.complex"),
        envir = .GenericArgsEnv)
 assign("as.double", function(x, ...) UseMethod("as.double"),
-       envir = .GenericArgsEnv)
-## deprecated
-assign("as.real", function(x, ...) UseMethod("as.double"),
        envir = .GenericArgsEnv)
 assign("as.integer", function(x, ...) UseMethod("as.integer"),
        envir = .GenericArgsEnv)

@@ -1,4 +1,21 @@
+#  File src/library/base/baseloader.R
+#  Part of the R package, http://www.R-project.org
+#
 #  Copyright (C) 1995-2013 The R Core Team
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
+
 
 ## this should be kept in step with code in R/lazyload.R
 .Internal(eval(quote({
@@ -48,12 +65,6 @@
             set(n, e, envenv)           # MUST do this immediately
             key <- getFromFrame(n, env)
             data <- lazyLoadDBfetch(key, datafile, compressed, envhook)
-            ## comment from r41494
-            ## modified the loading of old environments, so that those
-            ## serialized with parent.env NULL are loaded with the
-            ## parent.env=emptyenv(); and yes an alternative would have been
-            ## baseenv(), but that was seldom the intention of folks that
-            ## set the environment to NULL.
             if (is.null(data$enclos))
                 parent.env(e) <- emptyenv()
             else
@@ -62,9 +73,8 @@
             for (i in seq_along(vars))
                 set(vars[i], data$bindings[[i]], e)
             if (! is.null(data$attributes))
-                attributes(e) <-data$attributes
-            if (! is.null(data$isS4) && data$isS4)
-                .Call("R_setS4Object", e, TRUE, TRUE, PACKAGE = "base")
+                attributes(e) <- data$attributes
+            ## there are no S4 objects in base
             if (! is.null(data$locked) && data$locked)
                 .Internal(lockEnvironment(e, FALSE))
             e
@@ -97,3 +107,16 @@
 ## keep in sync with R/zzz.R
 as.numeric <- as.double
 is.name <- is.symbol
+
+
+## populate C/Fortran symbols
+local({
+    routines <- getDLLRegisteredRoutines("base")
+    for (i in c("dchdc", # chol, deprecated
+                "dqrcf", "dqrdc2", "dqrqty", "dqrqy", "dqrrsd", "dqrxb", # qr
+                "dtrco")) # .kappa_tri
+        assign(paste0(".F_", i), routines[[3]][[i]], envir = .BaseNamespaceEnv)
+    for(i in 1:2)
+        lapply(routines[[i]],
+               function(sym) assign(paste0(".C_", sym$name), sym, envir = .BaseNamespaceEnv))
+})

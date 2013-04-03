@@ -32,7 +32,8 @@ is.qr(x)
 as.qr(x)
 }
 \arguments{
-  \item{x}{a matrix whose QR decomposition is to be computed.}
+  \item{x}{a numeric or complex matrix whose QR decomposition is to be
+    computed.  Logical matrices are coerced to numeric.}
   \item{tol}{the tolerance for detecting linear dependencies in the
     columns of \code{x}. Only used if \code{LAPACK} is false and
     \code{x} is real.}
@@ -78,6 +79,9 @@ as.qr(x)
   It is not possible to coerce objects to mode \code{"qr"}.  Objects
   either are QR decompositions or they are not.
 
+  The LINPACK interface is restricted to matrices \code{x} with less
+  than \eqn{2^{31}}{2^31} elements.
+
   \code{qr.fitted} and \code{qr.resid} only support the LINPACK interface.
 }
 \value{
@@ -111,7 +115,7 @@ as.qr(x)
   For \code{qr}, the LINPACK routine \code{DQRDC} and the LAPACK
   routines \code{DGEQP3} and \code{ZGEQP3}.  Further LINPACK and LAPACK
   routines are used for \code{qr.coef}, \code{qr.qy} and \code{qr.aty}.
-  
+
   LAPACK and LINPACK are from \url{http://www.netlib.org/lapack} and
   \url{http://www.netlib.org/linpack} and their guides are listed
   in the references.
@@ -121,7 +125,7 @@ as.qr(x)
   \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
   Available on-line at
   \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
-  
+
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.

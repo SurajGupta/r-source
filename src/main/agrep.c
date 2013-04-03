@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2002--2011  The R Core Team
+ *  Copyright (C) 2002--2012  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Pulic License as published by
@@ -27,8 +27,13 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
+
 /* This is remapped */
 #undef pmatch 
+
+/* interval at which to check interrupts */
+#define NINTERRUPT 1000000
 
 #include <R_ext/RS.h>		/* for Calloc/Free */
 
@@ -94,7 +99,8 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP pat, vec, ind, ans;
     SEXP opt_costs, opt_bounds;
     int opt_icase, opt_value, opt_fixed, useBytes;
-    int i, j, n, nmatches, patlen;
+    R_xlen_t i, j, n;
+    int nmatches, patlen;
     Rboolean useWC = FALSE;
     const void *vmax = NULL;
 
@@ -130,7 +136,7 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if(opt_icase) cflags |= REG_ICASE;
 
-    n = LENGTH(vec);
+    n = XLENGTH(vec);
     if(!useBytes) {
 	Rboolean haveBytes = IS_BYTES(STRING_ELT(pat, 0));
 	if(!haveBytes)
@@ -209,6 +215,7 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ind = allocVector(LGLSXP, n));
     nmatches = 0;
     for (i = 0 ; i < n ; i++) {
+//	if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
 	if(STRING_ELT(vec, i) == NA_STRING) {
 	    LOGICAL(ind)[i] = 0;
 	    continue;
@@ -239,10 +246,8 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     tre_regfree(&reg);
 
-    PROTECT(ans = opt_value
-	    ? allocVector(STRSXP, nmatches)
-	    : allocVector(INTSXP, nmatches));
     if(opt_value) {
+	PROTECT(ans = allocVector(STRSXP, nmatches));
 	SEXP nmold = getAttrib(vec, R_NamesSymbol), nm;
 	for (j = i = 0 ; i < n ; i++) {
 	    if(LOGICAL(ind)[i])
@@ -256,10 +261,20 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
 	    setAttrib(ans, R_NamesSymbol, nm);
 	}
-    } else {
+    }
+#ifdef LONG_VECTOR_SUPPORT
+    else if (n > INT_MAX) {
+	PROTECT(ans = allocVector(REALSXP, nmatches));
 	for (j = i = 0 ; i < n ; i++)
 	    if(LOGICAL(ind)[i] == 1)
-		INTEGER(ans)[j++] = i + 1;
+		REAL(ans)[j++] = (double)(i + 1);
+    }
+#endif
+    else {
+	PROTECT(ans = allocVector(INTSXP, nmatches));
+	for (j = i = 0 ; i < n ; i++)
+	    if(LOGICAL(ind)[i] == 1)
+		INTEGER(ans)[j++] = (int)(i + 1);
     }
 
     UNPROTECT(2);
@@ -724,7 +739,8 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
     regmatch_t *pmatch;
     regaparams_t params;
     regamatch_t match;
-    int i, j, n, so, patlen;
+    int j, so, patlen;
+    R_xlen_t i, n;
     int rc, cflags = REG_EXTENDED;
 
     checkArity(op, args);
@@ -758,7 +774,7 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString(vec))
 	error(_("invalid '%s' argument"), "text");
 
-    n = LENGTH(vec);
+    n = XLENGTH(vec);
 
     if(!useBytes) {
         haveBytes = IS_BYTES(STRING_ELT(pat, 0));
@@ -823,6 +839,7 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(VECSXP, n));
 
     for(i = 0; i < n; i++) {
+//	if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
 	if(STRING_ELT(vec, i) == NA_STRING) {
 	    PROTECT(matchpos = ScalarInteger(NA_INTEGER));
 	    setAttrib(matchpos, install("match.length"),

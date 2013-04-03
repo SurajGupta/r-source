@@ -210,9 +210,20 @@ SEXP doSetViewport(SEXP vp,
 	if (rotationAngle != 0 &&
             rotationAngle != 90 &&
             rotationAngle != 270 &&
-            rotationAngle != 360)
-	    warning(_("Cannot clip to rotated viewport"));
-	else {
+            rotationAngle != 360) {
+	    warning(_("cannot clip to rotated viewport"));
+            /* Still need to set clip region for this viewport.
+               So "inherit" parent clip region.
+               In other words, 'clip=TRUE' + 'rot=15' = 'clip=FALSE'
+            */
+            SEXP parentClip;
+            PROTECT(parentClip = viewportClipRect(viewportParent(vp)));
+            xx1 = REAL(parentClip)[0];
+            yy1 = REAL(parentClip)[1];
+            xx2 = REAL(parentClip)[2];
+            yy2 = REAL(parentClip)[3];
+            UNPROTECT(1);
+        } else {
 	    /* Calculate a clipping region and set it
 	     */
 	    SEXP x1, y1, x2, y2;
@@ -670,12 +681,12 @@ SEXP L_unsetviewport(SEXP n)
      */
     SEXP newvp = VECTOR_ELT(gvp, PVP_PARENT);
     if (isNull(newvp))
-	error(_("Cannot pop the top-level viewport (grid and graphics output mixed?)"));
+	error(_("cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"));
     for (i = 1; i < INTEGER(n)[0]; i++) {
 	gvp = newvp;
 	newvp = VECTOR_ELT(gvp, PVP_PARENT);
 	if (isNull(newvp))
-	    error(_("Cannot pop the top-level viewport (grid and graphics output mixed?)"));
+	    error(_("cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"));
     }
     /* 
      * Remove the child (gvp) from the parent's (newvp) "list" of
@@ -764,12 +775,12 @@ SEXP L_upviewport(SEXP n)
     SEXP gvp = gridStateElement(dd, GSS_VP);
     SEXP newvp = VECTOR_ELT(gvp, PVP_PARENT);
     if (isNull(newvp))
-	error(_("Cannot pop the top-level viewport (grid and graphics output mixed?)"));
+	error(_("cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"));
     for (i = 1; i < INTEGER(n)[0]; i++) {
 	gvp = newvp;
 	newvp = VECTOR_ELT(gvp, PVP_PARENT);
 	if (isNull(newvp))
-	    error(_("Cannot pop the top-level viewport (grid and graphics output mixed?)"));
+	    error(_("cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"));
     }
     /* Get the current device size 
      */
@@ -1229,7 +1240,7 @@ SEXP L_layoutRegion(SEXP layoutPosRow, SEXP layoutPosCol) {
      * Only proceed if there is a layout currently defined
      */
     if (isNull(viewportLayout(currentvp)))
-	error(_("There is no layout defined"));
+	error(_("there is no layout defined"));
     /* 
      * The result is a numeric containing left, bottom, width, and height
      */
@@ -1449,7 +1460,7 @@ static void polygonEdge(double *x, double *y, int n,
 	     * shouldn't happen!  Unless, perhaps the polygon has
 	     * zero extent vertically or horizontally ... ?
 	     */
-	    error(_("Polygon edge not found (zero-width or zero-height?)"));
+	    error(_("polygon edge not found (zero-width or zero-height?)"));
 	}
 	/*
 	 * numb = ((x2 - x1)*(y1 - y3) - (y2 - y1)*(x1 - x3));
@@ -1458,7 +1469,7 @@ static void polygonEdge(double *x, double *y, int n,
 	*edgex = x1 + ua*(x2 - x1);
 	*edgey = y1 + ua*(y2 - y1);
     } else {
-	error(_("Polygon edge not found"));    
+	error(_("polygon edge not found"));    
     }
 }
 
@@ -1612,7 +1623,7 @@ static void arrows(double *x, double *y, int n,
     double vertx[3], verty[3];
     Rboolean first, last;
     if (n < 2)
-	error(_("Require at least two points to draw arrow"));
+	error(_("require at least two points to draw arrow"));
     first = TRUE;
     last = TRUE;
     switch (INTEGER(ends)[i % ne]) {
@@ -1928,7 +1939,7 @@ SEXP gridXspline(SEXP x, SEXP y, SEXP s, SEXP o, SEXP a, SEXP rep, SEXP index,
 	    xx[j] = toDeviceX(xx[j], GE_INCHES, dd);
 	    yy[j] = toDeviceY(yy[j], GE_INCHES, dd);
 	    if (!(R_FINITE(xx[j]) && R_FINITE(yy[j]))) {
-		    error(_("Non-finite control point in Xspline"));
+		    error(_("non-finite control point in Xspline"));
 	    }
 	}
 	PROTECT(points = GEXspline(nx, xx, yy, ss,
@@ -3282,7 +3293,7 @@ SEXP L_points(SEXP x, SEXP y, SEXP pch, SEXP size)
 		    ipch = INTEGER(pch)[i % npch];
 		} else if (isReal(pch)) {
 		    ipch = R_FINITE(REAL(pch)[i % npch]) ? 
-			REAL(pch)[i % npch] : NA_INTEGER;
+			(int) REAL(pch)[i % npch] : NA_INTEGER;
 		} else error(_("invalid plotting symbol"));
 		/*
 		 * special case for pch = "."
@@ -3369,7 +3380,7 @@ SEXP L_clip(SEXP x, SEXP y, SEXP w, SEXP h, SEXP hjust, SEXP vjust)
 	    UNPROTECT(1);
 	}
     } else {
-        warning(_("Unable to clip to rotated rectangle"));
+        warning(_("unable to clip to rotated rectangle"));
     }
     GEMode(0, dd);
     return R_NilValue;    

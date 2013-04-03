@@ -16,23 +16,26 @@ col2rgb(col, alpha = FALSE)
   \item{col}{vector of any of the three kinds of \R color specifications,
     i.e., either a color name (as listed by \code{\link{colors}()}), a
     hexadecimal string of the form \code{"#rrggbb"} or
-    \code{"#rrggbbaa"} (see \code{\link{rgb}}), or a positive
-    integer \code{i} meaning \code{\link{palette}()[i]} or \code{0} (see
-    \sQuote{Details}).  Non-character values are coerced to integers.}
-  \item{alpha}{logical value indicating whether alpha channel (opacity)
+    \code{"#rrggbbaa"} (see \code{\link{rgb}}), or a positive integer
+    \code{i} meaning \code{\link{palette}()[i]}.  Non-numeric values
+    are coerced to character.}
+  \item{alpha}{logical value indicating whether the alpha channel (opacity)
     values should be returned.}
 }
 \details{
-  For integer colors, \code{0} is shorthand for the current
-  \code{\link{par}("bg")} (and hence is only relevant to base graphics
-  and not grid graphics, and is an error if \pkg{graphics} is not
-  loaded: like \code{par} it will open a device if none is open).  Its
-  used is deprecated.
-
   \code{\link{NA}} (as integer or character) and \code{"NA"} mean transparent.
+
+  Prior to \R 3.0.0, \code{col = 0} could be used to refer to the
+  background color of the current device in base graphics: this is now
+  an error.
+
+  Before \R 3.0.0 negative integer values were accepted and wrapped
+  around to colors in the palette: this was not how either the base or
+  grid graphics systems usually resolved such values.  They are now
+  always an error.
 }
 \value{
-  An integer matrix with three or four (for\code{alpha = TRUE}) rows
+  An integer matrix with three or four (for \code{alpha = TRUE}) rows
   and number of columns the length of \code{col}.  If \code{col} has
   names these are used as the column names of the return value.
 }
@@ -41,6 +44,8 @@ col2rgb(col, alpha = FALSE)
 }
 \seealso{
   \code{\link{rgb}}, \code{\link{colors}}, \code{\link{palette}}, etc.
+
+  The newer, more flexible interface, \code{\link{convertColor}()}.
 }
 \examples{
 col2rgb("peachpuff")
@@ -48,7 +53,7 @@ col2rgb(c(blu = "royalblue", reddish = "tomato"))  # note: colnames
 
 col2rgb(1:8)  # the ones from the palette() (if the default)
 
-col2rgb(paste("gold", 1:4, sep = ""))
+col2rgb(paste0("gold", 1:4))
 
 col2rgb("#08a0ff")
 ## all three kinds of color specifications:
@@ -57,7 +62,7 @@ col2rgb(c(palette = 1:3))
 
 ##-- NON-INTRODUCTORY examples --
 
-grC <- col2rgb(paste("gray", 0:100, sep = ""))
+grC <- col2rgb(paste0("gray", 0:100))
 table(print(diff(grC["red",])))  # '2' or '3': almost equidistant
 ## The 'named' grays are in between {"slate gray" is not gray, strictly}
 col2rgb(c(g66 = "gray66", darkg =  "dark gray", g67 = "gray67",

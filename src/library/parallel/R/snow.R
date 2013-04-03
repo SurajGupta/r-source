@@ -24,7 +24,7 @@ assign("default", NULL, envir = .reg)
 defaultCluster <- function(cl = NULL)
 {
     if(is.null(cl)) cl <- get("default", envir = .reg)
-    if(is.null(cl)) stop("no cluster supplied and none is registered")
+    if(is.null(cl)) stop("no cluster 'cl' supplied and none is registered")
     checkCluster(cl)
     cl
 }
@@ -82,13 +82,9 @@ defaultClusterOptions <- NULL
 initDefaultClusterOptions <- function(libname)
 {
     rscript <- file.path(R.home("bin"), "Rscript")
-    port <- as.vector(Sys.getenv("R_PARALLEL_PORT"))
-    if (identical(port, "random")) {
+    port <- as.integer(Sys.getenv("R_PARALLEL_PORT"))
+    if (is.na(port))
         port <- 11000 + 1000 * ((stats::runif(1L) + unclass(Sys.time())/300) %% 1)
-    } else {
-        port <- as.integer(port)
-        if (is.na(port)) port <- 10187L
-    }
     options <- list(port = as.integer(port),
                     timeout = 60 * 60 * 24 * 30, # 30 days
                     master =  Sys.info()["nodename"],
@@ -139,7 +135,6 @@ makeCluster <-
            PSOCK = makePSOCKcluster(spec, ...),
            FORK = makeForkCluster(spec, ...),
            SOCK = snow::makeSOCKcluster(spec, ...),
-           PVM = snow::makePVMcluster(spec, ...),
            MPI = snow::makeMPIcluster(spec, ...),
            NWS = snow::makeNWScluster(spec, ...),
            stop("unknown cluster type"))
@@ -238,15 +233,12 @@ closeNode.NWSnode <- function(node) snow::closeNode.NWSnode(node)
 
 recvData.MPInode <- function(node) snow::recvData.MPInode(node)
 recvData.NWSnode <- function(node) snow::recvData.NWSnode(node)
-recvData.PVMnode <- function(node) snow::recvData.PVMnode(node)
 
 recvOneData.MPIcluster <- function(cl) snow::recvOneData.MPIcluster(cl)
 recvOneData.NWScluster <- function(cl) snow::recvOneData.NWScluster(cl)
-recvOneData.PVMcluster <- function(cl) snow::recvOneData.PVMcluster(cl)
 
 sendData.MPInode <- function(node, data) snow::sendData.MPInode(node, data)
 sendData.NWSnode <- function(node, data) snow::sendData.NWSnode(node, data)
-sendData.PVMnode <- function(node, data) snow::sendData.PVMnode(node, data)
 
 ## these use NextMethod() so need copies.
 stopCluster.MPIcluster <- function(cl) {
@@ -257,12 +249,12 @@ stopCluster.MPIcluster <- function(cl) {
 stopCluster.spawnedMPIcluster <- function(cl) {
     comm <- 1
     NextMethod()
-    mpi.comm.disconnect(comm)
+    Rmpi::mpi.comm.disconnect(comm)
 }
 
 stopCluster.NWScluster <- function(cl) {
-  NextMethod()
-  nwsDeleteWs(cl[[1]]$wsServer, nwsWsName(cl[[1]]$ws))
-  close(cl[[1]]$wsServer)
+    NextMethod()
+    new::nwsDeleteWs(cl[[1]]$wsServer, nws::nwsWsName(cl[[1]]$ws))
+    close(cl[[1]]$wsServer)
 }
 

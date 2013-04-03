@@ -49,9 +49,7 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
             if(length(res0)) rownames(res0) <- res0[, "Package"]
         } else {
             dest <- file.path(tempdir(),
-                              paste("repos_",
-                                    URLencode(repos, TRUE),
-                                    ".rds", sep=""))
+                              paste0("repos_", URLencode(repos, TRUE), ".rds"))
             if(file.exists(dest)) {
                 res0 <- readRDS(dest)
             } else {
@@ -106,7 +104,7 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
             if ("Path" %in% colnames(res0)) {
                 rp <- rep.int(repos, nrow(res0))
                 path <- res0[, "Path"]
-                rp[!is.na(path)] <- paste(repos, path[!is.na(path)], sep="/")
+                rp[!is.na(path)] <- paste(repos, path[!is.na(path)], sep = "/")
             } else rp <- repos
             res0 <- cbind(res0[, fields, drop = FALSE], Repository = rp)
             res <- rbind(res, res0)
@@ -136,7 +134,7 @@ function(contriburl = contrib.url(getOption("repos"), type), method,
             f <- available_packages_filters_db[[f[1L]]]
         }
         if(!is.function(f))
-            stop("Invalid 'filters' argument.")
+            stop("invalid 'filters' argument.")
         res <- f(res)
     }
 
@@ -210,47 +208,64 @@ available_packages_filters_db$duplicates <-
 function(db)
     tools:::.remove_stale_dups(db)
 
-available_packages_filters_db$`license/FOSS` <-
-function(db)
+filter_packages_by_depends_predicates <-
+function(db, predicate, recursive = TRUE)
 {
-    ## What we need to do is find all non-FOSS-verifiable packages and
-    ## all their recursive dependencies.  Somewhat tricky because there
-    ## may be dependencies missing from the package db.
-    ## Hence, for efficiency reasons, do the following.
-    ## Create a data frame which already has Depends/Imports/LinkingTo
-    ## info in package list form, and use this to compute the out of db
-    ## packages.
+    ## Could also add a 'which' argument to specify which dependencies
+    ## are taken.
+
+    ## Drop all packages for which any (recursive) dependency does not
+    ## satisfy the given predicate (implemented as a function computing
+    ## TRUE or FALSE for each rows of the package db).
+
+    ## Somewhat tricky because there may be depends missing from the db,
+    ## which are taken not to satisfy the predicate unless they are
+    ## standard packages.
+
+    ## Determine all depends missing from the db.
     db1 <- data.frame(Package = db[, "Package"],
                       stringsAsFactors = FALSE)
     fields <- c("Depends", "Imports", "LinkingTo")
     for(f in fields)
         db1[[f]] <-
             lapply(db[, f], tools:::.extract_dependency_package_names)
-
     all_packages <- unique(unlist(db1[fields], use.names = FALSE))
     bad_packages <-
         all_packages[is.na(match(all_packages, db1$Package))]
-    ## Dependency package names missing from the db can be
-    ## A. base packages
-    ## C. really missing.
-    ## We can ignore type A as these are known to be FOSS.
+    ## Drop the standard packages from these.
     bad_packages <-
-        bad_packages[is.na(match(bad_packages,
-                                 unlist(tools:::.get_standard_package_names())))]
+        setdiff(bad_packages,
+                unlist(tools:::.get_standard_package_names()))
 
-
-    ## Packages in the db not verifiable as FOSS.
-    ind <- !tools:::analyze_licenses(db[, "License"])$is_verified
+    ## Packages in the db which do not satisfy the predicate.
+    ind <- !predicate(db)
     ## Now find the recursive reverse dependencies of these and the
-    ## packages missing from the db.
-    depends <-
+    ## non-standard packages missing from the db.
+    rdepends <-
         tools:::package_dependencies(db1$Package[ind], db = db1,
-                                      reverse = TRUE, recursive = TRUE)
-    depends <- unique(unlist(depends))
-    ind[match(depends, db1$Package, nomatch = 0L)] <- TRUE
+                                     reverse = TRUE,
+                                     recursive = recursive)
+    rdepends <- unique(unlist(rdepends))
+    ind[match(rdepends, db1$Package, nomatch = 0L)] <- TRUE
 
     ## And drop these from the db.
     db[!ind, , drop = FALSE]
+}
+
+available_packages_filters_db$`license/FOSS` <-
+function(db) {
+    predicate <- function(db)
+        tools:::analyze_licenses(db[, "License"], db)$is_verified
+    filter_packages_by_depends_predicates(db, predicate)
+}
+
+available_packages_filters_db$`license/restricts_use` <-
+function(db) {
+    predicate <- function(db) {
+        ru <- tools:::analyze_licenses(db[, "License"], db)$restricts_use
+        !is.na(ru) & !ru
+    }
+    filter_packages_by_depends_predicates(db, predicate)
 }
 
 available_packages_filters_db$CRAN <-
@@ -385,7 +400,7 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(!missing(instPkgs)) {
         ## actually we need rather more than this
         if(!is.matrix(instPkgs) || !is.character(instPkgs[, "Package"]))
-            stop("illformed 'instPkgs' matrix")
+            stop("ill-formed 'instPkgs' matrix")
     }
     if(NROW(instPkgs) == 0L) return(NULL)
 
@@ -411,7 +426,8 @@ old.packages <- function(lib.loc = NULL, repos = getOption("repos"),
             Rdeps <- tools:::.split_dependencies(deps)[["R", exact=TRUE]]
             if(length(Rdeps) > 1L) {
                 target <- Rdeps$version
-                res <- eval(parse(text=paste("currentR", Rdeps$op, "target")))
+                res <- do.call(Rdeps$op, list(currentR, target))
+ ##               res <- eval(parse(text=paste("currentR", Rdeps$op, "target")))
                 if(!res) next
             }
         }
@@ -549,12 +565,10 @@ installed.packages <-
             ## Previously used URLencode for e.g. Windows paths with drives
             ## This version works for very long file names.
             base <- paste(c(lib, fields), collapse = ",")
-            enc <- sprintf("%d_%s", nchar(base),
-                           ## add 64-bit CRC in hex (in theory, seems
-                           ## it is actually 32-bit on some systems)
-                           .Call("crc64ToString", base, PACKAGE = "base"))
-            dest <- file.path(tempdir(),
-                              paste0("libloc_", enc, ".rds"))
+            ## add length and 64-bit CRC in hex (in theory, seems
+            ## it is actually 32-bit on some systems)
+            enc <- sprintf("%d_%s", nchar(base), .Call(C_crc64, base))
+            dest <- file.path(tempdir(), paste0("libloc_", enc, ".rds"))
             if(file.exists(dest) &&
                file.info(dest)$mtime > file.info(lib)$mtime &&
                (val <- readRDS(dest))$base == base)
@@ -617,8 +631,10 @@ remove.packages <- function(pkgs, lib)
 
     if(missing(lib) || is.null(lib)) {
         lib <- .libPaths()[1L]
-	message(gettextf("Removing package(s) from %s\n(as %s is unspecified)",
-			 sQuote(lib), sQuote("lib")), domain = NA)
+	message(sprintf(ngettext(length(pkgs),
+                                 "Removing package from %s\n(as %s is unspecified)",
+                                 "Removing packages from %s\n(as %s is unspecified)"),
+                        sQuote(lib), sQuote("lib")), domain = NA)
     }
 
     paths <- find.package(pkgs, lib)
@@ -660,12 +676,11 @@ download.packages <- function(pkgs, destdir, available = NULL,
             if (substr(type, 1L, 10L) == "mac.binary") type <- "mac.binary"
             ## in Oct 2009 we introduced file names in PACKAGES files
             File <- available[ok, "File"]
-            fn <- paste(p, "_", available[ok, "Version"],
-                        switch(type,
-                               "source" = ".tar.gz",
-                               "mac.binary" = ".tgz",
-                               "win.binary" = ".zip"),
-                        sep = "")
+            fn <- paste0(p, "_", available[ok, "Version"],
+                         switch(type,
+                                "source" = ".tar.gz",
+                                "mac.binary" = ".tgz",
+                                "win.binary" = ".zip"))
             have_fn <- !is.na(File)
             fn[have_fn] <- File[have_fn]
             repos <- available[ok, "Repository"]
@@ -690,7 +705,7 @@ download.packages <- function(pkgs, destdir, available = NULL,
                     warning(gettextf("package %s does not exist on the local repository", sQuote(p)),
                             domain = NA, immediate. = TRUE)
             } else {
-                url <- paste(repos, fn, sep="/")
+                url <- paste(repos, fn, sep = "/")
                 destfile <- file.path(destdir, fn)
 
                 res <- try(download.file(url, destfile, method, mode="wb", ...))
@@ -727,15 +742,15 @@ contrib.url <- function(repos, type = getOption("pkgType"))
 
     ver <- paste(R.version$major,
                  strsplit(R.version$minor, ".", fixed=TRUE)[[1L]][1L], sep = ".")
-    mac.subtype <- "universal"
+    mac.path <- "macosx"
     if (substr(type, 1L, 11L) == "mac.binary.") {
-        mac.subtype <- substring(type, 12L)
+        mac.path <- paste(mac.path, substring(type, 12L), sep = "/")
         type <- "mac.binary"
     }
     res <- switch(type,
-		"source" = paste(gsub("/$", "", repos), "src", "contrib", sep="/"),
-                "mac.binary" = paste(gsub("/$", "", repos), "bin", "macosx", mac.subtype, "contrib", ver, sep = "/"),
-                "win.binary" = paste(gsub("/$", "", repos), "bin", "windows", "contrib", ver, sep="/")
+		"source" = paste(gsub("/$", "", repos), "src", "contrib", sep = "/"),
+                "mac.binary" = paste(gsub("/$", "", repos), "bin", mac.path, "contrib", ver, sep = "/"),
+                "win.binary" = paste(gsub("/$", "", repos), "bin", "windows", "contrib", ver, sep = "/")
                )
     res
 }
@@ -748,11 +763,12 @@ getCRANmirrors <- function(all=FALSE, local.only=FALSE)
         ## try to handle explicitly failure to connect to CRAN.
         con <- url("http://cran.r-project.org/CRAN_mirrors.csv")
         m <- try(open(con, "r"), silent = TRUE)
-        if(!inherits(m, "try-error")) m <- try(read.csv(con, as.is=TRUE))
+        if(!inherits(m, "try-error")) m <- try(read.csv(con, as.is = TRUE))
         close(con)
     }
     if(is.null(m) || inherits(m, "try-error"))
-        m <- read.csv(file.path(R.home("doc"), "CRAN_mirrors.csv"), as.is=TRUE)
+        m <- read.csv(file.path(R.home("doc"), "CRAN_mirrors.csv"),
+                      as.is = TRUE)
     if(!all) m <- m[as.logical(m$OK), ]
     m
 }
@@ -778,7 +794,7 @@ chooseBioCmirror <- function(graphics = getOption("menu.graphics"))
     m <- c("Seattle (USA)"="http://www.bioconductor.org"
 	   , "Bethesda (USA)"="http://watson.nci.nih.gov/bioc_mirror"
 	   , "Dortmund (Germany)"="http://bioconductor.statistik.tu-dortmund.de"
-	   , "Bergen (Norway)"="http://bioconductor.uib.no/"
+	   , "Anhui (China)"="http://mirrors.ustc.edu.cn/bioc/"
 	   , "Cambridge (UK)"="http://mirrors.ebi.ac.uk/bioconductor/"
 	   , "Riken, Kobe (Japan)" = "http://bioconductor.jp/"
 	   , "Canberra (Australia)" = "http://mirror.aarnet.edu.au/pub/bioconductor/"
@@ -905,7 +921,8 @@ compareVersion <- function(a, b)
             ## so for now just see if any installed version will do.
             current <- as.package_version(installed[pkgs == x[[1L]], "Version"])
             target <- as.package_version(x[[3L]])
-            eval(parse(text = paste("any(current", x$op, "target)")))
+            any(do.call(x$op, list(current, target)))
+##            eval(parse(text = paste("any(current", x$op, "target)")))
         } else x[[1L]] %in% pkgs
     })
     xx <- xx[!have]
@@ -922,7 +939,8 @@ compareVersion <- function(a, b)
             ## install.packages() will find the highest version.
             current <- as.package_version(available[pkgs == x[[1L]], "Version"])
             target <- as.package_version(x[[3L]])
-            res <- eval(parse(text = paste("any(current", x$op, "target)")))
+            res <- any(do.call(x$op, list(current, target)))
+##            res <- eval(parse(text = paste("any(current", x$op, "target)")))
             if(res) canget <- c(canget, x[[1L]])
             else  miss <- c(miss, paste0(x[[1L]], " (>= ", x[[3L]], ")"))
         } else if(x[[1L]] %in% pkgs) canget <- c(canget, x[[1L]])

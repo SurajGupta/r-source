@@ -7,7 +7,7 @@
 \alias{detach}
 \title{Detach Objects from the Search Path}
 \usage{
-detach(name, pos = 2, unload = FALSE, character.only = FALSE,
+detach(name, pos = 2L, unload = FALSE, character.only = FALSE,
        force = FALSE)
 }
 \arguments{
@@ -68,7 +68,7 @@ detach(name, pos = 2, unload = FALSE, character.only = FALSE,
   You cannot detach either the workspace (position 1) nor the \pkg{base}
   package (the last item in the search list), and attempting to do so
   will throw an error.
-  
+
   Unloading some namespaces has undesirable side effects:
   e.g. unloading \pkg{grid} closes all graphics devices, and on some
   systems \pkg{tcltk} cannot be reloaded once it has been unloaded and

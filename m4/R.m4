@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2010 R Core Team
+### Copyright (C) 1998-2013 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -210,6 +210,8 @@ makeinfo_version_min=`echo ${makeinfo_version} | \
 if test -z "${makeinfo_version_maj}" \
      || test -z "${makeinfo_version_min}"; then
   r_cv_prog_makeinfo_v4=no
+elif test ${makeinfo_version_maj} -ge 5; then
+  r_cv_prog_makeinfo_v4=yes
 elif test ${makeinfo_version_maj} -lt 4 \
      || test ${makeinfo_version_min} -lt 7; then
   r_cv_prog_makeinfo_v4=no
@@ -325,6 +327,9 @@ for prog in "${cc_minus_MM}" "${CC} -M" "${CPP} -M" "cpp -M"; do
     break
   fi
 done])
+if test "${r_cv_prog_cc_m}" = "${cc_minus_MM}"; then
+  r_cv_prog_cc_m="\$(CC) -MM"
+fi
 if test -z "${r_cv_prog_cc_m}"; then
   AC_MSG_RESULT([no])
 else
@@ -1788,7 +1793,8 @@ fi
 if test "${use_aqua}" = yes; then
   AC_DEFINE(HAVE_AQUA, 1,
             [Define if you have the Aqua headers and libraries,
-             and want the Aqua GUI components and quartz() device to be built.])
+             and want to include support for R.app 
+	     and for the quartz() device to be built.])
 fi
 ])# R_AQUA
 
@@ -2998,7 +3004,7 @@ AM_CONDITIONAL(USE_MMAP_ZLIB,
 ## Set shell variable r_cv_header_zlib_h to 'yes' if a recent enough
 ## zlib.h is found, and to 'no' otherwise.
 AC_DEFUN([_R_HEADER_ZLIB],
-[AC_CACHE_CHECK([if zlib version >= 1.2.3],
+[AC_CACHE_CHECK([if zlib version >= 1.2.5],
                 [r_cv_header_zlib_h],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
@@ -3006,9 +3012,9 @@ AC_DEFUN([_R_HEADER_ZLIB],
 #include <zlib.h>
 int main() {
 #ifdef ZLIB_VERSION
-/* Workaround Debian bug: it uses 1.2.3.4 even though there is no such
+/* Work around Debian bug: it uses 1.2.3.4 even though there was no such
    version on the master site zlib.net */
-  exit(strncmp(ZLIB_VERSION, "1.2.3", 5) < 0);
+  exit(strncmp(ZLIB_VERSION, "1.2.5", 5) < 0);
 #else
   exit(1);
 #endif
@@ -3040,8 +3046,10 @@ caddr_t hello() {
 
 ## R_PCRE
 ## ------
-## Try finding pcre library and headers.
-## RedHat puts the headers in /usr/include/pcre.
+## If selected, try finding system pcre library and headers.
+## RedHat put the headers in /usr/include/pcre.
+## R (2.15.3, 3.0.0) includes 8.32: there are problems < 8.10 and
+## distros are often slow to update.
 AC_DEFUN([R_PCRE],
 [if test "x${use_system_pcre}" = xyes; then
   AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
@@ -3056,7 +3064,7 @@ else
   have_pcre=no
 fi
 if test "x${have_pcre}" = xyes; then
-AC_CACHE_CHECK([if PCRE version >= 7.6], [r_cv_have_pcre76],
+AC_CACHE_CHECK([if PCRE version >= 8.10], [r_cv_have_pcre810],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_PCRE_PCRE_H
 #include <pcre/pcre.h>
@@ -3067,9 +3075,9 @@ AC_CACHE_CHECK([if PCRE version >= 7.6], [r_cv_have_pcre76],
 #endif
 int main() {
 #ifdef PCRE_MAJOR
-#if PCRE_MAJOR > 7
+#if PCRE_MAJOR > 8
   exit(0);
-#elif PCRE_MAJOR > 6 && PCRE_MAJOR >= 6
+#elif PCRE_MAJOR == 8 && PCRE_MINOR >= 10
   exit(0);
 #else
   exit(1);
@@ -3078,18 +3086,18 @@ int main() {
   exit(1);
 #endif
 }
-]])], [r_cv_have_pcre76=yes], [r_cv_have_pcre76=no], [r_cv_have_pcre76=no])])
+]])], [r_cv_have_pcre810=yes], [r_cv_have_pcre810=no], [r_cv_have_pcre810=no])])
 fi
-if test "x${r_cv_have_pcre76}" = xyes; then
+if test "x${r_cv_have_pcre810}" = xyes; then
   LIBS="-lpcre ${LIBS}"
 fi
 AC_MSG_CHECKING([whether PCRE support needs to be compiled])
-if test "x${r_cv_have_pcre76}" = xyes; then
+if test "x${r_cv_have_pcre810}" = xyes; then
   AC_MSG_RESULT([no])
 else
   AC_MSG_RESULT([yes])
 fi
-AM_CONDITIONAL(BUILD_PCRE, [test "x${r_cv_have_pcre76}" != xyes])
+AM_CONDITIONAL(BUILD_PCRE, [test "x${r_cv_have_pcre810}" != xyes])
 ])# R_PCRE
 
 ## R_BZLIB

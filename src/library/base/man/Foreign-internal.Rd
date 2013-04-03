@@ -1,10 +1,11 @@
 % File src/library/base/man/Foreign-internal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Foreign-internal}
 \alias{.External.graphics}
+\alias{.External2}
 \alias{.Call.graphics}
 \title{Internal Versions of the Foreign Function Interface}
 \description{
@@ -13,6 +14,7 @@
 \usage{
     .Call.graphics(.NAME, \dots, PACKAGE)
 .External.graphics(.NAME, \dots, PACKAGE)
+        .External2(.NAME, \dots, PACKAGE)
 }
 \arguments{
   \item{.NAME}{a character string giving the name of a C function or
@@ -28,8 +30,12 @@
   They take additional steps to ensure that the device driver display
   lists are updated correctly.
 
-  Currently \code{.Call.graphics} is used in package \pkg{grid} and
-  \code{.External.graphics} is unused.
+  \code{.External2} is an enhanced version of \code{.External} which
+  passes additional information in more arguments.
+
+  \code{.Call.graphics} is used in package \pkg{grid} and
+  \code{.External.graphics} and \code{.External2} are used in package
+  \code{graphics}.
 
   These are primitive functions.
 }

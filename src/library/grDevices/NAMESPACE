@@ -1,18 +1,4 @@
-## Explicitly enumerate the symbols here that are in the registration
-## information rather than use .registration as there are symbols that
-## conflict with functions on Windows, i.e. savePlot.
-
-if(tools:::.OStype() == "windows") {
-    useDynLib(grDevices, R_chull, R_CreateAtVector, R_GAxisPars,
-              PicTeX, PostScript, XFig, PDF,
-              Cdevga=devga, CsavePlot=savePlot, devCairo,
-              Type1FontInUse, CIDFontInUse, R_GD_nullDevice)
-} else {
-    useDynLib(grDevices, R_chull, R_CreateAtVector, R_GAxisPars,
-              PicTeX, PostScript, XFig, PDF, CQuartz = Quartz, devCairo,
-              Type1FontInUse, CIDFontInUse, R_GD_nullDevice,
-              cairoProps, makeQuartzDefault)
-}
+useDynLib(grDevices, .registration = TRUE, .fixes = "C_")
 
 export(Hershey, adjustcolor, as.graphicsAnnot, as.raster, axisTicks, blues9,
        boxplot.stats, check.options, chull, CIDFont, col2rgb, colors,
@@ -26,7 +12,7 @@ export(Hershey, adjustcolor, as.graphicsAnnot, as.raster, axisTicks, blues9,
        getGraphicsEventEnv, graphics.off, gray, grey, gray.colors,
        grey.colors, heat.colors, hsv, hcl, is.raster, make.rgb,
        n2mfrow, nclass.Sturges, nclass.FD, nclass.scott, palette, pdf,
-       pdf.options, pdfFonts, pictex, postscript, postscriptFont,
+       pdf.options, pdfFonts, pictex, postscript,
        postscriptFonts, ps.options, rainbow, recordGraphics,
        recordPlot, replayPlot, rgb, rgb2hsv, savePlot, setEPS,
        setGraphicsEventEnv, setGraphicsEventHandlers, setPS,
@@ -34,7 +20,7 @@ export(Hershey, adjustcolor, as.graphicsAnnot, as.raster, axisTicks, blues9,
        xfig, xyTable, xy.coords, xyz.coords)
 
 ## devices common to all platforms
-export(X11, x11, bitmap, bmp, jpeg, png, tiff)
+export(X11, x11, bitmap, bmp, cairo_pdf, cairo_ps, jpeg, png, svg, tiff)
 
 S3method(print, recordedplot)
 S3method(print, colorConverter)
@@ -68,11 +54,10 @@ S3method(pretty, POSIXt)
 if(tools:::.OStype() == "windows") {
     export(bringToTop, msgWindow, win.graph, win.metafile, win.print,
            windows, windows.options, windowsFont, windowsFonts)
-    export(cairo_pdf, cairo_ps, svg)
 
     S3method("[", SavedPlots)
     S3method(print, SavedPlots)
 } else {
-    export(cairo_pdf, cairo_ps, X11.options, X11Font, X11Fonts,
-           quartz, quartz.options, quartzFont, quartzFonts, svg)
+    export(X11.options, X11Font, X11Fonts,
+           quartz, quartz.options, quartz.save, quartzFont, quartzFonts)
 }

@@ -51,7 +51,8 @@ gettextf(fmt, \dots, domain = NULL)
   \code{aAdifeEgGosxX\%}.  These letters denote the following types:
 
   \describe{
-    \item{\code{d, i, o, x, X}}{Integer value, \code{o} being octal,
+    \item{\code{d}, \code{i}, \code{o}, \code{x}, \code{X}}{Integer
+      value, \code{o} being octal, 
       \code{x} and \code{X} being hexadecimal (using the same case for
       \code{a-f} as the code).  Numeric variables with exactly integer
       values will be coerced to integer.  Formats \code{d} and \code{i}
@@ -65,19 +66,19 @@ gettextf(fmt, \dots, domain = NULL)
       are converted to \code{NA}, \code{NaN} or (perhaps a sign followed
       by) \code{Inf}.
     }
-    \item{\code{e, E}}{Double precision value, in
+    \item{\code{e}, \code{E}}{Double precision value, in
       \dQuote{\bold{e}xponential} decimal notation of the
       form \code{[-]m.ddde[+-]xx} or \code{[-]m.dddE[+-]xx}.
     }
-    \item{\code{g, G}}{Double precision value, in \code{\%e} or
+    \item{\code{g}, \code{G}}{Double precision value, in \code{\%e} or
       \code{\%E} format if the exponent is less than -4 or greater than or
       equal to the precision, and \code{\%f} format otherwise.
       (The precision (default 6) specifies the number of
       \emph{significant} digits here, whereas in \code{\%f, \%e}, it is
       the number of digits after the decimal point.)
     }
-    \item{\code{a, A}}{Double precision value, in binary notation of the
-      form \code{[-]0xh.hhhp[+-]d}.  This is a binary fraction
+    \item{\code{a}, \code{A}}{Double precision value, in binary notation
+      of the form \code{[-]0xh.hhhp[+-]d}.  This is a binary fraction
       expressed in hex multiplied by a (decimal) power of 2.  The number
       of hex digits after the decimal point is specified by the precision:
       the default is enough digits to represent exactly the internal
@@ -170,7 +171,7 @@ gettextf(fmt, \dots, domain = NULL)
   does perform sanity checks on the format, and since \R 2.10.0, we have
   not seen crashes anymore.  But not all possible user errors on all
   platforms have been tested, and some might be terminal.
-  
+
   The behaviour on inputs not documented here is \sQuote{undefined},
   which means it is allowed to differ by platform.
 }
@@ -245,7 +246,7 @@ sprintf("min 10-char string '\%10s'",
         c("a", "ABC", "and an even longer one"))
 
 n <- 1:18
-sprintf(paste("e with \%2d digits = \%.", n, "g", sep = ""), n, exp(1))
+sprintf(paste0("e with \%2d digits = \%.", n, "g"), n, exp(1))
 
 ## Using arguments out of order
 sprintf("second \%2$1.0f, first \%1$5.2f, third \%3$1.0f", pi, 2, 3)

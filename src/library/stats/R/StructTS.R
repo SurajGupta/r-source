@@ -114,8 +114,8 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
                  lower = rep(0, np+1L), upper = rep(Inf, np+1L),
                  control = optim.control)
         if(res$convergence > 0)
-            warning("possible convergence problem: optim gave code=",
-                    res$convergence, " ", res$message)
+            warning(gettextf("possible convergence problem: 'optim' gave code = %d and message %s",
+                             res$convergence, sQuote(res$message)), domain = NA)
     coef <- cf
     coef[mask] <- res$par
     Z$V[cbind(1L:np, 1L:np)] <- coef[1L:np]*vx
@@ -143,8 +143,9 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
                           "trend" = c("level", "slope", "epsilon"),
                           "BSM" = c("level", "slope", "seas", "epsilon")
                           )
-    loglik <- -length(y) * res$value + length(y) * log(2 * pi)
-    res <- list(coef = coef, loglik = loglik, data = y,
+    loglik <- -length(y) * res$value - 0.5 * sum(!is.na(y)) * log(2 * pi)
+    loglik0 <- -length(y) * res$value + length(y) * log(2 * pi)
+    res <- list(coef = coef, loglik = loglik, loglik0 = loglik0, data = y,
                 residuals = resid, fitted = states,
                 call = match.call(), series = series,
                 code = res$convergence, model = Z, model0 = Z0, xtsp = xtsp)
@@ -152,15 +153,15 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
     res
 }
 
-print.StructTS <- function(x, digits = max(3, getOption("digits") - 3), ...)
+print.StructTS <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     cat("\nCall:", deparse(x$call, width.cutoff = 75L), "", sep = "\n")
     cat("Variances:\n")
-    print.default(x$coef, print.gap = 2L, digits=digits)
+    print.default(x$coef, print.gap = 2L, digits = digits, ...)
     invisible(x)
 }
 
-predict.StructTS <- function(object, n.ahead = 1, se.fit = TRUE, ...)
+predict.StructTS <- function(object, n.ahead = 1L, se.fit = TRUE, ...)
 {
     xtsp <- object$xtsp
     z <- KalmanForecast(n.ahead, object$model)
@@ -173,10 +174,10 @@ predict.StructTS <- function(object, n.ahead = 1, se.fit = TRUE, ...)
     else return(pred)
 }
 
-tsdiag.StructTS <- function(object, gof.lag = 10, ...)
+tsdiag.StructTS <- function(object, gof.lag = 10L, ...)
 {
     ## plot standardized residuals, acf of residuals, Ljung-Box p-values
-    oldpar<- par(mfrow = c(3, 1))
+    oldpar <- par(mfrow = c(3, 1))
     on.exit(par(oldpar))
     rs <- object$residuals
     stdres <- rs

@@ -1,6 +1,6 @@
 % File src/library/methods/man/slot.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2013 R Core Team
 % Copyright 2005-2010 The R Foundation
 % Distributed under GPL 2 or later
 
@@ -8,7 +8,6 @@
 \alias{slot}
 \alias{.hasSlot}
 \alias{slot<-}
-\alias{@<-}
 \alias{slotNames}
 \alias{.slotNames}
 \alias{getSlots}
@@ -19,7 +18,7 @@
 }
 \usage{
 \special{object@name}% @ really is in base.
-object@name <- value
+\special{object@name <- value}% @<- really is in base.
 
 slot(object, name)
 slot(object, name, check = TRUE) <- value
@@ -93,6 +92,25 @@ getSlots(x)
   implementation does not prevent attributes being assigned, via
   \code{\link{attr<-}}, and such assignments are not checked for
   legitimate slot names.
+
+  Note that the \code{"@"} operators for extraction and (since \R 3.0.0)
+  replacement are primitive and actually reside in the \pkg{base}
+  package.
+
+  The replacement versions of  \code{"@"} and \code{slot()} differ in
+  the computations done to coerce the right side of the assignment to
+  the declared class of the slot.  Both verify that the value provided
+  is from a subclass of the declared slot class.  The  \code{slot()}
+  version will go on to call the coerce method if there is one, in
+  effect doing the computation \code{as(value, slotClass, strict =
+    FALSE)}. The  \code{"@"} version just verifies the relation,
+  leaving any coerce to be done later (e.g., when a relevant method is
+  dispatched).
+
+  In most uses the result is equivalent, and the  \code{"@"} version
+  saves an extra function call, but if empirical evidence shows that a
+  conversion is needed, either call \code{as()} before the replacement
+  or use the replacement version of \code{slot()}.
 }
 \references{
  Chambers, John M. (2008)

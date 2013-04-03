@@ -1,6 +1,6 @@
 % File src/library/base/man/unique.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{unique}
@@ -17,7 +17,8 @@
 \usage{
 unique(x, incomparables = FALSE, \dots)
 
-\method{unique}{default}(x, incomparables = FALSE, fromLast = FALSE, \dots)
+\method{unique}{default}(x, incomparables = FALSE, fromLast = FALSE,
+        nmax = NA, \dots)
 
 \method{unique}{matrix}(x, incomparables = FALSE, MARGIN = 1,
        fromLast = FALSE, \dots)
@@ -36,6 +37,8 @@ unique(x, incomparables = FALSE, \dots)
     from the last, i.e., the last (or rightmost) of identical elements will
     be kept.  This only matters for \code{\link{names}} or
     \code{\link{dimnames}}.}
+  \item{nmax}{the maximum number of unique items expected.
+    See \code{\link{duplicated}}.}
   \item{\dots}{arguments for particular methods.}
   \item{MARGIN}{the array margin to be held fixed: a single integer.}
 }
@@ -58,11 +61,11 @@ unique(x, incomparables = FALSE, \dots)
   Missing values are regarded as equal, but \code{NaN} is not equal to
   \code{NA_real_}.  Character strings are regarded as equal if they are
   in different encodings but would agree when translated to UTF-8.
-  
+
   Values in \code{incomparables} will never be marked as duplicated.
   This is intended to be used for a fairly small set of values and will
   not be efficient for a very large set.
-  
+
   When used on a data frame with more than one column, or an array or
   matrix when comparing dimensions of length greater than one, this
   tests for identity of character representations.  This will

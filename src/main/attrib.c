@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2012  The R Core Team
+ *  Copyright (C) 1997--2013  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
 #include <Rmath.h>
 
 static SEXP installAttrib(SEXP, SEXP, SEXP);
@@ -179,14 +180,17 @@ SEXP getAttrib(SEXP vec, SEXP name)
 	return getAttrib0(vec, name);
 }
 
-SEXP R_shortRowNames(SEXP vec, SEXP stype)
+attribute_hidden
+SEXP do_shortRowNames(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /* return  n if the data frame 'vec' has c(NA, n) rownames;
      *	       nrow(.) otherwise;  note that data frames with nrow(.) == 0
      *		have no row.names.
      ==> is also used in dim.data.frame() */
-    SEXP s = getAttrib0(vec, R_RowNamesSymbol), ans = s;
-    int type = asInteger(stype);
+
+    checkArity(op, args);
+    SEXP s = getAttrib0(CAR(args), R_RowNamesSymbol), ans = s;
+    int type = asInteger(CADR(args));
 
     if( type < 0 || type > 2)
 	error(_("invalid '%s' argument"), "type");
@@ -200,13 +204,17 @@ SEXP R_shortRowNames(SEXP vec, SEXP stype)
 }
 
 /* This is allowed to change 'out' */
-SEXP R_copyDFattr(SEXP in, SEXP out)
+attribute_hidden
+SEXP do_copyDFattr(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+    checkArity(op, args);
+    SEXP in = CAR(args), out = CADR(args);
     SET_ATTRIB(out, ATTRIB(in));
     IS_S4_OBJECT(in) ?  SET_S4_OBJECT(out) : UNSET_S4_OBJECT(out);
     SET_OBJECT(out, OBJECT(in));
     return out;
 }
+
 
 /* 'name' should be 1-element STRSXP or SYMSXP */
 SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
@@ -274,7 +282,7 @@ void copyMostAttrib(SEXP inp, SEXP ans)
 }
 
 /* version that does not preserve ts information, for subsetting */
-void attribute_hidden copyMostAttribNoTs(SEXP inp, SEXP ans)
+void copyMostAttribNoTs(SEXP inp, SEXP ans)
 {
     SEXP s;
 
@@ -369,7 +377,7 @@ static void checkNames(SEXP x, SEXP s)
 	if (!isVector(s) && !isList(s))
 	    error(_("invalid type (%s) for 'names': must be vector"),
 		  type2char(TYPEOF(s)));
-	if (length(x) != length(s))
+	if (xlength(x) != xlength(s))
 	    error(_("'names' attribute [%d] must be the same length as the vector [%d]"), length(s), length(x));
     }
     else if(IS_S4_OBJECT(x)) {
@@ -386,6 +394,7 @@ static void badtsp(void)
     error(_("invalid time series parameters specified"));
 }
 
+attribute_hidden
 SEXP tspgets(SEXP vec, SEXP val)
 {
     double start, end, frequency;
@@ -761,12 +770,12 @@ SEXP attribute_hidden do_namesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 	if(getAttrib(CAR(args), R_NamesSymbol) == R_NilValue) {
 	    /* S4 class w/o a names slot or attribute */
 	    if(TYPEOF(CAR(args)) == S4SXP)
-		error(_("Class '%s' has no 'names' slot"), klass);
+		error(_("class '%s' has no 'names' slot"), klass);
 	    else
-		warning(_("Class '%s' has no 'names' slot; assigning a names attribute will create an invalid object"), klass);
+		warning(_("class '%s' has no 'names' slot; assigning a names attribute will create an invalid object"), klass);
 	}
 	else if(TYPEOF(CAR(args)) == S4SXP)
-	    error(_("Illegal to use names()<- to set the 'names' slot in a non-vector class ('%s')"), klass);
+	    error(_("invalid to use names()<- to set the 'names' slot in a non-vector class ('%s')"), klass);
 	/* else, go ahead, but can't check validity of replacement*/
     }
     if (CADR(args) != R_NilValue) {
@@ -816,8 +825,8 @@ SEXP namesgets(SEXP vec, SEXP val)
 
     /* Check that the lengths and types are compatible */
 
-    if (length(val) < length(vec)) {
-	val = lengthgets(val, length(vec));
+    if (xlength(val) < xlength(vec)) {
+	val = xlengthgets(val, xlength(vec));
 	UNPROTECT(1);
 	PROTECT(val);
     }
@@ -1029,7 +1038,8 @@ SEXP attribute_hidden do_dimgets(SEXP call, SEXP op, SEXP args, SEXP env)
 
 SEXP dimgets(SEXP vec, SEXP val)
 {
-    int len, ndim, i, total;
+    int i, ndim;
+    R_xlen_t len, total;
     PROTECT(vec);
     PROTECT(val);
     if ((!isVector(vec) && !isList(vec)))
@@ -1041,7 +1051,7 @@ SEXP dimgets(SEXP vec, SEXP val)
     UNPROTECT(1);
     PROTECT(val);
 
-    len = length(vec);
+    len = xlength(vec);
     ndim = length(val);
     if (ndim == 0)
 	error(_("length-0 dimension vector is invalid"));
@@ -1054,8 +1064,12 @@ SEXP dimgets(SEXP vec, SEXP val)
 	    error(_("the dims contain negative values"));
 	total *= INTEGER(val)[i];
     }
-    if (total != len)
-	error(_("dims [product %d] do not match the length of object [%d]"), total, len);
+    if (total != len) {
+	if (total > INT_MAX || len > INT_MAX)
+	    error(_("dims do not match the length of object"), total, len);
+	else
+	    error(_("dims [product %d] do not match the length of object [%d]"), total, len);
+    }
     removeAttrib(vec, R_DimNamesSymbol);
     installAttrib(vec, R_DimSymbol, val);
     UNPROTECT(2);
@@ -1121,7 +1135,7 @@ SEXP attribute_hidden do_levelsgets(SEXP call, SEXP op, SEXP args, SEXP env)
 	/* calls, e.g., levels<-.factor() */
 	return(ans);
     if(!isNull(CADR(args)) && any_duplicated(CADR(args), FALSE))
-	warningcall(call, _("duplicated levels will not be allowed in factors anymore"));
+	warningcall(call, "duplicated levels in factors are deprecated");
 /* TODO errorcall(call, _("duplicated levels are not allowed in factors anymore")); */
     PROTECT(args = ans);
     if (NAMED(CAR(args)) > 1) SETCAR(args, duplicate(CAR(args)));
@@ -1350,12 +1364,56 @@ SEXP attribute_hidden do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
     return ans;
 }
 
+static void check_slot_assign(SEXP obj, SEXP input, SEXP value, SEXP env) 
+{
+    SEXP valueClass, objClass, e;
+
+    valueClass = PROTECT(R_data_class(value, FALSE));
+    objClass = PROTECT(R_data_class(obj, FALSE));
+    e = PROTECT(lang4(install("checkAtAssignment"), 
+		      objClass, input, valueClass));
+    eval(e, env);
+    UNPROTECT(3);
+}
+
+
 SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     /*  attr(x, which = "<name>")  <-  value  */
     SEXP obj, name, ap, argList;
 
     checkArity(op, args);
+
+    if(PRIMVAL(op)) { /* @<- */
+	SEXP input, nlist, ans, value;
+	PROTECT(input = allocVector(STRSXP, 1));
+
+	nlist = CADR(args);
+	if (isSymbol(nlist))
+	    SET_STRING_ELT(input, 0, PRINTNAME(nlist));
+	else if(isString(nlist) )
+	    SET_STRING_ELT(input, 0, STRING_ELT(nlist, 0));
+	else {
+	    error(_("invalid type '%s' for slot name"), 
+		  type2char(TYPEOF(nlist)));
+	    return R_NilValue; /*-Wall*/
+	}
+
+	/* replace the second argument with a string */
+	SETCADR(args, input);
+	UNPROTECT(1); // 'input' is now protected
+
+ 	if(DispatchOrEval(call, op, "@<-", args, env, &ans, 0, 0))
+	    return(ans);
+
+	PROTECT(obj = CAR(ans));
+	PROTECT(value = CADDR(ans));
+	check_slot_assign(obj, input, value, env);
+	value = R_do_slot_assign(obj, input, value);
+	UNPROTECT(2);
+	return value;
+    }
+
 
     obj = CAR(args);
     if (NAMED(obj) == 2)
@@ -1562,7 +1620,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
 	error(_("attempt to set slot on NULL object"));
 #endif
     PROTECT(obj); PROTECT(value);
-				/* Ensure that name is a symbol */
+    /* Ensure that name is a symbol */
     if(isString(name) && LENGTH(name) == 1)
 	name = install(translateChar(STRING_ELT(name, 0)));
     if(TYPEOF(name) == CHARSXP)
@@ -1578,7 +1636,7 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     } else {
 	if(isNull(value))		/* Slots, but not attributes, can be NULL.*/
 	    value = pseudo_NULL;	/* Store a special symbol instead. */
-
+	    
 #ifdef _R_ver_le_2_11_x_
 	setAttrib(obj, name, value);
 #else
@@ -1600,7 +1658,7 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP  nlist, object, ans, klass;
 
     if(!isMethodsDispatchOn())
-	error(_("formal classes cannot be used without the methods package"));
+	error(_("formal classes cannot be used without the 'methods' package"));
     nlist = CADR(args);
     /* Do some checks here -- repeated in R_do_slot, but on repeat the
      * test expression should kick out on the first element. */

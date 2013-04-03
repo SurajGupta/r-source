@@ -101,7 +101,7 @@ kernel <- function (coef, m = 2, r, name="unknown")
     }
 }
 
-print.tskernel <- function (x, digits = max(3,getOption("digits")-3), ...)
+print.tskernel <- function (x, digits = max(3L, getOption("digits") - 3L), ...)
 {
     m <- x$m
     y <- x[i <- -m:m]
@@ -112,7 +112,8 @@ print.tskernel <- function (x, digits = max(3,getOption("digits")-3), ...)
 }
 
 plot.tskernel <-
-    function(x, type = "h", xlab = "k", ylab = "W[k]", main=attr(x,"name"), ...)
+    function(x, type = "h", xlab = "k", ylab = "W[k]",
+             main = attr(x,"name"), ...)
 {
     i <- -x$m:x$m
     plot(i, x[i], type = type, xlab = xlab, ylab = ylab, main = main, ...)
@@ -197,8 +198,7 @@ kernapply.tskernel <- function (x, k, ...)
     n <- k$m
     xx <- c(rep(0,n), x[-x$m:x$m], rep(0,n))
     coef <- kernapply(xx, k, circular = TRUE)
-    m <- length(coef)%/%2L
-    kernel(coef[(m+1L):length(coef)],m,
-           paste("Composite(", attr(x, "name"), ",",
-                 attr(k, "name"), ")", sep=""))
+    m <- length(coef) %/% 2L
+    kernel(coef[(m+1L):length(coef)], m,
+           paste0("Composite(", attr(x, "name"), ",", attr(k, "name"), ")"))
 }

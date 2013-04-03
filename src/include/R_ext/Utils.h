@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2005    The R Core Team
+ *  Copyright (C) 1998-2012    The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -27,6 +27,7 @@
 
 #include <R_ext/Boolean.h>
 #include <R_ext/Complex.h>
+#include <stddef.h>
 
 #define revsort       Rf_revsort
 #define iPsort        Rf_iPsort
@@ -38,8 +39,6 @@
 #define StringFalse   Rf_StringFalse
 #define StringTrue    Rf_StringTrue
 #define isBlankString Rf_isBlankString
-#define hsv2rgb       Rf_hsv2rgb
-#define rgb2hsv       Rf_rgb2hsv
 
 #ifdef  __cplusplus
 extern "C" {
@@ -56,17 +55,15 @@ void	rPsort(double*, int, int);
 void	cPsort(Rcomplex*, int, int);
 
 /* ../../main/qsort.c : */
-void R_qsort    (double *v,         int i, int j);
+void R_qsort    (double *v,         size_t i, size_t j);
 void R_qsort_I  (double *v, int *I, int i, int j);
-void R_qsort_int  (int *iv,         int i, int j);
+void R_qsort_int  (int *iv,         size_t i, size_t j);
 void R_qsort_int_I(int *iv, int *I, int i, int j);
 #ifdef R_RS_H
 void F77_NAME(qsort4)(double *v, int *indx, int *ii, int *jj);
 void F77_NAME(qsort3)(double *v,            int *ii, int *jj);
 #endif
 
-/* ../../main/printutils.c : */
-int	IndexWidth(int);
 /* ../../main/util.c  and others : */
 const char *R_ExpandFileName(const char *);
 void	setIVector(int*, int, int);
@@ -84,14 +81,10 @@ double R_strtod(const char *c, char **end);
 char *R_tmpnam(const char *prefix, const char *tempdir);
 char *R_tmpnam2(const char *prefix, const char *tempdir, const char *fileext);
 
-void	hsv2rgb(double h, double s, double v,
-		double *r, double *g, double *b);
-void	rgb2hsv(double r, double g, double b,
-		double *h, double *s, double *v);
-
 void R_CheckUserInterrupt(void);
 void R_CheckStack(void);
-    
+void R_CheckStack2(size_t);
+
 
 /* ../../appl/interv.c: also in Applic.h */
 int findInterval(double *xt, int n, double x,

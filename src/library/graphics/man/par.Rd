@@ -165,7 +165,7 @@ par(\dots, no.readonly = FALSE)
   to physical margins.  (The same inter-line spacing multiplied by
   \code{lheight} is used for multi-line strings in \code{text} and
   \code{strheight}.)
-  
+
   Note that graphical parameters are suggestions: plotting functions and
   devices need not make use of them (and this is particularly true of
   non-default methods for e.g. \code{plot}).
@@ -255,7 +255,7 @@ par(\dots, no.readonly = FALSE)
       as \code{cra}, expressed in different units.}
     \item{\code{col}}{A specification for the default plotting color.  See
       section \sQuote{Color Specification}.
-      
+
       Some functions such as \code{\link{lines}} and \code{\link{text}}
       accept a vector of values which are recycled and may be
       interpreted slightly differently.
@@ -396,7 +396,9 @@ par(\dots, no.readonly = FALSE)
       (See the help on the device for details of the interpretation.)
 
       Functions such as \code{\link{lines}} and \code{\link{segments}}
-      accept a vector of values which are recycled.
+      accept a vector of values which are recycled: in such uses lines
+      corresponding to values \code{NA} or \code{NaN} are omitted.  The
+      interpretation of \code{0} is device-specific.
     }
     \item{\code{mai}}{A numerical vector of the form \code{c(bottom,
         left, top, right)} which gives the margin size specified in
@@ -541,7 +543,7 @@ par(\dots, no.readonly = FALSE)
       \code{\link{plot.window}} or setting \code{par("usr")}: \code{n}
       is taken from \code{par("lab")}.  It affects the default behaviour
       of subsequent calls to \code{\link{axis}} for sides 1 or 3.
-      
+
       It is only relevant to default numeric axis systems, and not for
       example to dates.
     }
@@ -596,7 +598,6 @@ par(\dots, no.readonly = FALSE)
 }
 
 \section{Color Specification}{
-  
   Colors can be specified in several different ways. The simplest way is
   with a character string giving the color name (e.g., \code{"red"}).  A
   list of the possible colors can be obtained with the function
@@ -608,11 +609,11 @@ par(\dots, no.readonly = FALSE)
   an index into a small table of colors, the \code{\link{palette}}:
   indices wrap round so with the default palette of size 8, \code{10} is
   the same as \code{2}.  This provides compatibility with S.  Index
-  \code{0} corresponds to the background color.  (Because apparently
-  some people have been assuming it, it was also possible to specify
-  integers as character strings, e.g. \code{"3"}.  This is now
-  deprecated.)  Note that the palette (apart from \code{0} which is
-  per-device) is a per-session setting.
+  \code{0} corresponds to the background color.  Note that the palette
+  (apart from \code{0} which is per-device) is a per-session setting.
+
+  Negative integer colours were accepted prior to \R 3.0.0, but treated
+  inconsistently.  They are now errors.
 
   Additionally, \code{"transparent"} is \emph{transparent}, useful for
   filled areas (such as the background!), and just invisible for things
@@ -624,8 +625,10 @@ par(\dots, no.readonly = FALSE)
   them.
 
   The functions \code{\link{rgb}}, \code{\link{hsv}}, \code{\link{hcl}},
-  \code{\link{gray}} and \code{\link{rainbow}}
-  provide additional ways of generating colors.
+  \code{\link{gray}} and \code{\link{rainbow}} provide additional ways
+  of generating colors.
+
+  It was possible to specify color numbers as strings prior to \R 3.0.0.
 }
 
 \section{Line Type Specification}{
@@ -718,8 +721,24 @@ ex <- function() {
    invisible() #-- now,  par(old.par)  will be executed
 }
 ex()
-}
 
+## Line types
+showLty <- function(ltys, xoff = 0, ...) {
+   stopifnot((n <- length(ltys)) >= 1)
+   op <- par(mar = rep(.5,4)); on.exit(par(op))
+   plot(0:1, 0:1, type = "n", axes = FALSE, ann = FALSE)
+   y <- (n:1)/(n+1)
+   clty <- as.character(ltys)
+   mytext <- function(x,y, txt) text(x, y, txt, adj = c(0, -.3), cex = 0.8, ...)
+   abline(h = y, lty = ltys, ...); mytext(xoff, y, clty)
+   y <- y - 1/(3*(n+1))
+   abline(h = y, lty = ltys, lwd = 2, ...); mytext(1/8+xoff, y, paste(clty," lwd = 2"))
+}
+showLty(c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash"))
+par(new = TRUE)  # the same:
+showLty(c("solid", "44", "13", "1343", "73", "2262"), xoff = .2, col = 2)
+showLty(c("11", "22", "33", "44",   "12", "13", "14",   "21", "31"))
+}
 \keyword{iplot}
 \keyword{dplot}
 \keyword{environment}

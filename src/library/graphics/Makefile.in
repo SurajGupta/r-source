@@ -1,19 +1,18 @@
 #
 # ${R_HOME}/src/library/graphics/Makefile
+pkg = graphics
 
 VPATH = @srcdir@
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 
 top_builddir = ../../..
-subdir = src/library/graphics
+subdir = src/library/$(pkg)
 
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 DISTFILES = DESCRIPTION.in Makefile.in Makefile.win NAMESPACE
-
-pkg = graphics
 
 R_EXE = $(top_builddir)/bin/R --vanilla --slave
 
@@ -23,7 +22,8 @@ DEFPKGS = NULL
 all: Makefile DESCRIPTION
 	@$(ECHO) "building package '$(pkg)'"
 	@$(MKINSTALLDIRS) $(top_builddir)/library/$(pkg)
-	@$(MAKE) mkR1 mkdesc mkdemos mkpo mkfigs
+	@$(MAKE) mkR1 mkdesc mkdemos mkfigs
+	@$(MAKE) mksrc
 @BYTE_COMPILE_PACKAGES_FALSE@	@$(MAKE) mklazy
 @BYTE_COMPILE_PACKAGES_TRUE@	@$(MAKE) mklazycomp
 

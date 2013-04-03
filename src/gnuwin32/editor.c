@@ -324,8 +324,7 @@ int editorchecksave(editor c)
 	case NO:
 	    break;
 	case CANCEL:
-	    return 1; /* used in rui.c (closeconsole) to abort closing
-			 the whole of Rgui */
+	    return 1;
 	}
     }
     return 0;
@@ -349,7 +348,10 @@ void editorcleanall(void)
 {
     int i;
     for (i = neditors-1;  i >= 0; --i) {
-	if (editorchecksave(REditors[i])) jump_to_toplevel();
+	if (editorchecksave(REditors[i])) {
+	    R_ProcessEvents();  // see R_CleanUp
+	    jump_to_toplevel();
+	}
 	del(REditors[i]);
     }
 }
@@ -739,9 +741,6 @@ static editor neweditor(void)
     MCHECK(m = newmenuitem("-", 0, NULL));
     MCHECK(m = newmenuitem(G_("Close script"), 0, menueditorclose));
     setdata(m, c);
-    /* MCHECK(m = newmenuitem("-", 0, NULL));
-       MCHECK(m = newmenuitem(G_("Exit"), 0, closeconsole));
-       setdata(m, c); */
     MCHECK(newmenu(G_("Edit")));
     MCHECK(m = newmenuitem(G_("Undo"), 'Z', editorundo));
     setdata(m, t);

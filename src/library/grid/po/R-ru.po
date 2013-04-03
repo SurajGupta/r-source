@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
-"PO-Revision-Date: 2012-03-15 11:27-0500\n"
+"POT-Creation-Date: 2013-01-12 10:57\n"
+"PO-Revision-Date: 2013-03-19 19:58-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -18,24 +18,22 @@ msgstr ""
 "Content-Type: text/plain; charset=KOI8-R\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-msgid "Invalid 'at' location in 'axis'"
-msgstr "Неправильная позиция 'at' в 'axis'"
+msgid "invalid 'at' location in 'axis'"
+msgstr "неправильная позиция 'at' в 'axis'"
 
-msgid "Invalid to specify axis labels when 'at' is NULL"
-msgstr "Не могу определить метки осей, если 'at' NULL"
+msgid "invalid to specify axis labels when 'at' is NULL"
+msgstr "не могу определить метки осей, если 'at' является NULL"
 
 msgid "'labels' and 'at' locations must have same length"
 msgstr "положения 'labels' и 'at' должны иметь одинаковую длину"
 
-#, fuzzy
 msgid "logical 'label' supplied of length 0"
-msgstr "логическая 'label' нулевой длины"
+msgstr "предложенная логическая 'label' нулевой длины"
 
-msgid "End points must not be identical"
-msgstr "Конечные точки не должны быть одинаковы"
+msgid "end points must not be identical"
+msgstr "конечные точки не должны быть одинаковы"
 
 msgid "'x1', 'y1', 'x2', and 'y2' must be units"
 msgstr "'x1', 'y1' ,'x2', и 'y2' должны быть единицами"
@@ -49,226 +47,215 @@ msgstr "'squareShape' должен быть между -1 и 1"
 msgid "'arrow' must be an arrow object or NULL"
 msgstr "'arrow' должен быть объектом-стрелкой или NULL"
 
-msgid "How did we get here?"
-msgstr "Как мы сюда попали?"
+msgid "how did we get here?"
+msgstr "как мы сюда попали?"
 
-msgid "Must start new page if showing leaves separately"
-msgstr "Если листья показываются отдельно, надо запустить новую страницу"
+msgid "must start new page if showing leaves separately"
+msgstr "если листья показываются отдельно, надо запустить новую страницу"
 
-msgid "Invalid 'edit' information"
-msgstr "Неправильная информация 'edit'"
+msgid "invalid 'edit' information"
+msgstr "неправильная информация 'edit'"
 
 msgid "'gEditList' can only contain 'gEdit' objects"
 msgstr "'gEditList' может содержать лишь объекты 'gEdit'"
 
-msgid "Invalid 'frame'"
-msgstr "Неправильная 'frame'"
+msgid "invalid 'frame'"
+msgstr "неправильная 'frame'"
 
-msgid "Invalid 'grob'"
-msgstr "Неправильный 'grob'"
+msgid "invalid 'grob'"
+msgstr "неправильный 'grob'"
 
-msgid "Invalid 'row' and/or 'col' (no such cell in frame layout)"
-msgstr "Неправильный 'row' и/или 'col' (нет такой клетки в эскизе рамки)"
+msgid "invalid 'row' and/or 'col' (no such cell in frame layout)"
+msgstr "неправильный 'row' и/или 'col' (нет такой клетки в эскизе рамки)"
 
 msgid "'col' can only be a range of existing columns"
 msgstr "'col' может быть только рангом из существующих колонок"
 
-msgid "Invalid 'col' specification"
-msgstr "Неправильное указание 'col'"
+msgid "invalid 'col' specification"
+msgstr "неправильное указание 'col'"
 
 msgid "'row' can only be a range of existing rows"
 msgstr "'row' может быть только рангом из существующих строк"
 
-msgid "Invalid 'row' specification"
-msgstr "Неправильное указание 'row'"
+msgid "invalid 'row' specification"
+msgstr "неправильное указание 'row'"
 
-msgid ""
-"Cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col."
-"before', or 'col.after'"
-msgstr ""
-"Не могу задать больше чем один 'side=[\"left\", \"right\"]', 'col', 'col."
-"before', или 'col.after'"
+msgid "cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col.before', or 'col.after'"
+msgstr "не могу задать больше чем один 'side=[\"left\", \"right\"]', 'col', 'col.before', или 'col.after'"
 
-msgid ""
-"Must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row."
-"before', or 'row.after'"
-msgstr ""
-"Вы должны задать в точности один из 'side=[\"top\", \"bottom\"]', 'строка', "
-"'строка.before', или 'строка.after'"
+msgid "must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'"
+msgstr "надо задать в точности один из 'side=[\"top\", \"bottom\"]', 'row', 'row.before', или 'row.after'"
 
-msgid "Invalid 'n'"
-msgstr "Неправильный 'n'"
+msgid "invalid 'n'"
+msgstr "неправильный 'n'"
 
-msgid "Invalid 'f'"
-msgstr "Неправильный 'f'"
+msgid "invalid 'f'"
+msgstr "неправильный 'f'"
 
-msgid "gpar element '%s' must not be length 0"
-msgstr "элемент gpar '%s' не должен быть нулевой длины"
+msgid "'gpar' element '%s' must not be length 0"
+msgstr "элемент 'gpar' '%s' не должен быть нулевой длины"
 
-msgid "'gamma' gpar is defunct"
-msgstr "'gamma' gpar больше не существует"
+msgid "'gamma' 'gpar' element is defunct"
+msgstr "элемент 'gamma' 'gpar' больше не существует"
 
-msgid "Invalid 'linemitre' value"
-msgstr "Неправильное значение 'linemitre'"
+msgid "invalid 'linemitre' value"
+msgstr "неправильное значение 'linemitre'"
 
-msgid "Invalid 'alpha' value"
-msgstr "Неправильное значение  'alpha'"
+msgid "invalid 'alpha' value"
+msgstr "неправильное значение  'alpha'"
 
-msgid "Must specify only one of 'font' and 'fontface'"
-msgstr "Вы должны задать только один из 'font' или 'fontface'"
+msgid "must specify only one of 'font' and 'fontface'"
+msgstr "надо задать только один из 'font' или 'fontface'"
 
-msgid "Invalid font face"
-msgstr "Неправильное начертание шрифта"
+msgid "invalid font face"
+msgstr "неправильное начертание шрифта"
 
-msgid "Argument must be a 'gpar' object"
-msgstr "Аргумент должен быть 'gpar'-объектом"
+msgid "argument must be a 'gpar' object"
+msgstr "аргумент должен быть 'gpar'-объектом"
 
-msgid "Must specify only valid 'gpar' names"
-msgstr "Вы должны задавать только правильные имена 'gpar'"
+msgid "must specify only valid 'gpar' names"
+msgstr "надо задавать только правильные имена 'gpar'"
 
-msgid "Invalid display list element"
-msgstr "Неправильный элемент списка изображений"
+msgid "invalid display list element"
+msgstr "неправильный элемент списка изображений"
 
-msgid "grob(s) overwritten (grab WILL not be faithful; try 'wrap=TRUE')"
-msgstr "grob(s) переписан (grab НЕ БУДЕТ точным; попробуйте 'wrap=TRUE')"
+msgid "one of more grobs overwritten (grab WILL not be faithful; try 'wrap = TRUE')"
+msgstr "один или больше grobs переписан (grab НЕ будет точным; попробуйте 'wrap = TRUE')"
 
 msgid "viewport overwritten (grab MAY not be faithful)"
 msgstr "оконница переписана (grab, ВОЗМОЖНО, не будет точным)"
 
-msgid ""
-"grob pushed viewports and did not pop/up them (grab MAY not be faithful)"
-msgstr ""
-"grob задвинул оконницы и не извлек/переместил вверх (grab, ВОЗМОЖНО, не "
-"будет точным)"
+msgid "grob pushed viewports and did not pop/up them (grab MAY not be faithful)"
+msgstr "grob задвинул оконницы и не извлек/переместил вверх (grab, ВОЗМОЖНО, не будет точным)"
 
-msgid "Only valid to push viewports"
-msgstr "Правильно только для задвигания оконниц"
+msgid "only valid to push viewports"
+msgstr "правильно только для задвигания оконниц"
 
-msgid "Must specify at least one viewport"
-msgstr "Надо определить по крайней мере одну оконницу"
+msgid "must specify at least one viewport"
+msgstr "надо определить по крайней мере одну оконницу"
 
-msgid "Must pop at least one viewport"
-msgstr "Нужно извлечь как минимум одну оконницу"
+msgid "must pop at least one viewport"
+msgstr "нужно извлечь как минимум одну оконницу"
 
-msgid "Must navigate up at least one viewport"
-msgstr "Нужно управлять как минимум одной оконницей"
+msgid "must navigate up at least one viewport"
+msgstr "нужно управлять как минимум одной оконницей"
 
-msgid "The vp argument is deprecated"
-msgstr "Аргумент vp не одобряется"
+msgid "the 'vp' argument is deprecated"
+msgstr "аргумент 'vp' не одобряется"
 
-msgid "Invalid 'ask' value"
-msgstr "Неправильное значение 'ask'"
+msgid "invalid object inserted on the display list"
+msgstr "неправильный объект вставлен в список изображений"
 
-msgid "Invalid object inserted on the display list"
-msgstr "Неправильный объект вставлен в список изображений"
+msgid "invalid modification of the display list"
+msgstr "неправильное изменение в списке изображений"
 
-msgid "Invalid modification of the display list"
-msgstr "Неправильное изменение в списке изображений"
+msgid "'expr' must return a grob or gList"
+msgstr "'expr' должен вернуть grob или gList"
 
-msgid "Invalid 'grob' argument"
+msgid "invalid 'grob' argument"
 msgstr "неправильный аргумент 'grob'"
 
-msgid "Invalid 'vp' slot"
-msgstr "Неправильный слот 'vp'"
+msgid "invalid 'vp' slot"
+msgstr "неправильный слот 'vp'"
 
-msgid "Invalid 'gp' slot"
-msgstr "Неправильный слот 'gp'"
+msgid "invalid 'gp' slot"
+msgstr "неправильный слот 'gp'"
 
-msgid "Invalid 'grob' class"
-msgstr "Неправильный класс 'grob'"
+msgid "invalid 'grob' class"
+msgstr "неправильный класс 'grob'"
 
 msgid "grid.grob() is deprecated; please use grob() instead"
 msgstr "grid.grob() не одобряется; используйте, пожалуйста, grob()"
 
-msgid "A 'grob' path must contain at least one 'grob' name"
-msgstr "Путь к 'grob' должен содержать по крайней мере одно имя 'grob'"
+msgid "a 'grob' path must contain at least one 'grob' name"
+msgstr "путь к 'grob' должен содержать по крайней мере одно 'grob'-имя"
 
-msgid "Invalid 'grob' name(s)"
-msgstr "Неправильные име(на) 'grob'"
+msgid "unable to coerce to \"gList\""
+msgstr "не могу преобразовать в \"gList\""
 
-msgid "Unable to coerce to gList"
-msgstr "Не могу преобразовать в gList"
+msgid "only 'grobs' allowed in \"gList\""
+msgstr "только 'grobs' разрешены в \"gList\""
 
-msgid "Only 'grobs' allowed in 'gList'"
-msgstr "Только 'grobs' разрешены в 'gList'"
+msgid "invalid element to add to \"gList\""
+msgstr "неправильный элемент для добавки в \"gList\""
 
-msgid "Invalid element to add to 'gList'"
-msgstr "Неправильный элемент для добавки в 'gList'"
+msgid "can only set 'children' for a \"gTree\""
+msgstr "могу только определить 'children' для \"gTree\""
 
-msgid "Can only set 'children' for a 'gTree'"
-msgstr "Могу только определить 'children' для 'gTree'"
+msgid "'children' must be a \"gList\""
+msgstr "'children' должны быть \"gList\""
 
-msgid "'children' must be a 'gList'"
-msgstr "'children' должны быть 'gList'"
+msgid "it is only valid to get 'children' from a \"gTree\""
+msgstr "правильно только получать 'children' из \"gTree\""
 
-msgid "It is only valid to get 'children' from a 'gTree'"
-msgstr "Правильно лишь получать 'children' из 'gTree'"
-
-msgid "Invalid 'gTree' class"
-msgstr "Неправильный класс 'gTree'"
+msgid "invalid \"gTree\" class"
+msgstr "неправильный класс \"gTree\""
 
 msgid "'allDevices' not yet implemented"
 msgstr "'allDevices' еще не разработано"
 
-msgid "Invalid 'gPath'"
-msgstr "Неправильный 'gPath'"
+msgid "invalid 'gPath'"
+msgstr "неправильный 'gPath'"
 
-msgid "Invalid 'grep' value"
-msgstr "Неправильное значение 'grep'"
+msgid "invalid 'grep' value"
+msgstr "неправильное значение 'grep'"
 
-msgid "It is only valid to get a child from a 'gTree'"
-msgstr "Правильно лишь получать 'child' из 'gTree'"
+msgid "it is only valid to get a child from a \"gTree\""
+msgstr "правильно только получать child из \"gTree\""
 
 msgid "'gPath' does not specify a valid child"
 msgstr "'gPath' не определяет правильного 'child'"
 
-msgid "It is only valid to set a child of a 'gTree'"
-msgstr "Правильно лишь устанавливать 'child' для 'gTree'"
+msgid "it is only valid to set a child of a \"gTree\""
+msgstr "правильно только устанавливать child для \"gTree\""
 
-msgid "It is only valid to set a 'grob' as child of a 'gTree'"
-msgstr "Правильно лишь устанавливать 'grob' в качестве 'child' для 'gTree'"
+msgid "it is only valid to set a 'grob' as child of a \"gTree\""
+msgstr "правильно только устанавливать 'grob' в качестве child для \"gTree\""
 
 msgid "New 'grob' name (%s) does not match 'gPath' (%s)"
 msgstr "Новое имя 'grob' (%s) не соответствует 'gPath' (%s)"
 
-msgid "It is only valid to add a 'grob' to a 'gTree'"
-msgstr "Правильно лишь добавлять 'grob' к 'gTree'"
+msgid "it is only valid to add a 'grob' to a \"gTree\""
+msgstr "правильно только добавлять 'grob' к \"gTree\""
 
-msgid "It is only valid to add a child to a 'gTree'"
-msgstr "Правильно лишь добавлять 'child' к 'gTree'"
+msgid "it is only valid to add a child to a \"gTree\""
+msgstr "правильно только добавлять child к \"gTree\""
 
 msgid "'gPath' (%s) not found"
 msgstr "'gPath' (%s) не найден"
 
-msgid "It is only valid to remove a child from a 'gTree'"
-msgstr "Правильно лишь удалять 'child' из 'gTree'"
+msgid "it is only valid to remove a child from a \"gTree\""
+msgstr "правильно только удалять child из \"gTree\""
 
-msgid "It is only valid to edit a child of a 'gTree'"
-msgstr "Правильно лишь редактировать 'child' из 'gTree'"
+msgid "it is only valid to edit a child of a \"gTree\""
+msgstr "правильно только редактировать child из \"gTree\""
 
-msgid "It is invalid to directly edit the 'children' or 'childrenOrder' slot"
-msgstr "Нельзя напрямую редактировать 'children' или 'childrenOrder' слот"
+msgid "it is invalid to directly edit the 'children' or 'childrenOrder' slot"
+msgstr "неправильно напрямую редактировать 'children' или 'childrenOrder' слот"
 
-msgid "Invalid 'result'"
-msgstr "Неправильный 'result'"
+msgid "invalid 'result'"
+msgstr "неправильный 'result'"
 
-msgid "The new 'grob' must have the same name as the old 'grob'"
-msgstr "Новый 'grob' должен иметь то же имя, как и старый 'grob'"
+msgid "the new 'grob' must have the same name as the old 'grob'"
+msgstr "новый 'grob' должен иметь то же имя, что и старый 'grob'"
 
-msgid "Slot '%s' not found"
-msgstr "Слот '%s' не найден"
+msgid "slot '%s' not found"
+msgstr "слот '%s' не найден"
 
 msgid "gPath (%s) not found"
 msgstr "gPath (%s) не найден"
 
-msgid "Grob '%s' not found"
-msgstr "Grob '%s' не найден"
+msgid "grob '%s' not found"
+msgstr "grob '%s' не найден"
 
-msgid "Invalid element in the display list"
-msgstr "Неправильный элемент в списке изображений"
+msgid "invalid element in the display list"
+msgstr "неправильный элемент в списке изображений"
 
-msgid "This function is redundant and will disappear in future versions."
-msgstr "Эта функция излишняя и исчезнет в будущих версиях."
+msgid "can only reorder 'children' for a \"gTree\""
+msgstr "могу только переопределить 'children' для \"gTree\""
+
+msgid "Invalid 'order'"
+msgstr "неправильный 'order'"
 
 msgid "'l' must be a layout"
 msgstr "'l' должен быть эскизом"
@@ -282,35 +269,38 @@ msgstr "'hgap' должен быть одиночной единицей"
 msgid "'vgap' must be single unit"
 msgstr "'vgap' должен быть одиночной единицей"
 
-msgid "Invalid justification"
-msgstr "Неправильное выравнивание"
+msgid "invalid justification"
+msgstr "неправильное выравнивание"
 
-msgid "Invalid horizontal justification"
-msgstr "Неправильное горизонтальное выравнивание"
+msgid "invalid horizontal justification"
+msgstr "неправильное горизонтальное выравнивание"
 
-msgid "Invalid vertical justification"
-msgstr "Неправильное вертикальное выравнивание"
+msgid "invalid vertical justification"
+msgstr "неправильное вертикальное выравнивание"
 
 msgid "'respect' must be logical or an 'nrow' by 'ncol' matrix"
 msgstr "'respect' должен быть логическим или матрицей 'nrow' x 'ncol'"
 
-msgid "Invalid 'print' argument"
-msgstr "Неправильный аргумент 'print'"
+msgid "invalid 'print' argument"
+msgstr "неправильный аргумент 'print'"
 
-msgid "Invalid object in listing"
-msgstr "Неправильный объект в списке"
+msgid "invalid object in 'listing'"
+msgstr "неправильный объект в 'listing'"
 
-msgid "Invalid listing"
-msgstr "Неправильный список"
+msgid "invalid listing"
+msgstr "неправильный 'listing'"
 
-msgid "Invalid 'origin'"
-msgstr "Неправильный 'origin'"
+msgid "invalid 'listing'"
+msgstr "неправильный список"
 
-msgid "'length' must be a unit object"
-msgstr "'длина' должен быть объектом-единицей"
+msgid "invalid 'origin'"
+msgstr "неправильный 'origin'"
 
-msgid "Invalid 'ends' or 'type' argument"
-msgstr "Неправильные аргументs 'ends' или 'type'"
+msgid "'length' must be a 'unit' object"
+msgstr "'length' должен быть объектом-единицей"
+
+msgid "invalid 'ends' or 'type' argument"
+msgstr "неправильные аргументы 'ends' или 'type'"
 
 msgid "'x' and 'y' must be units"
 msgstr "'x' и 'y' должен быть единицами"
@@ -321,8 +311,8 @@ msgstr "'x' и 'y' должны иметь длину 1"
 msgid "invalid 'arrow' argument"
 msgstr "неправильный аргумент 'arrow'"
 
-msgid "It is invalid to specify both 'id' and 'id.lengths'"
-msgstr "Нельзя устанавливать одновременно и 'id', и 'id.lengths'"
+msgid "it is invalid to specify both 'id' and 'id.lengths'"
+msgstr "нельзя устанавливать одновременно и 'id', и 'id.lengths'"
 
 msgid "'x' and 'y' must be same length"
 msgstr "'x' и 'y' должны быть одной длины"
@@ -339,30 +329,20 @@ msgstr "'x0', 'y0', 'x1', и 'y1' должны быть единицами"
 msgid "'x' and 'y' must be units or NULL"
 msgstr "'x' и 'y' должны быть единицами или NULL"
 
-msgid "Corrupt 'arrows' object"
-msgstr "Поврежденный объект 'arrows'"
+msgid "corrupt 'arrows' object"
+msgstr "поврежденный объект 'arrows'"
 
-msgid ""
-"grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing "
-"functions."
-msgstr ""
-"grid.arrows() не одобряется;  используйте аргументы 'arrow' для функций, "
-"рисующих линии."
-
-msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
-msgstr "Аргумент 'grob' должен быть 'line.to', 'lines', или 'segments' grob"
+msgid "the 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgstr "аргумент 'grob' должен быть 'line.to', 'lines', или 'segments' grob"
 
 msgid "x and y must be units"
 msgstr "x и y должны быть единицами"
 
-msgid "shape must be between -1 and 1"
-msgstr "форма должна быть между -1 и 1"
+msgid "must have exactly 4 control points"
+msgstr "должно быть ровно четыре контрольные точки"
 
-msgid "Must have exactly 4 control points"
-msgstr "Должно быть ровно четыре контрольные точки"
-
-msgid "Must have exactly 4 control points per Bezier curve"
-msgstr "Для кривой Безье должно быть в точности четыре контрольные точки"
+msgid "must have exactly 4 control points per Bezier curve"
+msgstr "для кривой Безье должно быть в точности четыре контрольные точки"
 
 msgid "'x', 'y', and 'r' must be units"
 msgstr "'x', 'y', и 'r' должны быть единицами"
@@ -370,8 +350,8 @@ msgstr "'x', 'y', и 'r' должны быть единицами"
 msgid "'x', 'y', 'width', and 'height' must be units"
 msgstr "'x', 'y', 'width', и 'height' должны быть единицами"
 
-msgid "Invalid 'rot' value"
-msgstr "Неправильное значение 'rot'"
+msgid "invalid 'rot' value"
+msgstr "неправильное значение 'rot'"
 
 msgid "zero-length 'pch'"
 msgstr "'pch' нулевой длины"
@@ -379,7 +359,7 @@ msgstr "'pch' нулевой длины"
 msgid "'x', 'y' and 'size' must be units"
 msgstr "'x', 'y' и 'size' должны быть единицами"
 
-msgid "'x' and 'y' must be unit objects and have the same length"
+msgid "'x' and 'y' must be 'unit' objects and have the same length"
 msgstr "'x' и 'y'  должны быть единицами и иметь одну длину"
 
 msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
@@ -388,7 +368,7 @@ msgstr "'x', 'y', 'width', и 'height' -- все должны быть единицами длиной 1"
 msgid "'x' and 'y' must all be units of length 1"
 msgstr "'x' и 'y' должны быть выражены в единицах единичной длины"
 
-msgid "'r' must be a unit object"
+msgid "'r' must be a 'unit' object"
 msgstr "'r' должен быть объектом-единицей"
 
 msgid "'x', 'y', 'width', and 'height' must have length 1"
@@ -400,141 +380,170 @@ msgstr "'x' и 'units' должен иметь длину > 0"
 msgid "'x' argument must be a unit object"
 msgstr "аргумент 'x' должен быть объектом-единицей"
 
-msgid "Invalid 'axis' or 'type'"
-msgstr "Неправильный 'axis' или 'тип'"
+msgid "invalid 'axis' or 'type'"
+msgstr "неправильный 'axis' или 'type'"
 
-msgid "No string supplied for 'strwidth/height' unit"
-msgstr "Не предложено строки для единицы 'strwidth/height'"
+msgid "no string supplied for 'strwidth/height' unit"
+msgstr "не предложено строки для единицы 'strwidth/height'"
 
-msgid "No 'grob' supplied for 'grobwidth/height' unit"
-msgstr "Не предложено 'grob' для единицы 'grobwidth/height'"
+msgid "no 'grob' supplied for 'grobwidth/height' unit"
+msgstr "не предложено 'grob' для единицы 'grobwidth/height'"
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
 msgstr "'gPath' должен иметь глубину 1 в единицах 'grobwidth/height'"
 
-msgid "Non-NULL value supplied for plain unit"
-msgstr "Для простой единицы указано не-NULL значение"
+msgid "non-NULL value supplied for plain unit"
+msgstr "для простой единицы указано не-NULL значение"
 
-msgid "Operator '%s' not meaningful for units"
-msgstr "Оператор '%s' не имеет значения для единиц"
+msgid "operator '%s' not meaningful for units"
+msgstr "оператор '%s' не имеет значения для единиц"
 
-msgid "Only one operand may be a unit"
-msgstr "Только один операнд может быть единицей"
+msgid "only one operand may be a unit"
+msgstr "только один операнд может быть единицей"
 
-msgid "Non-unit operand must be numeric"
-msgstr "Операнды-не-единицы должны быть числовыми"
+msgid "non-unit operand must be numeric"
+msgstr "операнды-не-единицы должны быть числовыми"
 
-msgid "Both operands must be units"
-msgstr "Оба операнда должны быть единицами"
+msgid "both operands must be units"
+msgstr "оба операнда должны быть единицами"
 
 msgid "'Summary' function '%s' not meaningful for units"
 msgstr "Функция 'Summary' '%s' не имеет значения для единиц"
 
+msgid "no arguments where at least one expected"
+msgstr "нет аргументов, ожидается хоть один"
+
 msgid "Zero arguments where at least one expected"
 msgstr "Нет аргументов, ожидается хоть один"
 
-msgid "Cannot mix signs of indices"
-msgstr "Не могу смешивать знаки индексов"
+msgid "cannot mix signs of indices"
+msgstr "не могу смешивать знаки индексов"
 
-msgid "Index out of bounds (unit subsetting)"
-msgstr "Индекс за пределами (подмножество единиц)"
+msgid "index out of bounds ('unit' subsetting)"
+msgstr "индекс за пределами (подмножество единиц)"
 
-msgid "Index out of bounds (unit arithmetic subsetting)"
-msgstr "Индекс за пределами (арифметическое подмножество единиц)"
+msgid "index out of bounds (unit arithmetic subsetting)"
+msgstr "индекс за пределами (арифметическое подмножество единиц)"
 
-msgid "Index out of bounds (unit list subsetting)"
-msgstr "Индекс за пределами (списковое подмножество единиц)"
+msgid "index out of bounds (unit list subsetting)"
+msgstr "индекс за пределами (списковое подмножество единиц)"
 
-msgid "It is invalid to combine unit objects with other types"
-msgstr "Нельзя комбинировать объекты-единицы с другими типами"
+msgid "it is invalid to combine 'unit' objects with other types"
+msgstr "нельзя комбинировать объекты-единицы с другими типами"
 
-msgid "Invalid unit object"
-msgstr "Неправильный единичный объект"
+msgid "invalid 'unit' object"
+msgstr "неправильный единичный объект"
 
-msgid ""
-"unit.rep has been deprecated in favour of a unit method for the generic rep "
-"function"
-msgstr ""
-"'unit.rep' не одобряется, используйте единичный метод для общей функции 'rep'"
-
-msgid ""
-"unit.length has been deprecated in favour of a unit method for the generic "
-"length function"
-msgstr ""
-"'unit.length' не одобряется, используйте единичный метод для общей функции "
-"'length'"
-
-msgid "Invalid theta"
-msgstr "Неправильная theta"
+msgid "invalid 'theta'"
+msgstr "неправильная theta"
 
 msgid "'range' must be numeric"
 msgstr "'range' должен быть числовым"
 
-msgid "Invalid graphics parameters"
-msgstr "Неправильные графические параметры"
+msgid "invalid 'gp' value"
+msgstr "неправильное значение 'gp'"
 
-msgid "Invalid 'clip' value"
-msgstr "Неправильное значение 'clip'"
+msgid "invalid 'clip' value"
+msgstr "неправильное значение 'clip'"
 
-msgid "Invalid 'xscale' in viewport"
-msgstr "Неправильное 'xscale' в оконнице"
+msgid "invalid 'xscale' in viewport"
+msgstr "неправильное 'xscale' в оконнице"
 
-msgid "Invalid 'yscale' in viewport"
-msgstr "Неправильное 'yscale' в оконнице"
+msgid "invalid 'yscale' in viewport"
+msgstr "неправильное 'yscale' в оконнице"
 
-msgid "Invalid 'angle' in viewport"
-msgstr "Неправильное 'angle' в оконнице"
+msgid "invalid 'angle' in viewport"
+msgstr "неправильное 'angle' в оконнице"
 
-msgid "Invalid 'layout' in viewport"
-msgstr "Неправильное 'layout' в оконнице"
+msgid "invalid 'layout' in viewport"
+msgstr "неправильное 'layout' в оконнице"
 
-msgid "Invalid 'layout.pos.row' in viewport"
-msgstr "Неправильное 'layout.pos.row' в оконнице"
+msgid "invalid 'layout.pos.row' in viewport"
+msgstr "неправильное 'layout.pos.row' в оконнице"
 
-msgid "Invalid 'layout.pos.col' in viewport"
-msgstr "Неправильное 'layout.pos.col' в оконнице"
+msgid "invalid 'layout.pos.col' in viewport"
+msgstr "неправильное 'layout.pos.col' в оконнице"
 
-msgid "Only viewports allowed in 'vpList'"
-msgstr "Только оконницы разрешены в 'vpList'"
+msgid "only viewports allowed in 'vpList'"
+msgstr "только оконницы разрешены в 'vpList'"
 
-msgid "Only viewports allowed in 'vpStack'"
-msgstr "Только оконницы разрешены в 'vpStack'"
+msgid "only viewports allowed in 'vpStack'"
+msgstr "только оконницы разрешены в 'vpStack'"
 
-msgid ""
-"'parent' must be a viewport and 'children' must be a 'vpList' in 'vpTree'"
-msgstr ""
-"'parent' должен быть оконницей и 'children' должны быть 'vpList' в 'vpTree'"
+msgid "'parent' must be a viewport and 'children' must be a 'vpList' in 'vpTree'"
+msgstr "'parent' должен быть оконницей и 'children' должны быть 'vpList' в 'vpTree'"
 
-msgid "A viewport path must contain at least one viewport name"
-msgstr ""
-"Путь к оконнице должен должен содержать по меньшей мере одно имя оконницы"
+msgid "a viewport path must contain at least one viewport name"
+msgstr "путь к оконнице должен должен содержать по меньшей мере одно имя оконницы"
 
-msgid "Invalid viewport name(s)"
-msgstr "Неправильное име(на) оконницы"
+msgid "must specify at least one of 'x' or 'xscale'"
+msgstr "надо задать по крайней мере одно из 'x' или 'xscale'"
 
-msgid "Must specify at least one of 'x' or 'xscale'"
-msgstr "Надо задать по крайней мере одно из 'x' или 'xscale'"
-
-msgid "Must specify at least one of 'y' or 'yscale'"
-msgstr "Надо задать по крайней мере одно из 'y' или 'yscale'"
+msgid "must specify at least one of 'y' or 'yscale'"
+msgstr "надо задать по крайней мере одно из 'y' или 'yscale'"
 
 msgid "shutting down all devices when unloading 'grid' namespace"
 msgstr "выключаю все устройства после выгрузки пространства имен 'grid'"
 
+msgid "invalid grob name"
+msgid_plural "invalid grob names"
+msgstr[0] "Неправильное имя 'grob'"
+msgstr[1] "Неправильные имена 'grob'"
+msgstr[2] "Неправильные имена 'grob'"
+
+msgid "invalid viewport name"
+msgid_plural "invalid viewport names"
+msgstr[0] "Неправильное имя оконницы"
+msgstr[1] "Неправильные имена оконниц"
+msgstr[2] "Неправильные имена оконниц"
+
+#, fuzzy
+#~ msgid "invalid 'ask' value"
+#~ msgstr "Неправильное значение 'ask'"
+#~ msgid "Cannot mix signs of indices"
+#~ msgstr "Не могу смешивать знаки индексов"
+
+#, fuzzy
+#~ msgid "It is only valid to remove a child from a \"gTree\""
+#~ msgstr "Правильно лишь удалять 'child' из 'gTree'"
+#~ msgid "This function is redundant and will disappear in future versions."
+#~ msgstr "Эта функция излишняя и исчезнет в будущих версиях."
+#~ msgid ""
+#~ "grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing "
+#~ "functions."
+#~ msgstr ""
+#~ "grid.arrows() не одобряется;  используйте аргументы 'arrow' для функций, "
+#~ "рисующих линии."
+#~ msgid "shape must be between -1 and 1"
+#~ msgstr "форма должна быть между -1 и 1"
+#~ msgid "Non-unit operand must be numeric"
+#~ msgstr "Операнды-не-единицы должны быть числовыми"
+#~ msgid ""
+#~ "unit.rep has been deprecated in favour of a unit method for the generic "
+#~ "rep function"
+#~ msgstr ""
+#~ "'unit.rep' не одобряется, используйте единичный метод для общей функции "
+#~ "'rep'"
+#~ msgid ""
+#~ "unit.length has been deprecated in favour of a unit method for the "
+#~ "generic length function"
+#~ msgstr ""
+#~ "'unit.length' не одобряется, используйте единичный метод для общей "
+#~ "функции 'length'"
+
+#, fuzzy
+#~ msgid "invalid graphics parameters"
+#~ msgstr "Неправильные графические параметры"
 #~ msgid "at least one of 'width' and 'height' must be specified"
 #~ msgstr "по крайней мере 'width', и 'height' должны быть определены"
-
 #~ msgid "Viewport '%s' was not found"
 #~ msgstr "Оконница '%s' не найдена"
-
 #~ msgid "Invalid"
 #~ msgstr "Неправильный"
-
 #~ msgid "print"
 #~ msgstr "печать"
-
 #~ msgid "argument"
 #~ msgstr "аргумент"
-
 #~ msgid "'x' must be numeric"
 #~ msgstr "'x' должен быть числом"
+

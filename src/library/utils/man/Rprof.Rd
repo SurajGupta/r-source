@@ -11,7 +11,8 @@
 }
 \usage{
 Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
-       memory.profiling = FALSE)
+       memory.profiling = FALSE, gc.profiling = FALSE, 
+       line.profiling = FALSE, numfiles = 100L, bufsize = 10000L)
 }
 \arguments{
   \item{filename}{
@@ -25,11 +26,14 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
     real: time interval between samples.
   }
   \item{memory.profiling}{logical: write memory use information to the file?}
+  \item{gc.profiling}{logical:  record whether GC is running?}
+  \item{line.profiling}{logical:  write line locations to the file?}
+  \item{numfiles, bufsize}{integers: line profiling memory allocation}
 }
 \details{
   Enabling profiling automatically disables any existing profiling to
   another or the same file.
-  
+
   Profiling works by writing out the call stack every \code{interval}
   seconds, to the file specified.  Either the \code{\link{summaryRprof}}
   function or the wrapper script \command{R CMD Rprof} can be used to
@@ -50,7 +54,7 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
   How time is measured varies by platform: on a Unix-alike it is the CPU
   time of the \R process, so for example excludes time when \R is waiting
   for input or for processes run by \code{\link{system}} to return.
-  
+
   Note that the timing interval cannot usefully be too small: once the
   timer goes off, the information is not recorded until the next timing
   click (probably in the range 1--10msecs).
@@ -61,6 +65,13 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
   \link{primitive} functions do not do so: specifically those which are
   of \link{type} \code{"special"} (see the \sQuote{R Internals} manual
   for more details).
+  
+  Individual statements will be recorded in the profile log if
+  \code{line.profiling} is \code{TRUE}, and if the code being executed
+  was parsed with source references.  See \code{\link{parse}} for a
+  discussion of source references.  By default the statement locations
+  are not shown in \code{\link{summaryRprof}}, but see that help page
+  for options to enable the display.    
 }
 #ifdef unix
 \note{
@@ -79,6 +90,17 @@ Rprof(filename = "Rprof.out", append = FALSE, interval = 0.02,
   the current locale.
 }
 #endif
+\note{
+The profiler interrupts R asynchronously, and it cannot allocate
+memory to store results as it runs.  This affects line profiling,
+which needs to store an unknown number of file pathnames.  The
+\code{numfiles} and \code{bufsize} arguments control the size of 
+pre-allocated buffers to hold these results:  the former counts the
+maximum number of paths, the latter counts the numbers of bytes in
+them.  If the profiler runs out of space it will skip recording the
+line information for new files, and issue a warning when
+\code{Rprof(NULL)} is called to finish profiling.
+}
 \seealso{
   The chapter on \dQuote{Tidying and profiling R code} in
   \dQuote{Writing \R Extensions} (see the \file{doc/manual} subdirectory

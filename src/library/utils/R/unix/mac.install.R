@@ -22,8 +22,8 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
     function(pkgs, lib, repos = getOption("repos"),
              contriburl = contrib.url(repos, type="mac.binary"),
              method, available = NULL, destdir = NULL,
-             lock = getOption("install.lock", FALSE),
              dependencies = FALSE,
+             lock = getOption("install.lock", FALSE), quiet = FALSE,
              ...)
     {}
 } else {
@@ -34,15 +34,15 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
              contriburl = contrib.url(repos, type="mac.binary"),
              method, available = NULL, destdir = NULL,
              dependencies = FALSE,
-             lock = getOption("install.lock", FALSE),
+             lock = getOption("install.lock", FALSE), quiet = FALSE,
              ...)
 {
     untar <- function(what, where)
     {
         ## FIXME: should this look for Sys.getenv('TAR')?
         ## Leopard has GNU tar, SL has BSD tar.
-        xcode <- system(paste("tar zxf \"", path.expand(what), "\" -C \"",
-                              path.expand(where), "\"", sep=''), intern=FALSE)
+        xcode <- system(paste0("tar zxf \"", path.expand(what), "\" -C \"",
+                               path.expand(where), "\""), intern=FALSE)
         if (xcode)
             warning(gettextf("'tar' returned non-zero exit code %d", xcode),
                     domain = NA, call. = FALSE)
@@ -77,7 +77,7 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
                  domain = NA, call. = FALSE)
 
         res <- tools::checkMD5sums(pkgname, file.path(tmpDir, pkgname))
-        if(!is.na(res) && res) {
+        if(!quiet && !is.na(res) && res) {
             cat(gettextf("package %s successfully unpacked and MD5 sums checked\n",
                          sQuote(pkgname)))
             flush.console()
@@ -86,15 +86,16 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
         instPath <- file.path(lib, pkgname)
         if(identical(lock, "pkglock") || isTRUE(lock)) {
 	    lockdir <- if(identical(lock, "pkglock"))
-                file.path(lib, paste("00LOCK", pkgname, sep="-"))
+                file.path(lib, paste("00LOCK", pkgname, sep = "-"))
             else file.path(lib, "00LOCK")
 	    if (file.exists(lockdir)) {
-		stop("ERROR: failed to lock directory ", sQuote(lib),
-			" for modifying\nTry removing ", sQuote(lockdir))
+                stop(gettextf("ERROR: failed to lock directory %s for modifying\nTry removing %s",
+                              sQuote(lib), sQuote(lockdir)), domain = NA)
 	    }
 	    dir.create(lockdir, recursive = TRUE)
 	    if (!dir.exists(lockdir))
-		stop("ERROR: failed to create lock directory ", sQuote(lockdir))
+                stop(gettextf("ERROR: failed to create lock directory %s",
+                              sQuote(lockdir)), domain = NA)
             ## Back up a previous version
             if (file.exists(instPath)) {
                 file.copy(instPath, lockdir, recursive = TRUE)
@@ -126,8 +127,8 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
                 restorePrevious <- TRUE # Might not be used
             }
         } else
-            stop("cannot remove prior installation of package ",
-                 sQuote(pkgname), call. = FALSE)
+        stop(gettextf("cannot remove prior installation of package %s",
+                      sQuote(pkgname)), call. = FALSE, domain = NA)
         setwd(cDir)
         unlink(tmpDir, recursive=TRUE)
     }
@@ -163,7 +164,7 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
 
     foundpkgs <- download.packages(pkgs, destdir = tmpd, available = available,
                                    contriburl = contriburl, method = method,
-                                   type = "mac.binary", ...)
+                                   type = "mac.binary", quiet = quiet, ...)
 
     if(length(foundpkgs)) {
         update <- unique(cbind(pkgs, lib))
@@ -178,7 +179,7 @@ if(substr(R.version$os, 1L, 6L) != "darwin") {
                               lock = lock)
             }
         }
-        if(!is.null(tmpd) && is.null(destdir))
+        if(!quiet && !is.null(tmpd) && is.null(destdir))
             cat("\n", gettextf("The downloaded binary packages are in\n\t%s", tmpd),
                 "\n", sep = "")
     } else if(!is.null(tmpd) && is.null(destdir)) unlink(tmpd, recursive = TRUE)

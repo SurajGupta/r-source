@@ -17,12 +17,6 @@
  */
 
 #include "modreg.h"
-#ifdef ENABLE_NLS
-#include <libintl.h>
-#define _(String) dgettext ("stats", String)
-#else
-#define _(String) (String)
-#endif
 
 /* To be "exported" (as part of R's C API): */
 /**
@@ -61,7 +55,7 @@ void monoFC_mod(double *m, double S[], int n)
     } /* end for */
 }
 
-SEXP R_monoFC_m(SEXP m, SEXP Sx)
+SEXP monoFC_m(SEXP m, SEXP Sx)
 {
     SEXP val;
     int n = LENGTH(m);

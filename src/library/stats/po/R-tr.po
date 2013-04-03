@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2013-03-05 08:17\n"
 "PO-Revision-Date: 2011-04-02 \n"
 "Last-Translator: Murat Alkan <muratalk@gmail.com>\n"
 "Language-Team: Turkish <muratalk@gmail.com>\n"
@@ -30,16 +30,19 @@ msgstr "'acf' uzunluğu 2 veya 2'den büyük olmalıdır"
 msgid "object not interpretable as a factor"
 msgstr "nesne faktör olarak yorumlanamıyor"
 
-msgid "cannot fit models without level ('alpha' must not be 0 or FALSE)."
+#, fuzzy
+msgid "cannot fit models without level ('alpha' must not be 0 or FALSE)"
 msgstr "seviyesiz modeller uydurulamaz ('alpha' 0 veya FALSE olmamalı)"
 
-msgid "'alpha', 'beta' and 'gamma' must be within the unit interval."
+#, fuzzy
+msgid "'alpha', 'beta' and 'gamma' must be within the unit interval"
 msgstr "'alpha', 'beta' ve 'gamma' birim aralığında olmalı"
 
-msgid "data must be non-zero for multiplicative Holt-Winters."
+msgid "data must be non-zero for multiplicative Holt-Winters"
 msgstr ""
 
-msgid "need at least 2 periods to compute seasonal start values."
+#, fuzzy
+msgid "need at least 2 periods to compute seasonal start values"
 msgstr "mevsimsel başlangıç değerlerini hesaplamak için en az 2 dönem gerekli"
 
 #, fuzzy
@@ -73,7 +76,7 @@ msgstr "zaman serilerinin ilk değeri eksik olmamalı"
 msgid "all parameters were fixed"
 msgstr "tüm parametreler düzeltildi"
 
-msgid "possible convergence problem: optim gave code="
+msgid "possible convergence problem: 'optim' gave code = %d and message %s"
 msgstr ""
 
 msgid "no factors in the fitted model"
@@ -84,6 +87,10 @@ msgstr ""
 
 msgid "'which' specified some non-factors which will be dropped"
 msgstr ""
+
+#, fuzzy
+msgid "'sampleT' and 'nser' must be integer"
+msgstr "'k' ve 'h' skalar olmalı"
 
 msgid "'lag.max' must be at least 0"
 msgstr "'lag.max' en az 0 olmalı"
@@ -115,9 +122,6 @@ msgstr "kullanımdaki satır sayısı değişti: eksik değerler silinsin mi?"
 msgid "attempting model selection on an essentially perfect fit is nonsense"
 msgstr ""
 
-msgid "using the %d/%d rows from a combined fit"
-msgstr ""
-
 msgid "F test assumes quasi%s family"
 msgstr ""
 
@@ -131,12 +135,6 @@ msgid "no 'drop1' method for \"mlm\" models"
 msgstr ""
 
 msgid "F test assumes 'quasi%s' family"
-msgstr ""
-
-msgid "lower scope has term(s) %s not included in model"
-msgstr ""
-
-msgid "upper scope does not include model term(s) %s"
 msgstr ""
 
 msgid "AIC is not defined for this model, so 'step' cannot proceed"
@@ -228,9 +226,6 @@ msgstr "Error() modeli tekil"
 msgid "the 'split' argument must be a list"
 msgstr "'split' argümanı bir liste olmalı"
 
-msgid "unknown name(s) in the 'split' list"
-msgstr "'split' listesinde bilinmeyen isim(ler)"
-
 msgid "'coef' must define a contrast, i.e., sum to 0"
 msgstr ""
 
@@ -273,10 +268,6 @@ msgstr "sıfır NA-olmayan nokta"
 msgid "'approx' requires n >= 1"
 msgstr "'approx' n >= 1 gerektirir"
 
-#, fuzzy
-msgid "invalid length(xout)"
-msgstr "geçersiz 'x'"
-
 msgid "'order.max' must be >= 1"
 msgstr "'order.max' >= 1 olmalı"
 
@@ -291,9 +282,6 @@ msgstr "'object' ve 'newdata' içindeki seri sayıları eşleşmiyor"
 
 msgid "'se.fit' not yet implemented for multivariate models"
 msgstr "'se.fit' çok değişkenli modeller için henüz tanımlanmadı"
-
-msgid "Burg's algorithm only implemented for univariate series"
-msgstr "Burg'ün algoritması sadece tek değişkenli seriler için tanımlı"
 
 msgid "MLE only implemented for univariate series"
 msgstr "MLE sadece tek değişkenli tek değişkenli seriler için tanımlı"
@@ -332,6 +320,9 @@ msgid "non-stationary AR part"
 msgstr "durağan olmayan AR parçası"
 
 msgid "non-stationary seasonal AR part"
+msgstr ""
+
+msgid "possible convergence problem: optim gave code = %d"
 msgstr ""
 
 msgid "non-stationary AR part from CSS"
@@ -374,12 +365,6 @@ msgstr "geçersiz 'x'"
 #, fuzzy
 msgid "invalid 'nb'"
 msgstr "geçersiz 'x'"
-
-msgid "sample is too sparse to find TD"
-msgstr "örnek TD'yi bulmak için çok aralıklı"
-
-msgid "sample is too sparse to find alph2"
-msgstr "örnek alph2'yi bulmak için çok aralıklı"
 
 msgid "no solution in the specified range of bandwidths"
 msgstr ""
@@ -541,8 +526,10 @@ msgstr ""
 msgid "numeric contrasts or contrast name expected"
 msgstr ""
 
-msgid "contr*(.., sparse=TRUE) needs package \"Matrix\" correctly installed"
+#, fuzzy
+msgid "%s needs package 'Matrix' correctly installed"
 msgstr ""
+"xtabs(*, sparse=TRUE) \"Matrix\" paketinin düzgün kurulumunu gerektirir"
 
 msgid "not enough degrees of freedom to define contrasts"
 msgstr ""
@@ -586,9 +573,6 @@ msgstr "yetersiz sayıda sonlu gözlemler"
 msgid "Cannot compute exact p-value with ties"
 msgstr ""
 
-msgid "Cannot compute exact p-values with ties"
-msgstr ""
-
 msgid "'formula' missing or invalid"
 msgstr "'formula' eksik veya geçersiz"
 
@@ -610,8 +594,9 @@ msgstr ""
 msgid "length of 'center' must equal the number of columns in 'x'"
 msgstr ""
 
-msgid "invalid 'tree' (merge component)"
-msgstr ""
+#, fuzzy
+msgid "invalid 'tree' ('merge' component)"
+msgstr "geçersiz 'use' argümanı"
 
 msgid "either 'k' or 'h' must be specified"
 msgstr "'k' veya 'h' seçilmeli"
@@ -637,8 +622,9 @@ msgstr ""
 msgid "'order.dendrogram' requires a dendrogram"
 msgstr "'order.dendrogram' bir ağaç diyagramı gerektirir"
 
-msgid "we require a dendrogram"
-msgstr ""
+#, fuzzy
+msgid "'reorder.dendrogram' requires a dendrogram"
+msgstr "'order.dendrogram' bir ağaç diyagramı gerektirir"
 
 msgid "invalid (length 0) node in dendrogram"
 msgstr ""
@@ -685,6 +671,9 @@ msgstr "'x' argümanı nümerik olmalı"
 msgid "'x' contains missing values"
 msgstr "'x' eksik değerler içeriyor"
 
+msgid "invalid value of length(x)"
+msgstr ""
+
 msgid "'x' and 'weights' have unequal length"
 msgstr "'x' ve 'weights' eşit olmayan uzunluklara sahip"
 
@@ -724,21 +713,15 @@ msgstr "'x' bir vektör değil"
 msgid "bad value for 'lag' or 'differences'"
 msgstr "'lag' veya 'differences' için hatalı değer"
 
-msgid "'xi' has not the right length"
+#, fuzzy
+msgid "'xi' does not have the right length"
 msgstr "'xi' doğru uzunluğa sahip değil"
-
-msgid "invalid value of length(x)"
-msgstr ""
 
 msgid "incorrect dimensions for 'xi'"
 msgstr "'xi' için hatalı boyutlar"
 
 msgid "'x' is not a vector or matrix"
 msgstr "'x' bir vektör veya matris değil"
-
-#, fuzzy
-msgid "extra argument(s) %s will be disregarded"
-msgstr "ekstra argümanlar çıkarıldı"
 
 msgid "invalid distance method"
 msgstr "geçersiz uzaklık metodu"
@@ -749,10 +732,14 @@ msgstr "belirsiz uzaklık metodu"
 msgid "non-square matrix"
 msgstr "kare olmayan matris"
 
+msgid "specify 'rate' or 'scale' but not both"
+msgstr ""
+
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[] ve prob[] eşit uzunlukta matris olmalı"
 
-msgid "probabilities cannot be negative nor all 0."
+#, fuzzy
+msgid "probabilities cannot be negative nor all 0"
 msgstr "olasılıklar negatif veya 0 olamaz"
 
 msgid "'x' must be non-negative"
@@ -796,29 +783,22 @@ msgstr "'x' matrisi olmadan puanlar istendi"
 msgid "factor analysis requires at least three variables"
 msgstr "faktör analizi en az 3 değişken gerektirir"
 
-msgid "%d factors is too many for %d variables"
-msgstr "%d faktör %d değişken için çok fazla"
-
-msgid "'start' must have %d rows"
-msgstr "'start' %d satıra sahip olmalı"
-
 msgid "no starting values supplied"
 msgstr "başlangıç değeri verilmedi"
-
-msgid "unable to optimize from these starting value(s)"
-msgstr ""
 
 msgid "invalid argument 'lambda'"
 msgstr "geçersiz argüman 'lambda'"
 
-msgid "link not recognised"
+#, fuzzy
+msgid "%s link not recognised"
 msgstr "bağlantı tanınmadı"
 
 msgid "link \"%s\" not available for poisson family; available links are %s"
 msgstr ""
 "bağlantı \"%s\" poisson ailesi için mevcut değil; mevcut bağlantılar: %s"
 
-msgid "negative values not allowed for the Poisson family"
+#, fuzzy
+msgid "negative values not allowed for the 'Poisson' family"
 msgstr "Poisson ailesi için negatif değerlere izin verilmiyor"
 
 msgid "ignoring prior weights"
@@ -829,7 +809,8 @@ msgid ""
 msgstr ""
 "bağlantı \"%s\" quasipoisson ailesi için mevcut değil; mevcut bağlantılar: %s"
 
-msgid "negative values not allowed for the quasiPoisson family"
+#, fuzzy
+msgid "negative values not allowed for the 'quasiPoisson' family"
 msgstr "quasiPoisson ailesi için negatif değerlere izin verilmiyor"
 
 msgid "link \"%s\" not available for gaussian family; available links are %s"
@@ -850,12 +831,11 @@ msgstr ""
 msgid "non-integer counts in a binomial glm!"
 msgstr ""
 
-msgid "for the binomial family, y must be a vector of 0 and 1's"
-msgstr "binom ailesi için, y 0 ve 1'lerin olduğu bir vektör olmalı"
-
+#, fuzzy
 msgid ""
+"for the 'binomial' family, y must be a vector of 0 and 1's\n"
 "or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
-msgstr ""
+msgstr "quasibinomial ailesi için, y 0 ve 1'lerin olduğu bir vektör olmalı"
 
 msgid "cannot simulate from non-integer prior.weights"
 msgstr "tamsayı olmayan prior.weights'den simülasyon yapılamıyor"
@@ -866,13 +846,17 @@ msgstr ""
 "bağlantı \"%s\" quasibinomial ailesi için mevcut değil; mevcut bağlantılar: "
 "%s"
 
-msgid "for the quasibinomial family, y must be a vector of 0 and 1's"
+#, fuzzy
+msgid ""
+"for the 'quasibinomial' family, y must be a vector of 0 and 1's\n"
+"or a 2 column matrix where col 1 is no. successes and col 2 is no. failures"
 msgstr "quasibinomial ailesi için, y 0 ve 1'lerin olduğu bir vektör olmalı"
 
 msgid "link \"%s\" not available for gamma family; available links are %s"
 msgstr "bağlantı \"%s\" gama ailesi için mevcut değil; mevcut bağlantılar: %s"
 
-msgid "non-positive values not allowed for the gamma family"
+#, fuzzy
+msgid "non-positive values not allowed for the 'gamma' family"
 msgstr "gama ailesi için pozitif olmayan değerlere izin verilmiyor"
 
 msgid "using weights as shape parameters"
@@ -883,10 +867,12 @@ msgid ""
 msgstr ""
 "bağlantı \"%s\" ters gauss ailesi için mevcut değil; mevcut bağlantılar: %s"
 
-msgid "positive values only allowed for the inverse.gaussian family"
+#, fuzzy
+msgid "positive values only are allowed for the 'inverse.gaussian' family"
 msgstr "pozitif değerlere sadece ters gauss ailesi için izin verilir"
 
-msgid "Need CRAN package 'SuppDists' for 'inverse.gaussian' family"
+#, fuzzy
+msgid "need CRAN package 'SuppDists' for the 'inverse.gaussian' family"
 msgstr "'inverse.gaussian' ailesi için CRAN paketi 'SuppDists' gerekli"
 
 msgid "using weights as inverse variances"
@@ -915,7 +901,12 @@ msgstr ""
 msgid "length of 'init' must equal length of 'filter'"
 msgstr "'init' uzunluğu 'filter' ile eşit uzunlukta olmalı"
 
-msgid "'init'; must have 1 or %d cols"
+#, fuzzy
+msgid "'init' must have 1 column"
+msgstr "'init'; 1 veya %d sütun içermeli"
+
+#, fuzzy
+msgid "'init' must have 1 or %d columns"
 msgstr "'init'; 1 veya %d sütun içermeli"
 
 msgid "'x' must have at least 2 rows and columns"
@@ -924,7 +915,8 @@ msgstr "'x' en az 2 satır ve sütun içermeli"
 msgid "'x' has entries too large to be integer"
 msgstr "'x' tamsayı olamayacak kadar büyük girdilere sahip"
 
-msgid "'x' has been rounded to integer:"
+#, fuzzy
+msgid "'x' has been rounded to integer: %d"
 msgstr "'x' tamsayıya yuvarlandı:"
 
 msgid "if 'x' is not a matrix, 'y' must be given"
@@ -957,11 +949,11 @@ msgstr "tüm grup seviyeleri sonlu olmalı"
 msgid "not enough observations"
 msgstr "yetersiz gözlem sayısı"
 
-msgid "NA's are not allowed in groups or blocks"
-msgstr "gruplarda veya bloklarda NA'lara izin verilmiyor"
+msgid "NA's are not allowed in 'groups' or 'blocks'"
+msgstr ""
 
-msgid "y, groups and blocks must have the same length"
-msgstr "y, gruplar ve bloklar aynı uzunluğa sahip olmalı"
+msgid "'y', 'groups' and 'blocks' must have the same length"
+msgstr ""
 
 msgid "not an unreplicated complete block design"
 msgstr ""
@@ -984,7 +976,8 @@ msgstr "'col.vars' için geçersiz özellik"
 msgid "interactions are not allowed"
 msgstr ""
 
-msgid "'formula' has '.' in both left and right hand side"
+#, fuzzy
+msgid "'formula' has '.' in both left and right hand sides"
 msgstr "'formula' hem sol hem sağ tarafta '.' içeriyor"
 
 msgid "incorrect variable names in rhs of formula"
@@ -998,6 +991,10 @@ msgstr "verilen veriyle formül içinde noktalar kullanılamaz"
 
 msgid "'x' must be an \"ftable\" object"
 msgstr "'x' bir \"ftable\" nesnesi olmalı"
+
+#, fuzzy
+msgid "wrong method"
+msgstr "'fixed' için yanlış uzunluk"
 
 msgid "'file' must be a character string or connection"
 msgstr "'file' bir karakter dizesi veya bağlantı olmalı"
@@ -1025,7 +1022,7 @@ msgid "number of offsets is %d should equal %d (number of observations)"
 msgstr ""
 
 msgid ""
-"fitting to calculate the null deviance did not converge -- increase maxit?"
+"fitting to calculate the null deviance did not converge -- increase 'maxit'?"
 msgstr ""
 
 msgid "value of 'epsilon' must be > 0"
@@ -1057,14 +1054,11 @@ msgstr "V(mu) içinde 0s"
 msgid "NAs in d(mu)/d(eta)"
 msgstr ""
 
-msgid "no observations informative at iteration"
+msgid "no observations informative at iteration %d"
 msgstr ""
 
 msgid "non-finite coefficients at iteration %d"
 msgstr ""
-
-msgid "X matrix has rank %d, but only %d observations"
-msgstr "X matrisinin rankı %d, ancak sadece %d gözlem var"
 
 msgid ""
 "no valid set of coefficients has been found: please supply starting values"
@@ -1102,22 +1096,16 @@ msgstr ""
 msgid ","
 msgstr ","
 
-msgid "using F test with a %s family is inappropriate"
+msgid "using F test with a '%s' family is inappropriate"
 msgstr ""
 
 msgid "using F test with a fixed dispersion is inappropriate"
 msgstr ""
 
-msgid "models with response"
-msgstr ""
-
-msgid "removed because response differs from model 1"
+msgid "models with response %s removed because response differs from model 1"
 msgstr ""
 
 msgid "models were not all fitted to the same size of dataset"
-msgstr ""
-
-msgid "using F test with a '%s' family is inappropriate"
 msgstr ""
 
 msgid "observations with zero weight not used for calculating dispersion"
@@ -1147,8 +1135,9 @@ msgstr "geçersiz ağaç diyagramı"
 msgid "'merge' component in dendrogram must be integer"
 msgstr ""
 
-msgid "argument 'x' cannot be coerced to class \"hclust\""
-msgstr ""
+#, fuzzy
+msgid "argument 'x' cannot be coerced to class %s"
+msgstr "'x' argümanı nümerik olmalı"
 
 msgid "Consider providing an as.hclust.%s() method"
 msgstr ""
@@ -1221,17 +1210,8 @@ msgstr "'x' bir çekirdek değil"
 msgid "empty cluster: try a better set of initial centers"
 msgstr ""
 
-msgid "did not converge in %d iterations"
-msgstr "%d ötelemede yakınsamadı"
-
 msgid "number of cluster centres must lie between 1 and nrow(x)"
 msgstr ""
-
-msgid "did not converge in"
-msgstr ""
-
-msgid "iterations"
-msgstr "ötelemeler"
 
 #, fuzzy
 msgid "invalid nrow(x)"
@@ -1269,11 +1249,7 @@ msgstr "yetersiz 'x' verisi"
 msgid "not enough 'y' data"
 msgstr "yetersiz 'y' verisi"
 
-#, fuzzy
-msgid "cannot compute exact p-values with ties"
-msgstr "sıfırlarla kesin p-değeri hesaplanamıyor"
-
-msgid "p-values will be approximate in the presence of ties"
+msgid "p-value will be approximate in the presence of ties"
 msgstr ""
 
 msgid "'y' must be numeric or a function or a string naming a valid function"
@@ -1325,10 +1301,8 @@ msgid ""
 " Rank zero or should not have used lm(.., qr=FALSE)."
 msgstr ""
 
-msgid "family '"
-msgstr "aile '"
-
-msgid "' not implemented"
+#, fuzzy
+msgid "family '%s' not implemented"
 msgstr "' tanımlanmamış"
 
 msgid "calling anova.lm(<fake-lm-object>) ..."
@@ -1337,23 +1311,17 @@ msgstr "çağırılan: anova.lm(<fake-lm-object>) ..."
 msgid "ANOVA F-tests on an essentially perfect fit are unreliable"
 msgstr ""
 
-msgid "removed because response differs from"
-msgstr ""
-
-msgid "model 1"
-msgstr "model 1"
-
 msgid "calling predict.lm(<fake-lm-object>) ..."
 msgstr ""
 
 msgid "prediction from a rank-deficient fit may be misleading"
 msgstr ""
 
-msgid "Predictions on current data refer to _future_ responses"
+msgid "predictions on current data refer to _future_ responses"
 msgstr ""
 
 msgid ""
-"Assuming prediction variance inversely proportional to weights used for "
+"assuming prediction variance inversely proportional to weights used for "
 "fitting"
 msgstr ""
 
@@ -1433,8 +1401,9 @@ msgstr "karşılaştırılacak model yok"
 msgid "extra arguments discarded"
 msgstr "ekstra argümanlar çıkarıldı"
 
-msgid "logLik.lm only handles single responses"
-msgstr ""
+#, fuzzy
+msgid "'logLik.lm' does not support multiple responses"
+msgstr "'model.tables' çoklu cevaplar için tanımlanmadı"
 
 msgid "no \"nobs\" attribute is available"
 msgstr ""
@@ -1444,26 +1413,6 @@ msgstr ""
 
 msgid "'start' and 'table' must be same length"
 msgstr "'start' ve 'table' aynı uzunlukta olmalı"
-
-msgid "this should not happen"
-msgstr "gerçekleşmemesi gerekir"
-
-msgid "algorithm did not converge"
-msgstr "algoritma yakınsamadı"
-
-msgid "incorrect specification of 'table' or 'start'"
-msgstr "'table' veya 'start' ın hatalı özelliği"
-
-msgid "%d missing values deleted"
-msgstr "%d eksik değer silindi"
-
-#, fuzzy
-msgid "'X' matrix has %d responses, 'Y' has %d responses"
-msgstr "'X' matrisin %d cevaba, 'Y' %d cevaba sahip"
-
-#, fuzzy
-msgid "%d responses, but only %d variables"
-msgstr "%d cevap olmasına rağmen sadece %d değişken var"
 
 msgid "number of weights = %d should equal %d (number of responses)"
 msgstr ""
@@ -1483,14 +1432,12 @@ msgstr "0 sıklığındaki gözlemler kullanılmadı"
 msgid "'low' and 'high' cannot be both TRUE"
 msgstr "'low' ve 'high' aynı anda TRUE olamaz"
 
-msgid "need multiple response"
-msgstr "çoklu cevap gerekli"
-
-msgid "object must be of class \"manova\" or \"maov\""
-msgstr "nesneler \"manova\" veya \"maov\" sınıfında olmalı"
-
 msgid "need multiple responses"
 msgstr "çoklu cevaplar gerekli"
+
+#, fuzzy
+msgid "object must be of class %s or %s"
+msgstr "nesneler \"manova\" veya \"maov\" sınıfında olmalı"
 
 msgid "residuals have rank %d < %d"
 msgstr "artıkların rankı %d < %d"
@@ -1525,20 +1472,15 @@ msgstr "'x' ve 'y' aynı sayıda seviyeye sahip olmalı (minimum 2)"
 msgid "need numeric data"
 msgstr "sayısal veri gerekli"
 
-msgid "medpolish() did not converge in %d iterations"
-msgstr "medpolish() %d ötelemede yakınsamadı"
-
 msgid "'mlm' objects with weights are not supported"
 msgstr "sıklıklar içeren 'mlm' nesneleri desteklenmiyor"
 
 msgid "X does not define a subspace of M"
 msgstr ""
 
-msgid "residuals have rank"
-msgstr "artıkların rankı"
-
-msgid "<"
-msgstr "<"
+#, fuzzy
+msgid "residuals have rank %s < %s"
+msgstr "artıkların rankı %d < %d"
 
 msgid "'model.tables' is not implemented for multiple responses"
 msgstr "'model.tables' çoklu cevaplar için tanımlanmadı"
@@ -1569,7 +1511,8 @@ msgstr ""
 msgid "na.action must be a function"
 msgstr "na.action bir fonksiyon olmalı"
 
-msgid "non-factors ignored:"
+#, fuzzy
+msgid "non-factors ignored: %s"
 msgstr "faktör olmayanlar görmezden gelindi:"
 
 msgid "eff.aovlist: non-orthogonal contrasts would give an incorrect answer"
@@ -1584,7 +1527,8 @@ msgstr ""
 msgid "'termlabels' must be a character vector of length at least one"
 msgstr "'termlabels' en az bir uzunluğunda bir karakter vektörü olmalı"
 
-msgid "'termobj' must be a object of class \"terms\""
+#, fuzzy
+msgid "'termobj' must be a object of class %s"
 msgstr "'termobj' \"terms\" sınıfının bir nesnesi olmalı"
 
 msgid "variable '%s' was fitted with type \"%s\" but type \"%s\" was supplied"
@@ -1596,26 +1540,14 @@ msgstr ""
 msgid "'data' must be a data.frame, not a matrix or an array"
 msgstr "'data' bir veri çerçevesi olmalı, bir matris veya bir dizi değil"
 
-msgid "'newdata' had %d rows but variable(s) found have %d rows"
-msgstr "'newdata' %d satıra sahip ancak bulunan değişken(ler)in %d satırı var"
-
-msgid "character variable '%s' changed to a factor"
-msgstr "karakter değişkeni '%s' bir faktörle değiştirildi"
-
 msgid "variable '%s' is not a factor"
 msgstr "değişken '%s' bir faktör değil"
-
-msgid "factor '%s' has new level(s) %s"
-msgstr "faktör '%s' yeni seviye(lere) sahip %s"
 
 msgid "'offset' must be numeric"
 msgstr "'offset' sayısal olmalı"
 
 msgid "model frame and formula mismatch in model.matrix()"
 msgstr "model.matrix()'de model çerçevesi ve formül uyumsuzluğu"
-
-msgid "variable '%s' converted to a factor"
-msgstr "değişken '%s' bir faktöre dönüştürüldü"
 
 msgid "invalid 'contrasts.arg' argument"
 msgstr "geçersiz 'contrasts.arg' argümanı"
@@ -1624,7 +1556,7 @@ msgstr "geçersiz 'contrasts.arg' argümanı"
 msgid "variable '%s' is absent, its contrast will be ignored"
 msgstr "değişken '%s' yok, karşılaştırması görmezden gelinecek"
 
-msgid "using type=\"numeric\" with a factor response will be ignored"
+msgid "using type = \"numeric\" with a factor response will be ignored"
 msgstr ""
 
 msgid "invalid response type"
@@ -1660,14 +1592,12 @@ msgstr "f.upper = f(upper) NA"
 msgid "f() values at end points not of opposite sign"
 msgstr "bitiş noktalarındaki f() değerleri ters işaretli değil"
 
-msgid "_NOT_ converged in"
-msgstr ""
-
-msgid "control argument must be a named list"
-msgstr ""
+#, fuzzy
+msgid "'control' argument must be a named list"
+msgstr "'split' argümanı bir liste olmalı"
 
 #, fuzzy
-msgid "Logical 'hessian' argument not allowed.  See documentation."
+msgid "logical 'hessian' argument not allowed.  See documentation."
 msgstr "Mantıksal 'hessian' argümanına izin verilmiyor. Belgeleri inceleyin"
 
 msgid "'params' has wrong length"
@@ -1697,27 +1627,15 @@ msgstr ""
 msgid "singular gradient matrix at initial parameter estimates"
 msgstr ""
 
-msgid "unrecognized control element(s) named `"
-msgstr ""
-
-msgid "' ignored"
-msgstr "' görmezden gelindi"
-
 msgid "'data' must be a list or an environment"
 msgstr "'data' bir liste veya bir çevrebirim olmalı"
 
-msgid "No starting values specified"
+#, fuzzy
+msgid "no starting values specified"
 msgstr "Başlangıç değeri belirlenmedi"
 
-msgid "parameters without starting value in 'data':"
+msgid "parameters without starting value in 'data': %s"
 msgstr ""
-
-msgid "fitting parameters"
-msgstr ""
-
-#, fuzzy
-msgid "without any variables"
-msgstr "herhangi bir değişken olmadan"
 
 msgid "no parameters to fit"
 msgstr ""
@@ -1728,7 +1646,7 @@ msgstr "'subset' argümanı görmezden gelinecek"
 msgid "argument 'na.action' will be ignored"
 msgstr "'na.action' argümanı görmezden gelinecek"
 
-msgid "Upper or lower bounds ignored unless algorithm = \"port\""
+msgid "upper and lower bounds ignored unless algorithm = \"port\""
 msgstr ""
 
 msgid "cannot calculate REML log-likelihood for \"nls\" objects"
@@ -1769,10 +1687,9 @@ msgid ""
 "method L-BFGS-B uses 'factr' (and 'pgtol') instead of 'reltol' and 'abstol'"
 msgstr ""
 
-msgid "one-diml optimization by Nelder-Mead is unreliable:"
-msgstr ""
-
-msgid "use \"Brent\" or optimize() directly"
+msgid ""
+"one-dimensional optimization by Nelder-Mead is unreliable:\n"
+"use \"Brent\" or optimize() directly"
 msgstr ""
 
 msgid "method = \"Brent\" is only available for one-dimensional optimization"
@@ -1782,7 +1699,7 @@ msgstr ""
 msgid "'lower' and 'upper' must be finite values"
 msgstr "'k' ve 'h' skalar olmalı"
 
-msgid "Pooling of SD is incompatible with paired tests"
+msgid "pooling of SD is incompatible with paired tests"
 msgstr ""
 
 msgid "'x' must have 2 columns"
@@ -1794,7 +1711,9 @@ msgstr "'x' ve 'n' aynı uzunlukta olmalı"
 msgid "too few groups"
 msgstr "çok az grup"
 
-msgid "Not plotting observations with leverage one:"
+msgid ""
+"not plotting observations with leverage one:\n"
+"  %s"
 msgstr ""
 
 msgid "use only with \"lm\" objects"
@@ -1806,10 +1725,9 @@ msgstr "'which' 1:6 içinde olmalı"
 msgid "'id.n' must be in {1,..,%d}"
 msgstr "'id.n' {1,..,%d} içinde olmalı"
 
-msgid "hat values (leverages) are all ="
-msgstr ""
-
-msgid "and there are no factor predictors; no plot no. 5"
+msgid ""
+"hat values (leverages) are all = %s\n"
+" and there are no factor predictors; no plot no. 5"
 msgstr ""
 
 msgid "'x' and 'T' have incompatible length"
@@ -1824,7 +1742,8 @@ msgstr "'T' negatif olmamalı"
 msgid "not enough data"
 msgstr "yeterli veri yok"
 
-msgid "The case k > 2 is unimplemented"
+#, fuzzy
+msgid "the case k > 2 is unimplemented"
 msgstr "k > 2 durumu tanımlanmamış"
 
 msgid "'r' must be a single positive number"
@@ -1837,9 +1756,6 @@ msgstr ""
 
 msgid "'sig.level' must be numeric in [0, 1]"
 msgstr "'sig.level' [0,1] aralığında bir sayı olmalı"
-
-msgid "internal error"
-msgstr "iç hata"
 
 msgid "exactly one of 'n', 'p1', 'p2', 'power', and 'sig.level' must be NULL"
 msgstr ""
@@ -1893,7 +1809,7 @@ msgstr ""
 msgid "'princomp' can only be used with more units than variables"
 msgstr ""
 
-msgid "cannot use cor=TRUE with a constant variable"
+msgid "cannot use 'cor = TRUE' with a constant variable"
 msgstr ""
 
 msgid "covariance matrix is not non-negative definite"
@@ -1903,9 +1819,6 @@ msgid "argument does not include a 'qr' component"
 msgstr ""
 
 msgid "argument does not include an 'effects' component"
-msgstr ""
-
-msgid "'proj' is not implemented for \"mlm\" fits"
 msgstr ""
 
 msgid "'proj' is not implemented for multiple responses"
@@ -1930,12 +1843,6 @@ msgid "elements of 'p' must be in (0,1)"
 msgstr "'p' nin öğeleri (0,1) içinde olmalı"
 
 msgid "y is empty or has only NAs"
-msgstr ""
-
-msgid "NA's are not allowed in 'groups' or 'blocks'"
-msgstr ""
-
-msgid "'y', 'groups' and 'blocks' must have the same length"
 msgstr ""
 
 msgid "'formula' missing"
@@ -1977,7 +1884,7 @@ msgstr ""
 msgid "'sep' must be a character string"
 msgstr ""
 
-msgid "Failed to guess time-varying variables from their names"
+msgid "failed to guess time-varying variables from their names"
 msgstr ""
 
 msgid "'varying' arguments must be the same length"
@@ -1998,12 +1905,13 @@ msgstr ""
 msgid "'varying' must be nonempty list or vector"
 msgstr ""
 
-msgid "length of v.names does not evenly divide length of varying"
-msgstr ""
+#, fuzzy
+msgid "length of 'v.names' does not evenly divide length of 'varying'"
+msgstr "'init' uzunluğu 'filter' ile eşit uzunlukta olmalı"
 
 msgid ""
-"length of varying must be the product of length of v.names and length of "
-"times"
+"length of 'varying' must be the product of length of 'v.names' and length of "
+"'times'"
 msgstr ""
 
 #, fuzzy
@@ -2013,10 +1921,12 @@ msgstr "geçersiz argüman 'n'"
 msgid "'k' must be positive"
 msgstr "'k' pozitif olmalı"
 
-msgid "'k' must be odd!  Changing 'k' to"
+#, fuzzy
+msgid "'k' must be odd!  Changing 'k' to %d"
 msgstr "'k' tek olmalı!  'k' şununla değiştiriliyor"
 
-msgid "'k' is bigger than 'n'!  Changing 'k' to"
+#, fuzzy
+msgid "'k' is bigger than 'n'!  Changing 'k' to %d"
 msgstr "'k' 'n!'den büyük  'k' şununla değiştiriliyor"
 
 msgid "bandwidth 'k' must be >= 1 and odd!"
@@ -2034,17 +1944,15 @@ msgstr ""
 msgid "all 'x' values are identical"
 msgstr "bütün 'x' değerleri eşit"
 
-msgid "ifault=%d. This should not happen"
-msgstr ""
-
 msgid "attempt to smooth non-numeric values"
 msgstr ""
 
 msgid "attempt to smooth NA values"
 msgstr ""
 
-msgid "wrong endrule"
-msgstr ""
+#, fuzzy
+msgid "invalid 'endrule' argument"
+msgstr "geçersiz 'use' argümanı"
 
 msgid "invalid 'control.spar'"
 msgstr "geçersiz 'control.spar'"
@@ -2052,6 +1960,10 @@ msgstr "geçersiz 'control.spar'"
 #, fuzzy
 msgid "missing or infinite values in inputs are not allowed"
 msgstr "eksik veya negatif sıklıklara izin verilmiyor"
+
+#, fuzzy
+msgid "invalid number of points"
+msgstr "geçersiz argüman 'omit'"
 
 msgid "lengths of 'x' and 'w' must match"
 msgstr "'x' ve 'w' uzunlukları eşleşmeli"
@@ -2072,7 +1984,7 @@ msgstr "en az dört eşsiz 'x' değeri gerekli"
 msgid "'cv' must not be NA when 'df' is specified"
 msgstr "'df' seçildiğinde 'cv' NA olmamalı"
 
-msgid "crossvalidation with non-unique 'x' values seems doubtful"
+msgid "cross-validation with non-unique 'x' values seems doubtful"
 msgstr ""
 
 msgid "'all.knots' is TRUE; 'nknots' specification is disregarded"
@@ -2103,7 +2015,7 @@ msgstr ""
 msgid "setting df = 1  __use with care!__"
 msgstr ""
 
-msgid "need result of smooth.spline(*, keep.data=TRUE)"
+msgid "need result of smooth.spline(keep.data = TRUE)"
 msgstr ""
 
 msgid "type = \"partial\" is not yet implemented"
@@ -2129,9 +2041,6 @@ msgstr ""
 
 msgid "no finite observations"
 msgstr "sonlu gözlem yok"
-
-msgid "observation(s) with NAs, NaNs and/or Infs deleted"
-msgstr ""
 
 msgid "'p' must be between 0 and 0.5"
 msgstr "'p' 0 ile 0.5 arasında olmalı"
@@ -2283,7 +2192,8 @@ msgstr "'xy.labels' karakter veya mantıksal olmalı"
 msgid "'frequency' and 'deltat' are both supplied and are inconsistent"
 msgstr "uyuşmadığı halde 'frequency' ve 'deltat'ın ikiside verildi"
 
-msgid "Frequency not changed"
+#, fuzzy
+msgid "'frequency' not changed"
 msgstr "Sıklık değişmedi"
 
 msgid "bad value for 'start'"
@@ -2349,12 +2259,6 @@ msgstr ""
 msgid "number of differences must be a positive integer"
 msgstr "farkların sayısı bir pozitif tamsayı olmalı"
 
-msgid "'start.innov' is too short: need %d points"
-msgstr "'start.innov' çok kısa: %d nokta gerekli"
-
-msgid "insufficient observations"
-msgstr "yetersiz gözlem sayısı"
-
 msgid "need an object with call component"
 msgstr "çağrı bileşeni içeren bir nesne gerekli"
 
@@ -2367,7 +2271,8 @@ msgstr "'x' ve 'w' aynı uzunlukta olmalı"
 msgid "not enough (finite) 'x' observations"
 msgstr "yetersiz (sonlu) 'x' gözlemleri"
 
-msgid "Requested conf.level not achievable"
+#, fuzzy
+msgid "requested conf.level not achievable"
 msgstr "İstenen conf.level elde edilemiyor"
 
 msgid "cannot compute confidence interval when all observations are tied"
@@ -2382,15 +2287,15 @@ msgstr "sıfırlarla kesin p-değeri hesaplanamıyor"
 msgid "cannot compute exact confidence interval with zeroes"
 msgstr "sıfırlarla kesin güven aralığı hesaplanamıyor"
 
+msgid "Requested conf.level not achievable"
+msgstr "İstenen conf.level elde edilemiyor"
+
 msgid "must supply either 'formula' or 'data'"
 msgstr "'formula' veya 'data' verilmeli"
 
-msgid "xtabs(*, sparse=TRUE) applies only to two-way tables"
+#, fuzzy
+msgid "%s applies only to two-way tables"
 msgstr "xtabs(*, sparse=TRUE) sadece 2 yönlü tablolara uygulanır"
-
-msgid "xtabs(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
-msgstr ""
-"xtabs(*, sparse=TRUE) \"Matrix\" paketinin düzgün kurulumunu gerektirir"
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr ""
@@ -2434,25 +2339,233 @@ msgstr ""
 msgid "all 'x' values must be non-negative to fit the Weibull growth model"
 msgstr ""
 
+msgid "using the %d/%d row from a combined fit"
+msgid_plural "using the %d/%d rows from a combined fit"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "lower scope has term %s not included in model"
+msgid_plural "lower scope has terms %s not included in model"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "upper scope has term %s not included in model"
+msgid_plural "upper scope has terms %s not included in model"
+msgstr[0] ""
+msgstr[1] ""
+
 msgid "there are %d Error terms: only 1 is allowed"
 msgid_plural "there are %d Error terms: only 1 is allowed"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "extra argument %s is not a \"%s\""
-msgid_plural "extra arguments %s are not \"%s\"s"
+#, fuzzy
+msgid "unknown name %s in the 'split' list"
+msgid_plural "unknown names %s in the 'split' list"
+msgstr[0] "'split' listesinde bilinmeyen isim(ler)"
+msgstr[1] "'split' listesinde bilinmeyen isim(ler)"
+
+#, fuzzy
+msgid "extra argument %s is not of class \"%s\""
+msgid_plural "extra arguments %s are not of class \"%s\"s"
+msgstr[0] "ekstra argümanlar çıkarıldı"
+msgstr[1] "ekstra argümanlar çıkarıldı"
+
+#, fuzzy
+msgid "extra argument %s will be disregarded"
+msgid_plural "extra arguments %s will be disregarded"
+msgstr[0] "ekstra argümanlar çıkarıldı"
+msgstr[1] "ekstra argümanlar çıkarıldı"
+
+#, fuzzy
+msgid "%d factor is too many for %d variables"
+msgid_plural "%d factors are too many for %d variables"
+msgstr[0] "%d faktör %d değişken için çok fazla"
+msgstr[1] "%d faktör %d değişken için çok fazla"
+
+#, fuzzy
+msgid "'start' must have %d row"
+msgid_plural "'start' must have %d rows"
+msgstr[0] "'start' %d satıra sahip olmalı"
+msgstr[1] "'start' %d satıra sahip olmalı"
+
+msgid "unable to optimize from this starting value"
+msgid_plural "unable to optimize from these starting values"
 msgstr[0] ""
 msgstr[1] ""
+
+#, fuzzy
+msgid "X matrix has rank %d, but only %d observation"
+msgid_plural "X matrix has rank %d, but only %d observations"
+msgstr[0] "X matrisinin rankı %d, ancak sadece %d gözlem var"
+msgstr[1] "X matrisinin rankı %d, ancak sadece %d gözlem var"
+
+#, fuzzy
+msgid "did not converge in %d iteration"
+msgid_plural "did not converge in %d iterations"
+msgstr[0] "%d ötelemede yakınsamadı"
+msgstr[1] "%d ötelemede yakınsamadı"
+
+#, fuzzy
+msgid "%d missing value deleted"
+msgid_plural "%d missing values deleted"
+msgstr[0] "%d eksik değer silindi"
+msgstr[1] "%d eksik değer silindi"
+
+#, fuzzy
+msgid "'X' matrix has %d response"
+msgid_plural "'X' matrix has %d responses"
+msgstr[0] "'X' matrisin %d cevaba, 'Y' %d cevaba sahip"
+msgstr[1] "'X' matrisin %d cevaba, 'Y' %d cevaba sahip"
+
+msgid "'Y' has %d response"
+msgid_plural "'Y' has %d responses"
+msgstr[0] ""
+msgstr[1] ""
+
+#, fuzzy
+msgid "%d response"
+msgid_plural "%d responses"
+msgstr[0] "geçersiz yanıt tipi"
+msgstr[1] "geçersiz yanıt tipi"
+
+#, fuzzy
+msgid "but only %d variable"
+msgid_plural "but only %d variables"
+msgstr[0] "%d cevap olmasına rağmen sadece %d değişken var"
+msgstr[1] "%d cevap olmasına rağmen sadece %d değişken var"
+
+#, fuzzy
+msgid "medpolish() did not converge in %d iteration"
+msgid_plural "medpolish() did not converge in %d iterations"
+msgstr[0] "medpolish() %d ötelemede yakınsamadı"
+msgstr[1] "medpolish() %d ötelemede yakınsamadı"
+
+#, fuzzy
+msgid "'newdata' had %d row"
+msgid_plural "'newdata' had %d rows"
+msgstr[0] "'start' %d satıra sahip olmalı"
+msgstr[1] "'start' %d satıra sahip olmalı"
+
+#, fuzzy
+msgid "but variable found had %d row"
+msgid_plural "but variables found have %d rows"
+msgstr[0] ""
+"'newdata' %d satıra sahip ancak bulunan değişken(ler)in %d satırı var"
+msgstr[1] ""
+"'newdata' %d satıra sahip ancak bulunan değişken(ler)in %d satırı var"
+
+#, fuzzy
+msgid "factor %s has new level %s"
+msgid_plural "factor %s has new levels %s"
+msgstr[0] "faktör '%s' yeni seviye(lere) sahip %s"
+msgstr[1] "faktör '%s' yeni seviye(lere) sahip %s"
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"
 msgstr[0] ""
 msgstr[1] ""
 
+#, fuzzy
+msgid "_NOT_ converged in %d iteration"
+msgid_plural "_NOT_ converged in %d iterations"
+msgstr[0] "%d ötelemede yakınsamadı"
+msgstr[1] "%d ötelemede yakınsamadı"
+
+msgid "unrecognized control element named %s ignored"
+msgid_plural "unrecognized control elements named %s ignored"
+msgstr[0] ""
+msgstr[1] ""
+
+#, fuzzy
+msgid "fitting parameter %s without any variables"
+msgid_plural "fitting parameters %s without any variables"
+msgstr[0] "herhangi bir değişken olmadan"
+msgstr[1] "herhangi bir değişken olmadan"
+
 msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
 msgstr[0] ""
 msgstr[1] ""
+
+msgid "%d observation with NA, NaN or Inf deleted"
+msgid_plural "%d observations with NAs, NaNs and/or Infs deleted"
+msgstr[0] ""
+msgstr[1] ""
+
+#, fuzzy
+msgid "'start.innov' is too short: need %d point"
+msgid_plural "'start.innov' is too short: need %d points"
+msgstr[0] "'start.innov' çok kısa: %d nokta gerekli"
+msgstr[1] "'start.innov' çok kısa: %d nokta gerekli"
+
+#~ msgid "character variable '%s' changed to a factor"
+#~ msgstr "karakter değişkeni '%s' bir faktörle değiştirildi"
+
+#~ msgid "variable '%s' converted to a factor"
+#~ msgstr "değişken '%s' bir faktöre dönüştürüldü"
+
+#~ msgid "Burg's algorithm only implemented for univariate series"
+#~ msgstr "Burg'ün algoritması sadece tek değişkenli seriler için tanımlı"
+
+#~ msgid "sample is too sparse to find TD"
+#~ msgstr "örnek TD'yi bulmak için çok aralıklı"
+
+#~ msgid "sample is too sparse to find alph2"
+#~ msgstr "örnek alph2'yi bulmak için çok aralıklı"
+
+#~ msgid "NA's are not allowed in groups or blocks"
+#~ msgstr "gruplarda veya bloklarda NA'lara izin verilmiyor"
+
+#~ msgid "y, groups and blocks must have the same length"
+#~ msgstr "y, gruplar ve bloklar aynı uzunluğa sahip olmalı"
+
+#, fuzzy
+#~ msgid "cannot compute exact p-values with ties"
+#~ msgstr "sıfırlarla kesin p-değeri hesaplanamıyor"
+
+#~ msgid "family '"
+#~ msgstr "aile '"
+
+#~ msgid "need multiple response"
+#~ msgstr "çoklu cevap gerekli"
+
+#~ msgid "internal error"
+#~ msgstr "iç hata"
+
+#~ msgid "for the binomial family, y must be a vector of 0 and 1's"
+#~ msgstr "binom ailesi için, y 0 ve 1'lerin olduğu bir vektör olmalı"
+
+#~ msgid "iterations"
+#~ msgstr "ötelemeler"
+
+#~ msgid "model 1"
+#~ msgstr "model 1"
+
+#~ msgid "residuals have rank"
+#~ msgstr "artıkların rankı"
+
+#~ msgid "<"
+#~ msgstr "<"
+
+#~ msgid "' ignored"
+#~ msgstr "' görmezden gelindi"
+
+#, fuzzy
+#~ msgid "invalid length(xout)"
+#~ msgstr "geçersiz 'x'"
+
+#~ msgid "this should not happen"
+#~ msgstr "gerçekleşmemesi gerekir"
+
+#~ msgid "algorithm did not converge"
+#~ msgstr "algoritma yakınsamadı"
+
+#~ msgid "incorrect specification of 'table' or 'start'"
+#~ msgstr "'table' veya 'start' ın hatalı özelliği"
+
+#~ msgid "insufficient observations"
+#~ msgstr "yetersiz gözlem sayısı"
 
 #~ msgid "'vec' contains NAs"
 #~ msgstr "'vec' NAs içeriyor"

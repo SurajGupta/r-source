@@ -24,6 +24,7 @@
 
 #define R_USE_SIGNALS 1
 #include <Defn.h>
+#include <Internal.h>
 
 SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -92,8 +93,11 @@ static Rboolean tracing_state = TRUE;
 #define GET_TRACE_STATE tracing_state
 #define SET_TRACE_STATE(value) tracing_state = value
 
-SEXP R_traceOnOff(SEXP onOff)
+SEXP attribute_hidden do_traceOnOff(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
+    SEXP onOff = CAR(args);
+
     Rboolean prev = GET_TRACE_STATE;
     if(length(onOff) > 0) {
 	Rboolean _new = asLogical(onOff);
@@ -171,7 +175,7 @@ SEXP attribute_hidden do_untracemem(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 
 #ifndef R_MEMORY_PROFILING
-void attribute_hidden memtrace_report(void* old, void *_new) {
+void memtrace_report(void* old, void *_new) {
     return;
 }
 #else
@@ -191,7 +195,7 @@ static void memtrace_stack_dump(void)
     Rprintf("\n");
 }
 
-void attribute_hidden memtrace_report(void * old, void * _new)
+void memtrace_report(void * old, void * _new)
 {
     if (!R_current_trace_state()) return;
     Rprintf("tracemem[%p -> %p]: ", (void *) old, _new);

@@ -1,6 +1,6 @@
 % File src/library/graphics/man/legend.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{legend}
@@ -28,7 +28,7 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
   \item{x, y}{the x and y co-ordinates to be used to position the legend.
     They can be specified by keyword or in any way which is accepted by
     \code{\link{xy.coords}}: See \sQuote{Details}.}
-  \item{legend}{a character or \link{expression} vector.
+  \item{legend}{a character or \link{expression} vector
     of length \eqn{\ge 1} to appear in the legend.  Other
     objects will be coerced by \code{\link{as.graphicsAnnot}}.}
   \item{fill}{if specified, this argument will cause boxes filled
@@ -39,11 +39,11 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
     \code{fill} is specified).}
   \item{lty, lwd}{the line types and widths for lines appearing in the
     legend.  One of these two \emph{must} be specified for line drawing.}
-  \item{pch}{the plotting symbols appearing in the legend, as a non-negative
-    numeric vector (see \code{\link{points}}, but unlike there negative
-    values are omitted) or a vector of 1-character strings, or one
-    multi-character string.  \emph{Must} be specified for symbol
-    drawing.}
+  \item{pch}{the plotting symbols appearing in the legend, as
+    numeric vector or a vector of 1-character strings (see
+    \code{\link{points}}). Unlike \code{points}, this can all be
+    specified as a single multi-character string.  \emph{Must} be
+    specified for symbol drawing.}
   \item{angle}{angle of shading lines.}
   \item{density}{the density of shading lines, if numeric and
     positive. If \code{NULL} or negative or \code{NA} color filling
@@ -135,6 +135,10 @@ legend(x, y = NULL, legend, fill = NULL, col = par("col"),
   line with their background color \code{pt.bg}, if applicable.
 
   See the examples for how to right-justify labels.
+
+  \R 2.x.0 omitted negative \code{pch} values.  Since they are not used
+  for Unicode points, values \code{-31:-1} are still silently omitted,
+  as are \code{NA} and \code{""} values.
 }
 \value{
   A list with list components
@@ -183,10 +187,10 @@ x <- seq(-pi, pi, len = 65)
 plot(x, sin(x), type = "l", ylim = c(-1.2, 1.8), col = 3, lty = 2)
 points(x, cos(x), pch = 3, col = 4)
 lines(x, tan(x), type = "b", lty = 1, pch = 4, col = 6)
-title("legend(..., lty = c(2, -1, 1), pch = c(-1, 3, 4), merge = TRUE)",
+title("legend(..., lty = c(2, -1, 1), pch = c(NA, 3, 4), merge = TRUE)",
       cex.main = 1.1)
 legend(-1, 1.9, c("sin", "cos", "tan"), col = c(3, 4, 6),
-       text.col = "green4", lty = c(2, -1, 1), pch = c(-1, 3, 4),
+       text.col = "green4", lty = c(2, -1, 1), pch = c(NA, 3, 4),
        merge = TRUE, bg = "gray90")
 
 ## right-justifying a set of labels: thanks to Uwe Ligges
@@ -206,13 +210,13 @@ leg.txt <- c("a one", "a two")
 
 par(mfrow = c(2, 2))
 for(ll in c("","x","y","xy")) {
-  plot(2:10, log = ll, main = paste("log = '",ll,"'", sep = ""))
-  abline(1,1)
-  lines(2:3,3:4, col = 2) #
-  points(2,2, col = 3)    #
-  rect(2,3,3,2, col = 4)
-  text(c(3,3),2:3, c("rect(2,3,3,2, col=4)",
-                     "text(c(3,3),2:3,\"c(rect(...)\")"), adj = c(0, 0.3))
+  plot(2:10, log = ll, main = paste0("log = '", ll, "'"))
+  abline(1, 1)
+  lines(2:3, 3:4, col = 2)
+  points(2, 2, col = 3)
+  rect(2, 3, 3, 2, col = 4)
+  text(c(3,3), 2:3, c("rect(2,3,3,2, col=4)",
+                      "text(c(3,3),2:3,\"c(rect(...)\")"), adj = c(0, 0.3))
   legend(list(x = 2,y = 8), legend = leg.txt, col = 2:3, pch = 1:2,
          lty = 1, merge = TRUE)   #, trace = TRUE)
 }

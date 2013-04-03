@@ -16,34 +16,21 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-forwardsolve <- function(l, x, k=ncol(l), upper.tri = FALSE, transpose = FALSE)
-    backsolve(l,x, k=k, upper.tri= upper.tri, transpose= transpose)
-
-backsolve <- function(r, x, k=ncol(r), upper.tri = TRUE, transpose = FALSE)
+forwardsolve <-
+    function(l, x, k = ncol(l), upper.tri = FALSE, transpose = FALSE)
 {
-    r <- as.matrix(r) # nr  x  k
-    storage.mode(r) <- "double"
+    l <- as.matrix(l)
     x.mat <- is.matrix(x)
-    if(!x.mat) x <- as.matrix(x) # k  x	nb
-    storage.mode(x) <- "double"
-    k <- as.integer(k)
-    ldb <- nrow(x)
-    if(is.na(k) || k <= 0 || k > ldb || k > ncol(r))
-        stop("invalid argument values in 'backsolve'")
-    nb <- as.integer(ncol(x))
-    if(is.na(nb)) stop("invalid value of ncol(x)")
-    upper.tri <- as.logical(upper.tri)
-    transpose <- as.logical(transpose)
-    job <- as.integer(upper.tri + 10L*transpose)
-    z <- .C("bakslv",
-	    t  = r, ldt= nrow(r), n  = k,
-	    b  = x, ldb, nb = nb,
-	    x  = matrix(0, ldb, nb),
-	    job = job,
-	    info = integer(1L),
-	    DUP = FALSE, PACKAGE = "base")[c("x","info")]
-    if(z$info)
-	stop(gettextf("singular matrix in 'backsolve'. First zero in diagonal [%d]", z$info), domain = NA)
-    zx <- if (k < ldb) z$x[seq_len(k),,drop=FALSE] else z$x
-    if(x.mat) zx else drop(zx)
+    if(!x.mat) x <- as.matrix(x)
+    z <- .Internal(backsolve(l, x, k, upper.tri, transpose))
+    if(x.mat) z else drop(z)
+}
+
+backsolve <- function(r, x, k  = ncol(r), upper.tri = TRUE, transpose = FALSE)
+{
+    r <- as.matrix(r) # so ncol(r) works
+    x.mat <- is.matrix(x)
+    if(!x.mat) x <- as.matrix(x)
+    z <- .Internal(backsolve(r, x, k, upper.tri, transpose))
+    if(x.mat) z else drop(z)
 }

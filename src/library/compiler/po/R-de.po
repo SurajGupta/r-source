@@ -1,14 +1,14 @@
 # Translation of src/library/compiler/R-compiler.pot to German
-# Copyright (C) 2011 The R Foundation
+# Copyright (C) 2011-2013 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <detlef.steuer@hsu-hh.de>, 2011.
+# Detlef Steuer <detlef.steuer@hsu-hh.de>, 2011-2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.14.0\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
-"PO-Revision-Date: 2011-10-07 15:36+0200\n"
+"POT-Creation-Date: 2012-09-30 15:04\n"
+"PO-Revision-Date: 2013-02-28 16:12+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsuhh.de>\n"
 "Language-Team: R-core <r-core@r-project.org>\n"
 "Language: \n"
@@ -16,9 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
-
-msgid "expected a single logical value for the S4 state flag"
-msgstr "erwartete einen einzelnen logischen Wert für das S4 Status-Flag"
 
 msgid "not a proper evaluation environment"
 msgstr "keine geeignete Evaluationsumgebung"
@@ -77,8 +74,8 @@ msgstr "keine sichtbare Bindung für '<<-' Zuweisung zu '%s'"
 msgid "wrong number of arguments to '%s'"
 msgstr "falsche Anzahl von Argumenten für '%s'"
 
-msgid "more than one default provided in switch call"
-msgstr "mehr als ein Default im Aufruf von switch"
+msgid "more than one default provided in switch() call"
+msgstr "mehr als ein Default im Aufruf von switch()"
 
 msgid "cannot compile a non-function"
 msgstr "kann keine nicht-Funktion kompilieren"
@@ -114,3 +111,6 @@ msgid "local assignment to syntactic function: "
 msgid_plural "local assignments to syntactic functions: "
 msgstr[0] "lokale Zuweisung an syntaktische Funktion:"
 msgstr[1] "lokale Zuweisungen an syntaktische Funktionen:"
+
+#~ msgid "expected a single logical value for the S4 state flag"
+#~ msgstr "erwartete einen einzelnen logischen Wert für das S4 Status-Flag"

@@ -1,6 +1,6 @@
 % File src/library/methods/man/methods-defunct.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{methods-defunct}
@@ -19,6 +19,8 @@
 \alias{seemsS4Object}
 \alias{allGenerics}
 \alias{trySilent}
+\alias{traceOn}
+\alias{traceOff}
 \title{Defunct Functions in Package \pkg{methods}}
 \description{
   Defunct functions in package \pkg{methods}.
@@ -45,6 +47,10 @@ allGenerics()
 
 % Removed in 2.11.0
 trySilent(expr)
+
+% Removed in 3.0.0
+traceOn(what, tracer=browseAll, exit=NULL)
+traceOff(what)
 }
 \details{
   The first block of functions should be replaced by direct access to
@@ -81,11 +87,15 @@ trySilent(expr)
   by the introduction of the S4 bit in \R 2.4.0.
 
   \code{allGenerics} is superseded by \code{\link{getGenerics}}.
-  
+
   \code{trySilent(ex)} was a deprecated equivalent of \code{\link{try}(e,
     silent=TRUE)}; in \R programming it is typically more efficient and
   flexible to work with something like \code{\link{tryCatch}(ex,
     error = function(e) e)} instead.
+
+  The functions \code{traceOn} and \code{traceOff} have been replaced by
+  extended versions of the functions \code{\link{trace}} and
+  \code{\link{untrace}}.
 }
 
 \seealso{

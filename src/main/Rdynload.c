@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1996 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2011 The R Core Team
+ *  Copyright (C) 1997-2012 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -120,15 +121,10 @@
 #endif
 
 
-/* The following code loads in a compatibility module written by Luke
-   Tierney to support S version 4 on Hewlett-Packard machines.	The
-   relevant defines are set up by autoconf. */
-
-#ifdef HAVE_DYNAMIC_LOADING
-
-#ifdef CACHE_DLL_SYM  /* NOT USED */
-/* keep a record of symbols that have been found */
-R_CPFun CPFun[100];
+#ifdef CACHE_DLL_SYM  /* Used on Windows */
+#define MAX_CACHE	100
+/* keep a record of symbols that have been found, about 70 bytes each */
+R_CPFun CPFun[MAX_CACHE];
 int nCPFun = 0;
 #endif
 
@@ -185,8 +181,15 @@ Rboolean R_useDynamicSymbols(DllInfo *info, Rboolean value)
     Rboolean old;
     old = info->useDynamicLookup;
     info->useDynamicLookup = value;
+    return old;
+}
 
-    return(old);
+Rboolean R_forceSymbols(DllInfo *info, Rboolean value)
+{
+    Rboolean old;
+    old = info->forceSymbols;
+    info->forceSymbols = value;
+    return old;
 }
 
 static void
@@ -221,10 +224,9 @@ R_getDllInfo(const char *path)
 {
     int i;
     for(i = 0; i < CountDLL; i++) {
-	if(strcmp(LoadedDLL[i].path, path) == 0)
-	    return(&LoadedDLL[i]);
+	if(strcmp(LoadedDLL[i].path, path) == 0) return(&LoadedDLL[i]);
     }
-    return((DllInfo*) NULL);
+    return (DllInfo*) NULL;
 }
 
 /*
@@ -250,10 +252,11 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
        Potentially change in the future to be only registered
        if there are any registered values.
     */
-    info->useDynamicLookup = (info->handle)?TRUE:FALSE;
+    info->useDynamicLookup = (info->handle) ? TRUE : FALSE;
+    info->forceSymbols = FALSE;
 
     if(croutines) {
-	for(num=0; croutines[num].name != NULL; num++) {;}
+	for(num = 0; croutines[num].name != NULL; num++) {;}
 	info->CSymbols = (Rf_DotCSymbol*)calloc((size_t) num,
 						sizeof(Rf_DotCSymbol));
 	info->numCSymbols = num;
@@ -263,39 +266,35 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     }
 
     if(fortranRoutines) {
-	for(num=0; fortranRoutines[num].name != NULL; num++) {;}
+	for(num = 0; fortranRoutines[num].name != NULL; num++) {;}
 	info->FortranSymbols =
 	    (Rf_DotFortranSymbol*)calloc((size_t) num,
 					 sizeof(Rf_DotFortranSymbol));
 	info->numFortranSymbols = num;
-
-	for(i = 0; i < num; i++) {
+	for(i = 0; i < num; i++)
 	    R_addFortranRoutine(info, fortranRoutines+i,
 				info->FortranSymbols + i);
-	}
     }
 
     if(callRoutines) {
-	for(num=0; callRoutines[num].name != NULL; num++) {;}
+	for(num = 0; callRoutines[num].name != NULL; num++) {;}
 	info->CallSymbols =
 	    (Rf_DotCallSymbol*)calloc((size_t) num, sizeof(Rf_DotCallSymbol));
 	info->numCallSymbols = num;
-	for(i = 0; i < num; i++) {
+	for(i = 0; i < num; i++)
 	    R_addCallRoutine(info, callRoutines+i, info->CallSymbols + i);
-	}
     }
 
     if(externalRoutines) {
-	for(num=0; externalRoutines[num].name != NULL; num++) {;}
+	for(num = 0; externalRoutines[num].name != NULL; num++) {;}
 	info->ExternalSymbols =
 	    (Rf_DotExternalSymbol*)calloc((size_t) num,
 					  sizeof(Rf_DotExternalSymbol));
 	info->numExternalSymbols = num;
 
-	for(i = 0; i < num; i++) {
+	for(i = 0; i < num; i++) 
 	    R_addExternalRoutine(info, externalRoutines+i,
 				 info->ExternalSymbols + i);
-	}
     }
 
     return(1);
@@ -471,6 +470,7 @@ found:
     R_callDLLUnload(&LoadedDLL[loc]);
     R_osDynSymbol->closeLibrary(LoadedDLL[loc].handle);
     Rf_freeDllInfo(LoadedDLL+loc);
+    /* FIXME: why not use memcpy here? */
     for(i = loc + 1 ; i < CountDLL ; i++) {
 	LoadedDLL[i - 1].path = LoadedDLL[i].path;
 	LoadedDLL[i - 1].name = LoadedDLL[i].name;
@@ -484,6 +484,7 @@ found:
 	LoadedDLL[i - 1].CallSymbols = LoadedDLL[i].CallSymbols;
 	LoadedDLL[i - 1].FortranSymbols = LoadedDLL[i].FortranSymbols;
 	LoadedDLL[i - 1].ExternalSymbols = LoadedDLL[i].ExternalSymbols;
+	LoadedDLL[i - 1].forceSymbols = LoadedDLL[i].forceSymbols;
     }
     CountDLL--;
     return 1;
@@ -529,7 +530,7 @@ static DllInfo* AddDLL(const char *path, int asLocal, int now,
 
     DeleteDLL(path);
     if(CountDLL == MAX_NUM_DLLS) {
-	strcpy(DLLerror, _("Maximal number of DLLs reached..."));
+	strcpy(DLLerror, _("`maximal number of DLLs reached..."));
 	return NULL;
     }
 
@@ -543,35 +544,29 @@ static DllInfo* AddDLL(const char *path, int asLocal, int now,
     info = R_RegisterDLL(handle, path);
 
     /* Now look for an initializing routine named R_init_<object name>.
-       If it is present, we invoke it. It should take a reference to the
+       If it is present, we call it. It should take a reference to the
        DllInfo object currently being initialized.
     */
     if(info) {
-	char *tmp;
+	const char *nm = info->name;
+	char tmp[strlen(nm) + 9]; // R_init_ + underscore + null
 	DllInfoInitCall f;
 #ifdef HAVE_NO_SYMBOL_UNDERSCORE
-	tmp = (char*) malloc(sizeof(char)*(strlen("R_init_") +
-					   strlen(info->name)+ 1));
-	if(!tmp) error("allocation failure in AddDLL");
 	sprintf(tmp, "%s%s","R_init_", info->name);
 #else
-	tmp = (char*) malloc(sizeof(char)*(strlen("R_init_") +
-					   strlen(info->name)+ 2));
-	if(!tmp) error("allocation failure in AddDLL");
 	sprintf(tmp, "_%s%s","R_init_", info->name);
 #endif
 	f = (DllInfoInitCall) R_osDynSymbol->dlsym(info, tmp);
-	/* This is potentially unsafe in MBCSs, as '.' might be part of 
-	   a character: but is not in UTF-8 */
+	/* If that failed, might have used the package name with
+	   . replaced by _ (as . it not valid in symbol names). */
 	if(!f) {
+	    /* This is potentially unsafe in MBCSs, as '.' might be
+	       part of a character: but is not in UTF-8 */
 	    for(char *p = tmp; *p; p++) if(*p == '.') *p = '_';
 	    f = (DllInfoInitCall) R_osDynSymbol->dlsym(info, tmp);
 	}
-	free(tmp);
-	if(f)
-	    f(info);
+	if(f) f(info);
     }
-
 
     return info;
 }
@@ -587,6 +582,7 @@ static DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
        initialization routine can limit access by setting this to FALSE.
     */
     info->useDynamicLookup = TRUE;
+    info->forceSymbols = FALSE;
 
     dpath = (char *) malloc(strlen(path)+1);
     if(dpath == NULL) {
@@ -596,8 +592,7 @@ static DllInfo *R_RegisterDLL(HINSTANCE handle, const char *path)
     }
     strcpy(dpath, path);
 
-    if(R_osDynSymbol->fixPath)
-	R_osDynSymbol->fixPath(dpath);
+    if(R_osDynSymbol->fixPath) R_osDynSymbol->fixPath(dpath);
 
     /* keep only basename from path */
     p = Rf_strrchr(dpath, FILESEP[0]);
@@ -652,53 +647,48 @@ addDLL(char *dpath, char *DLLname, HINSTANCE handle)
 static Rf_DotCSymbol *
 Rf_lookupRegisteredCSymbol(DllInfo *info, const char *name)
 {
-    int i;
-    for(i = 0; i < info->numCSymbols; i++) {
+    for(int i = 0; i < info->numCSymbols; i++) {
 	if(strcmp(name, info->CSymbols[i].name) == 0)
 	    return(&(info->CSymbols[i]));
     }
-
-    return(NULL);
+    return NULL;
 }
 
 static Rf_DotFortranSymbol *
 Rf_lookupRegisteredFortranSymbol(DllInfo *info, const char *name)
 {
-    int i;
-    for(i = 0; i < info->numFortranSymbols; i++) {
+    for(int i = 0; i < info->numFortranSymbols; i++) {
 	if(strcmp(name, info->FortranSymbols[i].name) == 0)
 	    return(&(info->FortranSymbols[i]));
     }
 
-    return((Rf_DotFortranSymbol*)NULL);
+    return (Rf_DotFortranSymbol*) NULL;
 }
 
 static Rf_DotCallSymbol *
 Rf_lookupRegisteredCallSymbol(DllInfo *info, const char *name)
 {
-    int i;
 
-    for(i = 0; i < info->numCallSymbols; i++) {
+    for(int i = 0; i < info->numCallSymbols; i++) {
 	if(strcmp(name, info->CallSymbols[i].name) == 0)
 	    return(&(info->CallSymbols[i]));
     }
-    return((Rf_DotCallSymbol*)NULL);
+    return (Rf_DotCallSymbol*) NULL;
 }
 
 static Rf_DotExternalSymbol *
 Rf_lookupRegisteredExternalSymbol(DllInfo *info, const char *name)
 {
-    int i;
-
-    for(i = 0; i < info->numExternalSymbols; i++) {
+    for(int i = 0; i < info->numExternalSymbols; i++) {
 	if(strcmp(name, info->ExternalSymbols[i].name) == 0)
 	    return(&(info->ExternalSymbols[i]));
     }
-    return((Rf_DotExternalSymbol*)NULL);
+    return (Rf_DotExternalSymbol*) NULL;
 }
 
-static DL_FUNC R_getDLLRegisteredSymbol(DllInfo *info, const char *name,
-				 R_RegisteredNativeSymbol *symbol)
+static DL_FUNC 
+R_getDLLRegisteredSymbol(DllInfo *info, const char *name,
+			 R_RegisteredNativeSymbol *symbol)
 {
     NativeSymbolType purpose = R_ANY_SYM;
 
@@ -807,19 +797,10 @@ R_dlsym(DllInfo *info, char const *name,
     return f;
 }
 
-	/* R_FindSymbol checks whether one of the objects */
-	/* that have been loaded contains the symbol name and */
-	/* returns a pointer to that symbol upon success. */
-
-/*
-  In the future, this will receive an additional argument
-  which will specify the nature of the symbol expected by the
-  caller, specifically whether it is for a .C(), .Call(),
-  .Fortran(), .External(), generic, etc. invocation. This will
-  reduce the pool of possible symbols in the case of an object
-  that registers its routines.
-  This is currently done via the value in symbol.
- */
+/* R_FindSymbol checks whether one of the objects that have been
+   loaded contains the symbol name and returns a pointer to that
+   symbol upon success. 
+*/
 
 DL_FUNC R_FindSymbol(char const *name, char const *pkg,
 		     R_RegisteredNativeSymbol *symbol)
@@ -841,13 +822,14 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg,
     for (i = CountDLL - 1; i >= 0; i--) {
 	doit = all;
 	if(!doit && !strcmp(pkg, LoadedDLL[i].name)) doit = 2;
+	if(doit && LoadedDLL[i].forceSymbols) doit = 0;
 	if(doit) {
 	    fcnptr = R_dlsym(&LoadedDLL[i], name, symbol); /* R_osDynSymbol->dlsym */
 	    if (fcnptr != (DL_FUNC) NULL) {
 		if(symbol)
 		    symbol->dll = LoadedDLL+i;
 #ifdef CACHE_DLL_SYM
-		if(strlen(pkg) <= 20 && strlen(name) <= 40 && nCPFun < 100
+		if(strlen(pkg) <= 20 && strlen(name) <= 40 && nCPFun < MAX_CACHE
 		   && (!symbol || !symbol->symbol.c)) {
 		    strcpy(CPFun[nCPFun].pkg, LoadedDLL[i].name);
 		    strcpy(CPFun[nCPFun].name, name);
@@ -917,7 +899,6 @@ SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
-attribute_hidden
 int R_moduleCdynload(const char *module, int local, int now)
 {
     char dllpath[PATH_MAX], *p = getenv("R_HOME");
@@ -1209,7 +1190,7 @@ createRSymbolObject(SEXP sname, DL_FUNC f, R_RegisteredNativeSymbol *symbol,
 	    break;
 	default:
 	    /* Something unintended has happened if we get here. */
-	    error(_("Unimplemented type %d in createRSymbolObject"),
+	    error(_("unimplemented type %d in 'createRSymbolObject'"),
 		  symbol->type);
 	    break;
 	}
@@ -1312,53 +1293,101 @@ R_getRegisteredRoutines(SEXP dll)
     return(ans);
 }
 
-#else /* no dyn.load support */
-
-void InitFunctionHashing()
+SEXP attribute_hidden
+do_getSymbolInfo(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+    const char *package = "", *name;
+    R_RegisteredNativeSymbol symbol = {R_ANY_SYM, {NULL}, NULL};
+    SEXP sym = R_NilValue;
+    DL_FUNC f = NULL;
+
+    checkArity(op, args);
+    SEXP sname = CAR(args), spackage = CADR(args), 
+	withRegistrationInfo = CADDR(args);
+
+    name = translateChar(STRING_ELT(sname, 0));
+    if(length(spackage)) {
+	if(TYPEOF(spackage) == STRSXP)
+	    package = translateChar(STRING_ELT(spackage, 0));
+	else if(TYPEOF(spackage) == EXTPTRSXP &&
+		R_ExternalPtrTag(spackage) == install("DLLInfo")) {
+	    f = R_dlsym((DllInfo *) R_ExternalPtrAddr(spackage), name, &symbol);
+	    package = NULL;
+	} else
+	    error(_("must pass package name or DllInfo reference"));
+    }
+    if(package)
+	f = R_FindSymbol(name, package, &symbol);
+    if(f)
+	sym = createRSymbolObject(sname, f, &symbol,
+				  LOGICAL(withRegistrationInfo)[0]);
+    return sym;
 }
 
-attribute_hidden
-DL_FUNC R_FindSymbol(char const *name, char const *pkg,
-		     R_RegisteredNativeSymbol *symbol)
+/* .Internal(getLoadedDLLs()) */
+SEXP attribute_hidden
+do_getDllTable(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    int i;
-    for(i = 0; CFunTab[i].name; i++)
-	if(!strcmp(name, CFunTab[i].name)) return CFunTab[i].func;
-    return (DL_FUNC) 0;
-}
+    SEXP ans, nm;
 
-SEXP attribute_hidden do_dynload(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    error(_("no dyn.load support in this R version"));
-    return(R_NilValue);
-}
+    checkArity(op, args);
 
-SEXP attribute_hidden do_dynunload(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    error(_("no dyn.load support in this R version"));
-    return(R_NilValue);
+ again:
+    PROTECT(ans = allocVector(VECSXP, CountDLL));
+    for(int i = 0; i < CountDLL; i++)
+	SET_VECTOR_ELT(ans, i, Rf_MakeDLLInfo(&(LoadedDLL[i])));
+    setAttrib(ans, R_ClassSymbol, mkString("DLLInfoList"));
+    UNPROTECT(1);
+
+    /* There is a problem here: The allocations can cause gc, and gc
+       may result in no longer referenced DLLs being unloaded.  So
+       CountDLL can be reduced during this loop.  A simple work-around
+       is to just try again until CountDLL at the end is the same as
+       it was at the beginning.  LT */
+    if (CountDLL != LENGTH(ans)) goto again;
+
+    PROTECT(ans);
+    PROTECT(nm = allocVector(STRSXP, CountDLL));
+    setAttrib(ans, R_NamesSymbol, nm);
+    for(int i = 0; i < CountDLL; i++)
+	SET_STRING_ELT(nm, i, 
+		       STRING_ELT(VECTOR_ELT(VECTOR_ELT(ans, i), 0), 0));
+    UNPROTECT(2);
+    return ans;
 }
 
 SEXP attribute_hidden
-R_getSymbolInfo(SEXP sname, SEXP spackage, SEXP withRegistrationInfo)
+do_getRegisteredRoutines(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    error(_("no dyn.load support in this R version"));
+    const char * const names[] = {".C", ".Call", ".Fortran", ".External"};
+
+    checkArity(op, args);
+    SEXP dll = CAR(args), ans, snames;
+
+    if(TYPEOF(dll) != EXTPTRSXP &&
+       R_ExternalPtrTag(dll) != install("DLLInfo"))
+	error(_("R_getRegisteredRoutines() expects a DllInfo reference"));
+
+    DllInfo *info = (DllInfo *) R_ExternalPtrAddr(dll);
+    if(!info) error(_("NULL value passed for DllInfo"));
+
+
+    PROTECT(ans = allocVector(VECSXP, 4));
+
+    SET_VECTOR_ELT(ans, 0, R_getRoutineSymbols(R_C_SYM, info));
+    SET_VECTOR_ELT(ans, 1, R_getRoutineSymbols(R_CALL_SYM, info));
+    SET_VECTOR_ELT(ans, 2, R_getRoutineSymbols(R_FORTRAN_SYM, info));
+    SET_VECTOR_ELT(ans, 3, R_getRoutineSymbols(R_EXTERNAL_SYM, info));
+
+    PROTECT(snames = allocVector(STRSXP, 4));
+    for(int i = 0; i < 4; i++)
+	SET_STRING_ELT(snames, i, mkChar(names[i]));
+    setAttrib(ans, R_NamesSymbol, snames);
+    UNPROTECT(2);
+    return(ans);
 }
 
-SEXP attribute_hidden
-R_getDllTable()
-{
-    error(_("no dyn.load support in this R version"));
-}
 
-SEXP attribute_hidden
-R_getRegisteredRoutines(SEXP dll)
-{
-    error(_("no dyn.load support in this R version"));
-}
-
-#endif
 
 /* Experimental interface for exporting and importing functions and
    data from one package for use from C code in a package.  The

@@ -30,9 +30,9 @@ model.tables.aov <- function(x, type = "effects", se = FALSE, cterms, ...)
     if(is.null(x$call)) stop("this fit does not inherit from \"lm\"")
     mf <- model.frame(x)
     factors <- attr(prjs, "factors")
-    dn.proj <- as.list(names(factors))
+    nf <- names(factors)
+    dn.proj <- setNames(as.list(nf), nf)
     m.factors <- factors
-    names(m.factors) <- names(dn.proj) <- names(factors)
     t.factor <- attr(prjs, "t.factor")
     vars <- colnames(t.factor)
     which <- match(vars, names(dn.proj))
@@ -110,7 +110,7 @@ model.tables.aovlist <- function(x, type = "effects", se = FALSE, ...)
     factors <- lapply(prjs, attr, "factors")
     dn.proj <- unlist(lapply(factors, names), recursive = FALSE)
     m.factors <- unlist(factors, recursive = FALSE)
-    dn.strata <- rep.int(names(factors), unlist(lapply(factors, length)))
+    dn.strata <- rep.int(names(factors), vapply(factors, length, 1L))
     names(dn.strata) <- names(m.factors) <- names(dn.proj) <- unlist(dn.proj)
     t.factor <- attr(prjs, "t.factor")
     efficiency <- FALSE
@@ -205,8 +205,7 @@ se.aovlist <- function(object, dn.proj, dn.strata, factors, mf, efficiency, n,
 make.tables.aovproj <-
     function(proj.cols, mf.cols, prjs, mf, fun = "mean", prt = FALSE, ...)
 {
-    tables <- vector(mode = "list", length = length(proj.cols))
-    names(tables) <- names(proj.cols)
+    tables <- setNames(vector("list", length(proj.cols)), names(proj.cols))
     for(i in seq_along(tables)) {
 	terms <- proj.cols[[i]]
         terms <- terms[terms %in% colnames(prjs)]
@@ -226,8 +225,7 @@ make.tables.aovprojlist <-
     function(proj.cols, strata.cols, model.cols, projections, model, eff,
 	     fun = "mean", prt = FALSE, ...)
 {
-    tables <- vector(mode = "list", length = length(proj.cols))
-    names(tables) <- names(proj.cols)
+    tables <- setNames(vector("list", length(proj.cols)), names(proj.cols))
     if(!missing(eff)) {
 	for(i in seq_along(tables)) {
 	    terms <- proj.cols[[i]]
@@ -313,9 +311,9 @@ replications <- function(formula, data = NULL, na.action)
     data <- na.action(data)
     class(data) <- NULL
     n <- length(o)
-    z <- vector("list", n)
-    names(z) <- labels
+    z <- setNames(vector("list", n), labels)
     dummy <- numeric(.row_names_info(data, 2L))
+    data <- lapply(data, function(x) if (is.character(x)) as.factor(x) else x)
     notfactor <- !sapply(data, function(x) inherits(x, "factor"))
     balance <- TRUE
     for(i in seq_len(n)) {
@@ -323,8 +321,9 @@ replications <- function(formula, data = NULL, na.action)
 	if(o[i] < 1 || substring(l, 1L, 5L) == "Error") { z[[l]] <- NULL; next }
 	select <- vars[f[, i] > 0]
 	if(any(nn <- notfactor[select])) {
-	    warning("non-factors ignored: ",
-                    paste(names(nn), collapse = ", "))
+            warning(gettextf("non-factors ignored: %s",
+                             paste(names(nn), collapse = ", ")),
+                    domain = NA)
 	    next
 	}
 	if(length(select))
@@ -339,7 +338,7 @@ replications <- function(formula, data = NULL, na.action)
     if(balance) unlist(z) else z
 }
 
-print.tables_aov <- function(x, digits = 4, ...)
+print.tables_aov <- function(x, digits = 4L, ...)
 {
     tables.aov <- x$tables
     n.aov <- x$n

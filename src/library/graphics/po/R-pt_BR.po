@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2013-03-20 07:11\n"
 "PO-Revision-Date: 2011-03-26 08:55-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -81,7 +81,8 @@ msgstr "argumento inicial inválido"
 msgid "'formula' missing or incorrect"
 msgstr "'formula' faltando ou incorreta"
 
-msgid "'at' must have same length as 'z$n', i.e."
+#, fuzzy
+msgid "'at' must have same length as 'z$n', i.e. %d"
 msgstr "'at' deve ter o mesmo comprimento que 'z$n', isto é"
 
 msgid "invalid boxplot widths"
@@ -130,7 +131,8 @@ msgstr "'given.values' inválidos"
 msgid "rows * columns too small"
 msgstr "fileiras * colunas pequeno demais"
 
-msgid "Missing rows"
+#, fuzzy
+msgid "Missing rows: %s"
 msgstr "Fileiras faltando"
 
 #, fuzzy
@@ -202,8 +204,12 @@ msgstr "algoritmo 'breaks' desconhecido"
 msgid "invalid number of 'breaks'"
 msgstr "número inválido de 'breaks'"
 
-msgid "hist.default: pretty() error, breaks="
+#, fuzzy
+msgid "hist.default: pretty() error, breaks=%s"
 msgstr "hist.default: erro em pretty(), breaks="
+
+msgid "Invalid breakpoints produced by 'breaks(x)': %s"
+msgstr ""
 
 #, fuzzy
 msgid "invalid length(breaks)"
@@ -220,7 +226,8 @@ msgstr ""
 "alguns valores de 'x' não computados; talvez 'breaks' não abranja todo o "
 "intervalo de 'x'"
 
-msgid "the AREAS in the plot are wrong -- rather use freq=FALSE"
+#, fuzzy
+msgid "the AREAS in the plot are wrong -- rather use 'freq = FALSE'"
 msgstr "as ÁREAS no gráfico estão erradas -- melhorutilizar freq=FALSE"
 
 msgid "'x' is wrongly structured"
@@ -241,7 +248,8 @@ msgstr "limites z inválidos"
 msgid "must have one more break than colour"
 msgstr "deve ter uma quebra a mais que cores"
 
-msgid "breaks must all be finite"
+#, fuzzy
+msgid "'breaks' must all be finite"
 msgstr "breaks devem ser todos finitos"
 
 msgid "unsorted 'breaks' will be sorted before use"
@@ -250,20 +258,25 @@ msgstr ""
 msgid "dimensions of z are not length(x)(-1) times length(y)(-1)"
 msgstr "dimensões de z não são length(x)(-1) vezes length(y)(-1)"
 
-msgid "useRaster=TRUE can only be used with a regular grid"
+msgid "%s can only be used with a regular grid"
+msgstr ""
+
+msgid "integer colors must be non-negative"
 msgstr ""
 
 msgid "'respect' must be logical or matrix with same dimension as 'mat'"
 msgstr "'respect' deve ser lógico ou matriz com as mesmas dimensões que 'mat'"
 
+#, fuzzy
 msgid ""
 "layout matrix must contain at least one reference\n"
-"to each of the values {1..n}; here  n ="
+"to each of the values {1 ... %d}"
 msgstr ""
 "matriz de layout deve conter pelo menos uma referência\n"
 "para cada um dos valores {1..n}; aqui  n ="
 
-msgid "invalid title"
+#, fuzzy
+msgid "invalid 'title'"
 msgstr "título inválido"
 
 msgid "'legend' is of length 0"
@@ -275,7 +288,8 @@ msgstr "comprimentos das coordenadas inválido"
 msgid "'text.width' must be numeric, >= 0"
 msgstr "'text.width' deve ser numérico, >= 0"
 
-msgid "horizontal specification overrides: Number of columns :="
+#, fuzzy
+msgid "horizontal specification overrides: Number of columns := %d"
 msgstr "especificação horizontal sobrescreve: Número de colunas :="
 
 msgid "'merge = TRUE' has no effect when no line segments are drawn"
@@ -303,9 +317,6 @@ msgstr "valores ausentes na tabela de contingência"
 
 msgid "'x' must not have 0 dimensionality"
 msgstr "'x' não deve ter 0 dimensões"
-
-msgid "extra argument(s) %s will be disregarded"
-msgstr "os argumento(s) extras %s serão desconsiderados"
 
 msgid "invalid 'shade' specification"
 msgstr "especificação inválida para 'shade'"
@@ -399,7 +410,8 @@ msgstr "'x' deve ser uma matriz ou um data frame"
 msgid "data in 'x' must be numeric"
 msgstr "dados em 'x' devem ser numéricos"
 
-msgid "nrow * ncol <  number of observations"
+#, fuzzy
+msgid "'nrow * ncol' is less than the number of observations"
 msgstr "nrow * ncol <  número de especificações"
 
 msgid "labels do not make sense for a single location"
@@ -435,13 +447,16 @@ msgstr "'number' deve ter o mesmo comprimento que 'x' e 'y'"
 msgid "exactly one symbol type must be specified"
 msgstr "exatamente um tipo de símbolo deve ser especificado"
 
-msgid "x log scale:  xinch() is non-sense"
+#, fuzzy
+msgid "x log scale:  xinch() is nonsense"
 msgstr "escala logarítmica de x:  xinch() não faz sentido"
 
-msgid "y log scale:  yinch() is non-sense"
+#, fuzzy
+msgid "y log scale:  yinch() is nonsense"
 msgstr "escala logarítmica de y: yinch() não faz sentido"
 
-msgid "log scale:  xyinch() is non-sense"
+#, fuzzy
+msgid "log scale:  xyinch() is nonsense"
 msgstr "escala logarítimica:  xyinch() não faz sentido"
 
 msgid "Outlier (%s) in boxplot %d is not drawn"
@@ -453,6 +468,12 @@ msgid "argument %s is not made use of"
 msgid_plural "arguments %s are not made use of"
 msgstr[0] "argumento %s não está sendo utilizado"
 msgstr[1] "argumentos %s não estão sendo utilizados"
+
+#, fuzzy
+msgid "extra argument %s will be disregarded"
+msgid_plural "extra arguments %s will be disregarded"
+msgstr[0] "os argumento(s) extras %s serão desconsiderados"
+msgstr[1] "os argumento(s) extras %s serão desconsiderados"
 
 #~ msgid "negative 'counts'. Internal Error in C-code for \"bincount\""
 #~ msgstr "'counts' negativo. Erro interno no código C para \"bincount\""

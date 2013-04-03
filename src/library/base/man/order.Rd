@@ -1,6 +1,6 @@
 % File src/library/base/man/order.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{order}
@@ -33,7 +33,9 @@ sort.list(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
     If \code{TRUE}, missing values in the data are put last; if
     \code{FALSE}, they are put first; if \code{NA}, they are removed
     (see \sQuote{Note}.)}
-  \item{method}{the method to be used: partial matches are allowed.}
+  \item{method}{the method to be used: partial matches are allowed.  The
+    default is \code{"shell"} except for some special cases: see
+    \sQuote{Details}.}
 }
 \details{
   In the case of ties in the first vector, values in the second are used
@@ -44,16 +46,18 @@ sort.list(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
 
   Complex values are sorted first by the real part, then the imaginary
   part.
-  
+
   The sort order for character vectors will depend on the collating
   sequence of the locale in use: see \code{\link{Comparison}}.
 
-  The default method for \code{sort.list} is a good compromise.
-  Method \code{"quick"} is only supported for numeric \code{x} with
-  \code{na.last=NA}, and is not stable, but will be faster for long vectors.
-  Method \code{"radix"} is only implemented for integer \code{x} with
-  a range of less than 100,000.  For such \code{x} it is very
-  fast (and stable), and hence is ideal for sorting factors.
+  The default method for \code{sort.list} is a good compromise.  Method
+  \code{"quick"} is only supported for numeric \code{x} with
+  \code{na.last = NA}, and is not stable, but will be substantially
+  faster for long vectors.  Method \code{"radix"} is only implemented
+  for integer \code{x} with a range of less than 100,000.  For such
+  \code{x} it is very fast (and stable), and hence is ideal for sorting
+  factors---as from \R 3.0.0 it is the default method for factors with
+  less than 100,000 levels.
 
   \code{partial = NULL} is supported for compatibility with other
   implementations of S, but no other values are accepted and ordering is
@@ -65,11 +69,17 @@ sort.list(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
   true.  For factors, this sorts on the internal codes, which is
   particularly appropriate for ordered factors.
 }
+
+\value{
+  An integer vector unless any of the inputs has \eqn{2^{31}}{2^31} or
+  more elements, when it is a double vector.
+}
+
 \note{
   \code{sort.list} can get called by mistake as a method for
   \code{\link{sort}} with a list argument, and gives a suitable error
   message for list \code{x}.
-  
+
   There is a historical difference in behaviour for \code{na.last = NA}:
   \code{sort.list} removes the \code{NA}s and then computes the order
   amongst the remaining elements: \code{order} computes the order
@@ -79,7 +89,7 @@ sort.list(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
 }
    both sort the non-\code{NA} values of \code{x}.
 }
-  
+
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.

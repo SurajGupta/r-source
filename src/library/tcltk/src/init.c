@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2003-10   The R Core Team.
+ *  Copyright (C) 2003-12   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ static const R_CMethodDef CEntries[] = {
     {"tcltk_end", (DL_FUNC) &tcltk_end, 0},
 #else
     {"tcltk_init", (DL_FUNC) &tcltk_init, 1},
-    {"delTcl", (DL_FUNC) &delTcl, 0},
+//    {"delTcl", (DL_FUNC) &delTcl, 0},
     {"RTcl_ActivateConsole", (DL_FUNC) &RTcl_ActivateConsole, 0},
 #endif
     {NULL, NULL, 0}
@@ -48,6 +48,8 @@ static const R_ExternalMethodDef ExternEntries[] = {
     {"RTcl_ObjFromCharVector", (DL_FUNC) &RTcl_ObjFromCharVector, 2},
     {"RTcl_ObjFromDoubleVector", (DL_FUNC) &RTcl_ObjFromDoubleVector, 2},
     {"RTcl_ObjFromIntVector", (DL_FUNC) &RTcl_ObjFromIntVector, 2},
+    {"RTcl_ObjFromRawVector", (DL_FUNC) &RTcl_ObjFromRawVector, 1},
+    /* (..FromRaw... has only 1 arg, no drop=) */
     {"RTcl_ServiceMode", (DL_FUNC) &RTcl_ServiceMode, 1},
     {"RTcl_GetArrayElem", (DL_FUNC) &RTcl_GetArrayElem, 2},
     {"RTcl_RemoveArrayElem", (DL_FUNC) &RTcl_RemoveArrayElem, 2},
@@ -60,5 +62,6 @@ void R_init_tcltk(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, NULL, NULL, ExternEntries);
     R_useDynamicSymbols(dll, FALSE);
+    R_forceSymbols(dll, FALSE);
 }
 

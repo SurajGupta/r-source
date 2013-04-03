@@ -49,28 +49,11 @@ spline <-
     if(missing(xout)) xout <- seq.int(xmin, xmax, length.out = n)
     else n <- length(xout)
     if (n <= 0L) stop("'spline' requires n >= 1")
+    xout <- as.double(xout)
 
-    z <- .C(C_spline_coef,
-	    method=as.integer(min(3L, method)),
-	    n=nx,
-	    x=x,
-	    y=y,
-	    b=double(nx),
-	    c=double(nx),
-	    d=double(nx),
-	    e=double(if(method == 1) nx else 0))
+    z <- .Call(C_SplineCoef, min(3L, method), x, y)
     if(method == 4L) z <- spl_coef_conv(hyman_filter(z))
-    .C(C_spline_eval,
-       z$method,
-       nu=as.integer(n),
-       x =as.double(xout),
-       y =double(n),
-       z$n,
-       z$x,
-       z$y,
-       z$b,
-       z$c,
-       z$d)[c("x","y")]
+    list(x = xout, y = .Call(C_SplineEval, xout, z))
 }
 
 ### Filters cubic spline function to yield co-monotonicity in accordance

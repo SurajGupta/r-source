@@ -14,16 +14,17 @@
   Arguments are recycled if necessary.
 }
 \usage{
-mapply(FUN, \dots, MoreArgs = NULL, SIMPLIFY = TRUE, USE.NAMES = TRUE)
+mapply(FUN, \dots, MoreArgs = NULL, SIMPLIFY = TRUE,
+       USE.NAMES = TRUE)
 }
 \arguments{
   \item{FUN}{function to apply, found via \code{\link{match.fun}}.}
   \item{\dots}{arguments to vectorize over (vectors or lists of strictly
-    positive length, or all of zero length).   See also \sQuote{Details}.}
+    positive length, or all of zero length).  See also \sQuote{Details}.}
   \item{MoreArgs}{a list of other arguments to \code{FUN}.}
   \item{SIMPLIFY}{logical or character string; attempt to reduce the
     result to a vector, matrix or higher dimensional array; see
-    the \code{simplify} argument of \code{\link{sapply}}.} 
+    the \code{simplify} argument of \code{\link{sapply}}.}
   \item{USE.NAMES}{logical; use names if the first \dots argument has
     names, or if it is a character vector, use that character vector as
     the names.}
@@ -33,9 +34,9 @@ mapply(FUN, \dots, MoreArgs = NULL, SIMPLIFY = TRUE, USE.NAMES = TRUE)
   (re-cycled to the length of the longest, unless any have length zero),
   followed by the arguments given in \code{MoreArgs}.  The arguments in
   the call will be named if \code{\dots} or \code{MoreArgs} are named.
-  
-  Arguments with classes in \code{\dots} will be accepted but may be
-  handled as their base types.
+
+  Arguments with classes in \code{\dots} will be accepted, and their
+  subsetting and \code{length} methods will be used.
 }
 \value{
   A list, or for \code{SIMPLIFY = TRUE}, a vector, array or list.

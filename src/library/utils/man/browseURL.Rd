@@ -10,7 +10,8 @@
   Load a given URL into a WWW browser.
 }
 \usage{
-browseURL(url, browser = getOption("browser"), encodeIfNeeded = FALSE)
+browseURL(url, browser = getOption("browser"),
+          encodeIfNeeded = FALSE)
 }
 \arguments{
   \item{url}{a non-empty character string giving the URL to be loaded.}
@@ -18,7 +19,7 @@ browseURL(url, browser = getOption("browser"), encodeIfNeeded = FALSE)
     program to be used as hypertext browser.  It should be in the PATH,
     or a full path specified.  Alternatively, an \R function to be
     called to invoke the browser.
-    
+
     Under Windows \code{NULL} is also allowed (and is the default), and
     implies that the file association mechanism will be used.
   }
@@ -37,7 +38,7 @@ browseURL(url, browser = getOption("browser"), encodeIfNeeded = FALSE)
   made manually or automatically when \R was configured.  (See
   \code{\link{Startup}} for where to override that default value.)
   To suppress showing URLs altogether, use the value \code{"false"}.
-  
+
   If \code{browser} supports remote control and \R knows how to perform
   it, the URL is opened in any already running browser or a new one if
   necessary.  This mechanism currently is available for browsers which
@@ -62,7 +63,7 @@ browseURL(url, browser = getOption("browser"), encodeIfNeeded = FALSE)
 }
 \examples{
 \dontrun{## for KDE users who want to open files in a new tab
-options(browser = "kfmclient newTab") 
+options(browser = "kfmclient newTab")
 browseURL("http://www.r-project.org")
 }}
 #endif

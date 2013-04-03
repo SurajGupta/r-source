@@ -51,7 +51,7 @@ function(x, full = TRUE, scale = TRUE, radius = TRUE,
 	if(is.null(ncol))
             ncol <- ceiling(n.loc/nrow)
         if(nrow * ncol < n.loc)
-            stop("nrow * ncol <  number of observations")
+            stop("'nrow * ncol' is less than the number of observations")
         ff <- if(!is.null(labels)) 2.3 else 2.1
         locations <- expand.grid(ff * 1L:ncol, ff * nrow:1)[1L:n.loc, ]
         if(!is.null(labels) && (missing(flip.labels) ||
@@ -198,7 +198,7 @@ function(x, full = TRUE, scale = TRUE, radius = TRUE,
                   1 - (lab.angl[k] - 270*deg) / (180*deg)
                   )
 	    text(label.x[k], label.y[k],
-                 labels= key.labels[k], cex = cex, adj = text.adj)
+                 labels = key.labels[k], cex = cex, adj = text.adj)
 	}
     } # Unit key is drawn and labelled
 

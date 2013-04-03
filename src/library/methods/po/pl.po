@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-13 10:32+0100\n"
+"POT-Creation-Date: 2012-12-10 18:35+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -12,8 +12,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "na-Revision-Date: 2012-05-29 07:55+0100\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2)\n"
+"|| n%100>=20) ? 1 : 2);\n"
 "X-Poedit-SourceCharset: iso-8859-1\n"
+"X-Generator: Poedit 1.5.5\n"
 
 # methods/src/class_support.c: 32
 # error(_("calling the C routine used as an initializer for 'externalptr' objects"))
@@ -50,19 +51,6 @@ msgstr ""
 "nie znaleziono gniazd 'allMethods' w obiekcie klasy '%s' użytej jako listy "
 "metod dla funkcji '%s'"
 
-# methods/src/methods_list_dispatch.c: 358
-# error(_("S language method selection got an error when called from internal dispatch for function '%s'"),
-# 	      check_symbol_or_string(fname, TRUE,
-# 				  "Function name for method selection called internally"))
-#: methods_list_dispatch.c:358
-#, c-format
-msgid ""
-"S language method selection got an error when called from internal dispatch "
-"for function '%s'"
-msgstr ""
-"wybór metody języka S spowodował błąd gdy został wywołany z wewnętrznego "
-"wysyłania dla funkcji '%s'"
-
 # methods/src/methods_list_dispatch.c: 433
 # error(_("no generic function definition found for '%s'"),
 # 		  CHAR(asChar(name)))
@@ -72,14 +60,14 @@ msgid "no generic function definition found for '%s'"
 msgstr "nie znaleziono definicji ogólnej funkcji dla '%s'"
 
 # methods/src/methods_list_dispatch.c: 436
-# error(_("No generic function definition found for '%s' in the supplied environment"),
+# error(_("no generic function definition found for '%s' in the supplied environment"),
 # 		  CHAR(asChar(name)))
 #: methods_list_dispatch.c:436
 #, c-format
 msgid ""
-"No generic function definition found for '%s' in the supplied environment"
+"no generic function definition found for '%s' in the supplied environment"
 msgstr ""
-"Nie znaleziono definicji ogólnej funkcji dla '%s' w dostarczonym środowisku"
+"nie znaleziono definicji ogólnej funkcji dla '%s' w dostarczonym środowisku"
 
 # methods/src/methods_list_dispatch.c: 471
 # error(_("invalid generic function object for method selection for function '%s': expected a function or a primitive, got an object of class \"%s\""),
@@ -226,16 +214,6 @@ msgstr ""
 "rekursywne użycie funkcji '%s' w wyborze metody, z brakiem określonej metody "
 "domyślnej"
 
-# methods/src/methods_list_dispatch.c: 661
-# error(_("internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call"))
-#: methods_list_dispatch.c:661
-msgid ""
-"internal error in 'callNextMethod': '.nextMethod' was not assigned in the "
-"frame of the method call"
-msgstr ""
-"błąd wewnętrzny w 'callNextMethod': '.nextMethod' nie została przydzielona w "
-"strukturze wywołania metody"
-
 # methods/src/methods_list_dispatch.c: 692
 # error(_("in processing 'callNextMethod', found a '...' in the matched call, but no corresponding '...' argument"))
 #: methods_list_dispatch.c:692
@@ -280,37 +258,47 @@ msgid "'%s' must be a single string (got an object of class \"%s\")"
 msgstr "'%s' musi być pojedynczym łańcuchem (otrzymano obiekt klasy '%s')"
 
 # methods/src/methods_list_dispatch.c: 876
-# error(_("Class should be either a character-string name or a class definition"))
+# error(_("class should be either a character-string name or a class definition"))
 #: methods_list_dispatch.c:876
-msgid "Class should be either a character-string name or a class definition"
-msgstr "Klasa powinna być albo nazwą tekstową albo definicją klasy"
+msgid "class should be either a character-string name or a class definition"
+msgstr "klasa powinna być albo nazwą tekstową albo definicją klasy"
 
 # methods/src/methods_list_dispatch.c: 955
-# error(_("Failed to get the generic for the primitive \"%s\""), CHAR(asChar(fname)))
+# error(_("failed to get the generic for the primitive \"%s\""), CHAR(asChar(fname)))
 #: methods_list_dispatch.c:955
 #, c-format
-msgid "Failed to get the generic for the primitive \"%s\""
-msgstr "Nie udało się uzyskać ogólnej funkcji dla typu prymitywnego '%s'"
+msgid "failed to get the generic for the primitive \"%s\""
+msgstr "nie udało się uzyskać ogólnej funkcji dla typu prymitywnego \"%s\""
 
 # methods/src/methods_list_dispatch.c: 961
-# error(_("Expected a generic function or a primitive for dispatch, got an object of class \"%s\""),
+# error(_("expected a generic function or a primitive for dispatch, got an object of class \"%s\""),
 # 	      class_string(fdef))
 #: methods_list_dispatch.c:961
 #, c-format
 msgid ""
-"Expected a generic function or a primitive for dispatch, got an object of "
+"expected a generic function or a primitive for dispatch, got an object of "
 "class \"%s\""
 msgstr ""
-"Oczekiwano ogólnej funkcji lub typu prymitywnego dla wysyłania, otrzymano "
-"obiekt klasy '%s'"
+"oczekiwano ogólnej funkcji lub typu prymitywnego dla wysyłania, otrzymano "
+"obiekt klasy \"%s\""
 
-# methods/src/methods_list_dispatch.c: 973
-# error(_("Generic \"%s\" seems not to have been initialized for table dispatch---need to have .SigArgs and .AllMtable assigned in its environment"))
-#: methods_list_dispatch.c:973
-#, c-format
-msgid ""
-"Generic \"%s\" seems not to have been initialized for table dispatch---need "
-"to have .SigArgs and .AllMtable assigned in its environment"
-msgstr ""
-"Ogólny '%s' wydaje się nie być zainicjalizowany dla tabeli wysyłki---"
-"potrzeba mieć '.SigArgs' oraz '.AllMtable' przypisane w jego środowisku"
+#~ msgid ""
+#~ "S language method selection got an error when called from internal "
+#~ "dispatch for function '%s'"
+#~ msgstr ""
+#~ "wybór metody języka S spowodował błąd gdy został wywołany z wewnętrznego "
+#~ "wysyłania dla funkcji '%s'"
+
+#~ msgid ""
+#~ "internal error in 'callNextMethod': '.nextMethod' was not assigned in the "
+#~ "frame of the method call"
+#~ msgstr ""
+#~ "błąd wewnętrzny w 'callNextMethod': '.nextMethod' nie została "
+#~ "przydzielona w strukturze wywołania metody"
+
+#~ msgid ""
+#~ "Generic \"%s\" seems not to have been initialized for table dispatch---"
+#~ "need to have .SigArgs and .AllMtable assigned in its environment"
+#~ msgstr ""
+#~ "Ogólny '%s' wydaje się nie być zainicjalizowany dla tabeli wysyłki---"
+#~ "potrzeba mieć '.SigArgs' oraz '.AllMtable' przypisane w jego środowisku"

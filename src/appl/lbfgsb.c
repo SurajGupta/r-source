@@ -21,16 +21,13 @@
 
 /* <UTF8> all char uses here are ASCII */
 
-/* Exports setulb()
- *         ======
- * called from lbfgsb() in ../main/optim.c */
 #include <math.h>
 #include <float.h> /* for DBL_EPSILON */
 #include <string.h>
 #include <R_ext/RS.h> /* for F77_CALL */
 #include <R_ext/Linpack.h>
 #include <R_ext/Applic.h>
-#include <R_ext/PrtUtil.h> /* Rprintf */
+#include <R_ext/Print.h> /* Rprintf */
 
 static void timer(double * ttime)
 {
@@ -134,6 +131,7 @@ static void prn3lb(int n, double *x, double *f, char *task, int iprint,
 
 
 /* ================    L-BFGS-B (version 2.3)	========================== */
+static
 void setulb(int n, int m, double *x, double *l, double *u, int *nbd,
 	    double *f, double *g, double factr, double *pgtol,
 	    double *wa, int * iwa, char *task, int iprint,

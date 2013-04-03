@@ -1,0 +1,1192 @@
+# Chinese translations for R package
+# Copyright (C) 2005 The R Foundation
+# This file is distributed under the same license as the PACKAGE package.
+# 陈斐 <feic@avaya.com>, 2006.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: R 2.1.0\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2013-03-18 19:30+0000\n"
+"PO-Revision-Date: 2007-11-06 13:34+0800\n"
+"Last-Translator: Yihui Xie <xie@yihui.name>\n"
+"Language-Team: Chinese\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=gb2312\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/gnuwin32/console.c:1167 src/gnuwin32/console.c:1209
+msgid "Not enough memory"
+msgstr "内存不够"
+
+#: src/gnuwin32/console.c:1256 src/gnuwin32/console.c:1260
+msgid "Insufficient memory: text not copied to the clipboard"
+msgstr "内存不够：文本没有复制到剪贴板"
+
+#: src/gnuwin32/console.c:1296 src/extra/graphapp/clipboard.c:53
+#: src/extra/graphapp/clipboard.c:79
+msgid "Unable to open the clipboard"
+msgstr "无法打开剪贴板"
+
+#: src/gnuwin32/console.c:1914
+msgid "Insufficient memory. Please close the console"
+msgstr "内存不够。 请关闭控制台"
+
+#: src/gnuwin32/console.c:1969 src/gnuwin32/console.c:2022
+#: src/gnuwin32/preferences.c:333
+#, c-format
+msgid ""
+"Font %s-%d-%d  not found.\n"
+"Using system fixed font"
+msgstr ""
+"找不到%s-%d-%d字体。\n"
+"用系统固定字体"
+
+#: src/gnuwin32/console.c:2127
+msgid "Save selection to"
+msgstr "保存所选到"
+
+#: src/gnuwin32/console.c:2129
+msgid "Save console contents to"
+msgstr "保存控制台内容到"
+
+#: src/gnuwin32/console.c:2228
+msgid "Scrolling.\n"
+msgstr "滚动：\n"
+
+#: src/gnuwin32/console.c:2229
+msgid "  Keyboard: PgUp, PgDown, Ctrl+Arrows, Ctrl+Home, Ctrl+End,\n"
+msgstr "  键盘：PgUp，PgDown，Ctrl+方向键，Ctrl+Home，Ctrl+End；\n"
+
+#: src/gnuwin32/console.c:2230
+msgid ""
+"  Mouse: use the scrollbar(s).\n"
+"\n"
+msgstr ""
+"  鼠标：控制滚动条。\n"
+"\n"
+
+#: src/gnuwin32/console.c:2231
+msgid "Editing.\n"
+msgstr "编辑：\n"
+
+#: src/gnuwin32/console.c:2232
+msgid "  Moving the cursor: \n"
+msgstr "  移动鼠标：\n"
+
+#: src/gnuwin32/console.c:2233
+msgid "     Left arrow or Ctrl+B: move backward one character;\n"
+msgstr "     左箭头或Ctrl+B：左移一字符；\n"
+
+#: src/gnuwin32/console.c:2234
+msgid "     Right arrow or Ctrl+F: move forward one character;\n"
+msgstr "     右箭头或Ctrl+F：右移一字符；\n"
+
+#: src/gnuwin32/console.c:2235
+msgid "     Home or Ctrl+A: go to beginning of line;\n"
+msgstr "     Home或Ctrl+A：移到行头；\n"
+
+#: src/gnuwin32/console.c:2236
+msgid "     End or Ctrl+E: go to end of line;\n"
+msgstr "     End或Ctrl+E：移到行尾；\n"
+
+#: src/gnuwin32/console.c:2237
+msgid "  History: Up and Down Arrows, Ctrl+P, Ctrl+N\n"
+msgstr "  历史命令：上、下箭头，Ctrl+P，Ctrl+N\n"
+
+#: src/gnuwin32/console.c:2238
+msgid "  Deleting:\n"
+msgstr "  删除：\n"
+
+#: src/gnuwin32/console.c:2239
+msgid "     Del or Ctrl+D: delete current character or selection;\n"
+msgstr "     Del或Ctrl+D：删除在当前位置的字符或所选文本；\n"
+
+#: src/gnuwin32/console.c:2240
+msgid "     Backspace: delete preceding character;\n"
+msgstr "     Backspace：删除当前位置之前的字符；\n"
+
+#: src/gnuwin32/console.c:2241
+msgid ""
+"     Ctrl+Del or Ctrl+K: delete text from current character to end of line.\n"
+msgstr "     Ctrl+Del或Ctrl+K：删除当前位置到行尾的所有文字；\n"
+
+#: src/gnuwin32/console.c:2242
+msgid "     Ctrl+U: delete all text from current line.\n"
+msgstr "     Ctrl+U：删除当前行上所有的文字；\n"
+
+#: src/gnuwin32/console.c:2243
+msgid "  Copy and paste.\n"
+msgstr "  复制和粘贴：\n"
+
+#: src/gnuwin32/console.c:2244
+msgid ""
+"     Use the mouse (with the left button held down) to mark (select) text.\n"
+msgstr "     按下鼠标左键选择文字；\n"
+
+#: src/gnuwin32/console.c:2245
+msgid ""
+"     Use Shift+Del (or Ctrl+C) to copy the marked text to the clipboard and\n"
+msgstr "     用Shift+Del(或Ctrl+C) 把选择文字复制到剪贴板；\n"
+
+#: src/gnuwin32/console.c:2246
+msgid ""
+"     Shift+Ins (or Ctrl+V or Ctrl+Y) to paste the content of the clipboard "
+"(if any)  \n"
+msgstr "     用Shift+Ins(或Ctrl+V或Ctrl+Y)来粘贴剪贴板的内容（如果有的话）；\n"
+
+#: src/gnuwin32/console.c:2247
+msgid "     to the console, Ctrl+X first copy then paste\n"
+msgstr "     在控制台中，Ctrl+X表示先复制再粘贴；\n"
+
+#: src/gnuwin32/console.c:2248
+msgid "  Misc:\n"
+msgstr "  其他：\n"
+
+#: src/gnuwin32/console.c:2249
+msgid "     Ctrl+L: Clear the console.\n"
+msgstr "     Ctrl+L：清空控制台；\n"
+
+#: src/gnuwin32/console.c:2250
+msgid "     Ctrl+O or INS: Toggle overwrite mode: initially off.\n"
+msgstr "     Ctrl+O或INS：开关覆盖模式，初始是关掉的；\n"
+
+#: src/gnuwin32/console.c:2251
+msgid "     Ctrl+T: Interchange current char with one to the left.\n"
+msgstr "     Ctrl+T: 将当前所在位置的字符与其左方的字符交换；\n"
+
+#: src/gnuwin32/console.c:2252
+msgid ""
+"\n"
+"Note: Console is updated only when some input is required.\n"
+msgstr ""
+"\n"
+"注意：控制台输出可以被缓冲，\n"
+
+#: src/gnuwin32/console.c:2253
+msgid ""
+"  Use Ctrl+W to toggle this feature off/on.\n"
+"\n"
+msgstr ""
+"  用Ctrl+W来开关这一功能。\n"
+"\n"
+
+#: src/gnuwin32/console.c:2254
+msgid ""
+"Use ESC to stop the interpreter.\n"
+"\n"
+msgstr ""
+"用ESC来中断解释器的工作。\n"
+"\n"
+
+#: src/gnuwin32/console.c:2255
+msgid ""
+"TAB starts completion of the current word.\n"
+"\n"
+msgstr "TAB键可以补全当前单词。\n"
+
+#: src/gnuwin32/console.c:2256
+msgid "Standard Windows hotkeys can be used to switch to the\n"
+msgstr "可以用Windows标准热键来转换\n"
+
+#: src/gnuwin32/console.c:2257
+msgid "graphics device (Ctrl+Tab or Ctrl+F6 in MDI, Alt+Tab in SDI)"
+msgstr "绘图设备 (MDI用Ctrl+Tab或Ctrl+F6, SDI用Alt+Tab)"
+
+#: src/gnuwin32/editor.c:88 src/gnuwin32/editor.c:90
+msgid "R Editor"
+msgstr "R编辑器"
+
+#: src/gnuwin32/editor.c:119
+#, c-format
+msgid "unable to open file %s for reading"
+msgstr "无法读取文件%s"
+
+#: src/gnuwin32/editor.c:135
+#, c-format
+msgid "Could not read from file '%s'"
+msgstr "无法读取'%s'文件"
+
+#: src/gnuwin32/editor.c:166
+#, c-format
+msgid "Could not save file '%s'"
+msgstr "无法保存'%s'文件"
+
+#: src/gnuwin32/editor.c:182
+msgid "Save script as"
+msgstr "保存程序脚本为"
+
+#: src/gnuwin32/editor.c:377 src/gnuwin32/editor.c:694
+#: src/gnuwin32/pager.c:431 src/gnuwin32/rui.c:1076
+msgid "Open script"
+msgstr "打开程序脚本"
+
+#: src/gnuwin32/editor.c:500 src/gnuwin32/pager.c:185 src/gnuwin32/pager.c:205
+msgid "No RGui console to paste to"
+msgstr "没有可以粘贴上的RGui控制台"
+
+#: src/gnuwin32/editor.c:602
+msgid "R EDITOR\n"
+msgstr "R编辑器\n"
+
+#: src/gnuwin32/editor.c:604
+msgid "A standard text editor for editing and running R code.\n"
+msgstr "一个用于编辑和运行R程序的标准文本编辑器。\n"
+
+#: src/gnuwin32/editor.c:606
+msgid "RUNNING COMMANDS\n"
+msgstr "运行命令\n"
+
+#: src/gnuwin32/editor.c:607
+msgid "To run a line or section of R code, select the code and either\n"
+msgstr "要运行一行或一段R代码, 请先选择代码，然后再\n"
+
+#: src/gnuwin32/editor.c:608
+msgid "     Press Ctrl-R\n"
+msgstr "     按Ctrl-R\n"
+
+#: src/gnuwin32/editor.c:609
+msgid "     Select \"Run line or selection\" from the \"Edit\" menu\n"
+msgstr "     或从\"编辑\"菜单中选择\"运行当前行或所选命令\"\n"
+
+#: src/gnuwin32/editor.c:610
+msgid "     Press the \"Run line or selection\" icon on the toolbar\n"
+msgstr "     或按工具栏上的\"运行当前行或所选命令\"按钮\n"
+
+#: src/gnuwin32/editor.c:611
+msgid ""
+"This will copy the selected commands to the console and evaluate them.\n"
+msgstr "这会把选择了的代码复制到控制台来运行。\n"
+
+#: src/gnuwin32/editor.c:612
+msgid ""
+"If there is no selection, this will just run the current line and advance\n"
+msgstr "如果没有选择代码的话，则运行当前所在行的代码，并将\n"
+
+#: src/gnuwin32/editor.c:613
+msgid "the cursor by one line.\n"
+msgstr "光标下移一行。\n"
+
+#: src/gnuwin32/editor.c:625 src/gnuwin32/editor.c:702
+#: src/gnuwin32/editor.c:760
+msgid "Run line or selection"
+msgstr "运行当前行或所选代码"
+
+#: src/gnuwin32/editor.c:627 src/gnuwin32/editor.c:745
+msgid "Undo"
+msgstr "撤消"
+
+#: src/gnuwin32/editor.c:629 src/gnuwin32/editor.c:748
+msgid "Cut"
+msgstr "剪切"
+
+#: src/gnuwin32/editor.c:630 src/gnuwin32/editor.c:750
+#: src/gnuwin32/pager.c:305 src/gnuwin32/pager.c:478 src/gnuwin32/rui.c:859
+#: src/gnuwin32/rui.c:1088 src/gnuwin32/rui.c:1144
+msgid "Copy"
+msgstr "复制"
+
+#: src/gnuwin32/editor.c:631 src/gnuwin32/editor.c:752 src/gnuwin32/rui.c:860
+#: src/gnuwin32/rui.c:1092 src/gnuwin32/rui.c:1145
+msgid "Paste"
+msgstr "粘贴"
+
+#: src/gnuwin32/editor.c:632 src/gnuwin32/editor.c:754
+msgid "Delete"
+msgstr "删除"
+
+#: src/gnuwin32/editor.c:634 src/gnuwin32/editor.c:756
+#: src/gnuwin32/pager.c:308 src/gnuwin32/pager.c:484 src/gnuwin32/rui.c:866
+#: src/gnuwin32/rui.c:1149
+msgid "Select all"
+msgstr "全选"
+
+#: src/gnuwin32/editor.c:698
+msgid "Save script"
+msgstr "保存程序脚本"
+
+#: src/gnuwin32/editor.c:706 src/gnuwin32/pager.c:451
+#: src/library/grDevices/src/devWindows.c:1594
+msgid "Return focus to Console"
+msgstr "回到控制台"
+
+#: src/gnuwin32/editor.c:709
+msgid "Print script"
+msgstr "打印程序脚本"
+
+#: src/gnuwin32/editor.c:711 src/gnuwin32/pager.c:446 src/gnuwin32/rui.c:1104
+#: src/library/grDevices/src/devWindows.c:1588
+msgid "Print"
+msgstr "打印"
+
+#: src/gnuwin32/editor.c:729 src/gnuwin32/pager.c:467 src/gnuwin32/rui.c:1122
+#: src/library/utils/src/windows/dataentry.c:1790
+#: src/library/grDevices/src/devWindows.c:1626
+msgid "File"
+msgstr "文件"
+
+#: src/gnuwin32/editor.c:730 src/gnuwin32/pager.c:468 src/gnuwin32/rui.c:1124
+msgid "New script"
+msgstr "新建程序脚本"
+
+#: src/gnuwin32/editor.c:732 src/gnuwin32/pager.c:469 src/gnuwin32/rui.c:1125
+msgid "Open script..."
+msgstr "打开程序脚本..."
+
+#: src/gnuwin32/editor.c:734
+msgid "Save"
+msgstr "保存"
+
+#: src/gnuwin32/editor.c:736
+msgid "Save as..."
+msgstr "另存为..."
+
+#: src/gnuwin32/editor.c:739 src/gnuwin32/pager.c:470 src/gnuwin32/rui.c:1138
+#: src/library/grDevices/src/devWindows.c:1689
+msgid "Print..."
+msgstr "打印..."
+
+#: src/gnuwin32/editor.c:742
+msgid "Close script"
+msgstr "关闭程序脚本"
+
+#: src/gnuwin32/editor.c:744 src/gnuwin32/pager.c:477 src/gnuwin32/rui.c:1143
+#: src/library/utils/src/windows/dataentry.c:1796
+msgid "Edit"
+msgstr "编辑"
+
+#: src/gnuwin32/editor.c:758 src/gnuwin32/rui.c:1150
+msgid "Clear console"
+msgstr "清空控制台"
+
+#: src/gnuwin32/editor.c:762
+msgid "Run all"
+msgstr "运行所有代码"
+
+#: src/gnuwin32/editor.c:765
+msgid "Find..."
+msgstr "查找..."
+
+#: src/gnuwin32/editor.c:767
+msgid "Replace..."
+msgstr "替换..."
+
+#: src/gnuwin32/editor.c:770 src/gnuwin32/rui.c:1154
+msgid "GUI preferences..."
+msgstr "GUI选项..."
+
+#: src/gnuwin32/editor.c:780 src/gnuwin32/rui.c:1186
+#: src/library/utils/src/windows/dataentry.c:1697
+#: src/library/utils/src/windows/dataentry.c:1807
+msgid "Help"
+msgstr "帮助"
+
+#: src/gnuwin32/editor.c:781
+msgid "Editor"
+msgstr "编辑器"
+
+#: src/gnuwin32/editor.c:840
+msgid "Maximum number of editors reached"
+msgstr "超出编辑器数量限制"
+
+#: src/gnuwin32/editor.c:845
+msgid "Unable to create editor window"
+msgstr "无法建立编辑器窗口"
+
+#: src/gnuwin32/editor.c:853
+msgid "Untitled"
+msgstr "未命名"
+
+#: src/gnuwin32/extra.c:823 src/gnuwin32/rui.c:1224
+msgid "Select file"
+msgstr "选择文件"
+
+#: src/gnuwin32/pager.c:89
+msgid "Error opening file"
+msgstr "打开文件时出错"
+
+#: src/gnuwin32/pager.c:96
+msgid "Insufficient memory to display file in internal pager"
+msgstr "用内部文本浏览程序来显示文件时内存不够"
+
+#: src/gnuwin32/pager.c:177 src/gnuwin32/pager.c:189 src/gnuwin32/pager.c:209
+#: src/gnuwin32/rui.c:237 src/gnuwin32/rui.c:264
+msgid "No selection"
+msgstr "没有选择内容"
+
+#: src/gnuwin32/pager.c:306 src/gnuwin32/pager.c:436 src/gnuwin32/pager.c:480
+msgid "Paste to console"
+msgstr "粘贴到控制台"
+
+#: src/gnuwin32/pager.c:307 src/gnuwin32/pager.c:441 src/gnuwin32/pager.c:482
+msgid "Paste commands to console"
+msgstr "粘贴命令到控制台"
+
+#: src/gnuwin32/pager.c:310 src/gnuwin32/rui.c:869
+#: src/library/utils/src/windows/dataentry.c:1703
+#: src/library/grDevices/src/devWindows.c:1686
+msgid "Stay on top"
+msgstr "窗口保持在最前面"
+
+#: src/gnuwin32/pager.c:312 src/gnuwin32/pager.c:475
+#: src/library/utils/src/windows/dataentry.c:1705
+#: src/library/utils/src/windows/dataentry.c:1792
+msgid "Close"
+msgstr "关闭"
+
+#: src/gnuwin32/pager.c:472 src/gnuwin32/rui.c:1139
+msgid "Save to File..."
+msgstr "保存到文件..."
+
+#: src/gnuwin32/pager.c:487 src/gnuwin32/rui.c:1156
+msgid "View"
+msgstr "查看"
+
+#: src/gnuwin32/pager.c:519
+msgid "Unable to create pager window"
+msgstr "无法建立文件浏览程序的窗口"
+
+#: src/gnuwin32/preferences.c:302
+msgid ""
+"The overall console properties cannot be changed\n"
+"on a running console.\n"
+"\n"
+"Save the preferences and restart Rgui to apply them.\n"
+msgstr ""
+"不能在控制台运行的时候改变其属性\n"
+"\n"
+"保存设置后重新启动Rgui以使更改生效。\n"
+
+#: src/gnuwin32/preferences.c:306
+msgid ""
+"The language for menus cannot be changed on a\n"
+" running console.\n"
+"\n"
+"Save the preferences and restart Rgui to apply to menus.\n"
+msgstr ""
+"不能在控制台运行的时候更改菜单的语言\n"
+"\n"
+"在保存设置后重新启动Rgui才能使更改生效。\n"
+
+#: src/gnuwin32/preferences.c:371
+msgid "Changes in pager size will not apply to any open pagers"
+msgstr "更改文本浏览程序的显示大小将不会影响其它已经打开的文本浏览程序"
+
+#: src/gnuwin32/preferences.c:377
+msgid ""
+"Do not change pager type if any pager is open\n"
+"Proceed?"
+msgstr ""
+"如果有文本浏览程序正在运行，则请不要改动文本浏览器的类型\n"
+"是否继续？"
+
+#: src/gnuwin32/preferences.c:410
+msgid "Select directory for file 'Rconsole'"
+msgstr "为文件Rconsole选择目录"
+
+#: src/gnuwin32/preferences.c:503
+msgid "Select 'Rconsole' file"
+msgstr "选择'Rconsole'文件"
+
+#: src/gnuwin32/preferences.c:688
+#, c-format
+msgid "Ignored '%s' at line %d of file %s"
+msgstr "文件%3$s的第%2$d行'%1$s'略过不用"
+
+#: src/gnuwin32/preferences.c:789
+msgid "Rgui Configuration Editor"
+msgstr "Rgui配置编辑器"
+
+#: src/gnuwin32/rui.c:140
+msgid "Select file to source"
+msgstr "选择要运行的程序文件"
+
+#: src/gnuwin32/rui.c:161
+msgid "Select image to load"
+msgstr "选择要载入的映像"
+
+#: src/gnuwin32/rui.c:176
+msgid "Save image in"
+msgstr "保存映像到"
+
+#: src/gnuwin32/rui.c:190
+msgid "Load history from"
+msgstr "载入历史于"
+
+#: src/gnuwin32/rui.c:199
+msgid "Save history in"
+msgstr "保存历史到"
+
+#: src/gnuwin32/rui.c:246 src/gnuwin32/rui.c:255
+msgid "No text available"
+msgstr "没有可用的文本"
+
+#: src/gnuwin32/rui.c:304
+msgid "Name of data frame or matrix"
+msgstr "数据框或矩阵名"
+
+#: src/gnuwin32/rui.c:311
+#, c-format
+msgid "'%s' cannot be found"
+msgstr "找不到'%s'"
+
+#: src/gnuwin32/rui.c:451
+msgid "Are you sure?"
+msgstr "是否确定?"
+
+#: src/gnuwin32/rui.c:546
+msgid "Help on"
+msgstr "帮助于"
+
+#: src/gnuwin32/rui.c:602
+msgid "Search help"
+msgstr "搜索帮助"
+
+#: src/gnuwin32/rui.c:617
+msgid "Search for words in help list archives and documentation"
+msgstr "搜索邮件列表归档和文档"
+
+#: src/gnuwin32/rui.c:632
+msgid "Apropos"
+msgstr "模糊查找对象"
+
+#: src/gnuwin32/rui.c:855
+msgid "Can only drag-and-drop .R, .RData and .rda files"
+msgstr "鼠标拖放只适用于.R，.RData和.rda后缀的文件"
+
+#: src/gnuwin32/rui.c:861 src/gnuwin32/rui.c:1146
+msgid "Paste commands only"
+msgstr "仅粘贴命令行"
+
+#: src/gnuwin32/rui.c:862 src/gnuwin32/rui.c:1096
+msgid "Copy and paste"
+msgstr "复制并粘贴"
+
+#: src/gnuwin32/rui.c:864
+msgid "Clear window"
+msgstr "清空窗口"
+
+#: src/gnuwin32/rui.c:868 src/gnuwin32/rui.c:1169
+msgid "Buffered output"
+msgstr "缓冲输出"
+
+#: src/gnuwin32/rui.c:908
+msgid "Packages"
+msgstr "程序包"
+
+#: src/gnuwin32/rui.c:909
+msgid "Load package..."
+msgstr "加载程序包..."
+
+#: src/gnuwin32/rui.c:911
+msgid "Set CRAN mirror..."
+msgstr "设定CRAN镜像..."
+
+#: src/gnuwin32/rui.c:913
+msgid "Select repositories..."
+msgstr "选择软件库..."
+
+#: src/gnuwin32/rui.c:915
+msgid "Install package(s)..."
+msgstr "安装程序包..."
+
+#: src/gnuwin32/rui.c:917
+msgid "Update packages..."
+msgstr "更新程序包..."
+
+#: src/gnuwin32/rui.c:920
+msgid "Install package(s) from local zip files..."
+msgstr "从本地zip文件安装程序包..."
+
+#: src/gnuwin32/rui.c:944
+msgid "FAQ on R"
+msgstr "R FAQ"
+
+#: src/gnuwin32/rui.c:946
+msgid "FAQ on R for &Windows"
+msgstr "Windows下的R FAQ"
+
+#: src/gnuwin32/rui.c:952 src/gnuwin32/rui.c:955
+msgid "Manuals (in PDF)"
+msgstr "手册(PDF文件)"
+
+#: src/gnuwin32/rui.c:985
+msgid "R functions (text)..."
+msgstr "R函数帮助(文本)..."
+
+#: src/gnuwin32/rui.c:987
+msgid "Html help"
+msgstr "Html帮助"
+
+#: src/gnuwin32/rui.c:989
+msgid "Search help..."
+msgstr "搜索帮助..."
+
+#: src/gnuwin32/rui.c:994
+msgid "Apropos..."
+msgstr "模糊查找对象..."
+
+#: src/gnuwin32/rui.c:996
+msgid "R Project home page"
+msgstr "R主页"
+
+#: src/gnuwin32/rui.c:997
+msgid "CRAN home page"
+msgstr "CRAN主页"
+
+#: src/gnuwin32/rui.c:999
+msgid "About"
+msgstr "关于"
+
+#: src/gnuwin32/rui.c:1008 src/extra/graphapp/gmenus.c:52
+msgid "Windows"
+msgstr "窗口"
+
+#: src/gnuwin32/rui.c:1009 src/extra/graphapp/gmenus.c:53
+msgid "Cascade"
+msgstr "层叠"
+
+#: src/gnuwin32/rui.c:1010 src/extra/graphapp/gmenus.c:54
+msgid "Tile &Horizontally"
+msgstr "水平铺"
+
+#: src/gnuwin32/rui.c:1011 src/extra/graphapp/gmenus.c:55
+msgid "Tile &Vertically"
+msgstr "垂直铺"
+
+#: src/gnuwin32/rui.c:1012
+msgid "Minimize group"
+msgstr "最小化组"
+
+#: src/gnuwin32/rui.c:1013
+msgid "Restore group"
+msgstr "恢复组"
+
+#: src/gnuwin32/rui.c:1080
+msgid "Load workspace"
+msgstr "加载工作空间"
+
+#: src/gnuwin32/rui.c:1084
+msgid "Save workspace"
+msgstr "保存工作空间"
+
+#: src/gnuwin32/rui.c:1100
+msgid "Stop current computation"
+msgstr "中断当前计算"
+
+#: src/gnuwin32/rui.c:1123
+msgid "Source R code..."
+msgstr "运行R脚本文件..."
+
+#: src/gnuwin32/rui.c:1126
+msgid "Display file(s)..."
+msgstr "显示文件内容..."
+
+#: src/gnuwin32/rui.c:1128
+msgid "Load Workspace..."
+msgstr "加载工作空间..."
+
+#: src/gnuwin32/rui.c:1129
+msgid "Save Workspace..."
+msgstr "保存工作空间..."
+
+#: src/gnuwin32/rui.c:1131
+msgid "Load History..."
+msgstr "加载历史..."
+
+#: src/gnuwin32/rui.c:1133
+msgid "Save History..."
+msgstr "保存历史..."
+
+#: src/gnuwin32/rui.c:1136
+msgid "Change dir..."
+msgstr "改变工作目录..."
+
+#: src/gnuwin32/rui.c:1141
+msgid "Exit"
+msgstr "退出"
+
+#: src/gnuwin32/rui.c:1148
+msgid "Copy and Paste"
+msgstr "复制并粘贴"
+
+#: src/gnuwin32/rui.c:1152
+msgid "Data editor..."
+msgstr "数据编辑器..."
+
+#: src/gnuwin32/rui.c:1157
+msgid "Toolbar"
+msgstr "工具栏"
+
+#: src/gnuwin32/rui.c:1158
+msgid "Statusbar"
+msgstr "状态栏"
+
+#: src/gnuwin32/rui.c:1162
+msgid "Misc"
+msgstr "其他"
+
+#: src/gnuwin32/rui.c:1163
+msgid "Stop current computation           \tESC"
+msgstr "中断当前的计算           \tESC"
+
+#: src/gnuwin32/rui.c:1165
+msgid "Stop all computations"
+msgstr "中断所有计算"
+
+#: src/gnuwin32/rui.c:1167
+msgid "Break to debugger"
+msgstr "进入调试器"
+
+#: src/gnuwin32/rui.c:1170
+msgid "Word completion"
+msgstr "补全单词"
+
+#: src/gnuwin32/rui.c:1172
+msgid "Filename completion"
+msgstr "补全文件名"
+
+#: src/gnuwin32/rui.c:1179
+msgid "List objects"
+msgstr "列出对象"
+
+#: src/gnuwin32/rui.c:1180
+msgid "Remove all objects"
+msgstr "删除所有对象"
+
+#: src/gnuwin32/rui.c:1181
+msgid "List search &path"
+msgstr "列出查找路径"
+
+#: src/gnuwin32/rui.c:1187
+msgid "Console"
+msgstr "控制台"
+
+#: src/gnuwin32/rui.c:1268
+msgid "'mname' is limited to 1000 bytes"
+msgstr "'mname'大小限制在1000字节以内"
+
+#: src/gnuwin32/rui.c:1310
+#, c-format
+msgid "menu %s does not exist"
+msgstr "没有%s菜单"
+
+#: src/gnuwin32/rui.c:1363
+msgid "'menu' is limited to 500 bytes"
+msgstr "'menu'的长度限制在500字节以内"
+
+#: src/gnuwin32/rui.c:1373
+msgid "base menu does not exist"
+msgstr "基础菜单不存在"
+
+#: src/gnuwin32/rui.c:1388
+msgid "failed to allocate menu"
+msgstr "无法配置菜单"
+
+#: src/gnuwin32/rui.c:1405 src/gnuwin32/rui.c:1529
+msgid "menu + item is limited to 1000 bytes"
+msgstr "菜单加菜单项的长度限制在1000字节以内"
+
+#: src/gnuwin32/rui.c:1413 src/gnuwin32/rui.c:1496
+msgid "menu does not exist"
+msgstr "没有这一菜单"
+
+#: src/gnuwin32/rui.c:1431 src/gnuwin32/rui.c:1454 src/gnuwin32/rui.c:1459
+msgid "failed to allocate char storage"
+msgstr "配置字符储存失败"
+
+#: src/gnuwin32/rui.c:1467
+msgid "failed to allocate menuitem"
+msgstr "配置菜单项失败"
+
+#: src/gnuwin32/rui.c:1519
+msgid "menu not found"
+msgstr "找不到菜单"
+
+#: src/gnuwin32/rui.c:1537
+msgid "menu or item does not exist"
+msgstr "菜单或者菜单项不存在"
+
+#: src/gnuwin32/system.c:442
+msgid "Save workspace image?"
+msgstr "是否保存工作空间映像?"
+
+#: src/extra/graphapp/clipboard.c:69 src/extra/graphapp/clipboard.c:73
+msgid "Insufficient memory: cell not copied to the clipboard"
+msgstr "内存不足: 单元格没有复制到剪贴板"
+
+#: src/extra/graphapp/dialogs.c:147 src/extra/graphapp/dialogs.c:164
+#: src/extra/graphapp/dialogs.c:181
+msgid "Question"
+msgstr "问题"
+
+#: src/extra/graphapp/dialogs.c:202
+msgid " Change working directory to:"
+msgstr " 将当前工作目录改成："
+
+#: src/extra/graphapp/dialogs.c:205
+#, c-format
+msgid "Unable to set '%s' as working directory"
+msgstr "无法将'%s'设成工作目录"
+
+#: src/extra/graphapp/dialogs.c:602 src/extra/graphapp/dialogs.c:620
+#: src/extra/graphapp/dialogs.c:626 src/extra/graphapp/dialogs.c:725
+#: src/extra/graphapp/dialogs.c:739 src/extra/graphapp/dialogs.c:745
+#: src/library/utils/src/windows/widgets.c:125
+msgid "Cancel"
+msgstr "取消"
+
+#: src/extra/graphapp/dialogs.c:622 src/extra/graphapp/dialogs.c:741
+#: src/library/utils/src/windows/widgets.c:124
+msgid "OK"
+msgstr "确定"
+
+#: src/extra/graphapp/dialogs.c:733
+msgid "User"
+msgstr "用户"
+
+#: src/extra/graphapp/dialogs.c:734
+msgid "Password"
+msgstr "密码"
+
+#: src/extra/graphapp/dialogs.c:900 src/extra/graphapp/dialogs.c:906
+#, c-format
+msgid "\"%s\" not found"
+msgstr "找不到\"%s\""
+
+#: src/extra/graphapp/gmenus.c:56
+msgid "Arrange Icons"
+msgstr "排列图标"
+
+#: src/library/utils/src/windows/dataentry.c:223
+#: src/library/utils/src/windows/dataentry.c:1850
+#: src/library/utils/src/windows/dataentry.c:1853
+#: src/library/utils/src/windows/dataentry.c:1884
+msgid "invalid argument"
+msgstr "参数无效"
+
+#: src/library/utils/src/windows/dataentry.c:270
+msgid "invalid type for value"
+msgstr "值的类型无效"
+
+#: src/library/utils/src/windows/dataentry.c:281
+msgid "Data Editor"
+msgstr "数据编辑器"
+
+#: src/library/utils/src/windows/dataentry.c:282
+#: src/library/utils/src/windows/dataentry.c:1891
+msgid "invalid device"
+msgstr "设备无效"
+
+#: src/library/utils/src/windows/dataentry.c:331
+msgid "dataentry: internal memory problem"
+msgstr "dataentry：内部内存问题"
+
+#: src/library/utils/src/windows/dataentry.c:634
+#: src/library/utils/src/windows/dataentry.c:1221
+msgid "dataentry: internal memory error"
+msgstr "dataentry：内部内存错误"
+
+#: src/library/utils/src/windows/dataentry.c:757
+#: src/library/utils/src/windows/dataentry.c:770
+msgid "internal type error in dataentry"
+msgstr "dataentry中的内部类型出错"
+
+#: src/library/utils/src/windows/dataentry.c:852
+msgid "dataentry: parse error on string"
+msgstr "dataentry：字符串句法分析出错"
+
+#: src/library/utils/src/windows/dataentry.c:995
+msgid "dataentry: expression too long"
+msgstr "dataentry：表达式太长"
+
+#: src/library/utils/src/windows/dataentry.c:1472
+msgid "column names cannot be blank"
+msgstr "列名不能为空"
+
+#: src/library/utils/src/windows/dataentry.c:1518
+msgid "Variable editor"
+msgstr "变量编辑器"
+
+#: src/library/utils/src/windows/dataentry.c:1523
+msgid "variable name"
+msgstr "变量名"
+
+#: src/library/utils/src/windows/dataentry.c:1525
+msgid "type"
+msgstr "类型"
+
+#: src/library/utils/src/windows/dataentry.c:1639
+msgid "Cell width(s)"
+msgstr "单元格宽"
+
+#: src/library/utils/src/windows/dataentry.c:1645
+msgid "Cell width"
+msgstr "单元格宽"
+
+#: src/library/utils/src/windows/dataentry.c:1648
+msgid "variable"
+msgstr "变量"
+
+#: src/library/utils/src/windows/dataentry.c:1691
+msgid ""
+"Navigation.\n"
+"  Keyboard: cursor keys move selection\n"
+"\tTab move right, Shift+Tab moves left\n"
+"\tPgDn or Ctrl+F: move down one screenful\n"
+"\tPgUp or Ctrl+B: move up one screenful\n"
+"\tHome: move to (1,1) cell\n"
+"\tEnd: show last rows of last column.\n"
+"   Mouse: left-click in a cell, use the scrollbar(s).\n"
+"\n"
+"Editing.\n"
+"  Type in the currently hightlighted cell\n"
+"  Double-click in a cell for an editable field\n"
+"\n"
+"Misc.\n"
+"  Ctrl-L redraws the screen, auto-resizing the columns\n"
+"  Ctrl-C copies selected cell\n"
+"  Ctrl-V pastes to selected cell\n"
+"  Right-click menu for copy, paste, autosize currently selected column\n"
+"\n"
+msgstr ""
+"导航：\n"
+"  键盘: 方向键用来移动更改选择区域\n"
+"\tTab右移, Shift+Tab左移\n"
+"\tPgDn或Ctrl+F：整屏下移\n"
+"\tPgUp或Ctrl+B：整屏上移\n"
+"\tHome：移到(1,1)位置\n"
+"\tEnd：显示最后一列的最后一行。\n"
+"   鼠标：在单元格里按左键；使用滚动条。\n"
+"\n"
+"编辑：\n"
+"  在当前选择单元格里可直接用键盘输入\n"
+"  在单元格里双击可以对该单元格进行编辑\n"
+"\n"
+"其他：\n"
+"  Ctrl-L刷新屏幕，自动调整列的大小\n"
+"  Ctrl-C复制所选单元格\n"
+"  Ctrl-V粘贴到所择单元格\n"
+"  右键菜单用来复制, 粘贴, 自动调整所选列的宽度\n"
+"\n"
+
+#: src/library/utils/src/windows/dataentry.c:1699
+msgid "Copy selected cell"
+msgstr "复制所选单元格"
+
+#: src/library/utils/src/windows/dataentry.c:1700
+msgid "Paste to selected cell"
+msgstr "粘贴到所选单元格"
+
+#: src/library/utils/src/windows/dataentry.c:1701
+msgid "Autosize column"
+msgstr "自动调节列宽"
+
+#: src/library/utils/src/windows/dataentry.c:1797
+msgid "Copy  \tCTRL+C"
+msgstr "复制  \tCTRL+C"
+
+#: src/library/utils/src/windows/dataentry.c:1799
+msgid "Paste \tCTRL+V"
+msgstr "粘贴 \tCTRL+V"
+
+#: src/library/utils/src/windows/dataentry.c:1801
+msgid "Delete\tDEL"
+msgstr "删除\tDEL"
+
+#: src/library/utils/src/windows/dataentry.c:1804
+msgid "Cell widths ..."
+msgstr "单元格宽..."
+
+#: src/library/utils/src/windows/dataentry.c:1808
+msgid "Data editor"
+msgstr "数据编辑器"
+
+#: src/library/grDevices/src/devWindows.c:932
+msgid "Portable network graphics file"
+msgstr "便携式网络图形文件"
+
+#: src/library/grDevices/src/devWindows.c:935
+msgid "Windows bitmap file"
+msgstr "Windows位图文件"
+
+#: src/library/grDevices/src/devWindows.c:938
+msgid "TIFF file"
+msgstr "TIFF文件"
+
+#: src/library/grDevices/src/devWindows.c:941
+msgid "Jpeg file"
+msgstr "Jpeg文件"
+
+#: src/library/grDevices/src/devWindows.c:963
+msgid "Postscript file"
+msgstr "Postscript文件"
+
+#: src/library/grDevices/src/devWindows.c:975
+msgid "PDF file"
+msgstr "PDF文件"
+
+#: src/library/grDevices/src/devWindows.c:987
+msgid "Enhanced metafiles"
+msgstr "增强型图元文件"
+
+#: src/library/grDevices/src/devWindows.c:990
+#: src/library/grDevices/src/devWindows.c:3436
+msgid "file path selected is too long: only 512 bytes are allowed"
+msgstr "选择文件路径太长：最多只能有512字节"
+
+#: src/library/grDevices/src/devWindows.c:1201
+msgid "No plot to replace!"
+msgstr "没有可替换的图！"
+
+#: src/library/grDevices/src/devWindows.c:1249
+msgid "Variable name"
+msgstr "变量名"
+
+#: src/library/grDevices/src/devWindows.c:1258
+#, fuzzy
+msgid "Variable doesn't contain any plots!"
+msgstr "变量不存在或不包含任何图！"
+
+#: src/library/grDevices/src/devWindows.c:1273
+msgid "Name of variable to save to"
+msgstr "要保存到的变量名"
+
+#: src/library/grDevices/src/devWindows.c:1582
+msgid "Copy to the clipboard as a metafile"
+msgstr "作为增强型图元文件复制到剪贴板"
+
+#: src/library/grDevices/src/devWindows.c:1600
+#: src/library/grDevices/src/devWindows.c:1611
+msgid "Stop locator"
+msgstr "停止定位器"
+
+#: src/library/grDevices/src/devWindows.c:1610
+#: src/library/grDevices/src/devWindows.c:1614
+msgid "Stop"
+msgstr "停止"
+
+#: src/library/grDevices/src/devWindows.c:1616
+msgid "Continue"
+msgstr "继续"
+
+#: src/library/grDevices/src/devWindows.c:1620
+msgid "Next"
+msgstr "下一个"
+
+#: src/library/grDevices/src/devWindows.c:1621
+msgid "Next plot"
+msgstr "下一张图"
+
+#: src/library/grDevices/src/devWindows.c:1627
+msgid "Save as"
+msgstr "另存为"
+
+#: src/library/grDevices/src/devWindows.c:1636
+#: src/library/grDevices/src/devWindows.c:1638
+#: src/library/grDevices/src/devWindows.c:1640
+#, c-format
+msgid "%s quality..."
+msgstr "%s 印刷质量..."
+
+#: src/library/grDevices/src/devWindows.c:1642
+msgid "Copy to the clipboard"
+msgstr "复制到剪贴板"
+
+#: src/library/grDevices/src/devWindows.c:1643
+msgid "as a Bitmap\tCTRL+C"
+msgstr "为位图\tCTRL+C"
+
+#: src/library/grDevices/src/devWindows.c:1644
+msgid "as a Metafile\tCTRL+W"
+msgstr "为图元文件\tCTRL+W"
+
+#: src/library/grDevices/src/devWindows.c:1647
+msgid "Print...\tCTRL+P"
+msgstr "打印...\tCTRL+P"
+
+#: src/library/grDevices/src/devWindows.c:1649
+msgid "close Device"
+msgstr "关闭设备"
+
+#: src/library/grDevices/src/devWindows.c:1650
+msgid "History"
+msgstr "历史"
+
+#: src/library/grDevices/src/devWindows.c:1651
+msgid "Recording"
+msgstr "记录"
+
+#: src/library/grDevices/src/devWindows.c:1654
+msgid "Add\tINS"
+msgstr "插入\tINS"
+
+#: src/library/grDevices/src/devWindows.c:1655
+msgid "Replace"
+msgstr "替换"
+
+#: src/library/grDevices/src/devWindows.c:1657
+msgid "Previous\tPgUp"
+msgstr "上一个\tPgUp"
+
+#: src/library/grDevices/src/devWindows.c:1658
+msgid "Next\tPgDown"
+msgstr "下一个\tPgDown"
+
+#: src/library/grDevices/src/devWindows.c:1660
+msgid "Save to variable..."
+msgstr "保存到变量..."
+
+#: src/library/grDevices/src/devWindows.c:1661
+msgid "Get from variable..."
+msgstr "读取于变量..."
+
+#: src/library/grDevices/src/devWindows.c:1663
+msgid "Clear history"
+msgstr "清除历史"
+
+#: src/library/grDevices/src/devWindows.c:1664
+msgid "Resize"
+msgstr "重设大小"
+
+#: src/library/grDevices/src/devWindows.c:1665
+msgid "R mode"
+msgstr "R模式"
+
+#: src/library/grDevices/src/devWindows.c:1667
+msgid "Fit to window"
+msgstr "适合窗口"
+
+#: src/library/grDevices/src/devWindows.c:1669
+msgid "Fixed size"
+msgstr "固定大小"
+
+#: src/library/grDevices/src/devWindows.c:1676
+msgid "Copy as metafile"
+msgstr "复制为图元文件"
+
+#: src/library/grDevices/src/devWindows.c:1678
+msgid "Copy as bitmap"
+msgstr "复制为位图"
+
+#: src/library/grDevices/src/devWindows.c:1681
+msgid "Save as metafile..."
+msgstr "保存为图元文件..."
+
+#: src/library/grDevices/src/devWindows.c:1683
+msgid "Save as postscript..."
+msgstr "保存为postscript..."
+
+#: src/library/grDevices/src/devWindows.c:3136
+msgid "Locator is active"
+msgstr "定位器已激活"
+
+#: src/library/grDevices/src/devWindows.c:3763
+msgid "Waiting to confirm page change..."
+msgstr "等待页面改变的确认..."
+
+#: src/library/grDevices/src/devWindows.c:3775
+msgid "Click or hit ENTER for next page"
+msgstr "按ENTER看下一页"

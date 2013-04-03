@@ -168,7 +168,7 @@ p <- 7e-4; df <- 0.9
 abs(1-c(pchisq(qchisq(p, df),df)/p, # was 2.31e-8 for R <= 1.8.1
         pchisq(qchisq(1-p, df,lower=FALSE),df,lower=FALSE)/(1-p),# was 1.618e-11
         pchisq(qchisq(log(p), df,log=TRUE),df, log=TRUE)/log(p), # was 3.181e-9
-        pchisq(qchisq(log(1-p),df,log=T,lower=F),df, log=T,lower=F)/log(1-p)
+        pchisq(qchisq(log1p(-p),df,log=T,lower=F),df, log=T,lower=F)/log1p(-p)
         )# 32b-i386: (2.2e-16, 0,0, 3.3e-16); Opteron: (2.2e-16, 0,0, 2.2e-15)
     ) < 1e-14
 
@@ -394,49 +394,49 @@ All.eq(Rwilcox,	  qwilcox  (log(Pwilcox), m = 13, n = 17, log=TRUE))
 
 ## same q*(p* (log) log) with upper tail:
 
-All.eq(Rbeta,	  qbeta	   (log(1- Pbeta), shape1 = .8, shape2 = 2, lower=F, log=T))
-All.eq(Rbinom,	  qbinom   (log(1- Pbinom), size = 55, prob = pi/16, lower=F, log=T))
-All.eq(Rcauchy,	  qcauchy  (log(1- Pcauchy), location = 12, scale = 2, lower=F, log=T))
-All.eq(Rchisq,	  qchisq   (log(1- Pchisq), df = 3, lower=F, log=T))
-All.eq(Rexp,	  qexp	   (log(1- Pexp), rate = 2, lower=F, log=T))
-All.eq(Rf,	  qf	   (log(1- Pf), df1 = 12, df2 = 6, lower=F, log=T))
-All.eq(Rgamma,	  qgamma   (log(1- Pgamma), shape = 2, scale = 5, lower=F, log=T))
-All.eq(Rgeom,	  qgeom	   (log(1- Pgeom), prob = pi/16, lower=F, log=T))
-All.eq(Rhyper,	  qhyper   (log(1- Phyper), m = 40, n = 30, k = 20, lower=F, log=T))
-All.eq(Rlnorm,	  qlnorm   (log(1- Plnorm), meanlog = -1, sdlog = 3, lower=F, log=T))
-All.eq(Rlogis,	  qlogis   (log(1- Plogis), location = 12, scale = 2, lower=F, log=T))
-All.eq(Rnbinom,	  qnbinom  (log(1- Pnbinom), size = 7, prob = .01, lower=F, log=T))
-All.eq(Rnorm,	  qnorm	   (log(1- Pnorm), mean = -1, sd = 3, lower=F, log=T))
-All.eq(Rpois,	  qpois	   (log(1- Ppois), lambda = 12, lower=F, log=T))
-All.eq(Rsignrank, qsignrank(log(1- Psignrank), n = 47, lower=F, log=T))
-All.eq(Rt,	  qt	   (log(1- Pt ), df = 11,   lower=F, log=T))
-all.equal(Rt2,	  qt	   (log(1- Pt2), df = 1.01, lower=F, log=T), tol = 1e-2)
-All.eq(Runif,	  qunif	   (log(1- Punif), min = .2, max = 2, lower=F, log=T))
-All.eq(Rweibull,  qweibull (log(1- Pweibull), shape = 3, scale = 2, lower=F, log=T))
-All.eq(Rwilcox,	  qwilcox  (log(1- Pwilcox), m = 13, n = 17, lower=F, log=T))
+All.eq(Rbeta,	  qbeta	   (log1p(-Pbeta), shape1 = .8, shape2 = 2, lower=F, log=T))
+All.eq(Rbinom,	  qbinom   (log1p(-Pbinom), size = 55, prob = pi/16, lower=F, log=T))
+All.eq(Rcauchy,	  qcauchy  (log1p(-Pcauchy), location = 12, scale = 2, lower=F, log=T))
+All.eq(Rchisq,	  qchisq   (log1p(-Pchisq), df = 3, lower=F, log=T))
+All.eq(Rexp,	  qexp	   (log1p(-Pexp), rate = 2, lower=F, log=T))
+All.eq(Rf,	  qf	   (log1p(-Pf), df1 = 12, df2 = 6, lower=F, log=T))
+All.eq(Rgamma,	  qgamma   (log1p(-Pgamma), shape = 2, scale = 5, lower=F, log=T))
+All.eq(Rgeom,	  qgeom	   (log1p(-Pgeom), prob = pi/16, lower=F, log=T))
+All.eq(Rhyper,	  qhyper   (log1p(-Phyper), m = 40, n = 30, k = 20, lower=F, log=T))
+All.eq(Rlnorm,	  qlnorm   (log1p(-Plnorm), meanlog = -1, sdlog = 3, lower=F, log=T))
+All.eq(Rlogis,	  qlogis   (log1p(-Plogis), location = 12, scale = 2, lower=F, log=T))
+All.eq(Rnbinom,	  qnbinom  (log1p(-Pnbinom), size = 7, prob = .01, lower=F, log=T))
+All.eq(Rnorm,	  qnorm	   (log1p(-Pnorm), mean = -1, sd = 3, lower=F, log=T))
+All.eq(Rpois,	  qpois	   (log1p(-Ppois), lambda = 12, lower=F, log=T))
+All.eq(Rsignrank, qsignrank(log1p(-Psignrank), n = 47, lower=F, log=T))
+All.eq(Rt,	  qt	   (log1p(-Pt ), df = 11,   lower=F, log=T))
+all.equal(Rt2,	  qt	   (log1p(-Pt2), df = 1.01, lower=F, log=T), tol = 1e-2)
+All.eq(Runif,	  qunif	   (log1p(-Punif), min = .2, max = 2, lower=F, log=T))
+All.eq(Rweibull,  qweibull (log1p(-Pweibull), shape = 3, scale = 2, lower=F, log=T))
+All.eq(Rwilcox,	  qwilcox  (log1p(-Pwilcox), m = 13, n = 17, lower=F, log=T))
 
 
 ## Check log( upper.tail ):
-All.eq(log(1 - Pbeta),	   pbeta    (Rbeta, shape1 = .8, shape2 = 2, lower=F, log=T))
-All.eq(log(1 - Pbinom),	   pbinom   (Rbinom, size = 55, prob = pi/16, lower=F, log=T))
-All.eq(log(1 - Pcauchy),   pcauchy  (Rcauchy, location = 12, scale = 2, lower=F, log=T))
-All.eq(log(1 - Pchisq),	   pchisq   (Rchisq, df = 3, lower=F, log=T))
-All.eq(log(1 - Pexp),	   pexp	    (Rexp, rate = 2, lower=F, log=T))
-All.eq(log(1 - Pf),	   pf	    (Rf, df1 = 12, df2 = 6, lower=F, log=T))
-All.eq(log(1 - Pgamma),	   pgamma   (Rgamma, shape = 2, scale = 5, lower=F, log=T))
-All.eq(log(1 - Pgeom),	   pgeom    (Rgeom, prob = pi/16, lower=F, log=T))
-All.eq(log(1 - Phyper),	   phyper   (Rhyper, m = 40, n = 30, k = 20, lower=F, log=T))
-All.eq(log(1 - Plnorm),	   plnorm   (Rlnorm, meanlog = -1, sdlog = 3, lower=F, log=T))
-All.eq(log(1 - Plogis),	   plogis   (Rlogis, location = 12, scale = 2, lower=F, log=T))
-All.eq(log(1 - Pnbinom),   pnbinom  (Rnbinom, size = 7, prob = .01, lower=F, log=T))
-All.eq(log(1 - Pnorm),	   pnorm    (Rnorm, mean = -1, sd = 3, lower=F, log=T))
-All.eq(log(1 - Ppois),	   ppois    (Rpois, lambda = 12, lower=F, log=T))
-All.eq(log(1 - Psignrank), psignrank(Rsignrank, n = 47, lower=F, log=T))
-All.eq(log(1 - Pt),	   pt	    (Rt, df = 11,   lower=F, log=T))
-All.eq(log(1 - Pt2),	   pt	    (Rt2,df = 1.01, lower=F, log=T))
-All.eq(log(1 - Punif),	   punif    (Runif, min = .2, max = 2, lower=F, log=T))
-All.eq(log(1 - Pweibull),  pweibull (Rweibull, shape = 3, scale = 2, lower=F, log=T))
-All.eq(log(1 - Pwilcox),   pwilcox  (Rwilcox, m = 13, n = 17, lower=F, log=T))
+All.eq(log1p(-Pbeta),	  pbeta	   (Rbeta, shape1 = .8, shape2 = 2, lower=F, log=T))
+All.eq(log1p(-Pbinom),	  pbinom   (Rbinom, size = 55, prob = pi/16, lower=F, log=T))
+All.eq(log1p(-Pcauchy),	  pcauchy  (Rcauchy, location = 12, scale = 2, lower=F, log=T))
+All.eq(log1p(-Pchisq),	  pchisq   (Rchisq, df = 3, lower=F, log=T))
+All.eq(log1p(-Pexp),	  pexp	   (Rexp, rate = 2, lower=F, log=T))
+All.eq(log1p(-Pf),	  pf	   (Rf, df1 = 12, df2 = 6, lower=F, log=T))
+All.eq(log1p(-Pgamma),	  pgamma   (Rgamma, shape = 2, scale = 5, lower=F, log=T))
+All.eq(log1p(-Pgeom),	  pgeom	   (Rgeom, prob = pi/16, lower=F, log=T))
+All.eq(log1p(-Phyper),	  phyper   (Rhyper, m = 40, n = 30, k = 20, lower=F, log=T))
+All.eq(log1p(-Plnorm),	  plnorm   (Rlnorm, meanlog = -1, sdlog = 3, lower=F, log=T))
+All.eq(log1p(-Plogis),	  plogis   (Rlogis, location = 12, scale = 2, lower=F, log=T))
+All.eq(log1p(-Pnbinom),	  pnbinom  (Rnbinom, size = 7, prob = .01, lower=F, log=T))
+All.eq(log1p(-Pnorm),	  pnorm	   (Rnorm, mean = -1, sd = 3, lower=F, log=T))
+All.eq(log1p(-Ppois),	  ppois	   (Rpois, lambda = 12, lower=F, log=T))
+All.eq(log1p(-Psignrank), psignrank(Rsignrank, n = 47, lower=F, log=T))
+All.eq(log1p(-Pt),	  pt	   (Rt, df = 11,   lower=F, log=T))
+All.eq(log1p(-Pt2),	  pt	   (Rt2,df = 1.01, lower=F, log=T))
+All.eq(log1p(-Punif),	  punif	   (Runif, min = .2, max = 2, lower=F, log=T))
+All.eq(log1p(-Pweibull),  pweibull (Rweibull, shape = 3, scale = 2, lower=F, log=T))
+All.eq(log1p(-Pwilcox),	  pwilcox  (Rwilcox, m = 13, n = 17, lower=F, log=T))
 
 
 ### (Extreme) tail tests added more recently:
@@ -522,6 +522,11 @@ sml.x <- c(10^-c(2:8,100), 0)
 cbind(x = sml.x, `dt(x,*)` = dt(sml.x, df = 2, ncp=1))
 ## small 'x' used to suffer from cancellation
 options(oo)
+x <- c(outer(1:12, 10^c(-3:2, 6:9, 10*(2:30))))
+for(nu in c(.75, 1.2, 4.5, 999, 1e50)) {
+    lfx <- dt(x, df=nu, log=TRUE)
+    stopifnot(is.finite(lfx), All.eq(exp(lfx), dt(x, df=nu)))
+}## dt(1e160, 1.2, log=TRUE) was -Inf  up to R 2.15.2
 
 ## pf() with large df1 or df2
 ## (was said to be PR#7099, but that is about non-central pchisq)
@@ -620,6 +625,10 @@ lq1 <- log(qt(-2^-(20:600), df=1, log=TRUE))
 lq2 <- log(qt(-2^-(20:600), df=2, log=TRUE))
 stopifnot(mean(abs(diff(lq1) - log(2)      )) < 1e-8,
 	  mean(abs(diff(lq2) - log(sqrt(2)))) < 4e-8)
+## Case, where log.p=TRUE was fine, but log.p=FALSE (default) gave NaN:
+lp <- 40:406
+stopifnot(all.equal(lp, -pt(qt(exp(-lp), 1.2), 1.2, log=TRUE), tol = 4e-16))
+
 
 ## pbeta(*, log=TRUE) {toms708} -- now improved tail behavior
 x <- c(.01, .10, .25, .40, .55, .71, .98)
@@ -755,6 +764,19 @@ x <- c(x, seq(700, 800, by=10))
 stopifnot(All.eq(x, qlogis(plogis(x, lower=FALSE, log.p=TRUE),
 			   lower=FALSE, log.p=TRUE)))
 # plogis() underflowed to -Inf too early for R <= 2.15.0
+
+## log upper tail pbeta():
+x <- (25:50)/128
+pbx <- pbeta(x, 1/2, 2200, lower.tail=FALSE, log.p=TRUE)
+d2p <- diff(dp <- diff(pbx))
+b <- 2200*2^(0:50)
+y <- log(-pbeta(.28, 1/2, b, lower.tail=FALSE, log.p=TRUE))
+stopifnot(-1094 < pbx, pbx < -481.66,
+            -29 < dp,   dp < -20,
+           -.36 < d2p, d2p < -.2,
+          all.equal(log(b), y+1.113, tol = .00002)
+          )
+## pbx had two -Inf; y was all Inf  for R <= 2.15.3;  PR#15162
 
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

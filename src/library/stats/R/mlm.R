@@ -36,16 +36,14 @@ summary.mlm <- function(object, ...)
     ind <- ynames == ""
     if(any(ind)) ynames[ind] <-  paste0("Y", seq_len(ny))[ind]
 
-    value <- vector("list", ny)
-    names(value) <- paste("Response", ynames)
+    value <- setNames(vector("list", ny), paste("Response", ynames))
     cl <- oldClass(object)
     class(object) <- cl[match("mlm", cl):length(cl)][-1L]
     # Need to put the evaluated formula in place
     object$call$formula <- formula(object)
     for(i in seq(ny)) {
-	object$coefficients <- coef[, i]
+	object$coefficients <- setNames(coef[, i], rownames(coef))
         ## if there is one coef, above drops names
-        names(object$coefficients) <- rownames(coef)
 	object$residuals <- resid[, i]
 	object$fitted.values <- fitted[, i]
 	object$effects <- effects[, i]
@@ -100,20 +98,20 @@ proj.matrix <- function(X, orth=FALSE){
 ## qr() will miss the cases where a row has all near-zeros,
 ## sensibly in some ways, annoying in others...
 
-Rank  <- function(X, tol=1e-7)
-    qr(zapsmall(X, digits=-log10(tol)+5),
+Rank  <- function(X, tol = 1e-7)
+    qr(zapsmall(X, digits = -log10(tol)+5),
        tol=tol, LAPACK=FALSE)$rank
 
-Thin.row <- function(X, tol=1e-7) {
-    X <- zapsmall(X, digits=-log10(tol)+5)
-    QR <- qr(t(X), tol=tol, LAPACK=FALSE)
-    X[QR$pivot[seq_len(QR$rank)],,drop=FALSE]
+Thin.row <- function(X, tol = 1e-7) {
+    X <- zapsmall(X, digits = -log10(tol)+5)
+    QR <- qr(t(X), tol = tol, LAPACK = FALSE)
+    X[QR$pivot[seq_len(QR$rank)], , drop = FALSE]
 }
 
-Thin.col <- function(X, tol=1e-7) {
-    X <- zapsmall(X, digits=-log10(tol)+5)
-    QR <- qr(X, tol=tol, LAPACK=FALSE)
-    X[,QR$pivot[seq_len(QR$rank)],drop=FALSE]
+Thin.col <- function(X, tol = 1e-7) {
+    X <- zapsmall(X, digits = -log10(tol)+5)
+    QR <- qr(X, tol = tol, LAPACK = FALSE)
+    X[,QR$pivot[seq_len(QR$rank)], drop = FALSE]
 }
 
 
@@ -137,8 +135,8 @@ mauchly.test.SSD <- function(object, Sigma=diag(nrow=p),
     if (missing(T)){
         orig.X <- X
         orig.M <- M
-        if (class(M) == "formula") M <- model.matrix(M, idata)
-        if (class(X) == "formula") X <- model.matrix(X, idata)
+	if (inherits(M, "formula")) M <- model.matrix(M, idata)
+	if (inherits(X, "formula")) X <- model.matrix(X, idata)
         if (Rank(cbind(M,X)) != Rank(M))
             stop("X does not define a subspace of M")
     }
@@ -192,8 +190,8 @@ sphericity <- function(object, Sigma=diag(nrow=p),
     p <- ncol(object$SSD)
 
     if (missing(T)){
-        if (class(M) == "formula") M <- model.matrix(M, idata)
-        if (class(X) == "formula") X <- model.matrix(X, idata)
+	if (inherits(M, "formula")) M <- model.matrix(M, idata)
+	if (inherits(X, "formula")) X <- model.matrix(X, idata)
         if (Rank(cbind(M,X)) != Rank(M))
             stop("X does not define a subspace of M")
     }
@@ -229,8 +227,8 @@ anova.mlm <-
         if (missing(T)){
             orig.M <- M # keep for printing
             orig.X <- X
-            if (class(M) == "formula") M <- model.matrix(M, idata)
-            if (class(X) == "formula") X <- model.matrix(X, idata)
+	    if (inherits(M, "formula")) M <- model.matrix(M, idata)
+	    if (inherits(X, "formula")) X <- model.matrix(X, idata)
             if (Rank(cbind(M,X)) != Rank(M))
                 stop("X does not define a subspace of M")
         }
@@ -281,14 +279,14 @@ anova.mlm <-
             sph <- sphericity(ssd, T=T, Sigma=Sigma)
             epsnote <- c(paste(format(c("Greenhouse-Geisser epsilon:",
                                         "Huynh-Feldt epsilon:")),
-                               format(c(sph$GG.eps, sph$HF.eps),digits=4)),
+                               format(c(sph$GG.eps, sph$HF.eps), digits = 4L)),
                          "")
 
             Psi <- T %*% Sigma %*% t(T)
             stats <- matrix(NA, nmodels+1, 6L)
             colnames(stats) <- c("F", "num Df", "den Df",
                                  "Pr(>F)", "G-G Pr", "H-F Pr")
-            for(i in 1L:nmodels) {
+            for(i in seq_len(nmodels)) {
                 s2 <- Tr(solve(Psi,T %*% ss[[i]] %*% t(T)))/pp/df[i]
                 Fval <- s2/sph$sigma
                 stats[i,1L:3L] <- abs(c(Fval, df[i]*pp, df.res*pp))
@@ -315,13 +313,13 @@ anova.mlm <-
 
             rss.qr <- qr((T %*% ssd$SSD  %*% t(T)) * scm, tol=tol)
             if(rss.qr$rank < pp)
-                stop("residuals have rank ", rss.qr$rank," < ", pp)
+                stop(gettextf("residuals have rank %s < %s", rss.qr$rank, pp),
+                     domain = NA)
             eigs <- array(NA, c(nmodels, pp))
             stats <- matrix(NA, nmodels+1L, 5L)
-            colnames(stats) <- c(test, "approx F", "num Df", "den Df",
-                                       "Pr(>F)")
+            colnames(stats) <- c(test, "approx F", "num Df", "den Df", "Pr(>F)")
 
-            for(i in 1L:nmodels) {
+            for(i in seq_len(nmodels)) {
                 eigs[i, ] <- Re(eigen(qr.coef(rss.qr,
                                               (T %*% ss[[i]] %*% t(T)) * scm),
                                       symmetric = FALSE)$values)
@@ -422,8 +420,8 @@ anova.mlmlist <- function (object, ...,
     if (missing(T)){
         orig.M <- M # keep for printing
         orig.X <- X
-        if (class(M) == "formula") M <- model.matrix(M, idata)
-        if (class(X) == "formula") X <- model.matrix(X, idata)
+	if (inherits(M, "formula")) M <- model.matrix(M, idata)
+	if (inherits(X, "formula")) X <- model.matrix(X, idata)
         if (Rank(cbind(M,X)) != Rank(M))
             stop("X does not define a subspace of M")
     }
@@ -433,9 +431,9 @@ anova.mlmlist <- function (object, ...,
     sameresp <- responses == responses[1L]
     if (!all(sameresp)) {
 	objects <- objects[sameresp]
-	warning("models with response ",
-                deparse(responses[!sameresp]),
-                " removed because response differs from ", "model 1")
+        warning(gettextf("models with response %s removed because response differs from model 1",
+                         sQuote(deparse(responses[!sameresp]))),
+                domain = NA)
     }
 
     ns <- sapply(objects, function(x) length(x$residuals))
@@ -462,26 +460,26 @@ anova.mlmlist <- function (object, ...,
 
     table <- data.frame(resdf, df, resdet)
     variables <- lapply(objects, function(x)
-                        paste(deparse(formula(x)), collapse="\n") )
-    dimnames(table) <- list(1L:nmodels,
+                        paste(deparse(formula(x)), collapse = "\n") )
+    dimnames(table) <- list(seq_len(nmodels),
                             c("Res.Df", "Df", "Gen.var."))
 
     title <- "Analysis of Variance Table\n"
-    topnote <- paste("Model ", format(1L:nmodels),": ",
-		     variables, sep="", collapse="\n")
+    topnote <- paste("Model ", format(seq_len(nmodels)),": ",
+		     variables, sep = "", collapse = "\n")
     transformnote <- if (!missing(T))
-        c("\nContrast matrix", apply(format(T), 1L, paste, collapse=" "))
+        c("\nContrast matrix", apply(format(T), 1L, paste, collapse = " "))
     else
         c(
           if (!Xmis)
           c("\nContrasts orthogonal to",
-            if (is.matrix(orig.X))  apply(format(X), 2L, paste, collapse=" ")
+            if (is.matrix(orig.X))  apply(format(X), 2L, paste, collapse = " ")
             else deparse(formula(orig.X)),"",
             if (!Mmis)
             c("\nContrasts spanned by",
-              if (is.matrix(orig.M))  apply(format(M), 2L, paste, collapse=" ")
-              else deparse(formula(orig.M)),""
-              )
+              if (is.matrix(orig.M))  apply(format(M), 2L, paste, collapse = " ")
+              else deparse(formula(orig.M)),
+              "")
             )
           )
     epsnote <- NULL
@@ -495,12 +493,12 @@ anova.mlmlist <- function (object, ...,
         sph <- sphericity(resssd[[bigmodel]],T=T,Sigma=Sigma)
         epsnote <- c(paste(format(c("Greenhouse-Geisser epsilon:",
                            "Huynh-Feldt epsilon:")),
-                         format(c(sph$GG.eps, sph$HF.eps),digits=4)),
+                         format(c(sph$GG.eps, sph$HF.eps), digits = 4L)),
                      "")
 
         Psi <- T %*% Sigma %*% t(T)
         stats <- matrix(NA, nmodels, 6L)
-        dimnames(stats) <-  list(1L:nmodels,
+        dimnames(stats) <-  list(seq_len(nmodels),
                                  c("F", "num Df", "den Df",
                                    "Pr(>F)", "G-G Pr", "H-F Pr"))
         for(i in 2:nmodels) {
@@ -508,14 +506,14 @@ anova.mlmlist <- function (object, ...,
             Fval <- s2/sph$sigma
             stats[i,1L:3] <- abs(c(Fval, df[i]*pp, df.res*pp))
         }
-        stats[,4] <- pf(stats[,1], stats[,2], stats[,3], lower.tail=FALSE)
+        stats[,4] <- pf(stats[,1], stats[,2], stats[,3], lower.tail = FALSE)
         stats[,5] <- pf(stats[,1],
                         stats[,2]*sph$GG.eps, stats[,3]*sph$GG.eps,
-                        lower.tail=FALSE)
+                        lower.tail = FALSE)
         stats[,6] <- pf(stats[,1],
                         stats[,2]*min(1,sph$HF.eps),
                         stats[,3]*min(1,sph$HF.eps),
-                        lower.tail=FALSE)
+                        lower.tail = FALSE)
         table <- cbind(table, stats)
     }
     else if(!is.null(test)) {
@@ -536,12 +534,13 @@ anova.mlmlist <- function (object, ...,
 
         rss.qr <- qr((T %*% resssd[[bigmodel]]$SSD %*% t(T)) * scm, tol=tol)
         if(rss.qr$rank < pp)
-            stop("residuals have rank ", rss.qr$rank," < ", pp)
+            stop(gettextf("residuals have rank %s < %s", rss.qr$rank, pp),
+                 domain = NA)
         eigs <- array(NA, c(nmodels, pp))
         stats <- matrix(NA, nmodels, 5L)
-        dimnames(stats) <-  list(1L:nmodels,
-                                 c(test, "approx F", "num Df", "den Df",
-                                   "Pr(>F)"))
+        dimnames(stats) <-
+            list(seq_len(nmodels),
+                 c(test, "approx F", "num Df", "den Df", "Pr(>F)"))
 
         for(i in 2:nmodels) {
             sg <- (df[i] > 0) -  (df[i] < 0)

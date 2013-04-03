@@ -148,10 +148,9 @@ Most @R{} novices will start with the introductory session in Appendix
 A.  This should give some familiarity with the style of @R{} sessions
 and more importantly some instant feedback on what actually happens.
 
-Many users will come to @R{} mainly for its graphical facilities.  In
-this case, @ref{Graphics} on the graphics facilities can be read at
-almost any time and need not wait until all the preceding sections have
-been digested.
+Many users will come to @R{} mainly for its graphical facilities.
+@ref{Graphics} on the graphics facilities can be read at almost any time
+and need not wait until all the preceding sections have been digested.
 
 @menu
 * Introduction and preliminaries::
@@ -273,7 +272,7 @@ generally to any implementation of the @R{} environment.
 Most users will find it necessary to interact directly with the
 operating system on their computer from time to time.  In this guide, we
 mainly discuss interaction with the operating system on UNIX machines.
-If you are running @R{} under Windows or Mac OS you will need to make
+If you are running @R{} under Windows or OS X you will need to make
 some small adjustments.
 
 Setting up a workstation to take full advantage of the customizable
@@ -453,8 +452,8 @@ be used in @R{} packages) only A--Za--z0--9 should be used.} (and in
 some countries this includes accented letters) plus @samp{@code{.}} and
 @samp{@code{_}}, with the restriction that a name must start with
 @samp{@code{.}} or a letter, and if it starts with @samp{@code{.}} the
-second character must not be a digit.  Names are currently effectively
-unlimited, but were limited to 256 bytes prior to @R{} 2.13.0
+second character must not be a digit.  Names are effectively
+unlimited in length.
 
 Elementary commands consist of either @emph{expressions} or
 @emph{assignments}.  If an expression is given as a command, it is
@@ -576,8 +575,9 @@ you are given the opportunity to save all the currently available
 objects.  If you indicate that you want to do this, the objects are
 written to a file called @file{.RData}@footnote{The leading ``dot'' in
 this file name makes it @emph{invisible} in normal file listings in
-UNIX.} in the current directory, and the command lines used in the
-session are saved to a file called @file{.Rhistory}.
+UNIX, and in default GUI file listings on OS X and Windows.} in the
+current directory, and the command lines used in the session are saved
+to a file called @file{.Rhistory}.
 
 When @R{} is started at later time from the same directory it reloads
 the workspace from this file.  At the same time the associated commands
@@ -1135,10 +1135,6 @@ assignment, in which case the assignment operation is performed
 @emph{only on those elements of the vector}.  The expression must be of
 the form @code{vector[@var{index_vector}]} as having an arbitrary
 expression in place of the vector name does not make much sense here.
-
-The vector assigned must match the length of the index vector, and in
-the case of a logical index vector it must again be the same length as
-the vector it is indexing.
 
 For example
 
@@ -2045,13 +2041,17 @@ is the matrix product.  If @code{x} is a vector, then
 
 @noindent
 is a quadratic form.@footnote{Note that @code{x %*% x} is ambiguous, as
-it could mean either @xTx{} or @xxT{}, where @eqn{@strong{x},x} is the
-column form.  In such cases the smaller matrix seems implicitly to be
-the interpretation adopted, so the scalar @xTx{} is in this case the
-result.  The matrix @xxT{} may be calculated either by @code{cbind(x)
-%*% x} or @code{x %*% rbind(x)} since the result of @code{rbind()} or
+it could mean either @xTx{} 
+ or @xxT{}, 
+ where @eqn{@strong{x},x} 
+ is the column form.  In such cases the smaller matrix seems implicitly to be
+the interpretation adopted, so the scalar @xTx{} 
+ is in this case the result.  The matrix @xxT{} 
+ may be calculated either by @code{cbind(x)%*% x} or @code{x %*% rbind(x)} since the result of @code{rbind()} or
 @code{cbind()} is always a matrix.  However, the best way to compute
-@xTx{} or @xxT{} is @code{crossprod(x)} or @code{x %o% x}
+@xTx{}
+ or @xxT{} 
+ is @code{crossprod(x)} or @code{x %o% x}
 respectively.}
 
 @findex crossprod
@@ -2107,12 +2107,16 @@ but rarely is needed.  Numerically, it is both inefficient and
 potentially unstable to compute @code{x <- solve(A) %*% b} instead of
 @code{solve(A,b)}.
 
-The quadratic form @eqn{@strong{x^T  A^{-1} x},@ @code{x %*% A^@{-1@} %*%
-x} @ } which is used in multivariate computations, should be computed by
+The quadratic form @eqn{@strong{x^T  A^{-1} x} ,@ @code{x %*% A^@{-1@} %*%x} @ } 
+, which is used in multivariate computations, should be computed by
 something like@footnote{Even better would be to form a matrix square
-root @eqn{B, B} with @eqn{A = BB^T, A = BB'} and find the squared length of the
-solution of @eqn{By = x, By = x}, perhaps using the Cholesky or
-eigendecomposition of @eqn{A, A}.} @code{x %*% solve(A,x)}, rather than
+root @eqn{B, B}
+ with @eqn{A = BB^T, A = BB'}
+ and find the squared length of the
+solution of @eqn{By = x, By = x},
+perhaps using the Cholesky or
+eigendecomposition of @eqn{A, A}.
+} @code{x %*% solve(A,x)}, rather than
 computing the inverse of @code{A}.
 
 @node Eigenvalues and eigenvectors, Singular value decomposition and determinants, Linear equations and inversion, Matrix facilities
@@ -2531,9 +2535,11 @@ factors, numeric matrices, lists, or other data frames.
 Matrices, lists, and data frames provide as many variables to the new
 data frame as they have columns, elements, or variables, respectively.
 @item
-Numeric vectors, logicals and factors are included as is, and character
-vectors are coerced to be factors, whose levels are the unique values
-appearing in the vector.
+Numeric vectors, logicals and factors are included as is, and by
+default@footnote{Conversion of character columns to factors is
+overridden using the @code{stringsAsFactors} argument to the
+@code{data.frame()} function.} character vectors are coerced to be
+factors, whose levels are the unique values appearing in the vector.
 @item
 Vector structures appearing as variables of the data frame must all have
 the @emph{same length}, and matrix structures must all have the same
@@ -2899,10 +2905,9 @@ data()
 @end example
 
 @noindent
-As from @R{} version 2.0.0 all the datasets supplied with @R{} are
-available directly by name.  However, many packages still use the
-earlier convention in which @code{data} was also used to load datasets
-into @R{}, for example
+All the datasets supplied with @R{} are available directly by name.
+However, many packages still use the obsolete convention in which
+@code{data} was also used to load datasets into @R{}, for example
 
 @example
 data(infert)
@@ -3716,6 +3721,9 @@ to be constants as in our simple example here.
 @node The three dots argument, Assignment within functions, Named arguments and defaults, Writing your own functions
 @section The @samp{@dots{}} argument
 
+@c The ?Reserved topic links here, so please update it
+@c if changing the node name.
+
 Another frequent requirement is to allow one function to pass on
 argument settings to another.  For example many graphics functions use
 the function @code{par()} and functions like @code{plot()} allow the
@@ -3733,6 +3741,12 @@ fun1 <- function(data, data.frame, graph=TRUE, limit=20, ...) @{
   @r{[more omissions]}
 @}
 @end example
+
+Less frequently, a function will need to refer to components of
+@samp{@dots{}}.  The expression @code{list(...)} evaluates all such
+arguments and returns them in a named list, while @code{..1},
+@code{..2}, etc. evaluate them one at a time, with @samp{..n}
+returning the n'th unmatched argument.
 
 @node Assignment within functions, More advanced examples, The three dots argument, Writing your own functions
 @section Assignments within functions
@@ -5090,7 +5104,7 @@ Certain forms of nonlinear model can be fitted by Generalized Linear
 Models (@code{glm()}).  But in the majority of cases we have to approach
 the nonlinear curve fitting problem as one of nonlinear optimization.
 @R{}'s nonlinear optimization routines are @code{optim()}, @code{nlm()}
-and (from @R{} 2.2.0) @code{nlminb()},
+and @code{nlminb()},
 @findex nlm
 @findex optim
 @findex nlminb
@@ -5340,7 +5354,7 @@ easy because at startup time @R{} initiates a graphics @emph{device
 driver} which opens a special @emph{graphics window} for the display of
 interactive graphics.  Although this is done automatically, it is useful
 to know that the command used is @code{X11()} under UNIX,
-@code{windows()} under Windows and @code{quartz()} under Mac OS X.
+@code{windows()} under Windows and @code{quartz()} under OS X.
 
 Once the device driver is running, @R{} plotting commands can be used to
 produce a variety of graphical displays and to create entirely new kinds
@@ -6247,7 +6261,7 @@ For use with the X11 window system on Unix-alikes
 For use on Windows
 @item quartz()
 @findex quartz
-For use on Mac OS X
+For use on OS X
 @item postscript()
 @findex postscript
 For printing on PostScript printers, or creating PostScript graphics
@@ -6337,7 +6351,7 @@ meanings are as follows:
 @itemx win.metafile()
 [Windows]
 @item quartz()
-[Mac OS X]
+[OS X]
 @item postscript()
 @itemx pdf()
 @item png()
@@ -6549,8 +6563,7 @@ disappear.
 @c need to adapt the discussion slightly.
 
 @table @code
-@item
-Start @R{} appropriately for your platform (@pxref{Invoking R}).
+@item Start @R{} appropriately for your platform (@pxref{Invoking R}).
 
 The @R{} program begins, with a banner.
 
@@ -6753,15 +6766,13 @@ parts @dots{}
 
 @item plot(w, xlim=c(-1,1), ylim=c(-1,1), pch="+",xlab="x", ylab="y")
 @itemx lines(z)
-@itemx
-All points are inside the unit circle, but the distribution is not
+@itemx All points are inside the unit circle, but the distribution is not
 uniform.
 
 @item w <- sqrt(runif(100))*exp(2*pi*runif(100)*1i)
 @itemx plot(w, xlim=c(-1,1), ylim=c(-1,1), pch="+", xlab="x", ylab="y")
 @itemx lines(z)
-@itemx
-The second method uses the uniform distribution.  The points should now
+@itemx The second method uses the uniform distribution.  The points should now
 look more evenly spaced over the disc.
 
 @item rm(th, w, z)
@@ -6776,13 +6787,13 @@ want to save it.
 @node Invoking R, The command-line editor, A sample session, Top
 @appendix Invoking R
 
-Users of @R{} on Windows or Mac OS X should read the OS-specific section
+Users of @R{} on Windows or OS X should read the OS-specific section
 first, but command-line use is also supported.
 
 @menu
 * Invoking R from the command line::  
 * Invoking R under Windows::    
-* Invoking R under Mac OS X::   
+* Invoking R under OS X::       
 * Scripting with R::            
 @end menu
 
@@ -6926,7 +6937,7 @@ Combine @option{--no-save}, @option{--no-environ},
 (not @command{Rgui.exe}) Take input from @var{file}: @samp{-} means
 @code{stdin}.  Implies @option{--no-save} unless @option{--save} has
 been set.  On a Unix-alike, shell metacharacters should be avoided in
-@var{file} (but as from @R{} 2.14.0 spaces are allowed).
+@var{file} (but spaces are allowed).
 
 @item -e @var{expression}
 (not @command{Rgui.exe}) Use @var{expression} as an input line.  One or
@@ -6949,7 +6960,8 @@ tilde-expansion: see the help for @code{path.expand}.
 For expert use only: set the initial trigger sizes for garbage
 collection of vector heap (in bytes) and @emph{cons cells} (number)
 respectively.  Suffix @samp{M} specifies megabytes or millions of cells
-respectively.  The defaults are 6Mb and 350k respectively.
+respectively.  The defaults are 6Mb and 350k respectively and can also
+be set by environment variables @env{R_NSIZE} and @env{R_VSIZE}.
 
 @item --max-ppsize=@var{N}
 Specify the maximum size of the pointer protection stack as @var{N}
@@ -6963,7 +6975,7 @@ for @R{} objects and working areas.  This is set by default to the
 smaller of the amount of physical RAM in the machine and for 32-bit
 @R{}, 1.5Gb@footnote{2.5Gb on versions of Windows that support 3Gb per
 process and have the support enabled: see the @file{rw-FAQ} Q2.9; 3.5Gb
-on some 64-bit versions of Windows.}, and must be between 32Mb and the
+on most 64-bit versions of Windows.}, and must be between 32Mb and the
 maximum allowed on that version of Windows.
 
 @item --quiet
@@ -7012,9 +7024,7 @@ support is available, @samp{Tk}. (For back-compatibility, @samp{x11} and
 @samp{tk} are accepted.)
 
 @item --arch=@var{name}
-(UNIX only) Run the specified sub-architecture.  Most commonly used on
-Mac OS X, where the possible values are @samp{i386}, @samp{x86_64} and
-@samp{ppc}.
+(UNIX only) Run the specified sub-architecture.
 
 @item --args
 This flag does nothing except cause the rest of the command line to be
@@ -7066,7 +7076,7 @@ Post-process @R{} profiling files.
 Convert Rd format to various other formats, including @HTML{}, @LaTeX{},
 plain text, and extracting the examples.  @code{Rd2txt} can be used as
 shorthand for @code{Rd2conv -t txt}.
-@itemx Rd2pdf
+@item Rd2pdf
 Convert Rd format to PDF.
 @item Stangle
 Extract S/R code from Sweave documentation
@@ -7096,17 +7106,17 @@ R CMD @var{command} --help
 to obtain usage information for each of the tools accessible via the
 @code{R CMD} interface.
 
-In addition, you can use@footnote{as from @R{} 2.13.0.}  options
-@option{--arch=}, @option{--no-environ}, @option{--no-init-file},
-@option{--no-site-file} and @option{--vanilla} between @command{R} and
-@command{CMD}: these affect any @R{} processes run by the tools.  (Here
-@option{--vanilla} is equivalent to @option{--no-environ --no-site-file
---no-init-file}.)  However, note that @command{R CMD} does not of itself
-use any @R{} startup files (in particular, neither user nor site
-@file{Renviron} files), and all of the @R{} processes run by these tools
-(except @command{BATCH}) use @option{--no-restore}.  Most use
-@option{--vanilla} and so invoke no @R{} startup files: the current
-exceptions are @command{INSTALL}, @command{REMOVE}, @command{Sweave} and
+In addition, you can use options @option{--arch=},
+@option{--no-environ}, @option{--no-init-file}, @option{--no-site-file}
+and @option{--vanilla} between @command{R} and @command{CMD}: these
+affect any @R{} processes run by the tools.  (Here @option{--vanilla} is
+equivalent to @option{--no-environ --no-site-file --no-init-file}.)
+However, note that @command{R CMD} does not of itself use any @R{}
+startup files (in particular, neither user nor site @file{Renviron}
+files), and all of the @R{} processes run by these tools (except
+@command{BATCH}) use @option{--no-restore}.  Most use @option{--vanilla}
+and so invoke no @R{} startup files: the current exceptions are
+@command{INSTALL}, @command{REMOVE}, @command{Sweave} and
 @command{SHLIB} (which uses @option{--no-site-file --no-init-file}).
 
 @example
@@ -7122,7 +7132,7 @@ batch file, or if it has extension @code{.sh} or @code{.pl} the
 appropriate interpreter (if available) is called to run it.
 
 
-@node Invoking R under Windows, Invoking R under Mac OS X, Invoking R from the command line, Invoking R
+@node Invoking R under Windows, Invoking R under OS X, Invoking R from the command line, Invoking R
 @appendixsec Invoking R under Windows
 
 There are two ways to run @R{} under Windows.  Within a terminal window
@@ -7192,22 +7202,23 @@ will run @LaTeX{} on @file{mydoc.tex}, with the path to @R{}'s
 this does not help with the MiKTeX build of @LaTeX{}, but
 @command{R CMD texify mydoc} will work in that case.)
 
-@node Invoking R under Mac OS X, Scripting with R, Invoking R under Windows, Invoking R
-@appendixsec Invoking R under Mac OS X
+@node Invoking R under OS X, Scripting with R, Invoking R under Windows, Invoking R
+@appendixsec Invoking R under OS X
 
-There are two ways to run @R{} under Mac OS X.  Within a @code{Terminal.app}
+There are two ways to run @R{} under OS X.  Within a @code{Terminal.app}
 window by invoking @code{R}, the methods described in the first
 subsection apply.  There is also console-based GUI (@code{R.app}) that by
 default is installed in the @code{Applications} folder on your
-system.  It is a standard double-clickable Mac OS X application.
+system.  It is a standard double-clickable OS X application.
 
-The startup procedure under Mac OS X is very similar to that under UNIX.
-The `home directory' is the one inside the R.framework, but the startup
-and current working directory are set as the user's home directory
-unless a different startup directory is given in the Preferences window
+The startup procedure under OS X is very similar to that under UNIX, but
+@code{R.app} does not make use of command-line arguments.  The `home
+directory' is the one inside the R.framework, but the startup and
+current working directory are set as the user's home directory unless a
+different startup directory is given in the Preferences window
 accessible from within the GUI.
 
-@node Scripting with R,  , Invoking R under Mac OS X, Invoking R
+@node Scripting with R,  , Invoking R under OS X, Invoking R
 @appendixsec Scripting with R
 
 If you just want to run a file @file{foo.R} of @R{} commands, the
@@ -7266,7 +7277,7 @@ the usual way for the shell running the command.
 
 If you do not wish to hardcode the path to @command{Rscript} but have it
 in your path (which is normally the case for an installed @R{} except on
-Windows, but e.g.@: Mac OS X users may need to add @file{/usr/local/bin}
+Windows, but e.g.@: OS X users may need to add @file{/usr/local/bin}
 to their path), use
 
 @example
@@ -7326,7 +7337,7 @@ When the @acronym{GNU} @strong{readline} library is available at the
 time @R{} is configured for compilation under UNIX, an inbuilt command
 line editor allowing recall, editing and re-submission of prior commands
 is used.  Note that other versions of @strong{readline} exist and may be
-used by the inbuilt command line editor: this used to happen on Mac OS X.
+used by the inbuilt command line editor: this used to happen on OS X.
 
 It can be disabled (useful for usage with @acronym{ESS} @footnote{The
 `Emacs Speaks Statistics' package; see the @acronym{URL}
@@ -7441,9 +7452,8 @@ Re-submit the command to @R{}.
 The final @key{RET} terminates the command line editing sequence.
 
 The @strong{readline} key bindings can be customized in the usual way
-@emph{via} a @file{~/.inputrc} file.  As from @R{} 2.12.0, these
-customizations can be conditioned on application @code{R}, that is
-by including a section like
+@emph{via} a @file{~/.inputrc} file.  These customizations can be
+conditioned on application @code{R}, that is by including a section like
 
 @example
 $if R

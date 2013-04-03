@@ -43,13 +43,13 @@ validDetails.axis <- function(x) {
     x$at <- as.numeric(x$at)
     if (length(x$at) < 1 ||
         !is.finite(x$at))
-      stop("Invalid 'at' location in 'axis'")
+      stop("invalid 'at' location in 'axis'")
   }
   if (!is.logical(x$label)) {
     # labels specified
     # Can only spec labels if at is not NULL
     if (is.null(x$at))
-      stop("Invalid to specify axis labels when 'at' is NULL")
+      stop("invalid to specify axis labels when 'at' is NULL")
     # Must be either language object or string
     x$label <- as.graphicsAnnot(x$label)
     # Must be same number of labels as "at" locations
@@ -60,21 +60,19 @@ validDetails.axis <- function(x) {
   x
 }
 
-drawDetails.xaxis <- function(x, recording=TRUE) {
-  # If x$at is NULL, then we must calculate the
-  # tick marks on-the-fly
-  if (is.null(x$at)) {
-    x$at <- grid.pretty(current.viewport()$xscale)
-    # Add the new output as children
-    x <- addGrob(x, make.xaxis.major(x$at, x$main))
-    x <- addGrob(x, make.xaxis.ticks(x$at, x$main))
-    x <- updateXlabels(x)
-    # Apply any edits relevant to children
-    x <- applyEdits(x, x$edits)
-    # Draw the children
-    for (i in childNames(x))
-      grid.draw(getGrob(x, i))
-  }
+makeContent.xaxis <- function(x) {
+    # If x$at is NULL, then we must calculate the
+    # tick marks on-the-fly
+    if (is.null(x$at)) {
+        x$at <- grid.pretty(current.viewport()$xscale)
+        # Add the new output as children
+        x <- addGrob(x, make.xaxis.major(x$at, x$main))
+        x <- addGrob(x, make.xaxis.ticks(x$at, x$main))
+        x <- updateXlabels(x)
+        # Apply any edits relevant to children
+        x <- applyEdits(x, x$edits)
+    }
+    x
 }
 
 # NOTE that this can't be for all axes because it needs to
@@ -191,18 +189,19 @@ grid.xaxis <- function(at=NULL, label=TRUE, main=TRUE,
   invisible(xg)
 }
 
-drawDetails.yaxis <- function(x, recording=TRUE) {
-  # If x$at is NULL, then we must calculate and draw the
-  # tick marks on-the-fly
-  if (is.null(x$at)) {
-    x$at <- grid.pretty(current.viewport()$yscale)
-    x <- addGrob(x, make.yaxis.major(x$at, x$main))
-    x <- addGrob(x, make.yaxis.ticks(x$at, x$main))
-    x <- updateYlabels(x)
-    x <- applyEdits(x, x$edits)
-    for (i in childNames(x))
-      grid.draw(getGrob(x, i))
-  }
+makeContent.yaxis <- function(x) {
+    # If x$at is NULL, then we must calculate the
+    # tick marks on-the-fly
+    if (is.null(x$at)) {
+        x$at <- grid.pretty(current.viewport()$yscale)
+        # Add the new output as children
+        x <- addGrob(x, make.yaxis.major(x$at, x$main))
+        x <- addGrob(x, make.yaxis.ticks(x$at, x$main))
+        x <- updateYlabels(x)
+        # Apply any edits relevant to children
+        x <- applyEdits(x, x$edits)
+    }
+    x
 }
 
 editDetails.yaxis <- function(x, specs) {

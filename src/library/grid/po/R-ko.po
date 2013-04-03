@@ -1,549 +1,498 @@
-# File R_HOME/src/library/grid/po/R-ko.po
-# Korean translations for R-Base
-# Copyright (C) 2012 THE R'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the R package
-# Maintainer: Chel Hee Lee (Korean, R Development Translation Team)
-# Email: <gnustats@gmail.com> or <chl948@mail.usask.ca>
+# Korean translation for R grid package
+# src/library/grid/po/R-ko.po
+# Copyright (C) 1995-2013 The R Core Team
+# This file is distributed under the same license as the R grid package.
+# R Development Translation Team - Korean
+# Chel Hee Lee <gnustats@korea.gnu.org>, 2008-2013.
+# Chel Hee Lee <gnustats@gmail.com>, 2008-2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
-"PO-Revision-Date: 2012-09-25 15:58-0600\n"
+"POT-Creation-Date: 2013-01-12 10:57\n"
+"PO-Revision-Date: 2013-02-21 20:36-0600\n"
 "Last-Translator: Chel Hee Lee <gnustats@gmail.com>\n"
-"Language-Team:  <gnustats@gmail.com>\n"
+"Language-Team: R Development Translation Teams (Korean) <gnustats@korea.gnu.org>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Language: Korean\n"
 "X-Poedit-Country: KOREA, REPUBLIC OF\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-msgid "Invalid 'at' location in 'axis'"
-msgstr "'axis'에서 'at' 위치가 잘못되었습니다"
+msgid "invalid 'at' location in 'axis'"
+msgstr "'axis'에 유효하지 않은 'at' 위치입니다"
 
-msgid "Invalid to specify axis labels when 'at' is NULL"
-msgstr "'at'가 NULL인경우 axis labels를 지정하는 것은 적절하지 않습니다"
+msgid "invalid to specify axis labels when 'at' is NULL"
+msgstr "'at'이 NULL인 경우에 축의 레이블을 지정하는 것은 유효하지 않습니다"
 
 msgid "'labels' and 'at' locations must have same length"
-msgstr "'labels'과 'at' 위치들은 반드시 같은 길이를 가져야 합니다"
+msgstr "'labels'과 'at'는 반드시 같은 길이를 가져야 합니다"
 
-#, fuzzy
 msgid "logical 'label' supplied of length 0"
-msgstr "길이가 0인 경우 'label'에 논리값이 제공됩니다"
+msgstr ""
 
-msgid "End points must not be identical"
-msgstr "반드시 끝점들이 동일해서는 안됩니다"
+msgid "end points must not be identical"
+msgstr "끝점들은 반드시 같아야 합니다"
 
 msgid "'x1', 'y1', 'x2', and 'y2' must be units"
-msgstr "'x1', 'y1', 'x2' 그리고 'y2'는 반드시 단위이어야 합니다"
+msgstr ""
 
 msgid "'shape' must be between -1 and 1"
-msgstr "'shape'는 반드시 -1과 1 사이에 존재해야 합니다"
+msgstr "'shape'는 반드시 -1과 1 내에 있어야 합니다"
 
 msgid "'squareShape' must be between -1 and 1"
-msgstr "'squareShape'는 반드시 -1과 1 사이에 존재해야 합니다"
+msgstr "'squareShape'은 반드시 -1과 1 사이에 있어야 합니다"
 
 msgid "'arrow' must be an arrow object or NULL"
-msgstr "'arrow'는 반드시 arrow 객체 또는 NULL이어야 합니다"
+msgstr "'arrow'는 반드시 화살표 객체 또는 NULL이어야 합니다"
 
-msgid "How did we get here?"
-msgstr "왜 이렇게 된 것이죠?"
+msgid "how did we get here?"
+msgstr "우리가 여기에 어떻게 온 것인가요?"
 
-msgid "Must start new page if showing leaves separately"
-msgstr ""
-"만약 leaves들을 따로 보여주고자 한다면, 반드시 새로운 페이지를 시작해야 합니"
-"다"
+msgid "must start new page if showing leaves separately"
+msgstr "만약 leaves가 따로 떨어져서 보인다면 새로운 페이지를 시작해야 합니다"
 
-msgid "Invalid 'edit' information"
-msgstr "잘못된 'edit' 정보"
+msgid "invalid 'edit' information"
+msgstr "유효하지 않은 'edit'정보입니다"
 
 msgid "'gEditList' can only contain 'gEdit' objects"
-msgstr "'gEditList'는 오로지 'gEdit' 객체들만을 포함할 수 있습니다"
+msgstr "'gEditList'은 'gEdit' 객체들을 포함만 할 수 있습니다"
 
-msgid "Invalid 'frame'"
-msgstr "유효하지 않은 'frame'"
+msgid "invalid 'frame'"
+msgstr "유효하지 않은 'frame'입니다"
 
-msgid "Invalid 'grob'"
-msgstr "유효하지 않은 'grob'"
+msgid "invalid 'grob'"
+msgstr "유효하지 않은 'grob'입니다"
 
-msgid "Invalid 'row' and/or 'col' (no such cell in frame layout)"
-msgstr ""
-"유효하지 않은 'row' 그리고/또는 'col' (프레임 레이아웃 안에 그러한 셀이 존재"
-"하지 않습니다)"
+msgid "invalid 'row' and/or 'col' (no such cell in frame layout)"
+msgstr "유효하지 않은 'row' 그리고/또는 'col'입니다 (프레임 레이아웃에 그런 셀은 없습니다)"
 
 msgid "'col' can only be a range of existing columns"
-msgstr "'col'은 존재하는 열의 범위안에서만 얻을수 있습니다"
+msgstr "'col'은 존재하는 열의 범위내에서만 얻을 수 있습니다"
 
-msgid "Invalid 'col' specification"
-msgstr "유효하지 않은 'col' 지정"
+msgid "invalid 'col' specification"
+msgstr "유효하지 않은 'col' 지정입니다"
 
 msgid "'row' can only be a range of existing rows"
-msgstr "'row'는 존재하는 행의 범위안에서만 얻을수 있습니다"
+msgstr "'row'는 존재하는 행의 범위내에서만 얻을 수 있습니다"
 
-msgid "Invalid 'row' specification"
-msgstr "유효하지 않은 'row' 지정"
+msgid "invalid 'row' specification"
+msgstr "유효하지 않은 'row'지정입니다"
 
-msgid ""
-"Cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col."
-"before', or 'col.after'"
-msgstr ""
-"'side=[\"left\", \"right\"]', 'col', 'col.before', 또는 'col.after' 중에서 하"
-"나 이상을 지정할 수 없습니다"
+msgid "cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col.before', or 'col.after'"
+msgstr "'side=[\"left\", \"right\"]', 'col', 'col.before', 또는 'col.after' 중 하나 이상을 지정할 수 없습니다"
 
-msgid ""
-"Must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row."
-"before', or 'row.after'"
-msgstr ""
-"'side=[\"top\", \"bottom\"]', 'row', 'row.before', 또는 'row.after' 중에 반드"
-"시 정확하게 하나를 지정해야 합니다"
+msgid "must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row.before', or 'row.after'"
+msgstr "'side=[\"top\", \"bottom\"]', 'row', 'row.before', 또는 'row.after' 중 하나만을 지정해야 합니다"
 
-msgid "Invalid 'n'"
-msgstr "유효하지 않은 'n'"
+msgid "invalid 'n'"
+msgstr "유효하지 않은 'n'입니다"
 
-msgid "Invalid 'f'"
-msgstr "유효하지 않은 'f'"
+msgid "invalid 'f'"
+msgstr "유효하지 않은 'f'입니다"
 
-msgid "gpar element '%s' must not be length 0"
-msgstr "gpar의 요소 '%s'의 길이가 0이 되어서는 안됩니다"
+msgid "'gpar' element '%s' must not be length 0"
+msgstr "'gpar' 요소 '%s'는 반드시 길이가 0이 아닙니다"
 
-msgid "'gamma' gpar is defunct"
-msgstr "'gamma' gpar는 더이상 사용되지 않습니다"
+msgid "'gamma' 'gpar' element is defunct"
+msgstr "'gamma' 'gpar' 요소는 더이상 지원되지 않습니다"
 
-msgid "Invalid 'linemitre' value"
-msgstr "유효하지 않은 'linemitre' 값"
+msgid "invalid 'linemitre' value"
+msgstr "유효하지 않은 'linemitre' 값입니다"
 
-msgid "Invalid 'alpha' value"
-msgstr "유효하지 않은 'alpha' 값"
+msgid "invalid 'alpha' value"
+msgstr "유효하지 않은 'alpha' 값입니다"
 
-msgid "Must specify only one of 'font' and 'fontface'"
-msgstr "'font'과 'fontface' 중 반드시 하나를 지정해야 합니다"
+msgid "must specify only one of 'font' and 'fontface'"
+msgstr "'font'와 'fontface' 중 하나만을 선택해야 합니다"
 
-msgid "Invalid font face"
-msgstr "Invalid font face"
+msgid "invalid font face"
+msgstr "유효하지 않은 폰트 페이스 입니다"
 
-msgid "Argument must be a 'gpar' object"
-msgstr "인수는 반드시 'gpar' 객체이어야 합니다"
+msgid "argument must be a 'gpar' object"
+msgstr "인자는 반드시 'gpar' 객체이어야 합니다"
 
-msgid "Must specify only valid 'gpar' names"
-msgstr "반드시 유효한 'gpar' 이름들을 지정해야 합니다"
+msgid "must specify only valid 'gpar' names"
+msgstr "반드시 유효한 'gpar' 이름을 지정해야 합니다"
 
-msgid "Invalid display list element"
-msgstr "유효하지 않은 디스플레이 목록요소"
+msgid "invalid display list element"
+msgstr "유효하지 않은 디스플레이 리스트의 구성요소입니다"
 
-msgid "grob(s) overwritten (grab WILL not be faithful; try 'wrap=TRUE')"
-msgstr ""
-"grob(s)를 덮어 씌웠습니다 (grab를 신용할 수 있는 것은 아닙니다; "
-"'wrap=TRUE'를 시도해보세요)"
+msgid "one of more grobs overwritten (grab WILL not be faithful; try 'wrap = TRUE')"
+msgstr "여러번 덮어 씌여진 grobs중 하나입니다 (grab은 정확한 것이 아닐 수도 있으므로 'wrap = TRUE'을 시도해보세요)"
 
 msgid "viewport overwritten (grab MAY not be faithful)"
-msgstr "뷰어포트가 덮어 씌워졌습니다 (grab을 신용할 수 있는 것은 아닙니다)"
+msgstr "덮어 씌어진 뷰포트입니다 (grab은 아마도 정확하지 못할 수도 있습니다)"
 
-msgid ""
-"grob pushed viewports and did not pop/up them (grab MAY not be faithful)"
+msgid "grob pushed viewports and did not pop/up them (grab MAY not be faithful)"
 msgstr ""
-"grob pushed viewports and did not pop/up them (grab MAY not be faithful)"
 
-msgid "Only valid to push viewports"
-msgstr "Only valid to push viewports"
+msgid "only valid to push viewports"
+msgstr ""
 
-msgid "Must specify at least one viewport"
-msgstr "최소한 한개의 뷰어포트를 지정해야 합니다"
+msgid "must specify at least one viewport"
+msgstr "적어도 하나의 뷰포트를 지정해야 합니다"
 
-msgid "Must pop at least one viewport"
-msgstr "최소한 한개의 뷰어포트를 띄어야 합니다"
+msgid "must pop at least one viewport"
+msgstr "적어도 하나의 뷰포트를 띄어줘야 합니다"
 
-msgid "Must navigate up at least one viewport"
-msgstr "최소한 한개의 뷰어포트를 탐색해야 합니다"
+msgid "must navigate up at least one viewport"
+msgstr "적어도 하나의 뷰포트를 찾아야만 합니다"
 
-msgid "The vp argument is deprecated"
-msgstr "vp 인수는 더 이상 사용되지 않습니다"
+msgid "the 'vp' argument is deprecated"
+msgstr "'vp' 인자는 더이상 지원되지 않습니다"
 
-msgid "Invalid 'ask' value"
-msgstr "유효하지 않은 'ask' 값"
+msgid "invalid object inserted on the display list"
+msgstr "디스플레이 목록에 삽입되어 있는 유효하지 않은 객체입니다"
 
-msgid "Invalid object inserted on the display list"
-msgstr "디스플레이 목록에 삽입되어 있는 부적절한 객체"
+msgid "invalid modification of the display list"
+msgstr "유효하지 않은 디스플레이 목록의 변경입니다"
 
-msgid "Invalid modification of the display list"
-msgstr "디스플레이 목록의 부적절한 변경"
+msgid "'expr' must return a grob or gList"
+msgstr "'expr'은 반드시 grob 또는 gList를 반환합니다"
 
-msgid "Invalid 'grob' argument"
-msgstr "잘못된 'grob' 인수"
+msgid "invalid 'grob' argument"
+msgstr "유효하지 않은 'grob' 인자입니다"
 
-msgid "Invalid 'vp' slot"
-msgstr "잘못된 'vp' 슬롯"
+msgid "invalid 'vp' slot"
+msgstr "유효하지 않은 'vp' 슬롯입니다"
 
-msgid "Invalid 'gp' slot"
-msgstr "잘못된 'gp' 슬롯"
+msgid "invalid 'gp' slot"
+msgstr "유효하지 않은 'gp' 슬롯입니다"
 
-msgid "Invalid 'grob' class"
-msgstr "잘못된 'grob' 클래스"
+msgid "invalid 'grob' class"
+msgstr "유효하지 않은 'grob' 클래스입니다"
 
 msgid "grid.grob() is deprecated; please use grob() instead"
-msgstr "grid.grob()는 지원되지 않습니다; 대신 grob()를 사용해주세요"
+msgstr "grid.grob()는 더이상 지원되지 않으므로 대신 grob()를 사용하세요"
 
-msgid "A 'grob' path must contain at least one 'grob' name"
-msgstr "'grob' 경로는 반드시 최소한 한개의 'grob' 이름을 포함해야 합니다"
+msgid "a 'grob' path must contain at least one 'grob' name"
+msgstr "'grob' 패스는 반드시 적어도 한개의 'grob' 이름을 포함해야 합니다"
 
-msgid "Invalid 'grob' name(s)"
-msgstr "잘못된 'grob' 이름(들)"
+msgid "unable to coerce to \"gList\""
+msgstr "\"gList\"로 강제형변환을 할 수 없습니다"
 
-msgid "Unable to coerce to gList"
-msgstr "gList로 강제변환 할 수 없습니다"
+msgid "only 'grobs' allowed in \"gList\""
+msgstr "\"gList\"에서는 오로지 'grobs'만 허용됩니다"
 
-msgid "Only 'grobs' allowed in 'gList'"
-msgstr "'gList'에는 오로지 'grobs'만이 허용됩니다"
+msgid "invalid element to add to \"gList\""
+msgstr ""
 
-msgid "Invalid element to add to 'gList'"
-msgstr "'gList'에 추가된 잘못된 요소"
+msgid "can only set 'children' for a \"gTree\""
+msgstr "\"gTree\"에 'children' 지정만 할 수 있습니다"
 
-msgid "Can only set 'children' for a 'gTree'"
-msgstr "'gTree'에는 오로지 'children'을 설정할 수 있습니다"
+msgid "'children' must be a \"gList\""
+msgstr "'children'은 반드시 \"gList\"이어야 합니다"
 
-msgid "'children' must be a 'gList'"
-msgstr "'children'은 반드시 'gList'이어야 합니다"
+msgid "it is only valid to get 'children' from a \"gTree\""
+msgstr "\"gTree\"으로부터 'children'을 얻는 것만이 유효합니다"
 
-msgid "It is only valid to get 'children' from a 'gTree'"
-msgstr "'gTree'로부터 'children'을 얻는 것만이 유효합니다"
-
-msgid "Invalid 'gTree' class"
-msgstr "잘못된 'gTree' 클래스"
+msgid "invalid \"gTree\" class"
+msgstr "유효하지 않은 \"gTree\" 클래스 입니다"
 
 msgid "'allDevices' not yet implemented"
-msgstr "'allDevices'는 아직 실제 적용되지 않았습니다"
+msgstr "아직 구현되지 않은 'allDevices'입니다"
 
-msgid "Invalid 'gPath'"
-msgstr "유효하지 않은 'gPath'"
+msgid "invalid 'gPath'"
+msgstr "유효하지 않은 'gPath'입니다"
 
-msgid "Invalid 'grep' value"
-msgstr "유효하지 않은 'grep' 값"
+msgid "invalid 'grep' value"
+msgstr "유효하지 않은 'grep' 값입니다"
 
-msgid "It is only valid to get a child from a 'gTree'"
-msgstr "'child'는 'gTree'으로부터만 얻을 수 있습니다"
+msgid "it is only valid to get a child from a \"gTree\""
+msgstr "\"gTree\"로부터 child를 얻는 것만이 유효합니다"
 
 msgid "'gPath' does not specify a valid child"
 msgstr "'gPath'는 유효한 child를 지정하지 않습니다"
 
-msgid "It is only valid to set a child of a 'gTree'"
-msgstr "'gTree'의 child를 지정하는 것만이 유효합니다"
+msgid "it is only valid to set a child of a \"gTree\""
+msgstr "\"gTree\"의 child를 설정하는 것만이 유효합니다"
 
-msgid "It is only valid to set a 'grob' as child of a 'gTree'"
-msgstr "'gTree'의 child로서 'grob'를 지정하는 것만이 유효합니다"
+msgid "it is only valid to set a 'grob' as child of a \"gTree\""
+msgstr "\"gTree\"의 child로서  'grob'를 정하는 것만이 유효합니다"
 
 msgid "New 'grob' name (%s) does not match 'gPath' (%s)"
-msgstr "새로운 'grob' 이름 (%s)은 'gPath' (%s)와 일치하지 않습니다"
+msgstr "새로운 'grob' 이름 (%1$s)이 'gPath' (%2$s)와 일치하지 않습니다"
 
-msgid "It is only valid to add a 'grob' to a 'gTree'"
-msgstr "'gTree'에 'grob'를 추가하는 것만이 유효합니다"
+msgid "it is only valid to add a 'grob' to a \"gTree\""
+msgstr "\"gTree\"에 'grob'를 추가하는 것만이 유효합니다"
 
-msgid "It is only valid to add a child to a 'gTree'"
-msgstr "'gTree'를 child에 추가하는 것만이 유효합니다"
+msgid "it is only valid to add a child to a \"gTree\""
+msgstr "\"gTree\"에 child를 추가하는 것만이 유효합니다"
 
 msgid "'gPath' (%s) not found"
 msgstr "'gPath' (%s)를 찾을 수 없습니다"
 
-msgid "It is only valid to remove a child from a 'gTree'"
-msgstr "'gTree'로부터 child를 제거하는 것만이 유효합니다"
+msgid "it is only valid to remove a child from a \"gTree\""
+msgstr "\"gTree\"으로부터 child를 제거하는 것만이 유효합니다"
 
-msgid "It is only valid to edit a child of a 'gTree'"
-msgstr "'gTree'로부터 child를 편집하는 것만이 유효합니다"
+msgid "it is only valid to edit a child of a \"gTree\""
+msgstr "\"gTree\"의 child를 수정하는 것만이 유효합니다"
 
-msgid "It is invalid to directly edit the 'children' or 'childrenOrder' slot"
-msgstr ""
-"'children' 또는 'childrenOrder' 슬롯을 직접적으로 편집하는 것은 유효하지 않습"
-"니다"
+msgid "it is invalid to directly edit the 'children' or 'childrenOrder' slot"
+msgstr "'children' 또는 'childrenOrder' 슬롯을 직접적으로 수정하는 것은 유효하지 않습니다"
 
-msgid "Invalid 'result'"
-msgstr "잘못된 'result'"
+msgid "invalid 'result'"
+msgstr "유효하지 않은 'result'입니다"
 
-msgid "The new 'grob' must have the same name as the old 'grob'"
-msgstr "새로운 'grob'는 반드시 기존의 'grob'에서 사용된 이름과 동일해야 합니다"
+msgid "the new 'grob' must have the same name as the old 'grob'"
+msgstr "새로운 'grob'는 반드시 예전의 'grob'와 같은 이름을 가져야만 합니다"
 
-msgid "Slot '%s' not found"
+msgid "slot '%s' not found"
 msgstr "슬롯 '%s'를 찾을 수 없습니다"
 
 msgid "gPath (%s) not found"
 msgstr "gPath (%s)를 찾을 수 없습니다"
 
-msgid "Grob '%s' not found"
-msgstr "Grob '%s'를 찾을 수 없습니다"
+msgid "grob '%s' not found"
+msgstr "grob '%s'를 찾을 수 없습니다"
 
-msgid "Invalid element in the display list"
-msgstr "디스플레이 목록에는 잘못된 요소가 있습니다"
+msgid "invalid element in the display list"
+msgstr "디스플레이 목록에 유효하지 않은 항목이 있습니다"
 
-msgid "This function is redundant and will disappear in future versions."
-msgstr "이 함수는 불필요하므로 향후 버전에서는 사라질 것입니다."
+msgid "can only reorder 'children' for a \"gTree\""
+msgstr "\"gTree\"에 'children'을 재정렬만을 할 수 있습니다"
+
+msgid "Invalid 'order'"
+msgstr "유효하지 않은 'order'입니다"
 
 msgid "'l' must be a layout"
-msgstr "'l'는 반드시 레이아웃이어야 합니다"
+msgstr "'l'은 반드시 레이아웃입니다"
 
 msgid "'pch' and 'labels' not the same length"
-msgstr "'pch'와 'labels'는 같은 길이가 아닙니다"
+msgstr "'pch'와 'labels'은 같은 길이를 가지지 않습니다"
 
 msgid "'hgap' must be single unit"
-msgstr "'hgap'는 반드시 하나의 단위이어야 합니다"
+msgstr ""
 
 msgid "'vgap' must be single unit"
-msgstr "'vgap'는 반드시 하나의 단위이어야 합니다"
+msgstr ""
 
-msgid "Invalid justification"
-msgstr "잘못된 위치지정"
+msgid "invalid justification"
+msgstr ""
 
-msgid "Invalid horizontal justification"
-msgstr "잘못된 수평방향의 위치지정"
+msgid "invalid horizontal justification"
+msgstr ""
 
-msgid "Invalid vertical justification"
-msgstr "잘못된 수직방향의 위치지정"
+msgid "invalid vertical justification"
+msgstr ""
 
 msgid "'respect' must be logical or an 'nrow' by 'ncol' matrix"
-msgstr "'respect'는 반드시 논리값 또는 'nrow'행 'ncol'열의 행렬이어야 합니다"
+msgstr "'respect'는 반드시 논리값이거나 'nrow'행 'ncol'열을 가진 행렬이어야 합니다"
 
-msgid "Invalid 'print' argument"
-msgstr "잘못된 'print' 인수"
+msgid "invalid 'print' argument"
+msgstr "유효하지 않은 'print' 인자입니다"
 
-msgid "Invalid object in listing"
-msgstr "목록중 잘못된 객체"
+msgid "invalid object in 'listing'"
+msgstr "'listing'에 있는 유효하지 않은 객체입니다"
 
-msgid "Invalid listing"
-msgstr "잘못된 목록"
+msgid "invalid listing"
+msgstr "유효하지 않은 listing입니다"
 
-msgid "Invalid 'origin'"
-msgstr "잘못된 'origin'"
+msgid "invalid 'listing'"
+msgstr "유효하지 않은 'listing'입니다"
 
-msgid "'length' must be a unit object"
-msgstr "'length'는 반드시 단위 객체이어야 합니다"
+msgid "invalid 'origin'"
+msgstr "유효하지 않은 'origin'입니다"
 
-msgid "Invalid 'ends' or 'type' argument"
-msgstr "잘못된 'ends' 또는 'type' 인수"
+msgid "'length' must be a 'unit' object"
+msgstr "'length'는 반드시 'unit' 객체이어야 합니다"
+
+msgid "invalid 'ends' or 'type' argument"
+msgstr "유효하지 않은 'ends' 또는 'type' 인자입니다"
 
 msgid "'x' and 'y' must be units"
-msgstr "'x'와 'y'는 반드시 units 이어야 합니다"
+msgstr "'x'와 'y'는 반드시 유닛이어야 합니다"
 
 msgid "'x' and 'y' must have length 1"
-msgstr "'x'와 'y'는 반드시 길이가 1 이어야 합니다"
+msgstr "'x'와 'y'느느 반드시 길이 1을 가져야 합니다"
 
 msgid "invalid 'arrow' argument"
-msgstr "잘못된 'arrow' 인수"
+msgstr "유효하지 않은 'arrow' 인자입니다"
 
-msgid "It is invalid to specify both 'id' and 'id.lengths'"
-msgstr "'id'와 'id.lengths'를 함께 지정하는 것은 올바르지 않습니다"
+msgid "it is invalid to specify both 'id' and 'id.lengths'"
+msgstr "'id'와 'id.lengths'를 함께 지정하는 것은 유효하지 않습니다"
 
 msgid "'x' and 'y' must be same length"
-msgstr "'x'와 'y'는 반드시 같은 길이이어야 합니다"
+msgstr "'x'와 'y'는 반드시 같은 길이어야 합니다"
 
 msgid "'x' and 'y' and 'id' must all be same length"
-msgstr "'x'와 'y' 그리고 'id'는 반드시 같은 길이이어야 합니다"
+msgstr "'x'와 'y' 그리고 'id'는 반드시 같은 길이어야 합니다"
 
 msgid "'x' and 'y' and 'id.lengths' must specify same overall length"
-msgstr "'x'와 'y' 그리고 'id.lengths'는 모두 동일길이로 지정되어야 합니다"
+msgstr "'x'와 'y' 그리고 'id.lengths'는 반드시 같은 길이를 지정해야 합니다"
 
 msgid "'x0', 'y0', 'x1', and 'y1' must be units"
-msgstr "'x0', 'y0', 'x1', 그리고 'y1'은 반드시 units 이어야 합니다"
+msgstr "'x0', 'y0', 'x1', 그리고 'y1'는 반드시 유닛입니다"
 
 msgid "'x' and 'y' must be units or NULL"
-msgstr "'x'와 'y'는 반드시 units 또는 NULL이어야 합니다"
+msgstr "'x'와'y'는 반드시 유닛이거나 NULL이어야 합니다"
 
-msgid "Corrupt 'arrows' object"
-msgstr "손상된 'arrows' 객체"
+msgid "corrupt 'arrows' object"
+msgstr "'arrows' 객체가 손상되었습니다"
 
-msgid ""
-"grid.arrows() has been deprecated;  use 'arrow' arguments to line drawing "
-"functions."
-msgstr ""
-"grid.arrows()는 더이상 지원되지 않습니다; 선분 그리기 함수들에 'arrow' 인수들"
-"을 사용하세요."
-
-msgid "The 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
-msgstr ""
-"'grob' 인수는 반드시 'line.to', 'lines', 또는 'segments' grob이어야 합니다"
+msgid "the 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+msgstr "'grob' 인자는 반드시 'line.to', 'lines', 또는 'segments' grob 중 하나이어야 합니다"
 
 msgid "x and y must be units"
-msgstr "x와 y는 반드시 units이어야 합니다"
+msgstr "x 그리고 y는 반드시 유닛이어야 합니다"
 
-msgid "shape must be between -1 and 1"
-msgstr "shape는 반드시 -1과 1 사이에 존재해야 합니다"
+msgid "must have exactly 4 control points"
+msgstr "반드시 4개의 컨트롤 포인트를 가져야만 합니다"
 
-msgid "Must have exactly 4 control points"
-msgstr "반드시 정확하게 4개의 제어점들을 가지고 있어야 합니다"
-
-msgid "Must have exactly 4 control points per Bezier curve"
-msgstr "반드시 정확하게 4개의 제어점을 Bezier 곡선별로 가지고 있어야 합니다"
+msgid "must have exactly 4 control points per Bezier curve"
+msgstr "반드시 4개의 컨트롤 포인트를 Bezier curve마다 가져야 합니다"
 
 msgid "'x', 'y', and 'r' must be units"
-msgstr "'x', 'y', 그리고 'r'는 반드시 units 이어야 합니다"
+msgstr "'x', 'y', 그리고 'r'는 반드시 유닛이어야 합니다"
 
 msgid "'x', 'y', 'width', and 'height' must be units"
-msgstr "'x', 'y', 'width', 그리고 'height' 반드시 units 이어야 합니다"
+msgstr "'x', 'y', 'width', 그리고 'height'는 반드시 유닛이어야 합니다"
 
-msgid "Invalid 'rot' value"
-msgstr "잘못된 'rot' 값입니다"
+msgid "invalid 'rot' value"
+msgstr "유효하지 않은 'rot' 값입니다"
 
 msgid "zero-length 'pch'"
-msgstr "'pch'의 길이가 0 입니다"
+msgstr "0의 길이르르 가지는 'pch'입니다"
 
 msgid "'x', 'y' and 'size' must be units"
-msgstr "'x', 'y' 그리고 'size'는 반드시 units이어야 합니다"
+msgstr "'x', 'y' 그리고 'size'는 반드시 유닛이어야 합니다"
 
-msgid "'x' and 'y' must be unit objects and have the same length"
-msgstr "'x'와 'y'는 반드시 단위 객체들이어야 하며 동일한 길이를 가져야 합니다"
+msgid "'x' and 'y' must be 'unit' objects and have the same length"
+msgstr "'x'와 'y'는 반드시 'unit' 객체이어야 하며 같은 길이를 가져야 합니다"
 
 msgid "'x', 'y', 'width', and 'height' must all be units of length 1"
-msgstr ""
-"'x', 'y', 'width', 그리고 'height'는 반드시 길이가 1인 units 이어야 합니다"
+msgstr "'x', 'y', 'width', 그리고 'height' 모두가 반드시 길이가 1인 유닛이어야 합니다"
 
 msgid "'x' and 'y' must all be units of length 1"
-msgstr "'x'와 'y'는 반드시 길이가 1인 단위들이어야 합니다"
+msgstr "'x'와 'y' 모두가 반드시 길이가 1인 유닛이어야 합니다"
 
-msgid "'r' must be a unit object"
-msgstr "'r'은 반드시 단위객체이어야 합니다"
+msgid "'r' must be a 'unit' object"
+msgstr "'r'은 반드시 'unit'객체이어야 합니다"
 
 msgid "'x', 'y', 'width', and 'height' must have length 1"
-msgstr "'x', 'y', 'width', 그리고 'height'는 반드시 길이 1을 가져야 합니다"
+msgstr "'x', 'y', 'width', 그리고 'height'는 반드시 길이가 1 이어야 합니다"
 
 msgid "'x' and 'units' must have length > 0"
-msgstr "'x'와 'units'는 반드시 0 보다 큰 길이를 가져야 합니다"
+msgstr "'x'와 'units'은 반드시 길이가 0보다 커야 합니다"
 
 msgid "'x' argument must be a unit object"
-msgstr "'x' 인수는 반드시 단위 객체이어야 합니다"
+msgstr "'x' 인수가 반드시 유닛객체이어야 합니다"
 
-msgid "Invalid 'axis' or 'type'"
-msgstr "잘못된 'axis' 또는 'type'"
+msgid "invalid 'axis' or 'type'"
+msgstr "유효하지 않은 'axis' 또는 'type'입니다"
 
-msgid "No string supplied for 'strwidth/height' unit"
-msgstr "'strwidth/height' 단위에 제공된 문자열이 없습니다"
+msgid "no string supplied for 'strwidth/height' unit"
+msgstr "'strwidth/height' 유닛에 제공된 문자열이 없습니다"
 
-msgid "No 'grob' supplied for 'grobwidth/height' unit"
-msgstr "'grobwidth/height' 단위에 제공된 'grob'는 없습니다"
+msgid "no 'grob' supplied for 'grobwidth/height' unit"
+msgstr "'grobwidth/height'에 제공된 'grob'가 없습니다"
 
 msgid "'gPath' must have depth 1 in 'grobwidth/height' units"
-msgstr "'gPath' must have depth 1 in 'grobwidth/height' units"
+msgstr ""
 
-msgid "Non-NULL value supplied for plain unit"
-msgstr "plain unit에는 NULL이 아닌 값이 부여되어야 합니다"
+msgid "non-NULL value supplied for plain unit"
+msgstr ""
 
-msgid "Operator '%s' not meaningful for units"
-msgstr "연산자 '%s'는  단위로서의 의미가 없습니다"
+msgid "operator '%s' not meaningful for units"
+msgstr "유닛에 아무런 의미가 없는 연산자 '%s'입니다"
 
-msgid "Only one operand may be a unit"
-msgstr "오로지 한개의 피연산자가 unit 일 것입니다"
+msgid "only one operand may be a unit"
+msgstr ""
 
-msgid "Non-unit operand must be numeric"
-msgstr "unit이 아닌 피연산자는 반드시 숫자이어야 합니다"
+msgid "non-unit operand must be numeric"
+msgstr ""
 
-msgid "Both operands must be units"
-msgstr "피연산자 모두 반드시 units 이어야 합니다"
+msgid "both operands must be units"
+msgstr ""
 
 msgid "'Summary' function '%s' not meaningful for units"
-msgstr "'Summary' 함수 '%s'는 units 으로서 의미가 없습니다"
+msgstr ""
+
+msgid "no arguments where at least one expected"
+msgstr "적어도 한개의 인수가 필요한 곳에 아무것도 없습니다"
 
 msgid "Zero arguments where at least one expected"
-msgstr "최소 한개이상의 인수가 필요하지만 0 개입니다"
+msgstr "적어도 한개의 인수가 필요한 곳에 아무것도 없습니다"
 
-msgid "Cannot mix signs of indices"
-msgstr "첨자의 부호들이 함께 사용할 수 없습니다"
-
-msgid "Index out of bounds (unit subsetting)"
-msgstr "Index out of bounds (unit subsetting)"
-
-msgid "Index out of bounds (unit arithmetic subsetting)"
-msgstr "Index out of bounds (unit arithmetic subsetting)"
-
-msgid "Index out of bounds (unit list subsetting)"
-msgstr "Index out of bounds (unit list subsetting)"
-
-msgid "It is invalid to combine unit objects with other types"
-msgstr "unit 객체들과 다른 유형의 객체들을 결합 할 수 없습니다"
-
-msgid "Invalid unit object"
-msgstr "잘못된 단위객체입니다"
-
-msgid ""
-"unit.rep has been deprecated in favour of a unit method for the generic rep "
-"function"
+msgid "cannot mix signs of indices"
 msgstr ""
-"unit.rep has been deprecated in favour of a unit method for the generic rep "
-"function"
 
-msgid ""
-"unit.length has been deprecated in favour of a unit method for the generic "
-"length function"
+msgid "index out of bounds ('unit' subsetting)"
 msgstr ""
-"unit.length has been deprecated in favour of a unit method for the generic "
-"length function"
 
-msgid "Invalid theta"
-msgstr "Invalid theta"
+msgid "index out of bounds (unit arithmetic subsetting)"
+msgstr ""
+
+msgid "index out of bounds (unit list subsetting)"
+msgstr ""
+
+msgid "it is invalid to combine 'unit' objects with other types"
+msgstr "'unit'객체들과 다른 타입들의 결합은 유효하지 않습니다"
+
+msgid "invalid 'unit' object"
+msgstr "유효하지 않은 'unit' 객체입니다"
+
+msgid "invalid 'theta'"
+msgstr "유효하지 않은 'theta'입니다"
 
 msgid "'range' must be numeric"
-msgstr "'range'는 반드시 숫자이어야 합니다"
+msgstr "'range'는 반드시 수치형입니다"
 
-msgid "Invalid graphics parameters"
-msgstr "잘못된 그래픽 파라미터들"
+msgid "invalid 'gp' value"
+msgstr "유효하지 않는 'gp' 값입니다"
 
-msgid "Invalid 'clip' value"
-msgstr "잘못된 'clip' 값"
+msgid "invalid 'clip' value"
+msgstr "유효하지 않는 'clip' 값입니다"
 
-msgid "Invalid 'xscale' in viewport"
-msgstr "뷰어포트에 유효하지 않은 'xscale'"
+msgid "invalid 'xscale' in viewport"
+msgstr "뷰포트에 유효하지 않는 'xscale'입니다"
 
-msgid "Invalid 'yscale' in viewport"
-msgstr "뷰어포트에 유효하지 않은 'yscale'"
+msgid "invalid 'yscale' in viewport"
+msgstr "뷰포트에 유효하지 않는 'xscale'입니다"
 
-msgid "Invalid 'angle' in viewport"
-msgstr "뷰어포트에 유효하지 않은 'angle'"
+msgid "invalid 'angle' in viewport"
+msgstr "뷰포트에 유효하지 않는 'angle'입니다"
 
-msgid "Invalid 'layout' in viewport"
-msgstr "뷰어포트에 유효하지 않은 'layout'"
+msgid "invalid 'layout' in viewport"
+msgstr "뷰포트에 유효하지 않는 'layout'입니다"
 
-msgid "Invalid 'layout.pos.row' in viewport"
-msgstr "뷰어포트에서 유효하지 않은 'layout.pos.row'"
+msgid "invalid 'layout.pos.row' in viewport"
+msgstr "뷰포트에 유효하지 않는 'layout.pos.row'입니다"
 
-msgid "Invalid 'layout.pos.col' in viewport"
-msgstr "뷰어포트에서 유효하지 않은 'layout.pos.col'"
+msgid "invalid 'layout.pos.col' in viewport"
+msgstr "뷰포트에 유효하지 않는 'layout.pos.col'입니다"
 
-msgid "Only viewports allowed in 'vpList'"
-msgstr "'vpList'에서는 오로지 뷰어포트만 허용됩니다"
+msgid "only viewports allowed in 'vpList'"
+msgstr "'vpList'에는 오로지 뷰포트만 허용됩니다"
 
-msgid "Only viewports allowed in 'vpStack'"
-msgstr "'vpStack'에서는 오로지 뷰어포트만 허용됩니다"
+msgid "only viewports allowed in 'vpStack'"
+msgstr "'vpStack'에는 오로지 뷰포트만 허용됩니다"
 
-msgid ""
-"'parent' must be a viewport and 'children' must be a 'vpList' in 'vpTree'"
-msgstr ""
-"'parent'는 반드시 뷰어포트이어야 하며 'children'는 반드시 'vpTree'내의 "
-"'vpList'이어야 합니다"
+msgid "'parent' must be a viewport and 'children' must be a 'vpList' in 'vpTree'"
+msgstr "'vpTree'에서 'parent'는 반드시 뷰포트이고 'children'은 반드시 'vpList'입니다"
 
-msgid "A viewport path must contain at least one viewport name"
-msgstr ""
-"뷰어포트 경로는 반드시 최소한 하나의 뷰어포트 이름을 포함하고 있어야 합니다"
+msgid "a viewport path must contain at least one viewport name"
+msgstr "뷰포트 패스는 적어도 뷰포트 이름을 포함하고 있어야 합니다"
 
-msgid "Invalid viewport name(s)"
-msgstr "잘못된 뷰어포트 이름(들)"
+msgid "must specify at least one of 'x' or 'xscale'"
+msgstr "'x' 또는 'xscale' 중 적어도 하나는 지정해야 합니다"
 
-msgid "Must specify at least one of 'x' or 'xscale'"
-msgstr "반드시 'x' 또는 'xscale' 중 최소 하나는 지정해야 합니다"
-
-msgid "Must specify at least one of 'y' or 'yscale'"
-msgstr "반드시 'y' 또는 'yscale' 중 최소 하나는 지정해야 합니다"
+msgid "must specify at least one of 'y' or 'yscale'"
+msgstr "'y' 또는 'yscale' 중 적어도 하나는 지정해야 합니다"
 
 msgid "shutting down all devices when unloading 'grid' namespace"
-msgstr "'grid' 네임스페이스를 언로드할때 모든 장치들을 닫습니다"
+msgstr "'grid'네임스페이스를 로딩하지 않을때에는 모든 장치를 닫아야 합니다"
 
-#, fuzzy
-#~ msgid "at least one of 'width' and 'height' must be specified"
-#~ msgstr ""
-#~ "'x','y','width' 그리고 'height'는 모두 units가 나오지 않으면 되지 않습니다"
+msgid "invalid grob name"
+msgid_plural "invalid grob names"
+msgstr[0] "유효하지 않은 grob 이름입니다"
 
-#~ msgid "Viewport '%s' was not found"
-#~ msgstr "Viewport '%s'가 검색되지 않습니다"
+msgid "invalid viewport name"
+msgid_plural "invalid viewport names"
+msgstr[0] "유효하지 않은 뷰포트 이름입니다"
 
-#, fuzzy
-#~ msgid "Invalid"
-#~ msgstr "부적절한 'theta' 입니다"
-
-#~ msgid "'x' must be numeric"
-#~ msgstr "'x'는 수치가 아니면 되지 않습니다"

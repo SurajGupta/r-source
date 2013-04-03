@@ -1,6 +1,6 @@
 % File src/library/tools/man/xgettext.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
 \name{xgettext}
@@ -20,7 +20,7 @@ xgettext(dir, verbose = FALSE, asCall = TRUE)
 
 xngettext(dir, verbose = FALSE)
 
-xgettext2pot(dir, potFile)
+xgettext2pot(dir, potFile, name = "R", version, bugs)
 }
 \arguments{
   \item{dir}{the directory of a source package.}
@@ -31,6 +31,9 @@ xgettext2pot(dir, potFile)
   \item{potFile}{name of \code{po} template file to be produced.
     Defaults to \file{R-\var{pkgname}.pot} where
     \var{pkgname} is the basename of \file{dir}.}
+  \item{name, version, bugs}{as recorded in the template file:
+    \code{version} defaults the version number of the currently running
+    \R, and \code{bugs} to \code{"bugs.r-project.org"}.}
 }
 \details{
   Leading and trailing white space (space, tab and linefeed) is removed
@@ -48,7 +51,8 @@ xgettext2pot(dir, potFile)
   tools.  This ensures that the strings for simple translation are
   unique in the file (as \pkg{GNU Gettext} requires), but does not do so
   for \code{ngettext} calls (and the rules are not stated in the Gettext
-  manual).
+  manual, but \command{msgfmt} complains if there is duplication between
+  the sets.).
 
   If applied to the \pkg{base} package, this also looks in the \file{.R}
   files in \file{\var{\link{R_HOME}}/share/R}.

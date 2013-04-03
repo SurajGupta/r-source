@@ -56,10 +56,11 @@ par <- function (..., no.readonly = FALSE)
 		    single <- TRUE
 	}
     }
-    value <- .Internal(par(args))
+    value <- .External2(C_par, args)
     if(single) value <- value[[1L]]
     if(!is.null(names(args))) invisible(value) else value
 }
 
-clip <- function(x1, x2, y1, y2) .Internal(clip(x1, x2, y1, y2))
+clip <- function(x1, x2, y1, y2)
+    invisible(.External.graphics(C_clip, x1, x2, y1, y2))
 

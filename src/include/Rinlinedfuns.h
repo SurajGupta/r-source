@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2007   The R Core Team.
+ *  Copyright (C) 1999-2012  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,8 +28,7 @@
 #ifndef R_INLINES_H_
 #define R_INLINES_H_
 
-/* Probably not able to use C99 semantics in gcc < 4.3.0 but who knows what
-   unofficial versions Debian or RedHat will distribute */
+/* Probably not able to use C99 semantics in gcc < 4.3.0 */
 #if __GNUC__ == 4 && __GNUC_MINOR__ >= 3 && defined(__GNUC_STDC_INLINE__) && !defined(C99_INLINE_SEMANTICS)
 #define C99_INLINE_SEMANTICS 1
 #endif
@@ -99,6 +98,38 @@ INLINE_FUN R_len_t length(SEXP s)
     case EXPRSXP:
     case RAWSXP:
 	return LENGTH(s);
+    case LISTSXP:
+    case LANGSXP:
+    case DOTSXP:
+	i = 0;
+	while (s != NULL && s != R_NilValue) {
+	    i++;
+	    s = CDR(s);
+	}
+	return i;
+    case ENVSXP:
+	return Rf_envlength(s);
+    default:
+	return 1;
+    }
+}
+
+INLINE_FUN R_xlen_t xlength(SEXP s)
+{
+    int i;
+    switch (TYPEOF(s)) {
+    case NILSXP:
+	return 0;
+    case LGLSXP:
+    case INTSXP:
+    case REALSXP:
+    case CPLXSXP:
+    case STRSXP:
+    case CHARSXP:
+    case VECSXP:
+    case EXPRSXP:
+    case RAWSXP:
+	return XLENGTH(s);
     case LISTSXP:
     case LANGSXP:
     case DOTSXP:
@@ -502,7 +533,7 @@ INLINE_FUN Rboolean isNumber(SEXP s)
 /* As from R 2.4.0 we check that the value is allowed. */
 INLINE_FUN SEXP ScalarLogical(int x)
 {
-    SEXP ans = allocVector(LGLSXP, 1);
+    SEXP ans = allocVector(LGLSXP, (R_xlen_t)1);
     if (x == NA_LOGICAL) LOGICAL(ans)[0] = NA_LOGICAL;
     else LOGICAL(ans)[0] = (x != 0);
     return ans;
@@ -510,14 +541,14 @@ INLINE_FUN SEXP ScalarLogical(int x)
 
 INLINE_FUN SEXP ScalarInteger(int x)
 {
-    SEXP ans = allocVector(INTSXP, 1);
+    SEXP ans = allocVector(INTSXP, (R_xlen_t)1);
     INTEGER(ans)[0] = x;
     return ans;
 }
 
 INLINE_FUN SEXP ScalarReal(double x)
 {
-    SEXP ans = allocVector(REALSXP, 1);
+    SEXP ans = allocVector(REALSXP, (R_xlen_t)1);
     REAL(ans)[0] = x;
     return ans;
 }
@@ -525,7 +556,7 @@ INLINE_FUN SEXP ScalarReal(double x)
 
 INLINE_FUN SEXP ScalarComplex(Rcomplex x)
 {
-    SEXP ans = allocVector(CPLXSXP, 1);
+    SEXP ans = allocVector(CPLXSXP, (R_xlen_t)1);
     COMPLEX(ans)[0] = x;
     return ans;
 }
@@ -534,15 +565,15 @@ INLINE_FUN SEXP ScalarString(SEXP x)
 {
     SEXP ans;
     PROTECT(x);
-    ans = allocVector(STRSXP, 1);
-    SET_STRING_ELT(ans, 0, x);
+    ans = allocVector(STRSXP, (R_xlen_t)1);
+    SET_STRING_ELT(ans, (R_xlen_t)0, x);
     UNPROTECT(1);
     return ans;
 }
 
 INLINE_FUN SEXP ScalarRaw(Rbyte x)
 {
-    SEXP ans = allocVector(RAWSXP, 1);
+    SEXP ans = allocVector(RAWSXP, (R_xlen_t)1);
     RAW(ans)[0] = x;
     return ans;
 }
@@ -555,11 +586,11 @@ INLINE_FUN Rboolean isVectorizable(SEXP s)
 {
     if (s == R_NilValue) return TRUE;
     else if (isNewList(s)) {
-	int i, n;
+	R_xlen_t i, n;
 
-	n = LENGTH(s);
+	n = XLENGTH(s);
 	for (i = 0 ; i < n; i++)
-	    if (!isVector(VECTOR_ELT(s, i)) || LENGTH(VECTOR_ELT(s, i)) > 1)
+	    if (!isVector(VECTOR_ELT(s, i)) || XLENGTH(VECTOR_ELT(s, i)) > 1)
 		return FALSE;
 	return TRUE;
     }
@@ -586,7 +617,7 @@ INLINE_FUN Rboolean isVectorizable(SEXP s)
 INLINE_FUN SEXP mkNamed(SEXPTYPE TYP, const char **names)
 {
     SEXP ans, nms;
-    int i, n;
+    R_xlen_t i, n;
 
     for (n = 0; strlen(names[n]) > 0; n++) {}
     ans = PROTECT(allocVector(TYP, n));
@@ -606,8 +637,8 @@ INLINE_FUN SEXP mkString(const char *s)
 {
     SEXP t;
 
-    PROTECT(t = allocVector(STRSXP, 1));
-    SET_STRING_ELT(t, 0, mkChar(s));
+    PROTECT(t = allocVector(STRSXP, (R_xlen_t)1));
+    SET_STRING_ELT(t, (R_xlen_t)0, mkChar(s));
     UNPROTECT(1);
     return t;
 }

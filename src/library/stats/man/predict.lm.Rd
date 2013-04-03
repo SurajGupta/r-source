@@ -137,6 +137,14 @@ predict(wfit, interval = "prediction")
 predict(wfit, new, interval = "prediction")
 predict(wfit, new, interval = "prediction", weights = (new$x)^2)
 predict(wfit, new, interval = "prediction", weights = ~x^2)
-}
 
+##-- From  aov(.) example ---- predict(.. terms)
+utils::data(npk, package = "MASS")
+npk.aov <- aov(yield ~ block + N*P*K, npk)
+(termL <- attr(terms(npk.aov), "term.labels"))
+(pt <- predict(npk.aov, type = "terms"))
+pt. <- predict(npk.aov, type = "terms", terms = termL[1:4])
+stopifnot(all.equal(pt[,1:4], pt.,
+                    check.attr = FALSE, tol = 1e-12))
+}
 \keyword{regression}

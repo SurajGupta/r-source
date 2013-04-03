@@ -24,13 +24,9 @@ rowsum.default <- function(x, group, reorder = TRUE, na.rm = FALSE, ...)
     if (length(group) != NROW(x)) stop("incorrect length for 'group'")
     if (any(is.na(group))) warning("missing values for 'group'")
     ugroup <- unique(group)
-    if (reorder) ugroup <- sort(ugroup, na.last=TRUE, method="quick")
-
-    rval <- .Call("Rrowsum_matrix", x, NCOL(x), group, ugroup, na.rm,
-                  PACKAGE="base")
-
-    dimnames(rval) <- list(as.character(ugroup),dimnames(x)[[2L]])
-    rval
+    if (reorder) ugroup <- sort(ugroup, na.last = TRUE, method = "quick")
+    ## ugroup can be either a vector or a factor, so do as.character here
+    .Internal(rowsum_matrix(x, group, ugroup, na.rm, as.character(ugroup)))
 }
 
 rowsum.data.frame <- function(x, group, reorder = TRUE, na.rm = FALSE, ...)
@@ -39,10 +35,6 @@ rowsum.data.frame <- function(x, group, reorder = TRUE, na.rm = FALSE, ...)
     if (length(group) != NROW(x)) stop("incorrect length for 'group'")
     if (any(is.na(group))) warning("missing values for 'group'")
     ugroup <- unique(group)
-    if (reorder) ugroup <- sort(ugroup, na.last=TRUE, method="quick")
-
-    rval <- .Call("Rrowsum_df", x, NCOL(x), group, ugroup, na.rm,
-                  PACKAGE="base")
-
-    as.data.frame(rval, row.names=as.character(ugroup))
+    if (reorder) ugroup <- sort(ugroup, na.last = TRUE, method = "quick")
+    .Internal(rowsum_df(x, group, ugroup, na.rm, as.character(ugroup)))
 }

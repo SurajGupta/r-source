@@ -1,15 +1,27 @@
+#  File src/library/base/makebasedb.R
+#  Part of the R package, http://www.R-project.org
+#
 #  Copyright (C) 1995-2012 The R Core Team
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  A copy of the GNU General Public License is available at
+#  http://www.r-project.org/Licenses/
 
 local({
     makeLazyLoadDB <- function(from, filebase, compress = TRUE, ascii = FALSE,
                                variables) {
 
-        envlist <- function(e) {
-            names <- ls(e, all=TRUE)
-            list <- .Call("R_getVarsFromFrame", names, e, FALSE, PACKAGE="base")
-            names(list) <- names
-            list
-        }
+        envlist <- function(e)
+            .Internal(getVarsFromFrame(ls(e, all = TRUE), e, FALSE))
 
         envtable <- function() {
             idx <- 0
@@ -34,17 +46,14 @@ local({
         }
 
         lazyLoadDBinsertValue <- function(value, file, ascii, compress, hook)
-            .Call("R_lazyLoadDBinsertValue", value, file, ascii, compress, hook,
-                  PACKAGE = "base")
+            .Internal(lazyLoadDBinsertValue(value, file, ascii, compress, hook))
 
         lazyLoadDBinsertListElement <- function(x, i, file, ascii, compress, hook)
-            .Call("R_lazyLoadDBinsertValue", x[[i]], file, ascii, compress, hook,
-                  PACKAGE = "base")
+            .Internal(lazyLoadDBinsertValue(x[[i]], file, ascii, compress, hook))
 
         lazyLoadDBinsertVariable <- function(n, e, file, ascii, compress, hook) {
-            x <- .Call("R_getVarsFromFrame", n, e, FALSE, PACKAGE="base")
-           .Call("R_lazyLoadDBinsertValue", x[[1]], file, ascii, compress, hook,
-                  PACKAGE = "base")
+            x <- .Internal(getVarsFromFrame(n, e, FALSE))
+            .Internal(lazyLoadDBinsertValue(x[[1L]], file, ascii, compress, hook))
         }
 
         mapfile <- paste(filebase, "rdx", sep = ".")
@@ -117,12 +126,5 @@ local({
     prims <- basevars[sapply(basevars, function(n) is.primitive(get(n, baseenv())))]
     basevars <- basevars[! basevars %in% c(omit, prims)]
 
-# **** need prims too since some prims have several names (is.name, is.symbol)
-#    basevars <- ls(baseenv(), all=TRUE)
-#    notPrim <- sapply(basevars, function(n)
-#        ! typeof(get(n, baseenv())) %in% c("builtin","special"))
-#    makeLazyLoadDB(baseenv(), baseFileBase, variables = basevars[notPrim])
-
     makeLazyLoadDB(baseenv(), baseFileBase, variables = basevars)
-#    q(save = "no", runLast = FALSE)
 })

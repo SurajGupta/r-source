@@ -33,7 +33,7 @@ hasArg(name)
 \seealso{ \code{\link{missing}} }
 
 \examples{
-ftest <- function(x1, ...) c(hasArg(x1), hasArg(y2))
+ftest <- function(x1, ...) c(hasArg(x1), hasArg("y2"))
 
 ftest(1) ## c(TRUE, FALSE)
 ftest(1, 2)  ## c(TRUE, FALSE)

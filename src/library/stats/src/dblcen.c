@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997-2012   The R Core Team.
+ *  Copyright (C) 1997-2002   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,23 +19,26 @@
 
 #include "Rinternals.h"
 
+/* Double Centering for Classical Multidimensional Scaling */
+
 /* NB: this does not duplicate A */
 SEXP DoubleCentre(SEXP A)
 {
-    int i, j, n = nrows(A);
-    double *a = REAL(A), sum;
+    int n = nrows(A);
+    double *a = REAL(A);
+    size_t N = n; /* avoid integer overflow with long vectors */
 
-    for(i = 0 ; i < n ; i++) {
-	sum = 0;
-	for(j = 0 ; j < n ; j++) sum += a[i+j*n];
+    for(int i = 0; i < n; i++) {
+	double sum = 0;
+	for(int j = 0; j < n; j++) sum += a[i+j*N];
 	sum /= n;
-	for(j = 0 ; j < n ; j++) a[i+j*n] -= sum;
+	for(int j = 0; j < n; j++) a[i+j*N] -= sum;
     }
-    for(j = 0 ; j < n ; j++) {
-	sum = 0;
-	for(i = 0 ; i < n ; i++) sum += a[i+j*n];
+    for(int j = 0; j < n; j++) {
+	double sum = 0;
+	for(int i = 0; i < n; i++) sum += a[i+j*N];
 	sum /= n;
-	for(i = 0 ; i < n ; i++) a[i+j*n] -= sum;
+	for(int i = 0; i < n; i++) a[i+j*N] -= sum;
     }
     return A;
 }

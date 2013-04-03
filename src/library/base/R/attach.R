@@ -16,14 +16,13 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-attach <- function(what, pos = 2, name = deparse(substitute(what)),
+attach <- function(what, pos = 2L, name = deparse(substitute(what)),
                    warn.conflicts = TRUE)
 {
     checkConflicts <- function(env)
     {
-        ## remove .First.lib eventually (no longer used nor exported)
         dont.mind <- c("last.dump", "last.warning", ".Last.value",
-                       ".Random.seed", ".First.lib", ".Last.lib",
+                       ".Random.seed", ".Last.lib", ".onDetach",
                        ".packageName", ".noGenerics", ".required",
                        ".no_S3_generics", ".requireCachedGenerics")
         sp <- search()
@@ -46,7 +45,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
         ipos <- seq_along(sp)[-c(db.pos, match(c("Autoloads", "CheckExEnv"), sp, 0L))]
         for (i in ipos) {
             obj.same <- match(objects(i, all.names = TRUE), ob, nomatch = 0L)
-            if (any(obj.same > 0)) {
+            if (any(obj.same > 0L)) {
                 same <- ob[obj.same]
                 same <- same[!(same %in% dont.mind)]
                 Classobjs <- grep("^\\.__", same)
@@ -61,15 +60,17 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
                                         inherits = FALSE))
                 same <- same[is_fn1 == is_fn2]
                 if(length(same)) {
-                    objs <- strwrap(paste(same, collapse=", "), indent=4,
-                                    exdent=4)
+                    objs <- strwrap(paste(same, collapse=", "), indent = 4L,
+                                    exdent = 4L)
                     pkg <-
                         if (sum(sp == sp[i]) > 1L) {
                             sprintf("%s (position %d)", sp[i], i)
                         } else {
                             sp[i]
                         }
-                    msg <- sprintf("The following object(s) are masked %s '%s':\n\n%s\n",
+                    msg <- sprintf(ngettext(length(objs),
+                                            "The following object is masked %s %s:\n\n%s\n",
+                                            "The following objects are masked %s %s:\n\n%s\n"),
                                    if (i < db.pos) "_by_" else "from",
                                    pkg, paste(objs, collapse="\n"))
                     cat(msg)
@@ -78,17 +79,17 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
         }
     }
 
-    if(pos == 1) {
+    if(pos == 1L) {
         warning("*** 'pos=1' is not possible; setting 'pos=2' for now.\n",
                 "*** Note that 'pos=1' will give an error in the future")
-        pos <- 2
+        pos <- 2L
     }
     if (is.character(what) && (length(what) == 1L)){
         if (!file.exists(what))
             stop(gettextf("file '%s' not found", what), domain = NA)
         if(missing(name)) name <- paste0("file:", what)
         value <- .Internal(attach(NULL, pos, name))
-        load(what, envir=as.environment(pos))
+        load(what, envir = as.environment(pos))
     }
     else
         value <- .Internal(attach(what, pos, name))
@@ -101,7 +102,7 @@ attach <- function(what, pos = 2, name = deparse(substitute(what)),
     invisible(value)
 }
 
-detach <- function(name, pos = 2, unload = FALSE, character.only = FALSE,
+detach <- function(name, pos = 2L, unload = FALSE, character.only = FALSE,
                    force = FALSE)
 {
     if(!missing(name)) {
@@ -119,11 +120,10 @@ detach <- function(name, pos = 2, unload = FALSE, character.only = FALSE,
 
     ## we need to treat packages differently from other objects, so get those
     ## out of the way now
-    if (! grepl("^package:", packageName) ) {
-        res <- .Internal(detach(pos))
-        return(invisible(res))
-    }
+    if (! grepl("^package:", packageName) )
+        return(invisible(.Internal(detach(pos))))
 
+    ## From here down we are detaching a package.
     pkgname <- sub("^package:", "", packageName)
     for(pkg in search()[-1L]) {
         if(grepl("^package:", pkg) &&
@@ -140,13 +140,30 @@ detach <- function(name, pos = 2, unload = FALSE, character.only = FALSE,
     }
     env <- as.environment(pos)
     libpath <- attr(env, "path")
-    hook <- getHook(packageEvent(pkgname, "detach")) # might be list
+    hook <- getHook(packageEvent(pkgname, "detach")) # might be a list
     for(fun in rev(hook)) try(fun(pkgname, libpath))
-    if(exists(".Last.lib", mode = "function", where = pos, inherits = FALSE)) {
+    ## some people, e.g. package g.data, have faked pakages without namespaces
+    ns <- .getNamespace(pkgname)
+    if(!is.null(ns) &&
+       exists(".onDetach", mode = "function", where = ns, inherits = FALSE)) {
+        .onDetach <- get(".onDetach",  mode = "function", pos = ns,
+                         inherits = FALSE)
+        if(!is.null(libpath)) {
+            res <- tryCatch(.onDetach(libpath), error = identity)
+            if (inherits(res, "error")) {
+                warning(gettextf("%s failed in %s() for '%s', details:\n  call: %s\n  error: %s",
+                                 ".onDetach", "detach", pkgname,
+                                 deparse(conditionCall(res))[1L],
+                                 conditionMessage(res)),
+                        call. = FALSE, domain = NA)
+            }
+        }
+    }
+    else if(exists(".Last.lib", mode = "function", where = pos, inherits = FALSE)) {
         .Last.lib <- get(".Last.lib",  mode = "function", pos = pos,
                          inherits = FALSE)
         if(!is.null(libpath)) {
-            res <- tryCatch(.Last.lib(libpath), error=identity)
+            res <- tryCatch(.Last.lib(libpath), error = identity)
             if (inherits(res, "error")) {
                 warning(gettextf("%s failed in %s() for '%s', details:\n  call: %s\n  error: %s",
                                  ".Last.lib", "detach", pkgname,
@@ -163,22 +180,23 @@ detach <- function(name, pos = 2, unload = FALSE, character.only = FALSE,
         if(unload) {
             tryCatch(unloadNamespace(pkgname),
                      error = function(e)
-                     warning(sQuote(pkgname),
-                             " namespace cannot be unloaded:\n  ",
-                             conditionMessage(e), call. = FALSE))
+                     warning(gettextf("%s namespace cannot be unloaded:\n  ",
+                                      sQuote(pkgname)),
+                             conditionMessage(e),
+                             call. = FALSE, domain = NA))
         }
     } else {
         if(.isMethodsDispatchOn() && methods:::.hasS4MetaData(env))
             methods:::cacheMetaData(env, FALSE)
-        .Call("R_lazyLoadDBflush",
-              paste0(libpath, "/R/", pkgname, ".rdb"),
-              PACKAGE="base")
+        .Internal(lazyLoadDBflush(paste0(libpath, "/R/", pkgname, ".rdb")))
     }
     invisible()
 }
 
+.detach <- function(pos) .Internal(detach(pos))
+
 ls <- objects <-
-    function (name, pos = -1, envir = as.environment(pos), all.names = FALSE,
+    function (name, pos = -1L, envir = as.environment(pos), all.names = FALSE,
               pattern)
 {
     if (!missing(name)) {
@@ -187,7 +205,8 @@ ls <- objects <-
             name <- substitute(name)
             if (!is.character(name))
                 name <- deparse(name)
-            warning(sQuote(name), " converted to character string")
+            warning(gettextf("%s converted to character string", sQuote(name)),
+                    domain = NA)
             pos <- name
         }
         else
@@ -195,8 +214,8 @@ ls <- objects <-
     }
     all.names <- .Internal(ls(envir, all.names))
     if (!missing(pattern)) {
-        if ((ll <- length(grep("[", pattern, fixed=TRUE))) &&
-            ll != length(grep("]", pattern, fixed=TRUE))) {
+        if ((ll <- length(grep("[", pattern, fixed = TRUE))) &&
+            ll != length(grep("]", pattern, fixed = TRUE))) {
             if (pattern == "[") {
                 pattern <- "\\["
                 warning("replaced regular expression pattern '[' by  '\\\\['")

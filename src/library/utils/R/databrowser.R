@@ -174,16 +174,15 @@ browseEnv <- function(envir = .GlobalEnv, pattern,
 				    si[c("user","nodename","sysname")]})))
     }
     if(html)
-	wsbrowser(IDS,IsRoot,Container,ItemsPerContainer, ParentID,
-		  NAMES,TYPES,DIMS,
-		  kind = "HTML", main = main, properties = properties,
-		  expanded)
+	wsbrowser(IDS, IsRoot, Container, ItemsPerContainer, ParentID,
+		  NAMES, TYPES, DIMS, kind = "HTML", main = main,
+                  properties = properties, expanded)
     else if(.Platform$GUI == "AQUA") {
-	.Internal(wsbrowser(as.integer(IDS), IsRoot, Container,
-			    as.integer(ItemsPerContainer), as.integer(ParentID),
-			    NAMES, TYPES, DIMS))
-        invisible()
-    } else stop("only 'html = TRUE' is supported on this platform")
+        awsbrowser <- get("wsbrowser", envir = as.environment("tools:RGUI"))
+ 	awsbrowser(as.integer(IDS), IsRoot, Container,
+                   as.integer(ItemsPerContainer), as.integer(ParentID),
+                   NAMES, TYPES, DIMS)
+   } else stop("only 'html = TRUE' is supported on this platform")
 }
 
 wsbrowser <- function(IDS, IsRoot, IsContainer, ItemsPerContainer,
@@ -197,8 +196,8 @@ wsbrowser <- function(IDS, IsRoot, IsContainer, ItemsPerContainer,
 
     bold <- function(ch) paste0("<b>",ch,"</b>")
     ital <- function(ch) paste0("<i>",ch,"</i>")
-    entry<- function(ch) paste0("<td>",ch,"</td>")
-    Par	 <- function(ch) paste0("<P>",ch,"</P>")
+    entry <- function(ch) paste0("<td>",ch,"</td>")
+    Par	<- function(ch) paste0("<P>",ch,"</P>")
     Trow <- function(N, ...) {
 	if(length(list(...)) != N) stop("wrong number of table row entries")
 	paste("<tr>", ..., "</tr>\n")

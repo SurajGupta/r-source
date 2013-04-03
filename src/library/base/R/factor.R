@@ -1,7 +1,7 @@
 #  File src/library/base/R/factor.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,20 +16,21 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-factor <- function(x = character(), levels, labels=levels,
-                   exclude = NA, ordered = is.ordered(x))
+factor <- function(x = character(), levels, labels = levels,
+                   exclude = NA, ordered = is.ordered(x), nmax = NA)
 {
     if(is.null(x)) x <- character()
     nx <- names(x)
     if (missing(levels)) {
-	y <- unique(x)
+	y <- unique(x, nmax = nmax)
 	ind <- sort.list(y) # or possibly order(x) which is more (too ?) tolerant
 	y <- as.character(y)
 	levels <- unique(y[ind])
     }
     force(ordered) # check if original x is an ordered factor
-    exclude <- as.vector(exclude, typeof(x))# may result in NA
+    exclude <- as.vector(exclude, typeof(x)) # may result in NA
     x <- as.character(x)
+    ## levels could be a long vectors, but match will not handle that.
     levels <- levels[is.na(match(levels, exclude))]
     f <- match(x, levels)
     if(!is.null(nx))
@@ -37,20 +38,17 @@ factor <- function(x = character(), levels, labels=levels,
     nl <- length(labels)
     nL <- length(levels)
     if(!any(nl == c(1L, nL)))
-	stop(gettextf("invalid labels; length %d should be 1 or %d", nl, nL),
+	stop(gettextf("invalid 'labels'; length %d should be 1 or %d", nl, nL),
 	     domain = NA)
     levels(f) <- ## nl == nL or 1
 	if (nl == nL) as.character(labels)
 	else paste0(labels, seq_along(levels))
-    class(f) <- c(if(ordered)"ordered", "factor")
+    class(f) <- c(if(ordered) "ordered", "factor")
     f
 }
 
 is.factor <- function(x) inherits(x, "factor")
 as.factor <- function(x) if (is.factor(x)) x else factor(x)
-
-## Help old S users:
-category <- function(...) .Defunct()
 
 levels <- function(x) UseMethod("levels")
 levels.default <- function(x) attr(x, "levels")
@@ -140,9 +138,10 @@ print.factor <- function (x, quote = FALSE, max.levels = NULL,
                 else max(1L, which(lenl > width)[1L] - 1L)
             }
         drop <- n > maxl
-        cat(if(drop)paste(format(n),""), T0,
+        cat(if(drop) paste(format(n), ""), T0,
             paste(if(drop)c(lev[1L:max(1,maxl-1)],"...",if(maxl > 1) lev[n])
-                      else lev, collapse= colsep), "\n", sep="")
+                      else lev, collapse = colsep),
+            "\n", sep = "")
     }
     invisible(x)
 }
@@ -159,7 +158,7 @@ Ops.factor <- function(e1, e2)
     ok <- switch(.Generic, "=="=, "!="=TRUE, FALSE)
     if(!ok) {
 	warning(.Generic, " not meaningful for factors")
-	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
+	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
     }
     nas <- is.na(e1) | is.na(e2)
     ## Need this for NA *levels* as opposed to missing
@@ -193,7 +192,7 @@ Ops.factor <- function(e1, e2)
 `[.factor` <- function(x, ..., drop = FALSE)
 {
     y <- NextMethod("[")
-    attr(y,"contrasts")<-attr(x,"contrasts")
+    attr(y,"contrasts") <- attr(x,"contrasts")
     attr(y,"levels") <- attr(x,"levels")
     class(y) <- oldClass(x)
     lev <- levels(x)
@@ -208,7 +207,7 @@ Ops.factor <- function(e1, e2)
     if (is.factor(value)) value <- levels(value)[value]
     m <- match(value, lx)
     if (any(is.na(m) & !is.na(value)))
-	warning("invalid factor level, NAs generated")
+	warning("invalid factor level, NA generated")
     class(x) <- NULL
     x[...] <- m
     attr(x,"levels") <- lx
@@ -257,7 +256,7 @@ Ops.ordered <- function (e1, e2)
     if(!ok) {
 	warning(sprintf("'%s' is not meaningful for ordered factors",
                         .Generic))
-	return(rep.int(NA, max(length(e1), if(!missing(e2))length(e2))))
+	return(rep.int(NA, max(length(e1), if(!missing(e2)) length(e2))))
     }
     if (.Generic %in% c("==", "!="))
       return(NextMethod(.Generic))  ##not S-PLUS compatible, but saner

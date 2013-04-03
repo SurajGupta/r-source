@@ -1,6 +1,6 @@
 % File src/library/base/man/Memory.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Memory}
@@ -10,16 +10,16 @@
   How \R manages its workspace.
 }
 \details{
-  \R has a variable-sized workspace.  Prior to \R 2.15.0 there were
-  (rarely-used) command-line options to control its size, but it is now
-  sized automatically.
+  \R has a variable-sized workspace.  There are (rarely-used)
+  command-line options to control its minimum size, but no longer any to
+  control the maximum size.
 #ifdef windows
-  
+
   On Windows the \option{--max-mem-size} option (or environment variable
-  \env{R_MAX_MEM_SIZE}) sets the maximum memory allocation: it has a
-  minimum allowed value of 32M.  This is intended to catch attempts to
-  allocate excessive amounts of memory which may cause other processes
-  to run out of resources.  See also \code{\link{memory.limit}}.
+  \env{R_MAX_MEM_SIZE}) sets the maximum (virtual) memory allocation: it
+  has a minimum allowed value of 32M.  This is intended to catch
+  attempts to allocate excessive amounts of memory which may cause other
+  processes to run out of resources.  See also \code{\link{memory.limit}}.
 #endif
 
   \R maintains separate areas for fixed and variable sized objects.  The
@@ -29,18 +29,30 @@
   second are thrown on a \emph{heap} of \sQuote{Vcells} of 8 bytes each.
   Each cons cell occupies 28 bytes on a 32-bit build of \R, (usually) 56
   bytes on a 64-bit build.
-  
+
   The default values are (currently) an initial setting of 350k cons
-  cells, 6Mb of vector heap: note that the areas are not actually
+  cell sand 6Mb of vector heap.  Note that the areas are not actually
   allocated initially: rather these values are the sizes for triggering
-  garbage collection.  Thereafter \R will grow or shrink the areas
+  garbage collection.  These values can be set by the command line
+  options \option{--min-nsize} and \option{--min-vsize} (or if they are
+  not used, the environment variables \env{R_NSIZE} and \env{R_VSIZE})
+  when \R is started. Thereafter \R will grow or shrink the areas
   depending on usage, never decreasing below the initial values.
+
+  How much time \R spends in the garbage collector will depend on these
+  initial settings and on the trade-off the memory manager makes, when
+  memory fills up, between collecting garbage to free up unused memory
+  and growing these areas.  The strategy used for growth can be
+  specified by setting the environment variable \env{R_GC_MEM_GROW} to
+  an integer value between 0 and 3. This variable is read at
+  start-up. Higher values grow the heap more aggressively, thus reducing
+  garbage collection time but using more memory.
 
   You can find out the current memory consumption (the heap and cons
   cells used as numbers and megabytes) by typing \code{\link{gc}()} at the
   \R prompt.  Note that following \code{\link{gcinfo}(TRUE)}, automatic
   garbage collection always prints memory use statistics.
-  
+
   The command-line option \option{--max-ppsize} controls the maximum
   size of the pointer protection stack.  This defaults to 50000, but can
   be increased to allow deep recursion or large and complicated

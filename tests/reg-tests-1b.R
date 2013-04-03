@@ -1325,14 +1325,7 @@ try( do.call(function(x) NextMethod('foo'),list()) )
 
 ## identical() returned FALSE on external ptr with
 ## identical addresses <= 2.11.1
-stopifnot(identical(
-                    getNativeSymbolInfo("R_getSymbolInfo", "base"),
-                    getNativeSymbolInfo("R_getSymbolInfo", "base")
-                    ))
-stopifnot(!identical(
-                     getNativeSymbolInfo("R_getSymbolInfo", "base"),
-                     getNativeSymbolInfo("R_getRegisteredRoutines", "base")
-                     ))
+## Example with getNativeSymbolInfo no longer relevant
 
 
 ## getNamespaceVersion() etc
@@ -1822,7 +1815,12 @@ hc <- hclust(d, method = "median")
 stopifnot(all.equal(hc$height[5:11],
                     c(1.69805, 1.75134375, 1.34036875, 1.47646406,
                       3.21380039, 2.9653438476, 6.1418258), tol = 1e-9))
-##
+## Also ensure that hclust() remains fast:
+set.seed(1); nn <- 2000
+tm0 <- system.time(dst <- as.dist(matrix(runif(n = nn^2, min = 0, max = 1), nn, nn)))
+(tm <- system.time(hc <- hclust(dst, method="average")))
+stopifnot(tm[1] < tm0[1])
+## was slow  from R 1.9.0 up to R 2.15.0
 
 
 ## 'infinity' partially matched 'inf'
@@ -1942,7 +1940,7 @@ stopifnot(is.null(dimnames(sA)))
 Q <- matrix(c(FALSE, TRUE, TRUE, FALSE), 2, 2)
 is.numeric(Q) # FALSE
 solve(Q)
-## failed in R-devel which interpreted 'numeric' correctly.
+## failed in R-devel, which interpreted 'numeric' correctly.
 
 
 ## tests of rowsum() with names and for factor groups
@@ -1977,6 +1975,16 @@ as.data.frame(1:10, nm = "OneToTen")
 as.data.frame(LETTERS[1:10], nm = "FirstTenLetters")
 as.data.frame(LETTERS[1:10])
 ## second failed in 2.15.1.
+
+
+## Test of stack direction (related to PR#15011)
+f <- function(depth) if(depth < 20) f(depth+1) else Cstack_info()
+(z <- f(0))
+z10 <- f(10)
+if(is.na(z[2]) || is.na(z10[2])) {
+    message("current stack size is not available")
+} else stopifnot(z[2] > z10[2])
+## Previous test ould be defeated by compiler optimization.
 
 
 ##
@@ -2016,8 +2024,21 @@ x <- list()
 x[1:2] <- list(1)
 x[[1]][] <- 2  # change part of first component of x
 x   # second component of x should not be affected
-stopifnot(identical(x[[2]], 1))
-## was  2  in R <= 2.15.2  ("NAMED")
+stopifnot(identical(x[[2]], 1))# was 2
+##
+## 2nd example from Comment #5
+x <- list()
+list(1) -> x[1] -> x[2]
+x[[1]][] <- 2
+stopifnot(x[[2]] == 1)## was 2, wrongly, as well ..
+##
+## 3rd example from Comment #5
+y <- list(1)
+x <- list()
+x[1] <- y
+x[[1]][] <- 2
+stopifnot(y[[1]] == 1)## was 2
+## "NAMED": all three were wrong in    2.4.0 <= R <= 2.15.2
 
 
 ## PR#15115
@@ -2028,6 +2049,13 @@ for (i in 2:5)
 abc <- 2
 stopifnot(eval(f) == 1)
 ## Was 0 in 2.15.2 because the i was not duplicated
+
+
+## Complex subassignment  return value
+## From: Justin Talbot to R-devel, 8 Jan 2013
+a <- list( 1 ); b <- (a[[1]] <- a); stopifnot(identical(b, list( 1 )))
+a <- list(x=1); b <- ( a$x  <-  a); stopifnot(identical(b, list(x=1)))
+## both failed in 2.15.2
 
 
 ## TukeyHSD with na.omit = na.exclude, see
@@ -2045,16 +2073,10 @@ stopifnot(!is.na(z$tension))
 ## recursive listing of directories
 p <- file.path(R.home(), "share","texmf") # always exists, readable
 lfri <- list.files(p, recursive=TRUE, include.dirs=TRUE)
-stopifnot(!is.na(match(c("tex", "bibtex"), lfri)))
-## failed for a few days, unnoticed, in the development version of R
-
-
-## In R 2.15.[12] this changed X
-## (https://stat.ethz.ch/pipermail/r-devel/2012-December/065339.html)
-X <- matrix(c(1,2,3, 5,7,11, 13,17,19), 3, 3)
-s <- svd(X, LINPACK = TRUE) # gives deprecation warning
-stopifnot(identical(X, matrix(c(1,2,3, 5,7,11, 13,17,19), 3, 3)))
-## but not in R-devel nor 2.15.2 patched at the time.
+subdirs <- c("bibtex", "tex")
+lfnd <- setdiff(list.files(p, all.files=TRUE, no..=TRUE), ".svn")
+stopifnot(!is.na(match(subdirs, lfri)), identical(subdirs, lfnd))
+## the first failed for a few days, unnoticed, in the development version of R
 
 
 ## [sd]Quote on 0-length inputs.
@@ -2062,6 +2084,14 @@ x <- character(0)
 stopifnot(identical(sQuote(x), x), identical(dQuote(x), x))
 ## was length one in 2.15.2
 
+## aperm(a, <char>)  when a has named dimnames:
+a <- matrix(1:6, 2, dimnames=list(A=NULL, B=NULL))
+stopifnot(identical(unname(aperm(a, c("B","A"))),
+		    matrix(1:6, 3, byrow=TRUE)))# worked
+assertError(aperm(a, c("C","A")))# fine, but
+## forgetting one had been detrimental:
+assertError( aperm(a, "A") )
+## seg.faulted in 2.15.2 and earlier
 
 ## enc2utf8 failed on NA in non-UTF-8 locales PR#15201
 stopifnot(identical(NA_character_, enc2utf8(NA_character_)))

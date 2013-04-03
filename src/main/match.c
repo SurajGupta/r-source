@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2010   The R Core Team.
+ *  Copyright (C) 1998-2012   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -374,7 +374,9 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
                 }
             }
 	    errorcall(call /* R_GlobalContext->call */,
-		      _("unused argument(s) %s"),
+		      ngettext("unused argument %s",
+			       "unused arguments %s",
+			       (unsigned long) length(unusedForError)),
 		      CHAR(STRING_ELT(deparse1line(unusedForError, 0), 0)) + 4);
                       /* '+ 4' is to remove 'list' from 'list(badTag1,...)' */
 	}

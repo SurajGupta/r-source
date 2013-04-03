@@ -3,6 +3,8 @@
 % Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+
 \name{GammaDist}
 \alias{GammaDist}
 \alias{dgamma}
@@ -63,7 +65,7 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
   }{f(x)= 1/(s^a Gamma(a)) x^(a-1) e^-(x/s)}
   for \eqn{x \ge 0}, \eqn{\alpha > 0}{a > 0} and \eqn{\sigma > 0}{s > 0}.
   (Here \eqn{\Gamma(\alpha)}{Gamma(a)} is the function implemented by \R's
-  \code{\link{gamma}()} and defined in its help.  Note that \eqn{a=0}
+  \code{\link{gamma}()} and defined in its help.  Note that \eqn{a = 0}
   corresponds to the trivial distribution with all mass at point 0.)
 
   The mean and variance are
@@ -89,7 +91,9 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
 %   \code{scale < 1e-10}.
 \note{
   The S (Becker \emph{et al} (1988) parametrization was via \code{shape}
-  and \code{rate}: S had no \code{scale} parameter.
+  and \code{rate}: S had no \code{scale} parameter.  In \R 2.x.y
+  \code{scale} took precedence over \code{rate}, but now it is an error
+  to supply both.
 
   \code{pgamma} is closely related to the incomplete gamma function.  As
   defined by Abramowitz and Stegun 6.5.1 (and by \sQuote{Numerical
@@ -108,7 +112,7 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
   Note however that \code{pgamma(x, a, ..)} currently requires \eqn{a > 0},
   whereas the incomplete gamma function is also defined for negative
   \eqn{a}.  In that case, you can use \code{gamma_inc(a,x)} (for
-  \eqn{\Gamma(a,x)}) from package \pkg{gsl}.
+  \eqn{\Gamma(a,x)}) from package \CRANpkg{gsl}.
 
   See also
   \url{http://en.wikipedia.org/wiki/Incomplete_gamma_function}, or

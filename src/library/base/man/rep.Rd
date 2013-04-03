@@ -1,6 +1,6 @@
 % File src/library/base/man/rep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{rep}
@@ -10,24 +10,27 @@
 \alias{rep.POSIXct}
 \alias{rep.POSIXlt}
 \alias{rep.Date}
+\alias{rep_len}
 
 \title{Replicate Elements of Vectors and Lists}
 \description{
   \code{rep} replicates the values in \code{x}.  It is a generic
   function, and the (internal) default method is described here.
 
-  \code{rep.int} is a faster simplified version for the most common case.
+  \code{rep.int} and \code{rep_len} are faster simplified versions for
+  two common cases.  They are not generic.
 }
 \usage{
 rep(x, \dots)
 
 rep.int(x, times)
+
+rep_len(x, length.out)
 }
 \arguments{
-  \item{x}{a vector (of any mode including a list) or a factor or
-    (except for \code{rep.int}) a \code{POSIXct} or \code{POSIXlt} or
-    \code{date} object; or also, an S4 object containing a vector of the
-    above kind.}
+  \item{x}{a vector (of any mode including a list) or a factor or (for
+    \code{rep} only) a \code{POSIXct} or \code{POSIXlt} or \code{Date}
+    object; or an S4 object containing such an object.}
   \item{\dots}{further arguments to be passed to or from other methods.
     For the internal default method these can include:
     \describe{
@@ -45,6 +48,8 @@ rep.int(x, times)
     }
   }
   \item{times}{see \code{\dots}.}
+  \item{length.out}{non-negative integer: the desired length of the
+    output vector.}
 }
 
 \details{
@@ -78,8 +83,8 @@ rep.int(x, times)
 \value{
   An object of the same type as \code{x}.
 
-  \code{rep.int} returns no attributes (except the class if returning a
-  factor).
+  \code{rep.int} and \code{rep_len} return no attributes (except the
+  class if returning a factor).
 
   The default method of \code{rep} gives the result names (which will
   almost always contain duplicates) if \code{x} had names, but retains
@@ -96,6 +101,11 @@ rep.int(x, times)
 
   For historical reasons \code{rep} works on \code{NULL}: the result is
   always \code{NULL} even when \code{length.out} is positive.
+
+  Although it has never been documented, these functions have always
+  worked on \link{expression} vectors.  \R 2.x.y accepted pairlists and
+  some other objects (although the results were rarely what their users
+  intended).
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -130,8 +140,9 @@ rep(as.POSIXlt(x), rep(2, 3))
 x <- factor(LETTERS[1:4]); names(x) <- letters[1:4]
 x
 rep(x, 2)
-rep(x, each=2)
+rep(x, each = 2)
 rep.int(x, 2)  # no names
+rep_len(x, 10)
 }
 \keyword{manip}
 \keyword{chron}

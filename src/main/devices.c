@@ -32,8 +32,19 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
 #include <Graphics.h>
-#include <GraphicsBase.h> /* registerBase */
+#include <GraphicsBase.h> 
+#include <R_ext/GraphicsEngine.h>
+
+int baseRegisterIndex = -1;
+
+GPar* dpptr(pGEDevDesc dd) {
+    if (baseRegisterIndex == -1)
+	error(_("the base graphics system is not registered"));
+    baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
+    return &(bss->dp);
+}
 
 static SEXP R_INLINE getSymbolValue(SEXP symbol)
 {
@@ -268,7 +279,7 @@ int selectDevice(int devNum)
 }
 
 /* historically the close was in the [kK]illDevices.
-   only use findNext= TRUE when shutting R dowm, and .Device[s] are not
+   only use findNext = FALSE when shutting R dowm, and .Device[s] are not
    updated.
 */
 static
@@ -347,69 +358,11 @@ void KillAllDevices(void)
     /* FIXME: There should really be a formal graphics finaliser
      * but this is a good proxy for now.
      */
-    unregisterBase();
-}
-
-
-#define checkArity_length					\
-    checkArity(op, args);					\
-    if(!LENGTH(CAR(args)))					\
-	error(_("argument must have positive length"))
-
-SEXP attribute_hidden do_devcontrol(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int listFlag;
-    pGEDevDesc gdd = GEcurrentDevice();
-
-    checkArity(op, args);
-    if(PRIMVAL(op) == 0) { /* dev.control */
-	listFlag = asLogical(CAR(args));
-	if(listFlag == NA_LOGICAL) error(_("invalid argument"));
-	GEinitDisplayList(gdd);
-	gdd->displayListOn = listFlag ? TRUE: FALSE;
-    } else { /* dev.displaylist */
-	listFlag = gdd->displayListOn;
+    // unregisterBase();
+    if (baseRegisterIndex != -1) {
+	GEunregisterSystem(baseRegisterIndex);
+	baseRegisterIndex = -1; 
     }
-    return ScalarLogical(listFlag);
-}
-
-SEXP attribute_hidden do_devcopy(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity_length;
-    GEcopyDisplayList(INTEGER(CAR(args))[0] - 1);
-    return R_NilValue;
-}
-
-SEXP attribute_hidden do_devcur(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity(op, args);
-    return ScalarInteger(curDevice() + 1);
-}
-
-SEXP attribute_hidden do_devnext(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity_length;
-    return ScalarInteger( nextDevice(INTEGER(CAR(args))[0] - 1) + 1 );
-}
-
-SEXP attribute_hidden do_devprev(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity_length;
-    return ScalarInteger( prevDevice(INTEGER(CAR(args))[0] - 1) + 1 );
-}
-
-SEXP attribute_hidden do_devset(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity_length;
-    int devNum = INTEGER(CAR(args))[0] - 1;
-    return ScalarInteger( selectDevice(devNum) + 1 );
-}
-
-SEXP attribute_hidden do_devoff(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    checkArity_length;
-    killDevice(INTEGER(CAR(args))[0] - 1);
-    return R_NilValue;
 }
 
 /* A common construction in some graphics devices */
@@ -495,7 +448,7 @@ void GEaddDevice(pGEDevDesc gdd)
     }
 }
 
-/* conveniende wrapper */
+/* convenience wrapper */
 void GEaddDevice2(pGEDevDesc gdd, const char *name)
 {
     gsetVar(R_DeviceSymbol, mkString(name), R_BaseEnv);
@@ -534,26 +487,20 @@ pGEDevDesc GEcreateDevDesc(pDevDesc dev)
 
 void attribute_hidden InitGraphics(void)
 {
-    int i;
-    SEXP s, t;
-
     R_Devices[0] = &nullDevice;
     active[0] = TRUE;
-    for (i = 1; i < R_MaxDevices; i++) {
+    // these are static arrays, not really needed
+    for (int i = 1; i < R_MaxDevices; i++) {
 	R_Devices[i] = NULL;
 	active[i] = FALSE;
     }
 
     /* init .Device and .Devices */
-    PROTECT(s = mkString("null device"));
+    SEXP s = PROTECT(mkString("null device"));
     gsetVar(R_DeviceSymbol, s, R_BaseEnv);
-    PROTECT(t = mkString("null device"));
-    gsetVar(R_DevicesSymbol, CONS(t, R_NilValue), R_BaseEnv);
+    s = PROTECT(mkString("null device"));
+    gsetVar(R_DevicesSymbol, CONS(s, R_NilValue), R_BaseEnv);
     UNPROTECT(2);
-
-    /* Register the base graphics system with the graphics engine
-     */
-    registerBase();
 }
 
 
@@ -561,126 +508,10 @@ void NewFrameConfirm(pDevDesc dd)
 {
     if(!R_Interactive) return;
     /* dd->newFrameConfirm(dd) will either handle this, or return
-       FALSE to ask for the engine to do so. */
+       FALSE to ask the engine to do so. */
     if(dd->newFrameConfirm && dd->newFrameConfirm(dd)) ;
     else {
 	unsigned char buf[1024];
 	R_ReadConsole(_("Hit <Return> to see next plot: "), buf, 1024, 0);
     }
-}
-
-/* This needs to manage R_Visible */
-SEXP attribute_hidden do_devAskNewPage(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int ask;
-    pGEDevDesc gdd = GEcurrentDevice();
-    Rboolean oldask = gdd->ask;
-
-    checkArity(op, args);
-    if (!isNull(CAR(args))) {
-	ask = asLogical(CAR(args));
-	if (ask == NA_LOGICAL)
-	    error(_("invalid '%s' argument"), "ask");
-	gdd->ask = ask;
-	R_Visible = FALSE;
-    } else R_Visible = TRUE;
-
-    return ScalarLogical(oldask);
-}
-
-SEXP attribute_hidden do_devsize(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP ans;
-    pDevDesc dd = GEcurrentDevice()->dev;
-    double left, right, bottom, top;
-
-    dd->size(&left, &right, &bottom, &top, dd);
-    ans = allocVector(REALSXP, 2);
-    REAL(ans)[0] = fabs(right - left);
-    REAL(ans)[1] = fabs(bottom - top);
-    return(ans);
-}
-
-SEXP attribute_hidden do_devholdflush(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    pDevDesc dd = GEcurrentDevice()->dev;
-
-    checkArity(op, args);
-    int level = asInteger(CAR(args));
-    if(dd->holdflush && level != NA_INTEGER) level = (dd->holdflush(dd, level));
-    else level = 0;
-    return ScalarInteger(level);
-}
-
-SEXP attribute_hidden do_devcap(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    SEXP ans;
-    int i = 0;
-    pDevDesc dd = GEcurrentDevice()->dev;
-
-    checkArity(op, args);
-
-    PROTECT(ans = allocVector(INTSXP, 9));
-    INTEGER(ans)[i] = dd->haveTransparency;
-    INTEGER(ans)[++i] = dd->haveTransparentBg;
-    /* These will be NULL if the device does not define them */
-    INTEGER(ans)[++i] = (dd->raster != NULL) ? dd->haveRaster : 1;
-    INTEGER(ans)[++i] = (dd->cap != NULL) ? dd->haveCapture : 1;
-    INTEGER(ans)[++i] = (dd->locator != NULL) ? dd->haveLocator : 1;
-    INTEGER(ans)[++i] = (int)(dd->canGenMouseDown);
-    INTEGER(ans)[++i] = (int)(dd->canGenMouseMove);
-    INTEGER(ans)[++i] = (int)(dd->canGenMouseUp);
-    INTEGER(ans)[++i] = (int)(dd->canGenKeybd);
-    /* FIXME:  there should be a way for a device to declare its own
-               events, and return information on how to set them */
-
-    UNPROTECT(1);
-    return ans;
-}
-
-SEXP attribute_hidden do_devcapture(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int i, col, row, nrow, ncol, size;
-    Rboolean native;
-    pGEDevDesc gdd = GEcurrentDevice();
-    int *rint;
-    SEXP raster, image, idim;
-    
-    checkArity(op, args);
-
-    native = asLogical(CAR(args));
-    if (native != TRUE) native = FALSE;
-
-    raster = GECap(gdd);
-    if (isNull(raster)) /* NULL = unsupported */
-	return raster;
-
-    PROTECT(raster);
-    if (native) {
-	setAttrib(raster, R_ClassSymbol, mkString("nativeRaster"));
-	UNPROTECT(1);
-	return raster;
-    }
-
-    /* non-native, covert to color strings (this is based on grid.cap) */
-    size = LENGTH(raster);
-    nrow = INTEGER(getAttrib(raster, R_DimSymbol))[0];
-    ncol = INTEGER(getAttrib(raster, R_DimSymbol))[1];
-        
-    PROTECT(image = allocVector(STRSXP, size));
-    rint = INTEGER(raster);
-    for (i = 0; i < size; i++) {
-	col = i % ncol + 1;
-	row = i / ncol + 1;
-	SET_STRING_ELT(image, (col - 1) * nrow + row - 1, 
-		       mkChar(col2name(rint[i])));
-    }
-        
-    PROTECT(idim = allocVector(INTSXP, 2));
-    INTEGER(idim)[0] = nrow;
-    INTEGER(idim)[1] = ncol;
-    setAttrib(image, R_DimSymbol, idim);
-    UNPROTECT(3);
-
-    return image;    
 }

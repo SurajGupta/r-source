@@ -141,12 +141,8 @@ function(x, y = NULL, z = NULL,
             ## Density of the *central* product hypergeometric
             ## distribution on its support: store for once as this is
             ## needed quite a bit.
-            dc <- .C(C_d2x2xk,
-                     as.integer(K),
-                     as.double(m),
-                     as.double(n),
-                     as.double(t),
-                     d = double(hi - lo + 1))$d
+
+            dc <- .Call(C_d2x2xk, K, m, n, t, hi - lo + 1L)
             logdc <- log(dc)
 
             dn2x2xk <- function(ncp) {

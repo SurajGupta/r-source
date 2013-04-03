@@ -9,7 +9,7 @@
 
 \title{Attach Set of R Objects to Search Path}
 \usage{
-attach(what, pos = 2, name = deparse(substitute(what)),
+attach(what, pos = 2L, name = deparse(substitute(what)),
        warn.conflicts = TRUE)
 }
 \arguments{

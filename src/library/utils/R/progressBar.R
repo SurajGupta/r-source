@@ -34,7 +34,7 @@ txtProgressBar <-
         if(style == 3L) width <- width - 10L
         width <- trunc(width/nw)
     }
-    if (max <= min) stop("must have max > min")
+    if (max <= min) stop("must have 'max' > 'min'")
 
     up1 <- function(value) {
         if(!is.finite(value) || value < min || value > max) return()
@@ -103,14 +103,18 @@ txtProgressBar <-
 getTxtProgressBar <- function(pb)
 {
     if(!inherits(pb, "txtProgressBar"))
-       stop("'pb' is not from class \"txtProgressBar\"")
+       stop(gettextf("'pb' is not from class %s",
+                     dQuote("txtProgressBar")),
+            domain = NA)
     pb$getVal()
 }
 
 setTxtProgressBar <- function(pb, value, title = NULL, label = NULL)
 {
     if(!inherits(pb, "txtProgressBar"))
-       stop("'pb' is not from class \"txtProgressBar\"")
+        stop(gettextf("'pb' is not from class %s",
+                      dQuote("txtProgressBar")),
+             domain = NA)
     oldval <- pb$getVal()
     pb$up(value)
     invisible(oldval)

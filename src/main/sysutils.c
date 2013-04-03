@@ -25,6 +25,7 @@
 #include <stdlib.h> /* for putenv */
 #define R_USE_SIGNALS 1
 #include <Defn.h>
+#include <Internal.h>
 #include <R_ext/Riconv.h>
 #include <Rinterface.h>
 #include <errno.h>
@@ -50,12 +51,12 @@
 #endif
 
 #ifdef HAVE_AQUA
-int (*ptr_CocoaSystem)(char*);
+int (*ptr_CocoaSystem)(const char*);
 extern	Rboolean useaqua;
 #endif
 
 #ifdef Win32
-Rboolean attribute_hidden R_FileExists(const char *path)
+Rboolean R_FileExists(const char *path)
 {
     struct _stati64 sb;
     return _stati64(R_ExpandFileName(path), &sb) == 0;
@@ -69,7 +70,7 @@ double attribute_hidden R_FileMtime(const char *path)
     return sb.st_mtime;
 }
 #else
-Rboolean attribute_hidden R_FileExists(const char *path)
+Rboolean R_FileExists(const char *path)
 {
     struct stat sb;
     return stat(R_ExpandFileName(path), &sb) == 0;
@@ -300,17 +301,11 @@ int R_system(const char *command)
     sigaddset(&ss, SIGPROF);
     sigprocmask(SIG_BLOCK, &ss,  NULL);
 #ifdef HAVE_AQUA
-    char *cmdcpy;
-    if(useaqua) {
-	/* FIXME, is Cocoa's interface not const char*? */
-	cmdcpy = acopy_string(command);
-	res = ptr_CocoaSystem(cmdcpy);
-    }
-    else
+    if(ptr_CocoaSystem) res = ptr_CocoaSystem(command); else
 #endif
     res = system(command);
     sigprocmask(SIG_UNBLOCK, &ss, NULL);
-#else
+#else // not APPLE
     res = system(command);
 #endif
 #ifdef HAVE_SYS_WAIT_H
@@ -380,8 +375,8 @@ SEXP attribute_hidden do_getenv(SEXP call, SEXP op, SEXP args, SEXP env)
 		SET_STRING_ELT(ans, j, STRING_ELT(CADR(args), 0));
 	    else {
 		int n = wcslen(w), N = 3*n+1; /* UCS-2 maps to <=3 UTF-8 */
+		R_CheckStack2(N);
 		char buf[N];
-		R_CheckStack();
 		wcstoutf8(buf, w, N); buf[N-1] = '\0'; /* safety */
 		SET_STRING_ELT(ans, j, mkCharCE(buf, CE_UTF8));
 	    }
@@ -559,7 +554,6 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP ans, x = CAR(args), si;
     void * obj;
-    int i, j, nout;
     const char *inbuf;
     char *outbuf;
     const char *sub;
@@ -639,7 +633,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		PROTECT(ans = duplicate(x));
 	}
 	R_AllocStringBuffer(0, &cbuff);  /* 0 -> default */
-	for(i = 0; i < LENGTH(x); i++) {
+	for(R_xlen_t i = 0; i < XLENGTH(x); i++) {
 	    if (isRawlist) {
 		si = VECTOR_ELT(x, i);
 		if (TYPEOF(si) == NILSXP) {
@@ -680,6 +674,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		    snprintf(outbuf, 5, "<%02x>", (unsigned char)*inbuf);
 		    outbuf += 4; outb -= 4;
 		} else {
+		    size_t j;
 		    if(outb < strlen(sub)) {
 			R_AllocStringBuffer(2*cbuff.bufsize, &cbuff);
 			goto top_of_loop;
@@ -694,7 +689,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	    if(toRaw) {
 		if(res != -1 && inb == 0) {
-		    nout = cbuff.bufsize - 1 - outb;
+		    size_t nout = cbuff.bufsize - 1 - outb;
 		    SEXP el = allocVector(RAWSXP, nout);
 		    memcpy(RAW(el), cbuff.data, nout);
 		    SET_VECTOR_ELT(ans, i, el);
@@ -703,12 +698,13 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		if(res != -1 && inb == 0) {
 		    cetype_t ienc = CE_NATIVE;
 		    
-		    nout = cbuff.bufsize - 1 - outb;
+		    size_t nout = cbuff.bufsize - 1 - outb;
 		    if(mark) {
 			if(isLatin1) ienc = CE_LATIN1;
 			else if(isUTF8) ienc = CE_UTF8;
 		    }
-		    SET_STRING_ELT(ans, i, mkCharLenCE(cbuff.data, nout, ienc));
+		    SET_STRING_ELT(ans, i, 
+				   mkCharLenCE(cbuff.data, (int) nout, ienc));
 		} else SET_STRING_ELT(ans, i, NA_STRING);
 	    }
 	}
@@ -845,7 +841,7 @@ next_char:
 	if (ienc == CE_UTF8) {
 	    /* if starting in UTF-8, use \uxxxx */
 	    /* This must be the first byte */
-	    int clen;
+	    size_t clen;
 	    wchar_t wc;
 	    clen = utf8toucs(&wc, inbuf);
 	    if(clen > 0 && inb >= clen) {
@@ -1044,7 +1040,7 @@ next_char:
 }
 
 
-extern void *Rf_AdobeSymbol2utf8(char* work, const char *c0, int nwork); /* from util.c */
+extern void *Rf_AdobeSymbol2utf8(char* work, const char *c0, size_t nwork); /* from util.c */
 
 const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst)
 {
@@ -1063,7 +1059,7 @@ const char *reEnc(const char *x, cetype_t ce_in, cetype_t ce_out, int subst)
        ce_in == CE_ANY || ce_out == CE_ANY) return x;
     if(ce_in == CE_SYMBOL) {
 	if(ce_out == CE_UTF8) {
-	    int nc = 3*strlen(x)+1; /* all in BMP */
+	    size_t nc = 3*strlen(x)+1; /* all in BMP */
 	    p = R_alloc(nc, 1);
 	    Rf_AdobeSymbol2utf8(p, x, nc);
 	    return p;
@@ -1380,7 +1376,6 @@ extern char * mkdtemp (char *template);
 void attribute_hidden InitTempDir()
 {
     char *tmp, *tm, tmp1[PATH_MAX+11], *p;
-    int len;
 #ifdef Win32
     char tmp2[PATH_MAX];
     int hasspace = 0;
@@ -1415,7 +1410,7 @@ void attribute_hidden InitTempDir()
 	sprintf(tmp1, "%s/RtmpXXXXXX", tm);
 #endif
 	tmp = mkdtemp(tmp1);
-	if(!tmp) R_Suicide(_("cannot mkdir R_TempDir"));
+	if(!tmp) R_Suicide(_("cannot create 'R_TempDir'"));
 #ifndef Win32
 # ifdef HAVE_SETENV
 	if(setenv("R_SESSION_TMPDIR", tmp, 1))
@@ -1435,10 +1430,10 @@ void attribute_hidden InitTempDir()
 #endif
     }
 
-    len = strlen(tmp) + 1;
+    size_t len = strlen(tmp) + 1;
     p = (char *) malloc(len);
     if(!p)
-	R_Suicide(_("cannot allocate R_TempDir"));
+	R_Suicide(_("cannot allocate 'R_TempDir'"));
     else {
 	R_TempDir = p;
 	strcpy(R_TempDir, tmp);
@@ -1604,7 +1599,8 @@ do_setSessionTimeLimit(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP x, ans;
-    int i, n, res, dirmark;
+    R_xlen_t i, n; 
+    int res, dirmark, initialized=FALSE;
     glob_t globbuf;
 #ifdef Win32
     R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
@@ -1613,7 +1609,7 @@ SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
     if (!isString(x = CAR(args)))
 	error(_("invalid '%s' argument"), "paths");
-    if (!LENGTH(x)) return allocVector(STRSXP, 0);
+    if (!XLENGTH(x)) return allocVector(STRSXP, 0);
     dirmark = asLogical(CADR(args));
     if (dirmark == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "dirmark");
@@ -1622,13 +1618,13 @@ SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("'dirmark = TRUE' is not supported on this platform"));
 #endif
 
-    for (i = 0; i < LENGTH(x); i++) {
+    for (i = 0; i < XLENGTH(x); i++) {
 	SEXP el = STRING_ELT(x, i);
 	if (el == NA_STRING) continue;
 #ifdef Win32
 	res = dos_wglob(filenameToWchar(el, FALSE),
 			(dirmark ? GLOB_MARK : 0) |
-			GLOB_QUOTE | (i ? GLOB_APPEND : 0),
+			GLOB_QUOTE | (initialized ? GLOB_APPEND : 0),
 			NULL, &globbuf);
 	if (res == GLOB_NOSPACE)
 	    error(_("internal out-of-memory condition"));
@@ -1637,7 +1633,7 @@ SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
 # ifdef GLOB_MARK
 		   (dirmark ? GLOB_MARK : 0) |
 # endif
-		   GLOB_QUOTE | (i ? GLOB_APPEND : 0),
+		   GLOB_QUOTE | (initialized ? GLOB_APPEND : 0),
 		   NULL, &globbuf);
 # ifdef GLOB_ABORTED
 	if (res == GLOB_ABORTED)
@@ -1648,8 +1644,9 @@ SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
 	    error(_("internal out-of-memory condition"));
 # endif
 #endif
+	initialized = TRUE;
     }
-    n = globbuf.gl_pathc;
+    n = initialized ? globbuf.gl_pathc : 0;
     PROTECT(ans = allocVector(STRSXP, n));
     for (i = 0; i < n; i++)
 #ifdef Win32
@@ -1668,6 +1665,6 @@ SEXP attribute_hidden do_glob(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef Win32
     R_FreeStringBufferL(&cbuff);
 #endif
-    globfree(&globbuf);
+    if (initialized) globfree(&globbuf);
     return ans;
 }

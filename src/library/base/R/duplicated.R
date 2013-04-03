@@ -18,16 +18,19 @@
 
 duplicated <- function(x, incomparables = FALSE, ...) UseMethod("duplicated")
 
-duplicated.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
-    .Internal(duplicated(x, incomparables, fromLast))
+duplicated.default <-
+    function(x, incomparables = FALSE, fromLast = FALSE, nmax = NA, ...)
+    .Internal(duplicated(x, incomparables, fromLast,
+                         if(is.factor(x)) min(length(x), nlevels(x) + 1L) else nmax))
 
-duplicated.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
+duplicated.data.frame <-
+    function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
     if(length(x) != 1L)
         duplicated(do.call("paste", c(x, sep="\r")), fromLast = fromLast)
-    else duplicated(x[[1L]], fromLast = fromLast)
+    else duplicated(x[[1L]], fromLast = fromLast, ...)
 }
 
 duplicated.matrix <- duplicated.array <-
@@ -38,10 +41,11 @@ duplicated.matrix <- duplicated.array <-
     dx <- dim(x)
     ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-	stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+        stop(gettextf("MARGIN = %d is invalid for dim = %d", MARGIN, dx),
+             domain = NA)
     collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
     temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
-    res <- duplicated.default(temp, fromLast = fromLast)
+    res <- duplicated.default(temp, fromLast = fromLast, ...)
     dim(res) <- dim(temp)
     dimnames(res) <- dimnames(temp)
     res
@@ -71,7 +75,8 @@ anyDuplicated.matrix <- anyDuplicated.array <-
     dx <- dim(x)
     ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-	stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+        stop(gettextf("MARGIN = %d is invalid for dim = %d", MARGIN, dx),
+             domain = NA)
     collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
     temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
     anyDuplicated.default(temp, fromLast = fromLast)
@@ -82,13 +87,17 @@ unique <- function(x, incomparables = FALSE, ...) UseMethod("unique")
 
 ## NB unique.default is used by factor to avoid unique.matrix,
 ## so it needs to handle some other cases.
-unique.default <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
+unique.default <-
+    function(x, incomparables = FALSE, fromLast = FALSE, nmax = NA, ...)
 {
-    z <- .Internal(unique(x, incomparables, fromLast))
-    if(is.factor(x))
-	factor(z, levels = seq_len(nlevels(x)), labels = levels(x),
-               ordered = is.ordered(x))
-    else if(inherits(x, "POSIXct"))
+    if(is.factor(x)) {
+        z <- .Internal(unique(x, incomparables, fromLast,
+                              min(length(x), nlevels(x) + 1L)))
+ 	return(factor(z, levels = seq_len(nlevels(x)), labels = levels(x),
+               ordered = is.ordered(x)))
+    }
+    z <- .Internal(unique(x, incomparables, fromLast, nmax))
+    if(inherits(x, "POSIXct"))
         structure(z, class = class(x), tzone = attr(x, "tzone"))
     else if(inherits(x, "Date"))
         structure(z, class = class(x))
@@ -99,7 +108,7 @@ unique.data.frame <- function(x, incomparables = FALSE, fromLast = FALSE, ...)
 {
     if(!identical(incomparables, FALSE))
 	.NotYetUsed("incomparables != FALSE")
-    x[!duplicated(x, fromLast = fromLast),  , drop = FALSE]
+    x[!duplicated(x, fromLast = fromLast, ...),  , drop = FALSE]
 }
 
 unique.matrix <- unique.array <-
@@ -110,11 +119,12 @@ unique.matrix <- unique.array <-
     dx <- dim(x)
     ndim <- length(dx)
     if (length(MARGIN) > ndim || any(MARGIN > ndim))
-        stop("MARGIN = ", MARGIN, " is invalid for dim = ", dx)
+        stop(gettextf("MARGIN = %d is invalid for dim = %d", MARGIN, dx),
+             domain = NA)
     collapse <- (ndim > 1L) && (prod(dx[-MARGIN]) > 1L)
     temp <- if(collapse) apply(x, MARGIN, function(x) paste(x, collapse = "\r")) else x
     args <- rep(alist(a=), ndim)
     names(args) <- NULL
-    args[[MARGIN]] <- !duplicated.default(temp, fromLast = fromLast)
-    do.call("[", c(list(x), args, list(drop=FALSE)))
+    args[[MARGIN]] <- !duplicated.default(temp, fromLast = fromLast, ...)
+    do.call("[", c(list(x), args, list(drop = FALSE)))
 }

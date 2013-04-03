@@ -13,26 +13,25 @@ R_HOME=$(top_builddir)
 include $(top_builddir)/Makeconf
 
 SOURCES_C = \
-	CConverters.c CommandLineArgs.c \
+	CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
 	agrep.c apply.c arithmetic.c array.c attrib.c \
-	base.c bind.c builtin.c \
-	character.c coerce.c colors.c complex.c connections.c context.c \
-	cov.c cum.c \
-	dcf.c datetime.c debug.c deparse.c deriv.c devices.c \
+	bind.c builtin.c \
+	character.c coerce.c colors.c complex.c connections.c context.c cum.c \
+	dcf.c datetime.c debug.c deparse.c devices.c \
 	dotcode.c dounzip.c dstruct.c duplicate.c \
-	engine.c envir.c errors.c eval.c \
-	format.c fourier.c \
-	gevents.c gram.c gram-ex.c gramLatex.c gramRd.c graphics.c grep.c \
+	edit.c engine.c envir.c errors.c eval.c \
+	format.c \
+	gevents.c gram.c gram-ex.c graphics.c grep.c \
 	identical.c inlined.c inspect.c internet.c iosupport.c \
 	lapack.c list.c localecharset.c logic.c \
-	main.c mapply.c match.c memory.c model.c \
+	main.c mapply.c match.c memory.c \
 	names.c \
-	objects.c optim.c optimize.c options.c \
-	par.c paste.c platform.c plot.c plot3d.c plotmath.c \
+	objects.c options.c \
+	paste.c platform.c plot.c plot3d.c plotmath.c \
 	print.c printarray.c printvector.c printutils.c qsort.c \
 	random.c raw.c registration.c relop.c rlocale.c \
-	saveload.c scan.c seq.c serialize.c size.c sort.c source.c split.c \
+	saveload.c scan.c seq.c serialize.c sort.c source.c split.c \
 	sprintf.c startup.c subassign.c subscript.c subset.c summary.c sysutils.c \
 	unique.c util.c \
 	version.c vfonts.c
@@ -51,8 +50,8 @@ HEADERS = \
 	RBufferUtils.h Rstrptime.h \
 	arithmetic.h \
 	basedecl.h \
+	contour-common.h \
 	gzio.h \
-	par-common.c \
 	qsort-body.c \
 	rlocale_data.h \
 	unzip.h \
@@ -65,9 +64,7 @@ DISTFILES = Makefile.in Makefile.win \
 	$(SOURCES_C) \
 	$(EXTRA_SOURCES_C) \
 	$(SOURCES_F) \
-	gram.y \
-	gramRd.y \
-	gramLatex.y
+	gram.y
 
 ZLIB_CPPFLAGS = @BUILD_ZLIB_TRUE@ -I$(top_srcdir)/src/extra/zlib
 BZLIB_CPPFLAGS = @BUILD_BZLIB_TRUE@ -I$(top_srcdir)/src/extra/bzip2
@@ -101,18 +98,15 @@ STATIC_LIBS = $(MAIN_LIBS) $(EXTRA_STATIC_LIBS)
 EXTRA_LIBS = $(BLAS_LIBS) $(FLIBS) $(R_XTRA_LIBS) @LIBINTL@ $(READLINE_LIBS) $(LIBS)
 
 R_binary = R.bin
-R_bin_OBJECTS = Rmain.o @BUILD_LTO_TRUE@@WANT_R_SHLIB_FALSE@$(OBJECTS)
-@BUILD_LTO_TRUE@@WANT_R_SHLIB_FALSE@R_bin_LDADD = $(MAIN_OBJS) $(EXTRA_STATIC_LIBS) $(EXTRA_LIBS)
-@BUILD_LTO_FALSE@@WANT_R_SHLIB_FALSE@R_bin_LDADD = libR.a $(EXTRA_LIBS)
+R_bin_OBJECTS = Rmain.o @WANT_R_SHLIB_FALSE@$(OBJECTS)
+@WANT_R_SHLIB_FALSE@R_bin_LDADD = $(MAIN_OBJS) $(EXTRA_STATIC_LIBS) $(EXTRA_LIBS)
 ## Linked against -lRblas becasue -lR is and otherwise ld complains.
 @WANT_R_SHLIB_TRUE@R_bin_LDADD = -L../../lib@R_ARCH@ -lR @BLAS_SHLIB_TRUE@-lRblas
 @BUILD_LTO_FALSE@R_bin_DEPENDENCIES =@WANT_R_SHLIB_FALSE@ libR.a @USE_EXPORTFILES_TRUE@ $(top_builddir)/etc/R.exp
 
 libR_la = libR$(DYLIB_EXT)
-## have to force in Rembedded.o
-libR_la_OBJECTS = $(OBJECTS) @BUILD_LTO_FALSE@../unix/Rembedded.o
-@BUILD_LTO_FALSE@libR_la_LIBADD = $(STATIC_LIBS) $(EXTRA_LIBS) @WANT_R_SHLIB_TRUE@ @USE_EXPORTFILES_TRUE@ -Wl,-bE:$(top_builddir)/etc/R.exp
-@BUILD_LTO_TRUE@libR_la_LIBADD = $(MAIN_OBJS) $(EXTRA_STATIC_LIBS) $(EXTRA_LIBS)
+libR_la_OBJECTS = $(OBJECTS)
+libR_la_LIBADD =  $(MAIN_OBJS) $(EXTRA_STATIC_LIBS) $(EXTRA_LIBS) @WANT_R_SHLIB_TRUE@ @USE_EXPORTFILES_TRUE@ -Wl,-bE:$(top_builddir)/etc/R.exp
 libR_la_DEPENDENCIES = $(STATIC_LIBS) @WANT_R_SHLIB_TRUE@ @USE_EXPORTFILES_TRUE@ $(top_builddir)/etc/R.exp
 
 ## The next is needed on darwin only at present
@@ -193,15 +187,7 @@ YFLAGS=-l
 $(srcdir)/gram.c: @MAINTAINER_MODE_TRUE@ $(srcdir)/gram.y
 	@$(ECHO) "re-making gram.c"
 	$(YACC) $(YFLAGS) $(srcdir)/gram.y
-	$(SHELL) $(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gram.c
-$(srcdir)/gramRd.c: @MAINTAINER_MODE_TRUE@ $(srcdir)/gramRd.y
-	@$(ECHO) "re-making gramRd.c"
-	$(YACC) $(YFLAGS) $(srcdir)/gramRd.y
-	$(SHELL) $(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gramRd.c	
-$(srcdir)/gramLatex.c: @MAINTAINER_MODE_TRUE@ $(srcdir)/gramLatex.y
-	@$(ECHO) "re-making gramLatex.c"
-	$(YACC) $(YFLAGS) $(srcdir)/gramLatex.y
-	$(SHELL) $(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gramLatex.c	
+	$(SHELL) $(top_srcdir)/tools/move-if-change y.tab.c $(srcdir)/gram.c	
 
 install: installdirs
 	@$(MAKE) install-bin
@@ -246,7 +232,7 @@ distclean: clean
 maintainer-clean: distclean
 	@$(ECHO) "This command is intended for maintainers to use; it"
 	@$(ECHO) "deletes files that may need special rules to rebuild"
-	@-rm -f $(srcdir)/gram.c $(srcdir)/gramRd.c
+	@-rm -f $(srcdir)/gram.c $(srcdir)/gramLatex.c $(srcdir)/gramRd.c
 
 tags: TAGS
 TAGS: $(SOURCES) $(EXTRA_SOURCES_C) $(HEADERS)
@@ -261,9 +247,6 @@ distdir: $(DISTFILES)
 	    || ln $(srcdir)/$${f} $(distdir)/$${f} 2>/dev/null \
 	    || cp -p $(srcdir)/$${f} $(distdir)/$${f}; \
 	done
-	@if test -f $(srcdir)/TAOCP1997.c ; then \
-	  cp -p $(srcdir)/TAOCP1997.c $(distdir)/TAOCP1997.c; \
-	fi
 
 ## Automagically generated dependencies:
 

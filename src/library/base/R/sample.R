@@ -16,17 +16,20 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-sample <- function(x, size, replace=FALSE, prob=NULL)
+sample <- function(x, size, replace = FALSE, prob = NULL)
 {
     if(length(x) == 1L && is.numeric(x) && x >= 1) {
 	if(missing(size)) size <- x
-	.Internal(sample(x, size, replace, prob))
-    }
-    else {
+	sample.int(x, size, replace, prob)
+    } else {
 	if(missing(size)) size <- length(x)
-	x[.Internal(sample(length(x), size, replace, prob))]
+	x[sample.int(length(x), size, replace, prob)]
     }
 }
 
-sample.int  <- function(n, size=n, replace=FALSE, prob=NULL)
-    .Internal(sample(n, size, replace, prob))
+sample.int  <- function(n, size = n, replace = FALSE, prob = NULL)
+{
+    if (!replace && is.null(prob) && n > 1e7 && size <= n/2)
+        .Internal(sample2(n, size))
+    else .Internal(sample(n, size, replace, prob))
+}

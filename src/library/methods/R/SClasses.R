@@ -22,14 +22,24 @@ setClass <-
              contains = character(), validity = NULL, access = list(),
              where = topenv(parent.frame()), version = .newExternalptr(),
              sealed = FALSE, package = getPackageName(where),
-             S3methods = FALSE)
+             S3methods = FALSE, slots)
 {
     oldDef <- getClassDef(Class, where)
     if(is(oldDef, "classRepresentation") && oldDef@sealed)
         stop(gettextf("%s has a sealed class definition and cannot be redefined",
                       dQuote(Class)),
              domain = NA)
-    if(is(representation, "classRepresentation")) {
+    if(!missing(slots)) {
+        ## The modern version consistent with reference classes
+        ## Arguments slots= and contains= are used, representation must not be
+        if(!missing(representation))
+            stop("Argument \"representation\" cannot be used if argument \"slots\" is supplied")
+        properties <- inferProperties(slots, "slot")
+        classDef <- makeClassRepresentation(Class, properties,contains, prototype, package,
+                                             validity, access, version, sealed, where = where)
+        superClasses <- names(classDef@contains)
+    }
+    else if(is(representation, "classRepresentation")) {
         ## supplied a class definition object
         classDef <- representation
         if(!(missing(prototype) && missing(contains) && missing(validity) && missing(access)
@@ -65,7 +75,7 @@ setClass <-
             else { # update class definition
                 classDef <- getClassDef(Class, where = where)
                 if(is.null(classDef))
-                  stop(gettextf("Internal error: definition of class %s not properly assigned",
+                  stop(sprintf("internal error: definition of class %s not properly assigned",
                                 dQuote(Class)),
                        domain = NA)
             }
@@ -128,10 +138,14 @@ representation <-
                             collapse = ", ")),
              domain = NA)
     slots <- anames[nzchar(anames)]
-    if(anyDuplicated(slots))
-       stop(gettextf("duplicated slot names: %s",
-                     paste(sQuote(slots[duplicated(slots)]), collapse="")),
-            domain = NA)
+    if(anyDuplicated(slots)) {
+        dslots <- slots[duplicated(slots)]
+        stop(sprintf(ngettext(length(dslots),
+                              "duplicated slot name: %s",
+                              "duplicated slot names: %s"),
+                     paste(sQuote(dslots), collapse="")),
+             domain = NA)
+    }
     value
 }
 
@@ -270,20 +284,20 @@ slot <-
   ## Because slots are stored as attributes, the validity check is not 100% guaranteed,
   ## but should be OK if nobody has "cheated" (e.g., by setting other attributes directly).
   function(object, name)
-    .Call("R_get_slot", object, name, PACKAGE = "methods")
+    .Call(C_R_get_slot, object, name)
 
 "slot<-" <-
   ## Set the value of the named slot.  Must be one of the slots in the class's definition.
   function(object, name, check = TRUE, value) {
       if(check)
           value <- checkSlotAssignment(object, name, value)
-      .Call("R_set_slot", object, name, value, PACKAGE="methods")
+      .Call(C_R_set_slot, object, name, value)
       ## currently --> R_do_slot_assign() in ../../../main/attrib.c
   }
 
 ## ". - hidden" since one should typically rather use is(), extends() etc:
 .hasSlot <- function(object, name)
-    .Call("R_hasSlot", object, name, PACKAGE = "methods")
+    .Call(C_R_hasSlot, object, name)
 
 checkSlotAssignment <- function(obj, name, value)
 {
@@ -311,19 +325,36 @@ checkSlotAssignment <- function(obj, name, value)
        as(value, slotClass, strict=FALSE, ext = ok)
 }
 
+## slightly simpler verison to be called from do_attrgets()
+checkAtAssignment <- function(cl, name, valueClass)
+{
+    ClassDef <- getClass(cl) # fails if cl not a defined class (!)
+    slotClass <- elNamed(ClassDef@slots, name)
+    if(is.null(slotClass))
+        stop(gettextf("%s is not a slot in class %s",
+                      sQuote(name), dQuote(cl)),
+             domain = NA)
+    if(.identC(slotClass, valueClass))
+       return(TRUE)
+    ## check the value, but be careful to use the definition of the slot's class from
+    ## the class environment of obj (change validObject too if a better way is found)
+    ok <- possibleExtends(valueClass, slotClass,
+                          ClassDef2 = getClassDef(slotClass, where = .classEnv(ClassDef)))
+    if(identical(ok, FALSE))
+       stop(gettextf("assignment of an object of class %s is not valid for @%s in an object of class %s; is(value, \"%s\") is not TRUE",
+		     dQuote(valueClass), sQuote(name), dQuote(cl), slotClass),
+            domain = NA)
+    TRUE
+}
 
-
-## "@" <-
-##   function(object, name)
-##   .Internal(object@name)
-
-"@<-" <-
-   function(object, name, value) {
-     arg <- substitute(name)
-     if(is.name(arg))
-       name <- as.character(arg)
-     "slot<-"(object, name, TRUE, value)
-   }
+## Now a primitive in base
+## "@<-" <-
+##    function(object, name, value) {
+##      arg <- substitute(name)
+##      if(is.name(arg))
+##        name <- as.character(arg)
+##      "slot<-"(object, name, TRUE, value)
+##    }
 
 ##  The names of the class's slots.  The argument is either the name
 ##  of a class, or an object from the relevant class.
@@ -336,7 +367,7 @@ slotNames <- function(x)
 .slotNames <- function(x)
 {
     classDef <-
-	getClassDef(if(identical(class(x), "character") && length(x) == 1L) x else class(x))
+	getClassDef(if(is.character(x) && length(x) == 1L) x else class(x))
     if(is.null(classDef))
 	character()
     else
@@ -349,7 +380,7 @@ removeClass <-  function(Class, where = topenv(parent.frame())) {
        classEnv <- .classEnv(Class, where, FALSE)
         classWhere <- findClass(Class, where = classEnv)
         if(length(classWhere) == 0L) {
-            warning(gettextf("Class definition for %s not found (no action taken)",
+            warning(gettextf("class definition for %s not found (no action taken)",
                              dQuote(Class)),
                     domain = NA)
             return(FALSE)
@@ -394,7 +425,7 @@ new <-
   function(Class, ...)
 {
     ClassDef <- getClass(Class, where = topenv(parent.frame()))
-    value <- .Call("R_do_new_object", ClassDef, PACKAGE = "base")
+    value <- .Call(C_new_object, ClassDef)
     initialize(value, ...)
 }
 
@@ -509,13 +540,12 @@ validObject <- function(object, test = FALSE, complete = FALSE)
 	if(test)
 	    errors
 	else {
-	    msg <- gettextf("invalid class %s object:",
-                            dQuote(Class))
+	    msg <- gettextf("invalid class %s object", dQuote(Class))
 	    if(length(errors) > 1L)
-		stop(paste(msg,
-			   paste(paste(seq_along(errors), errors, sep=": ")),
+		stop(paste(paste0(msg, ":"),
+                           paste(seq_along(errors), errors, sep=": "),
 			   collapse = "\n"), domain = NA)
-	    else stop(msg, " ", errors, domain = NA)
+	    else stop(msg, ": ", errors, domain = NA)
 	}
     }
     else
@@ -656,7 +686,9 @@ initialize <- function(.Object, ...) {
                                     collapse = ", ")), domain = NA)
             which  <- match(snames, names(slotDefs))
             if(any(is.na(which)))
-                stop(gettextf("invalid names for slots of class %s: %s",
+                stop(sprintf(ngettext(sum(is.na(which)),
+                                      "invalid name for slot of class %s: %s",
+                                      "invalid names for slots of class %s: %s"),
                               dQuote(Class),
                               paste(snames[is.na(which)], collapse=", ")),
                      domain = NA)
@@ -721,7 +753,7 @@ findClass <- function(Class, where = topenv(parent.frame()), unique = "") {
             classDef <- getClassDef(Class) # but won't likely succeed over previous
         if(nzchar(unique)) {
             if(is(classDef, "classRepresentation"))
-                stop(gettextf("Class %s is defined, with package %s, but no corresponding metadata object was found (not exported?)",
+                stop(gettextf("class %s is defined, with package %s, but no corresponding metadata object was found (not exported?)",
                               dQuote(Class),
                               sQuote(classDef@package)),
                      domain = NA)
@@ -740,11 +772,13 @@ findClass <- function(Class, where = topenv(parent.frame()), unique = "") {
                 pkgs <- base::unique(pkgs)
                 where <- where[1L]
                 ## problem: 'unique'x is text passed in, so do not translate
-                warning(gettextf("multiple definitions of class %s visible (%s); using the definition\n   in package %s for %s",
-                                 dQuote(Class),
-                                 paste(sQuote(pkgs), collapse = ", "),
-                                 sQuote(pkgs[[1L]]),
-                                 unique),
+                warning(sprintf(ngettext(length(pkgs),
+                                         "multiple definition of class %s visible (%s); using the definition\n   in package %s for %s",
+                                         "multiple definitions of class %s visible (%s); using the definition\n   in package %s for %s"),
+                                dQuote(Class),
+                                paste(sQuote(pkgs), collapse = ", "),
+                                sQuote(pkgs[[1L]]),
+                                unique),
                         domain = NA)
             }
             ## else returns a list of >1 places, for the caller to sort out (e.g., .findOrCopyClass)
@@ -790,12 +824,12 @@ names(.indirectAbnormalClasses) <- .AbnormalTypes
   if(length(type) == 0)
     return(classes)
   if(length(type) > 1)
-    stop(gettextf("Class definition cannot extend more than one of these data types: %s",
+    stop(gettextf("class definition cannot extend more than one of these data types: %s",
 		  paste0('"',type, '"', collapse = ", ")),
          domain = NA)
   class <- .indirectAbnormalClasses[type]
   if(is.na(class))
-    stop(gettextf("Sorry, abnormal type %s is not supported as a superclass of a class definition",
+    stop(gettextf("abnormal type %s is not supported as a superclass of a class definition",
                   dQuote(type)),
          domain = NA)
   ## this message USED TO BE PRINTED: reminds programmers that
@@ -884,14 +918,14 @@ className <- function(class, package) {
                 package <- classDef@package
             else if(length(classDef) > 1L) {
                 pkgs <- sapply(classDef, function(cl)cl@package)
-                warning(gettextf("Multiple class definitions for %s from packages: %s; picking the first",
+                warning(gettextf("multiple class definitions for %s from packages: %s; picking the first",
                                  dQuote(className),
                                  paste(sQuote(pkgs), collapse = ", ")),
                         domain = NA)
                 package <- pkgs[[1L]]
             }
             else
-                stop(gettextf("No package name supplied and no class definition found for %s",
+                stop(gettextf("no package name supplied and no class definition found for %s",
                               dQuote(className)),
                      domain = NA)
         }
@@ -923,7 +957,7 @@ classGeneratorFunction <- function(classDef, env = topenv(parent.frame())) {
             classDef <- getClass(classDef)
     }
     else
-        stop("argument classDef must be a class definition or the name of a class")
+        stop("argument 'classDef' must be a class definition or the name of a class")
     fun <- function(...)NULL
     ## put the class name with package attribute into new()
     body(fun) <- substitute(new(CLASS, ...),
@@ -934,3 +968,48 @@ classGeneratorFunction <- function(classDef, env = topenv(parent.frame())) {
     fun@package <- classDef@package
     fun
 }
+
+## grammar: 'what' is an adjective, so not plural ....
+inferProperties <- function(props, what) {
+    .validPropNames <- function(propNames) {
+        n <- length(props)
+        if(!n)
+            return(character())
+        else if(is.null(propNames))
+            stop(gettextf("No %s names supplied", what),
+                 domain = NA, call. = FALSE)
+        else if(!all(nzchar(propNames)))
+            stop(gettextf("All %s names must be nonempty in:\n(%s)", what,
+                          paste(sQuote(propNames), collapse = ", ")),
+                 domain = NA, call. = FALSE)
+        else if(any(duplicated(propNames))) # NB: not translatable because of plurals
+            stop(gettextf("All %s names must be distinct in:\n(%s)", what,
+                          paste(sQuote(propNames), collapse = ", ")),
+                 domain = NA, call. = FALSE)
+        propNames
+    }
+    if(is.character(props)) {
+        propNames <- names(props)
+        if(is.null(propNames)) {
+            propNames <- .validPropNames(props) # the text is the names
+            ## treat as "ANY"
+            props <- as.list(rep("ANY", length(props)))
+            names(props) <- propNames
+        }
+        else {
+            .validPropNames(propNames)
+            props <- as.list(props)
+        }
+    }
+    else if(is.list(props)) {
+        if(length(props) > 0) # just validate them
+            .validPropNames(names(props))
+    }
+    else
+        stop(gettextf("argument %s must be a list or a character vector; got an object of class %s",
+                      dQuote(what), dQuote(class(fields))),
+             domain = NA)
+    props
+}
+
+

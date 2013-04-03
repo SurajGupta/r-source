@@ -20,9 +20,9 @@
 
 #include <R_ext/Boolean.h>
 #include <Rinternals.h>
-#include "mva.h"
+#include "statsR.h"
 
-SEXP R_cutree(SEXP merge, SEXP which)
+SEXP cutree(SEXP merge, SEXP which)
 {
 /* Return grouping vector from cutting a (binary) (cluster) tree
  * into which[j] groups.

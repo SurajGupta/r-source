@@ -1,13 +1,13 @@
 # Translation of src/library/parallel/po/R-parallel.pot to German
-# Copyright (C) 2011-2012 The R Foundation
+# Copyright (C) 2011-2013 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2011-2012.
+# Detlef Steuer <steuer@hsu-hh.de>, 2011-2013.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.0\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-12 13:10\n"
-"PO-Revision-Date: 2012-03-06 09:20+0100\n"
+"POT-Creation-Date: 2013-02-19 07:12\n"
+"PO-Revision-Date: 2013-03-01 16:31+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-Core <r-core@r-project.org>\n"
 "Language: \n"
@@ -22,7 +22,7 @@ msgstr "unzulässiger Wert für 'seed'"
 msgid "need at least one argument"
 msgstr "benötige mindestens ein Argument"
 
-msgid "Zero-length inputs cannot be mixed with those of non-zero length"
+msgid "zero-length inputs cannot be mixed with those of non-zero length"
 msgstr ""
 "Eingaben mit Länge Null können nicht mit Eingaben anderer Länge\n"
 "gemischt werden"
@@ -36,8 +36,8 @@ msgstr "'X' muss benannte Dimensionsnamen haben"
 msgid "not all elements of 'MARGIN' are names of dimensions"
 msgstr "nicht alle Elemente von 'MARGIN' sind Dimensionsnamen"
 
-msgid "no cluster supplied and none is registered"
-msgstr "kein Cluster angegeben und keiner registriert"
+msgid "no cluster 'cl' supplied and none is registered"
+msgstr "kein Cluster 'cl' angegeben und keiner registriert"
 
 msgid "not a valid cluster"
 msgstr "kein zulässiger Cluster"
@@ -45,20 +45,11 @@ msgstr "kein zulässiger Cluster"
 msgid "unknown cluster type"
 msgstr "unbekannter Clustertyp"
 
-msgid "socket cluster with %d nodes on hosts %s"
-msgstr "Socketcluster mit %d Knoten auf den Systemen %s"
-
-msgid ","
-msgstr ","
-
-msgid "socket cluster with %d nodes on host %s"
-msgstr "Socketcluster mit %d Knoten auf System %s"
-
 msgid "node of a socket cluster on host %s with pid %d"
 msgstr "Knoten des Socketclusters auf System %s mit PID %d"
 
-msgid "host"
-msgstr "System"
+msgid "PORT must be specified"
+msgstr "PORT muss angegeben werden"
 
 msgid "'nnodes' must be >= 1"
 msgstr "'nnodes' muss >= 1 sein"
@@ -70,8 +61,8 @@ msgid "'children' must be a list of processes or a single process"
 msgstr ""
 "'children' muss eine Liste von Prozessen oder ein einzelner Prozess sein"
 
-msgid "'process' must be of the class \"process\""
-msgstr "'process' muss aus der  Klasse \"process\" sein"
+msgid "'process' must be of class %s"
+msgstr "'process' muss aus der  Klasse %s sein"
 
 msgid "'child' must be a valid child process"
 msgstr "'child' muss ein gültiger Kindprozess sein"
@@ -87,6 +78,11 @@ msgstr "%d Funktionsaufrufe endeten in einem Fehler"
 
 msgid "all scheduled cores encountered errors in user code"
 msgstr "alle verplanten Kerne berichten Fehler im Benutzerkode"
+
+msgid "Zero-length inputs cannot be mixed with those of non-zero length"
+msgstr ""
+"Eingaben mit Länge Null können nicht mit Eingaben anderer Länge\n"
+"gemischt werden"
 
 msgid "invalid 'jobs' argument"
 msgstr "unzulässiges 'jobs' Argument"
@@ -104,6 +100,11 @@ msgstr "Fork-Cluster sind unter Windows nicht unterstützt"
 msgid "'mc.cores' > 1 is not supported on Windows"
 msgstr "'mc.cores' > 1 ist unter Windows nicht unterstützt"
 
+msgid "socket cluster with %d nodes on host %s"
+msgid_plural "socket cluster with %d nodes on hosts %s"
+msgstr[0] "Socketcluster mit %d Knoten auf System %s"
+msgstr[1] "Socketcluster mit %d Knoten auf Systemen %s"
+
 msgid ""
 "scheduled core %s encountered error in user code, all values of the job will "
 "be affected"
@@ -116,3 +117,12 @@ msgstr[0] ""
 msgstr[1] ""
 "eingeplante Kerne %s berichten Fehler in Benutzerkode, alle Werte der Jobs "
 "werden betroffen sein"
+
+#~ msgid "socket cluster with %d nodes on hosts %s"
+#~ msgstr "Socketcluster mit %d Knoten auf den Systemen %s"
+
+#~ msgid ","
+#~ msgstr ","
+
+#~ msgid "host"
+#~ msgstr "System"

@@ -46,7 +46,7 @@ validDetails.roundrect <- function(x) {
         !is.unit(x$height))
         stop("'x', 'y', 'width', and 'height' must be units")
     if (!is.unit(x$r))
-        stop("'r' must be a unit object")
+        stop("'r' must be a 'unit' object")
     valid.just(x$just)
     # Make sure that x and y are of length 1
     if (length(x$x) != 1 | length(x$y) != 1 |
@@ -55,13 +55,15 @@ validDetails.roundrect <- function(x) {
     x
 }
 
-preDrawDetails.roundrect <- function(x) {
-  pushViewport(viewport(x$x, x$y, x$width, x$height, just=x$just),
-               recording=FALSE)
-}
-
-postDrawDetails.roundrect <- function(x) {
-  popViewport(recording=FALSE)
+makeContext.roundrect <- function(x) {
+    rrvp <- viewport(x$x, x$y, x$width, x$height, just=x$just,
+                     name="rrvp")
+    if (!is.null(x$vp)) {
+        x$vp <- vpStack(x$vp, rrvp)
+    } else {
+        x$vp <- rrvp
+    }
+    x
 }
 
 # x, y, is the real corner
@@ -114,10 +116,10 @@ rrpoints <- function(x) {
   list(x=xx, y=yy)
 }
 
-drawDetails.roundrect <- function(x, recording) {
+makeContent.roundrect <- function(x) {
     boundary <- rrpoints(x)
-    grid.Call.graphics(L_polygon, boundary$x, boundary$y,
-                       list(as.integer(seq_along(boundary$x))))
+    polygonGrob(boundary$x, boundary$y,
+                name=x$name, gp=x$gp, vp=x$vp)
 }
 
 xDetails.roundrect <- function(x, theta) {

@@ -16,18 +16,18 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-memory.size <- function(max = FALSE) round(.Internal(memory.size(max)), 2L)
+memory.size <- function(max = FALSE) round(.Call(C_memsize, max), 2L)
 
-memory.limit <- function(size = NA) trunc(.Internal(memory.size(size)))
+memory.limit <- function(size = NA) trunc(.Call(C_memsize, size))
 
-DLL.version <- function(path) .Internal(DLL.version(path))
+DLL.version <- function(path) .Call(C_dllversion, path)
 
 getClipboardFormats <- function(numeric = FALSE)
 {
     known <- c("text", "bitmap", "metafile PICT", "SYLK", "DIF",
     "TIFF", "OEM text", "DIB", "palette", "pendata", "RIFF", "audio",
     "Unicode text", "enhanced metafile", "drag-and-drop", "locale", "shell")
-    ans <- sort(.Internal(getClipboardFormats()))
+    ans <- sort(.Call(C_getClipboardFormats))
     if(numeric) ans else {
         res <- known[ans]
         res[is.na(res)] <- ans[is.na(res)]
@@ -35,23 +35,20 @@ getClipboardFormats <- function(numeric = FALSE)
     }
 }
 
-readClipboard <- function(format = 1, raw = FALSE)
-    .Internal(readClipboard(format, raw))
+readClipboard <- function(format = 1L, raw = FALSE)
+    .Call(C_readClipboard, format, raw)
 
-writeClipboard <- function(str, format = 1)
-    .Internal(writeClipboard(str, format))
+writeClipboard <- function(str, format = 1L)
+    invisible(.Call(C_writeClipboard, str, format))
 
-getIdentification <- function()
-    .Internal(getIdentification())
+getIdentification <- function() .Call(C_getIdentification)
 
 setWindowTitle <- function(suffix, title = paste(getIdentification(), suffix))
-    .Internal(setWindowTitle(title))
+    invisible(.Call(C_setWindowTitle,  title))
 
-getWindowTitle <- function()
-    .Internal(getWindowTitle())
+getWindowTitle <- function() .Call(C_getWindowTitle)
 
-setStatusBar <- function(text)
-    .Internal(setStatusBar(text))
+setStatusBar <- function(text) .Call(setStatusBar, text)
 
 getWindowsHandle <- function(which = "Console") {
     if (is.numeric(which)) {
@@ -60,29 +57,30 @@ getWindowsHandle <- function(which = "Console") {
         if(which > 0 && which <= length(.Devices) && .Devices[[which]] != "windows")
             return(NULL)
     }
-    .Internal(getWindowHandle(which))
+    .Call(C_getWindowsHandle, which)
 }
 
-getWindowsHandles <- function(which = "R", pattern="", minimized=FALSE) {
-    which <- match.arg(which, c("R", "all"), several.ok=TRUE)
+getWindowsHandles <- function(which = "R", pattern = "", minimized = FALSE)
+{
+    which <- match.arg(which, c("R", "all"), several.ok = TRUE)
     len <- max(length(which), length(pattern), length(minimized))
-    which <- rep(which, length.out=len)
-    pattern <- rep(pattern, length.out=len)
-    minimized <- rep(minimized, length.out=len)
+    which <- rep(which, length.out = len)
+    pattern <- rep(pattern, length.out = len)
+    minimized <- rep(minimized, length.out = len)
     result <- list()
     for (i in seq_along(which)) {
-	res <- .Internal(getWindowHandles(which[i], minimized))
-	if (nzchar(pattern[i]))
-    	    res <- res[grep(pattern[i], names(res))]
+	res <- .Call(C_getWindowsHandles, which[i], minimized)
+	if (nzchar(pattern[i])) res <- res[grep(pattern[i], names(res))]
     	result <- c(result, res)
     }
     dup <- duplicated(sapply(result, deparse))
     result[!dup]
 }
 
-arrangeWindows <- function(action=c("vertical", "horizontal","cascade",
-                                    "minimize", "restore"),
-                           windows, preserve=TRUE, outer=FALSE) {
+arrangeWindows <-
+    function(action = c("vertical", "horizontal","cascade", "minimize", "restore"),
+             windows, preserve = TRUE, outer = FALSE)
+{
     action <- match.arg(action)
     action <- which(action == c("cascade", "horizontal", "vertical", "minimize", "restore"))
     stopifnot(length(action) == 1 && !is.na(action))
@@ -96,7 +94,7 @@ arrangeWindows <- function(action=c("vertical", "horizontal","cascade",
             args$minimized <- TRUE
     	windows <- do.call(getWindowsHandles, args)
     }
-   .Internal(arrangeWindows(windows, action, preserve, outer))
+   .External2(C_arrangeWindows, windows, action, preserve, outer)
 }
 
 menuShowCRAN <- function()
@@ -107,15 +105,17 @@ menuShowCRAN <- function()
     shell.exec(CRAN)
 }
 
-shortPathName <- function(path) .Internal(shortPathName(path))
+shortPathName <- function(path) .Call(C_shortpath, path)
 
 readRegistry <-
     function(key, hive=c("HLM", "HCR", "HCU", "HU", "HCC", "HPD"),
              maxdepth = 1, view = c("default", "32-bit", "64-bit"))
 {
     view <- match(match.arg(view), c("default", "32-bit", "64-bit"))
-    .Internal(readRegistry(key, match.arg(hive), maxdepth, view))
+    .External2(C_readRegistry, key, match.arg(hive), maxdepth, view)
 }
 
-setInternet2 <- function(use = TRUE)
-    .Internal(useInternet2(use))
+setInternet2 <- function(use = TRUE) .Internal(useInternet2(use))
+
+
+win.version <- function() .Call(C_winver)

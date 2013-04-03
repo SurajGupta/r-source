@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2011  The R Core Team
+ *  Copyright (C) 1998-2012   The R Core Team
  *  Copyright (C) 2002-2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #define __MAIN__
 #define R_USE_SIGNALS 1
 #include "Defn.h"
+#include <Internal.h>
 #include "Rinterface.h"
 #include "IOStuff.h"
 #include "Fileio.h"
@@ -39,6 +40,7 @@
 #include "Startup.h"
 
 #include <locale.h>
+#include <R_ext/Print.h>
 
 #ifdef ENABLE_NLS
 void attribute_hidden nl_Rdummy(void)
@@ -105,10 +107,11 @@ static void R_ReplFile(FILE *fp, SEXP rho)
 		PrintWarnings();
 	    break;
 	case PARSE_ERROR:
+	    R_FinalizeSrcRefState();
 	    parseError(R_NilValue, R_ParseError);
 	    break;
 	case PARSE_EOF:
-	    R_FinalizeSrcRefState(&ParseState);
+	    R_FinalizeSrcRefState();
 	    return;
 	    break;
 	case PARSE_INCOMPLETE:
@@ -122,8 +125,7 @@ static void R_ReplFile(FILE *fp, SEXP rho)
 static int prompt_type;
 static char BrowsePrompt[20];
 
-
-char *R_PromptString(int browselevel, int type)
+static const char *R_PromptString(int browselevel, int type)
 {
     if (R_Slave) {
 	BrowsePrompt[0] = '\0';
@@ -135,10 +137,10 @@ char *R_PromptString(int browselevel, int type)
 		sprintf(BrowsePrompt, "Browse[%d]> ", browselevel);
 		return BrowsePrompt;
 	    }
-	    return (char *)CHAR(STRING_ELT(GetOption1(install("prompt")), 0));
+	    return CHAR(STRING_ELT(GetOption1(install("prompt")), 0));
 	}
 	else {
-	    return (char *)CHAR(STRING_ELT(GetOption1(install("continue")), 0));
+	    return CHAR(STRING_ELT(GetOption1(install("continue")), 0));
 	}
     }
 }
@@ -671,15 +673,29 @@ unsigned int TimeToSeed(void); /* datetime.c */
 
 const char* get_workspace_name();  /* from startup.c */
 
+void attribute_hidden BindDomain(char *R_Home)
+{
+#ifdef ENABLE_NLS
+    char localedir[PATH_MAX+20];
+    setlocale(LC_MESSAGES,"");
+    textdomain(PACKAGE);
+    char *p = getenv("R_TRANSLATIONS");
+    if (p) snprintf(localedir, PATH_MAX+20, "%s", p);
+    else snprintf(localedir, PATH_MAX+20, "%s/library/translations", R_Home);
+    bindtextdomain(PACKAGE, localedir); // PACKAGE = DOMAIN = "R"
+    bindtextdomain("R-base", localedir);
+# ifdef WIN32
+    bindtextdomain("RGui", localedir);
+# endif
+#endif
+}
+
 void setup_Rmainloop(void)
 {
     volatile int doneit;
     volatile SEXP baseEnv;
     SEXP cmd;
     FILE *fp;
-#ifdef ENABLE_NLS
-    char localedir[PATH_MAX+20];
-#endif
     char deferred_warnings[11][250];
     volatile int ndeferred_warnings = 0;
 
@@ -754,23 +770,6 @@ void setup_Rmainloop(void)
 		 "Setting LC_MEASUREMENT failed, using \"C\"\n");
 #endif
 #endif /* not Win32 */
-#ifdef ENABLE_NLS
-    /* This ought to have been done earlier, but be sure */
-    textdomain(PACKAGE);
-    {
-	char *p = getenv("R_SHARE_DIR");
-	if(p) {
-	    strcpy(localedir, p);
-	    strcat(localedir, "/locale");
-	} else {
-	    strcpy(localedir, R_Home);
-	    strcat(localedir, "/share/locale");
-	}
-    }
-    bindtextdomain(PACKAGE, localedir);
-    strcpy(localedir, R_Home); strcat(localedir, "/library/base/po");
-    bindtextdomain("R-base", localedir);
-#endif
 #endif
 
     /* make sure srand is called before R_tmpnam, PR#14381 */
@@ -786,7 +785,6 @@ void setup_Rmainloop(void)
     InitOptions();
     InitEd();
     InitArithmetic();
-    InitColors();
     InitGraphics();
     R_Is_Running = 1;
     R_check_locale();
@@ -963,11 +961,12 @@ void setup_Rmainloop(void)
 
     /* trying to do this earlier seems to run into bootstrapping issues. */
     R_init_jit_enabled();
+    R_Is_Running = 2;
 }
 
 extern SA_TYPE SaveAction; /* from src/main/startup.c */
 
-void end_Rmainloop(void)
+static void end_Rmainloop(void)
 {
     /* refrain from printing trailing '\n' in slave mode */
     if (!R_Slave)
@@ -1413,6 +1412,7 @@ R_getTaskCallbackNames(void)
      Simple state to indicate that they are currently being run. */
 static Rboolean Rf_RunningToplevelHandlers = FALSE;
 
+/* This is not used in R and in no header */
 void
 Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded,
 			Rboolean visible)

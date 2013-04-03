@@ -23,5 +23,6 @@ title <- function(main=NULL, sub=NULL, xlab=NULL, ylab=NULL,
     sub <- as.graphicsAnnot(sub)
     xlab <- as.graphicsAnnot(xlab)
     ylab <- as.graphicsAnnot(ylab)
-    .Internal(title(main, sub, xlab, ylab, line, outer, ...))
+    .External.graphics(C_title, main, sub, xlab, ylab, line, outer, ...)
+    invisible()
 }

@@ -160,7 +160,7 @@ package.skeleton <-
             objItem <- get(item, envir = environment)
             if(is.function(objItem))  {
                 if(isS4(objItem))
-                    stop(gettextf("Generic functions and other S4 objects (e.g., '%s') cannot be dumped; use the code_files= argument", item), domain = NA)
+                    stop(gettextf("generic functions and other S4 objects (e.g., '%s') cannot be dumped; use the 'code_files' argument", item), domain = NA)
                 dump(item,
                      file = file.path(code_dir, sprintf("%s.R", list0[item])))
             }
@@ -265,7 +265,7 @@ package.skeleton <-
             list0[!ok] <- paste0("z", list0[!ok])
         ## now on Mac/Windows lower/uppercase will collide too
         list1 <- tolower(list0)
-        list2 <- make.unique(list1, sep="_")
+        list2 <- make.unique(list1, sep = "_")
         changed <- (list2 != list1)
         list0[changed] <- list2[changed]
         list0

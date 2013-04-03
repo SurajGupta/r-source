@@ -8,9 +8,9 @@
 \alias{objects}
 \title{List Objects}
 \usage{
-ls(name, pos = -1, envir = as.environment(pos),
+ls(name, pos = -1L, envir = as.environment(pos),
    all.names = FALSE, pattern)
-objects(name, pos= -1, envir = as.environment(pos),
+objects(name, pos= -1L, envir = as.environment(pos),
         all.names = FALSE, pattern)
 }
 \arguments{

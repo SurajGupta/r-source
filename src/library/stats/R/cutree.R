@@ -19,7 +19,7 @@
 cutree <- function(tree, k=NULL, h=NULL)
 {
     if(is.null(n1 <- nrow(tree$merge)) || n1 < 1)
-        stop("invalid 'tree' (merge component)")
+        stop("invalid 'tree' ('merge' component)")
     n <- n1 + 1
     if(is.null(k) && is.null(h))
         stop("either 'k' or 'h' must be specified")
@@ -39,11 +39,10 @@ cutree <- function(tree, k=NULL, h=NULL)
                  domain = NA)
     }
 
-    ans <- .Call(C_R_cutree, tree$merge, k)
+    ans <- .Call(C_cutree, tree$merge, k)
 
     if(length(k) == 1L) {
-        ans <- as.vector(ans)
-        names(ans) <- tree$labels
+        ans <- setNames(as.vector(ans), tree$labels)
     }
     else{
         colnames(ans) <- if(!is.null(h)) h else k

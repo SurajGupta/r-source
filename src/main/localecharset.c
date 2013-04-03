@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2005   The R Core Team
+ *  Copyright (C) 2005-12   The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
 
 /*  This file was contributed by Ei-ji Nakama.
  *  It exports locale2charset for use in gram.y, and rlocale.c on MacOS X.
+ *  And sysutils.c, grDevices/src/devPS.c
  */
 
 /* setlocale(LC_CTYPE,NULL) to encodingname cf nl_langinfo(LC_CTYPE) */
@@ -52,7 +53,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include <R_ext/rlocale.h> /* To get the correct linkage for locale2charset */
+//#include <rlocale.h> /* To get the correct linkage for locale2charset */
 
 /* name_value struct */
 typedef struct {
@@ -654,7 +655,7 @@ const char *locale2charset(const char *locale)
     if (0 == strcmp(enc, "UTF-8")) strcpy(enc, "utf8");
 
     if(strcmp(enc, "") && strcmp(enc, "utf8")) {
-	for(i = 0; enc[i]; i++) enc[i] = tolower(enc[i]);
+	for(i = 0; enc[i]; i++) enc[i] = (char) tolower(enc[i]);
 
 	for(i = 0; i < known_count; i++)
 	    if (0 == strcmp(known[i].name,enc)) return known[i].value;
@@ -674,12 +675,12 @@ const char *locale2charset(const char *locale)
 	    strncpy(charset, (enc[3] == '-') ? enc+4: enc+3, sizeof(charset));
 	    if(strncmp(charset, "euc", 3)) {
 		if (charset[3] != '-') {
-		    for(i = strlen(charset)-3; 0 < i; i--)
+		    for(i = (int) strlen(charset)-3; 0 < i; i--)
 			charset[i+1] = charset[i];
 		    charset[3] = '-';
 		}
 		for(i = 0; charset[i]; i++)
-		    charset[i] = toupper(charset[i]);
+		    charset[i] = (char) toupper(charset[i]);
 		return charset;
 	    }
 	}
@@ -706,7 +707,7 @@ const char *locale2charset(const char *locale)
     if(0 == strcmp(enc, "utf8")) return "UTF-8";
 
     value = name_value_search(la_loc, guess, guess_count);
-    return value == NULL ? (char *) "ASCII" : value;
+    return value == NULL ? "ASCII" : value;
 #endif
 }
 

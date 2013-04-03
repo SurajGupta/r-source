@@ -42,7 +42,7 @@ download.file <-
             stop("no download method found")
     }
     if(method == "internal") {
-        status <- .Internal(download(url, destfile, quiet, mode, cacheOK))
+        status <- .External(C_download, url, destfile, quiet, mode, cacheOK)
         ## needed for Mac GUI from download.packages etc
         if(!quiet) flush.console()
     } else if(method == "wget") {
@@ -70,5 +70,4 @@ download.file <-
     invisible(status)
 }
 
-nsl <- function(hostname)
-    .Internal(nsl(hostname))
+nsl <- function(hostname) .Call(C_nsl, hostname)

@@ -1,7 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1997-2001   Saikat DebRoy and the
- *			      R Core Team
+ *  Copyright (C) 1997-2012   Saikat DebRoy and the R Core Team
  *  Copyright (C) 2003-2010   The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,6 +30,7 @@
 #include <float.h> /* DBL_MAX */
 #include <R_ext/Applic.h>
 #include <R_ext/Boolean.h>
+#include <R_ext/Print.h>   /* Rprintf */
 #include <R_ext/PrtUtil.h> /* printRealVector */
 #include <R_ext/Linpack.h> /* ddot, dnrm2, dtrsl, dscal */
 #include <Rmath.h>
@@ -110,6 +110,7 @@ void fdhess(int n, double *x, double fval, fcn_p fun, void *state,
     }
 } /* fdhess */
 
+#if 0
 static void d1fcn_dum(int n, double *x, double *g, void *state)
 {
 /*	dummy routine to prevent unsatisfied external diagnostic
@@ -121,6 +122,7 @@ static void d2fcn_dum(int nr, int n, double *x, double *h, void *state)
 /*	dummy routine to prevent unsatisfied external diagnostic
  *	when specific analytic hessian function not supplied. */
 }
+#endif
 
 static void mvmltl(int nr, int n, double *a, double *x, double *y)
 {
@@ -192,19 +194,17 @@ static void mvmlts(int nr, int n, double *a, double *x, double *y)
  * NOTE:	x and y cannot share storage.
  */
 
-  int i, j;
-  double sum;
+    int i, j;
+    double sum;
 
-  for (i = 0; i < n; ++i) {
-    sum = 0.;
-    for (j = 0; j <= i; ++j) {
-      sum += a[i + j * nr] * x[j];
+    for (i = 0; i < n; ++i) {
+	sum = 0.;
+	for (j = 0; j <= i; ++j)
+	    sum += a[i + j * nr] * x[j];
+	for (j = i+1; j < n; ++j)
+	    sum += a[j + i * nr] * x[j];
+	y[i] = sum;
     }
-    for (j = i+1; j < n; ++j) {
-      sum += a[j + i * nr] * x[j];
-    }
-    y[i] = sum;
-  }
 } /* mvmlts */
 
 static void lltslv(int nr, int n, double *a, double *x, double *b)
@@ -226,12 +226,12 @@ static void lltslv(int nr, int n, double *a, double *x, double *b)
  *	if b is not required by calling program, then
  *	b and x may share the same storage. */
 
-  int job = 0, info;
+    int job = 0, info;
 
-  if( x != b) Memcpy(x, b, (size_t) n);
-  F77_CALL(dtrsl)(a, &nr, &n, x, &job, &info);
-  job = 10;
-  F77_CALL(dtrsl)(a, &nr, &n, x, &job, &info);
+    if (x != b) Memcpy(x, b, n);
+    F77_CALL(dtrsl)(a, &nr, &n, x, &job, &info);
+    job = 10;
+    F77_CALL(dtrsl)(a, &nr, &n, x, &job, &info);
 } /* lltslv */
 
 static void
@@ -2070,7 +2070,7 @@ optchk(int n, double *x, double *typsiz, double *sx, double *fscale,
 
 static void
 prt_result(int nr, int n, const double x[], double f, const double g[],
-       const double *a, const double p[], int itncnt, int iflg)
+	   const double *a, const double p[], int itncnt, int iflg)
 {
 /*
  *  PURPOSE
@@ -2195,7 +2195,7 @@ optdrv(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
  *			 be evaluated by secant update instead of
  *			 analytically or by finite differences
  *	msg	    <--> on input:  ( > 0) message to inhibit certain
- *			   automatic checks; see do_nlm() in ../main/optimize.c
+ *			   automatic checks; see do_nlm() in optimize.c
  *			 on output: ( < 0) error code; =0 no error
  *	ndigit	     --> number of good digits in optimization function fcn
  *	itnlim	     --> maximum number of allowable iterations
@@ -2447,6 +2447,7 @@ optdrv(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
 	       *itrmcd, msg, prt_result);
 } /* optdrv */
 
+#if 0
 static void
 dfault(int n, double *x,
        double *typsiz, double *fscale,
@@ -2547,8 +2548,9 @@ optif0(int nr, int n, double *x, fcn_p fcn, void *state,
 	 &wrk[nr * 4], &wrk[nr * 5], &wrk[nr * 6], &wrk[nr * 7],
 	 &wrk[nr * 8], &itncnt);
 } /* optif0 */
+#endif
 
-/* ---- this one is called from ../main/optimize.c : --------------- */
+/* ---- this one is called from optimize.c : --------------- */
 void
 optif9(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
        void *state, double *typsiz, double fscale, int method,
@@ -2602,7 +2604,7 @@ optif9(int nr, int n, double *x, fcn_p fcn, fcn_p d1fcn, d2fcn_p d2fcn,
  *	fpls	    <--> on exit:  function value at solution, xpls
  *	gpls(n)	    <--> on exit:  gradient at solution xpls
  *	itrmcd	    <--	 termination code (in 0..5 ; 0 is "perfect");
- *			see optcode() in ../main/optimize.c for meaning
+ *			see optcode() in optimize.c for meaning
  *	a(n,n)	     --> workspace for hessian (or estimate)
  *			 and its cholesky decomposition
  *	wrk(n,8)     --> workspace

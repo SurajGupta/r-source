@@ -16,7 +16,8 @@
 }
 \usage{
 download.file(url, destfile, method, quiet = FALSE, mode = "w",
-              cacheOK = TRUE, extra = getOption("download.file.extra"))
+              cacheOK = TRUE,
+              extra = getOption("download.file.extra"))
 }
 \arguments{
   \item{url}{A character string naming the URL of a resource to be
@@ -84,7 +85,7 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 #endif
 #ifdef windows
   only supported if \option{--internet2} or environment variable
-  \env{R_WIN_INTERNET2} was set or 
+  \env{R_WIN_INTERNET2} was set or
   \code{\link{setInternet2}(TRUE)} was used (to make use of Internet
   Explorer internals), and then only if the certificate is considered to
   be valid.
@@ -117,8 +118,8 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   \code{mode = "wb"}.
 
   There is an alternative method if you have Internet Explorer 4 or
-  later installed.   You can use the command line flag \option{--internet2}, 
-  or call \code{\link{setInternet2}(TRUE)} and then 
+  later installed.   You can use the command line flag \option{--internet2},
+  or call \code{\link{setInternet2}(TRUE)} and then
   the \sQuote{Internet Options} of the system are used to choose proxies
   and so on; these are set in the Control Panel and are those used for
   Internet Explorer.  That version does not support \code{cacheOK = FALSE}.

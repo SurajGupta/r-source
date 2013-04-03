@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-4   The R Core Team.
+ *  Copyright (C) 2001-12   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,23 +22,12 @@
 #include <Rinternals.h>
 #include "stats.h"
 
-void acf(double *x, int *n, int *nser, int *nlag, int *correlation,
-	 double *acf);
-void uni_pacf(double *cor, double *p, int *pnlag);
-void artoma(int *pp, double *phi, double *psi, int *npsi);
-void burg(int *pn, double*x, int *pp, double *coefs, double *var1,
-	  double *var2);
 void multi_burg(int *pn, double *x, int *pomax, int *pnser, double *coef,
 		double *pacf, double *var, double *aic, int *porder,
 		int *useaic, int *vmethod);
 void multi_yw(double *acf, int *pn, int *pomax, int *pnser, double *coef,
 	      double *pacf, double *var, double *aic, int *porder,
 	      int *puseaic);
-void R_intgrt_vec (double *x, double *y, int *lag, int *n);
-void filter1(double *x, int *n, double *filter, int *nfilt, int *sides,
-	     int *circular, double *out);
-void filter2(double *x, int *n, double *filter, int *nfilt, double *out);
-void R_pp_sum (double *u, int *n, int *l, double *sum);
 void HoltWinters (double *x, int *xl, double *alpha, double *beta,
 		  double *gamma, int *start_time, int *seasonal, int *period,
 		  int *dotrend, int *doseasonal,
@@ -103,4 +92,12 @@ SEXP ARIMA_CSS(SEXP sy, SEXP sarma, SEXP sPhi, SEXP sTheta, SEXP sncond,
 	       SEXP giveResid);
 SEXP TSconv(SEXP a, SEXP b);
 SEXP getQ0(SEXP sPhi, SEXP sTheta);
+
+SEXP acf(SEXP x, SEXP lmax, SEXP sCor);
+SEXP pacf1(SEXP acf, SEXP lmax);
+SEXP ar2ma(SEXP ar, SEXP npsi);
+SEXP Burg(SEXP x, SEXP order);
+SEXP pp_sum(SEXP u, SEXP sl);
+SEXP intgrt_vec(SEXP x, SEXP xi, SEXP slag);
+
 #endif

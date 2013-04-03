@@ -22,7 +22,7 @@ assign(".quartz.Options",
        list(title = "Quartz %d",
             width = 7, height = 7, pointsize=12,
             family = "Helvetica",
-            fontsmooth = TRUE, antialias = TRUE,
+            antialias = TRUE,
             type = "native",
             bg = "transparent", canvas = "white",
             dpi = NA_real_),
@@ -46,8 +46,7 @@ quartz.options <- function(..., reset = FALSE)
     if(reset || l... > 0) invisible(old) else old
 }
 
-quartz <- function(title, width, height, pointsize, family,
-                   fontsmooth, antialias,
+quartz <- function(title, width, height, pointsize, family, antialias,
                    type, file = NULL, bg, canvas, dpi)
 {
     new <- list()
@@ -56,7 +55,6 @@ quartz <- function(title, width, height, pointsize, family,
     if(!missing(height)) new$height <- height
     if(!missing(pointsize)) new$pointsize <- pointsize
     if(!missing(family)) new$family <- family
-    if(!missing(fontsmooth)) new$fontsmooth <- fontsmooth
     if(!missing(antialias)) new$antialias <- antialias
     if(!missing(bg)) new$bg <- bg
     if(!missing(canvas)) new$canvas <- canvas
@@ -65,8 +63,8 @@ quartz <- function(title, width, height, pointsize, family,
     if(!checkIntFormat(new$title)) stop("invalid 'title'")
     if(!is.null(file) && !checkIntFormat(file)) stop("invalid 'file'")
     d <- check.options(new, name.opt = ".quartz.Options", envir = .Quartzenv)
-    .External(CQuartz, d$type, file, d$width, d$height, d$pointsize, d$family,
-              d$antialias, d$fontsmooth, d$title, d$bg, d$canvas,
+    .External(C_Quartz, d$type, file, d$width, d$height, d$pointsize, d$family,
+              d$antialias, d$title, d$bg, d$canvas,
               if(is.na(d$dpi)) NULL else d$dpi)
     invisible()
 }
@@ -121,12 +119,12 @@ quartzFonts <- function(...) {
         nnames <- length(fontNames)
         if (nnames == 0) {
             if (!all(sapply(fonts, is.character)))
-                stop("invalid arguments in quartzFonts (must be font names)")
+                stop("invalid arguments in 'quartzFonts' (must be font names)")
             else
                 get(".Quartz.Fonts", envir=.Quartzenv)[unlist(fonts)]
         } else {
             if (ndots != nnames)
-                stop("invalid arguments in quartzFonts (need named args)")
+                stop("invalid arguments in 'quartzFonts' (need named args)")
             setQuartzFonts(fonts, fontNames)
         }
     }
@@ -146,3 +144,31 @@ quartzFonts(# Default Serif font is Times
                 # Default Monospace font is Courier
             mono = quartzFont(c("Courier", "Courier-Bold",
             "Courier-Oblique", "Courier-BoldOblique")))
+
+## Formerly for R.app only
+quartz.save <- function(file, type = 'png', device = dev.cur(), dpi = 100, ...)
+{
+    ## modified version of dev.copy2pdf
+    dev.set(device)
+    current.device <- dev.cur()
+    nm <- names(current.device)[1]
+    if (nm == "null device") stop("no device to print from")
+    if (!dev.displaylist()) stop("can only print from a screen device")
+    oc <- match.call()
+    oc[[1]] <- as.name("dev.copy")
+    oc$file <- NULL
+    oc$device <- quartz
+    oc$type <- type
+    if(missing(file)) file <- paste("Rplot", type, sep=".")
+    oc$file <- file
+    oc$dpi <- dpi
+    din <- dev.size("in")
+    w <- din[1]
+    h <- din[2]
+    if (is.null(oc$width))
+        oc$width <- if (!is.null(oc$height)) w/h * eval.parent(oc$height) else w
+    if (is.null(oc$height))
+        oc$height <- if (!is.null(oc$width)) h/w * eval.parent(oc$width) else h
+    on.exit(dev.set(current.device))
+    dev.off(eval.parent(oc))
+}

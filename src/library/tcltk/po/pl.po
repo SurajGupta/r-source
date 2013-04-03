@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-07-13 10:32+0100\n"
+"POT-Creation-Date: 2013-03-07 08:37+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -12,8 +12,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "na-Revision-Date: 2012-05-29 07:55+0100\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2)\n"
+"|| n%100>=20) ? 1 : 2);\n"
 "X-Poedit-SourceCharset: iso-8859-1\n"
+"X-Generator: Poedit 1.5.5\n"
 
 # tcltk/src/tcltk.c: 63
 #  _("parse error in R expression")
@@ -29,7 +30,7 @@ msgstr "błąd 'tcl'.\n"
 # error(_("invalid argument"))
 # tcltk/src/tcltk.c: 714
 # error(_("invalid argument"))
-#: tcltk.c:187 tcltk.c:700
+#: tcltk.c:187 tcltk.c:714
 msgid "invalid argument"
 msgstr "niepoprawny argument"
 
@@ -49,7 +50,7 @@ msgstr "niepoprawny 'tclObj' -- być może zapisany z innej sesji?"
 
 # tcltk/src/tcltk.c: 589
 # error(_("argument list is too long in tcltk internal function 'callback_closure'"))
-#: tcltk.c:575
+#: tcltk.c:589
 msgid "argument list is too long in tcltk internal function 'callback_closure'"
 msgstr ""
 "lista argumentów jest zbyt długa w wewnętrznej funkcji tcltk "
@@ -57,30 +58,27 @@ msgstr ""
 
 # tcltk/src/tcltk.c: 622
 # error(_("argument is not of correct type"))
-#: tcltk.c:608
+#: tcltk.c:622
 msgid "argument is not of correct type"
 msgstr "argument nie jest poprawnego typu"
 
 # tcltk/src/tcltk.c: 673
 # warning(_("no DISPLAY variable so Tk is not available"))
-#: tcltk.c:659
+#: tcltk.c:673
 msgid "no DISPLAY variable so Tk is not available"
 msgstr "brak zmiennej 'DISPLAY' więc Tk nie jest dostępne"
 
-# tcltk/src/tcltk_unix.c: 86
-# error(_("Tcl already loaded"))
-#: tcltk_unix.c:86
-msgid "Tcl already loaded"
-msgstr "Tcl jest już załadowany"
-
-# tcltk/src/tcltk_unix.c: 107
+# tcltk/src/tcltk_unix.c: 94
 # error(_("Tcl is not loaded"))
-#: tcltk_unix.c:107
+#: tcltk_unix.c:94
 msgid "Tcl is not loaded"
 msgstr "Tcl nie został załadowany"
 
-# tcltk/src/tcltk_unix.c: 115
+# tcltk/src/tcltk_unix.c: 98
 # error(_("Tcl is not last loaded handler"))
-#: tcltk_unix.c:115
+#: tcltk_unix.c:98
 msgid "Tcl is not last loaded handler"
 msgstr "Tcl nie jest ostatnią załadowaną usługą"
+
+#~ msgid "Tcl already loaded"
+#~ msgstr "Tcl jest już załadowany"

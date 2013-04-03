@@ -124,9 +124,9 @@ x$i <- value
 }
 
 \section{Atomic vectors}{
-  The usual form of indexing is \code{"["}.  \code{"[["} can be used to
+  The usual form of indexing is \code{[}.  \code{[[} can be used to
   select a single element \emph{dropping} \code{\link{names}}, whereas
-  \code{"["} keeps them, e.g., in \code{c(abc = 123)[1]}.
+  \code{[} keeps them, e.g., in \code{c(abc = 123)[1]}.
 
   The index object \code{i} can be numeric, logical, character or empty.
   Indexing by factors is allowed and is equivalent to indexing by the
@@ -228,6 +228,10 @@ x$i <- value
   there is ambiguity as to whether an element of the rhs should
   be used or not, this is only allowed if the rhs value is of length one
   (so the two interpretations would have the same outcome).
+  (The documented behaviour of S was that an \code{NA} replacement index
+  \sQuote{goes nowhere} but uses up an element of \code{value}:
+  Becker \emph{et al} p. 359.  However, that has not been true of
+  other implementations.)
 }
 
 \section{Argument matching}{
@@ -279,13 +283,6 @@ x$i <- value
   even empty nor missing names.  If any object has no names or
   appropriate dimnames, they are taken as all \code{""} and so match
   nothing.
-}
-
-\note{
-  The documented behaviour of S is that an \code{NA} replacement index
-  \sQuote{goes nowhere} but uses up an element of \code{value}
-  (Becker \emph{et al} p. 359).  However, that has not been true of
-  other implementations.
 }
 
 \references{

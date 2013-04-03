@@ -37,7 +37,7 @@ extern void R_ProcessEvents(void);
 #include <ctype.h>
 #include <wchar.h>
 #include <limits.h>
-#include <R_ext/rlocale.h>
+#include <rlocale.h>
 #include <R_ext/Memory.h>
 #include "graphapp/ga.h"
 #ifdef USE_MDI
@@ -264,7 +264,7 @@ static size_t enctowcs(wchar_t *wc, char *s, int n)
 	nc += mbstowcs(wc, s, n);
 	pb += 3; pe = pb;
 	while(*pe &&
-	      !((pe = strchr(pb, UTF8out[0])) && *(pe+1) == UTF8out[1] &&
+	      !((pe = strchr(pe, UTF8out[0])) && *(pe+1) == UTF8out[1] &&
 	      *(pe+2) == UTF8out[2])) pe++;
 	if(!*pe) return nc; /* FIXME */;
 	*pe = '\0';
@@ -1945,7 +1945,7 @@ int consoler = 25, consolec = 80, consolex = 0, consoley = 0;
 int pagerrow = 25, pagercol = 80;
 int pagerMultiple = 1, haveusedapager = 0;
 int consolebufb = DIMLBUF, consolebufl = MLBUF, consolebuffered = 1;
-int consoleblink = 1;
+static int consoleblink = 1;
 
 void
 setconsoleoptions(const char *fnname,int fnsty, int fnpoints,

@@ -9,26 +9,25 @@ all: makeMakedeps libmain.a
 CPPFLAGS=-I. -I../include -DHAVE_CONFIG_H -DR_DLL_BUILD $(arch_DEFS)
 
 CSOURCES=\
-	CConverters.c CommandLineArgs.c \
+	CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
 	agrep.c apply.c arithmetic.c array.c attrib.c \
-	base.c bind.c builtin.c \
-	character.c coerce.c colors.c complex.c connections.c context.c \
-	cov.c cum.c \
-	dcf.c datetime.c debug.c deparse.c deriv.c devices.c \
+	bind.c builtin.c \
+	character.c coerce.c colors.c complex.c connections.c context.c cum.c \
+	dcf.c datetime.c debug.c deparse.c devices.c \
 	dotcode.c dounzip.c dstruct.c duplicate.c \
-	engine.c envir.c errors.c eval.c \
-	format.c fourier.c \
-	gevents.c gram.c gram-ex.c gramLatex.c gramRd.c graphics.c grep.c \
+	edit.c engine.c envir.c errors.c eval.c \
+	format.c \
+	gevents.c gram.c gram-ex.c graphics.c grep.c \
 	identical.c inlined.c inspect.c internet.c iosupport.c \
 	lapack.c list.c localecharset.c logic.c \
-	main.c mapply.c match.c memory.c mkdtemp.c model.c \
+	main.c mapply.c match.c memory.c mkdtemp.c \
 	names.c \
-	objects.c optim.c optimize.c options.c \
-	par.c paste.c platform.c plot.c plot3d.c plotmath.c \
+	objects.c options.c \
+	paste.c platform.c plot.c plot3d.c plotmath.c \
 	print.c printarray.c printvector.c printutils.c qsort.c \
 	random.c raw.c registration.c relop.c rlocale.c \
-	saveload.c scan.c seq.c serialize.c size.c sort.c source.c split.c \
+	saveload.c scan.c seq.c serialize.c sort.c source.c split.c \
 	sprintf.c startup.c subassign.c subscript.c subset.c summary.c sysutils.c \
 	unique.c util.c \
 	version.c vfonts.c
@@ -41,16 +40,6 @@ gram.c: gram.y
 	bison gram.y
 	$(SED) -e "s/gram.tab.c/gram.c/" gram.tab.c > gram.c
 	$(RM) gram.tab.c
-
-gramRd.c: gramRd.y
-	bison gramRd.y
-	$(SED) -e "s/gramRd.tab.c/gramRd.c/" gramRd.tab.c > gramRd.c
-	$(RM) gramRd.tab.c
-
-gramLatex.c: gramLatex.y
-	bison gramLatex.y
-	$(SED) -e "s/gramLatex.tab.c/gramLatex.c/" gramLatex.tab.c > gramLatex.c
-	$(RM) gramLatex.tab.c
 endif
 
 platform-CPPFLAGS=-I../gnuwin32 -I../extra -DPLATFORM_PKGTYPE='"win.binary"'
@@ -62,6 +51,7 @@ connections-CPPFLAGS=-I../extra/zlib -I../extra/bzip2
 connections-CPPFLAGS+=-DLZMA_API_STATIC -I../extra/xz/api
 dcf-CPPFLAGS=-I../extra
 dounzip-CPPFLAGS=-I../extra/zlib -I../extra/bzip2
+edit-CPPFLAGS=-I../gnuwin32
 grep-CPPFLAGS=-I../extra -I../extra/pcre -I../gnuwin32 -DPCRE_STATIC
 memory-CPPFLAGS=$(malloc-DEFS)
 printutils-CPPFLAGS=-I../gnuwin32

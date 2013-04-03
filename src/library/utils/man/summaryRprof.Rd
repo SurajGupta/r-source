@@ -13,19 +13,22 @@ amount of time used by different \R functions.
 \usage{
 summaryRprof(filename = "Rprof.out", chunksize = 5000,
               memory = c("none", "both", "tseries", "stats"),
-              index = 2, diff = TRUE, exclude = NULL)
+              lines = c("hide", "show", "both"),
+              index = 2, diff = TRUE, exclude = NULL,
+              basenames = 1)
 }
 \arguments{
   \item{filename}{Name of a file produced by \code{Rprof()}.}
   \item{chunksize}{Number of lines to read at a time.}
-  \item{memory}{Summaries for memory information.  See \sQuote{Details} below.}
+  \item{memory}{Summaries for memory information.  See \sQuote{Memory profiling} below.}
+  \item{lines}{Summaries for line information.  See \sQuote{Line profiling} below.}
   \item{index}{How to summarize the stack trace for memory
     information.  See \sQuote{Details} below.}
   \item{diff}{If \code{TRUE} memory summaries use change in memory
     rather than current memory.}
   \item{exclude}{Functions to exclude when summarizing the stack trace
     for memory summaries.}
-  
+  \item{basenames}{Number of components of the path to filenames to display.}
 }
 
 \details{
@@ -51,7 +54,7 @@ summaryRprof(filename = "Rprof.out", chunksize = 5000,
   allocated the memory.
 
   With \code{memory = "both"} the change in total memory (truncated at zero)
-  is reported in addition to timing data. 
+  is reported in addition to timing data.
 
   With \code{memory = "tseries"} or \code{memory = "stats"} the \code{index}
   argument specifies how to summarize the stack trace.  A positive number
@@ -67,8 +70,25 @@ summaryRprof(filename = "Rprof.out", chunksize = 5000,
   the end of the interval.
 }
 
+\section{Line profiling}{
+  If the code being run has source reference information retained (via
+  \code{keep.source = TRUE} in \code{\link{source}} or
+  \code{KeepSource = TRUE} in a package \file{DESCRIPTION} file or
+  some other way), then information about the origin of lines is
+  recorded during profiling.  By default this is not displayed, but
+  the \code{lines} parameter can enable the display.
+  
+  If \code{lines = "show"}, line locations will be used in preference
+  to the usual function name information, and the results
+  will be displayed ordered by location in addition to the other orderings.
+  
+  If \code{lines = "both"}, line locations will be mixed with function
+  names in a combined display.  
+}
+  
+
 \value{
-  If \code{memory = "none"}, a list with components
+  If \code{memory = "none"} and \code{lines = "hide"}, a list with components
   \item{by.self}{A data frame of timings sorted by \sQuote{self} time.}
   \item{by.total}{A data frame of timings sorted by \sQuote{total} time.}
   \item{sample.interval}{The sampling interval.}
@@ -79,12 +99,15 @@ summaryRprof(filename = "Rprof.out", chunksize = 5000,
   seconds and percentages of the total time spent executing code in that
   function and code in that function or called from that function,
   respectively.
+  
+  If \code{lines = "show"}, an additional component is added to the list:
+  \item{by.line}{A data frame of timings sorted by source location.}
 
   If \code{memory = "both"} the same list but with memory consumption in Mb
-  in addition to the timings.  
+  in addition to the timings.
 
   If \code{memory = "tseries"} a data frame giving memory statistics over
-  time
+  time.
 
   If \code{memory = "stats"} a \code{\link{by}} object giving memory statistics
   by function.
@@ -99,7 +122,7 @@ summaryRprof(filename = "Rprof.out", chunksize = 5000,
   of the \R source tree).
 
   \code{\link{Rprof}}
-  
+
   \code{\link{tracemem}} traces copying of an object via the C function
   \code{duplicate}.
 

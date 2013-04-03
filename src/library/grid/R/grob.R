@@ -41,7 +41,7 @@ grobName <- function(grob=NULL, prefix="GRID") {
         grobAutoName(prefix)
     else {
         if (!is.grob(grob))
-            stop("Invalid 'grob' argument")
+            stop("invalid 'grob' argument")
         else
             grobAutoName(prefix, class(grob)[1L])
     }
@@ -58,7 +58,7 @@ checkvpSlot <- function(vp) {
     if (!inherits(vp, "viewport") &&
         !inherits(vp, "vpPath") &&
         !is.character(vp))
-      stop("Invalid 'vp' slot")
+      stop("invalid 'vp' slot")
   # For interactive use, allow user to specify
   # vpPath directly (i.e., w/o calling vpPath)
   if (is.character(vp))
@@ -78,7 +78,7 @@ checkgpSlot <- function(gp) {
   # gp must be a gpar
   if (!is.null(gp))
     if (!inherits(gp, "gpar"))
-      stop("Invalid 'gp' slot")
+      stop("invalid 'gp' slot")
 }
 
 validDetails <- function(x) {
@@ -110,7 +110,7 @@ grob <- function(..., name=NULL, gp=NULL, vp=NULL, cl=NULL) {
   g <- list(..., name=name, gp=gp, vp=vp)
   if (!is.null(cl) &&
       !is.character(cl))
-    stop("Invalid 'grob' class")
+    stop("invalid 'grob' class")
   class(g) <- c(cl, "grob", "gDesc")
   validGrob(g)
 }
@@ -145,13 +145,13 @@ print.grob <- function(x, ...) {
 gPathFromVector <- function(names) {
   n <- length(names)
   if (n < 1L)
-    stop("A 'grob' path must contain at least one 'grob' name")
-  if (!all(is.character(names)))
-    stop("Invalid 'grob' name(s)")
-  path <- list(path=if (n==1) NULL else
-               paste(names[1L:(n-1)], collapse=.grid.pathSep),
-               name=names[n],
-               n=n)
+    stop("a 'grob' path must contain at least one 'grob' name")
+  if (any(bad <- !is.character(names)))
+      stop(ngettext(sum(bad), "invalid grob name", "invalid grob names"),
+           domain = NA)
+  path <- list(path = if (n==1) NULL else
+               paste(names[1L:(n-1)], collapse = .grid.pathSep),
+               name = names[n], n = n)
   class(path) <- c("gPath", "path")
   path
 }
@@ -189,7 +189,7 @@ as.gList <- function(x) {
     } else if (is.gList(x)) {
         result <- x
     } else {
-        stop("Unable to coerce to gList")
+        stop("unable to coerce to \"gList\"")
     }
     result
 }
@@ -205,7 +205,7 @@ gList <- function(...) {
         class(gl) <- c("gList")
         return(gl)
     } else {
-        stop("Only 'grobs' allowed in 'gList'")
+        stop("only 'grobs' allowed in \"gList\"")
     }
 }
 
@@ -217,7 +217,7 @@ addToGList.default <- function(x, gList) {
   if (is.null(x))
     gList
   else
-    stop("Invalid element to add to 'gList'")
+    stop("invalid element to add to \"gList\"")
 }
 
 addToGList.grob <- function(x, gList) {
@@ -262,10 +262,10 @@ childName <- function(x) {
 
 setChildren <- function(x, children) {
   if (!inherits(x, "gTree"))
-    stop("Can only set 'children' for a 'gTree'")
+    stop("can only set 'children' for a \"gTree\"")
   if (!is.null(children) &&
       !inherits(children, "gList"))
-    stop("'children' must be a 'gList'")
+    stop("'children' must be a \"gList\"")
   # Thin out NULL children
   if (!is.null(children)) {
     cl <- class(children)
@@ -286,7 +286,7 @@ setChildren <- function(x, children) {
 
 childNames <- function(gTree) {
   if (!inherits(gTree, "gTree"))
-    stop("It is only valid to get 'children' from a 'gTree'")
+    stop("it is only valid to get 'children' from a \"gTree\"")
   gTree$childrenOrder
 }
 
@@ -313,7 +313,7 @@ gTree <- function(..., name=NULL, gp=NULL, vp=NULL,
   gt <- list(..., name=name, gp=gp, vp=vp)
   if (!is.null(cl) &&
       !is.character(cl))
-    stop("Invalid 'gTree' class")
+    stop("invalid \"gTree\" class")
   class(gt) <- c(cl, "gTree", "grob", "gDesc")
   gt <- validGrob(gt, childrenvp)
   gt <- setChildren(gt, children)
@@ -363,9 +363,9 @@ grid.get <- function(gPath, strict=FALSE, grep=FALSE, global=FALSE,
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   getDLfromGPath(gPath, strict, grep, global)
 }
@@ -380,16 +380,16 @@ grid.gget <- function(..., grep=TRUE, global=TRUE) {
 getGrob <- function(gTree, gPath, strict=FALSE,
                     grep=FALSE, global=FALSE) {
   if (!inherits(gTree, "gTree"))
-    stop("It is only valid to get a child from a 'gTree'")
+    stop("it is only valid to get a child from a \"gTree\"")
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (depth(gPath) == 1 && strict) {
     gTree$children[[gPath$name]]
   } else {
     if (!is.logical(grep))
-      stop("Invalid 'grep' value")
+      stop("invalid 'grep' value")
     grep <- rep(grep, length.out=depth(gPath))
     getGTree(gTree, NULL, gPath, strict, grep, global)
   }
@@ -402,9 +402,9 @@ grid.set <- function(gPath, newGrob, strict=FALSE, grep=FALSE,
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   result <- setDLfromGPath(gPath, newGrob, strict, grep)
   # result$index will be non-zero if matched the gPath
@@ -427,15 +427,15 @@ grid.set <- function(gPath, newGrob, strict=FALSE, grep=FALSE,
 # nor is it valid to specify a global destination (i.e., no global arg)
 setGrob <- function(gTree, gPath, newGrob, strict=FALSE, grep=FALSE) {
   if (!inherits(gTree, "gTree"))
-    stop("It is only valid to set a child of a 'gTree'")
+    stop("it is only valid to set a child of a \"gTree\"")
   if (!inherits(newGrob, "grob"))
-    stop("It is only valid to set a 'grob' as child of a 'gTree'")
+    stop("it is only valid to set a 'grob' as child of a \"gTree\"")
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   if (depth(gPath) == 1 && strict) {
     # gPath must specify an existing child
@@ -467,9 +467,9 @@ grid.add <- function(gPath, child, strict=FALSE,
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   addDLfromGPath(gPath, child, strict, grep, global, redraw)
 }
@@ -478,7 +478,7 @@ grid.add <- function(gPath, child, strict=FALSE,
 addGrob <- function(gTree, child, gPath=NULL, strict=FALSE,
                     grep=FALSE, global=FALSE, warn=TRUE) {
     if (!inherits(child, "grob"))
-        stop("It is only valid to add a 'grob' to a 'gTree'")
+        stop("it is only valid to add a 'grob' to a \"gTree\"")
     if (is.null(gPath)) {
         addToGTree(gTree, child)
     } else {
@@ -486,9 +486,9 @@ addGrob <- function(gTree, child, gPath=NULL, strict=FALSE,
             gPath <- gPathDirect(gPath)
         # Only makes sense to specify a gPath for a gTree
         if (!inherits(gTree, "gTree"))
-            stop("It is only valid to add a child to a 'gTree'")
+            stop("it is only valid to add a child to a \"gTree\"")
         if (!is.logical(grep))
-            stop("Invalid 'grep' value")
+            stop("invalid 'grep' value")
         grep <- rep(grep, length.out=depth(gPath))
         # result will be NULL if no match
         result <- addGTree(gTree, child, NULL, gPath, strict, grep, global)
@@ -513,9 +513,9 @@ grid.remove <- function(gPath, warn=TRUE, strict=FALSE,
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   if (depth(gPath) == 1) {
     removeNameFromDL(gPath$name, strict, grep, global, warn, redraw)
@@ -539,13 +539,13 @@ grid.gremove <- function(..., grep=TRUE, global=TRUE) {
 removeGrob <- function(gTree, gPath, strict=FALSE,
                        grep=FALSE, global=FALSE, warn=TRUE) {
     if (!inherits(gTree, "gTree"))
-        stop("It is only valid to remove a child from a 'gTree'")
+        stop("it is only valid to remove a child from a \"gTree\"")
     if (is.character(gPath))
         gPath <- gPathDirect(gPath)
     if (!inherits(gPath, "gPath"))
-        stop("Invalid 'gPath'")
+        stop("invalid 'gPath'")
     if (!is.logical(grep))
-        stop("Invalid 'grep' value")
+        stop("invalid 'grep' value")
     grep <- rep(grep, length.out=depth(gPath))
     if (depth(gPath) == 1) {
         # result will be NULL if no match
@@ -578,9 +578,9 @@ grid.edit <- function(gPath, ..., strict=FALSE,
   if (is.character(gPath))
     gPath <- gPathDirect(gPath)
   if (!inherits(gPath, "gPath"))
-    stop("Invalid 'gPath'")
+    stop("invalid 'gPath'")
   if (!is.logical(grep))
-    stop("Invalid 'grep' value")
+    stop("invalid 'grep' value")
   grep <- rep(grep, length.out=depth(gPath))
   specs <- list(...)
   editDLfromGPath(gPath, specs, strict, grep, global, redraw)
@@ -603,9 +603,9 @@ editGrob <- function(grob, gPath=NULL, ..., strict=FALSE,
             gPath <- gPathDirect(gPath)
         # Only makes sense to specify a gPath for a gTree
         if (!inherits(grob, "gTree"))
-            stop("It is only valid to edit a child of a 'gTree'")
+            stop("it is only valid to edit a child of a \"gTree\"")
         if (!is.logical(grep))
-            stop("Invalid 'grep' value")
+            stop("invalid 'grep' value")
         grep <- rep(grep, length.out=depth(gPath))
         # result will be NULL if no match
         result <- editGTree(grob, specs, NULL, gPath, strict, grep, global)
@@ -636,7 +636,7 @@ editDetails.default <- function(x, specs) {
 editDetails.gTree <- function(x, specs) {
   # Disallow editing children or childrenOrder slots directly
   if (any(specs %in% c("children", "childrenOrder")))
-    stop("It is invalid to directly edit the 'children' or 'childrenOrder' slot")
+    stop("it is invalid to directly edit the 'children' or 'childrenOrder' slot")
   x
 }
 
@@ -747,7 +747,7 @@ growResult <- function(result, x) {
 # Should only be when result is NULL
 growResult.default <- function(result, x) {
   if (!is.null(result))
-    stop("Invalid 'result'")
+    stop("invalid 'result'")
   x
 }
 
@@ -945,7 +945,7 @@ setGTree <- function(gTree, pathsofar, gPath, newGrob, strict, grep) {
             gTree$children[[newGrob$name]] <- newGrob
             found <- TRUE
           } else {
-            stop("The new 'grob' must have the same name as the old 'grob'")
+            stop("the new 'grob' must have the same name as the old 'grob'")
           }
         } else {
           if (is.null(pathsofar))
@@ -969,7 +969,7 @@ setGTree <- function(gTree, pathsofar, gPath, newGrob, strict, grep) {
                 gTree$children[[newGrob$name]] <- newGrob
                 found <- TRUE
             } else {
-                stop("The new 'grob' must have the same name as the old 'grob'")
+                stop("the new 'grob' must have the same name as the old 'grob'")
             }
           }
         # Otherwise recurse down child
@@ -1005,7 +1005,7 @@ setGrobFromGPath.gTree <- function(grob, pathsofar, gPath, newGrob,
       if (match(grob$name, newGrob$name, nomatch=0L))
         newGrob
       else
-        stop("The new 'grob' must have the same name as the old 'grob'")
+        stop("the new 'grob' must have the same name as the old 'grob'")
     else
       if (strict)
         NULL
@@ -1058,7 +1058,7 @@ editThisGrob <- function(grob, specs) {
         else
           grob[[i]] <- specs[[i]]
       else
-        warning(gettextf("Slot '%s' not found", i), domain = NA)
+        warning(gettextf("slot '%s' not found", i), domain = NA)
   # Check grob slots are ok before trying to do anything with them
   # in editDetails
   # grob$childrenvp may be non-NULL for a gTree
@@ -1217,7 +1217,7 @@ editDLfromGPath <- function(gPath, specs, strict, grep, global, redraw) {
 # Assume that child is a grob
 addToGTree <- function(gTree, child) {
   if (!inherits(gTree, "gTree"))
-    stop("It is only valid to add a child to a 'gTree'")
+    stop("it is only valid to add a child to a \"gTree\"")
   gTree$children[[child$name]] <- child
   # Handle case where child name already exists (so will be overwritten)
   if (old.pos <- match(child$name, gTree$childrenOrder, nomatch=0))
@@ -1250,7 +1250,7 @@ addGrobFromGPath.grob <- function(grob, child,
     NULL
   else {
     if (nameMatch(gPath$name, grob$name, grep))
-      stop("It is only valid to add a child to a 'gTree'")
+      stop("it is only valid to add a child to a \"gTree\"")
     else
       NULL
   }
@@ -1369,7 +1369,7 @@ addDLfromGPath <- function(gPath, child, strict, grep, global, redraw) {
     index <- index + 1
   }
   if (!found)
-    stop(gettextf("gPath (%s) not found", gPath), domain = NA)
+    stop(gettextf("'gPath' (%s) not found", gPath), domain = NA)
   else if (redraw)
     draw.all()
 }
@@ -1380,7 +1380,7 @@ addDLfromGPath <- function(gPath, child, strict, grep, global, redraw) {
 
 removeFromGTree <- function(gTree, name, grep) {
   if (!inherits(gTree, "gTree"))
-    stop("It is only valid to remove a child from a 'gTree'")
+    stop("it is only valid to remove a child from a \"gTree\"")
   if (grep) {
     old.pos <- grep(name, gTree$childrenOrder)
     if (length(old.pos) == 0L)
@@ -1673,7 +1673,7 @@ findGrobinDL <- function(name) {
     index <- index + 1
   }
   if (is.null(result))
-    stop(gettextf("Grob '%s' not found", name), domain = NA)
+    stop(gettextf("grob '%s' not found", name), domain = NA)
   result
 }
 
@@ -1686,7 +1686,7 @@ findGrobinChildren <- function(name, children) {
     index <- index + 1
   }
   if (is.null(result))
-    stop(gettextf("Grob '%s' not found", name), domain = NA)
+    stop(gettextf("grob '%s' not found", name), domain = NA)
   result
 }
 
@@ -1710,7 +1710,7 @@ grid.draw <- function(x, recording=TRUE) {
 grid.draw.default <- function(x, recording) {
   # Allow for "holes" in the DL if a grob has been removed
   if (!is.null(x))
-    stop("Invalid element in the display list")
+    stop("invalid element in the display list")
 }
 
 grid.draw.viewport <- function(x, recording) {
@@ -1749,7 +1749,7 @@ popgrobvp <- function(vp) {
 
 popgrobvp.viewport <- function(vp) {
   # NOTE that the grob's vp may be a vpStack/List/Tree
-  popViewport(depth(vp), recording=FALSE)
+  upViewport(depth(vp), recording=FALSE)
 }
 
 popgrobvp.vpPath <- function(vp) {
@@ -1768,76 +1768,104 @@ pushvpgp <- function(x) {
   }
 }
 
+makeContext <- function(x) {
+    UseMethod("makeContext")
+}
+
+makeContext.default <- function(x) {
+    x
+}
+
+makeContent <- function(x) {
+    UseMethod("makeContent")
+}
+
+makeContent.default <- function(x) {
+    x
+}
+
 preDraw.grob <- function(x) {
-  # automatically push/pop the viewport and set/unset the gpar
-  pushvpgp(x)
-  preDrawDetails(x)
+    # Allow customisation of x$vp
+    x <- makeContext(x)
+    # automatically push/pop the viewport and set/unset the gpar
+    pushvpgp(x)
+    preDrawDetails(x)
+    x
 }
 
 preDraw.gTree <- function(x) {
-  # Make this gTree the "current grob" for evaluation of
-  # grobwidth/height units via gPath
-  # Do this as a .Call.graphics to get it onto the base display list
-  grid.Call.graphics(L_setCurrentGrob, x)
-  # automatically push/pop the viewport
-  pushvpgp(x)
-  # Push then "up" childrenvp
-  if (!is.null(x$childrenvp)) {
-    # Save any x$gp gpar settings
-    tempgp <- grid.Call(L_getGPar)
-    pushViewport(x$childrenvp, recording=FALSE)
-    upViewport(depth(x$childrenvp), recording=FALSE)
-    # reset the x$gp gpar settings
-    # The upViewport above may have overwritten them with
-    # the previous vp$gp settings
-    grid.Call.graphics(L_setGPar, tempgp)
-  }
-  preDrawDetails(x)
+    # Allow customisation of x$vp (and x$childrenvp)
+    x <- makeContext(x)
+    # Make this gTree the "current grob" for evaluation of
+    # grobwidth/height units via gPath
+    # Do this as a .Call.graphics to get it onto the base display list
+    grid.Call.graphics(L_setCurrentGrob, x)
+    # automatically push/pop the viewport
+    pushvpgp(x)
+    # Push then "up" childrenvp
+    if (!is.null(x$childrenvp)) {
+        # Save any x$gp gpar settings
+        tempgp <- grid.Call(L_getGPar)
+        pushViewport(x$childrenvp, recording=FALSE)
+        upViewport(depth(x$childrenvp), recording=FALSE)
+        # reset the x$gp gpar settings
+        # The upViewport above may have overwritten them with
+        # the previous vp$gp settings
+        grid.Call.graphics(L_setGPar, tempgp)
+    }
+    preDrawDetails(x)
+    x
 }
 
 postDraw <- function(x) {
-  UseMethod("postDraw")
+    UseMethod("postDraw")
 }
 
 postDraw.grob <- function(x) {
-  postDrawDetails(x)
-  if (!is.null(x$vp))
-    popgrobvp(x$vp)
+    postDrawDetails(x)
+    if (!is.null(x$vp))
+        popgrobvp(x$vp)
 }
 
 drawGrob <- function(x) {
-  # Temporarily turn off the grid DL so that
-  # nested calls to drawing code do not get recorded
-  dlon <- grid.Call(L_setDLon, FALSE)
-  # If get error or user-interrupt, need to reset state
-  # Need to turn grid DL back on (if it was on)
-  on.exit(grid.Call(L_setDLon, dlon))
-  # Save current gpar
-  tempgpar <- grid.Call(L_getGPar)
-  # If get error or user-interrupt, need to reset state
-  # Need to restore current grob (gtree predraw sets current grob)
-  # Need to restore gpar settings (set by gtree itself and/or its vp)
-  # This does not need to be a grid.Call.graphics() because
-  # we are nested within a recordGraphics()
-  # Do not call set.gpar because set.gpar accumulates cex
-  on.exit(grid.Call(L_setGPar, tempgpar), add=TRUE)
-  preDraw(x)
-  # Do any class-specific drawing
-  drawDetails(x, recording=FALSE)
-  postDraw(x)
+    # Temporarily turn off the grid DL so that
+    # nested calls to drawing code do not get recorded
+    dlon <- grid.Call(L_setDLon, FALSE)
+    # If get error or user-interrupt, need to reset state
+    # Need to turn grid DL back on (if it was on)
+    on.exit(grid.Call(L_setDLon, dlon))
+    # Save current gpar
+    tempgpar <- grid.Call(L_getGPar)
+    # If get error or user-interrupt, need to reset state
+    # Need to restore current grob (gtree predraw sets current grob)
+    # Need to restore gpar settings (set by gtree itself and/or its vp)
+    # This does not need to be a grid.Call.graphics() because
+    # we are nested within a recordGraphics()
+    # Do not call set.gpar because set.gpar accumulates cex
+    on.exit(grid.Call(L_setGPar, tempgpar), add=TRUE)
+    # Setting up the drawing context may involve modifying the grob
+    # (typically only x$vp) but the modified grob is needed for postDraw()
+    x <- preDraw(x)
+    # Allow customisation of x
+    # (should only return a basic grob that has a drawDetails()
+    #  method, otherwise nothing will be drawn)
+    x <- makeContent(x)
+    # Do any class-specific drawing
+    drawDetails(x, recording=FALSE)
+    postDraw(x)
 }
 
 grid.draw.grob <- function(x, recording=TRUE) {
-  engineDLon <- grid.Call(L_getEngineDLon)
-  if (engineDLon)
-    recordGraphics(drawGrob(x),
-                   list(x=x),
-                   getNamespace("grid"))
-  else
-    drawGrob(x)
-  if (recording)
-    record(x)
-  invisible()
+    engineDLon <- grid.Call(L_getEngineDLon)
+    if (engineDLon)
+        recordGraphics(drawGrob(x),
+                       list(x=x),
+                       getNamespace("grid"))
+    else
+        drawGrob(x)
+    if (recording)
+        record(x)
+    invisible()
 }
 
 drawGList <- function(x) {
@@ -1851,96 +1879,308 @@ drawGList <- function(x) {
 }
 
 grid.draw.gList <- function(x, recording=TRUE) {
-  engineDLon <- grid.Call(L_getEngineDLon)
-  if (engineDLon)
-    recordGraphics(drawGList(x),
-                   list(x=x),
-                   getNamespace("grid"))
-  else
-    drawGList(x)
-  invisible()
+    engineDLon <- grid.Call(L_getEngineDLon)
+    if (engineDLon)
+        recordGraphics(drawGList(x),
+                       list(x=x),
+                       getNamespace("grid"))
+    else
+        drawGList(x)
+    invisible()
 }
 
 drawGTree <- function(x) {
-  # Temporarily turn off the grid DL so that
-  # nested calls to drawing code do not get recorded
-  dlon <- grid.Call(L_setDLon, FALSE)
-  # If get error or user-interrupt, need to reset state
-  # Need to turn grid DL back on (if it was on)
-  on.exit(grid.Call(L_setDLon, dlon))
-  # Save current grob and current gpar
-  tempgrob <- grid.Call(L_getCurrentGrob)
-  tempgpar <- grid.Call(L_getGPar)
-  # If get error or user-interrupt, need to reset state
-  # Need to restore current grob (gtree predraw sets current grob)
-  # Need to restore gpar settings (set by gtree itself and/or its vp)
-  # This does not need to be a grid.Call.graphics() because
-  # we are nested within a recordGraphics()
-  # Do not call set.gpar because set.gpar accumulates cex
-  on.exit({ grid.Call(L_setGPar, tempgpar)
-            grid.Call(L_setCurrentGrob, tempgrob)
-          }, add=TRUE)
-  preDraw(x)
-  # Do any class-specific drawing
-  drawDetails(x, recording=FALSE)
-  # Draw all children IN THE RIGHT ORDER
-  for (i in x$childrenOrder)
-    grid.draw(x$children[[i]], recording=FALSE)
-  postDraw(x)
+    # Temporarily turn off the grid DL so that
+    # nested calls to drawing code do not get recorded
+    dlon <- grid.Call(L_setDLon, FALSE)
+    # If get error or user-interrupt, need to reset state
+    # Need to turn grid DL back on (if it was on)
+    on.exit(grid.Call(L_setDLon, dlon))
+    # Save current grob and current gpar
+    tempgrob <- grid.Call(L_getCurrentGrob)
+    tempgpar <- grid.Call(L_getGPar)
+    # If get error or user-interrupt, need to reset state
+    # Need to restore current grob (gtree predraw sets current grob)
+    # Need to restore gpar settings (set by gtree itself and/or its vp)
+    # This does not need to be a grid.Call.graphics() because
+    # we are nested within a recordGraphics()
+    # Do not call set.gpar because set.gpar accumulates cex
+    on.exit({ grid.Call(L_setGPar, tempgpar)
+              grid.Call(L_setCurrentGrob, tempgrob)
+            }, add=TRUE)
+    # Setting up the drawing context may involve modifying the grob
+    # (typically only x$vp) but the modified grob is needed for postDraw()
+    x <- preDraw(x)
+    # Allow customisation of x (should be confined to x$children)
+    x <- makeContent(x)
+    # Do any class-specific drawing
+    drawDetails(x, recording=FALSE)
+    # Draw all children IN THE RIGHT ORDER
+    for (i in x$childrenOrder)
+      grid.draw(x$children[[i]], recording=FALSE)
+    postDraw(x)
 }
 
 grid.draw.gTree <- function(x, recording=TRUE) {
-  engineDLon <- grid.Call(L_getEngineDLon)
-  if (engineDLon)
-    recordGraphics(drawGTree(x),
-                   list(x=x),
-                   getNamespace("grid"))
-  else
-    drawGTree(x)
-  if (recording)
-    record(x)
-  invisible()
+    engineDLon <- grid.Call(L_getEngineDLon)
+    if (engineDLon)
+        recordGraphics(drawGTree(x),
+                       list(x=x),
+                       getNamespace("grid"))
+    else
+        drawGTree(x)
+    if (recording)
+        record(x)
+    invisible()
 }
 
 draw.all <- function() {
-  grid.newpage(recording=FALSE)
-  dl.index <- grid.Call(L_getDLindex)
-  if (dl.index > 1)
-    # Start at 2 because first element is viewport[ROOT]
-    for (i in 2:dl.index) {
-      grid.draw(grid.Call(L_getDLelt, as.integer(i - 1)),
-                recording=FALSE)
-    }
+    grid.newpage(recording=FALSE)
+    dl.index <- grid.Call(L_getDLindex)
+    if (dl.index > 1)
+        # Start at 2 because first element is viewport[ROOT]
+        for (i in 2:dl.index) {
+            grid.draw(grid.Call(L_getDLelt, as.integer(i - 1)),
+                      recording=FALSE)
+        }
 }
 
 draw.details <- function(x, recording) {
-  .Deprecated("drawDetails")
-  UseMethod("drawDetails")
+    .Deprecated("drawDetails")
+    UseMethod("drawDetails")
 }
 
 preDrawDetails <- function(x) {
-  UseMethod("preDrawDetails")
+    UseMethod("preDrawDetails")
 }
 
 preDrawDetails.grob <- function(x) {
 }
 
 postDrawDetails <- function(x) {
-  UseMethod("postDrawDetails")
+    UseMethod("postDrawDetails")
 }
 
 postDrawDetails.grob <- function(x) {
 }
 
 drawDetails <- function(x, recording) {
-  UseMethod("drawDetails")
+    UseMethod("drawDetails")
 }
 
 drawDetails.grob <- function(x, recording) {
 }
 
 grid.copy <- function(grob) {
-  warning("This function is redundant and will disappear in future versions.")
-  grob
+    warning("this function is redundant and will disappear in future versions",
+            domain = NA)
+    grob
+}
+
+################################
+# Flattening a grob
+
+force <- function(x) {
+    UseMethod("force")
+}
+
+# The default action is to leave 'x' untouched
+# BUT it is also necessary to enforce the drawing context
+# for viewports and vpPaths
+force.default <- function(x) {
+    grid.draw(x, recording=FALSE)
+    x
+}
+
+# This allows 'x' to be modified, but may not
+# change 'x' at all
+force.grob <- function(x) {
+    # Copy of the original object to allow a "revert"
+    originalX <- x
+    # Same set up as drawGrob()
+    dlon <- grid.Call(L_setDLon, FALSE)
+    on.exit(grid.Call(L_setDLon, dlon))
+    tempgpar <- grid.Call(L_getGPar)
+    on.exit(grid.Call(L_setGPar, tempgpar), add=TRUE)
+    # Same drawing context set up as drawGrob()
+    # including enforcing the drawing context
+    x <- preDraw(x)
+    # Same drawing content set up as drawGrob() ...
+    x <- makeContent(x)
+    # BUT NO DRAWING
+    # Same context clean up as drawGrob()
+    postDraw(x)
+    # If 'x' has not changed, just return original 'x'
+    # Also, do not bother with saving original
+    # If 'x' has changed ...
+    if (!identical(x, originalX)) {
+        # Store the original object to allow a "revert"
+        x$.ORIGINAL <- originalX
+        # Return the 'x' that would have been drawn
+        # This will typically be a standard R primitive
+        # (which do not have makeContext() or makeContent()
+        #  methods, only drawDetails())
+        # BUT ot be safe add "forcedgrob" class so that subsequent
+        # draws will NOT run makeContext() or makeContent()
+        # methods
+        class(x) <- c("forcedgrob", class(x))
+    }
+    x
+}
+
+# This allows 'x' to be modified, but may not
+# change 'x' at all
+force.gTree <- function(x) {
+    # Copy of the original object to allow a "revert"
+    originalX <- x
+    # Same set up as drawGTree()
+    dlon <- grid.Call(L_setDLon, FALSE)
+    on.exit(grid.Call(L_setDLon, dlon))
+    tempgrob <- grid.Call(L_getCurrentGrob)
+    tempgpar <- grid.Call(L_getGPar)
+    on.exit({ grid.Call(L_setGPar, tempgpar)
+              grid.Call(L_setCurrentGrob, tempgrob)
+            }, add=TRUE)
+    # Same drawing context set up as drawGTree(),
+    # including enforcing the drawing context
+    x <- preDraw(x)
+    # Same drawing content set up as drawGTree() ...
+    x <- makeContent(x)
+    # Ensure that children are also forced
+    x$children <- do.call("gList", lapply(x$children, force))
+    # BUT NO DRAWING
+    # Same context clean up as drawGTree()
+    postDraw(x)
+    # If 'x' has changed ...
+    if (!identical(x, originalX)) {
+        # Store the original object to allow a "revert"
+        x$.ORIGINAL <- originalX
+        # Return the 'x' that would have been drawn
+        # This will typically be a vanilla gTree with children to draw
+        # (which will not have makeContext() or makeContent() methods)
+        # BUT to be safe add "forcedgrob" class so that subsequent
+        # draws will NOT run makeContext() or makeContent()
+        # methods
+        class(x) <- c("forcedgrob", class(x))
+    }
+    x
+}
+
+# A "forcedgrob" does NOT modify context or content at
+# drawing time
+makeContext.forcedgrob <- function(x) x
+
+makeContent.forcedgrob <- function(x) x
+
+# NOTE that things will get much trickier if allow
+# grid.force(gPath = ...)
+grid.force <- function(redraw=TRUE) {
+    dl.index <- grid.Call(L_getDLindex)
+    if (dl.index > 1) {
+        # Start at 2 because first element is viewport[ROOT]
+        for (i in 2:dl.index) {
+            grid.Call(L_setDLindex, as.integer(i - 1))
+            grid.Call(L_setDLelt,
+                      force(grid.Call(L_getDLelt, as.integer(i - 1))))
+        }
+        grid.Call(L_setDLindex, dl.index)
+    }
+    if (redraw) {
+        draw.all()
+    }
+}
+
+revert <- function(x) {
+    UseMethod("revert")
+}
+
+revert.default <- function(x) {
+    x
+}
+
+# Only need to revert "forcedgrob"s
+revert.forcedgrob <- function(x) {
+    x$.ORIGINAL
+}
+
+# No need for recursion for gTree because if top-level grob
+# changed its children then top-level grob will have retained
+# revert version of its entire self (including children)
+
+# NOTE that things will get much trickier if allow
+# grid.revert(gPath = ...)
+grid.revert <- function(redraw=TRUE) {
+    dl.index <- grid.Call(L_getDLindex)
+    if (dl.index > 1) {
+        # Start at 2 because first element is viewport[ROOT]
+        for (i in 2:dl.index) {
+            grid.Call(L_setDLindex, as.integer(i - 1))
+            grid.Call(L_setDLelt,
+                      revert(grid.Call(L_getDLelt, as.integer(i - 1))))
+        }
+        grid.Call(L_setDLindex, dl.index)
+    }
+    if (redraw) {
+        draw.all()
+    }
+}
+
+###############################
+# Reordering grobs
+
+# Reorder the children of a gTree
+# Order may be specified as a character vector
+#   Character vector MUST name existing children
+# Order may be specified as a numeric vector
+#   (which makes it easy to say something like
+#    "make last child the first child")
+#   Numeric vector MUST be within range 1:numChildren
+# Only unique order values used
+# Any children NOT specified by order are appended to
+#   front or back of order (depending on 'front' argument)
+# Order is ALWAYS back-to-front
+reorderGrob <- function(x, order, back=TRUE) {
+    if (!inherits(x, "gTree"))
+        stop("can only reorder 'children' for a \"gTree\"")
+    order <- unique(order)
+    oldOrder <- x$childrenOrder
+    N <- length(oldOrder)
+    if (is.character(order)) {
+        # Convert to numeric
+        order <- match(order, x$childrenOrder)
+    }
+    if (is.numeric(order)) {
+        if (any(!is.finite(order)) ||
+            !(all(order %in% 1:N))) {
+            stop("Invalid 'order'")
+        }
+        if (back) {
+            newOrder <- c(x$childrenOrder[order],
+                          x$childrenOrder[-order])
+        } else {
+            newOrder <- c(x$childrenOrder[-order],
+                          x$childrenOrder[order])
+        }
+    }
+    x$childrenOrder <- newOrder
+    x
+}
+
+# Reorder the children of a gTree on the display list
+# (identified by a gPath)
+# NOTE that it is possible for this operation to produce a grob
+# that no longer draws (because it relies on another grob that
+# used to be drawn before it, e.g., when the width of grob "b"
+# is calculated from the width of grob "a")
+# Do NOT allow reordering of grobs on the display list
+# (it is not even clear what should happen in terms of reordering
+#  grobs mixed with viewports PLUS the potential for ending up with
+#  something that will not draw is pretty high)
+# IF you want to reorder the grobs on the DL, do a grid.grab()
+# first and then reorder the children of the resulting gTree
+grid.reorder <- function(gPath, order, back=TRUE, grep=FALSE, redraw=TRUE) {
+    grob <- grid.get(gPath, grep=grep)
+    grid.set(gPath, reorderGrob(grob, order, back=back),
+             grep=grep, redraw=redraw)
 }
 

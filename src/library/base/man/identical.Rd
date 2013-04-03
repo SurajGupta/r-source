@@ -1,7 +1,6 @@
 % File src/library/base/man/identical.Rd
 % Part of the R package, http://www.R-project.org
 % Copyright 2001-2012 R Core Team
-% Copyright 2001-2010 R Core Development Team
 % Distributed under GPL 2 or later
 
 \name{identical}
@@ -14,7 +13,7 @@
 }
 \usage{
 identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE,
-                ignore.bytecode = TRUE)
+                ignore.bytecode = TRUE, ignore.environment = FALSE)
 }
 \arguments{
   \item{x, y}{any \R objects.}
@@ -33,6 +32,8 @@ identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE,
     \code{attrib.as.set = FALSE}.}
   \item{ignore.bytecode}{logical indicating if byte code should be
     ignored when comparing \link{closure}s.}
+  \item{ignore.environment}{logical indicating if their environments
+    should be ignored when comparing \link{closure}s.}
 }
 \details{
   A call to \code{identical} is the way to test exact equality in
@@ -66,14 +67,14 @@ identical(x, y, num.eq = TRUE, single.NA = TRUE, attrib.as.set = TRUE,
   If \code{single.NA} is true, as by default, \code{identical} sees
   \code{\link{NaN}} as different from \code{\link{NA_real_}}, but all
   \code{NaN}s are equal (and all \code{NA} of the same type are equal).
-  
+
   Character strings are regarded as identical if they are in different
   marked encodings but would agree when translated to UTF-8.
-  
+
   If \code{attrib.as.set} is true, as by default, comparison of
   attributes view them as a set (and not a vector, so order is not
   tested).
-  
+
   If \code{ignore.bytecode} is true (the default), the compiled
   bytecode of a function (see \code{\link{cmpfun}}) will be ignored in
   the comparison. If it is false, functions will compare equal only if

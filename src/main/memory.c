@@ -36,6 +36,7 @@
 #endif
 
 #include <R_ext/RS.h> /* for S4 allocation */
+#include <R_ext/Print.h>
 
 /* Declarations for Valgrind.
 
@@ -77,6 +78,7 @@
 
 #define R_USE_SIGNALS 1
 #include <Defn.h>
+#include <Internal.h>
 #include <R_ext/GraphicsEngine.h> /* GEDevDesc, GEgetDevice */
 #include <R_ext/Rdynload.h>
 
@@ -100,6 +102,10 @@ extern void *Rm_realloc(void * p, size_t n);
 
 static int gc_reporting = 0;
 static int gc_count = 0;
+
+/* These are used in profiling to separete out time in GC */
+static Rboolean R_in_gc = TRUE;
+int R_gc_running() { return R_in_gc; }
 
 #ifdef TESTING_WRITE_BARRIER
 # define PROTECTCHECK
@@ -211,7 +217,7 @@ static const char *sexptype2char(SEXPTYPE type) {
 
 #ifdef GC_TORTURE
 /* **** if the user specified a wait before starting to force
-   **** collecitons it might make sense to also wait before starting
+   **** collections it might make sense to also wait before starting
    **** to inhibit releases */
 static int gc_force_wait = 0;
 static int gc_force_gap = 0;
@@ -225,8 +231,6 @@ static Rboolean gc_inhibit_release = FALSE;
 static void R_ReportAllocation(R_size_t);
 static void R_ReportNewPage();
 #endif
-
-extern SEXP framenames;
 
 #define GC_PROT(X) do { \
     int __wait__ = gc_force_wait; \
@@ -296,7 +300,7 @@ static int R_PageReleaseFreq = 1;
    R_NGrowFrac * R_NSize, the value of R_NSize is incremented by
    R_NGrowIncrMin + R_NGrowIncrFrac * R_NSize.  When the number of
    nodes in use falls below R_NShrinkFrac, R_NSize is decremented by
-   R_NShrinkIncrMin * R_NShrinkFrac * R_NSize.  Analogous adjustments
+   R_NShrinkIncrMin + R_NShrinkFrac * R_NSize.  Analogous adjustments
    are made to R_VSize.
 
    This mechanism for adjusting the heap size constants is very
@@ -307,7 +311,10 @@ static int R_PageReleaseFreq = 1;
    information about the current needs; since the current live heap
    size can be very volatile, the adjustment mechanism only makes
    gradual adjustments.  A more sophisticated strategy would use more
-   of the live heap history. */
+   of the live heap history.
+
+   Some of the settings can now be adjusted by environment variables.
+*/
 static double R_NGrowFrac = 0.70;
 static double R_NShrinkFrac = 0.30;
 
@@ -328,6 +335,62 @@ static int R_NGrowIncrMin = 40000, R_NShrinkIncrMin = 0;
 static double R_VGrowIncrFrac = 0.05, R_VShrinkIncrFrac = 0.2;
 static int R_VGrowIncrMin = 80000, R_VShrinkIncrMin = 0;
 #endif
+
+static void init_gc_grow_settings()
+{
+    char *arg;
+
+    arg = getenv("R_GC_MEM_GROW");
+    if (arg != NULL) {
+	int which = (int) atof(arg);
+	switch (which) {
+	case 0: /* very conservative -- the SMALL_MEMORY settings */
+	    R_NGrowIncrFrac = 0.0;
+	    R_VGrowIncrFrac = 0.0;
+	    break;
+	case 1: /* default */
+	    break;
+	case 2: /* somewhat aggressive */
+	    R_NGrowIncrFrac = 0.2;
+	    R_VGrowIncrFrac = 0.2;
+	    break;
+	case 3: /* more aggressive */
+	    R_NGrowIncrFrac = 0.4;
+	    R_VGrowIncrFrac = 0.4;
+	    R_NGrowFrac = 0.5;
+	    R_VGrowFrac = 0.5;
+	    break;
+	}
+    }
+    arg = getenv("R_GC_GROWFRAC");
+    if (arg != NULL) {
+	double frac = atof(arg);
+	if (0.35 <= frac && frac <= 0.75) {
+	    R_NGrowFrac = frac;
+	    R_VGrowFrac = frac;
+	}
+    }
+    arg = getenv("R_GC_GROWINCRFRAC");
+    if (arg != NULL) {
+	double frac = atof(arg);
+	if (0.05 <= frac && frac <= 0.80) {
+	    R_NGrowIncrFrac = frac;
+	    R_VGrowIncrFrac = frac;
+	}
+    }
+    arg = getenv("R_GC_NGROWINCRFRAC");
+    if (arg != NULL) {
+	double frac = atof(arg);
+	if (0.05 <= frac && frac <= 0.80)
+	    R_NGrowIncrFrac = frac;
+    }
+    arg = getenv("R_GC_VGROWINCRFRAC");
+    if (arg != NULL) {
+	double frac = atof(arg);
+	if (0.05 <= frac && frac <= 0.80)
+	    R_VGrowIncrFrac = frac;
+    }
+}
 
 /* Maximal Heap Limits.  These variables contain upper limits on the
    heap sizes.  They could be made adjustable from the R level,
@@ -362,9 +425,9 @@ void attribute_hidden R_SetMaxNSize(R_size_t size)
     if (size >= R_NSize) R_MaxNSize = size;
 }
 
-void R_SetPPSize(R_size_t size)
+void attribute_hidden R_SetPPSize(R_size_t size)
 {
-    R_PPStackSize = size;
+    R_PPStackSize = (int) size;
 }
 
 /* Miscellaneous Globals. */
@@ -536,7 +599,6 @@ static R_size_t R_NodesInUse = 0;
 
 /* This macro calls dc__action__ for each child of __n__, passing
    dc__extra__ as a second argument for each call. */
-#ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
 /* When the CHARSXP hash chains are maintained through the ATTRIB
    field it is important that we NOT trace those fields otherwise too
    many CHARSXPs will be kept alive artificially. As a safety we don't
@@ -544,23 +606,16 @@ static R_size_t R_NodesInUse = 0;
    are themselves CHARSXPs, which is what they will be if they are
    part of a hash chain.  Theoretically, for CHARSXPs the ATTRIB field
    should always be either R_NilValue or a CHARSXP. */
-# ifdef PROTECTCHECK
-#  define HAS_GENUINE_ATTRIB(x) \
+#ifdef PROTECTCHECK
+# define HAS_GENUINE_ATTRIB(x) \
     (TYPEOF(x) != FREESXP && ATTRIB(x) != R_NilValue && \
      (TYPEOF(x) != CHARSXP || TYPEOF(ATTRIB(x)) != CHARSXP))
-# else
-#  define HAS_GENUINE_ATTRIB(x) \
+#else
+# define HAS_GENUINE_ATTRIB(x) \
     (ATTRIB(x) != R_NilValue && \
      (TYPEOF(x) != CHARSXP || TYPEOF(ATTRIB(x)) != CHARSXP))
-# endif
-#else
-# ifdef PROTECTCHECK
-#  define HAS_GENUINE_ATTRIB(x) \
-    (TYPEOF(x) != FREESXP && ATTRIB(x) != R_NilValue)
-# else
-#  define HAS_GENUINE_ATTRIB(x) (ATTRIB(x) != R_NilValue)
-# endif
 #endif
+
 #ifdef PROTECTCHECK
 #define FREE_FORWARD_CASE case FREESXP: if (gc_inhibit_release) break;
 #else
@@ -779,7 +834,7 @@ static void GetNewPage(int node_class)
     SEXP s, base;
     char *data;
     PAGE_HEADER *page;
-    int node_size, page_count, i;
+    int node_size, page_count, i;  // FIXME: longer type?
 
     node_size = NODE_SIZE(node_class);
     page_count = (R_PAGE_SIZE - sizeof(PAGE_HEADER)) / node_size;
@@ -903,25 +958,25 @@ static R_INLINE R_size_t getVecSizeInVEC(SEXP s)
     R_size_t size;
     switch (TYPEOF(s)) {	/* get size in bytes */
     case CHARSXP:
-	size = LENGTH(s) + 1;
+	size = XLENGTH(s) + 1;
 	break;
     case RAWSXP:
-	size = LENGTH(s);
+	size = XLENGTH(s);
 	break;
     case LGLSXP:
     case INTSXP:
-	size = LENGTH(s) * sizeof(int);
+	size = XLENGTH(s) * sizeof(int);
 	break;
     case REALSXP:
-	size = LENGTH(s) * sizeof(double);
+	size = XLENGTH(s) * sizeof(double);
 	break;
     case CPLXSXP:
-	size = LENGTH(s) * sizeof(Rcomplex);
+	size = XLENGTH(s) * sizeof(Rcomplex);
 	break;
     case STRSXP:
     case EXPRSXP:
     case VECSXP:
-	size = LENGTH(s) * sizeof(SEXP);
+	size = XLENGTH(s) * sizeof(SEXP);
 	break;
     default:
 	register_bad_sexp_type(s, __LINE__);
@@ -939,7 +994,7 @@ static void ReleaseLargeFreeVectors(void)
 	    R_size_t size;
 #ifdef PROTECTCHECK
 	    if (TYPEOF(s) == FREESXP)
-		size = LENGTH(s);
+		size = XLENGTH(s);
 	    else
 		/* should not get here -- arrange for a warning/error? */
 		size = getVecSizeInVEC(s);
@@ -949,7 +1004,14 @@ static void ReleaseLargeFreeVectors(void)
 	    UNSNAP_NODE(s);
 	    R_LargeVallocSize -= size;
 	    R_GenHeap[LARGE_NODE_CLASS].AllocCount--;
+#ifdef LONG_VECTOR_SUPPORT
+	    if (IS_LONG_VEC(s))
+		free(((char *) s) - sizeof(R_long_vec_hdr_t));
+	    else
+		free(s);
+#else
 	    free(s);
+#endif
 	}
 	s = next;
     }
@@ -960,8 +1022,8 @@ static void ReleaseLargeFreeVectors(void)
 
 static void AdjustHeapSize(R_size_t size_needed)
 {
-    R_size_t R_MinNFree = orig_R_NSize * R_MinFreeFrac;
-    R_size_t R_MinVFree = orig_R_VSize * R_MinFreeFrac;
+    R_size_t R_MinNFree = (R_size_t)(orig_R_NSize * R_MinFreeFrac);
+    R_size_t R_MinVFree = (R_size_t)(orig_R_VSize * R_MinFreeFrac);
     R_size_t NNeeded = R_NodesInUse + R_MinNFree;
     R_size_t VNeeded = R_SmallVallocSize + R_LargeVallocSize
 	+ size_needed + R_MinVFree;
@@ -969,7 +1031,7 @@ static void AdjustHeapSize(R_size_t size_needed)
     double vect_occup =	((double) VNeeded) / R_VSize;
 
     if (node_occup > R_NGrowFrac) {
-	R_size_t change = R_NGrowIncrMin + R_NGrowIncrFrac * R_NSize;
+	R_size_t change = (R_size_t)(R_NGrowIncrMin + R_NGrowIncrFrac * R_NSize);
 	if (R_MaxNSize >= R_NSize + change)
 	    R_NSize += change;
     }
@@ -984,7 +1046,7 @@ static void AdjustHeapSize(R_size_t size_needed)
     if (vect_occup > 1.0 && VNeeded < R_MaxVSize)
 	R_VSize = VNeeded;
     if (vect_occup > R_VGrowFrac) {
-	R_size_t change = R_VGrowIncrMin + R_VGrowIncrFrac * R_VSize;
+	R_size_t change = (R_size_t)(R_VGrowIncrMin + R_VGrowIncrFrac * R_VSize);
 	if (R_MaxVSize - R_VSize >= change)
 	    R_VSize += change;
     }
@@ -1493,9 +1555,6 @@ static void RunGenCollect(R_size_t size_needed)
 	FORWARD_NODE(ctxt->srcref);	   /* the current source reference */
     }
 
-    FORWARD_NODE(framenames);		   /* used for interprocedure
-					      communication in model.c */
-
     FORWARD_NODE(R_PreciousList);
 
     for (i = 0; i < R_PPStackTop; i++)	   /* Protected pointers */
@@ -1599,7 +1658,7 @@ static void RunGenCollect(R_size_t size_needed)
 		      calculating size */
 		if (CHAR(s) != NULL) {
 		    R_size_t size = getVecSizeInVEC(s);
-		    LENGTH(s) = size;
+		    SETLENGTH(s, size);
 		}
 		SETOLDTYPE(s, TYPEOF(s));
 		TYPEOF(s) = FREESXP;
@@ -1691,6 +1750,7 @@ static void RunGenCollect(R_size_t size_needed)
 }
 
 /* public interface for controlling GC torture settings */
+/* maybe, but in no header */
 void R_gc_torture(int gap, int wait, Rboolean inhibit)
 {
     if (gap != NA_INTEGER && gap >= 0)
@@ -1853,7 +1913,7 @@ static void mem_err_malloc(R_size_t size)
 /* This includes: stack space, node space and vector space */
 
 #define PP_REDZONE_SIZE 1000L
-static R_size_t R_StandardPPStackSize, R_RealPPStackSize;
+static int R_StandardPPStackSize, R_RealPPStackSize;
 
 void attribute_hidden InitMemory()
 {
@@ -1861,6 +1921,7 @@ void attribute_hidden InitMemory()
     int gen;
 
     init_gctorture();
+    init_gc_grow_settings();
 
     gc_reporting = R_Verbose;
     R_StandardPPStackSize = R_PPStackSize;
@@ -1961,33 +2022,27 @@ void vmaxset(const void *ovmax)
 char *R_alloc(size_t nelem, int eltsize)
 {
     R_size_t size = nelem * eltsize;
-    double dsize = (double)nelem * eltsize;
-    if (dsize > 0) { /* precaution against integer overflow on 32-bit*/
+    /* doubles are a precaution against integer overflow on 32-bit */
+    double dsize = (double) nelem * eltsize;
+    if (dsize > 0) {
 	SEXP s;
-#if SIZEOF_SIZE_T > 4
-	/* In this case by allocating larger units we can get up to
-	   size(Rcomplex) * (2^31 - 1) bytes, approx 16Gb */
-	if(dsize < R_LEN_T_MAX)
-	    s = allocVector(RAWSXP, size + 1);
-	else if(dsize < sizeof(double) * (R_LEN_T_MAX - 1))
-	    s = allocVector(REALSXP, (int)(0.99+dsize/sizeof(double)));
-	else if(dsize < sizeof(Rcomplex) * (R_LEN_T_MAX - 1))
-	    s = allocVector(CPLXSXP, (int)(0.99+dsize/sizeof(Rcomplex)));
-	else {
-	    error(_("cannot allocate memory block of size %0.1f Gb"),
-		  dsize/1024.0/1024.0/1024.0);
-	    s = R_NilValue; /* -Wall */
-	}
+#ifdef LONG_VECTOR_SUPPORT
+	/* 64-bit platform: previous version used REALSXPs */
+	if(dsize > R_XLEN_T_MAX)  /* currently 4096 TB */
+	    error(_("cannot allocate memory block of size %0.f Tb"),
+		  dsize/pow(1024.0, 4.0));
+	s = allocVector(RAWSXP, size + 1);
 #else
 	if(dsize > R_LEN_T_MAX) /* must be in the Gb range */
 	    error(_("cannot allocate memory block of size %0.1f Gb"),
-		  dsize/1024.0/1024.0/1024.0);
+		  dsize/pow(1024.0, 3.0));
 	s = allocVector(RAWSXP, size + 1);
 #endif
 	ATTRIB(s) = R_VStack;
 	R_VStack = s;
 	return (char *) DATAPTR(s);
     }
+    /* One programmer has relied on this, but it is undocumented! */
     else return NULL;
 }
 
@@ -2190,7 +2245,7 @@ SEXP attribute_hidden mkPROMISE(SEXP expr, SEXP rho)
 */
 #define intCHARSXP 73
 
-SEXP allocVector(SEXPTYPE type, R_len_t length)
+SEXP allocVector(SEXPTYPE type, R_xlen_t length)
 {
     SEXP s;     /* For the generational collector it would be safer to
 		   work in terms of a VECSEXP here, but that would
@@ -2236,14 +2291,17 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	    R_SmallVallocSize += alloc_size;
 	    ATTRIB(s) = R_NilValue;
 	    TYPEOF(s) = type;
-	    LENGTH(s) = length;
-	    TRUELENGTH(s) = 0;
+	    SET_SHORT_VEC_LENGTH(s, (R_len_t) length); // is 1
+	    SET_SHORT_VEC_TRUELENGTH(s, 0);
 	    NAMED(s) = 0;
 	    return(s);
 	}
     }
 
-    if (length < 0 )
+    if (length > R_XLEN_T_MAX)
+	errorcall(R_GlobalContext->call,
+		  _("vector is too large")); /**** put length into message */
+    else if (length < 0 )
 	errorcall(R_GlobalContext->call,
 		  _("negative length vectors are not allowed"));
     /* number of vector cells to allocate */
@@ -2321,11 +2379,17 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	break;
     case LANGSXP:
 	if(length == 0) return R_NilValue;
-	s = allocList(length);
+#ifdef LONG_VECTOR_SUPPORT
+	if (length > R_SHORT_LEN_MAX) error("invalid length for pairlist");
+#endif
+	s = allocList((int) length);
 	TYPEOF(s) = LANGSXP;
 	return s;
     case LISTSXP:
-	return allocList(length);
+#ifdef LONG_VECTOR_SUPPORT
+	if (length > R_SHORT_LEN_MAX) error("invalid length for pairlist");
+#endif
+	return allocList((int) length);
     default:
 	error(_("invalid type/length (%s/%d) in vector allocation"),
 	      type2char(type), length);
@@ -2372,24 +2436,48 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
 	    s->sxpinfo = UnmarkedNodeTemplate.sxpinfo;
 	    SET_NODE_CLASS(s, node_class);
 	    R_SmallVallocSize += alloc_size;
+	    SET_SHORT_VEC_LENGTH(s, (R_len_t) length);
 	}
 	else {
 	    Rboolean success = FALSE;
-	    s = NULL; /* initialize to suppress warning */
-	    if (size < (R_SIZE_T_MAX / sizeof(VECREC)) - sizeof(SEXPREC_ALIGN)) {
-		s = malloc(sizeof(SEXPREC_ALIGN) + size * sizeof(VECREC));
-		if (s == NULL) {
+	    R_size_t hdrsize = sizeof(SEXPREC_ALIGN);
+#ifdef LONG_VECTOR_SUPPORT
+	    if (length > R_SHORT_LEN_MAX)
+		hdrsize = sizeof(SEXPREC_ALIGN) + sizeof(R_long_vec_hdr_t);
+#endif
+	    void *mem = NULL; /* initialize to suppress warning */
+	    if (size < (R_SIZE_T_MAX / sizeof(VECREC)) - hdrsize) { /*** not sure this test is quite right -- why subtract the header? LT */
+		mem = malloc(hdrsize + size * sizeof(VECREC));
+		if (mem == NULL) {
 		    /* If we are near the address space limit, we
 		       might be short of address space.  So return
 		       all unused objects to malloc and try again. */
 		    R_gc_full(alloc_size);
-		    s = malloc(sizeof(SEXPREC_ALIGN) + size * sizeof(VECREC));
+		    mem = malloc(hdrsize + size * sizeof(VECREC));
 		}
-		if (s != NULL) success = TRUE;
-#ifdef R_MEMORY_PROFILING
-		R_ReportAllocation(sizeof(SEXPREC_ALIGN) + size * sizeof(VECREC));
+		if (mem != NULL) {
+#ifdef LONG_VECTOR_SUPPORT
+		    if (length > R_SHORT_LEN_MAX) {
+			s = (SEXP) (((char *) mem) + sizeof(R_long_vec_hdr_t));
+			SET_SHORT_VEC_LENGTH(s, R_LONG_VEC_TOKEN);
+			SET_LONG_VEC_LENGTH(s, length);
+			SET_LONG_VEC_TRUELENGTH(s, 0);
+		    }
+		    else {
+			s = mem;
+			SET_SHORT_VEC_LENGTH(s, (R_len_t) length);
+		    }
+#else
+		    s = mem;
+		    SETLENGTH(s, length);
 #endif
-	    }
+		    success = TRUE;
+		}
+		else s = NULL;
+#ifdef R_MEMORY_PROFILING
+		R_ReportAllocation(hdrsize + size * sizeof(VECREC));
+#endif
+	    } else s = NULL; /* suppress warning */
 	    if (! success) {
 		double dsize = (double)size * sizeof(VECREC)/1024.0;
 		/* reset the vector heap limit */
@@ -2419,9 +2507,9 @@ SEXP allocVector(SEXPTYPE type, R_len_t length)
     }
     else {
 	GC_PROT(s = allocSExpNonCons(type));
+	SET_SHORT_VEC_LENGTH(s, (R_len_t) length);
     }
-    LENGTH(s) = length;
-    TRUELENGTH(s) = 0;
+    SET_SHORT_VEC_TRUELENGTH(s, 0);
     NAMED(s) = 0;
 
     /* The following prevents disaster in the case */
@@ -2577,9 +2665,11 @@ static void R_gc_internal(R_size_t size_needed)
     R_V_maxused = R_MAX(R_V_maxused, R_VSize - VHEAP_FREE());
 
     BEGIN_SUSPEND_INTERRUPTS {
+	R_in_gc = TRUE;
 	gc_start_timing();
 	RunGenCollect(size_needed);
 	gc_end_timing();
+	R_in_gc = FALSE;
     } END_SUSPEND_INTERRUPTS;
 
     if (bad_sexp_type_seen != 0 && first_bad_sexp_type == 0) {
@@ -2720,7 +2810,7 @@ SEXP attribute_hidden do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static void reset_pp_stack(void *data)
 {
-    R_size_t *poldpps = data;
+    int *poldpps = data;
     R_PPStackSize =  *poldpps;
 }
 
@@ -2728,7 +2818,7 @@ SEXP protect(SEXP s)
 {
     if (R_PPStackTop >= R_PPStackSize) {
 	RCNTXT cntxt;
-	R_size_t oldpps = R_PPStackSize;
+	int oldpps = R_PPStackSize;
 
 	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		     R_NilValue, R_NilValue);
@@ -2778,6 +2868,23 @@ void unprotect_ptr(SEXP s)
     R_PPStackTop--;
 }
 
+/* Debugging function:  is s protected? */
+
+int Rf_isProtected(SEXP s)
+{
+    int i = R_PPStackTop;
+
+    /* go look for  s  in  R_PPStack */
+    do {
+	if (i == 0)
+	    return(i);
+    } while ( R_PPStack[--i] != s );
+
+    /* OK, got it, and  i  is indexing its location */
+    return(i);    
+}
+
+
 void R_ProtectWithIndex(SEXP s, PROTECT_INDEX *pi)
 {
     protect(s);
@@ -2786,16 +2893,20 @@ void R_ProtectWithIndex(SEXP s, PROTECT_INDEX *pi)
 
 void R_Reprotect(SEXP s, PROTECT_INDEX i)
 {
+    if (i >= R_PPStackTop || i < 0) {
+      error(_("R_Reprotect: only %d protected items, can't reprotect index %d"), R_PPStackTop, i);
+    }
     R_PPStack[i] = s;
 }
 
+#ifdef UNUSED
 /* remove all objects from the protection stack from index i upwards
    and return them in a vector. The order in the vector is from new
    to old. */
 SEXP R_CollectFromIndex(PROTECT_INDEX i)
 {
     SEXP res;
-    R_size_t top = R_PPStackTop, j = 0;
+    int top = R_PPStackTop, j = 0;
     if (i > top) i = top;
     res = protect(allocVector(VECSXP, top - i));
     while (i < top)
@@ -2803,8 +2914,10 @@ SEXP R_CollectFromIndex(PROTECT_INDEX i)
     R_PPStackTop = top; /* this includes the protect we used above */
     return res;
 }
+#endif
 
 /* "initStack" initialize environment stack */
+attribute_hidden
 void initStack(void)
 {
     R_PPStackTop = 0;
@@ -2823,7 +2936,7 @@ void *R_chk_calloc(size_t nelem, size_t elsize)
 #endif
     p = calloc(nelem, elsize);
     if(!p) /* problem here is that we don't have a format for size_t. */
-	error(_("Calloc could not allocate memory (%.0f of %u bytes)"),
+	error(_("'Calloc' could not allocate memory (%.0f of %u bytes)"),
 	      (double) nelem, elsize);
     return(p);
 }
@@ -2834,7 +2947,7 @@ void *R_chk_realloc(void *ptr, size_t size)
     /* Protect against broken realloc */
     if(ptr) p = realloc(ptr, size); else p = malloc(size);
     if(!p)
-	error(_("Realloc could not re-allocate memory (%.0f bytes)"), 
+	error(_("'Realloc' could not re-allocate memory (%.0f bytes)"), 
 	      (double) size);
     return(p);
 }
@@ -2988,6 +3101,9 @@ int (LENGTH)(SEXP x) { return LENGTH(CHK(x)); }
 int (TRUELENGTH)(SEXP x) { return TRUELENGTH(CHK(x)); }
 void (SETLENGTH)(SEXP x, int v) { SETLENGTH(CHK(x), v); }
 void (SET_TRUELENGTH)(SEXP x, int v) { SET_TRUELENGTH(CHK(x), v); }
+R_xlen_t (XLENGTH)(SEXP x) { return XLENGTH(CHK(x)); }
+R_xlen_t (XTRUELENGTH)(SEXP x) { return XTRUELENGTH(CHK(x)); }
+int  (IS_LONG_VEC)(SEXP x) { return IS_LONG_VEC(CHK(x)); }
 
 const char *(R_CHAR)(SEXP x) {
     if(TYPEOF(x) != CHARSXP)
@@ -2996,14 +3112,14 @@ const char *(R_CHAR)(SEXP x) {
     return (const char *)CHAR(x);
 }
 
-SEXP (STRING_ELT)(SEXP x, int i) {
+SEXP (STRING_ELT)(SEXP x, R_xlen_t i) {
     if(TYPEOF(x) != STRSXP)
 	error("%s() can only be applied to a '%s', not a '%s'",
 	      "STRING_ELT", "character vector", type2char(TYPEOF(x)));
     return CHK(STRING_ELT(x, i));
 }
 
-SEXP (VECTOR_ELT)(SEXP x, int i) {
+SEXP (VECTOR_ELT)(SEXP x, R_xlen_t i) {
     /* We need to allow vector-like types here */
     if(TYPEOF(x) != VECSXP &&
        TYPEOF(x) != EXPRSXP &&
@@ -3057,7 +3173,7 @@ SEXP *(VECTOR_PTR)(SEXP x)
   return NULL;
 }
 
-void (SET_STRING_ELT)(SEXP x, int i, SEXP v) {
+void (SET_STRING_ELT)(SEXP x, R_xlen_t i, SEXP v) {
     if(TYPEOF(x) != STRSXP)
 	error("%s() can only be applied to a '%s', not a '%s'",
 	      "SET_STRING_ELT", "character vector", type2char(TYPEOF(x)));
@@ -3068,7 +3184,7 @@ void (SET_STRING_ELT)(SEXP x, int i, SEXP v) {
     STRING_ELT(x, i) = v;
 }
 
-SEXP (SET_VECTOR_ELT)(SEXP x, int i, SEXP v) {
+SEXP (SET_VECTOR_ELT)(SEXP x, R_xlen_t i, SEXP v) {
     /*  we need to allow vector-like types here */
     if(TYPEOF(x) != VECSXP &&
        TYPEOF(x) != EXPRSXP &&
@@ -3187,9 +3303,13 @@ void (SET_CLOENV)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); CLOENV(x) = v; }
 void (SET_RDEBUG)(SEXP x, int v) { SET_RDEBUG(CHK(x), v); }
 void (SET_RSTEP)(SEXP x, int v) { SET_RSTEP(CHK(x), v); }
 
+/* These are only needed with the write barrier on */
+#ifdef TESTING_WRITE_BARRIER
 /* Primitive Accessors */
-attribute_hidden int (PRIMOFFSET)(SEXP x) { return PRIMOFFSET(x); }
-attribute_hidden void (SET_PRIMOFFSET)(SEXP x, int v) { SET_PRIMOFFSET(x, v); }
+int (PRIMOFFSET)(SEXP x) { return PRIMOFFSET(x); }
+attribute_hidden
+void (SET_PRIMOFFSET)(SEXP x, int v) { SET_PRIMOFFSET(x, v); }
+#endif
 
 /* Symbol Accessors */
 SEXP (PRINTNAME)(SEXP x) { return CHK(PRINTNAME(CHK(x))); }
@@ -3225,13 +3345,19 @@ void (SET_PRCODE)(SEXP x, SEXP v) { CHECK_OLD_TO_NEW(x, v); PRCODE(x) = v; }
 void (SET_PRSEEN)(SEXP x, int v) { SET_PRSEEN(CHK(x), v); }
 
 /* Hashing Accessors */
+#ifdef TESTING_WRITE_BARRIER
+attribute_hidden
 int (HASHASH)(SEXP x) { return HASHASH(CHK(x)); }
+attribute_hidden
 int (HASHVALUE)(SEXP x) { return HASHVALUE(CHK(x)); }
 
+attribute_hidden
 void (SET_HASHASH)(SEXP x, int v) { SET_HASHASH(CHK(x), v); }
+attribute_hidden
 void (SET_HASHVALUE)(SEXP x, int v) { SET_HASHVALUE(CHK(x), v); }
+#endif
 
-#ifdef USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS
+attribute_hidden
 SEXP (SET_CXTAIL)(SEXP x, SEXP v) {
 #ifdef USE_TYPE_CHECKING
     if(TYPEOF(v) != CHARSXP && TYPEOF(v) != NILSXP)
@@ -3242,7 +3368,6 @@ SEXP (SET_CXTAIL)(SEXP x, SEXP v) {
     ATTRIB(x) = v;
     return x;
 }
-#endif /* USE_ATTRIB_FIELD_FOR_CHARSXP_CACHE_CHAINS */
 
 /* Test functions */
 Rboolean Rf_isNull(SEXP s) { return isNull(s); }
@@ -3265,9 +3390,12 @@ void attribute_hidden
 void attribute_hidden (LOCK_BINDING)(SEXP b) {LOCK_BINDING(b);}
 void attribute_hidden (UNLOCK_BINDING)(SEXP b) {UNLOCK_BINDING(b);}
 
-/* R_FunTab accessors */
+/* R_FunTab accessors, only needed when write barrier is on */
+attribute_hidden
 int (PRIMVAL)(SEXP x) { return PRIMVAL(x); }
+attribute_hidden
 CCODE (PRIMFUN)(SEXP x) { return PRIMFUN(x); }
+attribute_hidden
 void (SET_PRIMFUN)(SEXP x, CCODE f) { PRIMFUN(x) = f; }
 
 /* for use when testing the write barrier */
@@ -3279,9 +3407,9 @@ void attribute_hidden (SET_BYTES)(SEXP x) { SET_BYTES(x); }
 void attribute_hidden (SET_LATIN1)(SEXP x) { SET_LATIN1(x); }
 void attribute_hidden (SET_UTF8)(SEXP x) { SET_UTF8(x); }
 void attribute_hidden (SET_ASCII)(SEXP x) { SET_ASCII(x); }
-int  attribute_hidden (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
+int  (ENC_KNOWN)(SEXP x) { return ENC_KNOWN(x); }
 void attribute_hidden (SET_CACHED)(SEXP x) { SET_CACHED(x); }
-int  attribute_hidden (IS_CACHED)(SEXP x) { return IS_CACHED(x); }
+int  (IS_CACHED)(SEXP x) { return IS_CACHED(x); }
 
 /*******************************************/
 /* Non-sampling memory use profiler
@@ -3291,7 +3419,7 @@ int  attribute_hidden (IS_CACHED)(SEXP x) { return IS_CACHED(x); }
 
 #ifndef R_MEMORY_PROFILING
 
-SEXP attribute_hidden do_Rprofmem(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_Rprofmem(SEXP args)
 {
     error(_("memory profiling is not available on this system"));
     return R_NilValue; /* not reached */
@@ -3364,13 +3492,12 @@ static void R_InitMemReporting(SEXP filename, int append,
     return;
 }
 
-SEXP attribute_hidden do_Rprofmem(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_Rprofmem(SEXP args)
 {
     SEXP filename;
     R_size_t threshold;
     int append_mode;
 
-    checkArity(op, args);
     if (!isString(CAR(args)) || (LENGTH(CAR(args))) != 1)
 	error(_("invalid '%s' argument"), "filename");
     append_mode = asLogical(CADR(args));
@@ -3389,7 +3516,6 @@ SEXP attribute_hidden do_Rprofmem(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #include "RBufferUtils.h"
 
-attribute_hidden
 void *R_AllocStringBuffer(size_t blen, R_StringBuffer *buf)
 {
     size_t blen1, bsize = buf->defaultSize;
@@ -3421,7 +3547,7 @@ void *R_AllocStringBuffer(size_t blen, R_StringBuffer *buf)
     return buf->data;
 }
 
-void attribute_hidden
+void
 R_FreeStringBuffer(R_StringBuffer *buf)
 {
     if (buf->data != NULL) {
@@ -3441,10 +3567,10 @@ R_FreeStringBufferL(R_StringBuffer *buf)
     }
 }
 
-/* ======== These need direct access to gp field for efficiency ======== */
+/* ======== This needs direct access to gp field for efficiency ======== */
 
-/* FIXME: consider inlining here */
 /* this has NA_STRING = NA_STRING */
+attribute_hidden
 int Seql(SEXP a, SEXP b)
 {
     /* The only case where pointer comparisons do not suffice is where
@@ -3464,3 +3590,10 @@ int Seql(SEXP a, SEXP b)
 }
 
 
+#ifdef LONG_VECTOR_SUPPORT
+R_len_t R_BadLongVector(SEXP x, const char *file, int line)
+{
+    error(_("long vectors not supported yet: %s:%d"), file, line);
+    return 0; /* not reached */
+}
+#endif

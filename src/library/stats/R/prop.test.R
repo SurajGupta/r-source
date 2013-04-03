@@ -57,9 +57,9 @@ function(x, n, p = NULL, alternative = c("two.sided", "less", "greater"),
     if (is.null(p) && (k == 1))
 	p <- .5
     if (!is.null(p)) {
-	DNAME <- paste(DNAME, ", null ",
+	DNAME <- paste0(DNAME, ", null ",
 		       if(k == 1) "probability " else "probabilities ",
-		       deparse(substitute(p)), sep = "")
+		       deparse(substitute(p)))
 	if (length(p) != l)
 	    stop("'p' must have the same length as 'x' and 'n'")
 	p <- p[OK]
@@ -77,8 +77,8 @@ function(x, n, p = NULL, alternative = c("two.sided", "less", "greater"),
 
     correct <- as.logical(correct)
 
-    ESTIMATE <- x/n
-    names(ESTIMATE) <- if (k == 1) "p" else paste("prop", 1L:l)[OK]
+    ESTIMATE <- setNames(x/n,
+			 if (k == 1) "p" else paste("prop", 1L:l)[OK])
     NVAL <- p
     CINT <- NULL
     YATES <- if(correct && (k <= 2)) .5 else 0

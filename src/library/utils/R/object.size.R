@@ -17,7 +17,7 @@
 #  http://www.r-project.org/Licenses/
 
 object.size <- function(x)
-    structure(.Internal(object.size(x)), class="object_size")
+    structure(.Call(C_objectSize, x), class = "object_size")
 
 print.object_size <-
     function(x, quote = FALSE, units = "b", ...)
@@ -36,6 +36,6 @@ print.object_size <-
                 "Mb" =, "MB" = paste(round(x/1024^2, 1L), "Mb"),
                 "Gb" =, "GB" = paste(round(x/1024^3, 1L), "Gb")
                 )
-    if(quote) print.default(y, ...) else cat(y, "\n", sep="")
+    if(quote) print.default(y, ...) else cat(y, "\n", sep = "")
     invisible(x)
 }

@@ -1,11 +1,11 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997 Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2008	The R Core Team
+ *  Copyright (C) 1998-2012	The R Core Team
  *
  *  This source code module:
  *  Copyright (C) 1997, 1998 Paul Murrell and Ross Ihaka
- *  Copyright (C) 1998-2008	The R Core Team
+ *  Copyright (C) 1998-2012	The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 #include <Defn.h>
 
 #include <ctype.h>
-#include <R_ext/rlocale.h>
+#include <rlocale.h>
 
 
 #include <Rmath.h>
@@ -303,7 +303,7 @@ static double TeX(TEXPAR which, pGEcontext gc, pGEDevDesc dd)
     case xi13:	  /* big_op_spacing5 */
 	return 0.15 * XHeight(gc, dd);
     default:/* never happens (enum type) */
-	error(_("invalid `which' in TeX")); return 0;/*-Wall*/
+	error("invalid `which' in C function TeX"); return 0;/*-Wall*/
     }
 }
 
@@ -938,7 +938,7 @@ static BBOX RenderSymbolChar(int ascii, int draw, mathContext *mc,
 	prev = SetFont(SymbolFont, gc);
     bbox = GlyphBBox(ascii, gc, dd);
     if (draw) {
-	asciiStr[0] = ascii;
+	asciiStr[0] = (char) ascii;
 	asciiStr[1] = '\0';
 	GEText(ConvertedX(mc ,dd), ConvertedY(mc, dd), asciiStr,
 	       CE_SYMBOL,
@@ -1063,7 +1063,7 @@ static BBOX RenderChar(int ascii, int draw, mathContext *mc,
 	    if(res == -1)
 		error("invalid character in current multibyte locale");
 	} else
-	    asciiStr[0] = ascii;
+	    asciiStr[0] = (char) ascii;
 	GEText(ConvertedX(mc ,dd), ConvertedY(mc, dd), asciiStr, CE_NATIVE,
 	       0.0, 0.0, mc->CurrentAngle, gc,
 	       dd);
@@ -1084,7 +1084,7 @@ static BBOX RenderStr(const char *str, int draw, mathContext *mc,
     if (str) {
 	/* need to advance by character, not byte, except in the symbol font */
 	if(mbcslocale && gc->fontface != 5) {
-	    int n = strlen(str), used;
+	    size_t n = strlen(str), used;
 	    wchar_t wc;
 	    const char *p = str;
 	    mbstate_t mb_st;
@@ -2108,7 +2108,7 @@ static BBOX RenderDelim(int which, double dist, int draw, mathContext *mc,
 		- (bboxHeight(topBBox) + bboxDepth(topBBox));
 	    ybot = axisHeight - dist
 		+ (bboxHeight(botBBox) + bboxDepth(botBBox));
-	    n = ceil((ytop - ybot) / (0.99 * extHeight));
+	    n = (int) ceil((ytop - ybot) / (0.99 * extHeight));
 	    if (n > 0) {
 		delta = (ytop - ybot) / n;
 		for (i = 0; i < n; i++) {
@@ -2610,6 +2610,7 @@ SymTab RelTable[] = {
     { "%==%",		186 },	/* equivalence */
     { "%~~%",		187 },	/* approxequal */
     { "%prop%",         181 },  /* proportional to */
+    { "%~%",            126 },  /* distributed as */
 
     { "%<->%",		171 },	/* Arrows */
     { "%<-%",		172 },
@@ -3069,7 +3070,7 @@ double GEExpressionWidth(SEXP expr,
      */
     mathContext mc;
     mc.BaseCex = gc->cex;
-    mc.BoxColor = name2col("pink");
+    mc.BoxColor = 4291543295U;  // name2col("pink");
     mc.CurrentStyle = STYLE_D;
     /*
      * Some "empty" values.  Will be filled in after BBox is calc'ed
@@ -3108,7 +3109,7 @@ double GEExpressionHeight(SEXP expr,
      */
     mathContext mc;
     mc.BaseCex = gc->cex;
-    mc.BoxColor = name2col("pink");
+    mc.BoxColor = 4291543295U;  // name2col("pink");
     mc.CurrentStyle = STYLE_D;
     /*
      * Some "empty" values.  Will be filled in after BBox is calc'ed
@@ -3146,7 +3147,7 @@ void GEExpressionMetric(SEXP expr,
      */
     mathContext mc;
     mc.BaseCex = gc->cex;
-    mc.BoxColor = name2col("pink");
+    mc.BoxColor = 4291543295U;  // name2col("pink");
     mc.CurrentStyle = STYLE_D;
     /*
      * Some "empty" values.  Will be filled in after BBox is calc'ed
@@ -3192,7 +3193,7 @@ void GEMathText(double x, double y, SEXP expr,
      * Build a "drawing context" for the current expression
      */
     mc.BaseCex = gc->cex;
-    mc.BoxColor = name2col("pink");
+    mc.BoxColor = 4291543295U;  // name2col("pink");
     mc.CurrentStyle = STYLE_D;
 
     /*

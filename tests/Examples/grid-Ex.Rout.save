@@ -1,7 +1,6 @@
 
-R version 2.15.2 Patched (2012-11-27 r61171) -- "Trick or Treat"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -23,7 +22,7 @@ Type 'q()' to quit R.
 > options(warn = 1)
 > library('grid')
 > 
-> assign(".oldSearch", search(), pos = 'CheckExEnv')
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
 > cleanEx()
 > nameEx("Grid")
 > ### * Grid
@@ -37,7 +36,7 @@ Type 'q()' to quit R.
 > 
 > ### ** Examples
 > 
-> ## Diagram of a simple layout 
+> ## Diagram of a simple layout
 > grid.show.layout(grid.layout(4,2,
 +                      heights=unit(rep(1, 4),
 +                                   c("lines", "lines", "lines", "null")),
@@ -130,7 +129,7 @@ attr(,"class")
 +         grid.rect(width=unit(metric$width, "inches"),
 +                   height=unit(metric$descent, "inches"),
 +                   just="bottom",
-+                   gp=gpar(col=rgb(1,0,0,.5)))        
++                   gp=gpar(col=rgb(1,0,0,.5)))
 +     }
 + }
 > 
@@ -554,7 +553,7 @@ NULL
 > # Viewport sets new clip region
 > pushViewport(viewport(width=0.5, height=0.5, clip=TRUE))
 > grid.lines(gp=gpar(col="grey", lwd=3))
-> # Return to original viewport;  get 
+> # Return to original viewport;  get
 > # clip region from previous grid.clip()
 > # (NOT from previous viewport clip region)
 > popViewport()
@@ -690,6 +689,27 @@ NULL
 > 
 > 
 > cleanEx()
+> nameEx("grid.delay")
+> ### * grid.delay
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: grid.delay
+> ### Title: Encapsulate calculations and generating a grob
+> ### Aliases: grid.delay delayGrob
+> ### Keywords: dplot
+> 
+> ### ** Examples
+> 
+> grid.delay({
++               w <- convertWidth(unit(1, "inches"), "npc")
++               rectGrob(width=w)
++             },
++             list())
+> 
+> 
+> 
+> cleanEx()
 > nameEx("grid.draw")
 > ### * grid.draw
 > 
@@ -733,6 +753,39 @@ Error in editDLfromGPath(gPath, specs, strict, grep, global, redraw) :
 > grid.edit("xa", at = 1:4/5)
 > # Now it should work
 > try(grid.edit(gPath("xa", "ticks"), gp = gpar(col="green")))
+> 
+> 
+> 
+> cleanEx()
+> nameEx("grid.force")
+> ### * grid.force
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: grid.force
+> ### Title: Force a grob into its components
+> ### Aliases: grid.force grid.revert
+> ### Keywords: dplot
+> 
+> ### ** Examples
+> 
+> grid.newpage()
+> pushViewport(viewport(width=.5, height=.5))
+> grid.xaxis()
+> grid.ls()
+GRID.text.248
+GRID.xaxis.249
+> grid.force()
+> grid.ls()
+GRID.text.248
+GRID.xaxis.249
+  major
+  ticks
+  labels
+> grid.revert()
+> grid.ls()
+GRID.text.248
+GRID.xaxis.249
 > 
 > 
 > 
@@ -949,7 +1002,7 @@ NULL
 +     grid.points(click.locn$x, click.locn$y, pch=16, size=unit(1, "mm"))
 +     clickx <- unittrim(click.locn$x)
 +     clicky <- unittrim(click.locn$y)
-+     grid.text(paste("(", clickx, ", ", clicky, ")", sep=""),
++     grid.text(paste0("(", clickx, ", ", clicky, ")"),
 +               click.locn$x + unit(2, "mm"), click.locn$y,
 +               just="left")
 +   }
@@ -960,7 +1013,7 @@ NULL
 +   grid.xaxis()
 +   grid.yaxis()
 +   do.click("native")
-+   popViewport()  
++   popViewport()
 + }
 > 
 > 
@@ -1036,7 +1089,7 @@ vp1
 vp1::vp2
 vp1::vp2 | parent::child
 vp1::vp2::2
-> # grob path listing 
+> # grob path listing
 > grid.ls(sampleGTree, view=TRUE, print=grobPathListing)
          | parent
 vp1::vp2 | parent::child
@@ -1060,7 +1113,7 @@ List of 6
  $ vpDepth: num [1:8] 0 0 1 2 0 1 2 2
  $ gPath  : chr [1:8] "" "parent" "parent" "parent" ...
  $ vpPath : chr [1:8] "" "" "vp1" "vp1::vp2" ...
- $ type   : chr [1:8] "gTreeListing" "vpTreeListing" "vpListing" "vpUpListing" ...
+ $ type   : chr [1:8] "gTreeListing" "vpListing" "vpListing" "vpUpListing" ...
  - attr(*, "class")= chr "flatGridListing"
 > 
 > 
@@ -1126,7 +1179,7 @@ List of 6
 > pathSample <- function(x, y, rule, gp = gpar()) {
 +     if (is.na(rule))
 +         grid.path(x, y, id = rep(1:2, each = 4), gp = gp)
-+     else 
++     else
 +         grid.path(x, y, id = rep(1:2, each = 4), rule = rule, gp = gp)
 +     if (!is.na(rule))
 +         grid.text(paste("Rule:", rule), y = 0, just = "bottom")
@@ -1248,7 +1301,7 @@ List of 6
 > 
 > redGradient <- matrix(hcl(0, 80, seq(50, 80, 10)),
 +                       nrow=4, ncol=5)
-> # interpolated 
+> # interpolated
 > grid.newpage()
 > grid.raster(redGradient)
 > # blocky
@@ -1286,6 +1339,39 @@ List of 6
 > 
 > 
 > cleanEx()
+> nameEx("grid.reorder")
+> ### * grid.reorder
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: grid.reorder
+> ### Title: Reorder the children of a gTree
+> ### Aliases: grid.reorder reorderGrob
+> ### Keywords: dplot
+> 
+> ### ** Examples
+> 
+> # gTree with two children, "red-rect" and "blue-rect" (in that order)
+> gt <- gTree(children=gList(
++                 rectGrob(gp=gpar(col=NA, fill="red"),
++                          width=.8, height=.2, name="red-rect"),
++                 rectGrob(gp=gpar(col=NA, fill="blue"),
++                          width=.2, height=.8, name="blue-rect")),
++             name="gt")
+> grid.newpage()
+> grid.draw(gt)
+> # Spec entire order as numeric (blue-rect, red-rect)
+> grid.reorder("gt", 2:1)
+> # Spec entire order as character
+> grid.reorder("gt", c("red-rect", "blue-rect"))
+> # Only spec the one I want behind as character
+> grid.reorder("gt", "blue-rect")
+> # Only spec the one I want in front as character
+> grid.reorder("gt", "blue-rect", back=FALSE)
+> 
+> 
+> 
+> cleanEx()
 > nameEx("grid.roundrect")
 > ### * grid.roundrect
 > 
@@ -1300,7 +1386,7 @@ List of 6
 > 
 > grid.roundrect(width=.5, height=.5, name="rr")
 > theta <- seq(0, 360, length=50)
-> for (i in 1:50) 
+> for (i in 1:50)
 +     grid.circle(x=grobX("rr", theta[i]),
 +                 y=grobY("rr", theta[i]),
 +                 r=unit(1, "mm"),
@@ -1321,7 +1407,7 @@ List of 6
 > 
 > ### ** Examples
 > 
-> ## Diagram of a simple layout 
+> ## Diagram of a simple layout
 > grid.show.layout(grid.layout(4,2,
 +                      heights=unit(rep(1, 4),
 +                                   c("lines", "lines", "lines", "null")),
@@ -1510,7 +1596,7 @@ List of 6
 > ##D     example(histogram)
 > ##D     showGrob()
 > ##D     showGrob(gPath="plot_01.ylab")
-> ##D     
+> ##D 
 > ##D     library(ggplot2)
 > ##D     # Ctrl-c after first example
 > ##D     example(qplot)
@@ -1536,14 +1622,14 @@ List of 6
 > 
 > ### ** Examples
 > 
-> showViewport(viewport(width=.5, height=.5))
+> showViewport(viewport(width=.5, height=.5, name="vp"))
 > 
-> showViewport(vpStack(viewport(width=.5, height=.5),
-+                      viewport(width=.5, height=.5)),
+> showViewport(vpStack(viewport(width=.5, height=.5, name="vp1"),
++                      viewport(width=.5, height=.5, name="vp2")),
 +              newpage=TRUE)
 > 
-> showViewport(vpStack(viewport(width=.5, height=.5),
-+                      viewport(width=.5, height=.5)),
+> showViewport(vpStack(viewport(width=.5, height=.5, name="vp1"),
++                      viewport(width=.5, height=.5, name="vp2")),
 +              fill=rgb(1:0, 0:1, 0, .1),
 +              newpage=TRUE)
 > 
@@ -1712,9 +1798,9 @@ List of 6
 > tree <- vpTree(viewport(w=0.8, h=0.8, name="A"),
 +                vpList(vpStack(viewport(x=0.1, y=0.1, w=0.5, h=0.5,
 +                                        just=c("left", "bottom"), name="B"),
-+                               viewport(x=0.1, y=0.1, w=0.5, h=0.5, 
++                               viewport(x=0.1, y=0.1, w=0.5, h=0.5,
 +                                        just=c("left", "bottom"), name="C"),
-+                               viewport(x=0.1, y=0.1, w=0.5, h=0.5, 
++                               viewport(x=0.1, y=0.1, w=0.5, h=0.5,
 +                                        just=c("left", "bottom"), name="D")),
 +                       viewport(x=0.5, w=0.4, h=0.9,
 +                                just="left", name="E")))
@@ -1861,13 +1947,7 @@ vp1::vp2
 > grid.draw(xg)
 > trace <- xsplinePoints(xg)
 > pushViewport(vp)
-> lapply(trace, function(t) grid.lines(t$x, t$y, gp=gpar(col="red")))
-[[1]]
-lines[GRID.lines.969] 
-
-[[2]]
-lines[GRID.lines.970] 
-
+> invisible(lapply(trace, function(t) grid.lines(t$x, t$y, gp=gpar(col="red"))))
 > popViewport()
 > 
 > grid.newpage()
@@ -1880,8 +1960,8 @@ lines[GRID.lines.970]
 > 
 > ### * <FOOTER>
 > ###
-> cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  2.052 0.027 2.091 0 0 
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  1.44 0.026 1.472 0 0 
 > grDevices::dev.off()
 null device 
           1 

@@ -21,8 +21,9 @@
 #ifndef PRINT_H_
 #define PRINT_H_
 
-#include <R_ext/PrtUtil.h>
 #include "Defn.h"
+#include <R_ext/PrtUtil.h>
+#include <R_ext/Print.h>
 
 #define formatRaw           Rf_formatRaw
 #define formatString        Rf_formatString
@@ -46,12 +47,13 @@ typedef struct {
     SEXP na_string;
     SEXP na_string_noquote;
     int useSource;
+    int cutoff; // for deparsed language objects
 } R_print_par_t;
 extern R_print_par_t R_print;
 
 /* Computation of printing formats */
-void formatRaw(Rbyte *, int, int *);
-void formatString(SEXP*, int, int*, int);
+void formatRaw(Rbyte *, R_xlen_t, int *);
+void formatString(SEXP*, R_xlen_t, int*, int);
 
 /* Formating of values */
 const char *EncodeElement(SEXP, int, int, char);
@@ -65,8 +67,8 @@ void printMatrix(SEXP, int, SEXP, int, int, SEXP, SEXP,
 		 const char*, const char*);
 void printNamedVector(SEXP, SEXP, int, const char*);
 void printVector(SEXP, int, int);
-void PrintClosure(SEXP, Rboolean);
-void PrintLanguage(SEXP, Rboolean);
+// void PrintClosure(SEXP, Rboolean);
+// void PrintLanguage(SEXP, Rboolean);
 
 /* Utilities for S compatibility and debuggging */
 int F77_SYMBOL(dblepr0)(const char *, int *, double *, int *);

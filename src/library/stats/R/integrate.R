@@ -16,10 +16,10 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-integrate<- function(f, lower, upper, ..., subdivisions = 100L,
-		     rel.tol = .Machine$double.eps^.25,
-		     abs.tol = rel.tol, stop.on.error = TRUE,
-		     keep.xy = FALSE, aux = NULL)
+integrate <- function(f, lower, upper, ..., subdivisions = 100L,
+                      rel.tol = .Machine$double.eps^.25,
+                      abs.tol = rel.tol, stop.on.error = TRUE,
+                      keep.xy = FALSE, aux = NULL)
 {
     f <- match.fun(f)
     ff <- function(x) f(x, ...)
@@ -28,12 +28,11 @@ integrate<- function(f, lower, upper, ..., subdivisions = 100L,
 	rel.tol < max(50*.Machine$double.eps, 0.5e-28)))
 	stop("invalid parameter values")
     if(is.finite(lower) && is.finite(upper)) {
-	wk <- .External("call_dqags",
+	wk <- .External(C_call_dqags,
 			ff, rho = environment(),
 			as.double(lower), as.double(upper),
 			as.double(abs.tol), as.double(rel.tol),
-			limit = limit,
-			PACKAGE = "base")
+			limit = limit)
     } else { # indefinite integral
 	if(is.na(lower) || is.na(upper)) stop("a limit is missing")
 	if (is.finite(lower)) {
@@ -46,12 +45,11 @@ integrate<- function(f, lower, upper, ..., subdivisions = 100L,
 	    inf <- 2
 	    bound <- 0.0
 	}
-	wk <- .External("call_dqagi",
+	wk <- .External(C_call_dqagi,
 			ff, rho = environment(),
 			as.double(bound), as.integer(inf),
 			as.double(abs.tol), as.double(rel.tol),
-			limit = limit,
-			PACKAGE = "base")
+			limit = limit)
     }
     res <- wk[c("value", "abs.error", "subdivisions")]
     res$message <-
@@ -69,10 +67,10 @@ integrate<- function(f, lower, upper, ..., subdivisions = 100L,
     res
 }
 
-print.integrate <- function (x, digits=getOption("digits"), ...)
+print.integrate <- function (x, digits = getOption("digits"), ...)
 {
-    if(x$message == "OK") cat(format(x$value, digits=digits),
-       " with absolute error < ", format(x$abs.error, digits=2),
+    if(x$message == "OK") cat(format(x$value, digits = digits),
+       " with absolute error < ", format(x$abs.error, digits = 2L),
        "\n", sep = "")
     else cat("failed with message ", sQuote(x$message), "\n", sep = "")
     invisible(x)

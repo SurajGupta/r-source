@@ -64,7 +64,7 @@ format.default <-
     }
 }
 
-format.pval <- function(pv, digits = max(1, getOption("digits")-2),
+format.pval <- function(pv, digits = max(1L, getOption("digits") - 2L),
 			eps = .Machine$double.eps, na.form = "NA", ...)
 {
     ## Format  P values; auxiliary for print.summary.[g]lm(.)
@@ -77,19 +77,19 @@ format.pval <- function(pv, digits = max(1, getOption("digits")-2),
 	## be smart -- differ for fixp. and expon. display:
 	expo <- floor(log10(ifelse(pv > 0, pv, 1e-50)))
 	fixp <- expo >= -3 | (expo == -4 & digits>1)
-	if(any( fixp)) rr[ fixp] <- format(pv[ fixp], digits=digits, ...)
-	if(any(!fixp)) rr[!fixp] <- format(pv[!fixp], digits=digits, ...)
-	r[!is0]<- rr
+	if(any( fixp)) rr[ fixp] <- format(pv[ fixp], digits = digits, ...)
+	if(any(!fixp)) rr[!fixp] <- format(pv[!fixp], digits = digits, ...)
+	r[!is0] <- rr
     }
     if(any(is0)) {
-	digits <- max(1,digits-2)
+	digits <- max(1L, digits - 2L)
 	if(any(!is0)) {
 	    nc <- max(nchar(rr, type="w"))
-	    if(digits > 1 && digits+6 > nc)
-		digits <- max(1, nc - 7)
-	    sep <- if(digits==1 && nc <= 6) "" else " "
-	} else sep <- if(digits==1) "" else " "
-	r[is0] <- paste("<", format(eps, digits=digits, ...), sep = sep)
+	    if(digits > 1L && digits + 6L > nc)
+		digits <- max(1L, nc - 7L)
+	    sep <- if(digits == 1L && nc <= 6L) "" else " "
+	} else sep <- if(digits == 1) "" else " "
+	r[is0] <- paste("<", format(eps, digits = digits, ...), sep = sep)
     }
     if(has.na) { ## rarely
 	rok <- r
@@ -116,8 +116,8 @@ formatC <- function (x, digits = NULL, width = NULL,
 	format.default(x, width=width,
 		       justify = if(flag=="-") "left" else "right")
     }
-    blank.chars <- function(no)
-	vapply(no+1L, function(n) paste(character(n), collapse=" "), "")
+     blank.chars <- function(no)
+ 	vapply(no+1L, function(n) paste(character(n), collapse=" "), "")
 
     if (!(n <- length(x))) return("")
     if (is.null(mode))	  mode <- storage.mode(x)
@@ -160,21 +160,22 @@ formatC <- function (x, digits = NULL, width = NULL,
     else {
 	maxDigits <- if(format != "f") 50L else ceiling(-(.Machine$double.neg.ulp.digits + .Machine$double.min.exp) / log2(10))
 	if (digits > maxDigits) {
-	    warning("'digits' reduced to ", maxDigits)
+            warning(gettextf("'digits' reduced to %d", maxDigits),
+                    domain = NA)
 	    digits <- maxDigits
 	}
     }
     if(is.null(width))	width <- digits + 1L
     else if (width == 0L) width <- digits
     i.strlen <-
-	pmax(abs(width),
+	pmax(abs(as.integer(width)),
 	     if(format == "fg" || format == "f") {
 		 xEx <- as.integer(floor(log10(abs(x+ifelse(x==0,1,0)))))
 		 as.integer(x < 0 | flag!="") + digits +
 		     if(format == "f") {
 			 2L + pmax(xEx, 0L)
 		     } else {# format == "fg"
-			 pmax(xEx, digits,digits+(-xEx)+1L) +
+			 pmax(xEx, digits, digits + (-xEx) + 1L) +
 			     ifelse(flag != "", nchar(flag, "b"), 0L) + 1L
 		     }
 	     } else # format == "g" or "e":
@@ -189,18 +190,10 @@ formatC <- function (x, digits = NULL, width = NULL,
 	digits <- -digits # C-code will notice "do not drop trailing zeros"
 
     attr(x, "Csingle") <- NULL	# avoid interpreting as.single
-    r <- .C("str_signif",
-	    x = x,
-	    n = n,
-	    mode   = as.character(mode),
-	    width  = as.integer(width),
-	    digits = as.integer(digits),
-	    format = as.character(format),
-	    flag   = as.character(flag),
-	    result = blank.chars(i.strlen + 2L), # used to overrun
-	    PACKAGE = "base")$result
-    if (some.special)
-	r[!Ok] <- format.char(rQ, width=width, flag=flag)
+    r <- .Internal(formatC(x, as.character(mode), width, digits,
+                           as.character(format), as.character(flag),
+                           i.strlen))
+    if (some.special) r[!Ok] <- format.char(rQ, width = width, flag = flag)
 
     if(big.mark != "" || small.mark != "" || decimal.mark != "." ||
        !is.null(zero.print) || drop0trailing)
@@ -244,7 +237,7 @@ format.data.frame <- function(x, ..., justify = "none")
 	}
     }
     for(i in 1L:nc) {
-	if(is.character(rval[[i]]) && class(rval[[i]]) == "character")
+	if(is.character(rval[[i]]) && inherits(rval[[i]], "character"))
 	    oldClass(rval[[i]]) <- "AsIs"
     }
     cn <- names(x)

@@ -30,7 +30,7 @@ Stangle(file, driver = Rtangle(),
   \item{file}{Path to Sweave source file.  Note that this can be
     supplied without the extension, but the function will only proceed
     if there is exactly one Sweave file in the directory whose
-    basename matches \code{file}.} 
+    basename matches \code{file}.}
   \item{driver}{The actual workhorse, see \sQuote{Details}.}
   \item{syntax}{\code{NULL} or an object of class \code{SweaveSyntax} or
     a character string with its name.
@@ -65,7 +65,7 @@ Stangle(file, driver = Rtangle(),
   initial options set by the driver: it should be a comma-separated set
   of \code{key=value} items, as would be used in a \samp{\\SweaveOpts}
   statement in a document.
-  
+
   Non-ASCII source files must contain a line of the form
 \preformatted{\usepackage[foo]{inputenc}}
   (where \samp{foo} is typically \samp{latin1}, \samp{latin2}, \samp{utf8} or
@@ -83,8 +83,8 @@ Stangle(file, driver = Rtangle(),
   If \code{syntax = NULL} (the default) then the available syntax
   objects are consulted in turn, and selected if their \code{extension}
   component matches (as a regexp) the file name.  Objects
-  \code{SweaveSyntaxNoweb} (with \code{extension = "\\\\.[rsRS]nw$"}) and
-  \code{SweaveSyntaxLatex} (with \code{extension = "\\\\.[rsRS]tex$"}) are
+  \code{SweaveSyntaxNoweb} (with \code{extension = "[.][rsRS]nw$"}) and
+  \code{SweaveSyntaxLatex} (with \code{extension = "[.][rsRS]tex$"}) are
   supplied, but users or packages can supply others with names matching
   the pattern \code{SweaveSyntax.*}.
 }
@@ -104,9 +104,9 @@ Stangle(file, driver = Rtangle(),
 \seealso{
   \sQuote{\href{../doc/Sweave.pdf}{Sweave User Manual}}, a vignette in
   the \pkg{utils} package.
-  
+
   \code{\link{RweaveLatex}}, \code{\link{Rtangle}}.
-  
+
   Packages \CRANpkg{cacheSweave}, \pkg{weaver} (Bioconductor) and
   \CRANpkg{SweaveListingUtils}.
 

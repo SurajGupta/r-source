@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/devAskNewPage.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2008 R Core Team
 % Distributed under GPL 2 or later
 
 \name{devAskNewPage}
@@ -19,10 +19,10 @@ devAskNewPage(ask = NULL)
 }
 \details{
   If the current device is the null device, this will open a graphics device.
-  
+
   The default argument just returns the current setting and does not
   change it.
-  
+
   The default value when a device is opened is taken from the
   setting of \code{\link{options}("device.ask.default")}.
 
@@ -34,6 +34,7 @@ devAskNewPage(ask = NULL)
 }
 \value{
   The current prompt setting \emph{before} any new setting is applied.
+  Invisibly if \code{ask} is logical.
 }
 
 \seealso{

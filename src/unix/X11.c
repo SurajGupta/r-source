@@ -22,6 +22,8 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
+
 #include <Rconnections.h>
 #include <Rdynpriv.h>
 
@@ -66,7 +68,8 @@ Rboolean attribute_hidden R_access_X11(void)
     return (initialized > 0) ? (*ptr->access)() > 0 : FALSE;
 }
 
-SEXP attribute_hidden do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
+// called from src/library/grDevices/src/stubs.c
+SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     R_X11_Init();
     if(initialized > 0)
@@ -77,7 +80,8 @@ SEXP attribute_hidden do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-SEXP attribute_hidden do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
+// called from src/library/grDevices/src/stubs.c
+SEXP do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     R_X11_Init();
     if(initialized > 0)
@@ -88,25 +92,7 @@ SEXP attribute_hidden do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-#ifndef HAVE_AQUA
-SEXP attribute_hidden do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
-#else
-/*  This copy of do_dataentry is needed when R is built under MacOSX along
-    with the aqua module which contains a definition of do_dataentry. If R
-    is not launched with --gui=aqua then a bus error is raised. S.I.
- */
-SEXP X11_do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
-#endif
-{
-    R_X11_Init();
-    if(initialized > 0)
-	return (*ptr->de)(call, op, args, rho);
-    else {
-	error(_("X11 module cannot be loaded"));
-	return R_NilValue;
-    }
-}
-
+// exported for src/include/R_ext/GetX11Image.h (and package tkrplot)
 Rboolean R_GetX11Image(int d, void *pximage, int *pwidth, int *pheight)
 {
     R_X11_Init();
@@ -128,17 +114,6 @@ Rboolean attribute_hidden R_ReadClipboard(Rclpconn clpcon, char *type)
 	return FALSE;
     }
 }
-
-SEXP attribute_hidden do_dataviewer(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    R_X11_Init();
-    if(initialized > 0)
-	return (*ptr->dv)(call, op, args, rho);
-    else {
-	error(_("X11 module cannot be loaded"));
-	return R_NilValue;
-    }
-}
 #else /* No HAVE_X11 */
 
 Rboolean attribute_hidden R_access_X11(void)
@@ -146,31 +121,17 @@ Rboolean attribute_hidden R_access_X11(void)
     return FALSE;
 }
 
-SEXP attribute_hidden do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_X11(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     error(_("X11 is not available"));
     return R_NilValue;
 }
 
-SEXP attribute_hidden do_cairo(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     error(_("X11 is not available"));
     return R_NilValue;
 }
-
-SEXP attribute_hidden do_saveplot(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error(_("X11 is not available"));
-    return R_NilValue;
-}
-
-#ifndef HAVE_AQUA
-SEXP attribute_hidden do_dataentry(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error(_("X11 is not available"));
-    return R_NilValue;
-}
-#endif
 
 Rboolean R_GetX11Image(int d, void *pximage, int *pwidth, int *pheight)
 {
@@ -182,11 +143,5 @@ Rboolean attribute_hidden R_ReadClipboard(Rclpconn con, char *type)
 {
     error(_("X11 is not available"));
     return FALSE;
-}
-
-SEXP attribute_hidden do_dataviewer(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    error(_("X11 is not available"));
-    return R_NilValue;
 }
 #endif

@@ -19,7 +19,8 @@
 demo <-
 function(topic, package = NULL, lib.loc = NULL,
 	 character.only = FALSE, verbose = getOption("verbose"),
-	 echo = TRUE, ask = getOption("demo.ask"))
+	 echo = TRUE, ask = getOption("demo.ask"),
+         encoding = getOption("encoding"))
 {
     paths <- find.package(package, lib.loc, verbose = verbose)
 
@@ -48,12 +49,11 @@ function(topic, package = NULL, lib.loc = NULL,
 	colnames(db) <- c("Package", "LibPath", "Item", "Title")
 
 	footer <- if(missing(package))
-	    paste("Use ",
-		  sQuote(paste("demo(package =",
-			       ".packages(all.available = TRUE))")),
-		  "\n",
-		  "to list the demos in all *available* packages.",
-		  sep = "")
+	    paste0("Use ",
+                   sQuote(paste("demo(package =",
+                                ".packages(all.available = TRUE))")),
+                   "\n",
+                   "to list the demos in all *available* packages.")
 	else
 	    NULL
 	y <- list(title = "Demos", header = NULL, results = db,
@@ -67,10 +67,10 @@ function(topic, package = NULL, lib.loc = NULL,
     	if (is.call(topic) && (topic[[1L]] == "::" || topic[[1L]] == ":::")) {
 	    package <- as.character(topic[[2L]])
 	    topic <- as.character(topic[[3L]])
-	} else 
+	} else
 	    topic <- as.character(topic)
     }
-    
+
     available <- character()
     paths <- file.path(paths, "demo")
     for(p in paths) {
@@ -88,6 +88,16 @@ function(topic, package = NULL, lib.loc = NULL,
                 sQuote(topic), sQuote(dirname(available[1L]))), domain = NA)
     }
 
+    ## now figure out if the package has an encoding
+    pkgpath <- dirname(dirname(available))
+    if (file.exists(file <- file.path(pkgpath, "Meta", "package.rds"))) {
+        desc <- readRDS(file)$DESCRIPTION
+        if (length(desc) == 1L) {
+            enc <- as.list(desc)[["Encoding"]]
+            !if(!is.null(enc)) encoding <- enc
+        }
+    }
+
     if(ask == "default")
         ask <- echo && grDevices::dev.interactive(orNone = TRUE)
 
@@ -102,10 +112,11 @@ function(topic, package = NULL, lib.loc = NULL,
     if (echo) {
 	cat("\n\n",
 	    "\tdemo(", topic, ")\n",
-	    "\t---- ", rep.int("~", nchar(topic, type="w")), "\n",
-	    sep="")
+	    "\t---- ", rep.int("~", nchar(topic, type = "w")), "\n",
+	    sep = "")
 	if(ask && interactive())
 	    readline("\nType  <Return>	 to start : ")
     }
-    source(available, echo = echo, max.deparse.length = Inf, keep.source=TRUE)
+    source(available, echo = echo, max.deparse.length = Inf,
+           keep.source = TRUE, encoding = encoding)
 }

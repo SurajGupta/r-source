@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2013-03-07 08:24\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -48,12 +48,13 @@ msgstr "ls directory '%s' non contiene codice R"
 msgid "directory '%s' does not contain Rd objects"
 msgstr "la directory '%s' non contiene oggetti Rd"
 
+#, fuzzy
 msgid ""
-"Functions/methods with usage in documentation object '%s' but not in code:"
-msgstr ""
+"Functions or methods with usage in documentation object '%s' but not in code:"
+msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
 #, fuzzy
-msgid "Data sets with usage in documentation object '%s' but not in code:"
+msgid "Data with usage in documentation object '%s' but not in code:"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
 msgid "Argument names in code not in docs:"
@@ -91,9 +92,6 @@ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 msgid "Slots for class '%s'"
 msgstr ""
 
-msgid "name"
-msgstr ""
-
 #, fuzzy
 msgid "Data codoc mismatches from documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
@@ -101,12 +99,6 @@ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 #, fuzzy
 msgid "Variables in data frame '%s'"
 msgstr "impossibile creare '%s'"
-
-msgid "code"
-msgstr ""
-
-msgid "docs"
-msgstr ""
 
 #, fuzzy
 msgid "Undocumented arguments in documentation object '%s'"
@@ -172,20 +164,11 @@ msgid "package name '%s' seems invalid; using directory name '%s' instead"
 msgstr ""
 
 msgid ""
-"Vignette dependencies (\\VignetteDepends{} entries) must be contained in the "
-"DESCRIPTION Depends/Suggests/Imports entries."
+"Vignette dependencies (%s entries) must be contained in the DESCRIPTION "
+"Depends/Suggests/Imports entries."
 msgstr ""
 
 msgid "Malformed package name"
-msgstr ""
-
-msgid "Invalid package name."
-msgstr ""
-
-msgid "This is the name of a base package."
-msgstr ""
-
-msgid "This name was used for a base package and is remapped by library()."
 msgstr ""
 
 msgid "Unknown encoding"
@@ -259,6 +242,9 @@ msgstr ""
 msgid "Authors@R field gives no person with author role."
 msgstr ""
 
+msgid "Authors@R field gives persons with no valid roles:"
+msgstr ""
+
 msgid "Cannot extract Maintainer field from Authors@R field:"
 msgstr ""
 
@@ -284,6 +270,9 @@ msgstr ""
 msgid "Invalid license file pointers: %s"
 msgstr ""
 
+msgid "Components with restrictions not permitted:"
+msgstr ""
+
 msgid "Non-portable flags in variable '%s':"
 msgstr ""
 
@@ -292,17 +281,8 @@ msgid ""
 "checked"
 msgstr ""
 
-msgid "Obsolete package(s) %s in Rd xrefs"
-msgstr ""
-
-msgid "Package(s) unavailable to check Rd xrefs: %s"
-msgstr ""
-
-msgid "Unknown package(s) %s in Rd xrefs"
-msgstr ""
-
 #, fuzzy
-msgid "Missing link(s) in documentation object '%s':"
+msgid "Missing link or links in documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
 msgid ""
@@ -310,16 +290,10 @@ msgid ""
 "Extensions' manual."
 msgstr ""
 
-msgid "found %s"
-msgstr ""
-
 msgid "File %s:"
 msgstr ""
 
 msgid "%s has wrong argument list %s"
-msgstr ""
-
-msgid ","
 msgstr ""
 
 msgid "%s calls:"
@@ -330,31 +304,25 @@ msgid ""
 "%s and %s, respectively."
 msgstr ""
 
-msgid "lib"
-msgstr ""
-
-msgid "pkg"
-msgstr ""
-
 msgid "Package startup functions should not change the search path."
 msgstr ""
 
 msgid "Package startup functions should use %s to generate messages."
 msgstr ""
 
-msgid "packageStartupMessage"
-msgstr ""
-
 msgid "Package startup functions should not call %s."
 msgstr ""
 
-msgid "installed.packages"
+#, fuzzy
+msgid "See section %s in '%s'."
+msgstr "impossibile eseguire bibtext su '%s'"
+
+msgid ""
+"Package detach functions should have one arguments with names starting with "
+"%s."
 msgstr ""
 
-msgid "See section %s in ?.onAttach."
-msgstr ""
-
-msgid "Good practice"
+msgid "Package detach functions should not call %s."
 msgstr ""
 
 msgid "unable to create"
@@ -401,38 +369,24 @@ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 msgid "Auto-generated content requiring editing in Rd object '%s':"
 msgstr ""
 
-msgid "Generics g in env ="
-msgstr ""
-
-msgid "where hasMethods(g, env) errors:"
-msgstr ""
-
-msgid "May need something like"
-msgstr ""
-
-msgid "importFrom("
-msgstr ""
-
-msgid ")"
-msgstr ""
-
-msgid "in NAMESPACE."
-msgstr ""
-
-msgid "Generics without methods in"
-msgstr ""
-
-msgid ":"
+msgid ""
+"Generics 'g' in 'env' %s where '%s' errors: %s\n"
+"May need something like\n"
+"\n"
+"%s\n"
+"in NAMESPACE."
 msgstr ""
 
 msgid "argument 'file' must be a character string or connection"
 msgstr ""
 "argomento 'file' deve essere una stringa di caratteri o una connessione"
 
-msgid "missing/empty \\name field in '%s'"
+#, fuzzy
+msgid "missing/empty %s field in '%s'"
 msgstr "campo \\name mancante/vuoto in '%s'"
 
-msgid "Rd files must have a non-empty \\name."
+#, fuzzy
+msgid "Rd files must have a non-empty %s."
 msgstr "I file Rd devono avere \\name non vuoto."
 
 msgid "See chapter 'Writing R documentation' in manual 'Writing R Extensions'."
@@ -456,9 +410,6 @@ msgstr "specificare 'package', 'dir' o 'file'"
 
 msgid "cannot deal with Rd objects with missing/empty names"
 msgstr "non posso lavorare con oggetti Rd con nomi mancanti/vuoti"
-
-msgid "missing/empty \\name field in Rd file(s)"
-msgstr "campo \\name mancante/vuoto nei file Rd"
 
 #, fuzzy
 msgid "No help on %s found in RdDB %s"
@@ -494,20 +445,79 @@ msgstr ""
 msgid "no inputs"
 msgstr ""
 
-msgid "Error in running tools::texi2pdf"
+msgid "Error in running tools::texi2pdf()"
 msgstr ""
 
 msgid "invalid value for '%s' : %s"
 msgstr ""
 
-msgid "Only one Rd section per \\Sexpr is supported."
+msgid "Only one Rd section per %s is supported."
 msgstr ""
 
-msgid "unable to create temp directory"
+msgid "Vignette product"
+msgstr ""
+
+msgid "does not have a known filename extension ("
+msgstr ""
+
+msgid ","
+msgstr ""
+
+msgid ")"
+msgstr ""
+
+#, fuzzy
+msgid "Failed to locate the"
+msgstr "impossibile creare"
+
+msgid "output file (by engine"
+msgstr ""
+
+msgid "%s::%s"
+msgstr ""
+
+msgid ") for vignette with name"
+msgstr ""
+
+msgid ". The following files exists in directory"
+msgstr ""
+
+msgid ":"
+msgstr ""
+
+#, fuzzy
+msgid "Located more than one"
+msgstr "non più di una corrispondenza"
+
+#, fuzzy
+msgid "unable to create temp directory %s"
 msgstr "impossibile creare directory temporanea"
+
+msgid "Vignette"
+msgstr ""
+
+msgid "overwrites the following"
+msgstr ""
+
+msgid "output by vignette"
+msgstr ""
+
+msgid "Detected vignette source files ("
+msgstr ""
+
+msgid ") with shared names ("
+msgstr ""
+
+msgid ") and therefore risking overwriting each others output files"
+msgstr ""
 
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
+"%s"
+msgstr ""
+
+msgid ""
+"tangling vignette '%s' failed with diagnostics:\n"
 "%s"
 msgstr ""
 
@@ -522,6 +532,70 @@ msgid "argument 'vignette' must be of length 1"
 msgstr "l'argomento 'vignette' deve avere lunghezza 1"
 
 msgid "file '%s' not found"
+msgstr "file '%s' non trovato"
+
+msgid "Unsupported engine name"
+msgstr ""
+
+#, fuzzy
+msgid "None of packages"
+msgstr "non può essere usato per il pacchetto 'base'"
+
+msgid "have registered vignette engines"
+msgstr ""
+
+msgid "Vignette engine"
+msgstr ""
+
+#, fuzzy
+msgid "is not registered"
+msgstr "il file '%s' non esiste"
+
+msgid "is not registered by any of the packages"
+msgstr ""
+
+msgid "Engine name"
+msgstr ""
+
+msgid "and package"
+msgstr ""
+
+#, fuzzy
+msgid "do not match"
+msgstr "il file '%s' non esiste"
+
+msgid "Argument"
+msgstr ""
+
+msgid "weave"
+msgstr ""
+
+msgid "must be a function and not"
+msgstr ""
+
+msgid "tangle"
+msgstr ""
+
+msgid "pattern"
+msgstr ""
+
+#, fuzzy
+msgid "must be a character vector or NULL and not"
+msgstr ""
+"argomento 'file' deve essere una stringa di caratteri o una connessione"
+
+#, fuzzy
+msgid "Cannot change the"
+msgstr "impossibile leggere codice sorgente del pacchetto"
+
+msgid "Sweave"
+msgstr ""
+
+msgid "engine or use an engine of that name"
+msgstr ""
+
+#, fuzzy
+msgid "vignette builder '%s' not found"
 msgstr "file '%s' non trovato"
 
 msgid "Invalid DESCRIPTION file"
@@ -553,10 +627,6 @@ msgid "unable to create '%s'"
 msgstr "impossibile creare '%s'"
 
 #, fuzzy
-msgid "unable to re-encode '%s' line(s) %s"
-msgstr "impossibile creare '%s'"
-
-#, fuzzy
 msgid "unable to copy INDEX to '%s'"
 msgstr "impossibile copiare INDEX su"
 
@@ -564,16 +634,18 @@ msgid "cannot create directory '%s'"
 msgstr "impossibile creare directory '%s'"
 
 #, fuzzy
-msgid "processing"
+msgid "processing %s"
 msgstr "analizzo '%s'"
 
 msgid ""
-"running Sweave on vignette '%s' failed with message:\n"
+"running %s on vignette '%s' failed with message:\n"
 "%s"
 msgstr ""
 
-msgid "file '%s' was not created"
-msgstr "il file '%s' non è stato creato"
+msgid ""
+"compiling TeX file %s failed with message:\n"
+"%s"
+msgstr ""
 
 msgid "cannot copy '%s' to '%s'"
 msgstr "impossibile copiare '%s' su '%s'"
@@ -597,15 +669,16 @@ msgstr ""
 msgid "The default JSS style may not be modified."
 msgstr ""
 
-msgid "invalid value for --compact-vignettes, assuming \"qpdf\""
+msgid "invalid value for '--compact-vignettes', assuming %s"
 msgstr ""
 
 #, fuzzy
-msgid "Error: cannot rename directory to"
+msgid "Error: cannot rename directory to %s"
 msgstr "impossibile creare directory '%s'"
 
-msgid "cannot link from"
-msgstr ""
+#, fuzzy
+msgid "cannot link from %s"
+msgstr "impossibile leggere directory '%s'"
 
 msgid "-l option without value"
 msgstr ""
@@ -616,7 +689,7 @@ msgstr ""
 msgid "'--multiarch' specified with only one usable sub-architecture"
 msgstr ""
 
-msgid "--as-cran turns off --extra-arch"
+msgid "'--as-cran' turns off '--extra-arch'"
 msgstr ""
 
 msgid "Error: no packages were specified"
@@ -626,20 +699,29 @@ msgstr ""
 msgid "ERROR: cannot create check dir %s"
 msgstr "impossibile creare directory '%s'"
 
-msgid "package dir"
+#, fuzzy
+msgid "package directory %s does not exist"
+msgstr "la directory '%s' non esiste"
+
+msgid "no packages to check"
 msgstr ""
 
-#, fuzzy
-msgid "does not exist"
-msgstr "il file '%s' non esiste"
+msgid "downloading reverse dependencies ..."
+msgstr ""
+
+msgid "downloading %s ..."
+msgstr ""
+
+msgid "installing dependencies %s"
+msgstr ""
+
+msgid "checking %s ..."
+msgstr ""
 
 msgid "non-ASCII input in a CITATION file without a declared encoding"
 msgstr ""
 
 msgid "No files in this directory"
-msgstr ""
-
-msgid "Unrecognized search field:"
 msgstr ""
 
 msgid "No results found"
@@ -657,9 +739,6 @@ msgstr ""
 #, fuzzy
 msgid "No help found for topic %s in any package."
 msgstr "non può essere usato per il pacchetto 'base'"
-
-msgid "Help on topic '%s' was found in the following packages:"
-msgstr ""
 
 #, fuzzy
 msgid "No package index found for package %s"
@@ -682,19 +761,6 @@ msgstr ""
 
 msgid ""
 "Only help files, %s, %s and files under %s and %s in a package can be viewed"
-msgstr ""
-
-msgid "NEWS"
-msgstr ""
-
-#, fuzzy
-msgid "DESCRIPTION"
-msgstr "file DESCRIPTION non valido"
-
-msgid "doc/"
-msgstr ""
-
-msgid "demo/"
 msgstr ""
 
 msgid "unsupported URL %s"
@@ -728,9 +794,6 @@ msgstr ""
 msgid "cannot read index information in file '%s'"
 msgstr "non posso leggere le informazioni dell'indice nel file '%s'"
 
-msgid "ERROR:"
-msgstr ""
-
 #, fuzzy
 msgid "error reading file '%s'"
 msgstr "errore analisi file '%s'"
@@ -738,29 +801,12 @@ msgstr "errore analisi file '%s'"
 msgid "this seems to be a bundle -- and they are defunct"
 msgstr ""
 
-#, fuzzy
-msgid "running 'zip' failed"
-msgstr "esecuzione di make fallita"
-
-#, fuzzy
-msgid "packaged installation of"
-msgstr "il pacchetto non contiene codice R"
-
-msgid "as"
-msgstr ""
-
 msgid ""
 "'cleanup' exists but is not executable -- see the 'R Installation and "
 "Administration Manual'"
 msgstr ""
 
-msgid "installing via 'install.libs.R' to"
-msgstr ""
-
-msgid "installing to"
-msgstr ""
-
-msgid "generating debug symbols (dSYM)"
+msgid "generating debug symbols (%s)"
 msgstr ""
 
 msgid "package %s successfully unpacked and MD5 sums checked"
@@ -770,10 +816,6 @@ msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
 "similar"
 msgstr ""
-
-#, fuzzy
-msgid "running src/Makefile.win ..."
-msgstr "esecuzione di make fallita"
 
 msgid "no source files found"
 msgstr ""
@@ -785,10 +827,7 @@ msgstr ""
 msgid "cannot create temporary directory"
 msgstr "impossibile creare directory '%s'"
 
-msgid "ERROR: --merge-multiarch applies only to a single tarball"
-msgstr ""
-
-msgid "only one architecture so ignoring '--merge-multiarch'"
+msgid "ERROR: '--merge-multiarch' applies only to a single tarball"
 msgstr ""
 
 msgid "invalid package"
@@ -798,31 +837,13 @@ msgid "ERROR: no packages specified"
 msgstr ""
 
 #, fuzzy
-msgid "ERROR: cannot cd to directory"
+msgid "ERROR: cannot cd to directory %s"
 msgstr "impossibile creare directory '%s'"
 
 msgid "ERROR: no permission to install to directory"
 msgstr ""
 
-msgid "ERROR: failed to lock directory"
-msgstr ""
-
-msgid ""
-"for modifying\n"
-"Try removing"
-msgstr ""
-
-#, fuzzy
-msgid "ERROR: failed to create lock directory"
-msgstr "impossibile creare directory temporanea"
-
 msgid "building a fake installation is disallowed"
-msgstr ""
-
-msgid "finding HTML links ..."
-msgstr ""
-
-msgid "finding level-2 HTML links ..."
 msgstr ""
 
 msgid "there is no package called '%s'"
@@ -899,37 +920,6 @@ msgstr ""
 msgid "Processing packages:"
 msgstr "Elaboro i pacchetti:"
 
-msgid "Internal error, no tag"
-msgstr ""
-
-msgid "Argument for"
-msgstr ""
-
-#, fuzzy
-msgid "not found."
-msgstr "file '%s' non trovato"
-
-msgid "Internal error:  NULL tag"
-msgstr ""
-
-msgid "internal error"
-msgstr ""
-
-msgid "Inconsistent arg count for"
-msgstr ""
-
-msgid "Entry for"
-msgstr ""
-
-msgid "="
-msgstr ""
-
-msgid "already defined to be"
-msgstr ""
-
-msgid "found encoding"
-msgstr ""
-
 #, fuzzy
 msgid "%s must be a character string or a file/raw connection"
 msgstr ""
@@ -943,7 +933,7 @@ msgstr "pacchetto '%s' non trovato"
 msgid "EOF marker not found"
 msgstr "pacchetto '%s' non trovato"
 
-msgid "cannot find startxref"
+msgid "cannot find 'startxref' keyword"
 msgstr ""
 
 msgid "cannot find xref table"
@@ -1007,17 +997,13 @@ msgid "invalid index in object stream lookup"
 msgstr ""
 
 #, fuzzy
-msgid "processing %s"
-msgstr "analizzo '%s'"
-
-#, fuzzy
 msgid "expanding %s"
 msgstr "analizzo '%s'"
 
 msgid "unsupported filter %s"
 msgstr ""
 
-msgid "unsupported flatedecode predictor %d"
+msgid "unsupported %s predictor %d"
 msgstr ""
 
 msgid "unsupported PNG filter %d"
@@ -1047,38 +1033,18 @@ msgstr ""
 msgid "unimplemented encoding"
 msgstr ""
 
-msgid "file"
-msgstr ""
-
 msgid "Found %s, possibly from %s"
-msgstr ""
-
-msgid "%s (%s)"
-msgstr ""
-
-msgid "ssname"
-msgstr ""
-
-msgid "language"
-msgstr ""
-
-msgid "cannot be opened"
 msgstr ""
 
 #, fuzzy
 msgid "testing '%s' failed"
 msgstr "esecuzione di make fallita"
 
-msgid "Testing examples for package"
-msgstr ""
+#, fuzzy
+msgid "Testing examples for package %s"
+msgstr "non può essere usato per il pacchetto 'base'"
 
-msgid "comparing"
-msgstr ""
-
-msgid "to"
-msgstr ""
-
-msgid "..."
+msgid "comparing %s to %s ..."
 msgstr ""
 
 msgid "OK"
@@ -1091,71 +1057,30 @@ msgstr ""
 msgid "no examples found for package %s"
 msgstr "non può essere usato per il pacchetto 'base'"
 
-msgid "Running specific tests for package"
+msgid "Running specific tests for package %s"
 msgstr ""
 
-msgid "Running"
-msgstr ""
+#, fuzzy
+msgid "Running %s"
+msgstr "analizzo '%s'"
 
-msgid "Running vignettes for package"
-msgstr ""
+#, fuzzy
+msgid "Running vignettes for package %s"
+msgstr "non può essere usato per il pacchetto 'base'"
 
-msgid "Comparing"
-msgstr ""
-
-msgid "creation of"
-msgstr ""
-
-msgid "failed"
+msgid "Comparing %s to %s ..."
 msgstr ""
 
 msgid "no parsed files found"
 msgstr ""
 
-msgid "creating"
-msgstr ""
-
-#, fuzzy
-msgid "running code in"
-msgstr "esecuzione di make fallita"
-
 msgid "FAILED"
-msgstr ""
-
-msgid "running strict specific tests"
-msgstr ""
-
-msgid "running sloppy specific tests"
-msgstr ""
-
-msgid "running regression tests"
-msgstr ""
-
-msgid "comparing 'reg-plot.ps' to 'reg-plot.ps.save' ..."
-msgstr ""
-
-msgid "running tests of plotting Latin-1"
-msgstr ""
-
-msgid "expect failure or some differences if not in a Latin or UTF-8 locale"
-msgstr ""
-
-msgid "comparing 'reg-plot-latin1.ps' to 'reg-plot-latin1.ps.save' ..."
-msgstr ""
-
-msgid "running tests of consistency of as/is.*"
 msgstr ""
 
 msgid "running tests of random deviate generation -- fails occasionally"
 msgstr ""
 
-msgid "running tests of primitives"
-msgstr ""
-
-msgid "running regexp regression tests"
-msgstr ""
-
-msgid "running tests to possibly trigger segfaults"
+msgid "R CMD build failed"
 msgstr ""
 
 #, fuzzy
@@ -1223,30 +1148,18 @@ msgstr "Successione delle chiamate:"
 msgid "parsing '%s'"
 msgstr "analizzo '%s'"
 
-msgid "Foreign function call without 'PACKAGE' argument:"
-msgid_plural "Foreign function calls without 'PACKAGE' argument:"
+msgid "Obsolete package %s in Rd xrefs"
+msgid_plural "Obsolete packages %s in Rd xrefs"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Foreign function call with empty 'PACKAGE' argument:"
-msgid_plural "Foreign function calls with empty 'PACKAGE' argument:"
+msgid "Package unavailable to check Rd xrefs: %s"
+msgid_plural "Packages unavailable to check Rd xrefs: %s"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Foreign function call with 'PACKAGE' argument in a base package:"
-msgid_plural ""
-"Foreign function calls with 'PACKAGE' argument in a base package:"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "Foreign function call with 'PACKAGE' argument in a different package:"
-msgid_plural ""
-"Foreign function calls with 'PACKAGE' argument in a different package:"
-msgstr[0] ""
-msgstr[1] ""
-
-msgid "Undeclared package in foreign function calls:"
-msgid_plural "Undeclared packages in foreign function calls:"
+msgid "Unknown package %s in Rd xrefs"
+msgid_plural "Unknown packages %s in Rd xrefs"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1266,8 +1179,8 @@ msgstr[0] ""
 msgstr[1] ""
 
 #, fuzzy
-msgid "Warning in file '%s':"
-msgid_plural "Warnings in file '%s':"
+msgid "Warning in file %s:"
+msgid_plural "Warnings in file %s:"
 msgstr[0] "errore analisi file '%s'"
 msgstr[1] "errore analisi file '%s'"
 
@@ -1276,14 +1189,78 @@ msgid_plural "Found possibly global 'T' or 'F' in the following functions:"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Found possibly global 'T' or 'F' in the following Rd example file:"
+msgid ""
+"Found possibly global 'T' or 'F' in the examples of the following Rd file:"
 msgid_plural ""
-"Found possibly global 'T' or 'F' in the following Rd example files:"
+"Found possibly global 'T' or 'F' in the examples of the following Rd files:"
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Found .Internal call in the following function:"
+msgid "Found a .Internal call in the following function:"
 msgid_plural "Found .Internal calls in the following functions:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found a.Internal call in methods for the following S4 generic:"
+msgid_plural "Found .Internal calls in methods for the following S4 generics:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found a .Internal call in methods for the following reference class:"
+msgid_plural ""
+"Found .Internal calls in methods for the following reference classes:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found an obsolete call in the following function:"
+msgid_plural "Found an obsolete call in the following functions:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found an obsolete call in methods for the following S4 generic:"
+msgid_plural "Found an obsolete call in methods for the following S4 generics:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found an obsolete call in methods for the following reference class:"
+msgid_plural ""
+"Found an obsolete call in methods for the following reference classes:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found the deprecated function:"
+msgid_plural "Found the deprecated functions:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Found the defunct/removed function:"
+msgid_plural "Found the defunct/removed functions:"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Generic without any methods in %s: %s"
+msgid_plural "Generics without any methods in %s: %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#, fuzzy
+msgid ""
+"missing/empty \\name field in Rd file\n"
+"%s"
+msgid_plural ""
+"missing/empty \\name field in Rd files\n"
+"%s"
+msgstr[0] "campo \\name mancante/vuoto nei file Rd"
+msgstr[1] "campo \\name mancante/vuoto nei file Rd"
+
+#, fuzzy
+msgid "unable to re-encode %s line %s"
+msgid_plural "unable to re-encode %s lines %s"
+msgstr[0] "impossibile creare '%s'"
+msgstr[1] "impossibile creare '%s'"
+
+msgid "Help on topic '%s' was found in the following package:"
+msgid_plural "Help on topic '%s' was found in the following packages:"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -1294,8 +1271,63 @@ msgstr[0] "creati da più di una chiamata data"
 msgstr[1] "creati da più di una chiamata data"
 
 #, fuzzy
+#~ msgid "not found"
+#~ msgstr "file '%s' non trovato"
+
+#~ msgid "file '%s' was not created"
+#~ msgstr "il file '%s' non è stato creato"
+
+#, fuzzy
 #~ msgid "package must be loaded"
 #~ msgstr "il name space non deve essere caricato."
+
+#, fuzzy
+#~ msgid "DESCRIPTION"
+#~ msgstr "file DESCRIPTION non valido"
+
+#, fuzzy
+#~ msgid "processing"
+#~ msgstr "analizzo '%s'"
+
+#, fuzzy
+#~ msgid "package directory"
+#~ msgstr "impossibile creare directory '%s'"
+
+#, fuzzy
+#~ msgid "running 'zip' failed"
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "packaged installation of"
+#~ msgstr "il pacchetto non contiene codice R"
+
+#, fuzzy
+#~ msgid "running 'src/Makefile.win' ..."
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "ERROR: failed to create lock directory"
+#~ msgstr "impossibile creare directory temporanea"
+
+#, fuzzy
+#~ msgid "running code in"
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "running msgmerge failed"
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "running msginit failed"
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "running msgconv failed"
+#~ msgstr "esecuzione di make fallita"
+
+#, fuzzy
+#~ msgid "running xgettext failed"
+#~ msgstr "esecuzione di make fallita"
 
 #, fuzzy
 #~ msgid "cannot update HTML package index"
@@ -1401,6 +1433,3 @@ msgstr[1] "creati da più di una chiamata data"
 
 #~ msgid "Syntax error in documentation object '%s':"
 #~ msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
-
-#~ msgid "no or more than one match"
-#~ msgstr "non più di una corrispondenza"

@@ -90,12 +90,11 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
         colnames(db) <- c("Package", "LibPath", "Item", "Title")
 
         footer <- if(missing(package))
-            paste("Use ",
-                  sQuote(paste("data(package =",
-                               ".packages(all.available = TRUE))")),
-                  "\n",
-                  "to list the data sets in all *available* packages.",
-                  sep = "")
+            paste0("Use ",
+                   sQuote(paste("data(package =",
+                                ".packages(all.available = TRUE))")),
+                   "\n",
+                   "to list the data sets in all *available* packages.")
         else
             NULL
         y <- list(title = "Data sets", header = NULL, results = db,
@@ -150,7 +149,7 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                 o <- match(fileExt(files), dataExts, nomatch = 100L)
                 paths0 <- dirname(files)
 		## Next line seems unnecessary to MM (FIXME?)
-		paths0 <- factor(paths0, levels= unique(paths0))
+		paths0 <- factor(paths0, levels = unique(paths0))
                 files <- files[order(paths0, o)]
             }
             if(length(files)) {
@@ -172,8 +171,8 @@ function(..., list = character(), package = NULL, lib.loc = NULL,
                             Rdatadir <- tempfile("Rdata")
                             dir.create(Rdatadir, showWarnings=FALSE)
                             topic <- basename(file)
-                            rc <- .Internal(unzip(zipname, topic, Rdatadir, FALSE, TRUE, FALSE))
-                            if(rc==0L) zfile <- file.path(Rdatadir, topic)
+                            rc <- .Call(C_unzip, zipname, topic, Rdatadir, FALSE, TRUE, FALSE)
+                            if(rc == 0L) zfile <- file.path(Rdatadir, topic)
                         }
                         if(zfile != file) on.exit(unlink(zfile))
                         switch(ext,

@@ -30,7 +30,6 @@
 \alias{as.list.POSIXct}
 \alias{.leap.seconds}
 \alias{is.na.POSIXlt}
-\alias{all.equal.POSIXct}
 \alias{c.POSIXct}
 \alias{c.POSIXlt}
 \alias{as.matrix.POSIXlt}
@@ -181,7 +180,7 @@
   tz = "UTC")} will give \code{"1969-12-31 23:59:00"}.  Other OSes
   (including the code used by \R on Windows) report errors separately
   and so are able to handle that time as valid.
-  
+
   The print methods respect \code{\link{options}("max.print")}.
 }
 \section{Sub-second Accuracy}{
@@ -235,6 +234,7 @@ print(.leap.seconds, tz = "PST8PDT")  # and in Seattle's
 ## look at *internal* representation of "POSIXlt" :
 leapS <- as.POSIXlt(.leap.seconds)
 names(leapS) ; is.list(leapS)
+## str() "too smart" -->  need unclass(.):
 utils::str(unclass(leapS), vec.len = 7)
 }}
 \keyword{utilities}

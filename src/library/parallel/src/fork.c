@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  (C) Copyright 2008-11 Simon Urbanek
- *      Copyright 2011 R Core Team.
+ *      Copyright 2011-2 R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,10 @@
    
    Derived from multicore version 0.1-8 by Simon Urbanek
 */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h> /* for affinity function checks */
+#endif
 
 #include "parallel.h"
 
@@ -225,7 +229,7 @@ SEXP mc_send_master(SEXP what)
 	error(_("write error, closing pipe to the master"));
     }
     while (i < len) {
-	int n = write(master_fd, b + i, len - i);
+	ssize_t n = write(master_fd, b + i, len - i);
 	if (n < 1) {
 	    close(master_fd);
 	    master_fd = -1;
@@ -254,7 +258,7 @@ SEXP mc_send_child_stdin(SEXP sPid, SEXP what)
     b = RAW(what);
     fd = ci -> sifd;
     while (i < len) {
-	int n = write(fd, b + i, len - i);
+	ssize_t n = write(fd, b + i, len - i);
 	if (n < 1) error(_("write error"));
 	i += n;
     }
@@ -370,7 +374,7 @@ static SEXP read_child_ci(child_info_t *ci)
 {
     unsigned int len = 0;
     int fd = ci->pfd;
-    int n = read(fd, &len, sizeof(len));
+    ssize_t n = read(fd, &len, sizeof(len));
 #ifdef MC_DEBUG
     Dprintf(" read_child_ci(%d) - read length returned %d\n", ci->pid, n);
 #endif
@@ -541,7 +545,7 @@ SEXP mc_kill(SEXP sPid, SEXP sSig)
     int pid = asInteger(sPid);
     int sig = asInteger(sSig);
     if (kill((pid_t) pid, sig))
-	error(_("mckill failed"));
+	error(_("'mckill' failed"));
     return ScalarLogical(1);
 }
 
@@ -549,16 +553,17 @@ SEXP mc_exit(SEXP sRes)
 {
     int res = asInteger(sRes);
 #ifdef MC_DEBUG
-    Dprintf("child %d: mcexit called\n", getpid());
+    Dprintf("child %d: 'mcexit' called\n", getpid());
 #endif
-    if (is_master) error(_("mcexit can only be used in a child process"));
+    if (is_master) error(_("'mcexit' can only be used in a child process"));
     if (master_fd != -1) { /* send 0 to signify that we're leaving */
-	unsigned int len = 0;
+	size_t len = 0;
 	/* assign result for Fedora security settings */
-	write(master_fd, &len, sizeof(len));
+	ssize_t n = write(master_fd, &len, sizeof(len));
 	/* make sure the pipe is closed before we enter any waiting */
 	close(master_fd);
 	master_fd = -1;
+	if (n < 0) error(_("write error, closing pipe to the master"));
     }
     if (!child_can_exit) {
 #ifdef MC_DEBUG
@@ -571,6 +576,87 @@ SEXP mc_exit(SEXP sRes)
     Dprintf("child %d: exiting\n", getpid());
 #endif
     exit(res);
-    error(_("mcexit failed"));
+    error(_("'mcexit' failed"));
     return R_NilValue;
 }
+
+/*--  mcaffinity --
+  FIXME: we may want to move this outside fork.c in case Windows can do that */
+#ifdef HAVE_SCHED_SETAFFINITY
+
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
+
+#if defined(CPU_ZERO) && defined(CPU_COUNT) && defined(CPU_SETSIZE) && defined(CPU_SET) && defined(CPU_SET_S) && defined(CPU_ISSET)
+#define WORKING_MC_AFFINITY
+#endif
+#endif
+
+#ifdef WORKING_MC_AFFINITY
+
+/* req is one-based, cpu_set is zero-based */
+SEXP mc_affinity(SEXP req) {
+    if (req != R_NilValue && TYPEOF(req) != INTSXP && TYPEOF(req) != REALSXP)
+	error(_("invalid CPU affinity specification"));
+    if (TYPEOF(req) == REALSXP)
+	req = coerceVector(req, INTSXP);
+    if (TYPEOF(req) == INTSXP) {
+	int max_cpu = 0, i, n = LENGTH(req), *v = INTEGER(req);
+	for (i = 0; i < n; i++) {
+	    if (v[i] > max_cpu)
+		max_cpu = v[i];
+	    if (v[i] < 1)
+		error(_("invalid CPU affinity specification"));
+	}
+	/* These are both one-based */
+	if (max_cpu <= CPU_SETSIZE) { /* can use static set */
+	    cpu_set_t cs;
+	    CPU_ZERO(&cs);
+	    for (i = 0; i < n; i++)
+		CPU_SET(v[i] - 1, &cs);
+	    sched_setaffinity(0, sizeof(cpu_set_t), &cs);
+	} else {
+#ifndef CPU_ALLOC
+	    error(_("requested CPU set is too large for this system"));
+#else
+	    size_t css = CPU_ALLOC_SIZE(max_cpu);
+	    cpu_set_t *cs = CPU_ALLOC(max_cpu);
+	    CPU_ZERO_S(css, cs);
+	    for (i = 0; i < n; i++)
+		CPU_SET_S(v[i] - 1, css, cs);
+	    sched_setaffinity(0, css, cs);
+#endif
+	}
+    }
+
+    {
+	/* FIXME: in theory we may want to use *_S versions as well,
+	 but that would require some knowledge about the number of
+	 available CPUs and comparing that to CPU_SETSIZE, so for now
+	 we just use static cpu_set -- the mask will be still set
+	 correctly, just the returned set will be truncated at
+	 CPU_SETSIZE */
+	cpu_set_t cs;
+	CPU_ZERO(&cs);
+	if (sched_getaffinity(0, sizeof(cs), &cs)) {
+	    if (req == R_NilValue)
+		error(_("retrieving CPU affinity set failed"));
+	    return R_NilValue;
+	} else {
+	    SEXP res = allocVector(INTSXP, CPU_COUNT(&cs));
+	    int i, *v = INTEGER(res);
+	    for (i = 0; i < CPU_SETSIZE; i++)
+		if (CPU_ISSET(i, &cs))
+		    *(v++) = i + 1;
+	    return res;
+	}
+    }
+}
+#else /* ! WORKING_MC_AFFINITY */
+
+SEXP mc_affinity(SEXP req) {
+    return R_NilValue;
+}
+
+#endif /* WORKING_MC_AFFINITY */

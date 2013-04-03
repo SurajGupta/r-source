@@ -27,6 +27,7 @@
 
 #define R_USE_SIGNALS 1
 #include <Defn.h>
+#include <Internal.h>
 #include <Rinterface.h>
 #include <Fileio.h>
 #include <R_ext/Print.h>
@@ -103,44 +104,147 @@ static int R_Mem_Profiling=0;
 extern void get_current_mem(unsigned long *,unsigned long *,unsigned long *); /* in memory.c */
 extern unsigned long get_duplicate_counter(void);  /* in duplicate.c */
 extern void reset_duplicate_counter(void);         /* in duplicate.c */
+static int R_GC_Profiling = 0;                     /* indicates GC profiling */
+static int R_Line_Profiling = 0;                   /* indicates line profiling, and also counts the filenames seen (+1) */
+static char **R_Srcfiles;			   /* an array of pointers into the filename buffer */
+static size_t R_Srcfile_bufcount;                  /* how big is the array above? */
+static SEXP R_Srcfiles_buffer = NULL;              /* a big RAWSXP to use as a buffer for filenames and pointers to them */
+static int R_Profiling_Error;		   /* record errors here */
 
 #ifdef Win32
 HANDLE MainThread;
 HANDLE ProfileEvent;
+#endif /* Win32 */
 
-static void doprof(void)
+/* Careful here!  These functions are called asynchronously, maybe in the middle of GC,
+   so don't do any allocations */
+
+/* This does a linear search through the previously recorded filenames.  If 
+   this one is new, we try to add it.  FIXME:  if there are eventually
+   too many files for an efficient linear search, do hashing. */
+   
+static int getFilenum(const char* filename) {
+    int fnum;
+    
+    for (fnum = 0; fnum < R_Line_Profiling-1
+		   && strcmp(filename, R_Srcfiles[fnum]); fnum++);
+
+    if (fnum == R_Line_Profiling-1) {
+	size_t len = strlen(filename); 
+	if (fnum >= R_Srcfile_bufcount) { /* too many files */
+	    R_Profiling_Error = 1;
+	    return 0;
+	}
+	if (R_Srcfiles[fnum] - (char*)RAW(R_Srcfiles_buffer) + len + 1 > length(R_Srcfiles_buffer)) {
+	      /* out of space in the buffer */
+	    R_Profiling_Error = 2;
+	    return 0;
+	}
+	strcpy(R_Srcfiles[fnum], filename);
+	R_Srcfiles[fnum+1] = R_Srcfiles[fnum] + len + 1;
+	*(R_Srcfiles[fnum+1]) = '\0';
+	R_Line_Profiling++;
+    }
+    
+    return fnum + 1;
+}
+
+/* These, together with sprintf/strcat, are not safe -- we should be
+   using snprintf and such and computing needed sizes, but these
+   settings are better than what we had. LT */
+
+#define PROFBUFSIZ 10500
+#define PROFITEMMAX  500
+#define PROFLINEMAX (PROFBUFSIZ - PROFITEMMAX)
+
+/* It would also be better to flush the buffer when it gets full,
+   even if the line isn't complete. But this isn't possible if we rely
+   on writing all line profiling files first.  With these sizes
+   hitting the limit is fairly unlikely, but if we do then the output
+   file is wrong. Maybe writing an overflow marker of some sort would
+   be better.  LT */
+
+static void lineprof(char* buf, SEXP srcref) 
+{
+    size_t len;
+    if (srcref && !isNull(srcref) && (len = strlen(buf)) < PROFLINEMAX) {
+	int fnum, line = asInteger(srcref);
+	SEXP srcfile = getAttrib(srcref, R_SrcfileSymbol);
+	const char *filename;
+	
+	if (!srcfile || TYPEOF(srcfile) != ENVSXP) return;
+	srcfile = findVar(install("filename"), srcfile);
+	if (TYPEOF(srcfile) != STRSXP || !length(srcfile)) return;
+	filename = CHAR(STRING_ELT(srcfile, 0));
+	
+	if ((fnum = getFilenum(filename)))
+	    snprintf(buf+len, PROFBUFSIZ - len, "%d#%d ", fnum, line);
+    }
+}
+
+static void doprof(int sig)  /* sig is ignored in Windows */
 {
     RCNTXT *cptr;
-    char buf[1100];
+    char buf[PROFBUFSIZ];
     unsigned long bigv, smallv, nodes;
-    int len;
-
+    size_t len;
+    int prevnum = R_Line_Profiling;
+    
     buf[0] = '\0';
+    
+#ifdef Win32
     SuspendThread(MainThread);
+#endif /* Win32 */
+
     if (R_Mem_Profiling){
 	    get_current_mem(&smallv, &bigv, &nodes);
-	    if((len = strlen(buf)) < 1000) {
-		sprintf(buf+len, ":%ld:%ld:%ld:%ld:", smallv, bigv,
-		     nodes, get_duplicate_counter());
-	    }
+	    if((len = strlen(buf)) < PROFLINEMAX)
+		snprintf(buf+len, PROFBUFSIZ - len, 
+			 ":%ld:%ld:%ld:%ld:", smallv, bigv,
+			 nodes, get_duplicate_counter());
 	    reset_duplicate_counter();
     }
+    
+    if (R_GC_Profiling && R_gc_running())
+	strcat(buf, "\"<GC>\" ");
+
+    if (R_Line_Profiling)
+    	lineprof(buf, R_Srcref);
+    
     for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
 	if ((cptr->callflag & (CTXT_FUNCTION | CTXT_BUILTIN))
 	    && TYPEOF(cptr->call) == LANGSXP) {
 	    SEXP fun = CAR(cptr->call);
-	    if(strlen(buf) < 1000) {
+	    if(strlen(buf) < PROFLINEMAX) {
+	    	strcat(buf, "\"");
 		strcat(buf, TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) :
-		       "<Anonymous>");
-		strcat(buf, " ");
+		       	"<Anonymous>");
+		strcat(buf, "\" ");
+		if (R_Line_Profiling)
+		    lineprof(buf, cptr->srcref);
 	    }
 	}
     }
+    
+    /* I believe it would be slightly safer to place this _after_ the
+       next two bits, along with the signal() call. LT */
+#ifdef Win32
     ResumeThread(MainThread);
+#endif /* Win32 */	
+
+    for (int i = prevnum; i < R_Line_Profiling; i++)
+    	fprintf(R_ProfileOutfile, "#File %d: %s\n", i, R_Srcfiles[i-1]);
+
     if(strlen(buf))
 	fprintf(R_ProfileOutfile, "%s\n", buf);
+
+#ifndef Win32	
+    signal(SIGPROF, doprof);
+#endif /* not Win32 */
+
 }
 
+#ifdef Win32
 /* Profiling thread main function */
 static void __cdecl ProfileThread(void *pwait)
 {
@@ -148,36 +252,10 @@ static void __cdecl ProfileThread(void *pwait)
 
     SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
     while(WaitForSingleObject(ProfileEvent, wait) != WAIT_OBJECT_0) {
-	doprof();
+	doprof(0);
     }
 }
 #else /* not Win32 */
-static void doprof(int sig)
-{
-    RCNTXT *cptr;
-    int newline = 0;
-    unsigned long bigv, smallv, nodes;
-    if (R_Mem_Profiling){
-	    get_current_mem(&smallv, &bigv, &nodes);
-	    if (!newline) newline = 1;
-	    fprintf(R_ProfileOutfile, ":%ld:%ld:%ld:%ld:", smallv, bigv,
-		     nodes, get_duplicate_counter());
-	    reset_duplicate_counter();
-    }
-    for (cptr = R_GlobalContext; cptr; cptr = cptr->nextcontext) {
-	if ((cptr->callflag & (CTXT_FUNCTION | CTXT_BUILTIN))
-	    && TYPEOF(cptr->call) == LANGSXP) {
-	    SEXP fun = CAR(cptr->call);
-	    if (!newline) newline = 1;
-	    fprintf(R_ProfileOutfile, "\"%s\" ",
-		    TYPEOF(fun) == SYMSXP ? CHAR(PRINTNAME(fun)) :
-		    "<Anonymous>");
-	}
-    }
-    if (newline) fprintf(R_ProfileOutfile, "\n");
-    signal(SIGPROF, doprof);
-}
-
 static void doprof_null(int sig)
 {
     signal(SIGPROF, doprof_null);
@@ -203,9 +281,18 @@ static void R_EndProfiling(void)
     if(R_ProfileOutfile) fclose(R_ProfileOutfile);
     R_ProfileOutfile = NULL;
     R_Profiling = 0;
+    if (R_Srcfiles_buffer) {
+        R_ReleaseObject(R_Srcfiles_buffer);
+        R_Srcfiles_buffer = NULL;
+    }
+    if (R_Profiling_Error) 
+    	warning(_("source files skipped by Rprof; please increase '%s'"), 
+    		R_Profiling_Error == 1 ? "numfiles" : "bufsize");
 }
 
-static void R_InitProfiling(SEXP filename, int append, double dinterval, int mem_profiling)
+static void R_InitProfiling(SEXP filename, int append, double dinterval,
+			    int mem_profiling, int gc_profiling,
+			    int line_profiling, int numfiles, int bufsize)
 {
 #ifndef Win32
     struct itimerval itv;
@@ -222,14 +309,32 @@ static void R_InitProfiling(SEXP filename, int append, double dinterval, int mem
 	error(_("Rprof: cannot open profile file '%s'"),
 	      translateChar(filename));
     if(mem_profiling)
-	fprintf(R_ProfileOutfile, "memory profiling: sample.interval=%d\n", interval);
-    else
-	fprintf(R_ProfileOutfile, "sample.interval=%d\n", interval);
+	fprintf(R_ProfileOutfile, "memory profiling: ");
+    if(gc_profiling)
+        fprintf(R_ProfileOutfile, "GC profiling: ");
+    if(line_profiling)
+        fprintf(R_ProfileOutfile, "line profiling: ");
+    fprintf(R_ProfileOutfile, "sample.interval=%d\n", interval);
 
     R_Mem_Profiling=mem_profiling;
     if (mem_profiling)
 	reset_duplicate_counter();
-
+	
+    R_Profiling_Error = 0;	
+    R_Line_Profiling = line_profiling;
+    R_GC_Profiling = gc_profiling;
+    if (line_profiling) {
+        /* Allocate a big RAW vector to use as a buffer.  The first len1 bytes are an array of pointers
+           to strings; the actual strings are stored in the second len2 bytes. */
+        R_Srcfile_bufcount = numfiles;
+    	size_t len1 = R_Srcfile_bufcount*sizeof(char *), len2 = bufsize;
+    	R_PreserveObject( R_Srcfiles_buffer = Rf_allocVector(RAWSXP, len1 + len2) );
+ //   	memset(RAW(R_Srcfiles_buffer), 0, len1+len2);
+    	R_Srcfiles = (char **) RAW(R_Srcfiles_buffer);
+    	R_Srcfiles[0] = (char *)RAW(R_Srcfiles_buffer) + len1;
+    	*(R_Srcfiles[0]) = '\0';
+    } 	
+    
 #ifdef Win32
     /* need to duplicate to make a real handle */
     DuplicateHandle(Proc, GetCurrentThread(), Proc, &MainThread,
@@ -252,33 +357,44 @@ static void R_InitProfiling(SEXP filename, int append, double dinterval, int mem
     R_Profiling = 1;
 }
 
-SEXP attribute_hidden do_Rprof(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_Rprof(SEXP args)
 {
     SEXP filename;
-    int append_mode, mem_profiling;
+    int append_mode, mem_profiling, gc_profiling, line_profiling;
     double dinterval;
+    int numfiles, bufsize;
 
 #ifdef BC_PROFILING
     if (bc_profiling) {
-	warning(_("can't use R profiling while byte code profiling"));
+	warning("cannot use R profiling while byte code profiling");
 	return R_NilValue;
     }
 #endif
-    checkArity(op, args);
-    if (!isString(CAR(args)) || (LENGTH(CAR(args))) != 1)
+    if (!isString(filename = CAR(args)) || (LENGTH(filename)) != 1)
 	error(_("invalid '%s' argument"), "filename");
-    append_mode = asLogical(CADR(args));
-    dinterval = asReal(CADDR(args));
-    mem_profiling = asLogical(CADDDR(args));
-    filename = STRING_ELT(CAR(args), 0);
+    					      args = CDR(args);
+    append_mode = asLogical(CAR(args));       args = CDR(args);
+    dinterval = asReal(CAR(args));            args = CDR(args);
+    mem_profiling = asLogical(CAR(args));     args = CDR(args);
+    gc_profiling = asLogical(CAR(args));      args = CDR(args);
+    line_profiling = asLogical(CAR(args));    args = CDR(args);
+    numfiles = asInteger(CAR(args));  	      args = CDR(args);
+    if (numfiles < 0)
+	error(_("invalid '%s' argument"), "numfiles");
+    bufsize = asInteger(CAR(args));
+    if (bufsize < 0)
+	error(_("invalid '%s' argument"), "bufsize");
+    
+    filename = STRING_ELT(filename, 0);
     if (LENGTH(filename))
-	R_InitProfiling(filename, append_mode, dinterval, mem_profiling);
+	R_InitProfiling(filename, append_mode, dinterval, mem_profiling,
+			gc_profiling, line_profiling, numfiles, bufsize);
     else
 	R_EndProfiling();
     return R_NilValue;
 }
 #else /* not R_PROFILING */
-SEXP attribute_hidden do_Rprof(SEXP call, SEXP op, SEXP args, SEXP rho)
+SEXP do_Rprof(SEXP args)
 {
     error(_("R profiling is not available on this system"));
     return R_NilValue;		/* -Wall */
@@ -489,9 +605,12 @@ SEXP eval(SEXP e, SEXP rho)
 	    /* We used to insert a context only if profiling,
 	       but helps for tracebacks on .C etc. */
 	    if (R_Profiling || (PPINFO(op).kind == PP_FOREIGN)) {
+		SEXP oldref = R_Srcref;
+		R_Srcref = NULL;
 		begincontext(&cntxt, CTXT_BUILTIN, e,
 			     R_BaseEnv, R_BaseEnv, R_NilValue, R_NilValue);
 		tmp = PRIMFUN(op) (e, op, tmp, rho);
+		R_Srcref = oldref;
 		endcontext(&cntxt);
 	    } else {
 		tmp = PRIMFUN(op) (e, op, tmp, rho);
@@ -1440,7 +1559,7 @@ SEXP attribute_hidden do_return(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue; /*NOTREACHED*/
 }
 
-/* Declated with a variable number of args in names.c */
+/* Declared with a variable number of args in names.c */
 SEXP attribute_hidden do_function(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP rval, srcref;
@@ -2034,10 +2153,6 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     RCNTXT cntxt;
 
     checkArity(op, args);
-
-    if (PRIMVAL(op)) {
-	warning(".Internal(eval.with.vis) should not be used and will be removed soon");
-    }
     expr = CAR(args);
     env = CADR(args);
     encl = CADDR(args);
@@ -2132,18 +2247,6 @@ SEXP attribute_hidden do_eval(SEXP call, SEXP op, SEXP args, SEXP rho)
     else if( TYPEOF(expr) == PROMSXP ) {
 	expr = eval(expr, rho);
     } /* else expr is returned unchanged */
-    if (PRIMVAL(op)) { /* eval.with.vis(*) : */
-	PROTECT(expr);
-	PROTECT(env = allocVector(VECSXP, 2));
-	PROTECT(encl = allocVector(STRSXP, 2));
-	SET_STRING_ELT(encl, 0, mkChar("value"));
-	SET_STRING_ELT(encl, 1, mkChar("visible"));
-	SET_VECTOR_ELT(env, 0, expr);
-	SET_VECTOR_ELT(env, 1, ScalarLogical(R_Visible));
-	setAttrib(env, R_NamesSymbol, encl);
-	expr = env;
-	UNPROTECT(3);
-    }
     UNPROTECT(1);
     return expr;
 }
@@ -3200,7 +3303,7 @@ typedef int BCODE;
 #else
 #define BEGIN_MACHINE  loop: switch(*pc++)
 #endif
-#define LASTOP  default: error(_("Bad opcode"))
+#define LASTOP  default: error(_("bad opcode"))
 #define INITIALIZE_MACHINE()
 
 #define NEXT() goto loop
@@ -4832,12 +4935,11 @@ static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
        if (TYPEOF(value) == STRSXP) {
 	   int i, n, which;
 	   if (names == R_NilValue)
-	       errorcall(call, _("numeric EXPR required for switch() "
-				 "without named alternatives"));
+	       errorcall(call, _("numeric EXPR required for 'switch' without named alternatives"));
 	   if (TYPEOF(coffsets) != INTSXP)
-	       errorcall(call, _("bad character switch offsets"));
+	       errorcall(call, "bad character 'switch' offsets");
 	   if (TYPEOF(names) != STRSXP || LENGTH(names) != LENGTH(coffsets))
-	       errorcall(call, _("bad switch names"));
+	       errorcall(call, "bad 'switch' names");
 	   n = LENGTH(names);
 	   which = n - 1;
 	   for (i = 0; i < n - 1; i++)
@@ -4851,7 +4953,7 @@ static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
        else {
 	   int which = asInteger(value) - 1;
 	   if (TYPEOF(ioffsets) != INTSXP)
-	       errorcall(call, _("bad numeric switch offsets"));
+	       errorcall(call, "bad numeric 'switch' offsets");
 	   if (which < 0 || which >= LENGTH(ioffsets))
 	       which = LENGTH(ioffsets) - 1;
 	   pc = codebase + INTEGER(ioffsets)[which];
@@ -5106,6 +5208,7 @@ SEXP attribute_hidden do_savefile(SEXP call, SEXP op, SEXP args, SEXP env)
     return R_NilValue;
 }
 
+#ifdef UNUSED
 #define R_COMPILED_EXTENSION ".Rc"
 
 /* neither of these functions call R_ExpandFileName -- the caller
@@ -5123,18 +5226,18 @@ char *R_CompiledFileName(char *fname, char *buf, size_t bsize)
 	/* the supplied file name has the compiled file extension, so
 	   just copy it to the buffer and return the buffer pointer */
 	if (snprintf(buf, bsize, "%s", fname) < 0)
-	    error(_("R_CompiledFileName: buffer too small"));
+	    error("R_CompiledFileName: buffer too small");
 	return buf;
     }
     else if (ext == NULL) {
 	/* if the requested file has no extention, make a name that
 	   has the extenrion added on to the expanded name */
 	if (snprintf(buf, bsize, "%s%s", fname, R_COMPILED_EXTENSION) < 0)
-	    error(_("R_CompiledFileName: buffer too small"));
+	    error("R_CompiledFileName: buffer too small");
 	return buf;
     }
     else {
-	/* the supplied file already has an extention, so there is no
+	/* the supplied file already has an extension, so there is no
 	   corresponding compiled file name */
 	return NULL;
     }
@@ -5154,6 +5257,7 @@ FILE *R_OpenCompiledFile(char *fname, char *buf, size_t bsize)
 	return R_fopen(buf, "rb");
     else return NULL;
 }
+#endif
 
 SEXP attribute_hidden do_growconst(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -5182,11 +5286,11 @@ SEXP attribute_hidden do_putconst(SEXP call, SEXP op, SEXP args, SEXP env)
 
     constBuf = CAR(args);
     if (TYPEOF(constBuf) != VECSXP)
-	error(_("constBuf must be a generic vector"));
+	error(_("constant buffer must be a generic vector"));
 
     constCount = asInteger(CADR(args));
     if (constCount < 0 || constCount >= LENGTH(constBuf))
-	error(_("bad constCount value"));
+	error("bad constCount value");
 
     x = CADDR(args);
 
@@ -5300,10 +5404,6 @@ SEXP R_stopbcprof()
 
     return R_NilValue;
 }
-//#else
-//SEXP R_getbcprofcounts() { return R_NilValue; }
-//SEXP R_startbcprof() { return R_NilValue; }
-//SEXP R_stopbcprof() { return R_NilValue; }
 #endif
 
 /* end of byte code section */

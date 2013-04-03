@@ -1,6 +1,6 @@
 % File src/library/base/man/Startup.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Startup}
@@ -127,7 +127,7 @@
   \code{\var{value}} is then processed in a similar way to a Unix shell:
   in particular the outermost level of (single or double) quotes is
   stripped, and backslashes are removed except inside quotes.
-  
+
   On systems with sub-architectures (mainly Mac OS X and Windows), the
   files \file{Renviron.site} and \file{Rprofile.site} are looked for
   first in architecture-specific directories,
@@ -144,24 +144,31 @@
   site or user environment files: do not change
   \file{\var{\link{R_HOME}}/etc/Renviron} itself.  Note that this is
   distinct from \file{\var{\link{R_HOME}}/etc/Renviron.site}.
+
+  Command-line options may well not apply to alternative front-ends:
+  they do not apply to \command{R.app} on OS X.
 #endif
 #ifdef windows
   The startup options are for \command{Rgui}, \command{Rterm} and
   \code{R} but not for \command{Rcmd}: attempting to use
   e.g. \option{--vanilla} with the latter will give a warning or error.
-  
+
   Unix versions of \R have a file \file{\var{\link{R_HOME}}/etc/Renviron}
   which is read very early in the start-up processing.  It contains
   environment variables set by \R in the configure process, and is not
   used on \R for Windows.
 #endif
-  
+
   \command{R CMD check} and \command{R CMD build} do not always read the
   standard startup files, but they do always read specific
-  \samp{Renviron} files such as \file{~/.R/check.Renviron},
-  \file{~/.R/build.Renviron} or sub-architecture-specific versions.
+  \samp{Renviron} files.  The location of these can be controlled by the
+  environment variables \env{R_CHECK_ENVIRON} and \env{R_BUILD_ENVIRON}.
+  If these are set their value is used as the path for the
+  \samp{Renviron} file; otherwise, files \file{~/.R/check.Renviron} or
+  \file{~/.R/build.Renviron} or sub-architecture-specific versions are
+  employed.
 
-  If you want \code{~/.Renviron} or \code{~/.Rprofile} to be ignored by
+  If you want \file{~/.Renviron} or \file{~/.Rprofile} to be ignored by
   child \R processes (such as those run by \command{R CMD check} and
   \command{R CMD build}), set the appropriate environment variable
   \env{R_ENVIRON_USER} or \env{R_PROFILE_USER} to (if possible, which it
@@ -186,13 +193,13 @@
 #ifdef unix
   \code{\link{X11}} and \code{\link{quartz}}.
 #endif
-  
+
   \emph{An Introduction to R} for more command-line options: those
   affecting memory management are covered in the help file for
   \link{Memory}.
 
   \code{\link{readRenviron}} to read \file{.Renviron} files.
-  
+
   For profiling code, see \code{\link{Rprof}}.
 }
 \examples{
@@ -229,7 +236,7 @@ local({
   cols <- Sys.getenv("COLUMNS")
   if(nzchar(cols)) options(width = as.integer(cols))
   # interactive sessions get a fortune cookie (needs fortunes package)
-  if (interactive()) 
+  if (interactive())
     fortunes::fortune()
 })
 

@@ -1,7 +1,7 @@
 #  File src/library/utils/R/packages2.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -110,7 +110,10 @@ install.packages <-
              configure.args = getOption("configure.args"),
              configure.vars = getOption("configure.vars"),
              clean = FALSE, Ncpus = getOption("Ncpus", 1L),
-             libs_only = FALSE, INSTALL_opts, ...)
+	     verbose = getOption("verbose"),
+             libs_only = FALSE, INSTALL_opts, quiet = FALSE,
+             keep_outputs = FALSE,
+             ...)
 {
     if (is.logical(clean) && clean)
         clean <- "--clean"
@@ -120,59 +123,66 @@ install.packages <-
 
     ## Compute the configuration arguments for a given package.
     ## If configure.args is an unnamed character vector, use that.
-    ## If it is named, match the pkg name to the names of the character vector
-    ## and if we get a match, use that element.
-    ## Similarly, configure.args is a list(), match pkg to the names pkg and
-    ## use that element, collapsing it into a single string.
+    ## If it is named, match the pkg name to the names of the character
+    ## vector and if we get a match, use that element.
+    ## Similarly, configure.args is a list(), match pkg to the names pkg
+    ## and use that element, collapsing it into a single string.
 
-    getConfigureArgs <-  function(pkg)
-    {
-        if(.Platform$OS.type == "windows") return(character())
+    get_package_name <- function(pkg) {
         ## Since the pkg argument can be the name of a file rather than
         ## a regular package name, we have to clean that up.
-        pkg <- gsub("_\\.(zip|tar\\.gz)", "",
-                    gsub(.standard_regexps()$valid_package_version, "", basename(pkg)))
+        gsub("_\\.(zip|tar\\.gz)", "",
+             gsub(.standard_regexps()$valid_package_version, "",
+                  basename(pkg)))
+    }
+
+    getConfigureArgs <- function(pkg)
+    {
+        if(.Platform$OS.type == "windows") return(character())
+
+        pkg <- get_package_name(pkg)
 
         if(length(pkgs) == 1L && length(configure.args) &&
            length(names(configure.args)) == 0L)
-            return(paste("--configure-args=",
-                         shQuote(paste(configure.args, collapse = " ")),
-                         sep = ""))
+            return(paste0("--configure-args=",
+                          shQuote(paste(configure.args, collapse = " "))))
 
         if (length(configure.args) && length(names(configure.args))
               && pkg %in% names(configure.args))
-            config <- paste("--configure-args=",
-                            shQuote(paste(configure.args[[ pkg ]], collapse = " ")),
-                            sep = "")
+            config <- paste0("--configure-args=",
+                             shQuote(paste(configure.args[[ pkg ]], collapse = " ")))
         else
             config <- character()
 
         config
     }
 
-    getConfigureVars <-  function(pkg)
+    getConfigureVars <- function(pkg)
     {
         if(.Platform$OS.type == "windows") return(character())
-        ## Since the pkg argument can be the name of a file rather than
-        ## a regular package name, we have to clean that up.
-        pkg <- gsub("_\\.(zip|tar\\.gz)", "",
-                    gsub(.standard_regexps()$valid_package_version, "", basename(pkg)))
+
+        pkg <- get_package_name(pkg)
 
         if(length(pkgs) == 1L && length(configure.vars) &&
            length(names(configure.vars)) == 0L)
-            return(paste("--configure-vars=",
-                         shQuote(paste(configure.vars, collapse = " ")),
-                         sep = ""))
+            return(paste0("--configure-vars=",
+                          shQuote(paste(configure.vars, collapse = " "))))
 
         if (length(configure.vars) && length(names(configure.vars))
               && pkg %in% names(configure.vars))
-            config <- paste("--configure-vars=",
-                            shQuote(paste(configure.vars[[ pkg ]], collapse = " ")),
-                            sep = "")
+            config <- paste0("--configure-vars=",
+                             shQuote(paste(configure.vars[[ pkg ]], collapse = " ")))
         else
             config <- character()
 
         config
+    }
+
+    get_install_opts <- function(pkg) {
+        if(!length(INSTALL_opts))
+            character()
+        else
+            paste(INSTALL_opts[[get_package_name(pkg)]], collapse = " ")
     }
 
     if(missing(pkgs) || !length(pkgs)) {
@@ -202,9 +212,11 @@ install.packages <-
 
     if(missing(lib) || is.null(lib)) {
         lib <- .libPaths()[1L]
-	if(length(.libPaths()) > 1L)
-	    message(gettextf("Installing package(s) into %s\n(as %s is unspecified)",
-			     sQuote(lib), sQuote("lib")), domain = NA)
+	if(!quiet && length(.libPaths()) > 1L)
+	    message(sprintf(ngettext(length(pkgs),
+                                     "Installing package into %s\n(as %s is unspecified)",
+                                     "Installing packages into %s\n(as %s is unspecified)"),
+                            sQuote(lib), sQuote("lib")), domain = NA)
     }
 
     ## check for writability by user
@@ -251,12 +263,14 @@ install.packages <-
 		ans <- ask.yes.no("Would you like to create a personal library\n%s\nto install packages into?")
 		if(identical(ans, "no")) stop("unable to install packages")
 		if(!dir.create(userdir, recursive = TRUE))
-		    stop("unable to create ", sQuote(userdir))
+                    stop(gettextf("unable to create %s", sQuote(userdir)),
+                         domain = NA)
 		.libPaths(c(userdir, .libPaths()))
 	    }
 	} else stop("unable to install packages")
     }
 
+    lib <- normalizePath(lib)
 
     ## check if we should infer repos=NULL
     if(length(pkgs) == 1L && missing(repos) && missing(contriburl)) {
@@ -269,6 +283,7 @@ install.packages <-
         }
     }
 
+# for testing .Platform$pkgType <- "mac.binary.leopard"
     ## Look at type == "both"
     if (type == "both") {
         ## NB it is only safe to use binary packages with a Mac OS X
@@ -314,7 +329,11 @@ install.packages <-
             print(out)
             cat("\n")
             if(interactive() && any(later & hasSrc)) {
-                message("Do you want to attempt to install from sources the package(s) which need compilation?")
+                msg <-
+                    ngettext(sum(later & hasSrc),
+                             "Do you want to install from sources the package which need compilation?",
+                             "Do you want to install from sources the packages which need compilation?")
+                message(msg, domain = NA)
                 res <- readline("y/n: ")
                 if(res != "y") later <- later & !hasSrc
             }
@@ -325,8 +344,11 @@ install.packages <-
             nc <- !( available[srcOnly, "NeedsCompilation"] %in% "no" )
             s2 <- srcOnly[nc]
             if(length(s2)) {
-                msg <- c("Package(s) which are only available in source form, and may need compilation of C/C++/Fortran: ",
-                         sQuote(s2))
+                msg <-
+                    ngettext(length(s2),
+                             "Package which are only available in source form, and may need compilation of C/C++/Fortran",
+                             "Packages which are only available in source form, and may need compilation of C/C++/Fortran")
+                msg <- c(paste0(msg, ": "), sQuote(s2))
                 msg <- strwrap(paste(msg, collapse = " "), exdent = 2)
                 message(paste(msg, collapse = "\n"), domain = NA)
                 message("Do you want to attempt to install these from sources?")
@@ -419,7 +441,7 @@ install.packages <-
                                method = method, available = available,
                                destdir = destdir,
                                dependencies = dependencies,
-                               libs_only = libs_only, ...)
+                               libs_only = libs_only, quiet = quiet,  ...)
             return(invisible())
         }
         ## Avoid problems with spaces in pathnames.
@@ -441,7 +463,7 @@ install.packages <-
             .install.macbinary(pkgs = pkgs, lib = lib, contriburl = contriburl,
                                method = method, available = available,
                                destdir = destdir,
-                               dependencies = dependencies, ...)
+                               dependencies = dependencies, quiet = quiet, ...)
             return(invisible())
         }
 
@@ -458,9 +480,36 @@ install.packages <-
     ## or run the install in the current process.
     libpath <- .libPaths()
     libpath <- libpath[! libpath %in% .Library]
-    if(length(libpath)) libpath <- paste(libpath, collapse=.Platform$path.sep)
-    cmd0 <- paste(file.path(R.home("bin"),"R"), "CMD INSTALL")
     if(length(libpath))
+        libpath <- paste(libpath, collapse = .Platform$path.sep)
+
+    cmd0 <- file.path(R.home("bin"), "R")
+    args0 <- c("CMD", "INSTALL")
+
+    output <- if(quiet) FALSE else ""
+    env <- character()
+
+    outdir <- getwd()
+    if(is.logical(keep_outputs)) {
+        if(is.na(keep_outputs))
+            keep_outputs <- FALSE
+    } else if(is.character(keep_outputs) &&
+              (length(keep_outputs) == 1L)) {
+        if(!file_test("-d", keep_outputs) &&
+           !dir.create(keep_outputs, recursive = TRUE))
+            stop(gettextf("unable to create %s", sQuote(keep_outputs)),
+                 domain = NA)
+        outdir <- normalizePath(keep_outputs)
+        keep_outputs <- TRUE
+    } else
+        stop(gettextf("invalid %s argument", sQuote("keep_outputs")),
+             domain = NA)
+
+    if(length(libpath)) {
+        ## <NOTE>
+        ## For the foreseeable future, the 'env' argument to system2()
+        ## on Windows is limited to calls to make and rterm (but not R
+        ## CMD): hence need to set the R_LIBS env var here.
         if(.Platform$OS.type == "windows") {
             ## We don't have a way to set an environment variable for
             ## a single command, as we do not spawn a shell.
@@ -468,29 +517,50 @@ install.packages <-
             Sys.setenv(R_LIBS = libpath)
             on.exit(Sys.setenv(R_LIBS = oldrlibs))
         } else
-            cmd0 <- paste(paste("R_LIBS", shQuote(libpath), sep = "="), cmd0)
+            env <- paste("R_LIBS", shQuote(libpath), sep = "=")
+        ## </NOTE>
+    }
 
     if (is.character(clean))
-        cmd0 <- paste(cmd0, clean)
+        args0 <- c(args0, clean)
     if (libs_only)
-        cmd0 <- paste(cmd0, "--libs-only")
-    if (!missing(INSTALL_opts))
-        cmd0 <- paste(cmd0, paste(INSTALL_opts, collapse = " "))
+        args0 <- c(args0, "--libs-only")
+    if (!missing(INSTALL_opts)) {
+        if(!is.list(INSTALL_opts)) {
+            args0 <- c(args0, paste(INSTALL_opts, collapse = " "))
+            INSTALL_opts <- list()
+        }
+    } else {
+        INSTALL_opts <- list()
+    }
+
+    if(verbose)
+        message(gettextf("system (cmd0): %s",
+                         paste(c(cmd0, args0), collapse = " ")),
+                domain = NA)
 
     if(is.null(repos) & missing(contriburl)) {
         ## install from local source tarball(s)
         update <- cbind(path.expand(pkgs), lib) # for side-effect of recycling to same length
 
         for(i in seq_len(nrow(update))) {
-            cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
-                         getConfigureArgs(update[i, 1L]),
-                         getConfigureVars(update[i, 1L]),
-                         shQuote(update[i, 1L]))
-            if(system(cmd) > 0L)
-                warning(gettextf(
-                 "installation of package %s had non-zero exit status",
-                                sQuote(update[i, 1L])),
+            args <- c(args0,
+                      get_install_opts(update[i, 1L]),
+                      "-l", shQuote(update[i, 2L]),
+                      getConfigureArgs(update[i, 1L]),
+                      getConfigureVars(update[i, 1L]),
+                      shQuote(update[i, 1L]))
+            status <- system2(cmd0, args, env = env,
+                              stdout = output, stderr = output)
+            if(status > 0L)
+                warning(gettextf("installation of package %s had non-zero exit status",
+                                 sQuote(update[i, 1L])),
                         domain = NA)
+            else if(verbose) {
+                cmd <- paste(c(cmd0, args), collapse = " ")
+                message(sprintf("%d): succeeded '%s'", i, cmd),
+                        domain = NA)
+            }
         }
         return(invisible())
     }
@@ -512,15 +582,21 @@ install.packages <-
 
     foundpkgs <- download.packages(pkgs, destdir = tmpd, available = available,
                                    contriburl = contriburl, method = method,
-                                   type = "source", ...)
+                                   type = "source", quiet = quiet, ...)
 
     ## at this point 'pkgs' may contain duplicates,
     ## the same pkg in different libs
     if(length(foundpkgs)) {
+	if(verbose) message(gettextf("foundpkgs: %s",
+                                     paste(foundpkgs, collapse=", ")),
+                            domain = NA)
         update <- unique(cbind(pkgs, lib))
         colnames(update) <- c("Package", "LibPath")
         found <- pkgs %in% foundpkgs[, 1L]
         files <- foundpkgs[match(pkgs[found], foundpkgs[, 1L]), 2L]
+	if(verbose) message(gettextf("files: %s",
+                                     paste(files, collapse=", \n\t")),
+                            domain = NA)
         update <- cbind(update[found, , drop=FALSE], file = files)
         if(nrow(update) > 1L) {
             upkgs <- unique(pkgs <- update[, 1L])
@@ -533,7 +609,7 @@ install.packages <-
         if (Ncpus > 1L && nrow(update) > 1L) {
             ## if --no-lock or --lock was specified in INSTALL_opts
             ## that will override this.
-            cmd0 <- paste(cmd0, "--pkglock")
+            args0 <- c(args0, "--pkglock")
             tmpd <- file.path(tempdir(), "make_packages")
             if (!file.exists(tmpd) && !dir.create(tmpd))
                 stop(gettextf("unable to create temporary directory %s",
@@ -548,16 +624,30 @@ install.packages <-
             aDL <- .make_dependency_list(upkgs, available, recursive = TRUE)
             for(i in seq_len(nrow(update))) {
                 pkg <- update[i, 1L]
-                cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
-                             getConfigureArgs(update[i, 3L]),
-                             getConfigureVars(update[i, 3L]),
-                             shQuote(update[i, 3L]),
-                             ">", paste0(pkg, ".out"), "2>&1")
+                args <- c(args0,
+                          get_install_opts(update[i, 3L]),
+                          "-l", shQuote(update[i, 2L]),
+                          getConfigureArgs(update[i, 3L]),
+                          getConfigureVars(update[i, 3L]),
+                          shQuote(update[i, 3L]),
+                          ">", paste0(pkg, ".out"),
+                          "2>&1")
+                ## <NOTE>
+                ## We currently only use env on Unix for R_LIBS.
+                ## Windows we do Sys.setenv(R_LIBS = libpath),
+                ## since system2() has limited support for 'env'
+                ## Should we use env on Windows as well?
+                ## If so, would we need
+                ##   cmd <- paste(c(shQuote(command), env, args),
+                ##                collapse = " ")
+                ## on Windows?
+                cmd <- paste(c(shQuote(cmd0), args), collapse = " ")
+                ## </NOTE>
                 deps <- aDL[[pkg]]
                 deps <- deps[deps %in% upkgs]
                 ## very unlikely to be too long
                 deps <- if(length(deps))
-                    paste(paste0(deps, ".ts"), collapse=" ") else ""
+                    paste(paste0(deps, ".ts"), collapse = " ") else ""
                 cat(paste0(pkg, ".ts: ", deps),
                     paste("\t@echo begin installing package", sQuote(pkg)),
                     paste0("\t@", cmd, " && touch ", pkg, ".ts"),
@@ -565,11 +655,13 @@ install.packages <-
                     "", sep = "\n", file = conn)
             }
             close(conn)
-            ## system(paste("cat ", mfile))
             cwd <- setwd(tmpd)
             on.exit(setwd(cwd))
             ## MAKE will be set by sourcing Renviron
-            status <- system(paste(Sys.getenv("MAKE", "make"), "-k -j", Ncpus))
+            status <- system2(Sys.getenv("MAKE", "make"),
+                              c("-k -j", Ncpus),
+                              stdout = output, stderr = output,
+                              env = env)
             if(status > 0L) {
                 ## Try to figure out which
                 pkgs <- update[, 1L]
@@ -580,21 +672,39 @@ install.packages <-
                                  paste(sQuote(failed), collapse = ", ")),
                         domain = NA)
             }
+            if(keep_outputs)
+                file.copy(paste0(update[, 1L], ".out"), outdir)
             setwd(cwd); on.exit()
             unlink(tmpd, recursive = TRUE)
         } else {
             for(i in seq_len(nrow(update))) {
-                cmd <- paste(cmd0, "-l", shQuote(update[i, 2L]),
-                             getConfigureArgs(update[i, 3L]),
-                             getConfigureVars(update[i, 3L]),
-                             update[i, 3L])
-                status <- system(cmd)
+                outfile <- if(keep_outputs) {
+                    paste0(update[i, 1L], ".out")
+                } else output
+                args <- c(args0,
+                          get_install_opts(update[i, 3L]),
+                          "-l", shQuote(update[i, 2L]),
+                          getConfigureArgs(update[i, 3L]),
+                          getConfigureVars(update[i, 3L]),
+                          update[i, 3L])
+                status <- system2(cmd0, args, env = env,
+                                  stdout = outfile, stderr = outfile)
+                if(!quiet && keep_outputs)
+                    writeLines(readLines(outfile))
                 if(status > 0L)
                     warning(gettextf("installation of package %s had non-zero exit status",
-                                     sQuote(update[i, 1L])), domain = NA)
+                                     sQuote(update[i, 1L])),
+                            domain = NA)
+		else if(verbose) {
+                    cmd <- paste(c(cmd0, args), collapse = " ")
+                    message(sprintf("%d): succeeded '%s'", i, cmd),
+                            domain = NA)
+                }
             }
+            if(keep_outputs && (outdir != getwd()))
+                file.copy(paste0(update[, 1L], ".out"), outdir)
         }
-        if(nonlocalrepos && !is.null(tmpd) && is.null(destdir))
+        if(!quiet && nonlocalrepos && !is.null(tmpd) && is.null(destdir))
             cat("\n", gettextf("The downloaded source packages are in\n\t%s",
                                sQuote(normalizePath(tmpd, mustWork = FALSE))),
                 "\n", sep = "")
@@ -643,4 +753,15 @@ globalVariables <- function(names, package, add = TRUE) {
         assign(.listFile, current, envir = env)
     }
     current
+}
+
+packageName <- function(env = parent.frame()) {
+    if (!is.environment(env)) stop("'env' must be an environment")
+    env <- topenv(env)
+    if (exists(".packageName", envir = env, inherits = FALSE))
+	get(".packageName", envir = env, inherits = FALSE)
+    else if (identical(env, .BaseNamespaceEnv))
+	"base"
+    else
+	NULL
 }

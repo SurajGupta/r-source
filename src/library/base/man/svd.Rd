@@ -1,30 +1,28 @@
 % File src/library/base/man/svd.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2009 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{svd}
 \alias{svd}
 \alias{La.svd}
 \title{Singular Value Decomposition of a Matrix}
+\description{
+  Compute the singular-value decomposition of a rectangular matrix.
+}
 \usage{
 svd(x, nu = min(n, p), nv = min(n, p), LINPACK = FALSE)
 
 La.svd(x, nu = min(n, p), nv = min(n, p))
 }
 \arguments{
-  \item{x}{a numeric, logical or complex matrix whose SVD decomposition
-    is to be computed.}
+  \item{x}{a numeric or complex matrix whose SVD decomposition
+    is to be computed.  Logical matrices are coerced to numeric.}
   \item{nu}{the number of left  singular vectors to be computed.
     This must between \code{0} and \code{n = nrow(x)}.}
   \item{nv}{the number of right singular vectors to be computed.
     This must be between \code{0} and \code{p = ncol(x)}.}
-  \item{LINPACK}{logical.  Should LINPACK be used (for compatibility with
-    \R < 1.7.0)?  In this case \code{nu} must be \code{0},
-    \code{nrow(x)} or \code{ncol(x)}.}
-}
-\description{
-  Compute the singular-value decomposition of a rectangular matrix.
+  \item{LINPACK}{logical.  Defunct and ignored (with a warning for true values).}
 }
 \details{
   The singular value decomposition plays an important role in many
@@ -41,7 +39,7 @@ La.svd(x, nu = min(n, p), nv = min(n, p))
   that the algorithm failed to converge.
 }
 \value{
-  The SVD decomposition of the matrix as computed by LAPACK/LINPACK,
+  The SVD decomposition of the matrix as computed by LAPACK,
   \deqn{ \bold{X = U D V'},} where \eqn{\bold{U}} and \eqn{\bold{V}} are
   orthogonal, \eqn{\bold{V'}} means \emph{V transposed}, and
   \eqn{\bold{D}} is a diagonal matrix with the singular
@@ -61,11 +59,9 @@ La.svd(x, nu = min(n, p), nv = min(n, p))
 }
 \source{
   The main functions used are the LAPACK routines \code{DGESDD} and
-  \code{ZGESVD}; \code{svd(LINPACK = TRUE)} provides an interface to the
-  LINPACK routine \code{DSVDC}.
-     
-  LAPACK and LINPACK are from \url{http://www.netlib.org/lapack} and
-  \url{http://www.netlib.org/linpack} and their guides are listed
+  \code{ZGESVD}.
+
+  LAPACK is from \url{http://www.netlib.org/lapack} and its guide is listed
   in the references.
 }
 \references{
@@ -73,18 +69,10 @@ La.svd(x, nu = min(n, p), nv = min(n, p))
   \emph{LAPACK Users' Guide}. Third Edition. SIAM.\cr
   Available on-line at
   \url{http://www.netlib.org/lapack/lug/lapack_lug.html}.
-  
+
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
-
-  Dongarra, J. J., Bunch, J. R., Moler, C. B. and Stewart, G. W. (1978)
-  \emph{LINPACK Users Guide.}  Philadelphia: SIAM Publications.
-}
-
-\note{
-  \code{LINPACK = TRUE} (for compatibility with \R < 1.7.0) was formally
-  deprecated in \R 2.15.2.
 }
 
 \seealso{

@@ -16,18 +16,12 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-vector <- function(mode = "logical", length = 0L).Internal(vector(mode, length))
+vector <- function(mode = "logical", length = 0L) .Internal(vector(mode, length))
 logical <- function(length = 0L) .Internal(vector("logical", length))
 character <- function(length = 0L) .Internal(vector("character", length))
 integer <- function(length = 0L) .Internal(vector("integer", length))
 numeric <- double <-
     function(length = 0L) .Internal(vector("double", length))
-
-real <- function(length = 0L)
-{
-    .Deprecated("double")
-    .Internal(vector("double", length))
-}
 
 complex <- function(length.out = 0L,
 		    real = numeric(), imaginary = numeric(),
@@ -37,8 +31,7 @@ complex <- function(length.out = 0L,
 	.Internal(complex(length.out, real, imaginary))
     } else {
 	n <- max(length.out, length(argument), length(modulus))
-	rep(modulus, length.out = n) *
-	    exp(1i * rep(argument, length.out = n))
+	rep_len(modulus, n) * exp(1i * rep_len(argument, n))
     }
 }
 

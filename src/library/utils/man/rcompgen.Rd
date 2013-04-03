@@ -18,18 +18,18 @@
 \title{A Completion Generator for R}
 
 \description{
-  This package provides a mechanism to generate relevant completions
+  This page documents a mechanism to generate relevant completions
   from a partially completed command line.  It is not intended to be
   useful by itself, but rather in conjunction with other mechanisms that
   use it as a backend.  The functions listed in the usage section
   provide a simple control and query mechanism.  The actual interface
   consists of a few unexported functions described further down.
 }
-  
+
 \usage{
 
 rc.settings(ops, ns, args, func, ipck, S3, data, help,
-            argdb, files)
+            argdb, quotes, files)
 
 rc.status()
 rc.getOption(name)
@@ -44,41 +44,41 @@ rc.options(\dots)
 }
 
 \arguments{
-  \item{ops, ns, args, func, ipck, S3, data, help, argdb, files}{
+  \item{ops, ns, args, func, ipck, S3, data, help, argdb, quotes, files}{
 
     logical, turning some optional completion features on and off.
 
     \describe{
-      \item{\code{ops}:}{activates completion after the \code{$} and
-        \code{@} operators}
+      \item{\code{ops}:}{ Activates completion after the \code{$} and
+        \code{@} operators. }
 
-      \item{\code{ns}:}{controls namespace related completions}
+      \item{\code{ns}:}{ Controls namespace related completions. }
 
-      \item{\code{args}:}{enables completion of function arguments}
+      \item{\code{args}:}{ Enables completion of function arguments. }
 
-      \item{\code{func}:}{enables detection of functions.  If enabled,
+      \item{\code{func}:}{ Enables detection of functions.  If enabled,
         a customizable extension (\code{"("} by default) is appended to
         function names.  The process of determining whether a potential
         completion is a function requires evaluation, including for lazy
-        loaded symbols.  This is extremely undesirable for large
-        objects, because of potentially wasteful use of memory in
-        addition to the time overhead associated with loading.  For this
-        reason, this feature is disabled by default. }
+        loaded symbols.  This is undesirable for large objects, because
+        of potentially wasteful use of memory in addition to the time
+        overhead associated with loading.  For this reason, this feature
+        is disabled by default. }
 
-      \item{\code{S3}:}{ when \code{args = TRUE}, activates completion on
+      \item{\code{S3}:}{ When \code{args = TRUE}, activates completion on
         arguments of all S3 methods (otherwise just the generic, which
-        usually has very few arguments) }
+        usually has very few arguments). }
 
-      \item{\code{ipck}:}{ enables completion of installed package names
-        inside \code{\link{library}} and \code{\link{require}} }
+      \item{\code{ipck}:}{ Enables completion of installed package names
+        inside \code{\link{library}} and \code{\link{require}}. }
 
-      \item{\code{data}:}{ enables completion of data sets (including
-        those already visible) inside \code{\link{data}} }
+      \item{\code{data}:}{ Enables completion of data sets (including
+        those already visible) inside \code{\link{data}}. }
 
-      \item{\code{help}:}{ enables completion of help requests starting
-        with a question mark, by looking inside help index files }
+      \item{\code{help}:}{ Enables completion of help requests starting
+        with a question mark, by looking inside help index files. }
 
-      \item{\code{argdb}:}{ when \code{args = TRUE}, completion is
+      \item{\code{argdb}:}{ When \code{args = TRUE}, completion is
         attempted on function arguments.  Generally, the list of valid
         arguments is determined by dynamic calls to \code{\link{args}}.
         While this gives results that are technically correct, the use
@@ -89,27 +89,27 @@ rc.options(\dots)
         lookup in this internal data base for functions with an entry in
         it.  Of course, this is useful only when the data base contains
         information about the function of interest.  Some functions are
-        included in the package (the maintainer is happy to add more
-        upon request), and more can be added by the user through the
-        unexported function \code{.addFunctionInfo} (see below).
-      }
-      
-      \item{\code{files}:}{ enables filename completion in \R code.  This
-        is initially set to \code{FALSE}, in which case the underlying
-        completion front-end can take over (and hopefully do a better
-        job than we would have done).  For systems where no such
-        facilities exist, this can be set to \code{TRUE} if file name
-        completion is desired.  This is used on Windows (where file
-	paths including spaces do work): on Unix-alikes
-        \code{readline}'s filename completion is normally used.
-      }
+        already included, and more can be added by the user through the
+        unexported function \code{.addFunctionInfo} (see below).  }
+
+      \item{\code{quotes}:}{ Enables completion in \R code when inside
+        quotes.  This normally leads to filename completion, but can be
+        otherwise depending on context (for example, when the open quote
+        is preceded by \code{?}, help completion is invoked.  Setting
+        this to \code{FALSE} relegates completion to the underlying
+        completion front-end, which may do its own processing (for
+        example, \code{readline} on Unix-alikes will do filename
+        completion.  }
+
+      \item{\code{files}:}{ Deprecated.  Use \code{quotes} instead.  }
 
     }
 
-    All settings are turned on by default except \code{ipck},
-    \code{func} and \code{files}.  Turn more off if your CPU cycles are
-    valuable; you will still retain basic completion on names of objects
-    in the search list.  See below for additional details.
+    All settings are turned on by default except \code{ipck} and
+    \code{func}.  Turn more off if your CPU cycles are valuable; you
+    will still retain basic completion on names of objects in the search
+    list.  See below for additional details.
+
   }
   \item{name, \dots}{ user-settable options.  Currently valid names are
     \describe{
@@ -117,7 +117,7 @@ rc.options(\dots)
       \item{\code{funarg.suffix}:}{ default \code{" = "} }
       \item{\code{package.suffix}}{ default \code{"::"} }
     }
-    See \code{\link{options}} for detailed usage description.
+    Usage is similar to that of \code{\link{options}}.
   }
 
   \item{x}{ An R object for which valid names after \code{"$"}
@@ -132,13 +132,13 @@ rc.options(\dots)
 \details{
   There are several types of completion, some of which can be disabled
   using \code{rc.settings}.  The most basic level, which can not be
-  turned off once the package is loaded, provides completion on names
-  visible on the search path, along with a few special keywords
-  (e.g. \code{TRUE}).  This type of completion is not attempted if the
-  partial \sQuote{word} (a.k.a. token) being completed is empty (since
-  there would be too many completions).  The more advanced types of
-  completion are described below.
-  
+  turned off once the completion functionality is activated, provides
+  completion on names visible on the search path, along with a few
+  special keywords (e.g. \code{TRUE}).  This type of completion is not
+  attempted if the partial \sQuote{word} (a.k.a. token) being completed
+  is empty (since there would be too many completions).  The more
+  advanced types of completion are described below.
+
   \describe{
 
     \item{\bold{Completion after extractors \code{$} and \code{@}}:}{
@@ -169,6 +169,13 @@ rc.options(\dots)
       will attempt to load the namespace if it is not already loaded,
       e.g. trying to complete on \code{MASS::fr} will load \code{MASS}
       (but not necessarily attach it) even if it is not already loaded.
+    }
+
+    \item{\bold{Completion for help items}:}{
+      When the \code{help} setting is turned on, completion on help
+      topics is attempted when a token is preceded by \code{?}.
+      Prefixes (such as \code{class}, \code{method}) are supported, as
+      well as quoted help topics containing special characters.
     }
 
     \item{\bold{Completion of function arguments}:}{
@@ -232,13 +239,16 @@ rc.options(\dots)
       \code{\link{installed.packages}} is cached, so subsequent calls
       are usually fast, so turning this option on is not particularly
       onerous even in such situations.
-
     }
 
   }
 }
 
 \value{
+  If \code{rc.settings} is called without any arguments, it returns the
+  current settings as a named logical vector.  Otherwise, it returns
+  \code{NULL} invisibly. 
+  
   \code{rc.status} returns, as a list, the contents of an internal
   (unexported) environment that is used to record the results of the
   last completion attempt.  This can be useful for debugging.  For such
@@ -248,24 +258,21 @@ rc.options(\dots)
 
   The items of primary interest in the returned list are:
 
-  \item{comps}{ the possible completions generated by the last
-    call to \code{.completeToken}, as a character vector }
-  \item{token}{ the token that was (or, is to be) completed, as
+  \item{comps}{ The possible completions generated by the last
+    call to \code{.completeToken}, as a character vector. }
+  \item{token}{ The token that was (or, is to be) completed, as
     set by the last call to \code{.assignToken} (possibly inside a call
-    to \code{.guessTokenFromLine}) }
-  \item{linebuffer}{ the full line, as set by the last call to
-    \code{.assignLinebuffer}}
-  \item{start}{ the start position of the token in the line
-    buffer, as set by the last call to \code{.assignStart} }
-  \item{end}{ the end position of the token in the line
-    buffer, as set by the last call to \code{.assignEnd} }
-  \item{fileName}{ logical, indicating whether the cursor is
-    currently inside quotes.  If so, no completion is attempted.  A
-    reasonable default behaviour for the backend in that case is to fall
-    back to filename completion.  }
-  \item{fguess}{ the name of the function \code{rcompgen} thinks
-    the cursor is currently inside }
-  \item{isFirstArg}{ logical.  If cursor is inside a function, is it the
+    to \code{.guessTokenFromLine}). }
+  \item{linebuffer}{ The full line, as set by the last call to
+    \code{.assignLinebuffer}. }
+  \item{start}{ The start position of the token in the line
+    buffer, as set by the last call to \code{.assignStart}. }
+  \item{end}{ The end position of the token in the line
+    buffer, as set by the last call to \code{.assignEnd}. }
+  \item{fileName}{ Logical, indicating whether the cursor is
+    currently inside quotes. }
+  \item{fguess}{ The name of the function the cursor is currently inside. }
+  \item{isFirstArg}{ Logical.  If cursor is inside a function, is it the
     first argument? }
 
   In addition, the components \code{settings} and \code{options} give
@@ -278,7 +285,7 @@ rc.options(\dots)
 
 \section{Unexported API}{
 
-  There are several unexported functions in the package.  Of these, 
+  There are several unexported functions in the package.  Of these,
   a few are special because they provide the API through which other
   mechanisms can make use of the facilities provided by this package
   (they are unexported because they are not meant to be called directly
@@ -295,7 +302,7 @@ rc.options(\dots)
 
     .guessTokenFromLine()
     .win32consoleCompletion(linebuffer, cursorPosition,
-                            check.repeat = TRUE, 
+                            check.repeat = TRUE,
                             minlength = -1)
 
     .addFunctionInfo(...)
@@ -310,7 +317,7 @@ rc.options(\dots)
   \code{.completeToken}, and the completions can be retrieved as an \R
   character vector using \code{.retrieveCompletions}.
 
-  If the cursor is inside quotes, no completion is attempted.  The
+  If the cursor is inside quotes, completion may be suppressed.  The
   function \code{.getFileComp} can be used after a call to
   \code{.completeToken} to determine if this is the case (returns
   \code{TRUE}), and alternative completions generated as deemed useful.
@@ -320,8 +327,7 @@ rc.options(\dots)
   backends that do not already break a line into tokens.  It requires
   the linebuffer and endpoint (cursor position) to be already set, and
   itself sets the token and the start position.  It returns the token as
-  a character string.  (This is used by the ESS completion hook example
-  given in the \code{examples/altesscomp.el} file.)
+  a character string.
 
   The \code{.win32consoleCompletion} is similar in spirit, but is more
   geared towards the Windows GUI (or rather, any front-end that has no
@@ -366,8 +372,7 @@ rc.options(\dots)
   \code{foo[i, 1:10]$ba} will evaluate \code{foo[i, 1:10]}, etc.  This
   should not be too bad, as explicit function calls (involving
   parentheses) are not evaluated in this manner.  However, this
-  \emph{will} affect lazy loaded symbols (and presumably other promise
-  type thingies).
+  \emph{will} affect promises and lazy loaded symbols.
 }
 
 \author{ Deepayan Sarkar, \email{deepayan.sarkar@r-project.org} }

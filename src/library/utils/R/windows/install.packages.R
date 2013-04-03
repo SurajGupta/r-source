@@ -17,16 +17,17 @@
 #  http://www.r-project.org/Licenses/
 
 ## Unexported helper
-unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
+unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE,
+                         lock = FALSE, quiet = FALSE)
 {
     .zip.unpack <- function(zipname, dest)
     {
         if(file.exists(zipname)) {
             if((unzip <- getOption("unzip")) != "internal") {
-                system(paste(unzip, "-oq", zipname, "-d", dest),
+                system(paste(shQuote(unzip), "-oq", zipname, "-d", dest),
                        show.output.on.console = FALSE, invisible = TRUE)
             } else unzip(zipname, exdir = dest)
-        } else stop(gettextf("zipfile %s not found",
+        } else stop(gettextf("zip file %s not found",
                              sQuote(zipname)), domain = NA)
     }
 
@@ -46,7 +47,7 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
     res <- .zip.unpack(pkg, tmpDir)
     setwd(tmpDir)
     res <- tools::checkMD5sums(pkgname, file.path(tmpDir, pkgname))
-    if(!is.na(res) && res) {
+    if(!quiet && !is.na(res) && res) {
         cat(gettextf("package %s successfully unpacked and MD5 sums checked\n",
                      sQuote(pkgname)))
         flush.console()
@@ -102,15 +103,16 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
             ## This is code adapted from tools:::.install_packages
             dir.exists <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
 	    lockdir <- if(identical(lock, "pkglock"))
-                file.path(lib, paste("00LOCK", pkgname, sep="-"))
+                file.path(lib, paste("00LOCK", pkgname, sep = "-"))
             else file.path(lib, "00LOCK")
 	    if (file.exists(lockdir)) {
-		stop("ERROR: failed to lock directory ", sQuote(lib),
-			" for modifying\nTry removing ", sQuote(lockdir))
+                stop(gettextf("ERROR: failed to lock directory %s for modifying\nTry removing %s",
+                              sQuote(lib), sQuote(lockdir)), domain = NA)
 	    }
 	    dir.create(lockdir, recursive = TRUE)
 	    if (!dir.exists(lockdir))
-		stop("ERROR: failed to create lock directory ", sQuote(lockdir))
+                stop(gettextf("ERROR: failed to create lock directory %s",
+                              sQuote(lockdir)), domain = NA)
             ## Back up a previous version
             if (file.exists(instPath)) {
                 file.copy(instPath, lockdir, recursive = TRUE)
@@ -201,7 +203,7 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
              contriburl = contrib.url(repos),
              method, available = NULL, destdir = NULL,
              dependencies = FALSE, libs_only = FALSE,
-             lock = getOption("install.lock", FALSE), ...)
+             lock = getOption("install.lock", FALSE), quiet = FALSE, ...)
 {
     if(!length(pkgs)) return(invisible())
     ## look for package in use.
@@ -226,7 +228,7 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
 
     if(is.null(contriburl)) {
         for(i in seq_along(pkgs))
-            unpackPkgZip(pkgs[i], pkgnames[i], lib, libs_only, lock)
+            unpackPkgZip(pkgs[i], pkgnames[i], lib, libs_only, lock, quiet)
         return(invisible())
     }
     tmpd <- destdir
@@ -246,13 +248,13 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
 
     foundpkgs <- download.packages(pkgs, destdir = tmpd, available = available,
                                    contriburl = contriburl, method = method,
-                                   type = "win.binary", ...)
+                                   type = "win.binary", quiet = quiet, ...)
 
     if(length(foundpkgs)) {
         update <- unique(cbind(pkgs, lib))
         colnames(update) <- c("Package", "LibPath")
         for(lib in unique(update[,"LibPath"])) {
-            oklib <- lib==update[,"LibPath"]
+            oklib <- lib == update[,"LibPath"]
             for(p in update[oklib, "Package"])
             {
                 okp <- p == foundpkgs[, 1L]
@@ -261,7 +263,7 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE, lock = FALSE)
                                  lib, libs_only, lock)
             }
         }
-        if(!is.null(tmpd) && is.null(destdir))
+        if(!quiet && !is.null(tmpd) && is.null(destdir))
             ## tends to be a long path on Windows
             cat("\n", gettextf("The downloaded binary packages are in\n\t%s",
                                normalizePath(tmpd, mustWork = FALSE)),

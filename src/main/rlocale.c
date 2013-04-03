@@ -18,7 +18,7 @@
  */
 
 /*  This file was contributed by Ei-ji Nakama.
- *  See also the comments in R_ext/rlocale.h.
+ *  See also the comments in rlocale.h.
  *
  *  It provides replacements for the wctype functions on
  *  Windows (where they are not correct in e.g. Japanese)
@@ -35,11 +35,17 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_VISIBILITY_ATTRIBUTE
+# define attribute_hidden __attribute__ ((visibility ("hidden")))
+#else
+# define attribute_hidden
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 
 #define IN_RLOCALE_C 1 /* used in rlocale.h */
-#include <R_ext/rlocale.h>
+#include <rlocale.h>
 #include "rlocale_data.h"
 
 #include <wctype.h>
@@ -104,6 +110,7 @@ static cjk_locale_name_t cjk_locale_name[] = {
     {"",				        MB_UTF8},
 };
 
+/* used in grDevices */
 int Ri18n_wcwidth(wchar_t c)
 {
     char lc_str[128];
@@ -114,8 +121,8 @@ int Ri18n_wcwidth(wchar_t c)
 
     if (0 != strcmp(setlocale(LC_CTYPE, NULL), lc_cache)) {
 	strncpy(lc_str, setlocale(LC_CTYPE, NULL), sizeof(lc_str));
-	for (i = 0, j = strlen(lc_str); i < j && i < sizeof(lc_str); i++)
-	    lc_str[i] = toupper(lc_str[i]);
+	for (i = 0, j = (int) strlen(lc_str); i < j && i < sizeof(lc_str); i++)
+	    lc_str[i] = (char) toupper(lc_str[i]);
 	for (i = 0; i < (sizeof(cjk_locale_name)/sizeof(cjk_locale_name_t));
 	     i++) {
 	    if (0 == strncmp(cjk_locale_name[i].name, lc_str,
@@ -131,6 +138,8 @@ int Ri18n_wcwidth(wchar_t c)
 			 lc));
 }
 
+/* Used in charcter.c, gnuwin32/console.c */
+attribute_hidden
 int Ri18n_wcswidth (const wchar_t *s, size_t n)
 {
     int rs = 0;
@@ -179,6 +188,10 @@ static const char UNICODE[] = "UCS-4BE";
 #else
 static const char UNICODE[] = "UCS-4LE";
 #endif
+
+/* in Defn.h which is not included here */
+extern const char *locale2charset(const char *);
+
 
 #define ISWFUNC(ISWNAME) static int Ri18n_isw ## ISWNAME (wint_t wc) \
 {	                                                             \
@@ -294,6 +307,7 @@ static const Ri18n_wctype_func_l Ri18n_wctype_func[] = {
     {NULL,     0,     NULL}
 };
 
+/* These two used (via macros) in X11 dataentry */
 wctype_t Ri18n_wctype(const char *name)
 {
     int i;

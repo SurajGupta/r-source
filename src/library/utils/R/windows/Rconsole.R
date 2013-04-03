@@ -16,5 +16,6 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-loadRconsole <- function(file=choose.files(file.path(Sys.getenv("R_USER"), "Rconsole")))
-    invisible(.Internal(loadRconsole(file)))
+loadRconsole <-
+    function(file=choose.files(file.path(Sys.getenv("R_USER"), "Rconsole")))
+    invisible(.Call(C_loadRconsole, file))

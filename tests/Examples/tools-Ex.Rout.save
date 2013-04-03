@@ -1,7 +1,6 @@
 
-R version 2.15.2 Patched (2012-11-27 r61171) -- "Trick or Treat"
-Copyright (C) 2012 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -23,7 +22,7 @@ Type 'q()' to quit R.
 > options(warn = 1)
 > library('tools')
 > 
-> assign(".oldSearch", search(), pos = 'CheckExEnv')
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
 > cleanEx()
 > nameEx("HTMLheader")
 > ### * HTMLheader
@@ -101,7 +100,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x2d4dea0>
+<environment: 0x382b150>
 
 $showURLs
 [1] FALSE
@@ -135,7 +134,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x2d4dea0>
+<environment: 0x382b150>
 
 $showURLs
 [1] FALSE
@@ -169,7 +168,7 @@ $itemBullet
 $enumFormat
 function (n) 
 sprintf("%d. ", n)
-<environment: 0x2d4dea0>
+<environment: 0x382b150>
 
 $showURLs
 [1] FALSE
@@ -205,7 +204,7 @@ $underline_titles
 > 
 > ### Name: bibstyle
 > ### Title: Select or define a bibliography style.
-> ### Aliases: bibstyle
+> ### Aliases: bibstyle getBibstyle
 > ### Keywords: utilties documentation
 > 
 > ### ** Examples
@@ -213,33 +212,35 @@ $underline_titles
 > ## Don't show: 
 > options(useFancyQuotes = FALSE)
 > ## End Don't show
-> refs <- 
+> refs <-
 + c(bibentry(bibtype = "manual",
 +     title = "R: A Language and Environment for Statistical Computing",
 +     author = person("R Core Team"),
 +     organization = "R Foundation for Statistical Computing",
 +     address = "Vienna, Austria",
-+     year = 2010,
-+     isbn = "3-900051-07-0",
-+     url = "http://www.R-project.org"),  
++     year = 2013,
++     url = "http://www.R-project.org"),
 +   bibentry(bibtype = "article",
-+     author = c(person(c("George", "E", "P"), "Box"),
-+                person(c("David",  "R"),      "Cox")),
++     author = c(person(c("George", "E.", "P."), "Box"),
++                person(c("David",  "R."),      "Cox")),
 +     year = 1964,
 +     title = "An Analysis of Transformations",
 +     journal = "Journal of the Royal Statistical Society, Series B",
 +     volume = 26,
 +     pages = "211-252"))
+> 
 > bibstyle("unsorted", sortKeys = function(refs) seq_along(refs),
++     fmtPrefix = function(paper) paste0("[", paper$.index, "]"),
 +        .init = TRUE)
-<environment: 0x3014690>
-> print(refs, .bibstyle = "unsorted")    
-R Core Team (2010). _R: A Language and Environment for Statistical
+<environment: 0x3750a78>
+> print(refs, .bibstyle = "unsorted")
+[1] R Core Team (2013). _R: A Language and Environment for Statistical
 Computing_. R Foundation for Statistical Computing, Vienna, Austria.
-ISBN 3-900051-07-0, <URL: http://www.R-project.org>.
+<URL: http://www.R-project.org>.
 
-Box GEP and Cox DR (1964). "An Analysis of Transformations." _Journal
-of the Royal Statistical Society, Series B_, *26*, pp. 211-252.
+[2] Box GEP and Cox DR (1964). "An Analysis of Transformations."
+_Journal of the Royal Statistical Society, Series B_, *26*, pp.
+211-252.
 > 
 > 
 > 
@@ -258,7 +259,7 @@ of the Royal Statistical Society, Series B_, *26*, pp. 211-252.
 > 
 > ## find Adobe names for ISOLatin2 chars.
 > latin2 <- charset_to_Unicode[, "ISOLatin2"]
-> aUnicode <- as.numeric(paste("0x", Adobe_glyphs$unicode, sep=""))
+> aUnicode <- as.numeric(paste0("0x", Adobe_glyphs$unicode))
 > keep <- aUnicode %in% latin2
 > aUnicode <- aUnicode[keep]
 > aAdobe <- Adobe_glyphs[keep, 1]
@@ -680,6 +681,34 @@ NULL
 > 
 > 
 > cleanEx()
+> nameEx("print.via.format")
+> ### * print.via.format
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: .print.via.format
+> ### Title: Printing Utilities
+> ### Aliases: .print.via.format
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+> ## The function is simply defined as
+>  function (x, ...) {
++     writeLines(format(x, ...))
++     invisible(x)
++  }
+function (x, ...) 
+{
+    writeLines(format(x, ...))
+    invisible(x)
+}
+> 
+> ## is used for simple print methods in R, and as prototype for new methods.
+> 
+> 
+> 
+> cleanEx()
 > nameEx("pskill")
 > ### * pskill
 > 
@@ -871,6 +900,29 @@ attr(,"class")
 > 
 > 
 > cleanEx()
+> nameEx("vignetteEngine")
+> ### * vignetteEngine
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: vignetteEngine
+> ### Title: Set or get a vignette processing engine.
+> ### Aliases: vignetteEngine
+> ### Keywords: utilities documentation
+> 
+> ### ** Examples
+> 
+> str(vignetteEngine("Sweave"))
+List of 5
+ $ name   : chr "Sweave"
+ $ package: chr "utils"
+ $ pattern: chr "[.][rRsS](nw|tex)$"
+ $ weave  :function (...)  
+ $ tangle :function (...)  
+> 
+> 
+> 
+> cleanEx()
 > nameEx("writePACKAGES")
 > ### * writePACKAGES
 > 
@@ -910,8 +962,8 @@ attr(,"class")
 > 
 > ### * <FOOTER>
 > ###
-> cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.368 0.01 0.388 0 0 
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.311 0.014 0.326 0 0 
 > grDevices::dev.off()
 null device 
           1 

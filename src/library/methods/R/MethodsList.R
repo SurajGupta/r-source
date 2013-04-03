@@ -386,7 +386,7 @@ finalDefaultMethod <-
         if(is(method, "MethodsList"))
             method <-  elNamed(slot(method, "methods"), "ANY")
         else
-          stop(gettextf("Default method must be a method definition, a primitive or NULL: got an object of class %s", dQuote(class(method))),
+          stop(gettextf("default method must be a method definition, a primitive or NULL: got an object of class %s", dQuote(class(method))),
                domain = NA)
     }
     method
@@ -528,9 +528,8 @@ matchSignature <-
     if(is.null(names(signature))) {
         which <- seq_along(signature)
         if(length(which) > length(anames))
-          stop(gettextf("more elements in the method signature (%d) than in the generic  signature (%d)",
-               length(which),
-               length(anames)), domain = NA)
+          stop(gettextf("more elements in the method signature (%d) than in the generic signature (%d) for function %s",
+	       length(which), length(anames), sQuote(fun@generic)), domain = NA)
     }
     else {
     ## construct a function call with the same naming pattern  &
@@ -554,9 +553,11 @@ matchSignature <-
     ## and carried along the values.  Get the supplied classes in that
     ## order, from the matched args in the call object.
     if(any(is.na(which)))
-        stop(gettextf("in the method signature for function %s invalid argument names in the signature: %s",
-                      sQuote(fun@generic),
-                      paste(snames[is.na(which)], collapse = ", ")),
+        stop(sprintf(ngettext(sum(is.na(which)),
+                              "in the method signature for function %s invalid argument name in the signature: %s",
+                              "in the method signature for function %s invalid argument names in the signature: %s"),
+                     sQuote(fun@generic),
+                     paste(snames[is.na(which)], collapse = ", ")),
              domain = NA)
     smatch <- smatch[-1]
     for(i in seq_along(smatch)) {
@@ -668,7 +669,7 @@ promptMethods <- function(f, filename = NULL, methods)
 
     fdef <- getGeneric(f)
     if(!isGeneric(f, fdef=fdef))
-	stop(gettextf("No generic function found corresponding to %s",
+	stop(gettextf("no generic function found corresponding to %s",
                       sQuote(f)),
 	     domain = NA)
     if(missing(methods)) {
@@ -886,10 +887,10 @@ asMethodDefinition <- function(def, signature = list(.anyClassName), sealed = FA
     else if(is.character(this))
         msg <- gettextf("%s, along with other use of the \"MethodsList\" metadata objects, is deprecated.", dQuote(this))
     else
-        msg <- gettextf("In %s: use of \"MethodsList\" metadata objects is deprecated.", deparse(this))
+        msg <- gettextf("in %s: use of \"MethodsList\" metadata objects is deprecated.", deparse(this))
     if(!missing(instead))
-      msg <- paste(msg, gettextf("Use %s instead.", dQuote(instead)))
-    msg <- paste(msg, "See ?MethodsList. (This warning is shown once per session.)")
+      msg <- paste(msg, gettextf("use %s instead.", dQuote(instead)))
+    msg <- paste(msg, "see ?MethodsList. (This warning is shown once per session.)")
     base::.Deprecated(msg = msg)
 }
 

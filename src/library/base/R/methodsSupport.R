@@ -22,9 +22,9 @@ trace <- function(what, tracer, exit, at, print, signature, where = topenv(paren
     if(needsAttach) {
         ns <- try(loadNamespace("methods"))
         if(isNamespace(ns))
-            message("(loaded the methods namespace)")
+            message("(loaded the methods namespace)", domain = NA)
         else
-            stop("Tracing functions requires the methods package, but unable to load methods namespace")
+            stop("tracing functions requires the 'methods' package, but unable to load the 'methods' namespace")
     }
     else if(nargs() == 1L)
         return(.primTrace(what))
@@ -63,33 +63,19 @@ untrace <- function(what, signature = NULL, where = topenv(parent.frame())) {
     invisible(value)
 }
 
-.isMethodsDispatchOn <- function(onOff = NULL)
-    .Call("R_isMethodsDispatchOn", onOff, PACKAGE = "base")
 
-tracingState <- function( on = NULL)
-    .Call("R_traceOnOff", on, PACKAGE = "base")
+tracingState <- function(on = NULL) .Internal(traceOnOff(on))
 
-isS4 <- function(object)
-    .Call("R_isS4Object", object, PACKAGE = "base")
 
-asS4 <- function(object, flag = TRUE, complete = TRUE) {
-    flag <- methods::as(flag, "logical")
-    if(length(flag) != 1L || is.na(flag))
-	stop("Expected a single logical value for the S4 state flag")
-    .Call("R_setS4Object", object, flag, complete, PACKAGE = "base")
-}
+asS4 <- function(object, flag = TRUE, complete = TRUE)
+    .Internal(setS4Object(object, flag, complete))
 
-asS3 <- function(object, flag = TRUE, complete = TRUE) {
-    flag <- methods::as(flag, "logical")
-    if(length(flag) != 1L || is.na(flag))
-	stop("Expected a single logical value for the S3 state flag")
-    .Call("R_setS4Object", object, !flag, complete, PACKAGE = "base")
-}
-
+asS3 <- function(object, flag = TRUE, complete = TRUE)
+    .Internal(setS4Object(object, !as.logical(flag), complete))
 
 
 .doTrace <- function(expr, msg) {
-    on <- tracingState(FALSE)	   # turn it off QUICKLY (via a .Call)
+    on <- tracingState(FALSE)	   # turn it off QUICKLY (via a .Internal)
     if(on) {
 	on.exit(tracingState(TRUE)) # restore on exit, keep off during trace
 	if(!missing(msg)) {

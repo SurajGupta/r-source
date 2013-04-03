@@ -3,6 +3,8 @@
 % Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
+
 \name{splineDesign}
 \alias{splineDesign}
 \alias{spline.des}
@@ -12,8 +14,10 @@
   at the values in \code{x}.
 }
 \usage{
-splineDesign(knots, x, ord = 4, derivs, outer.ok = FALSE, sparse = FALSE)
-spline.des  (knots, x, ord = 4, derivs, outer.ok = FALSE, sparse = FALSE)
+splineDesign(knots, x, ord = 4, derivs, outer.ok = FALSE,
+             sparse = FALSE)
+spline.des  (knots, x, ord = 4, derivs, outer.ok = FALSE,
+             sparse = FALSE)
 }
 \arguments{
   \item{knots}{a numeric vector of knot positions with non-decreasing
@@ -32,7 +36,7 @@ spline.des  (knots, x, ord = 4, derivs, outer.ok = FALSE, sparse = FALSE)
   \item{outer.ok}{logical indicating if \code{x} should be allowed
     outside the \emph{inner} knots, see the \code{x} argument.}
   \item{sparse}{logical indicating if the result should inherit from class
-    \code{\linkS4class{sparseMatrix}} (package \pkg{Matrix}).}
+    \code{\linkS4class{sparseMatrix}} (package \CRANpkg{Matrix}).}
 }
 \value{
   A matrix with \code{length( x )} rows and \code{length( knots ) - ord}

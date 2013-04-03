@@ -10,7 +10,7 @@
 \alias{toBibtex}
 \alias{print.Bibtex}
 \description{
-  These methods convert R objects to character vectors with
+  These methods convert \R objects to character vectors with
   BibTeX or LaTeX markup.
 }
 \usage{
@@ -26,12 +26,12 @@ toLatex(object, \dots)
     \code{"Latex"}.}
   \item{prefix}{a character string which is printed at the beginning of
     each line, mostly used to insert whitespace for indentation.}
-  \item{\dots}{currently not used in the print methods.}
+  \item{\dots}{in the print methods, passed to \code{\link{writeLines}}.}
 }
 \details{
   Objects of class \code{"Bibtex"} or \code{"Latex"} are simply
   character vectors where each element holds one line of the
   corresponding BibTeX or LaTeX file.
-} 
+}
 \seealso{\code{\link{citEntry}} and \code{\link{sessionInfo}} for examples}
 \keyword{misc}

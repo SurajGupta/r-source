@@ -125,7 +125,7 @@ print.packageDescription <-
     cat("\n-- File:", attr(x, "file"), "\n")
     if(!is.null(attr(x, "fields"))){
         cat("-- Fields read: ")
-        cat(attr(x, "fields"), sep=", ")
+        cat(attr(x, "fields"), sep = ", ")
         cat("\n")
     }
     invisible(x)
@@ -146,7 +146,7 @@ packageVersion <- function(pkg, lib.loc = NULL)
     res <- suppressWarnings(packageDescription(pkg, lib.loc=lib.loc,
                                                fields = "Version"))
     if (!is.na(res)) package_version(res) else
-    stop("package ", sQuote(pkg), " not found")
+    stop(gettextf("package %s not found", sQuote(pkg)), domain = NA)
 }
 
 ## used with firstOnly = TRUE for example()
@@ -186,9 +186,8 @@ function(x, ...)
     outConn <- file(outFile, open = "w")
     first <- TRUE
     for(pkg in names(out)) {
-        writeLines(paste(ifelse(first, "", "\n"), x$title,
-                         " in package ", sQuote(pkg), ":\n",
-                         sep = ""),
+        writeLines(paste0(ifelse(first, "", "\n"), x$title,
+                          " in package ", sQuote(pkg), ":\n"),
                    outConn)
         writeLines(formatDL(out[[pkg]][, "Item"],
                             out[[pkg]][, "Title"]),

@@ -26,9 +26,10 @@ function(data = NA, dim = length(data), dimnames = NULL)
     ## package rv has an as.vector() method which leave this as a classed list
     if(is.object(data)) {
         dim <- as.integer(dim)
-        if (!length(dim)) warning("use of 0-length dim is deprecated")
+        if (!length(dim)) stop("'dims' cannot be of length 0")
         vl <- prod(dim)
         if(length(data) != vl) {
+            ## C code allows long vectors, but rep() does not.
             if(vl > .Machine$integer.max)
                 stop("'dim' specifies too large an array")
             data <- rep(data, length.out=vl)
@@ -57,4 +58,22 @@ function(x, MARGIN)
 		 prod(d[seq.int(from = MARGIN + 1L, length.out = n - MARGIN)]))
     dim(y) <- d
     y
+}
+
+provideDimnames <- function(x, sep="", base = list(LETTERS)) {
+    ## provide dimnames where missing - not copying x unnecessarily
+    dx <- dim(x)
+    dnx <- dimnames(x)
+    if(new <- is.null(dnx))
+	dnx <- vector("list", length(dx))
+    k <- length(M <- vapply(base, length, 1L))
+    for(i in which(vapply(dnx, is.null, NA))) {
+	ii <- 1L+(i-1L) %% k # recycling
+	dnx[[i]] <-
+	    make.unique(base[[ii]][1L+ 0:(dx[i]-1L) %% M[ii]],
+			sep = sep)
+	new <- TRUE
+    }
+    if(new) dimnames(x) <- dnx
+    x
 }

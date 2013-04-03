@@ -1,37 +1,23 @@
 #-*- Makefile -*-
 
-Rsharedir = ../share
-Rlocaledir = $(Rsharedir)/locale
-
-RGUI-CATALOGS = $(wildcard RGui-*.gmo)
-# no use on Windows en@quot.gmo
-CATALOGS = $(filter-out en@quot.gmo $(RGUI-CATALOGS), $(wildcard *.gmo))
-
 all:
-	@echo
-	@echo "---------- Installing translations ------------"
-	@mkdir -p $(Rsharedir)
-	@catalogs='$(CATALOGS)'; \
-	echo -n "msgs: "; \
-	for cat in $$catalogs; do \
-	  lang=`echo $$cat | sed -e 's/\.gmo$$//'`; \
-	  echo -n "$$lang "; \
-	  dir=$(Rlocaledir)/$$lang/LC_MESSAGES; \
-	  mkdir -p $$dir; \
-	  cp -p $$cat $$dir/R.mo; \
-	done
-	@echo
-	@catalogs='$(RGUI-CATALOGS)'; \
-	echo -n "RGui: "; \
-	for cat in $$catalogs; do \
-	  lang=`echo $$cat | sed -e 's/\.gmo$$//' -e 's/^RGui-//'`; \
-	  echo -n "$$lang "; \
-	  dir=$(Rlocaledir)/$$lang/LC_MESSAGES; \
-	  mkdir -p $$dir; \
-	  cp -p $$cat $$dir/RGui.mo; \
-	done
-	@echo
-	@echo
-
 clean:
-	rm -rf $(Rlocaledir)
+
+## datasets does not have any translations
+R_PKGS_PO = base compiler grDevices graphics grid methods parallel splines stats stats4 tcltk tools utils
+
+top_srcdir = ..
+ECHO = echo
+
+R_EXE = ../bin/R --vanilla --slave
+update-RGui:
+	@echo "tools:::update_RGui_po(\"$(top_srcdir)\")" | \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE) > /dev/null
+
+## en@quot has to be done in a UTF-8 locale, so this is incomplete
+update-pkg-po:
+	@for pkg in $(R_PKGS_PO); do \
+	   $(ECHO) "updating translations for $${pkg}"; \
+	   $(ECHO) "tools:::update_pkg_po(\"$(top_srcdir)/src/library/$${pkg}\")" | \
+	     R_DEFAULT_PACKAGES=NULL LC_COLLATE=C $(R_EXE); \
+	done

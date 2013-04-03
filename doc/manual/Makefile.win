@@ -51,8 +51,6 @@ R_RD4PDF = times,inconsolata,hyper
 
 texinputs_BASE = $(R_PKGS_BASE:=-pkg.tex)
 texinputs_RECOMMENDED = $(R_PKGS_RECOMMENDED:=-pkg.tex)
-R_PKGS_refman = base compiler datasets grDevices graphics grid methods parallel splines stats stats4 tcltk tools utils
-refman_TEXINPUTS = $(R_PKGS_refman:=-pkg.tex)
 refman_DEPENDENCIES = version.tex $(top_srcdir)/share/texmf/tex/latex/Rd.sty
 fullrefman_TEXINPUTS = $(texinputs_BASE) $(texinputs_RECOMMENDED)
 SVN_REV = $(top_srcdir)/SVN-REVISION
@@ -103,11 +101,10 @@ $(OBJECTS_HTML): $(texiincludes) Rman.css
 info: $(OBJECTS_INFO)
 $(OBJECTS_INFO): $(texiincludes)
 
-pdf: refman.pdf $(OBJECTS_PDF)
+pdf: fullrefman.pdf $(OBJECTS_PDF)
 $(OBJECTS_PDF): $(texiincludes)
 
-refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
-   refman.top refman.bot
+refman.pdf: $(refman_DEPENDENCIES) $(texinputs_BASE) refman.top refman.bot
 	@$(ECHO) " PDF/LaTeX documentation: reference index ..."
 	@(opt="$(R_PAPERSIZE)paper"; \
 	  $(ECHO) "\\documentclass[$${opt}]{book}"; \
@@ -115,7 +112,7 @@ refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 	  $(ECHO) "\\usepackage[$${opt}]{Rd}"; \
 	  $(ECHO) "\\usepackage[utf8]{inputenc}"; \
 	  cat $(srcdir)/refman.top; \
-	  texinputs=`(for f in $(refman_TEXINPUTS); \
+	  texinputs=`(for f in $(texinputs_BASE); \
 	    do $(ECHO) $${f}; done) | LC_COLLATE=C $(SORT)`; \
 	  for f in $${texinputs}; do $(ECHO) "\\input{$${f}}"; done; \
 	  cat $(srcdir)/refman.bot) > refman.tex
@@ -130,7 +127,7 @@ refman.pdf: $(refman_TEXINPUTS) $(refman_DEPENDENCIES) \
 
 fullrefman.pdf: $(fullrefman_TEXINPUTS) $(refman_DEPENDENCIES) \
    refman.top refman.bot
-	@$(ECHO) " PDF/LaTeX documentation: reference index ..."
+	@$(ECHO) " PDF/LaTeX documentation: full reference index ..."
 	@(opt="$(R_PAPERSIZE)paper"; \
 	  $(ECHO) "\\documentclass[$${opt}]{book}"; \
 	  opt="$(R_RD4PDF)"; \
@@ -200,3 +197,27 @@ maintainer-clean: distclean
 
 ## Run from src/gnuwin32/fixed/Makefile
 svnonly: ../FAQ ../RESOURCES ../html/resources.html
+
+## formerly in src/gnuwin32/Makefile.docs
+RVER = $(shell cut -d' ' -f1 $(top_srcdir)/VERSION | sed -n 1p)
+RPREFIX = $(shell ../../bin$(R_ARCH)/Rscript ../../src/gnuwin32/fixed/rwver.R)
+SEDVER = -e s/@RVER@/$(RVER)/g -e s/@RWVER@/$(RPREFIX)/g
+
+FAQ: rw-FAQ ../html/rw-FAQ.html
+
+../html/rw-FAQ.html: rw-FAQ.texi $(top_srcdir)/VERSION Rman.css
+	@echo "making rw-FAQ.html"
+	@$(SED) $(SEDVER) $< | \
+	  makeinfo --no-split --html --no-headers --number-sections --css-include=Rman.css -o $@ 
+
+rw-FAQ: rw-FAQ.texi $(top_srcdir)/VERSION
+	@echo "making rw-FAQ"
+	@$(SED) $(SEDVER) $< | \
+	  makeinfo --no-headers --number-sections -o $@
+
+rw-FAQ.pdf: rw-FAQ.texi $(top_srcdir)/VERSION
+	@$(SED) $(SEDVER) $< > tmp.texi
+	@$(TEXI2DVI) --pdf tmp.texi
+	@$(TEXI2DVI) --pdf tmp.texi
+	@mv tmp.pdf $@
+	@rm tmp.*

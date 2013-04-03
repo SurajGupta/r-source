@@ -33,9 +33,11 @@ function(x, centers, iter.max = 10, nstart = 1,
                                 ifault = 0L)
                        switch(Z$ifault,
                               stop("empty cluster: try a better set of initial centers",
-                                   call.=FALSE),
-                              warning(gettextf("did not converge in %d iterations",
-                                               iter.max), call.=FALSE, domain =NA),
+                                   call. = FALSE),
+                              warning(sprintf(ngettext(iter.max,
+                                                       "did not converge in %d iteration",
+                                                       "did not converge in %d iterations"),
+                                              iter.max), call. = FALSE, domain =NA),
                               stop("number of cluster centres must lie between 1 and nrow(x)",
                                    call.=FALSE)
                               )
@@ -47,8 +49,10 @@ function(x, centers, iter.max = 10, nstart = 1,
                                c1 = integer(m), iter = iter.max,
                                nc = integer(k), wss = double(k))
                        if(Z$iter > iter.max)
-                           warning("did not converge in ",
-                                  iter.max, " iterations", call.=FALSE)
+                           warning(sprintf(ngettext(iter.max,
+                                                    "did not converge in %d iteration",
+                                                    "did not converge in %d iterations"),
+                                           iter.max), call.=FALSE, domain = NA)
                        if(any(Z$nc == 0))
                            warning("empty cluster: try a better set of initial centers", call.=FALSE)
                        Z
@@ -59,8 +63,10 @@ function(x, centers, iter.max = 10, nstart = 1,
                                c1 = integer(m), iter = iter.max,
                                nc = integer(k), wss = double(k))
                        if(Z$iter > iter.max)
-                           warning("did not converge in ",
-                                   iter.max, " iterations", call.=FALSE)
+                           warning(sprintf(ngettext(iter.max,
+                                                    "did not converge in %d iteration",
+                                                    "did not converge in %d iterations"),
+                                           iter.max), call.=FALSE, domain = NA)
                        if(any(Z$nc == 0))
                            warning("empty cluster: try a better set of initial centers", call.=FALSE)
                        Z
@@ -78,6 +84,7 @@ function(x, centers, iter.max = 10, nstart = 1,
                     "Hartigan-Wong" = 1,
                     "Lloyd" = 2, "Forgy" = 2,
                     "MacQueen" = 3)
+    storage.mode(x) <- "double"
     if(length(centers) == 1L) {
 	if (centers == 1) nmeth <- 3
 	k <- centers
@@ -106,8 +113,7 @@ function(x, centers, iter.max = 10, nstart = 1,
     if(is.na(iter.max) || iter.max < 1) stop("'iter.max' must be positive")
     if(ncol(x) != ncol(centers))
 	stop("must have same number of columns in 'x' and 'centers'")
-    if(!is.double(x)) storage.mode(x) <- "double"
-    if(!is.double(centers)) storage.mode(centers) <- "double"
+    storage.mode(centers) <- "double"
     Z <- do_one(nmeth)
     best <- sum(Z$wss)
     if(nstart >= 2 && !is.null(cn))

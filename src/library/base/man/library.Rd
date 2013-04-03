@@ -20,12 +20,10 @@
 library(package, help, pos = 2, lib.loc = NULL,
         character.only = FALSE, logical.return = FALSE,
         warn.conflicts = TRUE, quietly = FALSE,
-        keep.source = getOption("keep.source.pkgs"),
         verbose = getOption("verbose"))
 
 require(package, lib.loc = NULL, quietly = FALSE,
         warn.conflicts = TRUE,
-        keep.source = getOption("keep.source.pkgs"),
         character.only = FALSE)
 }
 \arguments{
@@ -50,10 +48,6 @@ require(package, lib.loc = NULL, quietly = FALSE,
     package.  A conflict is a function masking a function,
     or a non-function masking a non-function.
   }
-  \item{keep.source}{logical. Now ignored.
-    This argument does not apply to packages using lazy-loading:
-    whether they have kept source is determined when they are installed.
-  }
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed.}
   \item{quietly}{a logical.  If \code{TRUE}, no message confirming
@@ -77,7 +71,7 @@ require(package, lib.loc = NULL, quietly = FALSE,
   \code{\link{suppressPackageStartupMessages}}: this will suppress all
   messages from \R itself but not necessarily all those from package
   authors.
-  
+
   If \code{library} is called with no \code{package} or \code{help}
   argument, it lists all available packages in the libraries specified
   by \code{lib.loc}, and returns the corresponding information in an
@@ -93,12 +87,6 @@ require(package, lib.loc = NULL, quietly = FALSE,
   \code{"packageInfo"}.  The structure of this class may change in
   future versions.  When used with the default value (\code{NULL}) for
   \code{lib.loc}, the attached packages are searched before the libraries.
-
-  In versions of \R{} prior to 2.14.0, a \code{.First.lib} function 
-  would be called when a package without a namespace was attached.
-  As of 2.14.0, all functions have namespaces; see 
-  \code{\link{.onLoad}} for current behaviour, and \sQuote{Writing R Extensions}
-  for a description of the older mechanism.
 }
 \value{
   Normally \code{library} returns (invisibly) the list of attached

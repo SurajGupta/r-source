@@ -44,8 +44,7 @@ addmargins <-
     ## length as the margins vector.
     if (length(FUN) == 1 && !is.list(FUN)) {
 	fname <- if (!miss.FUN) deparse(substitute(FUN)) else "Sum"
-	FUN <- list(FUN)
-	names(FUN) <- fname
+	FUN <- setNames(list(FUN), fname)
     }
 
     if (!miss.FUN) {
@@ -119,7 +118,7 @@ addmargins <-
 	## BxC, August 2003
 
 	## Make sure that FUN is a list
-	if(class(FUN) != "list") FUN <- list(FUN)
+	if(!inherits(FUN, "list")) FUN <- list(FUN)
 
 	## Useful constants
 	d <- dim(A)
@@ -182,8 +181,9 @@ addmargins <-
     ##
     if(!quiet && !miss.FUN && n.sid > 1) {
 	cat("Margins computed over dimensions\nin the following order:\n")
+        ## FIXME: what is paste(i) supposed to do?
 	for(i in seq_len(n.sid))
-	    cat(paste(i), ": ", names(dimnames(A))[margin[i]], "\n", sep="")
+	    cat(paste(i), ": ", names(dimnames(A))[margin[i]], "\n", sep = "")
     }
     new.A
 }

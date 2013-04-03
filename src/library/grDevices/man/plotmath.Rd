@@ -87,6 +87,7 @@
     \code{x \%=~\% y}   \tab x and y are congruent \cr
     \code{x \%==\% y}   \tab x is defined as y \cr
     \code{x \%prop\% y}  \tab x is proportional to y \cr
+    \code{x \%~\% y}  \tab x is distributed as y \cr
     \code{plain(x)}   \tab draw x in normal font \cr
     \code{bold(x)}   \tab draw x in bold font \cr
     \code{italic(x)}   \tab draw x in italic font \cr
@@ -217,7 +218,7 @@
   \code{\link{points}}.  The \code{\link{windows}} family of devices can
   display such characters if they are available in the font in use.
   This can often be used to display Greek \emph{letters} in bold or italic.
- 
+
   A good way to both find out which characters are available in a font
   and to determine the Unicode number is to use the \sQuote{Character
   Map} accessory (usually on the \sQuote{Start} menu under

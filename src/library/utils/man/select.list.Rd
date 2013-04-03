@@ -10,8 +10,8 @@
   Select item(s) from a character vector.
 }
 \usage{
-select.list(choices, preselect = NULL, multiple = FALSE, title = NULL,
-             graphics = getOption("menu.graphics"))
+select.list(choices, preselect = NULL, multiple = FALSE,
+            title = NULL, graphics = getOption("menu.graphics"))
 }
 \arguments{
   \item{choices}{a character vector of items.}
@@ -48,8 +48,8 @@ select.list(choices, preselect = NULL, multiple = FALSE, title = NULL,
   \code{multiple = FALSE} case uses \code{\link{menu}}.  Preselection is
   only supported for \code{multiple = TRUE}, where it is indicated by a
   \code{"+"} preceding the item.
-  
-  It is an error to use \code{select.list} in a non-interactive session. 
+
+  It is an error to use \code{select.list} in a non-interactive session.
 }
 \value{
   A character vector of selected items.  If \code{multiple} is false and

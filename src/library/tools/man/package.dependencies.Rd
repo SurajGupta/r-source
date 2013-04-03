@@ -8,11 +8,12 @@
 \title{Check Package Dependencies}
 \description{
   Parses and checks the dependencies of a package against the currently
-  installed version of R (and other packages). 
+  installed version of R (and other packages).
 }
 \usage{
 package.dependencies(x, check = FALSE,
-                     depLevel = c("Depends", "Imports", "Suggests"))
+                     depLevel =
+                     c("Depends", "Imports", "Suggests"))
 }
 \arguments{
   \item{x}{A matrix of package descriptions as returned by
@@ -24,7 +25,7 @@ package.dependencies(x, check = FALSE,
 }
 \details{
   Currently we only check if the package conforms with the currently
-  running version of R.  In the future we might add checks for 
+  running version of R.  In the future we might add checks for
   inter-package dependencies.
 }
 \seealso{

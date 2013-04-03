@@ -50,9 +50,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
         exact <- ((m < 50L) && (n < 50L))
 
     if(exact && !TIES) {
-        pansari <- function(q, m, n) {
-            .C(C_pansari, as.integer(length(q)), p = as.double(q), m, n)$p
-        }
+        pansari <- function(q, m, n) .Call(C_pAnsari, q, m, n)
         PVAL <-
             switch(alternative,
                    two.sided = {
@@ -66,9 +64,7 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                    less = 1 - pansari(STATISTIC - 1, m, n),
                    greater = pansari(STATISTIC, m, n))
         if (conf.int) {
-            qansari <- function(p, m, n) {
-                .C(C_qansari, as.integer(length(p)), q = as.double(p), m, n)$q
-            }
+            qansari <- function(p, m, n) .Call(C_qAnsari, p, m, n)
             alpha <- 1 - conf.level
             x <- sort(x)
             y <- sort(y)
@@ -92,11 +88,11 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
               }
               if (is.null(uci)) {
                   u[u < 0] <- NA
-                  uci <- min(sigma[which(u == min(u, na.rm=TRUE))])
+                  uci <- min(sigma[which(u == min(u, na.rm = TRUE))])
               }
               if (is.null(lci)) {
                   l[l <= 0] <- NA
-                  lci <- max(sigma[which(l == min(l, na.rm=TRUE))])
+                  lci <- max(sigma[which(l == min(l, na.rm = TRUE))])
               }
               ## The process of the statistics does not need to be
               ## monotone in sigma: check this and interchange quantiles.
@@ -104,9 +100,9 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                   l <- absigma - qansari(alpha/2,  m, n)
                   u <- absigma - qansari(1 - alpha/2, m, n)
                   u[u < 0] <- NA
-                  uci <- min(sigma[which(u == min(u, na.rm=TRUE))])
+                  uci <- min(sigma[which(u == min(u, na.rm = TRUE))])
                   l[l <= 0] <- NA
-                  lci <- max(sigma[which(l == min(l, na.rm=TRUE))])
+                  lci <- max(sigma[which(l == min(l, na.rm = TRUE))])
                }
                c(uci, lci)
             }
@@ -121,13 +117,9 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                 absigma <-
                     sapply(sigma + c(diff(sigma)/2,
                                      sigma[length(sigma)]*1.01), ab)
-                switch(alternative, two.sided = {
-                    cci(alpha)
-                }, greater= {
-                    c(cci(alpha*2)[1L], Inf)
-                }, less= {
-                    c(0, cci(alpha*2)[2L])
-                })
+                switch(alternative, two.sided = cci(alpha),
+                       greater = c(cci(alpha*2)[1L], Inf),
+                       less = c(0, cci(alpha*2)[2L]))
             }
             attr(cint, "conf.level") <- conf.level
             u <- absigma - qansari(0.5, m, n)
@@ -214,13 +206,10 @@ function(x, y, alternative = c("two.sided", "less", "greater"),
                     sort(c(u, l))
                 }
                 srange <- range(c(srangepos, srangeneg), na.rm=FALSE)
-                cint <- switch(alternative, two.sided = {
-                    ccia(alpha)
-                }, greater= {
-                    c(ccia(alpha*2)[1L], Inf)
-                }, less= {
-                    c(0, ccia(alpha*2)[2L])
-                })
+                cint <- switch(alternative,
+                               two.sided = ccia(alpha),
+                               greater = c(ccia(alpha*2)[1L], Inf),
+                               less = c(0, ccia(alpha*2)[2L]) )
                 attr(cint, "conf.level") <- conf.level
                 ## Check if the statistic exceeds both quantiles first.
                 statu <- ab2(srange[1L], zq=0)
@@ -273,8 +262,7 @@ function(formula, data, subset, na.action, ...)
     g <- factor(mf[[-response]])
     if(nlevels(g) != 2L)
         stop("grouping factor must have exactly 2 levels")
-    DATA <- split(mf[[response]], g)
-    names(DATA) <- c("x", "y")
+    DATA <- setNames(split(mf[[response]], g), c("x", "y"))
     y <- do.call("ansari.test", c(DATA, list(...)))
     y$data.name <- DNAME
     y

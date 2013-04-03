@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2\n"
+"Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-28 09:13\n"
+"POT-Creation-Date: 2012-12-10 18:35\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,13 +20,13 @@ msgstr ""
 msgid "'ord' must be positive integer, at most the number of knots"
 msgstr ""
 
-msgid "need at least 2*ord -1 (=%d) knots"
+msgid "need at least %s (=%d) knots"
 msgstr ""
 
-msgid "the 'x' data must be in the range %g to %g unless you set 'outer.ok = TRUE'"
+msgid "the 'x' data must be in the range %g to %g unless you set '%s'"
 msgstr ""
 
-msgid "splineDesign(*, sparse=TRUE) needs package \"Matrix\" correctly installed"
+msgid "%s needs package 'Matrix' correctly installed"
 msgstr ""
 
 msgid "values of 'x' must be distinct"
@@ -65,7 +65,7 @@ msgstr ""
 msgid "'degree' must be integer >= 1"
 msgstr ""
 
-msgid "'df' was too small; have used"
+msgid "'df' was too small; have used %d"
 msgstr ""
 
 msgid "some 'x' values beyond boundary knots may cause ill-conditioned bases"

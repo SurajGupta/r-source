@@ -22,6 +22,7 @@
 #endif
 
 #include <Defn.h>
+#include <Internal.h>
 
 /* .Internal(lapply(X, FUN)) */
 
@@ -30,15 +31,16 @@
 SEXP attribute_hidden do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP R_fcall, ans, names, X, XX, FUN;
-    int i, n;
+    R_xlen_t i, n;
     PROTECT_INDEX px;
 
     checkArity(op, args);
     PROTECT_WITH_INDEX(X = CAR(args), &px);
     PROTECT(XX = eval(CAR(args), rho));
     FUN = CADR(args);  /* must be unevaluated for use in e.g. bquote */
-    n = length(XX);
+    n = xlength(XX);
     if (n == NA_INTEGER) error(_("invalid length"));
+    Rboolean realIndx = n > INT_MAX;
 
     PROTECT(ans = allocVector(VECSXP, n));
     names = getAttrib(XX, R_NamesSymbol);
@@ -57,7 +59,7 @@ SEXP attribute_hidden do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 	   protection of its args internally), but not both of them,
 	   since the computation of one may destroy the other */
 
-	PROTECT(ind = allocVector(INTSXP, 1));
+	PROTECT(ind = allocVector(realIndx ? REALSXP : INTSXP, 1));
 	if(isVectorAtomic(XX))
 	    PROTECT(tmp = LCONS(R_Bracket2Symbol,
 				LCONS(XX, LCONS(ind, R_NilValue))));
@@ -68,7 +70,8 @@ SEXP attribute_hidden do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 				LCONS(tmp, LCONS(R_DotsSymbol, R_NilValue))));
 
 	for(i = 0; i < n; i++) {
-	    INTEGER(ind)[0] = i + 1;
+	    if (realIndx) REAL(ind)[0] = (double)(i + 1);
+	    else INTEGER(ind)[0] = (int)(i + 1);
 	    tmp = eval(R_fcall, rho);
 	    if (NAMED(tmp))
 		tmp = duplicate(tmp);
@@ -86,9 +89,11 @@ SEXP attribute_hidden do_lapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* This is a special .Internal */
 SEXP attribute_hidden do_vapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP R_fcall, ans, names=R_NilValue, rowNames=R_NilValue, X, XX, FUN, value, dim_v;
-    int i, n, commonLen, useNames,
-	rnk_v = -1; // = array_rank(value) := length(dim(value))
+    SEXP R_fcall, ans, names = R_NilValue, rowNames = R_NilValue,
+	X, XX, FUN, value, dim_v;
+    R_xlen_t i, n;
+    int commonLen;
+    int useNames, rnk_v = -1; // = array_rank(value) := length(dim(value))
     Rboolean array_value;
     SEXPTYPE commonType;
     PROTECT_INDEX index;
@@ -98,14 +103,17 @@ SEXP attribute_hidden do_vapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(XX = eval(CAR(args), rho));
     FUN = CADR(args);  /* must be unevaluated for use in e.g. bquote */
     PROTECT(value = eval(CADDR(args), rho));
-    if (!isVector(value)) error(_("FUN.VALUE must be a vector"));
+    if (!isVector(value)) error(_("'FUN.VALUE' must be a vector"));
     useNames = asLogical(eval(CADDDR(args), rho));
-    if (useNames == NA_LOGICAL) error(_("invalid USE.NAMES value"));
+    if (useNames == NA_LOGICAL) error(_("invalid '%s' value"), "USE.NAMES");
 
-    n = length(XX);
+    n = xlength(XX);
     if (n == NA_INTEGER) error(_("invalid length"));
+    Rboolean realIndx = n > INT_MAX;
 
     commonLen = length(value);
+    if (commonLen > 1 && n > INT_MAX)
+	error(_("long vectors are not supported for matrix/array results"));
     commonType = TYPEOF(value);
     dim_v = getAttrib(value, R_DimSymbol);
     array_value = (TYPEOF(dim_v) == INTSXP && LENGTH(dim_v) >= 1);
@@ -147,8 +155,12 @@ SEXP attribute_hidden do_vapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for(i = 0; i < n; i++) {
 	    SEXP val; SEXPTYPE valType;
 	    PROTECT_INDEX indx;
-	    INTEGER(ind)[0] = i + 1;
-	    PROTECT_WITH_INDEX(val = eval(R_fcall, rho), &indx);
+	    if (realIndx) REAL(ind)[0] = (double)(i + 1);
+	    else INTEGER(ind)[0] = (int)(i + 1);
+	    val = eval(R_fcall, rho);
+	    if (NAMED(val))
+		val = duplicate(val);
+	    PROTECT_WITH_INDEX(val, &indx);
 	    if (length(val) != commonLen)
 	    	error(_("values must be length %d,\n but FUN(X[[%d]]) result is length %d"),
 	               commonLen, i+1, length(val));
@@ -198,7 +210,7 @@ SEXP attribute_hidden do_vapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 		INTEGER(dim)[j] = INTEGER(dim_v)[j];
 	else
 	    INTEGER(dim)[0] = commonLen;
-	INTEGER(dim)[rnk_v] = n;
+	INTEGER(dim)[rnk_v] = (int) n;  // checked above
 	setAttrib(ans, R_DimSymbol, dim);
 	UNPROTECT(1);
     }
@@ -264,6 +276,8 @@ static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt,
 	/* PROTECT(R_fcall = lang2(FUN, X)); */
 	PROTECT(R_fcall = lang3(FUN, X, R_DotsSymbol));
 	ans = eval(R_fcall, rho);
+	if (NAMED(ans))
+	    ans = duplicate(ans);
 	UNPROTECT(1);
 	return(ans);
     } else if(replace) return duplicate(X);
