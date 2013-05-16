@@ -1,5 +1,164 @@
 R News
 
+CHANGES IN R 3.0.1:
+
+  NEW FEATURES:
+
+    o chooseCRANmirror() and chooseBioCmirror() gain an ind argument
+      (like setRepositories()).
+
+    o mcparallel has a new argument mc.interactive which can modify the
+      interactive flag in the child process. The new default is FALSE
+      which makes child processes non-interactive by default (this
+      prevents lock-ups due to children waiting for interactive input).
+
+    o scan() now warns when end-of-file occurs within a quoted string.
+
+    o count.fields() is now consistent with scan() in its handling of
+      newlines in quoted strings.  Instead of triggering an error, this
+      results in the current line receiving NA as the field count, with
+      the next line getting the total count of the two lines.
+
+    o The default method of image() will plot axes of the class of xlim
+      and ylim (and hence of x and y if there is a suitable range()
+      method).  Based on a suggestion of Michael Sumner.
+
+    o load() now has a verbose argument for debugging support, to print
+      the names of objects just before loading them.
+
+    o When loading a serialized object encounters a reference to a
+      namespace which cannot be loaded, this is replaced by a reference
+      to the global environment, with a warning.
+
+    o pairs() gains a line.main option for title placement.
+
+    o The remaining instances in which serialization to a raw vector
+      was limited to 2GB have been unlimited on a 64-bit platform, and
+      in most cases serialization to a vector of more than 1GB will be
+      substantially faster.
+
+  UTILITIES:
+
+    o R CMD config now make use of personal Makevars files under ~/.R
+      and a site file Makevars.site, in the same way as R CMD SHLIB and
+      R CMD INSTALL.  This makes the utility more useful in package
+      configure scripts.
+
+      On Windows finding the personal files may require the environment
+      variable HOME set.
+
+      The old behaviour can be obtained with the new options
+      --no-user-files and --no-site-files.
+
+  PACKAGE INSTALLATION:
+
+    o Alternatives to the site and user customization files
+      Makevars.site and ~/.R/Makevars can be specified _via_ the
+      environment variables R_MAKEVARS_SITE and R_MAKEVARS_USER
+      respectively.  These can be used to suppress the use of the
+      default files by setting an empty value (where possible) or a
+      non-existent path.
+
+  BUG FIXES:
+
+    o sys.source() did not report error locations when keep.source =
+      TRUE.
+
+    o as.POSIXct.numeric was coercing origin using the tz argument and
+      not "GMT" as documented (PR#14973).
+
+    o The active binding to assign fields in reference classes has been
+      cleaned up to reduce dependence on the class' package
+      environment, also fixing bug in initializing read-only fields
+      (inspired by a report from Hadley Wickham).
+
+    o str(d) no longer gives an error when names(d) contain illegal
+      multibyte strings (PR#15247).
+
+    o Profiling of built-in functions with line.profiling= TRUE did not
+      record the line from which they were called.
+
+    o citation(pkg) dropped the header and footer specified in the
+      CITATION file (PR#15257).
+
+    o Quotes were handled differently when reading the first line and
+      reading the rest, so read.table() misread some files that
+      contained quote characters (PR#15245).
+
+    o cat() with sep a character vector of length greater than one and
+      more than one argument was using separators inconsistently
+      (PR#15261).
+
+    o On Windows in R 3.0.0, savePlot() failed because of an incorrect
+      check on the argument count.
+
+    o unzip(list = TRUE) returned Names as a factor and not a character
+      vector (as documented) for the internal method.  (Noticed by Sean
+      O'Riordain.)
+
+    o contourLines() now checks more comprehensively for conformance of
+      its x, y and z arguments (it was used incorrectly in package
+      R2G2).
+
+    o Saved graphics display lists are R version-specific.  Attempting
+      to load workspaces containing them (or some other
+      version-specific objects) aborted the load in R 3.0.0 and
+      earlier; now it does a partial load and generates a warning
+      instead.
+
+    o In R 3.0.0, identify() and locator() did not record information
+      correctly, so replaying a graph (e.g. by copying it to another
+      device) would fail. (PR#15271)
+
+    o Calling file.copy() or dirname() with the invalid input "" (which
+      was being used in packages, despite not being a file path) could
+      have caused a segfault.
+
+      dirname("") is now "" rather than "." (unless it segfaulted).
+
+    o supsmu() could read/write outside its input vectors for very
+      short inputs (seen in package rms for n = 4).
+
+    o as.dendrogram()'s hclust method uses less memory and hence gets
+      considerably faster for large (n ~ 1000) clusterings, thanks to
+      Daniel M"ullner. (PR#15174)
+
+    o The return value when all workers failed from
+      parallel::mclapply(mc.presechedule = TRUE) was a list of strings
+      and not of error objects.  (Spotted by Karl Forner and Bernd
+      Bischl.)
+
+    o In R 3.0.0, when help() found multiple pages with the same alias,
+      the HTML display of all the selections was not produced.
+      (PR#15282)
+
+    o splinefun(method="monoH.FC") now produces a function with first
+      argument named x and allows deriv=3, as documented. (PR#15273)
+
+    o summaryRprof() would only read the first chunksize lines of an
+      Rprof file produced with line.profiling=TRUE. By default, this is
+      the first 100 seconds.  (PR#15288)
+
+    o lsfit() produced an incorrect error message when argument x had
+      more columns than rows or x had a different number of rows than
+      y. (Spotted by Renaud Gaujoux.)
+
+    o Binary operations on equal length vectors copied the class name
+      from the second operand when the first had no class name, but did
+      not set the object bit. (PR#15299)
+
+    o The trace() method for reference generator objects failed after
+      those objects became function definitions.
+
+    o write.table() did not check that factors were constructed
+      correctly, and so caused a segment fault when writing bad ones.
+      (PR#15300)
+
+    o The internal HTTP server no longer chokes on POST requests
+      without body. It will also pass-through other request types for
+      custom handlers (with the method stored in Request-Method header)
+      instead of failing.
+
 CHANGES IN R 3.0.0:
 
   SIGNIFICANT USER-VISIBLE CHANGES:

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2012  The R Core Team
+ *  Copyright (C) 1995--2013  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1283,6 +1283,10 @@ void R_Serialize(SEXP s, R_outpstream_t stream)
  * Unserialize Code
  */
 
+int R_ReadItemDepth = 0;
+int R_InitReadItemDepth;
+static char lastname[8192];
+
 #define INITIAL_REFREAD_TABLE_SIZE 128
 
 static SEXP MakeReadRefTable(void)
@@ -1331,8 +1335,10 @@ static SEXP InStringVec(R_inpstream_t stream, SEXP ref_table)
 	error(_("names in persistent strings are not supported yet"));
     len = InInteger(stream);
     PROTECT(s = allocVector(STRSXP, len));
+    R_ReadItemDepth++;
     for (i = 0; i < len; i++)
 	SET_STRING_ELT(s, i, ReadItem(ref_table, stream));
+    R_ReadItemDepth--;
     UNPROTECT(1);
     return s;
 }
@@ -1472,6 +1478,20 @@ static R_xlen_t ReadLENGTH (R_inpstream_t stream)
 #endif
 }
 
+/* differs when it fails from version in envir.c */
+static SEXP R_FindNamespace1(SEXP info)
+{
+    SEXP expr, val, where;
+    PROTECT(info);
+    where = PROTECT(ScalarString(mkChar(lastname)));
+    PROTECT(expr = LCONS(install("..getNamespace"), 
+			 LCONS(info, LCONS(where, R_NilValue))));
+    val = eval(expr, R_GlobalEnv);
+    UNPROTECT(3);
+    return val;
+}
+
+
 static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 {
     SEXPTYPE type;
@@ -1502,7 +1522,9 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	AddReadRef(ref_table, s);
 	return s;
     case SYMSXP:
+        R_ReadItemDepth++;
 	PROTECT(s = ReadItem(ref_table, stream)); /* print name */
+	R_ReadItemDepth--;
 	s = install(CHAR(s));
 	AddReadRef(ref_table, s);
 	UNPROTECT(1);
@@ -1515,7 +1537,7 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	return s;
     case NAMESPACESXP:
 	PROTECT(s = InStringVec(stream, ref_table));
-	s = R_FindNamespace(s);
+	s = R_FindNamespace1(s);
 	AddReadRef(ref_table, s);
 	UNPROTECT(1);
 	return s;
@@ -1529,10 +1551,12 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    AddReadRef(ref_table, s);
 
 	    /* Now fill it in  */
+	    R_ReadItemDepth++;
 	    SET_ENCLOS(s, ReadItem(ref_table, stream));
 	    SET_FRAME(s, ReadItem(ref_table, stream));
 	    SET_HASHTAB(s, ReadItem(ref_table, stream));
 	    SET_ATTRIB(s, ReadItem(ref_table, stream));
+	    R_ReadItemDepth--;
 	    if (ATTRIB(s) != R_NilValue &&
 		getAttrib(s, R_ClassSymbol) != R_NilValue)
 		/* We don't write out the object bit for environments,
@@ -1561,9 +1585,19 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	PROTECT(s = allocSExp(type));
 	SETLEVELS(s, levs);
 	SET_OBJECT(s, objf);
+	R_ReadItemDepth++;
 	SET_ATTRIB(s, hasattr ? ReadItem(ref_table, stream) : R_NilValue);
 	SET_TAG(s, hastag ? ReadItem(ref_table, stream) : R_NilValue);
+	if (hastag && R_ReadItemDepth == R_InitReadItemDepth + 1 &&
+	    isSymbol(TAG(s))) {
+	    snprintf(lastname, 8192, "%s", CHAR(PRINTNAME(TAG(s))));
+	}
+	if (hastag && R_ReadItemDepth <= 0) {
+	    Rprintf("%*s", 2*(R_ReadItemDepth - R_InitReadItemDepth), "");
+	    PrintValue(TAG(s));
+	}
 	SETCAR(s, ReadItem(ref_table, stream));
+	R_ReadItemDepth--; /* do this early because of the recursion. */
 	SETCDR(s, ReadItem(ref_table, stream));
 	/* For reading closures and promises stored in earlier versions, convert NULL env to baseenv() */
 	if      (type == CLOSXP && CLOENV(s) == R_NilValue) SET_CLOENV(s, R_BaseEnv);
@@ -1579,8 +1613,10 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	    PROTECT(s = allocSExp(type));
 	    AddReadRef(ref_table, s);
 	    R_SetExternalPtrAddr(s, NULL);
+	    R_ReadItemDepth++;
 	    R_SetExternalPtrProtected(s, ReadItem(ref_table, stream));
 	    R_SetExternalPtrTag(s, ReadItem(ref_table, stream));
+	    R_ReadItemDepth--;
 	    break;
 	case WEAKREFSXP:
 	    PROTECT(s = R_MakeWeakRef(R_NilValue, R_NilValue, R_NilValue,
@@ -1595,7 +1631,12 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 		char cbuf[length+1];
 		InString(stream, cbuf, length);
 		cbuf[length] = '\0';
-		PROTECT(s = mkPRIMSXP(StrToInternal(cbuf), type == BUILTINSXP));
+		int index = StrToInternal(cbuf);
+		if (index == NA_INTEGER) {
+		    warning(_("unrecognized internal function name \"%s\""), cbuf); 
+		    PROTECT(s = R_NilValue);
+		} else
+		    PROTECT(s = mkPRIMSXP(index, type == BUILTINSXP));
 	    }
 	    break;
 	case CHARSXP:
@@ -1642,15 +1683,22 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	case STRSXP:
 	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
+	    R_ReadItemDepth++;
 	    for (count = 0; count < len; ++count)
 		SET_STRING_ELT(s, count, ReadItem(ref_table, stream));
+	    R_ReadItemDepth--;
 	    break;
 	case VECSXP:
 	case EXPRSXP:
 	    len = ReadLENGTH(stream);
 	    PROTECT(s = allocVector(type, len));
-	    for (count = 0; count < len; ++count)
+	    R_ReadItemDepth++;
+	    for (count = 0; count < len; ++count) {
+		if (R_ReadItemDepth <= 0) 
+		    Rprintf("%*s[%d]\n", 2*(R_ReadItemDepth - R_InitReadItemDepth), "", count+1);
 		SET_VECTOR_ELT(s, count, ReadItem(ref_table, stream));
+	    }
+	    R_ReadItemDepth--;
 	    break;
 	case BCODESXP:
 	    PROTECT(s = ReadBC(ref_table, stream));
@@ -1686,10 +1734,15 @@ static SEXP ReadItem (SEXP ref_table, R_inpstream_t stream)
 	       alone.  If there is an attribute (as there might be if
 	       the serialized data was created by an older version) we
 	       read and ignore the value. */
+	    R_ReadItemDepth++;
 	    if (hasattr) ReadItem(ref_table, stream);
+	    R_ReadItemDepth--;
 	}
-	else
+	else {
+	    R_ReadItemDepth++;
 	    SET_ATTRIB(s, hasattr ? ReadItem(ref_table, stream) : R_NilValue);
+	    R_ReadItemDepth--;
+	}
 	UNPROTECT(1); /* s */
 	return s;
     }
@@ -1723,9 +1776,11 @@ static SEXP ReadBCLang(int type, SEXP ref_table, SEXP reps,
 	    PROTECT(ans = allocSExp(type));
 	    if (pos >= 0)
 		SET_VECTOR_ELT(reps, pos, ans);
+            R_ReadItemDepth++;
 	    if (hasattr)
 		SET_ATTRIB(ans, ReadItem(ref_table, stream));
 	    SET_TAG(ans, ReadItem(ref_table, stream));
+	    R_ReadItemDepth--;
 	    SETCAR(ans, ReadBCLang(InInteger(stream), ref_table, reps,
 				   stream));
 	    SETCDR(ans, ReadBCLang(InInteger(stream), ref_table, reps,
@@ -1733,7 +1788,13 @@ static SEXP ReadBCLang(int type, SEXP ref_table, SEXP reps,
 	    UNPROTECT(1);
 	    return ans;
 	}
-    default: return ReadItem(ref_table, stream);
+    default: 
+    	{
+    	    R_ReadItemDepth++;
+            SEXP res = ReadItem(ref_table, stream);
+            R_ReadItemDepth--;
+            return res;
+        }
     }
 }
 
@@ -1760,7 +1821,9 @@ static SEXP ReadBCConsts(SEXP ref_table, SEXP reps, R_inpstream_t stream)
 	    SET_VECTOR_ELT(ans, i, c);
 	    break;
 	default:
+	    R_ReadItemDepth++;
 	    SET_VECTOR_ELT(ans, i, ReadItem(ref_table, stream));
+	    R_ReadItemDepth--;
 	}
     }
     UNPROTECT(1);
@@ -1771,7 +1834,9 @@ static SEXP ReadBC1(SEXP ref_table, SEXP reps, R_inpstream_t stream)
 {
     SEXP s;
     PROTECT(s = allocSExp(BCODESXP));
+    R_ReadItemDepth++;
     SETCAR(s, ReadItem(ref_table, stream)); /* code */
+    R_ReadItemDepth--;
     SETCAR(s, R_bcEncode(CAR(s)));
     SETCDR(s, ReadBCConsts(ref_table, reps, stream)); /* consts */
     SET_TAG(s, R_NilValue); /* expr */
@@ -2271,18 +2336,21 @@ typedef struct membuf_st {
 #define INCR MAXELTSIZE
 static void resize_buffer(membuf_t mb, R_size_t needed)
 {
-    /* This used to allocate double 'needed', but that was problematic for
-       large buffers */
-    /* FIXME: no longer limited */
-    /* we need to store the result in a RAWSXP so limited to INT_MAX */
-    if(needed > INT_MAX)
+    if(needed > R_XLEN_T_MAX)
 	error(_("serialization is too large to store in a raw vector"));
+#ifdef LONG_VECTOR_SUPPORT
     if(needed < 10000000) /* ca 10MB */
 	needed = (1+2*needed/INCR) * INCR;
-    if(needed < 1000000000) /* ca 1GB */
-	needed = (int)((1+1.2*(double)needed/INCR) * INCR);
+    else 
+	needed = (R_size_t)((1+1.2*(double)needed/INCR) * INCR);
+#else
+    if(needed < 10000000) /* ca 10MB */
+	needed = (1+2*needed/INCR) * INCR;
+    else if(needed < 1700000000) /* close to 2GB/1.2 */
+	needed = (R_size_t)((1+1.2*(double)needed/INCR) * INCR);
     else if(needed < INT_MAX - INCR)
 	needed = (1+needed/INCR) * INCR;
+#endif
     unsigned char *tmp = realloc(mb->buf, needed);
     if (tmp == NULL) {
 	free(mb->buf); mb->buf = NULL;
@@ -2303,9 +2371,11 @@ static void OutBytesMem(R_outpstream_t stream, void *buf, int length)
 {
     membuf_t mb = stream->data;
     R_size_t needed = mb->count + (R_size_t) length;
+#ifndef LONG_VECTOR_SUPPORT
     /* There is a potential overflow here on 32-bit systems */
     if((double) mb->count + length > (double) INT_MAX)
 	error(_("serialization is too large to store in a raw vector"));
+#endif
     if (needed > mb->size) resize_buffer(mb, needed);
     memcpy(mb->buf + mb->count, buf, length);
     mb->count = needed;
@@ -2674,11 +2744,11 @@ static SEXP R_getVarsFromFrame(SEXP vars, SEXP env, SEXP forcesxp)
 
 /* from connections.c */
 SEXP R_compress1(SEXP in);
-SEXP R_decompress1(SEXP in);
+SEXP R_decompress1(SEXP in, Rboolean *err);
 SEXP R_compress2(SEXP in);
-SEXP R_decompress2(SEXP in);
+SEXP R_decompress2(SEXP in, Rboolean *err);
 SEXP R_compress3(SEXP in);
-SEXP R_decompress3(SEXP in);
+SEXP R_decompress3(SEXP in, Rboolean *err);
 
 /* Serializes and, optionally, compresses a value and appends the
    result to a file.  Returns the key position/length key for
@@ -2689,7 +2759,7 @@ R_lazyLoadDBinsertValue(SEXP value, SEXP file, SEXP ascii,
 			SEXP compsxp, SEXP hook)
 {
     PROTECT_INDEX vpi;
-    Rboolean compress = asInteger(compsxp);
+    int compress = asInteger(compsxp);
     SEXP key;
 
     value = R_serialize(value, R_NilValue, ascii, R_NilValue, hook);
@@ -2714,7 +2784,8 @@ do_lazyLoadDBfetch(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP key, file, compsxp, hook;
     PROTECT_INDEX vpi;
-    Rboolean compressed;
+    int compressed;
+    Rboolean err = FALSE;
     SEXP val;
 
     checkArity(op, args);
@@ -2726,11 +2797,12 @@ do_lazyLoadDBfetch(SEXP call, SEXP op, SEXP args, SEXP env)
 
     PROTECT_WITH_INDEX(val = readRawFromFile(file, key), &vpi);
     if (compressed == 3)
-	REPROTECT(val = R_decompress3(val), vpi);
+	REPROTECT(val = R_decompress3(val, &err), vpi);
     else if (compressed == 2)
-	REPROTECT(val = R_decompress2(val), vpi);
+	REPROTECT(val = R_decompress2(val, &err), vpi);
     else if (compressed)
-	REPROTECT(val = R_decompress1(val), vpi);
+	REPROTECT(val = R_decompress1(val, &err), vpi);
+    if (err) error("lazy-load database '%s' is corrupt", file);
     val = R_unserialize(val, hook);
     if (TYPEOF(val) == PROMSXP) {
 	REPROTECT(val, vpi);

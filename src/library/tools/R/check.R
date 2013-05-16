@@ -416,7 +416,7 @@ setRlibs <-
         }
 
         ## Next check for name clashes on case-insensitive file systems
-        ## (that is on Windows and (by default) on Mac OS X).
+        ## (that is on Windows and (by default) on OS X).
 
         dups <- unique(allfiles[duplicated(tolower(allfiles))])
         if (nb <- length(dups)) {
@@ -2077,7 +2077,7 @@ setRlibs <-
             }
             if (do_timings) {
                 tfile <- paste0(pkgname, "-Ex.timings")
-                times <- read.table(tfile, header = TRUE, row.names = 1)
+                times <- read.table(tfile, header = TRUE, row.names = 1L, colClasses = c("character", rep("numeric", 3)))
                 o <- order(times[[1]]+times[[2]], decreasing = TRUE)
                 times <- times[o, ]
                 keep <- (times[[1]] + times[[2]] > 5) | (times[[3]] > 5)
@@ -2897,12 +2897,12 @@ setRlibs <-
                 ## come from .install_package_indices(), and should be
                 ## safe to ignore ...
                 lines <- grep("Warning: incomplete final line found by readLines",
-                              lines, invert = TRUE, value = TRUE)
+                              lines, invert = TRUE, value = TRUE, useBytes = TRUE)
 
                 check_Stangle <- Sys.getenv("_R_CHECK_STANGLE_WARNINGS_", "TRUE")
                 if (!config_val_to_logical(check_Stangle))
                 lines <- grep("Warning: value of .* option should be lowercase",
-                              lines, invert = TRUE, value = TRUE)
+                              lines, invert = TRUE, value = TRUE, useBytes = TRUE)
 
                 ## Package writers cannot really do anything about
                 ## non ISO C code in *system* headers.  Also,
@@ -2914,9 +2914,9 @@ setRlibs <-
                 ## warnings via an environment variable.
                 if (!R_check_all_non_ISO_C) {
                     lines <- grep("^ */.*: warning: .*ISO C",
-                                  lines, invert = TRUE, value = TRUE)
+                                  lines, invert = TRUE, value = TRUE, useBytes = TRUE)
                     lines <- grep("warning: *ISO C forbids.*function pointer",
-                                  lines, invert = TRUE, value = TRUE)
+                                  lines, invert = TRUE, value = TRUE, useBytes = TRUE)
                 }
 
                 ## Warnings spotted by gcc with '-Wunused', which is
@@ -2926,10 +2926,10 @@ setRlibs <-
                     Sys.getenv("_R_CHECK_SRC_MINUS_W_UNUSED_", "FALSE")
                 if (!config_val_to_logical(check_src_flag)) {
                     lines <- grep("warning: unused", lines, ignore.case = TRUE,
-                                  invert = TRUE, value = TRUE)
+                                  invert = TRUE, value = TRUE, useBytes = TRUE)
                     lines <- grep("warning: .* set but not used", lines,
                                   ignore.case = TRUE,
-                                  invert = TRUE, value = TRUE)
+                                  invert = TRUE, value = TRUE, useBytes = TRUE)
                 }
                 ## (gfortran seems to use upper case.)
 

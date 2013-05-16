@@ -8,6 +8,237 @@
 
 <h2> R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.0.1</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li> <p><code>chooseCRANmirror()</code> and <code>chooseBioCmirror()</code> gain
+an <code>ind</code> argument (like <code>setRepositories()</code>).
+</p>
+</li>
+<li> <p><code>mcparallel</code> has a new argument <code>mc.interactive</code>
+which can modify the interactive flag in the child process. The
+new default is <code>FALSE</code> which makes child processes
+non-interactive by default (this prevents lock-ups due to children
+waiting for interactive input).
+</p>
+</li>
+<li> <p><code>scan()</code> now warns when end-of-file occurs within
+a quoted string.
+</p>
+</li>
+<li> <p><code>count.fields()</code> is now consistent with <code>scan()</code>
+in its handling of newlines in quoted strings.  Instead of
+triggering an error, this results in the current line receiving
+<code>NA</code> as the field count, with the next line getting the total
+count of the two lines.
+</p>
+</li>
+<li><p> The default method of <code>image()</code> will plot axes of the
+class of <code>xlim</code> and <code>ylim</code> (and hence of <code>x</code> and
+<code>y</code> if there is a suitable <code>range()</code> method).  Based on
+a suggestion of Michael Sumner.
+</p>
+</li>
+<li> <p><code>load()</code> now has a <code>verbose</code> argument for
+debugging support, to print the names of objects just before
+loading them.
+</p>
+</li>
+<li><p> When loading a serialized object encounters a reference to a
+namespace which cannot be loaded, this is replaced by a reference
+to the global environment, with a warning.
+</p>
+</li>
+<li> <p><code>pairs()</code> gains a <code>line.main</code> option for title placement.
+</p>
+</li>
+<li><p> The remaining instances in which serialization to a raw
+vector was limited to 2GB have been unlimited on a 64-bit
+platform, and in most cases serialization to a vector of more than
+1GB will be substantially faster.
+</p>
+</li></ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+<ul>
+<li> <p><CODE>R CMD config</CODE> now make use of personal
+&lsquo;<span class="file">Makevars</span>&rsquo; files under &lsquo;<span class="file">~/.R</span>&rsquo; and a site file
+&lsquo;<span class="file">Makevars.site</span>&rsquo;, in the same way as <CODE>R CMD SHLIB</CODE> and
+<CODE>R CMD INSTALL</CODE>.  This makes the utility more useful in
+package <CODE>configure</CODE> scripts.
+</p>
+<p>On Windows finding the personal files may require the environment
+variable <span class="env">HOME</span> set.
+</p>
+<p>The old behaviour can be obtained with the new options
+<span class="option">--no-user-files</span> and <span class="option">--no-site-files</span>.
+</p>
+</li></ul>
+
+
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+
+<ul>
+<li><p> Alternatives to the site and user customization files
+&lsquo;<span class="file">Makevars.site</span>&rsquo; and &lsquo;<span class="file">~/.R/Makevars</span>&rsquo; can be specified
+<EM>via</EM> the environment variables <span class="env">R_MAKEVARS_SITE</span> and
+<span class="env">R_MAKEVARS_USER</span> respectively.  These can be used to suppress
+the use of the default files by setting an empty value (where
+possible) or a non-existent path.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>sys.source()</code> did not report error locations when
+<code>keep.source = TRUE</code>.
+</p>
+</li>
+<li> <p><code>as.POSIXct.numeric</code> was coercing <code>origin</code> using
+the <code>tz</code> argument and not <code>"GMT"</code> as documented
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14973">PR#14973</a>).
+</p>
+</li>
+<li><p> The active binding to assign fields in reference classes
+has been cleaned up to reduce dependence on the class' package
+environment, also fixing bug in initializing read-only fields
+(inspired by a report from Hadley Wickham).
+</p>
+</li>
+<li> <p><code>str(d)</code> no longer gives an error when <code>names(d)</code>
+contain illegal multibyte strings (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15247">PR#15247</a>).
+</p>
+</li>
+<li><p> Profiling of built-in functions with <code>line.profiling=
+      TRUE</code> did not record the line from which they were called.
+</p>
+</li>
+<li> <p><code>citation(pkg)</code> dropped the header and footer specified
+in the &lsquo;<span class="file">CITATION</span>&rsquo; file (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15257">PR#15257</a>).
+</p>
+</li>
+<li><p> Quotes were handled differently when reading the first line
+and reading the rest, so <code>read.table()</code> misread some files
+that contained quote characters (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15245">PR#15245</a>).
+</p>
+</li>
+<li> <p><code>cat()</code> with <code>sep</code> a character vector of length
+greater than one and more than one argument was using separators
+inconsistently (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15261">PR#15261</a>).
+</p>
+</li>
+<li><p> On Windows in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, <code>savePlot()</code> failed because of
+an incorrect check on the argument count.
+</p>
+</li>
+<li> <p><code>unzip(list = TRUE)</code> returned <code>Names</code> as a factor
+and not a character vector (as documented) for the internal method.
+(Noticed by Sean O'Riordain.)
+</p>
+</li>
+<li> <p><code>contourLines()</code> now checks more comprehensively for
+conformance of its <code>x</code>, <code>y</code> and <code>z</code> arguments (it
+was used incorrectly in package <a href="http://CRAN.R-project.org/package=R2G2"><span class="pkg">R2G2</span></a>).
+</p>
+</li>
+<li><p> Saved graphics display lists are <font face="Courier New,Courier" color="#666666"><b>R</b></font> version-specific.
+Attempting to load workspaces containing them (or some other
+version-specific objects) aborted the load in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0 and
+earlier; now it does a partial load and generates a warning
+instead.
+</p>
+</li>
+<li><p> In <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, <code>identify()</code> and <code>locator()</code> did
+not record information correctly, so replaying a graph (e.g. by
+copying it to another device) would fail. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15271">PR#15271</a>)
+</p>
+</li>
+<li><p> Calling <code>file.copy()</code> or <code>dirname()</code> with the
+invalid input <code>""</code> (which was being used in packages, despite
+not being a file path) could have caused a segfault.
+</p>
+<p><code>dirname("")</code> is now <code>""</code> rather than <code>"."</code> (unless
+it segfaulted).
+</p>
+</li>
+<li> <p><code>supsmu()</code> could read/write outside its input vectors
+for very short inputs (seen in package <a href="http://CRAN.R-project.org/package=rms"><span class="pkg">rms</span></a> for <code>n = 4</code>).
+</p>
+</li>
+<li> <p><code>as.dendrogram()</code>'s <code>hclust</code> method uses less
+memory and hence gets considerably faster for large (n ~ 1000)
+clusterings, thanks to Daniel Müllner. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15174">PR#15174</a>)
+</p>
+</li>
+<li><p> The return value when all workers failed from
+<code>parallel::mclapply(mc.presechedule = TRUE)</code> was a list of
+strings and not of error objects.  (Spotted by Karl Forner and
+Bernd Bischl.) 
+</p>
+</li>
+<li><p> In <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, when <code>help()</code> found multiple pages with
+the same alias, the HTML display of all the selections was not
+produced.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15282">PR#15282</a>)  
+</p>
+</li>
+<li> <p><code>splinefun(method="monoH.FC")</code> now produces a
+function with first argument named <code>x</code> and allows
+<code>deriv=3</code>, as documented. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15273">PR#15273</a>)     
+</p>
+</li>
+<li> <p><code>summaryRprof()</code> would only read the first 
+<code>chunksize</code> lines of an <code>Rprof</code> file produced with
+<code>line.profiling=TRUE</code>. By default, this is the first 100
+seconds.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15288">PR#15288</a>)
+</p>
+</li>
+<li> <p><code>lsfit()</code> produced an incorrect error message when
+argument <code>x</code> had more columns than rows or <code>x</code> had a
+different number of rows than <code>y</code>. (Spotted by Renaud Gaujoux.)      
+</p>
+</li>
+<li><p> Binary operations on equal length vectors copied the
+class name from the second operand when the first had no
+class name, but did not set the object bit. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15299">PR#15299</a>)
+</p>
+</li>
+<li><p> The <code>trace()</code> method for reference generator objects
+failed after those objects became function definitions.
+</p>
+</li>
+<li> <p><code>write.table()</code> did not check that factors were
+constructed correctly, and so caused a segment fault when
+writing bad ones. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15300">PR#15300</a>)
+</p>
+</li>
+<li><p> The internal HTTP server no longer chokes on POST requests
+without body. It will also pass-through other request types for
+custom handlers (with the method stored in Request-Method header)
+instead of failing.
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.0.0</h3>
 
 

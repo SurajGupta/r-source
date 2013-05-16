@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2012  The R Core Team
+ *  Copyright (C) 1997--2013  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -602,7 +602,12 @@ static void RestoreSEXP(SEXP s, FILE *fp, InputRoutines *m, NodeInfo *node, int 
     case BUILTINSXP:
 	len = m->InInteger(fp, d);
 	R_AllocStringBuffer(MAXELTSIZE - 1, &(d->buffer));
-	SET_PRIMOFFSET(s, StrToInternal(m->InString(fp, d)));
+	int index = StrToInternal(m->InString(fp, d));
+	if (index == NA_INTEGER) {
+	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data); 
+	    index = 0;   /* zero doesn't make sense, but is back compatible with 3.0.0 and earlier */
+	}
+	SET_PRIMOFFSET(s, index);
 	break;
     case CHARSXP:
 	len = m->InInteger(fp, d);
@@ -1260,7 +1265,12 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp,
     case SPECIALSXP:
     case BUILTINSXP:
 	R_AllocStringBuffer(MAXELTSIZE - 1, &(d->buffer));
-	PROTECT(s = mkPRIMSXP(StrToInternal(m->InString(fp, d)), type == BUILTINSXP));
+	int index = StrToInternal(m->InString(fp, d));
+	if (index == NA_INTEGER) {
+	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data); 
+	    PROTECT(s = R_NilValue);
+	} else
+	    PROTECT(s = mkPRIMSXP(index, type == BUILTINSXP));
 	break;
     case CHARSXP:
     case LGLSXP:
@@ -2313,9 +2323,12 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 
 /* Read and checks the magic number, open the connection if needed */
 
+extern int R_ReadItemDepth;
+extern int R_InitReadItemDepth;
+
 SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    /* loadFromConn2(conn, environment) */
+    /* loadFromConn2(conn, environment, verbose) */
 
     struct R_inpstream_st in;
     Rconnection con;
@@ -2328,7 +2341,7 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     con = getConnection(asInteger(CAR(args)));
-
+    
     wasopen = con->isopen;
     if(!wasopen) {
 	char mode[5];	
@@ -2361,7 +2374,9 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
 	strncmp((char*)buf, "RDX2\n", 5) == 0) {
 	R_InitConnInPStream(&in, con, R_pstream_any_format, NULL, NULL);
 	/* PROTECT is paranoia: some close() method might allocate */
+	R_InitReadItemDepth = R_ReadItemDepth = -asInteger(CADDR(args));
 	PROTECT(res = RestoreToEnv(R_Unserialize(&in), aenv));
+	R_ReadItemDepth = 0;
 	if(!wasopen) {endcontext(&cntxt); con->close(con);}
 	UNPROTECT(1);
     } else

@@ -1244,6 +1244,8 @@ at the command line run
 tar xf bwidget-1.9.6.tar.gz
 sudo mv bwidget-1.9.6 /usr/local/lib
 @end example
+
+@noindent
 substituting a location on the Tcl/Tk search path for @file{/usr/local/lib} if
 needed.
 
@@ -1785,6 +1787,30 @@ they will need to read the source code to determine if it is
 thread-safe.  In particular, code which makes use of the stack-checking
 mechanism must not be called from threaded code.
 
+Packages are not standard-alone programs, and an @R{} process could
+contain more than one OpenMP-enabled package as well as other components
+(for example, an optimized BLAS) making use of OpenMP.  So careful
+consideration needs to be given to resource usage.  OpenMP works with
+parallel regions, and for most implementations the default is to use as
+many threads as `CPUs' for such regions.  Parallel regions can be
+nested, although it is common to use only a single thread below the
+first level.  The detected number of `CPUs' and the assumption that the
+@R{} process is entitled to use them all are both dubious assumptions.
+The best way to limit resources is to limit the overall number of
+threads available to OpenMP in the R process: this can be done via
+environment variable @env{OMP_THREAD_LIMIT}, where
+implemented.@footnote{Which it was at the time of writing with GCC,
+Solaris Studio and Intel compilers.}  Alternatively, the number of
+threads per region can be limited by the environment variable
+@env{OMP_NUM_THREADS} or API call @code{omp_set_num_threads}, or,
+better, for the regions in your code as part of their
+specification. E.g.@: @R{} uses
+@example
+#pragma omp parallel for num_threads(nthreads) @dots{}
+@end example
+@noindent
+That way you only control your own code and not that of other OpenMP users.
+
 @node Using pthreads, Compiling in sub-directories, OpenMP support, Using Makevars
 @subsubsection Using pthreads
 
@@ -1793,8 +1819,8 @@ There is no direct support for the POSIX threads (more commonly known as
 were using it unconditionally so it seems that nowadays it is
 universally available on POSIX operating systems (hence not Windows).
 
-For reasonably recent versions of @command{gcc} the correct
-specification is
+For reasonably recent versions of @command{gcc} and @command{clang} the
+correct specification is
 
 @example
 PKG_CPPFLAGS = -pthread
@@ -1885,11 +1911,11 @@ Csdp/lib/libsdp.a
 @end smallexample
 
 @noindent
-Note the quotes: the macros can contain spaces, e.g.@: @code{gcc -m64
--std=gnu99}.  Several authors have forgotten about parallel makes: the
-static library in the subdirectory must be made before the shared
-library and so must depend on the latter.  Others forget the need for
-position-independent code.
+Note the quotes: the macros can contain spaces, e.g.@: @code{CC = "gcc
+-m64 -std=gnu99"}.  Several authors have forgotten about parallel makes:
+the static library in the subdirectory must be made before the shared
+object (@code{$(SHLIB)}) and so the latter must depend on the former.
+Others forget the need for position-independent code.
 
 We really do not recommend using a @file{src/Makefile} instead on
 @file{src/Makevars}, and as the example above shows, it is not necessary.
@@ -2100,7 +2126,7 @@ using these utilities.
 @end quotation
 
 @quotation Note to Windows users
-@code{R CMD build} will make use of the Windows toolset (see the ``R
+@code{R CMD build} may make use of the Windows toolset (see the ``R
 Installation and Administration'' manual) if present and in your path,
 and it is required for packages which need it to install (including
 those with @file{configure.win} or @file{cleanup.win} scripts or a
@@ -2488,6 +2514,20 @@ default (it can be selected by environment variable
 It can be useful to run @command{R CMD check --check-subdirs=yes} on the
 built tarball as a final check on the contents.
 
+Where a non-POSIX file system is in use which does not utilize execute
+permissions, some care is needed with permissions.  This applies on
+Windows and to e.g.@: FAT-formatted drives and SMB-mounted file systems
+on other OSes.  The `mode' of the file recorded in the tarball will be
+whatever @code{file.info()} returns.  On Windows this will record only
+directories with execute permission and on other OSes it is likely that
+all files have reported `mode' @code{0777}.  A particular issue is
+packages being built on Windows which are intended to contain executable
+scripts such as @file{configure} and @file{cleanup}: it is difficult to
+include these from Windows but where Cygwin has been used to set a
+POSIX-like mode, using environment variable @env{R_BUILD_TAR=tar.exe}
+@emph{may} provide a workaround.
+
+
 @node Building binary packages,  , Building package tarballs, Checking and building packages
 @subsection Building binary packages
 @cindex Building binary packages
@@ -2786,10 +2826,15 @@ engine supplied with @R{}, the package providing any other engine must
 be specified in the @samp{VignetteBuilder} field of the package
 @file{DESCRIPTION} file, and also specified in the @samp{Suggests},
 @samp{Imports} or @samp{Depends} field (since its namespace must be
-available to build or check your package). If more than one package is
+available to build or check your package).  If more than one package is
 specified as a builder, they will be searched in the order given
 there.  The @pkg{utils} package is always implicitly appended to the
 list of builder packages.
+
+Note that a package with non-Sweave vignettes should always have a
+@samp{VignetteBuilder} field in the @file{DESCRIPTION} file, since this
+is how @command{R CMD check} recognizes that there are vignettes to be
+checked.
 
 The vignette engine can produce @file{.tex}, @file{.pdf}, or @file{.html}
 files as output.  If it produces @file{.tex} files, @R{} will 
@@ -6126,7 +6171,7 @@ which provide complementary examples to those given here.)
 @menu
 * Browsing::                    
 * Debugging R code::            
-* Using gctorture and valgrind::  
+* Using gctorture and memory access::  
 * Debugging compiled code::     
 @end menu
 
@@ -6210,7 +6255,7 @@ really necessary, objects can be assigned to the workspace from the
 browser prompt (by using @code{<<-} if the name is not already in
 scope).
 
-@node Debugging R code, Using gctorture and valgrind, Browsing, Debugging
+@node Debugging R code, Using gctorture and memory access, Browsing, Debugging
 @section Debugging R code
 
 @findex traceback
@@ -6526,8 +6571,8 @@ temporary code, but @code{trace} can help with functions in a namespace
 @code{trace(,edit=TRUE)} to insert code visually.
 
 
-@node Using gctorture and valgrind, Debugging compiled code, Debugging R code, Debugging
-@section Using gctorture and valgrind
+@node Using gctorture and memory access, Debugging compiled code, Debugging R code, Debugging
+@section Using gctorture and memory access
 
 Errors in memory allocation and reading/writing outside arrays are very
 common causes of crashes (e.g.,@: segfaults) on some machines.  Often
@@ -6536,12 +6581,17 @@ damage to the structures which @R{} itself has allocated may only become
 apparent at the next garbage collection (or even at later garbage
 collections after objects have been deleted).
 
+Note that memory access errors may be seen with LAPACK, BLAS and
+Java-using packages: some at least of these seem to be intentional.
+
 @menu
 * Using gctorture::             
 * Using valgrind::              
+* Using AddressSanitizer::      
+* Fortran array bounds checking::  
 @end menu
 
-@node Using gctorture, Using valgrind, Using gctorture and valgrind, Using gctorture and valgrind
+@node Using gctorture, Using valgrind, Using gctorture and memory access, Using gctorture and memory access
 @subsection Using gctorture
 
 @findex gctorture
@@ -6605,7 +6655,7 @@ Used with a debugger and with @code{gctorture} or @code{gctorture2} this
 mechanism can be helpful in isolating memory protect problems.
 
 
-@node Using valgrind,  , Using gctorture, Using gctorture and valgrind
+@node Using valgrind, Using AddressSanitizer, Using gctorture, Using gctorture and memory access
 @subsection Using valgrind
 
 If you have access to Linux on an @cputype{ix86}, @cputype{x86_64},
@@ -6629,14 +6679,13 @@ maximal information use a build with debugging symbols.  We know there
 will be some small memory leaks from @code{readline} and @R{} itself ---
 these are memory areas that are in use right up to the end of the @R{}
 session.  Expect this to run around 20x slower than without
-@code{valgrind}, and in some cases even slower than that.  Earlier
-versions of @code{valgrind} were not happy with many optimized BLASes
-that use @acronym{CPU}-specific instructions (3D now, SSE, SSE2, SSE3
-and similar) so you may need to build a version of @R{} specifically to
-use with @code{valgrind}.
+@code{valgrind}, and in some cases even slower than that.  Several
+versions of @code{valgrind} were not happy with some optimized BLASes
+that use @acronym{CPU}-specific instructions so you may need to build a
+version of @R{} specifically to use with @code{valgrind}.
 
-On Mac OS 10.6/7 the valgrind session is liable to hang when @R{}
-terminates with @command{valgrind} prior to 3.8.1.
+On Mac OS 10.6 and later the valgrind session is liable to hang when
+@R{} terminates with @command{valgrind} prior to 3.8.1.
 
 On platforms supported by @code{valgrind} you can build a version of
 @R{} with extra instrumentation to help @code{valgrind} detect errors in
@@ -6688,6 +6737,10 @@ stack trace is not sufficiently informative the option
 a post-mortem debugger (by default @code{gdb}) so that variables in the
 C code can be inspected (@pxref{Inspecting R objects}).
 
+@command{valgrind} is good at spotting the use of uninitialized values:
+use option @option{--track-origins=yes} to show where these originated
+from.  What it cannot detect is the misuse of arrays allocated on the
+stack: this includes C automatic variables and most Fortran arrays.
 
 It is possible to run all the examples, tests and vignettes covered by
 @code{R CMD check} under @code{valgrind} by using the option
@@ -6696,25 +6749,106 @@ It is possible to run all the examples, tests and vignettes covered by
 @file{~/.valgrindrc} file containing
 
 @example
---tool=memcheck
---memcheck:leak-check=full
+--leak-check=full
+--track-origins=yes
 @end example
 
 @noindent
 or setting the environment variable @env{VALGRIND_OPTS}.
 
-On OS X you may need to ensure that debugging symbols are made
-available (so @command{valgrind} reports line numbers in files).  This
-can usually be done with the @command{valgrind} option
-@option{--dysmutil=yes} to ask for the symbols to be dumped when the
-@file{.so} file is loaded.  This will not work where packages are
-installed into a system area (such as the @file{R.framework}) and can be
-slow.  Installing packages with @command{R CMD INSTALL --dsym} installs
-the dumped symbols.  (This can also be done by setting environment
-variable @env{PKG_MAKE_DSYM} to a non-empty value.)
+On OS X you may need to ensure that debugging symbols are made available
+(so @command{valgrind} reports line numbers in files).  This can usually
+be done with the @command{valgrind} option @option{--dysmutil=yes} to
+ask for the symbols to be dumped when the @file{.so} file is loaded.
+This will not work where packages are installed into a system area (such
+as the @file{R.framework}) and can be slow.  Installing packages with
+@command{R CMD INSTALL --dsym} installs the dumped symbols.  (This can
+also be done by setting environment variable @env{PKG_MAKE_DSYM} to a
+non-empty value before the @command{INSTALL}.)
+
+@node Using AddressSanitizer, Fortran array bounds checking, Using valgrind, Using gctorture and memory access
+@subsection Using AddressSanitizer
+
+@command{AddressSanitizer} (`ASan') is a tool with similar aims to the
+memory checker in @command{valgrind}.  It is available with suitable
+builds of @command{gcc} 4.8.x and @command{clang} 3.1 and
+later@footnote{not including the version distributed by Apple in
+@code{Xcode} 4.6.}, on common Linux platforms and 64-bit Mac OS X.  See
+@uref{https://code.google.com/p/address-sanitizer/}.
+
+It requires code to have been compiled @emph{and linked} with
+@option{-fsanitize=address} (@command{gcc} and recent versions of
+@command{clang}) or @option{-faddress-sanitizer} (@command{clang} 3.1),
+and using @code{-fno-omit-frame-pointer} will give more legible reports.
+It has a runtime penalty of 2--3x, extended compilation times and uses
+substantially more memory, often 1--2GB, at run time.  In contrast to
+@command{valgrind}, it can detect misuse of stack variables but not the
+use of uninitialized memory (although that may come with
+@option{-fsanitize=memory} in future versions of @command{clang}).
+
+Current versions do not return symbolic addresses for the location of
+the error without some help.  One possibility is to use an external
+symbolizer such as @command{asan_symbolize.py} from
+@url{http://llvm.org}: it makes use of @command{llvm-symbolizer} if
+available.  For example, the check output can be piped through
+@command{asan_symbolize.py} and then (for compiled C++ code)
+@command{c++filt}.
+
+The simplest way to make use of this is to build a version of @R{} with
+something like
+
+@example
+CC="gcc-4.8.0 -std=gnu99 -fsanitize=address"
+CFLAGS="-fno-omit-frame-pointer -O2 -Wall -pedantic -mtune=native"
+@end example
+
+@noindent
+which will ensure that the @code{libasan} run-time library is compiled
+into the @R{} executable.  However, building @R{} with e.g.@:
+
+@example
+MAIN_LD="gcc-4.8.0 -std=gnu99 -fsanitize=address"
+@end example
+
+@noindent
+allows this check to be enabled on a per-package basis by using a
+@file{~/.R/Makevars} file like
+@example
+CC = gcc-4.8.0 -std=gnu99 -fsanitize=address -fno-omit-frame-pointer
+CXX = g++-4.8.0 -fsanitize=address -fno-omit-frame-pointer
+F77 = gfortran-4.8.0 -fsanitize=address
+FC = gfortran-4.8.0 -fsanitize=address
+@end example
 
 
-@node Debugging compiled code,  , Using gctorture and valgrind, Debugging
+@node Fortran array bounds checking,  , Using AddressSanitizer, Using gctorture and memory access
+@subsection Fortran array bounds checking
+
+Most of the Fortran compilers used with @R{} allow code to be compiled
+with checking of array bounds: for example @command{gfortran} has option
+@option{-fbounds-check} and Solaris Studio has @option{-C}.  This gives
+an error when the upper or lower bound is exceeded, e.g.
+@example
+At line 97 of file .../src/appl/dqrdc2.f
+Fortran runtime error: Index '1' of dimension 1 of array 'x' above upper bound of 0
+@end example
+
+One does need to be aware that lazy programmers often specify Fortran
+dimensions as @code{1} rather than @code{*} or a real bound:
+@file{stats/src/portsrc.f} was a prolific example.
+
+It is easy to arrange to use this check on just the code in your
+package: add to @file{~/.R/Makevars} something like (for
+@command{gfortran})
+@example
+FCFLAGS = -g -O2 -mtune=native -fbounds-check
+FFLAGS = -g -O2 -mtune=native -fbounds-check
+@end example
+
+@noindent
+when you run @command{R CMD check}.
+
+@node Debugging compiled code,  , Using gctorture and memory access, Debugging
 @section Debugging compiled code
 @cindex Debugging
 
@@ -6753,7 +6887,8 @@ Selection: 3
 
 @noindent
 Since the @R{} process may be damaged, the only really safe option is
-the first.
+the first.  (Note that a core dump is only produced where enabled: a
+common default in a shell is to limit its size to 0, thereby disabling it.)
 
 A fairly common cause of such crashes is a package which uses @code{.C}
 or @code{.Fortran} and writes beyond (at either end) one of the
