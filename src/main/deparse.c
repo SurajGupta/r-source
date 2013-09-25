@@ -405,7 +405,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(o = objs = allocList(nobjs));
 
     for (j = 0, nout = 0; j < nobjs; j++, o = CDR(o)) {
-	SET_TAG(o, install(translateChar(STRING_ELT(names, j))));
+	SET_TAG(o, installTrChar(STRING_ELT(names, j)));
 	SETCAR(o, findVar(TAG(o), source));
 	if (CAR(o) == R_UnboundValue)
 	    warning(_("object '%s' not found"), CHAR(PRINTNAME(TAG(o))));
@@ -643,6 +643,7 @@ static void printcomment(SEXP s, LocalParseData *d)
 {
     SEXP cmt;
     int i, ncmt;
+    const void *vmax = vmaxget();
 
     /* look for old-style comments first */
 
@@ -660,6 +661,7 @@ static void printcomment(SEXP s, LocalParseData *d)
 	    writeline(d);
 	}
     }
+    vmaxset(vmax);
 }
 
 
@@ -748,10 +750,12 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	break;
     case CHARSXP:
     {
+	const void *vmax = vmaxget();
 	const char *ts = translateChar(s);
 	/* versions of R < 2.7.0 cannot parse strings longer than 8192 chars */
 	if(strlen(ts) >= 8192) d->longstring = TRUE;
 	print2buff(ts, d);
+	vmaxset(vmax);
 	break;
     }
     case SPECIALSXP:
@@ -769,7 +773,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	    d->opts = localOpts;
 	    print2buff(">", d);
 	} else {
-	    PROTECT(s = eval(s, NULL)); /* eval uses env of promise */
+	    PROTECT(s = eval(s, R_EmptyEnv)); /* eval uses env of promise */
 	    deparse2buff(s, d);
 	    UNPROTECT(1);
 	}
@@ -856,13 +860,16 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	    if ((TYPEOF(SYMVALUE(op)) == BUILTINSXP) ||
 		(TYPEOF(SYMVALUE(op)) == SPECIALSXP) ||
 		(userbinop = isUserBinop(op))) {
+		s = CDR(s);
 		if (userbinop) {
-		    fop.kind = PP_BINARY2;    /* not quite right for spacing, but can't be unary */
-		    fop.precedence = PREC_PERCENT;
-		    fop.rightassoc = 0;
+		    if (isNull(getAttrib(s, R_NamesSymbol))) {  
+			fop.kind = PP_BINARY2;    /* not quite right for spacing, but can't be unary */
+			fop.precedence = PREC_PERCENT;
+			fop.rightassoc = 0;
+		    } else 
+			fop.kind = PP_FUNCALL;  /* if args are named, deparse as function call (PR#15350) */
 		} else 
 		    fop = PPINFO(SYMVALUE(op));
-		s = CDR(s);
 		if (fop.kind == PP_BINARY) {
 		    switch (length(s)) {
 		    case 1:
@@ -995,10 +1002,12 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 		    } else {
 			s = CADDR(s);
 			n = length(s);
+			const void *vmax = vmaxget();
 			for(i = 0 ; i < n ; i++) {
 			    print2buff(translateChar(STRING_ELT(s, i)), d);
 			    writeline(d);
 			}
+			vmaxset(vmax);
 		    }
 		    break;
 		case PP_ASSIGN:
@@ -1343,6 +1352,9 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 		surround = TRUE;
 		print2buff("as.character(", d);
 	    }
+	} else if(TYPEOF(vector) == RAWSXP) {
+	    surround = TRUE;
+	    print2buff("as.raw(", d);
 	}
 	if(tlen > 1) print2buff("c(", d);
 	allNA = allNA && !(d->opts & S_COMPAT);
@@ -1362,10 +1374,14 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 		formatReal(&REAL(vector)[i], 1, &w, &d, &e, 0);
 		strp = EncodeReal2(REAL(vector)[i], w, d, e);
 	    } else if (TYPEOF(vector) == STRSXP) {
+		const void *vmax = vmaxget();
 		const char *ts = translateChar(STRING_ELT(vector, i));
 		/* versions of R < 2.7.0 cannot parse strings longer than 8192 chars */
 		if(strlen(ts) >= 8192) d->longstring = TRUE;
 		strp = EncodeElement(vector, i, quote, '.');
+		vmaxset(vmax);
+	    } else if (TYPEOF(vector) == RAWSXP) {
+		strp = EncodeRaw(RAW(vector)[i], "0x");
 	    } else
 		strp = EncodeElement(vector, i, quote, '.');
 	    print2buff(strp, d);
@@ -1383,6 +1399,7 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 static void src2buff1(SEXP srcref, LocalParseData *d)
 {
     int i,n;
+    const void *vmax = vmaxget();
     PROTECT(srcref);
 
     PROTECT(srcref = lang2(install("as.character"), srcref));
@@ -1393,6 +1410,7 @@ static void src2buff1(SEXP srcref, LocalParseData *d)
 	if(i < n-1) writeline(d);
     }
     UNPROTECT(3);
+    vmaxset(vmax);
 }
 
 /* src2buff : Deparse source element k to buffer, if possible; return FALSE on failure */
@@ -1417,6 +1435,7 @@ static void vec2buff(SEXP v, LocalParseData *d)
     SEXP nv, sv;
     int i, n /*, localOpts = d->opts */;
     Rboolean lbreak = FALSE;
+    const void *vmax = vmaxget();
 
     n = length(v);
     nv = getAttrib(v, R_NamesSymbol);
@@ -1455,6 +1474,7 @@ static void vec2buff(SEXP v, LocalParseData *d)
     }
     if (lbreak)
 	d->indent--;
+    vmaxset(vmax);
 }
 
 static void args2buff(SEXP arglist, int lineb, int formals, LocalParseData *d)

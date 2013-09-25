@@ -285,6 +285,7 @@ SEXP attribute_hidden do_date(SEXP call, SEXP op, SEXP args, SEXP rho)
  *  for the file(s) to be displayed.
  */
 
+// .Internal so manages R_alloc stack used by acopy_string
 SEXP attribute_hidden do_fileshow(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP fn, tl, hd, pg;
@@ -830,10 +831,16 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n; i++) {
 #ifdef Win32
 	wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
-	/* 'Sharpie' and fellow ignorami use trailing / on Windows,
-	   where it is not valid */
-	wchar_t *p = wfn + (wcslen(wfn) - 1);
-	if (*p == L'/' || *p == L'\\') *p = 0;
+	/* trailing \ is not valid on Windows except for the
+	   root directory on a drive, specified as "\", or "D:\",
+	   or "\\?\D:\", etc.  We remove it in other cases,
+	   to help those who think they're on Unix. */
+	size_t len = wcslen(wfn);
+	if (len) {
+	    wchar_t *p = wfn + (len - 1);
+            if (len > 1 && (*p == L'/' || *p == L'\\') &&
+            	*(p-1) != L':') *p = 0;
+        }
 #else
 	const char *efn = R_ExpandFileName(translateChar(STRING_ELT(fn, i)));
 #endif
@@ -864,9 +871,9 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(ctime)[i] = (double) sb.st_ctime;
 	    REAL(atime)[i] = (double) sb.st_atime;
 # ifdef STAT_TIMESPEC_NS
-	    REAL(mtime)[i] += STAT_TIMESPEC_NS (st, st_mtim);
-	    REAL(ctime)[i] += STAT_TIMESPEC_NS (st, st_ctim);
-	    REAL(atime)[i] += STAT_TIMESPEC_NS (st, st_atim);
+	    REAL(mtime)[i] += STAT_TIMESPEC_NS (sb, st_mtim);
+	    REAL(ctime)[i] += STAT_TIMESPEC_NS (sb, st_ctim);
+	    REAL(atime)[i] += STAT_TIMESPEC_NS (sb, st_atim);
 # endif
 #endif
 #ifdef UNIX_EXTRAS
@@ -1101,13 +1108,14 @@ SEXP attribute_hidden do_listfiles(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
-static void list_dirs(const char *dnp, const char *stem, int *count,
+static void list_dirs(const char *dnp, const char *nm, 
+		      Rboolean full, int *count,
 		      SEXP *pans, int *countmax, PROTECT_INDEX idx,
 		      Rboolean recursive)
 {
     DIR *dir;
     struct dirent *de;
-    char p[PATH_MAX], stem2[PATH_MAX];
+    char p[PATH_MAX];
 #ifdef Windows
     /* > 2GB files might be skipped otherwise */
     struct _stati64 sb;
@@ -1115,13 +1123,14 @@ static void list_dirs(const char *dnp, const char *stem, int *count,
     struct stat sb;
 #endif
     R_CheckUserInterrupt(); // includes stack check
+
     if ((dir = opendir(dnp)) != NULL) {
 	if (recursive) {
 	    if (*count == *countmax - 1) {
 		*countmax *= 2;
 		REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
 	    }
-	    SET_STRING_ELT(*pans, (*count)++, mkChar(dnp));
+	    SET_STRING_ELT(*pans, (*count)++, mkChar(full ? dnp : nm));
 	}
 	while ((de = readdir(dir))) {
 #ifdef Win32
@@ -1140,27 +1149,19 @@ static void list_dirs(const char *dnp, const char *stem, int *count,
 	    if ((sb.st_mode & S_IFDIR) > 0) {
 		if (strcmp(de->d_name, ".") && strcmp(de->d_name, "..")) {
 		    if(recursive) {
-			if (stem) {
-#ifdef Win32
-			    if(strlen(stem) == 2 && stem[1] == ':')
-				snprintf(stem2, PATH_MAX, "%s%s", stem,
-					 de->d_name);
-			    else
-				snprintf(stem2, PATH_MAX, "%s%s%s", stem,
-					 R_FileSep, de->d_name);
-#else
-			    snprintf(stem2, PATH_MAX, "%s%s%s", stem,
-				     R_FileSep, de->d_name);
-#endif
-			} else strcpy(stem2, de->d_name);
-			list_dirs(p, stem2, count, pans, countmax, idx, recursive);
+			char nm2[PATH_MAX];
+			snprintf(nm2, PATH_MAX, "%s%s%s", nm, R_FileSep, 
+				 de->d_name);
+			list_dirs(p, nm[0] ? nm2 : de->d_name, full, count,
+				  pans, countmax, idx, recursive);
 
 		    } else {
 			if (*count == *countmax - 1) {
 			    *countmax *= 2;
 			    REPROTECT(*pans = lengthgets(*pans, *countmax), idx);
 			}
-			SET_STRING_ELT(*pans, (*count)++, mkChar(p));
+			SET_STRING_ELT(*pans, (*count)++, 
+				       mkChar(full ? p : de->d_name));
 		    }
 		}
 	    }
@@ -1192,8 +1193,7 @@ SEXP attribute_hidden do_listdirs(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < LENGTH(d) ; i++) {
 	if (STRING_ELT(d, i) == NA_STRING) continue;
 	dnp = R_ExpandFileName(translateChar(STRING_ELT(d, i)));
-	list_dirs(dnp, fullnames ? dnp : NULL, &count, &ans, &countmax,
-		  idx, recursive);
+	list_dirs(dnp, "", fullnames, &count, &ans, &countmax, idx, recursive);
     }
     REPROTECT(ans = lengthgets(ans, count), idx);
     ssort(STRING_PTR(ans), count);

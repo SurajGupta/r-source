@@ -1,5 +1,5 @@
 
-R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+R version 3.0.2 RC (2013-09-22 r63960) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -51,7 +51,7 @@ integer literal 1.L contains unnecessary decimal point
 > try(parse(text = "12iL")) # gives syntax error
 Error in parse(text = "12iL") : <text>:1:4: unexpected symbol
 1: 12iL
-      ^
+       ^
 > 
 > 
 > all((0:6) == pi + ((-pi):pi))

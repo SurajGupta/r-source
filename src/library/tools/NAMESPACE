@@ -1,28 +1,9 @@
 useDynLib(tools, .registration = TRUE)
 
-## Package 'tools' must work before 'utils' -- cannot import
-## importFrom("utils",
-## 	   Stangle, Sweave,
-## 	   available.packages,
-## 	   bibentry, citEntry, citeNatbib,
-## 	   compareVersion,
-## 	   contrib.url,
-## 	   data,
-## 	   flush.console,
-## 	   globalVariables,
-## 	   install.packages,
-## 	   installed.packages,
-## 	   localeToCharset,
-## 	   make.packages.html,
-## 	   packageDescription,
-## 	   read.delim,
-## 	   summaryRprof,
-## 	   tail,
-## 	   tar, untar, zip)
-
 export("Adobe_glyphs", "HTMLheader", "Rd2HTML", "Rd2ex", "Rd2latex",
        "Rd2txt", "Rd2txt_options", "RdTextFilter", "Rd_db", "Rdiff",
-       "Rdindex", "SweaveTeXFilter", "add_datalist", "bibstyle",
+       "Rdindex", "SweaveTeXFilter", "add_datalist",
+       "assertCondition", "assertError", "assertWarning", "bibstyle",
        "buildVignettes", "charset_to_Unicode", "checkDocFiles",
        "checkDocStyle", "checkFF", "checkMD5sums", "checkNEWS",
        "checkRd", "checkPoFile", "checkPoFiles", "checkRdaFiles",
@@ -31,8 +12,8 @@ export("Adobe_glyphs", "HTMLheader", "Rd2HTML", "Rd2ex", "Rd2latex",
        "compactPDF", "delimMatch", "deparseLatex", "dependsOnPkgs",
        "encoded_text_to_latex", "file_ext", "file_path_as_absolute",
        "file_path_sans_ext", "findHTMLlinks", "getBibstyle",
-       "getDepList", "installFoundDepends", "latexToUtf8",
-       "list_files_with_exts", "list_files_with_type",
+       "getDepList", "getVignetteInfo", "installFoundDepends",
+       "latexToUtf8", "list_files_with_exts", "list_files_with_type",
        "make_translations_pkg", "md5sum", "package.dependencies",
        "package_dependencies", "parseLatex", "parse_Rd", "pkgDepends",
        "pkgVignettes", "pskill", "psnice", "read.00Index", "readNEWS",
@@ -40,7 +21,7 @@ export("Adobe_glyphs", "HTMLheader", "Rd2HTML", "Rd2ex", "Rd2latex",
        "startDynamicHelp", "testInstalledBasic",
        "testInstalledPackage", "testInstalledPackages", "texi2dvi",
        "texi2pdf", "toHTML", "toRd", "undoc", "update_pkg_po",
-       "vignetteDepends", "vignetteEngine", "write_PACKAGES", 
+       "vignetteDepends", "vignetteEngine", "write_PACKAGES",
        "xgettext", "xgettext2pot", "xngettext")
 
 export("check_packages_in_dir",
@@ -58,6 +39,7 @@ S3method("[[", "pdf_doc")
 S3method("as.character", "Rd")
 
 S3method("format", "check_Rd_contents")
+S3method("format", "check_Rd_line_widths")
 S3method("format", "check_Rd_metadata")
 S3method("format", "check_Rd_xrefs")
 S3method("format", "check_T_and_F")
@@ -132,6 +114,7 @@ S3method("print", "PDF_Stream", .print.via.format)
 S3method("print", "PDF_String", .print.via.format)
 
 S3method("print", "check_Rd_contents", .print.via.format)
+S3method("print", "check_Rd_line_widths", .print.via.format)
 S3method("print", "check_Rd_metadata", .print.via.format)
 S3method("print", "check_Rd_xrefs", .print.via.format)
 S3method("print", "check_T_and_F", .print.via.format)

@@ -37,7 +37,7 @@ FULLVERSION=`cat ../../../VERSION`
 RPREFIX = $(shell ../../../bin$(R_ARCH)/Rscript ../fixed/rwver.R)
 LIBFILES = $(foreach i, $(R_PKGS_BASE) $(R_PKGS_RECOMMENDED) translations $(EXTRA_PKGS), $(R_HOME)/library/$i)
 
-INFO_FILES = COPYING NEWS README
+INFO_FILES = COPYING NEWS NEWS.0 NEWS.1 NEWS.2 README
 DOC_INFO_FILES = AUTHORS COPYING FAQ RESOURCES THANKS CHANGES
 GW_INFO_FILES = COPYRIGHTS README.Rterm ../../doc/manual/rw-FAQ
 
@@ -51,7 +51,7 @@ all: $(RPREFIX)-win.exe
 msi: $(RPREFIX)-$(SUFF).msi
 
 imagedir:
-	$(RM) -r $(RPREFIX)
+	$(RM) -R $(RPREFIX)
 	$(MKDIR) $(RPREFIX)
 	$(CP) -pR $(R_HOME)/bin $(R_HOME)/modules $(RPREFIX)
 # copy base and recommended packages

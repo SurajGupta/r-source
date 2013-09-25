@@ -80,7 +80,7 @@ transformMethod <- function(i, blocks, Rdfile) {
     	    	chars <- strsplit(blocks[[j]], "")[[1]]
     		parens <- cumsum( (chars == "(") - (chars == ")") )
     		if (any(parens > 0)) {
-    	   	    char <- which(parens > 0)[1]
+		    char <- which.max(parens > 0)
     	   	    break
     	   	}
     	    }
@@ -103,7 +103,7 @@ transformMethod <- function(i, blocks, Rdfile) {
 		chars <- strsplit(blocks[[j]], "")[[1]]
 		parens <- level + cumsum( (chars == "(") - (chars == ")") )
 		if (any(parens == 1 & chars == ",")) {
-		    char <- which(parens == 1 & chars == ",")[1]
+		    char <- which.max(parens == 1 & chars == ",")
 		    break
 		}
 		if (any(parens == 0))
@@ -278,13 +278,6 @@ Rd2txt <-
     saveOpts <- Rd2txt_options()
     on.exit(Rd2txt_options(saveOpts))# Rd files may change these, so restore them
     				     # whether or not the caller set them.
-    ## see if we can render Unicode bullet: not C locales, nor CJK on Windows.
-    if (.Platform$OS.type == "windows") {
-        cp <- l10n_info()$codepage
-        if (cp > 0 && (cp == 874L || (cp >= 1250L && cp <= 1258L)))
-            Rd2txt_options(itemBullet = "\u2022 ")
-    } else if (!is.na(iconv("\u2022", "UTF-8", outputEncoding)))
-        Rd2txt_options(itemBullet = "\u2022 ")
     if (!missing(options)) Rd2txt_options(options)
 
 ## these attempt to mimic pre-2.10.0 layout

@@ -167,7 +167,6 @@ static SEXP getActiveValue(SEXP fun)
 #define HASHPRI(x)	     TRUELENGTH(x)
 #define HASHTABLEGROWTHRATE  1.2
 #define HASHMINSIZE	     29
-#define SET_HASHSIZE(x,v)    SETLENGTH(x,v)
 #define SET_HASHPRI(x,v)     SET_TRUELENGTH(x,v)
 
 #define IS_HASHED(x)	     (HASHTAB(x) != R_NilValue)
@@ -318,7 +317,6 @@ static SEXP R_NewHashTable(int size)
 
     /* Allocate hash table in the form of a vector */
     PROTECT(table = allocVector(VECSXP, size));
-    SET_HASHSIZE(table, size);
     SET_HASHPRI(table, 0);
     UNPROTECT(1);
     return(table);
@@ -369,8 +367,11 @@ static SEXP DeleteItem(SEXP symbol, SEXP lst)
 
 static void R_HashDelete(int hashcode, SEXP symbol, SEXP table)
 {
-    SET_VECTOR_ELT(table, hashcode % HASHSIZE(table),
-	DeleteItem(symbol, VECTOR_ELT(table, hashcode % HASHSIZE(table))));
+    SEXP list = DeleteItem(symbol,
+			   VECTOR_ELT(table, hashcode % HASHSIZE(table)));
+    if (list == R_NilValue)
+	SET_HASHPRI(table, HASHPRI(table) - 1);
+    SET_VECTOR_ELT(table, hashcode % HASHSIZE(table), list);
     return;
 }
 
@@ -631,6 +632,7 @@ void attribute_hidden InitBaseEnv()
 void attribute_hidden InitGlobalEnv()
 {
     R_GlobalEnv = R_NewHashedEnv(R_BaseEnv, ScalarInteger(0));
+    R_MethodsNamespace = R_GlobalEnv; // so it is initialized.
 #ifdef NEW_CODE /* Not used */
     HASHTAB(R_GlobalEnv) = R_NewHashTable(100);
 #endif
@@ -1541,7 +1543,7 @@ SEXP attribute_hidden do_assign(SEXP call, SEXP op, SEXP args, SEXP rho)
     else {
 	if (length(CAR(args)) > 1)
 	    warning(_("only the first element is used as variable name"));
-	name = install(translateChar(STRING_ELT(CAR(args), 0)));
+	name = installTrChar(STRING_ELT(CAR(args), 0));
     }
     PROTECT(val = CADR(args));
     aenv = CADDR(args);
@@ -1583,7 +1585,7 @@ SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("'envir' argument must be an environment"));
 
     for(int i = 0; i < LENGTH(x) ; i++) {
-	SEXP name = install(translateChar(STRING_ELT(xnms, i)));
+	SEXP name = installTrChar(STRING_ELT(xnms, i));
 	defineVar(name, VECTOR_ELT(x, i), envir);
     }
 
@@ -1631,6 +1633,8 @@ static int RemoveVariable(SEXP name, int hashcode, SEXP env)
 	list = RemoveFromList(name, VECTOR_ELT(hashtab, idx), &found);
 	if (found) {
 	    if(env == R_GlobalEnv) R_DirtyImage = 1;
+	    if (list == R_NilValue)
+		SET_HASHPRI(hashtab, HASHPRI(hashtab) - 1);
 	    SET_VECTOR_ELT(hashtab, idx, list);
 #ifdef USE_GLOBAL_CACHE
 	    if (IS_GLOBAL_FRAME(env))
@@ -1680,7 +1684,7 @@ SEXP attribute_hidden do_remove(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     for (i = 0; i < LENGTH(name); i++) {
 	done = 0;
-	tsym = install(translateChar(STRING_ELT(name, i)));
+	tsym = installTrChar(STRING_ELT(name, i));
 	if( !HASHASH(PRINTNAME(tsym)) )
 	    hashcode = R_Newhashpjw(CHAR(PRINTNAME(tsym)));
 	else
@@ -1727,7 +1731,7 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isValidStringF(CAR(args)))
 	error(_("invalid first argument"));
     else
-	t1 = install(translateChar(STRING_ELT(CAR(args), 0)));
+	t1 = installTrChar(STRING_ELT(CAR(args), 0));
 
     /* envir :	originally, the "where=" argument */
 
@@ -1890,9 +1894,9 @@ SEXP attribute_hidden do_mget(SEXP call, SEXP op, SEXP args, SEXP rho)
 		error(_("invalid '%s' argument"), "mode");
 	}
 	SET_VECTOR_ELT(ans, i,
-		       gfind(translateChar(STRING_ELT(x, i % nvals)), env,
+		       duplicate(gfind(translateChar(STRING_ELT(x, i % nvals)), env,
 			     gmode, VECTOR_ELT(ifnotfound, i % nifnfnd),
-			     ginherits, rho));
+			     ginherits, rho)));
     }
 
     setAttrib(ans, R_NamesSymbol, duplicate(x));
@@ -1989,7 +1993,7 @@ SEXP attribute_hidden do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
     check1arg(args, call, "x");
     s = sym = CAR(args);
     if( isString(sym) && length(sym)==1 )
-	s = sym = install(translateChar(STRING_ELT(CAR(args), 0)));
+	s = sym = installTrChar(STRING_ELT(CAR(args), 0));
     if (!isSymbol(sym))
 	errorcall(call, _("invalid use of 'missing'"));
 
@@ -2741,6 +2745,7 @@ SEXP attribute_hidden do_pos2env(SEXP call, SEXP op, SEXP args, SEXP rho)
 static SEXP matchEnvir(SEXP call, const char *what)
 {
     SEXP t, name;
+    const void *vmax = vmaxget();
     if(!strcmp(".GlobalEnv", what))
 	return R_GlobalEnv;
     if(!strcmp("package:base", what))
@@ -2748,10 +2753,14 @@ static SEXP matchEnvir(SEXP call, const char *what)
     for (t = ENCLOS(R_GlobalEnv); t != R_EmptyEnv ; t = ENCLOS(t)) {
 	name = getAttrib(t, R_NameSymbol);
 	if(isString(name) && length(name) > 0 &&
-	   !strcmp(translateChar(STRING_ELT(name, 0)), what))
+	   !strcmp(translateChar(STRING_ELT(name, 0)), what)) {
+	    vmaxset(vmax);
 	    return t;
+	}
     }
     errorcall(call, _("no item called \"%s\" on the search list"), what);
+    /* not reached */
+    vmaxset(vmax);
     return R_NilValue;
 }
 
@@ -3208,7 +3217,7 @@ static SEXP checkNSname(SEXP call, SEXP name)
 	break;
     case STRSXP:
 	if (LENGTH(name) >= 1) {
-	    name = install(translateChar(STRING_ELT(name, 0)));
+	    name = installTrChar(STRING_ELT(name, 0));
 	    break;
 	}
 	/* else fall through */
@@ -3297,8 +3306,8 @@ SEXP attribute_hidden do_importIntoEnv(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     n = LENGTH(impnames);
     for (i = 0; i < n; i++) {
-	impsym = install(translateChar(STRING_ELT(impnames, i)));
-	expsym = install(translateChar(STRING_ELT(expnames, i)));
+	impsym = installTrChar(STRING_ELT(impnames, i));
+	expsym = installTrChar(STRING_ELT(expnames, i));
 
 	/* find the binding--may be a CONS cell or a symbol */
 	SEXP binding = R_NilValue;

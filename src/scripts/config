@@ -20,7 +20,7 @@
 ## A copy of the GNU General Public License is available at
 ## http://www.r-project.org/Licenses/
 
-revision='$Revision: 62610 $'
+revision='$Revision: 62845 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 
@@ -219,7 +219,7 @@ if test "${personal}" = "yes"; then
       makefiles="${makefiles} -f ${HOME}/.R/Makevars"
     fi
   else
-    . ${R_HOME}/etc/Renviron
+    . ${R_HOME}/etc${R_ARCH}/Renviron
     if test -n "${R_MAKEVARS_USER}"; then
       makefiles="${makefiles} -f ${R_MAKEVARS_USER}"
     elif test -f "${HOME}/.R/Makevars-${R_PLATFORM}"; then
@@ -240,7 +240,7 @@ ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS FC FCFLAGS FCPICFLAGS"
 ok_ld_vars="LDFLAGS"
 ok_shlib_vars="SHLIB_CFLAGS SHLIB_CXXLD SHLIB_CXXLDFLAGS SHLIB_EXT SHLIB_FFLAGS SHLIB_LD SHLIB_LDFLAGS SHLIB_FCLD SHLIB_FCLDFLAGS"
 ok_tcltk_vars="TCLTK_CPPFLAGS TCLTK_LIBS"
-ok_other_vars="BLAS_LIBS LAPACK_LIBS MAKE LIBnn"
+ok_other_vars="BLAS_LIBS LAPACK_LIBS MAKE LIBnn LOCAL_SOFT"
 
 ## Can we do this elegantly using case?
 

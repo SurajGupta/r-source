@@ -104,7 +104,7 @@ package.skeleton <-
 	file = description, sep = "")
     close(description)
 
-    if(!namespace)
+    if(!missing(namespace))
 	warning("From R 2.14.0 on, every package gets a NAMESPACE.",
 		" Argument 'namespace' is deprecated.", domain = NA)
     ## NAMESPACE
@@ -154,15 +154,16 @@ package.skeleton <-
         message("Saving functions and data ...", domain = NA)
         if(length(internalObjInds))
             dump(internalObjs,
-                 file = file.path(code_dir,
-                 sprintf("%s-internal.R", name)))
+                 file = file.path(code_dir, sprintf("%s-internal.R", name)),
+                 envir = environment)
         for(item in list){
             objItem <- get(item, envir = environment)
             if(is.function(objItem))  {
                 if(isS4(objItem))
                     stop(gettextf("generic functions and other S4 objects (e.g., '%s') cannot be dumped; use the 'code_files' argument", item), domain = NA)
                 dump(item,
-                     file = file.path(code_dir, sprintf("%s.R", list0[item])))
+                     file = file.path(code_dir, sprintf("%s.R", list0[item])),
+                     envir = environment)
             }
             else       # we cannot guarantee this is a valid file name
                 try(save(list = item, envir = environment,

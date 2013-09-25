@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995,1996  Robert Gentleman, Ross Ihaka
- *  Copyright (C) 1997-2012  The R Core Team
+ *  Copyright (C) 1997-2013  The R Core Team
  *  Copyright (C) 2003-2009 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -387,6 +387,7 @@ SEXP VectorToPairList(SEXP x)
 {
     SEXP xptr, xnew, xnames;
     int i, len, named;
+
     len = length(x);
     PROTECT(x);
     PROTECT(xnew = allocList(len)); /* limited to int */
@@ -396,7 +397,7 @@ SEXP VectorToPairList(SEXP x)
     for (i = 0; i < len; i++) {
 	SETCAR(xptr, VECTOR_ELT(x, i));
 	if (named && CHAR(STRING_ELT(xnames, i))[0] != '\0') /* ASCII */
-	    SET_TAG(xptr, install(translateChar(STRING_ELT(xnames, i))));
+	    SET_TAG(xptr, installTrChar(STRING_ELT(xnames, i)));
 	xptr = CDR(xptr);
     }
     if (len > 0)       /* can't set attributes on NULL */
@@ -1130,7 +1131,7 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
 	}
     }
     else
-	error(_("(list) object cannot be coerced to type '%s'"), 
+	error(_("(list) object cannot be coerced to type '%s'"),
 	      type2char(type));
 
     if (warn) CoercionWarning(warn);
@@ -1149,11 +1150,11 @@ static SEXP coerceSymbol(SEXP v, SEXPTYPE type)
 	SET_VECTOR_ELT(rval, 0, v);
 	UNPROTECT(1);
     } else if (type == CHARSXP)
-	rval = PRINTNAME(v);	
+	rval = PRINTNAME(v);
     else if (type == STRSXP)
 	rval = ScalarString(PRINTNAME(v));
     else
-	warning(_("(symbol) object cannot be coerced to type '%s'"), 
+	warning(_("(symbol) object cannot be coerced to type '%s'"),
 		type2char(type));
     return rval;
 }
@@ -1167,7 +1168,7 @@ SEXP coerceVector(SEXP v, SEXPTYPE type)
 	return v;
     /* code to allow classes to extend ENVSXP, SYMSXP, etc */
     if(IS_S4_OBJECT(v) && TYPEOF(v) == S4SXP) {
-        SEXP vv = R_getS4DataSlot(v, ANYSXP);
+	SEXP vv = R_getS4DataSlot(v, ANYSXP);
 	if(vv == R_NilValue)
 	  error(_("no method for coercing this S4 class to a vector"));
 	else if(TYPEOF(vv) == type)
@@ -1281,9 +1282,9 @@ SEXP CreateTag(SEXP x)
 	return x;
     if (isString(x)
 	&& length(x) >= 1
-	&& length(STRING_ELT(x, 0)) >= 1)
-	x = install(translateChar(STRING_ELT(x, 0)));
-    else
+	&& length(STRING_ELT(x, 0)) >= 1) {
+	x = installTrChar(STRING_ELT(x, 0));
+    } else
 	x = install(CHAR(STRING_ELT(deparse1(x, 1, SIMPLEDEPARSE), 0)));
     return x;
 }
@@ -1375,7 +1376,7 @@ SEXP asCharacterFactor(SEXP x)
     SEXP ans;
 
     if( !inherits(x, "factor") )
-        error(_("attempting to coerce non-factor"));
+	error(_("attempting to coerce non-factor"));
 
     R_xlen_t i, n = XLENGTH(x);
     SEXP labels = getAttrib(x, install("levels"));
@@ -1420,7 +1421,7 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* Method dispatch has failed, we now just */
     /* run the generic internal code */
-    
+
     checkArity(op, args);
     x = CAR(args);
     if(TYPEOF(x) == type) {
@@ -1479,7 +1480,7 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     if(IS_S4_OBJECT(x) && TYPEOF(x) == S4SXP) {
-        SEXP v = R_getS4DataSlot(x, ANYSXP);
+	SEXP v = R_getS4DataSlot(x, ANYSXP);
 	if(v == R_NilValue)
 	    error(_("no method for coercing this S4 class to a vector"));
 	x = v;
@@ -1547,7 +1548,7 @@ SEXP attribute_hidden do_asfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
     for (i = 0; i < n - 1; i++) {
 	SETCAR(pargs, VECTOR_ELT(arglist, i));
 	if (names != R_NilValue && *CHAR(STRING_ELT(names, i)) != '\0') /* ASCII */
-	    SET_TAG(pargs, install(translateChar(STRING_ELT(names, i))));
+	    SET_TAG(pargs, installTrChar(STRING_ELT(names, i)));
 	else
 	    SET_TAG(pargs, R_NilValue);
 	pargs = CDR(pargs);
@@ -1592,7 +1593,7 @@ SEXP attribute_hidden do_ascall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = 0; i < n; i++) {
 	    SETCAR(ap, VECTOR_ELT(args, i));
 	    if (names != R_NilValue && !StringBlank(STRING_ELT(names, i)))
-		SET_TAG(ap, install(translateChar(STRING_ELT(names, i))));
+		SET_TAG(ap, installTrChar(STRING_ELT(names, i)));
 	    ap = CDR(ap);
 	}
 	UNPROTECT(1);
@@ -1937,11 +1938,15 @@ SEXP attribute_hidden do_isvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     stype = CHAR(STRING_ELT(CADR(args), 0)); /* ASCII */
 
+    /* "name" and "symbol" are synonymous */
+    if (streql(stype, "name"))
+      stype = "symbol";
+
     PROTECT(ans = allocVector(LGLSXP, 1));
     if (streql(stype, "any")) {
 	/* isVector is inlined, means atomic or VECSXP or EXPRSXP */
 	LOGICAL(ans)[0] = isVector(x);
-    } 
+    }
     else if (streql(stype, "numeric")) {
 	LOGICAL(ans)[0] = (isNumeric(x) && !isLogical(x));
     }
@@ -2127,7 +2132,7 @@ SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 			       R_IsNaN(COMPLEX(x)[i].i));
 	break;
     default:
-        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
+	errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (dims != R_NilValue)
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2190,7 +2195,7 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    LOGICAL(ans)[i] = (R_FINITE(COMPLEX(x)[i].r) && R_FINITE(COMPLEX(x)[i].i));
 	break;
     default:
-        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
+	errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (dims != R_NilValue)
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2258,7 +2263,7 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	break;
     default:
-        errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
+	errorcall(call, _("default method not implemented for type '%s'"), type2char(TYPEOF(x)));
     }
     if (!isNull(dims))
 	setAttrib(ans, R_DimSymbol, dims);
@@ -2289,8 +2294,8 @@ SEXP attribute_hidden do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(rfun = install(str));
     PROTECT(evargs = duplicate(CDR(args)));
     for (rest = evargs; rest != R_NilValue; rest = CDR(rest)) {
-        PROTECT(tmp = eval(CAR(rest), rho));
-        if (NAMED(tmp)) tmp = duplicate(tmp);
+	PROTECT(tmp = eval(CAR(rest), rho));
+	if (NAMED(tmp)) tmp = duplicate(tmp);
 	SETCAR(rest, tmp);
 	UNPROTECT(1);
     }
@@ -2347,7 +2352,7 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SET_PRVALUE(CAR(c), VECTOR_ELT(args, i));
 #endif
 	if (ItemName(names, (int)i) != R_NilValue)
-	    SET_TAG(c, install(translateChar(ItemName(names, i))));
+	    SET_TAG(c, installTrChar(ItemName(names, i)));
 	c = CDR(c);
     }
     call = eval(call, envir);
@@ -2491,7 +2496,7 @@ SEXP attribute_hidden do_quote(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     check1arg(args, call, "expr");
-    SEXP val = CAR(args); 
+    SEXP val = CAR(args);
     /* Make sure expression has NAMED == 2 before being returning
        in to avoid modification of source code */
     if (NAMED(val) != 2) SET_NAMED(val, 2);
@@ -2540,14 +2545,18 @@ static int class2type(const char *s)
     /* cannot get here return -1; */
 }
 
-static SEXP do_unsetS4(SEXP obj, SEXP newClass) {
+static SEXP do_unsetS4(SEXP obj, SEXP newClass)
+{
   if(isNull(newClass))  { /* NULL class is only valid for S3 objects */
     warning(_("Setting class(x) to NULL;   result will no longer be an S4 object"));
   }
   else if(length(newClass) > 1)
-    warning(_("Setting class(x) to multiple strings (\"%s\", \"%s\", ...); result will no longer be an S4 object"), translateChar(STRING_ELT(newClass, 0)), translateChar(STRING_ELT(newClass, 1)));
+    warning(_("Setting class(x) to multiple strings (\"%s\", \"%s\", ...); result will no longer be an S4 object"),
+	    translateChar(STRING_ELT(newClass, 0)),
+	    translateChar(STRING_ELT(newClass, 1)));
   else
-    warning(_("Setting class(x) to \"%s\" sets attribute to NULL; result will no longer be an S4 object"), CHAR(asChar(newClass)));
+    warning(_("Setting class(x) to \"%s\" sets attribute to NULL; result will no longer be an S4 object"),
+	    CHAR(asChar(newClass)));
   UNSET_S4_OBJECT(obj);
   return obj;
 }

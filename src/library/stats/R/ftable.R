@@ -26,10 +26,11 @@ ftable.default <- function(..., exclude = c(NA, NaN),
     x <- args[[1L]]
     if(is.list(x))
 	x <- table(x, exclude = exclude)
-    else if(inherits(x, "ftable")) {
-	x <- as.table(x)
+    else if(inherits(x, "ftable") ||
+	    (arr2 <- is.array(x) && (length(dim(x)) > 1L))) {
+	x <- as.table(x) # regularizes dimnames for (>=2)D-arrays
     }
-    else if(!(is.array(x) && (length(dim(x)) > 1L))) {
+    else if(!arr2 ) {
 	x <- table(..., exclude = exclude)
     }
     dn <- dimnames(x)
@@ -146,7 +147,7 @@ ftable.formula <- function(formula, data = NULL, subset, na.action, ...)
                                    paste(c(rvars, cvars),
                                          collapse = "+")),
                                 env = environment(formula))
-        m[[1L]] <- as.name("model.frame")
+        m[[1L]] <- quote(stats::model.frame)
         mf <- eval(m, parent.frame())
         ftable(mf, row.vars = rvars, col.vars = cvars, ...)
     }

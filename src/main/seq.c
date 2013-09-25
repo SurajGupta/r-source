@@ -42,6 +42,7 @@ static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
     SEXP a, la, ls, lt, rs, rt;
     int i, j, k, n, nls, nlt;
     char *cbuf;
+    const void *vmax = vmaxget();
 
     if (length(s) != length(t))
 	errorcall(call, _("unequal factor lengths"));
@@ -85,7 +86,8 @@ static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
     setAttrib(a, R_ClassSymbol, la);
     UNPROTECT(2);
     R_FreeStringBufferL(&cbuff);
-    return(a);
+    vmaxset(vmax);
+    return a;
 }
 
 /* interval at which to check interrupts */
@@ -158,10 +160,10 @@ SEXP attribute_hidden do_colon(SEXP call, SEXP op, SEXP args, SEXP rho)
     s2 = CADR(args);
     n1 = length(s1);
     n2 = length(s2);
+    if (n1 == 0 || n2 == 0)
+	errorcall(call, _("argument of length 0"));
     if (n1 > 1)
 	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n1);
-    else if (n1 == 0 || n2 == 0)
-	errorcall(call, _("argument of length 0"));
     if (n2 > 1)
 	warningcall(call, _("numerical expression has %d elements: only the first used"), (int) n2);
     n1 = asReal(s1);
@@ -236,8 +238,9 @@ static SEXP rep2(SEXP s, SEXP ncopy)
     case EXPRSXP:
 	for (i = 0; i < nc; i++) {
 //	    if ((i+1) % ni == 0) R_CheckUserInterrupt();
+	    SEXP elt = duplicate(VECTOR_ELT(s, i));
 	    for (j = 0; j < INTEGER(t)[i]; j++)
-		SET_VECTOR_ELT(a, n++, VECTOR_ELT(s, i));
+		SET_VECTOR_ELT(a, n++, elt);
 	}
 	break;
     case RAWSXP:
@@ -743,8 +746,12 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     if(One && from != R_MissingArg) {
 	lf = length(from);
-	if(lf == 1 && (TYPEOF(from) == INTSXP || TYPEOF(from) == REALSXP))
-	    ans = seq_colon(1.0, asReal(from), call);
+	if(lf == 1 && (TYPEOF(from) == INTSXP || TYPEOF(from) == REALSXP)) {
+	    double rfrom = asReal(from);
+	    if (!R_FINITE(rfrom))
+		errorcall(call, "'from' cannot be NA, NaN or infinite");
+	    ans = seq_colon(1.0, rfrom, call);
+	}
 	else if (lf)
 	    ans = seq_colon(1.0, (double)lf, call);
 	else
@@ -773,6 +780,10 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else if(length(from) != 1) error("'from' must be of length 1");
 	if(to == R_MissingArg) rto = 1.0;
 	else if(length(to) != 1) error("'to' must be of length 1");
+	if (!R_FINITE(rfrom))
+	    errorcall(call, "'from' cannot be NA, NaN or infinite");
+	if (!R_FINITE(rto))
+	    errorcall(call, "'to' cannot be NA, NaN or infinite");
 	if(by == R_MissingArg)
 	    ans = seq_colon(rfrom, rto, call);
 	else {

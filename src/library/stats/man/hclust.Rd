@@ -1,6 +1,6 @@
 % File src/library/stats/man/hclust.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -9,7 +9,6 @@
 \title{Hierarchical Clustering}
 \alias{hclust}
 \alias{plot.hclust}
-\alias{plclust}
 \alias{print.hclust}
 \description{
   Hierarchical cluster analysis on a set of dissimilarities and
@@ -22,11 +21,6 @@ hclust(d, method = "complete", members = NULL)
      axes = TRUE, frame.plot = FALSE, ann = TRUE,
      main = "Cluster Dendrogram",
      sub = NULL, xlab = NULL, ylab = "Height", \dots)
-
-plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
-        square = TRUE, labels = NULL, plot. = TRUE,
-        axes = TRUE, frame.plot = FALSE, ann = TRUE,
-        main = "", sub = NULL, xlab = NULL, ylab = "Height")
 }
 \arguments{
   \item{d}{a dissimilarity structure as produced by \code{dist}.}
@@ -40,7 +34,7 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   \item{members}{\code{NULL} or a vector with length size of
     \code{d}. See the \sQuote{Details} section.}
 
-  \item{x,tree}{an object of the type produced by \code{hclust}.}
+  \item{x}{an object of the type produced by \code{hclust}.}
 
   \item{hang}{The fraction of the plot height by which labels should hang
     below the rest of the plot.
@@ -51,19 +45,12 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
     used. If \code{labels = FALSE} no labels at all are plotted.}
 
   \item{axes, frame.plot, ann}{logical flags as in \code{\link{plot.default}}.}
+  
   \item{main, sub, xlab, ylab}{character strings for
     \code{\link{title}}.  \code{sub} and \code{xlab} have a non-NULL
     default when there's a \code{tree$call}.}
-  \item{\dots}{Further graphical arguments.}
-
-  \item{unit}{logical.  If true, the splits are plotted at
-    equally-spaced heights rather than at the height in the object.}
-
-  \item{hmin}{numeric.  All heights less than \code{hmin} are regarded
-    as being \code{hmin}: this can be used to suppress detail at the
-    bottom of the tree.}
-  \item{level, square, plot.}{as yet unimplemented arguments of
-    \code{plclust} for S-PLUS compatibility.}
+  \item{\dots}{Further graphical arguments.  E.g. \code{cex} controls
+    the size of the labels (if plotted) in the same way as \code{\link{text}}.}
 }
 \value{
   An object of class \bold{hclust} which describes the
@@ -105,9 +92,6 @@ plclust(tree, hang = 0.1, unit = FALSE, level = FALSE, hmin = 0,
   There are \code{\link{print}}, \code{\link{plot}} and \code{identify}
   (see \code{\link{identify.hclust}}) methods and the
   \code{\link{rect.hclust}()} function for \code{hclust} objects.
-  The \code{plclust()} function is basically the same as the plot method,
-  \code{plot.hclust}, primarily for back compatibility with S-PLUS. Its
-  extra arguments are not yet implemented.
 }
 \details{
   This function performs a hierarchical cluster analysis

@@ -1,5 +1,5 @@
 
-R version 3.0.0 Patched (2013-04-04 r62492) -- "Masked Marvel"
+R version 3.0.2 RC (2013-09-22 r63960) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -1755,7 +1755,7 @@ Sep 1961  20  30
 > try(glm(y ~ x, family = poisson(identity)))
 Error : no valid set of coefficients has been found: please supply starting values
 In addition: Warning message:
-In log(ifelse(y == 0, 1, y/mu)) : NaNs produced
+In log(y/mu) : NaNs produced
 > ## failed because start = NULL in 1.4.1
 > ## now gives useful error message
 > glm(y ~ x, family = poisson(identity), start = c(1,0))
@@ -3292,7 +3292,9 @@ NULL
 [1] 1
 > dimnames(x) <- list(some=letters[1:5])
 > x[]
-[1] 1 2 3 4 5
+some
+a b c d e 
+1 2 3 4 5 
 > x[2:3]
 some
 b c 
@@ -6397,15 +6399,15 @@ function ()
 > print.function
 function (x, ...)  
  - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 19 1 63 19 63 1 1
-  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3c66fe8> 
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x2afb490> 
 > f
 function ()  
  - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 17 1 28 17 28 1 1
-  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3c46db0> 
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x2a0ef60> 
  - attr(*, "note")= chr "just a note"
  - attr(*, "yada")=function ()  
   ..- attr(*, "srcref")=Class 'srcref'  atomic [1:8] 2 24 2 48 24 48 2 2
-  .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3c46db0> 
+  .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x2a0ef60> 
 > rm(print.function)
 > ## auto-printing and printing differed up to R 2.9.x
 > 
@@ -6893,16 +6895,12 @@ F-statistic:  4412 on 1 and 6 DF,  p-value: 7.834e-10
 > ## R < 2.15.1 got these as FALSE, TRUE, FALSE.
 > 
 > 
-> ## Error in constructing the error message
-> assertErrorPrint <- function(expr) {
-+     stopifnot(inherits(e <- tryCatch(expr, error=function(e)e), "error"))
-+     cat("Asserted Error:", e[["message"]],"\n")
-+ }
 > library("methods")# (not needed here)
-> assertErrorPrint( getMethod(ls, "bar", fdef=ls) )
-Asserted Error: no generic function found for 'ls' 
-> assertErrorPrint( getMethod(show, "bar") )
-Asserted Error: no method found for function 'show' and signature bar 
+> assertCondition <- tools::assertCondition
+> assertCondition( getMethod(ls, "bar", fdef=ls), "error", verbose=TRUE)
+assertCondition: caught "error"
+> assertCondition( getMethod(show, "bar"),        "error", verbose=TRUE)
+assertCondition: caught "error"
 > ## R < 2.15.1 gave
 > ##   cannot coerce type 'closure' to vector of type 'character'
 > 
@@ -7066,4 +7064,22 @@ g(y)(x)
 1 2 
 2 3 
 > ## Printed the class attribute in R <= 3.0.0
+> 
+> ## PR#15311 : regmatches<- mishandled regexpr results.
+>   x <- c('1', 'B', '3')
+>   m <- regexpr('\\d', x)
+>   regmatches(x, m) <- c('A', 'C')
+>   print(x)
+[1] "A" "B" "C"
+> ## Gave a warning and a wrong result up to 3.0.1
+> 
+> ## Bad warning found by Radford Neal
+>   saveopt <- options(warnPartialMatchDollar=TRUE)
+>   pl <- pairlist(abc=1, def=2)
+>   pl$ab
+[1] 1
+Warning message:
+In pl$ab : partial match of 'ab' to 'abc'
+>   if (!is.null(saveopt[["warnPartialMatchDollar"]])) options(saveopt)
+> ## 'abc' was just ''
 > 

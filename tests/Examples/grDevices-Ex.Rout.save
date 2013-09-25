@@ -1,5 +1,5 @@
 
-R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+R version 3.0.2 RC (2013-09-22 r63960) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -115,8 +115,8 @@ $allowed
 +      main = "example(Japanese)", xlab = "using Hershey fonts")
 > par(cex = 3)
 > Vf <- c("serif", "plain")
-> text(4, 2, "\\#J2438\\#J2421\\#J2451\\#J2473", vfont = Vf)
-> text(4, 4, "\\#J2538\\#J2521\\#J2551\\#J2573", vfont = Vf)
+> text(4, 2, "\\#J244b\\#J245b\\#J2473", vfont = Vf)
+> text(4, 4, "\\#J2538\\#J2563\\#J2551\\#J2573", vfont = Vf)
 > text(4, 6, "\\#J467c\\#J4b5c", vfont = Vf)
 > text(4, 8, "Japan", vfont = Vf)
 > par(cex = 1)
@@ -377,7 +377,8 @@ $allowed
 > plot(10*(0:10)); (pu <- par("usr"))
 [1]   0.6  11.4  -4.0 104.0
 > aX <- function(side, at, ...)
-+     axis(side, at = at, labels = FALSE, lwd.ticks = 2, col.ticks = 2, tck = 0.05, ...)
++     axis(side, at = at, labels = FALSE, lwd.ticks = 2, col.ticks = 2,
++          tck = 0.05, ...)
 > aX(1, print(xa <- axisTicks(pu[1:2], log = FALSE)))  # x axis
 [1]  2  4  6  8 10
 > aX(2, print(ya <- axisTicks(pu[3:4], log = FALSE)))  # y axis
@@ -1844,16 +1845,6 @@ gray    76.97594   0.00000    0.00000
 > ### Keywords: dplot
 > 
 > ### ** Examples
-> 
-> x1  <- matrix(rnorm(1e3), ncol = 2)
-> x2  <- matrix(rnorm(1e3, mean = 3, sd = 1.5), ncol = 2)
-> x   <- rbind(x1, x2)
-> 
-> dcols <- densCols(x)
-KernSmooth 2.23 loaded
-Copyright M. P. Wand 1997-2009
-> graphics::plot(x, col = dcols, pch = 20, main = "n = 1000")
-> 
 > 
 > 
 > cleanEx()
@@ -3705,8 +3696,9 @@ $zlab
 > 
 > ### * <FOOTER>
 > ###
+> options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  8.757 0.186 8.972 0 0 
+Time elapsed:  13.527 0.199 13.779 0 0 
 > grDevices::dev.off()
 null device 
           1 

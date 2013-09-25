@@ -48,26 +48,26 @@ static SEXP GetObject(RCNTXT *cptr)
 
     tag = TAG(formals);
     if (tag != R_NilValue && tag != R_DotsSymbol) {
-	s = R_NilValue;
+	s = NULL;
 	/** exact matches **/
 	for (b = cptr->promargs ; b != R_NilValue ; b = CDR(b))
 	    if (TAG(b) != R_NilValue && pmatch(tag, TAG(b), 1)) {
-		if (s != R_NilValue)
+		if (s != NULL)
 		    error(_("formal argument \"%s\" matched by multiple actual arguments"), tag);
 		else
 		    s = CAR(b);
 	    }
 
-	if (s == R_NilValue)
+	if (s == NULL)
 	    /** partial matches **/
 	    for (b = cptr->promargs ; b != R_NilValue ; b = CDR(b))
 		if (TAG(b) != R_NilValue && pmatch(tag, TAG(b), 0)) {
-		    if ( s != R_NilValue)
+		    if ( s != NULL)
 			error(_("formal argument \"%s\" matched by multiple actual arguments"), tag);
 		    else
 			s = CAR(b);
 		}
-	if (s == R_NilValue)
+	if (s == NULL)
 	    /** first untagged argument **/
 	    for (b = cptr->promargs ; b != R_NilValue ; b = CDR(b))
 		if (TAG(b) == R_NilValue )
@@ -75,7 +75,7 @@ static SEXP GetObject(RCNTXT *cptr)
 		    s = CAR(b);
 		    break;
 		}
-	if (s == R_NilValue)
+	if (s == NULL)
 	    s = CAR(cptr->promargs);
 /*
 	    error("failed to match argument for dispatch");
@@ -156,6 +156,10 @@ static SEXP matchmethargs(SEXP oldargs, SEXP newargs)
     newargs = newintoold(newargs, oldargs);
     return listAppend(oldargs, newargs);
 }
+
+/* R_MethodsNamespace is initialized to R_GlobalEnv when R is
+   initialized.  If it set to the methods namespace when the latter is
+   loaded, and back to R_GlobalEnv when it is unloaded. */
 
 #ifdef S3_for_S4_warn /* not currently used */
 static SEXP s_check_S3_for_S4 = 0;
@@ -308,11 +312,13 @@ int usemethod(const char *generic, SEXP obj, SEXP call, SEXP args,
 
     nclass = length(klass);
     for (i = 0; i < nclass; i++) {
+	const void *vmax = vmaxget();
         const char *ss = translateChar(STRING_ELT(klass, i));
 	if(strlen(generic) + strlen(ss) + 2 > 512)
 	    error(_("class name too long in '%s'"), generic);
 	snprintf(buf, 512, "%s.%s", generic, ss);
 	method = install(buf);
+	vmaxset(vmax);
 	sxp = R_LookupMethod(method, rho, callrho, defrho);
 	if (isFunction(sxp)) {
 	    if(method == sort_list && CLOENV(sxp) == R_BaseNamespace)
@@ -416,7 +422,7 @@ SEXP attribute_hidden do_usemethod(SEXP call, SEXP op, SEXP args, SEXP env)
 	The generic need not be a closure (Henrik Bengtsson writes
 	UseMethod("$"), although only functions are documented.)
     */
-    val = findVar1(install(translateChar(STRING_ELT(generic, 0))),
+    val = findVar1(installTrChar(STRING_ELT(generic, 0)),
 		   ENCLOS(env), FUNSXP, TRUE); /* That has evaluated promises */
     if(TYPEOF(val) == CLOSXP) defenv = CLOENV(val);
     else defenv = R_BaseNamespace;
@@ -804,6 +810,12 @@ SEXP attribute_hidden do_nextmethod(SEXP call, SEXP op, SEXP args, SEXP env)
     defineVar(R_dot_Group, group, m);
 
     SETCAR(newcall, method);
+
+    /* applyMethod expects that the parent of the caller is the caller
+       of the generic, so fixup by brute force. This should fix
+       PR#15267 --pd */
+    R_GlobalContext->sysparent = callenv;
+
     ans = applyMethod(newcall, nextfun, matchedarg, env, m);
     UNPROTECT(10);
     return(ans);
@@ -847,7 +859,9 @@ SEXP attribute_hidden do_unclass(SEXP call, SEXP op, SEXP args, SEXP env)
  */
 static SEXP inherits3(SEXP x, SEXP what, SEXP which)
 {
+    const void *vmax = vmaxget();
     SEXP klass, rval = R_NilValue /* -Wall */;
+
     if(IS_S4_OBJECT(x))
 	PROTECT(klass = R_data_class2(x));
     else
@@ -887,6 +901,7 @@ static SEXP inherits3(SEXP x, SEXP what, SEXP which)
 	    }
 	}
     }
+    vmaxset(vmax);
     if(!isvec) {
     	UNPROTECT(1);
 	return mkFalse();
@@ -904,6 +919,14 @@ SEXP attribute_hidden do_inherits(SEXP call, SEXP op, SEXP args, SEXP env)
 		     /* which = */ CADDR(args));
 }
 
+
+/*
+   ==============================================================
+
+     code from here on down is support for the methods package
+
+   ==============================================================
+*/
 
 /**
  * Return the 0-based index of an is() match in a vector of class-name
@@ -981,9 +1004,9 @@ int R_check_class_etc(SEXP x, const char **valid)
     pkg = getAttrib(cl, R_PackageSymbol); /* ==R== packageSlot(class(x)) */
     if(!isNull(pkg)) { /* find  rho := correct class Environment */
 	SEXP clEnvCall;
-	// FIXME: fails if 'methods' is not attached.
+	// FIXME: fails if 'methods' is not loaded.
 	PROTECT(clEnvCall = lang2(meth_classEnv, cl));
-	rho = eval(clEnvCall, R_GlobalEnv);
+	rho = eval(clEnvCall, R_MethodsNamespace);
 	UNPROTECT(1);
 	if(!isEnvironment(rho))
 	    error(_("could not find correct environment; please report!"));
@@ -991,19 +1014,9 @@ int R_check_class_etc(SEXP x, const char **valid)
     return R_check_class_and_super(x, valid, rho);
 }
 
-/*
-   ==============================================================
-
-     code from here on down is support for the methods package
-
-   ==============================================================
-*/
-
 /* standardGeneric:  uses a pointer to R_standardGeneric, to be
-   initialized when the methods package is attached.  When and if the
-   methods code is automatically included, the pointer will not be
-   needed
-
+   initialized when the methods namespace is loaded,
+   via R_initMethodDispatch.
 */
 static R_stdGen_ptr_t R_standardGeneric_ptr = 0;
 static SEXP dispatchNonGeneric(SEXP name, SEXP env, SEXP fdef);
@@ -1015,6 +1028,8 @@ R_stdGen_ptr_t R_get_standardGeneric_ptr(void)
     return R_standardGeneric_ptr;
 }
 
+/* Also called from R_initMethodDispatch in methods C code, which is
+   called when the methods namespace is loaded. */
 R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t val, SEXP envir)
 {
     R_stdGen_ptr_t old = R_standardGeneric_ptr;
@@ -1027,27 +1042,29 @@ R_stdGen_ptr_t R_set_standardGeneric_ptr(R_stdGen_ptr_t val, SEXP envir)
     return old;
 }
 
-static SEXP R_isMethodsDispatchOn(SEXP onOff) {
-    SEXP value = allocVector(LGLSXP, 1);
-    Rboolean onOffValue;
+static SEXP R_isMethodsDispatchOn(SEXP onOff)
+{
     R_stdGen_ptr_t old = R_get_standardGeneric_ptr();
-    LOGICAL(value)[0] = !NOT_METHODS_DISPATCH_PTR(old);
+    int ival =  !NOT_METHODS_DISPATCH_PTR(old);
     if(length(onOff) > 0) {
-	onOffValue = asLogical(onOff);
+	Rboolean onOffValue = asLogical(onOff);
 	if(onOffValue == NA_INTEGER)
 	    error(_("'onOff' must be TRUE or FALSE"));
 	else if(onOffValue == FALSE)
-	    R_set_standardGeneric_ptr(0, 0);
+	    R_set_standardGeneric_ptr(NULL, R_GlobalEnv);
+	// TRUE is not currently used
 	else if(NOT_METHODS_DISPATCH_PTR(old)) {
-	    SEXP call;
-	    PROTECT(call = allocList(2));
-	    SETCAR(call, install("initMethodsDispatch"));
-	    eval(call, R_GlobalEnv); /* only works with
-					methods	 attached */
+	    // so not already on
+	    // This may not work correctly: the default arg is incorrect.
+	    warning("R_isMethodsDispatchOn(TRUE) called -- may not work correctly");
+	    // FIXME: use call = PROTECT(lang1(install("initMethodDispatch")));
+	    SEXP call = PROTECT(allocList(2));
+	    SETCAR(call, install("initMethodDispatch"));
+	    eval(call, R_MethodsNamespace); // only works with methods loaded
 	    UNPROTECT(1);
 	}
     }
-    return value;
+    return ScalarLogical(ival);
 }
 
 /* simpler version for internal use, in attrib.c and print.c */
@@ -1058,6 +1075,13 @@ Rboolean isMethodsDispatchOn(void)
 }
 
 
+/* primitive for .isMethodsDispatchOn
+   This is generally called without an arg, but is call with
+   onOff=FALSE when package methods is detached/unloaded.
+
+   It seems it is not currently called with onOff = TRUE (and would
+   not have worked prior to 3.0.2).
+*/ 
 attribute_hidden
 SEXP do_S4on(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -1072,8 +1096,9 @@ static SEXP dispatchNonGeneric(SEXP name, SEXP env, SEXP fdef)
        calls to standardGeneric during the loading of the methods package */
     SEXP e, value, rho, fun, symbol;
     RCNTXT *cptr;
+
     /* find a non-generic function */
-    symbol = install(translateChar(asChar(name)));
+    symbol = installTrChar(asChar(name));
     for(rho = ENCLOS(env); rho != R_EmptyEnv;
 	rho = ENCLOS(rho)) {
 	fun = findVarInFrame3(rho, symbol, TRUE);
@@ -1159,6 +1184,7 @@ SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef,
 		       SEXP mlist)
 {
     const char *code_string;
+    const void *vmax = vmaxget();
     if(!isValidString(code_vec))
 	error(_("argument 'code' must be a character string"));
     code_string = translateChar(asChar(code_vec));
@@ -1178,7 +1204,8 @@ SEXP R_set_prim_method(SEXP fname, SEXP op, SEXP code_vec, SEXP fundef,
 	return value;
     }
     do_set_prim_method(op, code_string, fundef, mlist);
-    return(fname);
+    vmaxset(vmax);
+    return fname;
 }
 
 SEXP R_primitive_methods(SEXP op)
@@ -1324,6 +1351,7 @@ argument to standardGeneric.
 */
 static SEXP get_this_generic(SEXP args)
 {
+    const void *vmax = vmaxget();
     SEXP value = R_NilValue; static SEXP gen_name;
     int i, n;
     RCNTXT *cptr;
@@ -1353,7 +1381,9 @@ static SEXP get_this_generic(SEXP args)
 	}
     }
     UNPROTECT(1);
-    return(value);
+    vmaxset(vmax);
+
+    return value;
 }
 
 /* Could there be methods for this op?	Checks
@@ -1480,7 +1510,7 @@ SEXP R_do_MAKE_CLASS(const char *what)
     PROTECT(call = allocVector(LANGSXP, 2));
     SETCAR(call, s_getClass);
     SETCAR(CDR(call), mkString(what));
-    e = eval(call, R_GlobalEnv);
+    e = eval(call, R_MethodsNamespace);
     UNPROTECT(1);
     return(e);
 }
@@ -1496,7 +1526,7 @@ SEXP R_getClassDef(const char *what)
     PROTECT(call = allocVector(LANGSXP, 2));
     SETCAR(call, s_getClassDef);
     SETCAR(CDR(call), mkString(what));
-    e = eval(call, R_GlobalEnv);
+    e = eval(call, R_MethodsNamespace);
     UNPROTECT(1);
     return(e);
 }
@@ -1506,6 +1536,7 @@ SEXP R_do_new_object(SEXP class_def)
 {
     static SEXP s_virtual = NULL, s_prototype, s_className;
     SEXP e, value;
+    const void *vmax = vmaxget();
     if(!s_virtual) {
 	s_virtual = install("virtual");
 	s_prototype = install("prototype");
@@ -1526,6 +1557,7 @@ SEXP R_do_new_object(SEXP class_def)
 	setAttrib(value, R_ClassSymbol, e);
 	SET_S4_OBJECT(value);
     }
+    vmaxset(vmax);
     return value;
 }
 

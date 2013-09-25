@@ -366,6 +366,28 @@ static int SubassignTypeFix(SEXP *x, SEXP *y, R_xlen_t stretch, int level,
 	return(which);
 }
 
+#ifdef LONG_VECTOR_SUPPORT
+static R_INLINE R_xlen_t gi(SEXP indx, R_xlen_t i)
+{
+    if (TYPEOF(indx) == REALSXP) {
+	double d = REAL(indx)[i];
+	return R_FINITE(d) ? (R_xlen_t) d : NA_INTEGER;
+    } else
+	return INTEGER(indx)[i];
+}
+#else
+#define R_SHORT_LEN_MAX INT_MAX
+static R_INLINE int gi(SEXP indx, R_xlen_t i)
+{
+    if (TYPEOF(indx) == REALSXP) {
+	double d = REAL(indx)[i];
+	if (!R_FINITE(d) || d < -R_SHORT_LEN_MAX || d > R_SHORT_LEN_MAX) return NA_INTEGER;
+	return (int) d;
+    } else
+	return INTEGER(indx)[i];
+}
+#endif
+
 static SEXP DeleteListElements(SEXP x, SEXP which)
 {
     SEXP include, xnew, xnames, xnewnames;
@@ -377,7 +399,7 @@ static SEXP DeleteListElements(SEXP x, SEXP which)
     for (i = 0; i < len; i++)
 	INTEGER(include)[i] = 1;
     for (i = 0; i < lenw; i++) {
-	ii = INTEGER(which)[i];
+	ii = gi(which, i);
 	if (0 < ii  && ii <= len)
 	    INTEGER(include)[ii - 1] = 0;
     }
@@ -413,28 +435,6 @@ static SEXP DeleteListElements(SEXP x, SEXP which)
     UNPROTECT(2);
     return xnew;
 }
-
-#ifdef LONG_VECTOR_SUPPORT
-static R_INLINE R_xlen_t gi(SEXP indx, R_xlen_t i)
-{
-    if (TYPEOF(indx) == REALSXP) {
-	double d = REAL(indx)[i];
-	return R_FINITE(d) ? (R_xlen_t) d : NA_INTEGER;
-    } else
-	return INTEGER(indx)[i];
-}
-#else
-#define R_SHORT_LEN_MAX INT_MAX
-static R_INLINE int gi(SEXP indx, R_xlen_t i)
-{
-    if (TYPEOF(indx) == REALSXP) {
-	double d = REAL(indx)[i];
-	if (!R_FINITE(d) || d < -R_SHORT_LEN_MAX || d > R_SHORT_LEN_MAX) return NA_INTEGER;
-	return (int) d;
-    } else
-	return INTEGER(indx)[i];
-}
-#endif
 
 static R_INLINE SEXP VECTOR_ELT_FIX_NAMED(SEXP y, R_xlen_t i) {
     /* if RHS (container or element) has NAMED > 0 set NAMED = 2.
@@ -1262,7 +1262,7 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y, int ind)
 	    SEXP z = yi;
 	    int i;
 	    for(i = 0; i < LENGTH(t); i++, z = CDR(z))
-		SET_TAG(z, install(translateChar(STRING_ELT(t, i))));
+		SET_TAG(z, installTrChar(STRING_ELT(t, i)));
 	}
 	PROTECT(x = listAppend(x, yi));
 	nx = (int) stretch;
@@ -1288,9 +1288,7 @@ static SEXP listRemove(SEXP x, SEXP s, int ind)
     SEXP a, pa, px;
     int i, ii, *indx, ns, nx;
     R_xlen_t stretch=0;
-    const void *vmax;
-
-    vmax = vmaxget();
+    const void *vmax = vmaxget();
     nx = length(x);
     PROTECT(s = GetOneIndex(s, ind));
     PROTECT(s = makeSubscript(x, s, &stretch, R_NilValue));
@@ -1561,7 +1559,7 @@ do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( TYPEOF(x) == ENVSXP) {
 	if( nsubs!=1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
 	    error(_("wrong args for environment subassignment"));
-	defineVar(install(translateChar(STRING_ELT(CAR(subs), 0))), y, x);
+	defineVar(installTrChar(STRING_ELT(CAR(subs), 0)), y, x);
 	UNPROTECT(1);
 	return(S4 ? xOrig : x);
     }
@@ -1572,10 +1570,11 @@ do_subassign2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	thesub = CAR(subs);
 	len = length(thesub); /* depth of recursion, small */
 	if (len > 1) {
-	    xup = vectorIndex(x, thesub, 0, len-2, /*partial ok*/TRUE, call);
+	    xup = vectorIndex(x, thesub, 0, len-2, /*partial ok*/TRUE, call,
+			      TRUE);
 	    /* OneIndex sets newname, but it will be overwritten before being used. */
 	    off = OneIndex(xup, thesub, xlength(xup), 0, &newname, len-2, R_NilValue);
-	    x = vectorIndex(xup, thesub, len-2, len-1, TRUE, call);
+	    x = vectorIndex(xup, thesub, len-2, len-1, TRUE, call, TRUE);
 	    recursed = TRUE;
 	}
     }
@@ -1860,7 +1859,7 @@ SEXP attribute_hidden do_subassign3(SEXP call, SEXP op, SEXP args, SEXP env)
       return(ans);
 
     if (! iS)
-	nlist = install(translateChar(STRING_ELT(input, 0)));
+	nlist = installTrChar(STRING_ELT(input, 0));
 
     return R_subassign3_dflt(call, CAR(ans), nlist, CADDR(ans));
 }

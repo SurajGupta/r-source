@@ -207,17 +207,16 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
          texi2dvi = getOption("texi2dvi"),
          texinputs = NULL, index = TRUE)
 {
+    if (clean) pre_files <- list.files(all.files = TRUE)
     do_cleanup <- function(clean)
         if(clean) {
             ## output file will be created in the current directory
             out_file <- paste(basename(file_path_sans_ext(file)),
-                              if(pdf) "pdf" else "dvi",
-                              sep = ".")
+                              if(pdf) "pdf" else "dvi", sep = ".")
             files <- setdiff(list.files(all.files = TRUE),
-                             c(".", "..", out_file))
-            file.remove(files[file_test("-nt", files, ".timestamp")])
+                             c(".", "..", out_file, pre_files))
+            file.remove(files)
         }
-
 
     ## Run texi2dvi on a latex file, or emulate it.
 
@@ -260,11 +259,6 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     } else on.exit(Sys.setenv(BSTINPUTS = obstinputs), add = TRUE)
     Sys.setenv(BSTINPUTS = paste(obstinputs, bstinputs, sep = envSep))
 
-    if (clean) {
-        file.create(".timestamp")
-        on.exit(file.remove(".timestamp"), add = TRUE)
-        Sys.sleep(0.1) # wait long enough for files to be after the timestamp
-    }
     if(index && nzchar(texi2dvi) && .Platform$OS.type != "windows") {
         ## switch off the use of texindy in texi2dvi >= 1.157
         Sys.setenv(TEXINDY = "false")
@@ -283,10 +277,14 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         ## https://stat.ethz.ch/pipermail/r-devel/2011-March/060262.html
         ## That has [A-Za-z], earlier versions [A-z], both of which may be
         ## invalid in some locales.
+        env0 <- "LC_COLLATE=C"
+        ## texi2dvi, at least on OS X (4.8) does not accept TMPDIR with spaces.
+        if (grepl(" ", Sys.getenv("TMPDIR")))
+            env0 <- paste(env0,  "TMPDIR=/tmp")
         out <- .system_with_capture(texi2dvi,
                                     c(opt_pdf, opt_quiet, opt_extra,
                                       shQuote(file)),
-                                    env = "LC_COLLATE=C")
+                                    env = env0)
 
         ## We cannot necessarily rely on out$status, hence let us
         ## analyze the log files in any case.
@@ -441,7 +439,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version("2.12")
+    numeric_version(Sys.getenv("R_BIOC_VERSION", "2.13"))
 ## Things are more complicated from R-2.15.x with still two BioC
 ## releases a year, so we do need to set this manually.
 
@@ -1070,9 +1068,9 @@ function(x)
     raw_ub <- charToRaw("\x7f")
     raw_lb <- charToRaw("\xa0")
     vapply(as.character(x), function(txt) {
-	    raw <- charToRaw(txt)
-	    all(raw <= raw_ub | raw >= raw_lb)
-	}, NA)
+        raw <- charToRaw(txt)
+        all(raw <= raw_ub | raw >= raw_lb)
+    }, NA)
 }
 
 ### ** .is_primitive_in_base
@@ -1277,8 +1275,7 @@ function(package)
              Hmisc = c("abs.error.pred", "all.digits", "all.is.numeric",
                        "format.df", "format.pval", "t.test.cluster"),
              HyperbolicDist = "log.hist",
-             MASS = c("frequency.polygon",
-                      "gamma.dispersion", "gamma.shape",
+             MASS = c("frequency.polygon", "gamma.dispersion", "gamma.shape",
                       "hist.FD", "hist.scott"),
              ## FIXME: since these are already listed with 'base',
              ##        they should not need to be repeated here:
@@ -1290,10 +1287,11 @@ function(package)
              SMPracticals = "exp.gibbs",
              XML = "text.SAX",
              ape = "sort.index",
-	     assist = "chol.new",
+             arm = "sigma.hat", # lme4 has sigma()
+             assist = "chol.new",
              boot = "exp.tilt",
              car = "scatterplot.matrix",
-	     calibrator = "t.fun",
+             calibrator = "t.fun",
              clusterfly = "ggobi.som",
              coda = "as.mcmc.list",
              crossdes = "all.combn",
@@ -1304,15 +1302,15 @@ function(package)
              gbm = c("pretty.gbm.tree", "quantile.rug"),
              gpclib = "scale.poly",
              grDevices = "boxplot.stats",
-             graphics = c("close.screen",
-             "plot.design", "plot.new", "plot.window", "plot.xy",
-             "split.screen"),
+             graphics = c("close.screen", "plot.design", "plot.new",
+                          "plot.window", "plot.xy", "split.screen"),
              ic.infer = "all.R2",
              hier.part = "all.regs",
              lasso2 = "qr.rtr.inv",
              latticeExtra = "xyplot.list",
              locfit = c("density.lf", "plot.eval"),
              moments = c("all.cumulants", "all.moments"),
+             mosaic = "t.test",
              mratios = c("t.test.ration", "t.test.ratio.default",
                          "t.test.ratio.formula"),
              ncdf = c("open.ncdf", "close.ncdf",
@@ -1323,15 +1321,17 @@ function(package)
              rgeos = "scale.poly",
              sac = "cumsum.test",
              sm = "print.graph",
+             splusTimeDate = "sort.list",
+             splusTimeSeries = "sort.list",
              stats = c("anova.lmlist", "fitted.values", "lag.plot",
-             "influence.measures", "t.test",
-             "plot.spec.phase", "plot.spec.coherency"),
+                       "influence.measures", "t.test",
+                       "plot.spec.phase", "plot.spec.coherency"),
              supclust = c("sign.change", "sign.flip"),
-	     tensorA = "chol.tensor",
+             tensorA = "chol.tensor",
              utils = c("close.socket", "flush.console", "update.packages")
              )
     if(is.null(package)) return(unlist(stopList))
-    thisPkg <- stopList[[package, exact = TRUE]] # 'st' matched 'stats'
+    thisPkg <- stopList[[package]]
     if(!length(thisPkg)) character() else thisPkg
 }
 

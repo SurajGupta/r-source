@@ -1,7 +1,7 @@
 #  File src/library/utils/R/sourceutils.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -111,7 +111,10 @@ substr_with_tabs <- function(x, start, stop, tabsize = 8) {
 }
 
 getParseData <- function(x, includeText = NA) {
-    srcfile <- getSrcfile(x)
+    if (inherits(x, "srcfile")) 
+	srcfile <- x
+    else 
+	srcfile <- getSrcfile(x)
 
     if (is.null(srcfile))
     	return(NULL)
@@ -123,10 +126,10 @@ getParseData <- function(x, includeText = NA) {
         colnames(data) <- c( "line1", "col1",
 		 	     "line2", "col2",
 		 	     "terminal", "token.num", "id", "parent" )
-    	data <- data.frame(data[,-c(5,6)], token=tokens,
-    	                   terminal=as.logical(data[,"terminal"]),
-    	                   text=attr(data, "text"),
-    			   stringsAsFactors=FALSE)
+    	data <- data.frame(data[, -c(5,6), drop = FALSE], token = tokens,
+    	                   terminal = as.logical(data[,"terminal"]),
+    	                   text = attr(data, "text"),
+    			   stringsAsFactors = FALSE)
     	o <- order(data[,1], data[,2], -data[,3], -data[,4])
     	data <- data[o,]
     	rownames(data) <- data$id

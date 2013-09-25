@@ -347,6 +347,7 @@ tar <- function(tarfile, files = NULL,
                 if (grepl("darwin8", R.version$os)) # 10.4, Tiger
                     tar <- paste("COPY_EXTENDED_ATTRIBUTES_DISABLE=1", tar)
             }
+            if (is.null(extra_flags)) extra_flags <- ""
             ## 'tar' might be a command + flags, so don't quote it
             cmd <- paste(tar, extra_flags, flags, shQuote(tarfile),
                          paste(shQuote(files), collapse=" "))
@@ -418,14 +419,35 @@ tar <- function(tarfile, files = NULL,
             }
         }
         header[seq_along(name)] <- name
-        header[101:107] <- charToRaw(sprintf("%07o", info$mode))
+        mode <- info$mode
+        ## for use by R CMD build
+        if (is.null(extra_flags) && grepl("/(configure|cleanup)$", f) &&
+            (mode & "111") != as.octmode("111")) {
+            warning(gettextf("file '%s' did not have execute permissions: corrected", f), domain = NA, call. = FALSE)
+            mode <- mode | "111"
+        }
+        header[101:107] <- charToRaw(sprintf("%07o", mode))
         ## Windows does not have uid, gid: defaults to 0, which isn't great
         uid <- info$uid
-        if(!is.null(uid) && !is.na(uid))
+        ## uids are supposed to be less than 'nobody' (32767)
+        ## but it seems there are broken ones around: PR#15436
+        if(!is.null(uid) && !is.na(uid)) {
+            if(uid < 0L || uid > 32767L) {
+                warning(gettextf("invalid uid value replaced by that for user 'nobody'", uid),
+                        domain = NA, call. = FALSE)
+                uid <- 32767L
+            }
             header[109:115] <- charToRaw(sprintf("%07o", uid))
+        }
         gid <- info$gid
-        if(!is.null(gid) && !is.na(gid))
+        if(!is.null(gid) && !is.na(gid)) {
+            if(gid < 0L || gid > 32767L) {
+                warning(gettextf("invalid gid value replaced by that for user 'nobody'", uid),
+                        domain = NA, call. = FALSE)
+                gid <- 32767L
+            }
             header[117:123] <- charToRaw(sprintf("%07o", gid))
+	}
         header[137:147] <- charToRaw(sprintf("%011o", as.integer(info$mtime)))
         if (info$isdir) header[157L] <- charToRaw("5")
         else {

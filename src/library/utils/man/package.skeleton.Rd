@@ -1,6 +1,6 @@
 % File src/library/utils/man/package.skeleton.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{package.skeleton}
@@ -28,9 +28,7 @@ package.skeleton(name = "anRpackage", list,
     \sQuote{Details}.}
   \item{path}{path to put the package directory in.}
   \item{force}{If \code{FALSE} will not overwrite an existing directory.}
-  \item{namespace}{a logical, no longer used, and hence deprecated.  A
-    \code{NAMESPACE} file is always created to export all objects whose
-    names begin with a letter, plus all S4 methods and classes.}
+  \item{namespace}{a logical, no longer used, and hence deprecated.}
   \item{code_files}{a character vector with the paths to R code files to
     build the package around.  See \sQuote{Details}.}
 }
@@ -42,10 +40,9 @@ package.skeleton(name = "anRpackage", list,
   provide alternative ways to initialize the package.  If
   \code{code_files} is supplied, the files so named will be sourced to
   form the environment, then used to generate the package skeleton.
-  Otherwise \code{list} defaults to the non-hidden files in
-  \code{environment} (those whose name does not start with \code{.}),
-  but can be supplied to select a subset of the objects in that
-  environment.
+  Otherwise \code{list} defaults to the objects in \code{environment}
+  (including those whose names start with \code{.}), but can be supplied
+  to select a subset of the objects in that environment.
 
   Stubs of help files are generated for functions, data objects, and
   S4 classes and methods, using the \code{\link{prompt}},
@@ -54,12 +51,11 @@ package.skeleton(name = "anRpackage", list,
   The package sources are placed in subdirectory \code{name} of
   \code{path}.  If \code{code_files} is supplied, these files are
   copied; otherwise, objects will be dumped into individual source
-  files.
-  The file names in \code{code_files} should  have suffix \code{".R"} and
-  be in the current working directory.
+  files.  The file names in \code{code_files} should have suffix
+  \code{".R"} and be in the current working directory.
 
   The filenames created for source and documentation try to be valid for
-  all OSes known to run R.  Invalid characters are replaced by \samp{_},
+  all OSes known to run \R.  Invalid characters are replaced by \samp{_},
   invalid names are preceded by \samp{zz}, names are converted to lower
   case (to avoid case collisions on case-insensitive file systems) and
   finally the converted names are made unique by
@@ -68,6 +64,9 @@ package.skeleton(name = "anRpackage", list,
   the code and help files should have names starting with an ASCII
   letter or digit, and this is checked and if necessary \code{z}
   prepended.
+
+  Functions with names starting with a dot are placed in file
+  \file{R/\var{name}-internal.R}.
 
   When you are done, delete the \file{Read-and-delete-me} file, as it
   should not be distributed.

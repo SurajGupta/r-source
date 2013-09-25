@@ -150,6 +150,9 @@ nls(formula, data, start, control, algorithm,
 \seealso{
   \code{\link{summary.nls}}, \code{\link{predict.nls}},
   \code{\link{profile.nls}}.
+
+  Self starting models (with \sQuote{automatic initial values}):
+  \code{\link{selfStart}}.
 }
 \examples{
 \testonly{od <- options(digits=5)}
@@ -270,6 +273,7 @@ curve(100 + 10 * exp(x / 2), col = 4, add = TRUE)
 lines(x, predict(nlmod), col = 2)
 
 
+\donttest{
 ## The muscle dataset in MASS is from an experiment on muscle
 ## contraction on 21 animals.  The observed variables are Strip
 ## (identifier of muscle), Conc (Cacl concentration) and Length
@@ -280,7 +284,7 @@ utils::data(muscle, package = "MASS")
 ##       Length = alpha + beta*exp(-Conc/theta) + error
 ## where theta is constant but alpha and beta may vary with Strip.
 
-with(muscle, table(Strip)) # 2,3 or 4 obs per strip
+with(muscle, table(Strip)) # 2, 3 or 4 obs per strip
 
 ## We first use the plinear algorithm to fit an overall model,
 ## ignoring that alpha and beta might vary with Strip.
@@ -298,7 +302,7 @@ summary(musc.1)
 b <- coef(musc.1)
 musc.2 <- nls(Length ~ a[Strip] + b[Strip]*exp(-Conc/th), muscle,
               start = list(a = rep(b[2], 21), b = rep(b[3], 21), th = b[1]))
-summary(musc.2)
+summary(musc.2)}
 \testonly{options(od)}
 }
 \keyword{nonlinear}

@@ -122,9 +122,9 @@ void attribute_hidden R_run_onexits(RCNTXT *cptr)
     RCNTXT *c;
 
     for (c = R_GlobalContext; c != cptr; c = c->nextcontext) {
+        // a user embedding R incorrectly triggered this (PR#15420)
 	if (c == NULL)
-	    error(_("bad target context--should NEVER happen;\n\
-please bug.report() [R_run_onexits]"));
+	    error("bad target context--should NEVER happen if R was called correctly");
 	if (c->cend != NULL) {
 	    void (*cend)(void *) = c->cend;
 	    c->cend = NULL; /* prevent recursion */
@@ -221,7 +221,6 @@ void begincontext(RCNTXT * cptr, int flags,
 		  SEXP syscall, SEXP env, SEXP sysp,
 		  SEXP promargs, SEXP callfun)
 {
-    cptr->nextcontext = R_GlobalContext;
     cptr->cstacktop = R_PPStackTop;
     cptr->evaldepth = R_EvalDepth;
     cptr->callflag = flags;
@@ -242,6 +241,7 @@ void begincontext(RCNTXT * cptr, int flags,
     cptr->intstack = R_BCIntStackTop;
 #endif
     cptr->srcref = R_Srcref;
+    cptr->nextcontext = R_GlobalContext;
     R_GlobalContext = cptr;
 }
 

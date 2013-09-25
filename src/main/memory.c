@@ -1526,6 +1526,8 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_HandlerStack);          /* Condition handler stack */
     FORWARD_NODE(R_RestartStack);          /* Available restarts stack */
 
+    FORWARD_NODE(R_Srcref);                /* Current source reference */
+
     if (R_SymbolTable != NULL)             /* in case of GC during startup */
 	for (i = 0; i < HSIZE; i++)        /* Symbol table */
 	    FORWARD_NODE(R_SymbolTable[i]);
@@ -2629,12 +2631,15 @@ static void gc_end_timing(void)
     if (gctime_enabled) {
 	double times[5], delta;
 	R_getProcTime(times);
-	delta = R_getClockIncrement();
 
-	/* add delta to compensate for timer resolution:
-	   NB: as all current Unix-alike systems use getrusage, 
-	   this may over-compensate.
-	 */
+	/* add delta to compensate for timer resolution */
+#if 0
+	/* this seems to over-compensate too */
+	delta = R_getClockIncrement();
+#else
+	delta = 0;
+#endif
+
 	gctimes[0] += times[0] - gcstarttimes[0] + delta;
 	gctimes[1] += times[1] - gcstarttimes[1] + delta;
 	gctimes[2] += times[2] - gcstarttimes[2];

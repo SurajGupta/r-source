@@ -299,10 +299,7 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir)
 
     PROTECT(pars = allocVector(VECSXP, LENGTH(theta)));
 
-    if (TYPEOF(expr) == SYMSXP)
-	PROTECT(ans = duplicate(eval(expr, rho)));
-    else
-	PROTECT(ans = eval(expr, rho));
+    PROTECT(ans = duplicate(eval(expr, rho)));
 
     if(!isReal(ans)) {
 	SEXP temp = coerceVector(ans, REALSXP);
@@ -313,6 +310,7 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir)
 	if (!R_FINITE(REAL(ans)[i]))
 	    error(_("Missing value or an infinity produced when evaluating the model"));
     }
+    const void *vmax = vmaxget();
     for(i = 0; i < LENGTH(theta); i++) {
 	const char *name = translateChar(STRING_ELT(theta, i));
 	SEXP temp = findVar(install(name), rho);
@@ -323,6 +321,7 @@ numeric_deriv(SEXP expr, SEXP theta, SEXP rho, SEXP dir)
 	SET_VECTOR_ELT(pars, i, temp);
 	lengthTheta += LENGTH(VECTOR_ELT(pars, i));
     }
+    vmaxset(vmax);
     PROTECT(gradient = allocMatrix(REALSXP, LENGTH(ans), lengthTheta));
 
     for(i = 0, start = 0; i < LENGTH(theta); i++) {

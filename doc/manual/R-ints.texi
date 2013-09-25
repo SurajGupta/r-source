@@ -19,15 +19,15 @@
 @include R-defs.texi
 @include version.texi
 
-@ifinfo
-@ignore
-Permission is granted to process this file through TeX and print the
-results, provided the printed document carries a copying permission
-notice identical to this one except for the removal of this paragraph
-(this paragraph not being relevant to the printed manual).
+@copying
+This manual is for R, version @value{VERSION}.
 
-@end ignore
-@end ifinfo
+@Rcopyright{1999}
+
+@quotation
+@permission{}
+@end quotation
+@end copying
 
 @titlepage
 @title R Internals
@@ -35,12 +35,12 @@ notice identical to this one except for the removal of this paragraph
 @author R Core Team
 @page
 @vskip 0pt plus 1filll
-@permission{}
-
-@Rcopyright{1999}
-
-@value{ISBN-ints}
+@insertcopying
 @end titlepage
+
+@ifplaintext
+@insertcopying
+@end ifplaintext
 
 @c @ifnothtml
 @contents
@@ -53,14 +53,7 @@ notice identical to this one except for the removal of this paragraph
 This is a guide to the internal structures of @R{} and coding standards for
 the core team working on @R{} itself.
 
-The current version of this document is @value{VERSION}.
-
-@value{ISBN-ints}
-
-@Rcopyright{1999}
-
-@permission{}
-@c ---------- ^- read that
+@insertcopying
 
 @end ifnottex
 
@@ -363,7 +356,7 @@ Bits 1, 2, 3, 5 and 6 are used for a @code{CHARSXP} to denote its
 encoding.  Bit 1 indicates that the @code{CHARSXP} should be treated as
 a set of bytes, not necessarily representing a character in any known
 encoding.  Bits 2, 3 and 6 are used to indicate that it is known to be
-in Latin-1, UTF-8 or ASCII respectively.
+in Latin-1, UTF-8 or @acronym{ASCII} respectively.
 
 Bit 5 for a @code{CHARSXP} indicates that it is hashed by its address,
 that is @code{NA_STRING} or is in the @code{CHARSXP} cache (this is not
@@ -1130,12 +1123,13 @@ of the file (a single LF-terminated line) which the lower-level versions
 do not.
 
 @code{save} and @code{saveRDS} allow various forms of compression, and
-@command{gzip} compression is the default (except for ASCII saves).
-Compression is applied to the whole file stream, including the headers,
-so serialized files can be uncompressed or re-compressed by external
-programs.  Both @code{load} and @code{readRDS} can read @command{gzip},
-@command{bzip2} and @command{xz} forms of compression when reading from
-a file, and @command{gzip} compression when reading from a connection.
+@command{gzip} compression is the default (except for @acronym{ASCII}
+saves).  Compression is applied to the whole file stream, including the
+headers, so serialized files can be uncompressed or re-compressed by
+external programs.  Both @code{load} and @code{readRDS} can read
+@command{gzip}, @command{bzip2} and @command{xz} forms of compression
+when reading from a file, and @command{gzip} compression when reading
+from a connection.
 
 @R{} has used the same serialization format since @R{} 1.4.0 in December
 2001.  Earlier formats are still supported via @code{load} and
@@ -1220,7 +1214,7 @@ The `ASCII' format writes 7-bit characters.  Integers are formatted with
 doubles formatted with @code{%.16g} (plus @code{NA}, @code{Inf} and
 @code{-Inf}) and bytes with @code{%02x}.  Strings are written using
 standard escapes (e.g.@: @code{\t} and @code{\013}) for non-printing and
-non-ASCII bytes.
+non-@acronym{ASCII} bytes.
 
 @node Encodings for CHARSXPs, The CHARSXP cache, Serialization Formats, R Internal Structures
 @section Encodings for CHARSXPs
@@ -1249,10 +1243,10 @@ if this is known, either via the @code{encoding} argument to
 the @R{} command line.  (Other ways are recorded on the help page for
 @code{Encoding}.)
 
-It is not necessary to declare the encoding of ASCII strings as they
-will work in any locale.  ASCII strings should never have a marked
-encoding, as any encoding will be ignored when entering such strings
-into the @code{CHARSXP} cache.
+It is not necessary to declare the encoding of @acronym{ASCII} strings
+as they will work in any locale.  @acronym{ASCII} strings should never
+have a marked encoding, as any encoding will be ignored when entering
+such strings into the @code{CHARSXP} cache.
 
 The rationale behind considering only UTF-8 and Latin-1 was that most
 systems are capable of producing UTF-8 strings and this is the nearest
@@ -1316,7 +1310,7 @@ examples still exist).
 The cache records the encoding of the string as well as the bytes: all
 requests to create a @code{CHARSXP} should be @emph{via} a call to
 @code{mkCharLenCE}.  Any encoding given in @code{mkCharLenCE} call will
-be ignored if the string's bytes are all ASCII characters.
+be ignored if the string's bytes are all @acronym{ASCII} characters.
 
 
 @node Warnings and errors, S4 objects, The CHARSXP cache, R Internal Structures
@@ -2639,14 +2633,14 @@ Windows has another couple of peculiarities.  Whereas a POSIX file
 system has a single root directory (and other physical file systems are
 mounted onto logical directories under that root), Windows has separate
 roots for each physical or logical file system (`volume'), organized
-under @emph{drives} (with file paths starting @code{D:} for an ASCII
-letter, case-insensitively) and @emph{network shares} (with paths like
-@code{\netname\topdir\myfiles\a file}.  There is a current drive, and
-path names without a drive part are relative to the current drive.
-Further, each drive has a current directory, and relative paths are
-relative to that current directory, on a particular drive if one is
-specified.  So @file{D:dir\file} and @file{D:} are valid path
-specifications (the last being the current directory on drive
+under @emph{drives} (with file paths starting @code{D:} for an
+@acronym{ASCII} letter, case-insensitively) and @emph{network shares}
+(with paths like @code{\netname\topdir\myfiles\a file}.  There is a
+current drive, and path names without a drive part are relative to the
+current drive.  Further, each drive has a current directory, and
+relative paths are relative to that current directory, on a particular
+drive if one is specified.  So @file{D:dir\file} and @file{D:} are valid
+path specifications (the last being the current directory on drive
 @file{D:}).
 
 @c basename        Wchar   na
@@ -3689,7 +3683,7 @@ already set.
 @command{gfortran} is installed.
 
 @item
-The default HTML browser is switched to the one in @command{R.app}.
+The default @HTML{} browser is switched to the one in @command{R.app}.
 
 @item
 Various widgets are switched to the versions provided in
@@ -3768,9 +3762,12 @@ Default: false.
 If true, give an error if suggested packages are not available.
 Default: true (but false for CRAN submission checks).
 @item _R_CHECK_RD_CONTENTS_
-If true, check @file{Rd} files for auto-generated content which needs editing,
-and missing argument documentation.
+If true, check @file{Rd} files for auto-generated content which needs
+editing, and missing argument documentation.
 Default: true.
+@item _R_CHECK_RD_LINE_WIDTHS_
+If true, check @file{Rd} line widths in usage and examples sections.
+Default: false (but true for CRAN submission checks).
 @item _R_CHECK_RD_STYLE_
 If true, check whether @file{Rd} usage entries for S3 methods use the full
 function name rather than the appropriate @code{\method} markup.
@@ -3780,7 +3777,7 @@ If true, check the cross-references in @file{.Rd} files.
 Default: true.
 @item _R_CHECK_SUBDIRS_NOCASE_
 If true, check the case of directories such as @file{R} and @file{man}.
-Default: true
+Default: true.
 @item _R_CHECK_SUBDIRS_STRICT_
 Initial setting for @option{--check-subdirs}.
 Default: @samp{default} (which checks only tarballs, and checks in the
@@ -3906,9 +3903,11 @@ Default: false.
 Should the @file{vign_test} directory be removed if the test is successful?
 Default: true.
 @item _R_CHECK_REPLACING_IMPORTS_
-Should warnings about replacing imports be reported?  These come
-from auto-generated @file{NAMESPACE} files in other packages.
-Default: false.
+Should warnings about replacing imports be reported?  These sometimes come
+from auto-generated @file{NAMESPACE} files in other packages, but most
+often from importing the whole of a namespace rather than using
+@code{importFrom}.
+Default: false (but true for CRAN submission checks).
 @item _R_CHECK_UNSAFE_CALLS_
 Check for calls that appear to tamper with (or allow tampering with)
 already loaded code not from the current package: such calls may well
@@ -4010,6 +4009,13 @@ Should the package code be checked for the presence of recently deprecated
 or defunct functions (including completely removed functions). 
 Default: false (but true for CRAN submission checks).
 
+@item _R_CHECK_TOPLEVEL_FILES_
+Report on top-level files in the package sources that are not described
+in `Writing R Extensions' nor are commonly understood (like
+@file{ChangeLog}).  Variations on standard names (e.g.@:
+@file{COPYRIGHT}) are also reported.
+Default: false (but true for CRAN submission checks).
+
 @end vtable
 
 CRAN's submission checks use something like
@@ -4028,6 +4034,8 @@ _R_CHECK_CODE_ATTACH_=TRUE
 _R_CHECK_CODE_DATA_INTO_GLOBALENV_=TRUE
 _R_CHECK_DOT_FIRSTLIB_=TRUE
 _R_CHECK_DEPRECATED_DEFUNCT_=TRUE
+_R_CHECK_REPLACING_IMPORTS_=TRUE
+_R_CHECK_TOPLEVEL_FILES_=TRUE
 @end example
 
 @noindent
@@ -4195,9 +4203,9 @@ if you change internal structures.]
 Various dialects of TeX and used for different purposes in @R{}.  The
 policy is that manuals be written in @samp{texinfo}, and for convenience
 the main and Windows FAQs are also.  This has the advantage that is is
-easy to produce HTML and plain text versions as well as typeset manuals.
+easy to produce @HTML{} and plain text versions as well as typeset manuals.
 
-LaTeX is not used directly, but rather as an intermediate format for
+@LaTeX{} is not used directly, but rather as an intermediate format for
 typeset help documents and for vignettes.
 
 Care needs to be taken about the assumptions made about the @R{} user's
@@ -4220,9 +4228,10 @@ This process has been rather vulnerable to the versions of the external
 software used: particular issues have been @command{texi2dvi} and
 @file{texinfo.tex} updates, mismatches between the two@footnote{Linux
 distributions tend to unbundle @file{texinfo.tex} from @samp{texinfo}.},
-versions of the LaTeX package @samp{hyperref} and quirks in index
-production.  The licenses used for LaTeX and latterly @samp{texinfo}
-prohibit us from including `known good' versions in the @R{} distribution.
+versions of the @LaTeX{} package @samp{hyperref} and quirks in index
+production.  The licenses used for @LaTeX{} and latterly @samp{texinfo}
+prohibit us from including `known good' versions in the @R{}
+distribution.
 
 On a Unix-alike @command{configure} looks for the executables for TeX and
 friends and if found records the absolute paths in the system

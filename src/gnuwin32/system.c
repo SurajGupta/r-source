@@ -327,7 +327,7 @@ FileReadConsole(const char *prompt, char *buf, int len, int addhistory)
 	char obuf[len+1], *ob = obuf;
 	if(!cd) {
 	    cd = Riconv_open("", R_StdinEnc);
-	    if(!cd) error(_("encoding '%s' is not recognised"), R_StdinEnc);
+	    if(cd == (void *)-1) error(_("encoding '%s' is not recognised"), R_StdinEnc);
 	}
 	res = Riconv(cd, &ib, &inb, &ob, &onb);
 	*ob = '\0';
@@ -1029,6 +1029,12 @@ int cmdlineoptions(int ac, char **av)
 		break;
 	    } else if(CharacterMode == RTerm && !strcmp(*av, "-f")) {
 		ac--; av++;
+		if (!ac) {
+		    snprintf(s, 1024,
+			    _("option '%s' requires an argument"),
+			    "-f");
+		    R_Suicide(s);
+		}
 		Rp->R_Interactive = FALSE;
 		Rp->ReadConsole = FileReadConsole;
 		if(strcmp(*av, "-")) {
@@ -1054,6 +1060,12 @@ int cmdlineoptions(int ac, char **av)
 		}
 	    } else if(CharacterMode == RTerm && !strcmp(*av, "-e")) {
 		ac--; av++;
+		if (!ac || !strlen(*av)) {
+		    snprintf(s, 1024,
+			    _("option '%s' requires a non-empty argument"),
+			    "-e");
+		    R_Suicide(s);
+		}
 		if(strlen(cmdlines) + strlen(*av) + 2 <= 10000) {
 		    strcat(cmdlines, *av);
 		    strcat(cmdlines, "\n");

@@ -2608,14 +2608,10 @@ is.unsorted(data.frame(x=3:4, y=1:2))
 ## R < 2.15.1 got these as FALSE, TRUE, FALSE.
 
 
-## Error in constructing the error message
-assertErrorPrint <- function(expr) {
-    stopifnot(inherits(e <- tryCatch(expr, error=function(e)e), "error"))
-    cat("Asserted Error:", e[["message"]],"\n")
-}
 library("methods")# (not needed here)
-assertErrorPrint( getMethod(ls, "bar", fdef=ls) )
-assertErrorPrint( getMethod(show, "bar") )
+assertCondition <- tools::assertCondition
+assertCondition( getMethod(ls, "bar", fdef=ls), "error", verbose=TRUE)
+assertCondition( getMethod(show, "bar"),        "error", verbose=TRUE)
 ## R < 2.15.1 gave
 ##   cannot coerce type 'closure' to vector of type 'character'
 
@@ -2696,3 +2692,17 @@ str(d)
 ## PR#15299 : adding a simple vector to a classed object produced a bad result:
 1:2 + table(1:2)
 ## Printed the class attribute in R <= 3.0.0
+
+## PR#15311 : regmatches<- mishandled regexpr results.
+  x <- c('1', 'B', '3')
+  m <- regexpr('\\d', x)
+  regmatches(x, m) <- c('A', 'C')
+  print(x)
+## Gave a warning and a wrong result up to 3.0.1
+
+## Bad warning found by Radford Neal
+  saveopt <- options(warnPartialMatchDollar=TRUE)
+  pl <- pairlist(abc=1, def=2)
+  pl$ab
+  if (!is.null(saveopt[["warnPartialMatchDollar"]])) options(saveopt)
+## 'abc' was just ''

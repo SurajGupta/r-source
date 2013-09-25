@@ -5,6 +5,9 @@
 
 \name{system}
 \alias{system}
+#ifdef unix
+\alias{shell}
+#endif
 \title{Invoke a System Command}
 \description{
   \code{system} invokes the OS command specified by \code{command}.
@@ -58,7 +61,7 @@ system(command, intern = FALSE,
   \file{.com}) or a batch file (extensions \file{.cmd} and \file{.bat}):
   these extensions are tried in turn if none is supplied.)  This means
   that redirection, pipes, DOS internal commands, \dots cannot be used:
-  see \code{\link{shell}}.
+  see \code{\link{shell}} if you want to pass a shell command-line.
 
   The search path for \code{command} may be system-dependent: it will
   include the \R \file{bin} directory, the working directory and the
@@ -69,6 +72,9 @@ system(command, intern = FALSE,
   and POSIX requires that shell), so \code{command} can be anything the
   shell regards as executable, including shell scripts, and it can
   contain multiple commands separated by \code{;}.
+
+  On Windows, \code{system} does not use a shell and there is a separate
+  function \code{shell} which passes command lines to a shell.
 
   If \code{intern} is \code{TRUE} then \code{popen} is used to invoke the
   command and the output collected, line by line, into an \R
@@ -183,7 +189,7 @@ system(command, intern = FALSE,
     Windows the command is run directly -- use \code{shell} for an
     interface which runs \code{command} \emph{via} a shell (by default
     the Windows shell \command{cmd.exe}, which has many differences from
-    the POSIX shell).
+    a POSIX shell).
 
     This means that it cannot be assumed that redirection or piping will
     work in \code{system} (redirection sometimes does, but we have seen
@@ -210,10 +216,14 @@ system(command, intern = FALSE,
 }
 \seealso{
   \code{\link{system2}}.
+  
 #ifdef windows
-
   \code{\link{shell}} or \code{\link{shell.exec}} for a less raw
   interface.
+#endif
+#ifdef unix
+  \command{man system} and \command{man sh} for how this is implemented
+  on the OS in use.
 #endif
 
   \code{\link{.Platform}} for platform-specific variables.

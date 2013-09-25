@@ -163,7 +163,7 @@ SEXP getAttrib(SEXP vec, SEXP name)
 	! (TYPEOF(vec) == LISTSXP || TYPEOF(vec) == LANGSXP))
 	return R_NilValue;
 
-    if (isString(name)) name = install(translateChar(STRING_ELT(name, 0)));
+    if (isString(name)) name = installTrChar(STRING_ELT(name, 0));
 
     /* special test for c(NA, n) rownames of data frames: */
     if (name == R_RowNamesSymbol) {
@@ -222,8 +222,9 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
     PROTECT(vec);
     PROTECT(name);
 
-    if (isString(name))
-	name = install(translateChar(STRING_ELT(name, 0)));
+    if (isString(name)) {
+	name = installTrChar(STRING_ELT(name, 0));
+    }
     if (val == R_NilValue) {
 	UNPROTECT(2);
 	return removeAttrib(vec, name);
@@ -642,9 +643,11 @@ static SEXP cache_class(const char *class, SEXP klass) {
     return klass;
 }
 
-static SEXP S4_extends(SEXP klass) {
-  static SEXP s_extends = 0, s_extendsForS3;
+static SEXP S4_extends(SEXP klass) 
+{
+    static SEXP s_extends = 0, s_extendsForS3;
     SEXP e, val; const char *class;
+    const void *vmax = vmaxget();
     if(!s_extends) {
 	s_extends = install("extends");
 	s_extendsForS3 = install(".extendsForS3");
@@ -656,6 +659,7 @@ static SEXP S4_extends(SEXP klass) {
         return klass;
     class = translateChar(STRING_ELT(klass, 0)); /* TODO: include package attr. */
     val = findVarInFrame(R_S4_extends_table, install(class));
+    vmaxset(vmax);
     if(val != R_UnboundValue)
        return val;
     PROTECT(e = allocVector(LANGSXP, 2));
@@ -852,7 +856,7 @@ SEXP namesgets(SEXP vec, SEXP val)
 	    if (STRING_ELT(val, i) != R_NilValue
 		&& STRING_ELT(val, i) != R_NaString
 		&& *CHAR(STRING_ELT(val, i)) != 0) /* test of length */
-		SET_TAG(s, install(translateChar(STRING_ELT(val, i))));
+		SET_TAG(s, installTrChar(STRING_ELT(val, i)));
 	    else
 		SET_TAG(s, R_NilValue);
     }
@@ -981,7 +985,7 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
 	top = VECTOR_ELT(val, 0);
 	i = 0;
 	for (val = vec; !isNull(val); val = CDR(val))
-	    SET_TAG(val, install(translateChar(STRING_ELT(top, i++))));
+	    SET_TAG(val, installTrChar(STRING_ELT(top, i++)));
     }
     UNPROTECT(2);
     return vec;
@@ -1227,7 +1231,7 @@ SEXP attribute_hidden do_attributesgets(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
 	for (i = 0; i < nattrs; i++) {
 	    if (i == i0) continue;
-	    setAttrib(object, install(translateChar(STRING_ELT(names, i))),
+	    setAttrib(object, installTrChar(STRING_ELT(names, i)),
 		      VECTOR_ELT(attrs, i));
 	}
     }
@@ -1447,6 +1451,7 @@ SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 /* These provide useful shortcuts which give access to */
 /* the dimnames for matrices and arrays in a standard form. */
 
+/* NB: this may return R_alloc-ed rn and dn */
 void GetMatrixDimnames(SEXP x, SEXP *rl, SEXP *cl,
 		       const char **rn, const char **cn)
 {
@@ -1622,9 +1627,9 @@ SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value) {
     PROTECT(obj); PROTECT(value);
     /* Ensure that name is a symbol */
     if(isString(name) && LENGTH(name) == 1)
-	name = install(translateChar(STRING_ELT(name, 0)));
+	name = installTrChar(STRING_ELT(name, 0));
     if(TYPEOF(name) == CHARSXP)
-	name = install(translateChar(name));
+	name = installTrChar(name);
     if(!isSymbol(name) )
 	error(_("invalid type or length for slot name"));
 
@@ -1664,7 +1669,7 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
      * test expression should kick out on the first element. */
     if(!(isSymbol(nlist) || (isString(nlist) && LENGTH(nlist) == 1)))
 	error(_("invalid type or length for slot name"));
-    if(isString(nlist)) nlist = install(translateChar(STRING_ELT(nlist, 0)));
+    if(isString(nlist)) nlist = installTrChar(STRING_ELT(nlist, 0));
     PROTECT(object = eval(CAR(args), env));
     if(!s_dot_Data) init_slot_handling();
     if(nlist != s_dot_Data && !IS_S4_OBJECT(object)) {

@@ -1,5 +1,5 @@
 
-R version 3.0.0 RC (2013-03-29 r62438) -- "Masked Marvel"
+R version 3.0.2 RC (2013-09-22 r63960) -- "Frisbee Sailing"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -486,8 +486,8 @@ Potentially influential observations of
 > 
 > ## PR#7829 model.tables & replications
 > if(require(MASS)) {
-+ oats.aov <- aov(Y ~ B + V + N + V:N, data=oats[-1,])
-+ model.tables(oats.aov, "means", cterms=c("N", "V:N"))
++     oats.aov <- aov(Y ~ B + V + N + V:N, data=oats[-1,])
++     model.tables(oats.aov, "means", cterms=c("N", "V:N"))
 + }
 Tables of means
 Grand mean
@@ -609,18 +609,21 @@ climb   1 320.99
 > 
 > 
 > ## as.matrix.data.frame with coercion
-> library(survival)
-> soa <- Surv(1:5, c(0, 0, 1, 0, 1))
-> df.soa <- data.frame(soa)
-> as.matrix(df.soa) # numeric result
+> if(require("survival")) {
++     soa <- Surv(1:5, c(0, 0, 1, 0, 1))
++     df.soa <- data.frame(soa)
++     print(as.matrix(df.soa)) # numeric result
++     df.soac <- data.frame(soa, letters[1:5])
++     print(as.matrix(df.soac)) # character result
++     detach("package:survival")
++ }
+Loading required package: survival
      soa.time soa.status
 [1,]        1          0
 [2,]        2          0
 [3,]        3          1
 [4,]        4          0
 [5,]        5          1
-> df.soac <- data.frame(soa, letters[1:5])
-> as.matrix(df.soac) # character result
      soa  letters.1.5.
 [1,] "1+" "a"         
 [2,] "2+" "b"         
@@ -630,7 +633,6 @@ climb   1 320.99
 > ## failed in 2.8.1
 > 
 > ## wish of PR#13505
-> utils::data(npk, package="MASS")
 > npk.aov <- aov(yield ~ block + N * P + K, npk)
 > foo <- proj(npk.aov)
 > cbind(npk, foo)
@@ -696,6 +698,7 @@ climb   1 320.99
 +   x3 <- x2; x3[4:5] <- x2[5:4]
 +   print(xtabs(~ x1 + x2, sparse= TRUE, exclude = 'c'))
 +   print(xtabs(~ x1 + x3, sparse= TRUE, exclude = 'c'))
++   detach("package:Matrix")
 +   ## failed in R <= 2.13.1
 + }
 5 x 4 sparse Matrix of class "dgCMatrix"
@@ -735,16 +738,78 @@ b . 1
 > ## xtabs did not exclude levels from factors
 > x1 <- c('a','b','a','b','c', NA)
 > x2 <- factor(x1, exclude=NULL)
-> print(xtabs(~ x1 + x2, na.action = na.pass)) 
+> print(xtabs(~ x1 + x2, na.action = na.pass))
    x2
 x1  a b c <NA>
   a 2 0 0    0
   b 0 2 0    0
   c 0 0 1    0
-> print(xtabs(~ x1 + x2, exclude = 'c', na.action = na.pass)) 
+> print(xtabs(~ x1 + x2, exclude = 'c', na.action = na.pass))
       x2
 x1     a b <NA>
   a    2 0    0
   b    0 2    0
   <NA> 0 0    1
+> 
+> 
+> ## median should work by default for a suitable S4 class.
+> ## adapted from adaptsmoFMRI
+> if(suppressMessages(require("Matrix"))) {
++     x <- matrix(c(1,2,3,4))
++     print(median(x))
++     print(median(as(x, "dgeMatrix")))
++     detach("package:Matrix")
++ }
+[1] 2.5
+[1] 2.5
+> 
+> ## Various arguments were not duplicated:  PR#15352 to 15354
+> x <- 5
+> y <- 2
+> f <- function (y) x
+> numericDeriv(f(y),"y")
+[1] 5
+attr(,"gradient")
+     [,1]
+[1,]    0
+> x
+[1] 5
+> 
+> a<-list(1,2)
+> b<-rep.int(a,c(2,2))
+> b[[1]][1]<-9
+> a[[1]]
+[1] 1
+> 
+> a <- numeric(1)
+> x <- mget("a",as.environment(1))
+> x
+$a
+[1] 0
+
+> a[1] <- 9
+> x
+$a
+[1] 0
+
+> 
+> 
+> ## needs MASS installed
+> ## PR#2586 labelling in alias()
+> if(require("MASS")) {
++     Y <- c(0,1,2)
++     X1 <- c(0,1,0)
++     X2 <- c(0,1,0)
++     X3 <- c(0,0,1)
++     print(res <- alias(lm(Y ~ X1 + X2 + X3)))
++     stopifnot(identical(rownames(res[[2]]), "X2"))
++ }
+Model :
+Y ~ X1 + X2 + X3
+
+Complete :
+   (Intercept) X1 X3
+X2 0           1  0 
+
+> ## the error was in lm.(w)fit
 > 

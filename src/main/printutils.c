@@ -142,16 +142,17 @@ const char *EncodeInteger(int x, int w)
 }
 
 attribute_hidden
-const char *EncodeRaw(Rbyte x)
+const char *EncodeRaw(Rbyte x, const char * prefix)
 {
     static char buff[10];
-    sprintf(buff, "%02x", x);
+    sprintf(buff, "%s%02x", prefix, x);
     return buff;
 }
 
 attribute_hidden
 const char *EncodeEnvironment(SEXP x)
 {
+    const void *vmax = vmaxget();
     static char ch[1000];
     if (x == R_GlobalEnv)
 	sprintf(ch, "<environment: R_GlobalEnv>");
@@ -167,6 +168,7 @@ const char *EncodeEnvironment(SEXP x)
 		translateChar(STRING_ELT(R_NamespaceEnvSpec(x), 0)));
     else snprintf(ch, 1000, "<environment: %p>", (void *)x);
 
+    vmaxset(vmax);
     return ch;
 }
 
@@ -429,6 +431,8 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
     const char *p; char *q, buf[11];
     cetype_t ienc = getCharCE(s);
     Rboolean useUTF8 = w < 0;
+    const void *vmax = vmaxget();
+
     if (w < 0) w = w + 1000000;
 
     /* We have to do something like this as the result is returned, and
@@ -659,6 +663,8 @@ const char *EncodeString(SEXP s, int w, int quote, Rprt_adj justify)
 	for(i = 0 ; i < b ; i++) *q++ = ' ';
     }
     *q = '\0';
+
+    vmaxset(vmax);
     return buffer->data;
 }
 
@@ -693,7 +699,7 @@ const char *EncodeElement(SEXP x, int indx, int quote, char dec)
 	res = EncodeComplex(COMPLEX(x)[indx], w, d, e, wi, di, ei, dec);
 	break;
     case RAWSXP:
-	res = EncodeRaw(RAW(x)[indx]);
+	res = EncodeRaw(RAW(x)[indx], "");
 	break;
     default:
 	res = NULL; /* -Wall */

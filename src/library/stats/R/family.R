@@ -118,12 +118,14 @@ make.link <- function (link)
                linkfun <- function(mu) 1/mu
                linkinv <- function(eta) 1/eta
                mu.eta <- function(eta) -1/(eta^2)
-               valideta <- function(eta) all(eta!=0)
+               valideta <- function(eta) all(eta != 0)
            },
            ## else :
            stop(gettextf("%s link not recognised", sQuote(link)),
                 domain = NA)
            )# end switch(.)
+    environment(linkfun) <- environment(linkinv) <- environment(mu.eta) <-
+        environment(valideta) <- asNamespace("stats")
     structure(list(linkfun = linkfun, linkinv = linkinv,
                    mu.eta = mu.eta, valideta = valideta, name = link),
               class="link-glm")
@@ -153,7 +155,12 @@ poisson <- function (link = "log")
     variance <- function(mu) mu
     validmu <- function(mu) all(mu>0)
     dev.resids <- function(y, mu, wt)
-        2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) - (y - mu))
+    { ## faster than  2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) - (y - mu))
+	r <- mu*wt
+	p <- which(y > 0)
+	r[p] <- (wt * (y*log(y/mu) - (y - mu)))[p]
+	2*r
+    }
     aic <- function(y, n, mu, wt, dev) -2*sum(dpois(y, mu, log=TRUE)*wt)
     initialize <- expression({
 	if (any(y < 0))
@@ -209,7 +216,12 @@ quasipoisson <- function (link = "log")
     variance <- function(mu) mu
     validmu <- function(mu) all(mu>0)
     dev.resids <- function(y, mu, wt)
-	2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) - (y - mu))
+    { ## faster than  2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) - (y - mu))
+	r <- mu*wt
+	p <- which(y > 0)
+	r[p] <- (wt * (y*log(y/mu) - (y - mu)))[p]
+	2*r
+    }
     aic <- function(y, n, mu, wt, dev) NA
     initialize <- expression({
 	if (any(y < 0))
@@ -399,9 +411,7 @@ quasibinomial <- function (link = "logit")
     }
     variance <- function(mu) mu * (1 - mu)
     validmu <- function(mu) all(mu>0) && all(mu<1)
-    dev.resids <- function(y, mu, wt)
-	2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) +
-		  (1 - y) * log(ifelse(y == 1, 1, (1 - y)/(1 - mu))))
+    dev.resids <- function(y, mu, wt) .Call(C_binomial_dev_resids, y, mu, wt)
     aic <- function(y, n, mu, wt, dev) NA
     initialize <- expression({
 	if (NCOL(y) == 1) {
@@ -574,9 +584,7 @@ quasi <- function (link = "identity", variance = "constant")
            "mu(1-mu)" = {
                varfun <- function(mu) mu * (1 - mu)
                validmu <- function(mu) all(mu>0) && all(mu<1)
-               dev.resids <- function(y, mu, wt)
-                   2 * wt * (y * log(ifelse(y == 0, 1, y/mu)) +
-                             (1 - y) * log(ifelse(y == 1, 1, (1 - y)/(1 - mu))))
+               dev.resids <- function(y, mu, wt) .Call(C_binomial_dev_resids, y, mu, wt)
                initialize <- expression({n <- rep.int(1, nobs)
                                          mustart <- pmax(0.001, pmin(0.999, y))})
            },

@@ -19,6 +19,7 @@
 readNEWS <- function(file = file.path(R.home(), "NEWS"),
                      trace = FALSE, chop = c("first", "1", "par1", "keepAll"))
 {
+    .Deprecated()
     ## Purpose: read R's NEWS file - or a file similarly organized
     ## ----------------------------------------------------------------------
     ## Arguments: trace: is used in  "inner functions"
@@ -41,7 +42,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	n <- length(cvec); if(n <= 1L) return(cvec)
 	## else	 n >= 2
 	empty <- grep("^[\t ]*$", cvec)
-	cvec[if(any(!empty)) which(!empty)[1L] else 1L]
+	cvec[if(any(!empty)) which.max(!empty) else 1L]
     }
 
     chopPara <- function(cvec) {
@@ -51,7 +52,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 	## the first non-empty ``from the right''
 	nm <- 1L:n %nIN% (n + 1 - rev(empty))
 	if(any(nm))
-	    cvec[1L:(n - (which(nm)[1L] - 1))]
+	    cvec[1L:(n - (which.max(nm) - 1L))]
 	else ## all are empty; return just one
 	    cvec[1L]
     }
@@ -211,6 +212,7 @@ readNEWS <- function(file = file.path(R.home(), "NEWS"),
 # Check for common formatting errors in a NEWS file.
 
 checkNEWS <- function(file = file.path(R.home(), "NEWS")) {
+    .Deprecated()
     check <- function(item) {
 	if (is.list(item)) return(all(unlist(lapply(item, check))))
 

@@ -7,14 +7,7 @@ options(stringsAsFactors=TRUE)
 ## .Machine
 (Meps <- .Machine$double.eps)# and use it in this file
 
-assertError <- function(expr)
-    stopifnot(inherits(try(expr, silent = TRUE), "try-error"))
-assertWarning <- function(expr)
-    stopifnot(inherits(tryCatch(expr, warning = function(w)w), "warning"))
-assertWarning_atleast <- function(expr) {
-    r <- tryCatch(expr, warning = function(w)w, error = function(e)e)
-    stopifnot(inherits(r, "warning") || inherits(r, "error"))
-}
+assertCondition <- tools::assertCondition
 
 ## regression test for PR#376
 aggregate(ts(1:20), nfreq=1/3)
@@ -501,7 +494,8 @@ stopifnot(
     !is.nan(c(1,NA)),
     c(FALSE,TRUE,FALSE) == is.nan(c   (1,NaN,NA))
 )
-assertError(is.nan(list(1,NaN,NA))) #-> result allowed but varies in older versions
+assertCondition(is.nan(list(1,NaN,NA)),
+		"error") #-> result allowed but varies in older versions
 
 
 stopifnot(identical(lgamma(Inf), Inf))
@@ -1838,10 +1832,10 @@ stopifnot(length(res) == 1 && res == 1)
 ## Formerly undocumented line limit in system(intern=TRUE)
 ## Naoki Takebayashi <ntakebay@bio.indiana.edu> 2002-12-07
 tmp <- tempfile()
-long <- paste(rep("0123456789", 20), collapse="")
+long <- paste(rep("0123456789", 20L), collapse="")
 cat(long, "\n", sep="", file=tmp)
-junk <- system(paste("cat", tmp), intern = TRUE)
-stopifnot(length(junk) == 1, nchar(junk[1]) == 200)
+junk <- system(paste("cat", shQuote(tmp)), intern = TRUE)
+stopifnot(length(junk) == 1L, nchar(junk[1]) == 200L)
 ## and split truncated on 1.6.1
 
 
@@ -1983,16 +1977,6 @@ x <- numeric(0)
 x[1] <- NA
 stopifnot(identical(mode(x), "numeric"))
 ##
-
-
-## PR#2586 labelling in alias()
-Y <- c(0,1,2)
-X1 <- c(0,1,0)
-X2 <- c(0,1,0)
-X3 <- c(0,0,1)
-(res <- alias(lm(Y ~ X1 + X2 + X3)))
-stopifnot(identical(rownames(res[[2]]),	 "X2"))
-## the error was in lm.(w)fit
 
 
 ## coercion lost the object bit in [<-

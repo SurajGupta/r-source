@@ -1,6 +1,6 @@
 % File src/library/stats/man/kmeans.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{kmeans}
@@ -16,7 +16,7 @@ K-Means Clustering
 \usage{
 kmeans(x, centers, iter.max = 10, nstart = 1,
        algorithm = c("Hartigan-Wong", "Lloyd", "Forgy",
-                     "MacQueen"))
+                     "MacQueen"), trace=FALSE)
 \method{fitted}{kmeans}(object, method = c("centers", "classes"), ...)
 }
 \arguments{
@@ -29,17 +29,23 @@ kmeans(x, centers, iter.max = 10, nstart = 1,
   \item{iter.max}{the maximum number of iterations allowed.}
   \item{nstart}{if \code{centers} is a number, how many random sets
     should be chosen?}
-  \item{algorithm}{character: may be abbreviated.}
+  \item{algorithm}{character: may be abbreviated.  Note that
+    \code{"Lloyd"} and \code{"Forgy"} and alternative names for one
+    algorithm.}
   \item{object}{an \R object of class \code{"kmeans"}, typically the
     result \code{ob} of \code{ob <- kmeans(..)}.}
   \item{method}{character: may be abbreviated. \code{"centers"} causes
     \code{fitted} to return cluster centers (one for each input point) and
     \code{"classes"} causes \code{fitted} to return a vector of class
     assignments.}
+  \item{trace}{logical or integer number, currently only used in the
+    default method (\code{"Hartigan-Wong"}): if positive (or true),
+    tracing information on the progress of the algorithm is
+    produced.  Higher values may produce more tracing information.}
   \item{\dots}{not used.}
 }
 \details{
-  The data given by \code{x} is clustered by the \eqn{k}-means method,
+  The data given by \code{x} are clustered by the \eqn{k}-means method,
   which aims to partition the points into \eqn{k} groups such that the
   sum of squares from points to the assigned cluster centres is minimized.
   At the minimum, all cluster centres are at the mean of their Voronoi
@@ -49,9 +55,14 @@ kmeans(x, centers, iter.max = 10, nstart = 1,
   that some authors use \eqn{k}-means to refer to a specific algorithm
   rather than the general method: most commonly the algorithm given by
   MacQueen (1967) but sometimes that given by Lloyd (1957) and Forgy
-  (1965). The Hartigan--Wong algorithm generally does a better job than
+  (1965).  The Hartigan--Wong algorithm generally does a better job than
   either of those, but trying several random starts (\code{nstart}\eqn{>
-  1}) is often recommended.
+  1}) is often recommended.  In rare cases, when some of the points
+  (rows of \code{x}) are extremely close, the algorithm may not converge
+  in the \dQuote{Quick-Transfer} stage, signalling a warning (and
+  returning \code{ifault = 4}).  Slight
+  rounding of the data may be advisable in that case.
+
   For ease of programmatic exploration, \eqn{k=1} is allowed, notably
   returning the center and \code{withinss}.
 
@@ -63,17 +74,24 @@ kmeans(x, centers, iter.max = 10, nstart = 1,
 }
 \value{
   \code{kmeans} returns an object of class \code{"kmeans"} which has a
-  \code{print} and a \code{fitted} method.  It is a list with components:
+  \code{print} and a \code{fitted} method.  It is a list with at least
+  the following components:
   \item{cluster}{
     A vector of integers (from \code{1:k}) indicating the cluster to
     which each point is allocated.
   }
   \item{centers}{A matrix of cluster centres.}
   \item{totss}{The total sum of squares.}
-  \item{withinss}{Vector of within-cluster sum of squares, one component per cluster.}
-  \item{tot.withinss}{Total within-cluster sum of squares, i.e., \code{sum(withinss)}.}
-  \item{betweenss}{The between-cluster sum of squares, i.e. \code{totss-tot.withinss}.}
+  \item{withinss}{Vector of within-cluster sum of squares,
+    one component per cluster.}
+  \item{tot.withinss}{Total within-cluster sum of squares,
+    i.e., \code{sum(withinss)}.}
+  \item{betweenss}{The between-cluster sum of squares,
+    i.e. \code{totss-tot.withinss}.}
   \item{size}{The number of points in each cluster.}
+  \item{iter}{The number of (outer) iterations.}
+  \item{ifault}{integer: indicator of a possible algorithm problem
+    -- for experts.}
 }
 \references{
   Forgy, E. W. (1965) Cluster analysis of multivariate data:

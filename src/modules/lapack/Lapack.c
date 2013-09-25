@@ -466,6 +466,14 @@ static SEXP La_zgecon(SEXP A, SEXP norm)
 		     /* iwork: */(int *) R_alloc(n, sizeof(int)),
 		     &info);
     if (info) {
+	if (info < 0) {
+	    UNPROTECT(1);
+	    error(_("error [%d] from Lapack 'zgetrf()'"), info);
+	} else {
+	    REAL(val)[0] = 0.; /* rcond = 0 <==> singularity */
+	    UNPROTECT(1);
+	    return val;
+	}
 	UNPROTECT(1);
 	error(_("error [%d] from Lapack 'zgetrf()'"), info);
     }
@@ -659,7 +667,7 @@ static SEXP qr_coef_cmplx(SEXP Q, SEXP Bin)
     k = LENGTH(tau);
     if (!isMatrix(Bin)) error(_("'b' must be a complex matrix"));
 
-    if (!isReal(Bin)) B = PROTECT(coerceVector(Bin, CPLXSXP));
+    if (!isComplex(Bin)) B = PROTECT(coerceVector(Bin, CPLXSXP));
     else B = PROTECT(duplicate(Bin));
 
     n = INTEGER(coerceVector(getAttrib(qr, R_DimSymbol), INTSXP))[0];

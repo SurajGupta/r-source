@@ -19,7 +19,7 @@ package.skeleton("myTst", code_files = tmp)# with a file name warning
 file.copy(tmp, (tm2 <- paste(tmp,".R", sep="")))
 unlink("myTst", recursive=TRUE)
 op <- options(warn=2) # *NO* "invalid file name" warning {failed in 2.7.[01]}:
-package.skeleton("myTst", code_files = tm2, namespace=TRUE)
+package.skeleton("myTst", code_files = tm2)
 options(op)
 ##_2_ only a class, no generics/methods:
 writeLines(c('setClass("DocLink",',
@@ -41,7 +41,7 @@ build.pkg <- function(dir) {
     patt <- paste(basename(dir), ".*tar\\.gz$", sep="_")
     unlink(dir('.', pattern = patt))
     Rcmd <- paste(file.path(R.home("bin"), "R"), "CMD")
-    r <- tail(system(paste(Rcmd, "build --keep-empty-dirs", dir),
+    r <- tail(system(paste(Rcmd, "build --keep-empty-dirs", shQuote(dir)),
                      intern = TRUE), 3)
     ## return name of tar file built
     dir('.', pattern = patt)
@@ -66,11 +66,12 @@ if(file_test("-d", pkgSrcPath)) {
     ## could use file.copy(recursive = TRUE)
     system(paste('cp -R', shQuote(pkgSrcPath), shQuote(tempdir())))
     pkgPath <- file.path(tempdir(), "Pkgs")
-#    op <- options(warn = 2)    # There should be *NO* warnings here!
     ## pkgB tests an empty R directory
     dir.create(file.path(pkgPath, "pkgB", "R"), recursive = TRUE,
                showWarnings = FALSE)
-    p.lis <- c("pkgA", "pkgB", "exNSS4")
+    p.lis <- if("Matrix" %in% row.names(installed.packages()))
+        c("pkgA", "pkgB", "exNSS4")
+    else "exNSS4"
     for(p. in p.lis) {
         cat("building package", p., "...\n")
         r <- build.pkg(file.path(pkgPath, p.))
@@ -83,7 +84,6 @@ if(file_test("-d", pkgSrcPath)) {
     ## TODO: not just print, but check the "list":
     res <- installed.packages(lib.loc = "myLib", priority = "NA")
     print(res)
-#    options(op)
     unlink("myLib", recursive = TRUE)
     unlink(file.path(pkgPath), recursive = TRUE)
 }

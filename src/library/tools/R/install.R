@@ -3,6 +3,8 @@
 #
 #  Copyright (C) 1995-2013 The R Core Team
 #
+# NB: also copyright dates in Usages.
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -168,9 +170,12 @@
             "      --without-keep.source",
             "			use (or not) 'keep.source' for R code",
             "      --byte-compile	byte-compile R code",
+            "      --no-byte-compile	do not byte-compile R code",
             "      --no-test-load	skip test of loading installed package",
             "      --no-clean-on-error	do not remove installed package on error",
             "      --merge-multiarch	multi-arch by merging (from a single tarball only)",
+	    ## "      --group-writable	set file permissions to group-writable,",
+	    ## "			such that group members can update.packages()",
            "\nfor Unix",
             "      --configure-args=ARGS",
             "			set arguments for the configure scripts (if any)",
@@ -184,7 +189,7 @@
             "",
             "Which of --html or --no-html is the default depends on the build of R:",
             paste0("for this one it is ",
-                   ifelse(static_html, "--html", "--no-html"), "."),
+		   if(static_html) "--html" else "--no-html", "."),
             "",
             "Report bugs at bugs.r-project.org .", sep = "\n")
     }
@@ -294,7 +299,8 @@
             do_install_binary(pkg_name, instdir, desc)
 
         ## Add read permission to all, write permission to owner
-        .Call(dirchmod, instdir)
+        ## If group-write permissions were requested, set them
+        .Call(dirchmod, instdir, group.writable)
         is_first_package <<- FALSE
 
         if (tar_up) { # Unix only
@@ -392,7 +398,7 @@
                 for(arch in archs) {
                     ss <- paste("src", arch, sep = "-")
                     ## it seems fixing permissions is sometimes needed
-                    .Call(dirchmod, ss)
+                    .Call(dirchmod, ss, group.writable)
                     unlink(ss, recursive = TRUE)
                 }
 
@@ -426,7 +432,7 @@
         on.exit(Sys.unsetenv("R_INSTALL_PKG"))
         shlib_install <- function(instdir, arch)
         {
-            ## install.lib.R allows customization of the libs installation process
+            ## install.libs.R allows customization of the libs installation process
             if (file.exists("install.libs.R")) {
                 message("installing via 'install.libs.R' to ", instdir,
                         domain = NA)
@@ -452,7 +458,9 @@
                 dir.create(dest, recursive = TRUE, showWarnings = FALSE)
                 file.copy(files, dest, overwrite = TRUE)
                 ## not clear if this is still necessary, but sh version did so
-                if (!WINDOWS) Sys.chmod(file.path(dest, files), "755")
+		if (!WINDOWS)
+		    Sys.chmod(file.path(dest, files),
+			      if(group.writable) "775" else "755")
 		## OS X does not keep debugging symbols in binaries
 		## anymore so optionally we can create dSYMs. This is
 		## important since we will blow away .o files so there
@@ -541,13 +549,21 @@
                 errmsg(" Windows-only package")
         }
 
+	if(group.writable) { ## group-write modes if requested:
+	    fmode <- "664"
+	    dmode <- "775"
+	} else {
+	    fmode <- "644"
+	    dmode <- "755"
+	}
 
         ## At this point we check that we have the dependencies we need.
         ## We cannot use installed.packages() as other installs might be
         ## going on in parallel
 
         pkgInfo <- .split_description(.read_description("DESCRIPTION"))
-        pkgs <- unique(c(names(pkgInfo$Depends), names(pkgInfo$Imports)))
+        pkgs <- unique(c(names(pkgInfo$Depends), names(pkgInfo$Imports),
+                         names(pkgInfo$LinkingTo)))
         if (length(pkgs)) {
             miss <- character()
             for (pkg in pkgs) {
@@ -614,6 +630,9 @@
                                  paste(configure_args, collapse = " "))
                     if (debug) message("configure command: ", sQuote(cmd),
                                        domain = NA)
+                    ## in case the configure script calls SHLIB (some do)
+                    cmd <- paste("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_=false",
+                                 cmd)
                     res <- system(cmd)
                     if (res) pkgerrmsg("configuration failed", pkg_name)
                 }  else if (file.exists("configure"))
@@ -626,7 +645,7 @@
             for (f in c("NAMESPACE", "LICENSE", "LICENCE", "NEWS"))
                 if (file.exists(f)) {
                     file.copy(f, instdir, TRUE)
-                    Sys.chmod(file.path(instdir, f), "644")
+		    Sys.chmod(file.path(instdir, f), fmode)
                 }
 
             res <- try(.install_package_description('.', instdir))
@@ -646,11 +665,28 @@
                 ## maybe even an error?  But installing Fortran-based packages should work
                 warning("R include directory is empty -- perhaps need to install R-devel.rpm or similar", call. = FALSE)
             has_error <- FALSE
-            linkTo <- desc["LinkingTo"]
-            if (!is.na(linkTo)) {
-                lpkgs <- strsplit(linkTo, ",[[:blank:]]*")[[1L]]
-                paths <- find.package(lpkgs, quiet=TRUE)
+            linkTo <- pkgInfo$LinkingTo
+            if (!is.null(linkTo)) {
+                lpkgs <- sapply(linkTo, function(x) x[[1L]])
+                ## we checked that these were all available earlier,
+                ## but be cautious in case this changed.
+                paths <- find.package(lpkgs, quiet = TRUE)
+                bpaths <- basename(paths)
                 if (length(paths)) {
+                    ## check any version requirements
+                    have_vers <-
+                        (vapply(linkTo, length, 1L) > 1L) & lpkgs %in% bpaths
+                    for (z in linkTo[have_vers]) {
+                        p <- z[[1L]]
+                        path <- paths[bpaths %in% p]
+                        current <- readRDS(file.path(path, "Meta", "package.rds"))$DESCRIPTION["Version"]
+                        target <- as.numeric_version(z$version)
+                        if (!do.call(z$op, list(as.numeric_version(current), target)))
+                            stop(gettextf("package %s %s was found, but %s %s is required by %s",
+                                          sQuote(p), current, z$op,
+                                          target, sQuote(pkgname)),
+                                 call. = FALSE, domain = NA)
+                    }
                     clink_cppflags <- paste(paste0('-I"', paths, '/include"'),
                                             collapse = " ")
                     Sys.setenv(CLINK_CPPFLAGS = clink_cppflags)
@@ -723,7 +759,7 @@
                             dir.create(ss, showWarnings = FALSE)
                             file.copy(Sys.glob("src/*"), ss, recursive = TRUE)
                             ## avoid read-only files/dir such as nested .svn
-                            .Call(dirchmod, ss)
+			    .Call(dirchmod, ss, group.writable)
                             setwd(ss)
 
                             ra <- paste0("/", arch)
@@ -922,7 +958,7 @@
 			resaveRdaFiles(paths, compress = "auto")
 		    }
 		}
-		Sys.chmod(Sys.glob(file.path(instdir, "data", "*")), "644")
+		Sys.chmod(Sys.glob(file.path(instdir, "data", "*")), fmode)
 		if (thislazy) {
 		    starsmsg(paste0(stars, "*"),
                              "moving datasets to lazyload DB")
@@ -956,7 +992,7 @@
 	    res <- try(.install_package_demos(".", instdir))
 	    if (inherits(res, "try-error"))
 		pkgerrmsg("ERROR: installing demos failed")
-	    Sys.chmod(Sys.glob(file.path(instdir, "demo", "*")), "644")
+	    Sys.chmod(Sys.glob(file.path(instdir, "demo", "*")), fmode)
 	}
 
         ## dotnames are ignored.
@@ -969,7 +1005,7 @@
 	    if (length(files)) {
 		file.copy(files, file.path(instdir, "exec"), TRUE)
                 if (!WINDOWS)
-                    Sys.chmod(Sys.glob(file.path(instdir, "exec", "*")), "755")
+		    Sys.chmod(Sys.glob(file.path(instdir, "exec", "*")), dmode)
 	    }
 	}
 
@@ -1018,7 +1054,7 @@
                 ## make executable if the source file was (for owner)
                 modes <- file.info(i_files)$mode
                 execs <- as.logical(modes & as.octmode("100"))
-                Sys.chmod(i2_files[execs], "755")
+		Sys.chmod(i2_files[execs], dmode)
             }
             if (compact_docs) {
                 pdfs <- dir(file.path(instdir, "doc"), pattern="\\.pdf",
@@ -1038,8 +1074,9 @@
 
 	## LazyLoading/Compiling
 	if (install_R && dir.exists("R") && length(dir("R"))) {
-            BC <- parse_description_field(desc, "ByteCompile",
-                                          default = byte_compile)
+            BC <- if (!is.na(byte_compile)) byte_compile
+            else
+                parse_description_field(desc, "ByteCompile", default = FALSE)
             rcp <- as.numeric(Sys.getenv("R_COMPILE_PKGS"))
             BC <- BC || (!is.na(rcp) && rcp > 0)
             if (BC) {
@@ -1118,7 +1155,12 @@
                 starsmsg(stars, "installing vignettes")
                 enc <- desc["Encoding"]
                 if (is.na(enc)) enc <- ""
-                res <- try(.install_package_vignettes2(".", instdir, enc))
+		if (file_test("-f", file.path("build", "vignette.rds")))
+		    installer <- .install_package_vignettes3
+		# FIXME:  this handles pre-3.0.2 tarballs.  In the long run, delete the alternative.
+		else
+		    installer <- .install_package_vignettes2
+                res <- try(installer(".", instdir, enc))
 	    if (inherits(res, "try-error"))
 		errmsg("installing vignettes failed")
             }
@@ -1200,8 +1242,8 @@
     fake <- FALSE
     lazy <- TRUE
     lazy_data <- FALSE
-    byte_compile <- FALSE
-    ## This is not very useful unless R CMD INSTALL reads a startup file
+    byte_compile <- NA # means take from DESCRIPTION file.
+    ## Next is not very useful unless R CMD INSTALL reads a startup file
     lock <- getOption("install.lock", NA) # set for overall or per-package
     pkglock <- FALSE  # set for per-package locking
     libs_only <- FALSE
@@ -1213,7 +1255,6 @@
     test_load <- TRUE
     merge <- FALSE
     dsym <- nzchar(Sys.getenv("PKG_MAKE_DSYM"))
-
     get_user_libPaths <- FALSE
     data_compress <- TRUE # FALSE (none), TRUE (gzip), 2 (bzip2), 3 (xz)
     resave_data <- FALSE
@@ -1240,7 +1281,7 @@
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2010 The R Core Team.",
+                "Copyright (C) 2000-2013 The R Core Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep = "\n")
@@ -1342,6 +1383,8 @@
             keep.source <- FALSE
         } else if (a == "--byte-compile") {
             byte_compile <- TRUE
+        } else if (a == "--no-byte-compile") {
+            byte_compile <- FALSE
         } else if (a == "--dsym") {
             dsym <- TRUE
         } else if (substr(a, 1, 1) == "-") {
@@ -1508,6 +1551,12 @@
         stop("ERROR: no permission to install to directory ",
              sQuote(lib), call. = FALSE)
 
+    group.writable <- if(WINDOWS) FALSE else {
+	## install package group-writable  iff  in group-writable lib
+	m <- file.info(lib)$mode
+	(m & "020") == as.octmode("020") ## TRUE  iff  g-bit is "w"
+    }
+
     if (libs_only) {
 	install_R <- FALSE
 	install_data <- FALSE
@@ -1585,7 +1634,7 @@
     do_cleanup()
     on.exit()
     invisible()
-}
+} ## .install_packages()
 
 ## for R CMD SHLIB on all platforms
 .SHLIB <- function()
@@ -1681,7 +1730,7 @@
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2011 The R Core Team.",
+                "Copyright (C) 2000-2013 The R Core Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep = "\n")

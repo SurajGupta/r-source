@@ -813,6 +813,7 @@ extern0 Rboolean known_to_be_utf8 INI_as(FALSE);
 # define IntegerFromString	Rf_IntegerFromString
 # define internalTypeCheck	Rf_internalTypeCheck
 # define isValidName		Rf_isValidName
+# define installTrChar		Rf_installTrChar
 # define ItemName		Rf_ItemName
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define KillAllDevices		Rf_KillAllDevices
@@ -1078,7 +1079,7 @@ void unmarkPhase(void);
 #endif
 SEXP R_LookupMethod(SEXP, SEXP, SEXP, SEXP);
 int usemethod(const char *, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP*);
-SEXP vectorIndex(SEXP, SEXP, int, int, int, SEXP);
+SEXP vectorIndex(SEXP, SEXP, int, int, int, SEXP, Rboolean);
 
 #ifdef R_USE_SIGNALS
 void begincontext(RCNTXT*, int, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -1123,7 +1124,7 @@ typedef enum {
 } Rprt_adj;
 
 int	Rstrlen(SEXP, int);
-const char *EncodeRaw(Rbyte);
+const char *EncodeRaw(Rbyte, const char *);
 const char *EncodeString(SEXP, int, int, Rprt_adj);
 const char *EncodeReal2(double, int, int, int);
 
@@ -1157,6 +1158,8 @@ size_t ucstomb(char *s, const unsigned int wc);
 size_t ucstoutf8(char *s, const unsigned int wc);
 size_t mbtoucs(unsigned int *wc, const char *s, size_t n);
 size_t wcstoutf8(char *s, const wchar_t *wc, size_t n);
+
+SEXP Rf_installTrChar(SEXP);
 
 const wchar_t *wtransChar(SEXP x); /* from sysutils.c */
 
@@ -1244,6 +1247,17 @@ extern void *alloca(size_t);
 # define LDOUBLE long double
 #else
 # define LDOUBLE double
+#endif
+
+/* int_fast64_t is required by C99/C11
+   Alternative would be to use intmax_t.
+ */
+#ifdef HAVE_INT64_T
+# define LONG_INT int64_t
+# define LONG_INT_MAX INT64_MAX
+#elif defined(HAVE_INT_FAST64_T)
+# define LONG_INT int_fast64_t
+# define LONG_INT_MAX INT_FAST64_MAX
 #endif
 
 #endif /* DEFN_H_ */

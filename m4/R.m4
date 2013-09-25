@@ -155,12 +155,18 @@ AC_SUBST(TEXI2DVICMD)
 AC_PATH_PROGS(KPSEWHICH, [${KPSEWHICH} kpsewhich], "")
 r_rd4pdf="times,inconsolata,hyper"
 if test -n "${KPSEWHICH}"; then
-  if test -z `${KPSEWHICH} inconsolata.sty`; then
-     r_rd4pdf="times,hyper"
-     if test -z "${R_RD4PDF}" ;  then
-       warn_pdf3="inconsolata.sty not found: PDF vignettes and package manuals will not be rendered optimally"
-       AC_MSG_WARN([${warn_pdf3}])
-     fi
+  ${KPSEWHICH} zi4.sty
+  if test $? -eq 0; then
+     r_rd4pdf="times,inconsolata,hyper"
+  else
+    ${KPSEWHICH} inconsolata.sty
+    if test $? -ne 0; then
+       r_rd4pdf="times,hyper"
+       if test -z "${R_RD4PDF}" ;  then
+         warn_pdf3="neither inconsolata.sty nor zi4.sty found: PDF vignettes and package manuals will not be rendered optimally"
+         AC_MSG_WARN([${warn_pdf3}])
+       fi
+    fi
   fi
 fi
 : ${R_RD4PDF=${r_rd4pdf}}
@@ -3155,7 +3161,7 @@ AC_DEFUN([R_LZMA],
     AC_CHECK_HEADERS(lzma.h, [have_lzma=yes], [have_lzma=no])
   fi
 if test "x${have_lzma}" = xyes; then
-AC_CACHE_CHECK([if lzma version >= 4.999], [r_cv_have_lzma],
+AC_CACHE_CHECK([if lzma version >= 5.0.3], [r_cv_have_lzma],
 [AC_LANG_PUSH(C)
 r_save_LIBS="${LIBS}"
 LIBS="-llzma ${LIBS}"
@@ -3166,7 +3172,9 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdlib.h>
 int main() {
     unsigned int ver = lzma_version_number();
-    exit(ver < 49990000);
+    // This is 10000000*major + 10000*minor + 10*revision + [012]
+    // I.e. xyyyzzzs and 5.1.2 would be 50010020
+    exit(ver < 50000030);
 }
 ]])], [r_cv_have_lzma=yes], [r_cv_have_lzma=no], [r_cv_have_lzma=no])
 LIBS="${r_save_LIBS}"
@@ -3176,7 +3184,7 @@ if test "x${r_cv_have_lzma}" = xno; then
   have_lzma=no
 fi
 if test "x${have_lzma}" = xyes; then
-  AC_DEFINE(HAVE_LZMA, 1, [Define if your system has lzma >= 4.999.])
+  AC_DEFINE(HAVE_LZMA, 1, [Define if your system has lzma >= 5.0.3.])
   LIBS="-llzma ${LIBS}"
 fi
 else

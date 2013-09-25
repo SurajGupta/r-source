@@ -17,16 +17,18 @@ S
 @acronym{HTML}
 @end macro
 
-@macro eqn {t, a}
 @iftex
+@macro eqn {t, a}
 @tex
 $\t\$%
 @end tex
+@end macro
 @end iftex
 @ifnottex
-\a\@c
-@end ifnottex
+@macro eqn {t, a}
+\a\
 @end macro
+@end ifnottex
 
 @macro pkg {p}
 @strong{\p\}
@@ -60,6 +62,11 @@ into another language, under the above conditions for modified versions,
 except that this permission notice may be stated in a translation
 approved by the R Core Team.
 @end macro
+
+@c This breaks HTML conversion on texinfo 4.x.
+@iftex
+@hyphenation{name-space name-spaces}
+@end iftex
 
 @set ISBN-FAQ 
 @set ISBN-admin 

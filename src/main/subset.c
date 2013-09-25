@@ -779,19 +779,20 @@ SEXP attribute_hidden do_subset_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    int len = length(ans);
 
 	    if(!drop || len > 1) {
+		// must grab these before the dim is set.
+		SEXP nm = PROTECT(getAttrib(ans, R_NamesSymbol));
 		PROTECT(attr = allocVector(INTSXP, 1));
 		INTEGER(attr)[0] = length(ans);
 		setAttrib(ans, R_DimSymbol, attr);
-		UNPROTECT(1);
 		if((attrib = getAttrib(x, R_DimNamesSymbol)) != R_NilValue) {
 		    /* reinstate dimnames, include names of dimnames */
 		    PROTECT(nattrib = duplicate(attrib));
-		    SET_VECTOR_ELT(nattrib, 0,
-				   getAttrib(ans, R_NamesSymbol));
+		    SET_VECTOR_ELT(nattrib, 0, nm);
 		    setAttrib(ans, R_DimNamesSymbol, nattrib);
 		    setAttrib(ans, R_NamesSymbol, R_NilValue);
 		    UNPROTECT(1);
 		}
+		UNPROTECT(2);
 	    }
 	}
     } else {
@@ -911,7 +912,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( TYPEOF(x) == ENVSXP ) {
 	if( nsubs != 1 || !isString(CAR(subs)) || length(CAR(subs)) != 1 )
 	    errorcall(call, _("wrong arguments for subsetting an environment"));
-	ans = findVarInFrame(x, install(translateChar(STRING_ELT(CAR(subs), 0))));
+	ans = findVarInFrame(x, installTrChar(STRING_ELT(CAR(subs), 0)));
 	if( TYPEOF(ans) == PROMSXP ) {
 	    PROTECT(ans);
 	    ans = eval(ans, R_GlobalEnv);
@@ -937,7 +938,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	int len = length(thesub);
 
 	if (len > 1)
-	    x = vectorIndex(x, thesub, 0, len-1, pok, call);
+	    x = vectorIndex(x, thesub, 0, len-1, pok, call, FALSE);
 	    
 	offset = get1index(thesub, getAttrib(x, R_NamesSymbol),
 			   xlength(x), pok, len > 1 ? len-1 : -1, call);
@@ -1036,6 +1037,7 @@ enum pmatch
 pstrmatch(SEXP target, SEXP input, size_t slen)
 {
     const char *st = "";
+    const void *vmax = vmaxget();
 
     if(target == R_NilValue)
 	return NO_MATCH;
@@ -1048,9 +1050,13 @@ pstrmatch(SEXP target, SEXP input, size_t slen)
 	st = translateChar(target);
 	break;
     }
-    if(strncmp(st, translateChar(input), slen) == 0)
+    if(strncmp(st, translateChar(input), slen) == 0) {
+	vmaxset(vmax);
 	return (strlen(st) == slen) ?  EXACT_MATCH : PARTIAL_MATCH;
-    else return NO_MATCH;
+    } else {
+	vmaxset(vmax);
+	return NO_MATCH;
+    }
 }
 
 
@@ -1144,7 +1150,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	if (havematch == 1) { /* unique partial match */
 	    if(R_warn_partial_match_dollar) {
 		const char *st = "";
-		SEXP target = TAG(y);
+		SEXP target = TAG(xmatch);
 		switch (TYPEOF(target)) {
 		case SYMSXP:
 		    st = CHAR(PRINTNAME(target));
@@ -1214,7 +1220,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	return R_NilValue;
     }
     else if( isEnvironment(x) ){
-	y = findVarInFrame(x, install(translateChar(input)));
+	y = findVarInFrame(x, installTrChar(input));
 	if( TYPEOF(y) == PROMSXP ) {
 	    PROTECT(y);
 	    y = eval(y, R_GlobalEnv);

@@ -3,6 +3,8 @@
 #
 #  Copyright (C) 1995-2013 The R Core Team
 #
+# NB: also copyright date in Usage.
+#
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
@@ -44,10 +46,12 @@ massageExamples <-
         cat("base::assign(\".ExTimings\", \"", pkg,
             "-Ex.timings\", pos = 'CheckExEnv')\n", sep="", file = out)
         cat("base::cat(\"name\\tuser\\tsystem\\telapsed\\n\", file=base::get(\".ExTimings\", pos = 'CheckExEnv'))\n", file = out)
+        ## a package left OutDec = "," at the end of an example
         cat("base::assign(\".format_ptime\",",
             "function(x) {",
             "  if(!is.na(x[4L])) x[1L] <- x[1L] + x[4L]",
             "  if(!is.na(x[5L])) x[2L] <- x[2L] + x[5L]",
+            "  options(OutDec = '.')",
             "  format(x[1L:3L], digits = 7L)",
             "},",
             "pos = 'CheckExEnv')\n", sep = "\n", file = out)
@@ -141,9 +145,12 @@ Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE,
         ## regularize fancy quotes.  First UTF-8 ones:
         txt <- gsub("(\xe2\x80\x98|\xe2\x80\x99)", "'", txt,
                       perl = TRUE, useBytes = TRUE)
+        txt <- gsub("(\xe2\x80\x9c|\xe2\x80\x9d)", '"', txt,
+                      perl = TRUE, useBytes = TRUE)
         if(.Platform$OS.type == "windows") {
             ## not entirely safe ...
-            txt <- gsub("(\x93|\x94)", "'", txt, perl = TRUE, useBytes = TRUE)
+            txt <- gsub("(\x91|\x92)", "'", txt, perl = TRUE, useBytes = TRUE)
+            txt <- gsub("(\x93|\x94)", '"', txt, perl = TRUE, useBytes = TRUE)
             txt <- txt[!grepl('options(pager = "console")', txt,
                               fixed = TRUE, useBytes = TRUE)]
         }
@@ -230,7 +237,7 @@ testInstalledPackages <-
             else warning(msg, domain = NA, call. = FALSE, immediate. = TRUE)
         }
     }
-    return(invisible(status))
+    invisible(status)
 }
 
 testInstalledPackage <-
@@ -676,7 +683,7 @@ detachPackages <- function(pkgs, verbose = TRUE)
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2010 The R Core Team.",
+                "Copyright (C) 2000-2013 The R Core Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep = "\n")

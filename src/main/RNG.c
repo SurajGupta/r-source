@@ -352,18 +352,23 @@ static void GetRNGkind(SEXP seeds)
     if (!isInteger(seeds)) {
 	if (seeds == R_MissingArg) /* How can this happen? */
 	    error(_("'.Random.seed' is a missing argument with no default"));
-	error(_("'.Random.seed' is not an integer vector but of type '%s'"),
+	warning(_("'.Random.seed' is not an integer vector but of type '%s', so ignored"),
 		type2char(TYPEOF(seeds)));
+	goto invalid;
     }
     is = INTEGER(seeds);
     tmp = is[0];
     /* avoid overflow here: max current value is 705 */
-    if (tmp == NA_INTEGER || tmp < 0 || tmp > 1000)
-	error(_("'.Random.seed[1]' is not a valid integer"));
+    if (tmp == NA_INTEGER || tmp < 0 || tmp > 1000) {
+	warning(_("'.Random.seed[1]' is not a valid integer, so ignored"));
+	goto invalid;
+    }
     newRNG = (RNGtype) (tmp % 100);
     newN01 = (N01type) (tmp / 100);
-    if (newN01 > KINDERMAN_RAMAGE)
-	error(_("'.Random.seed[1]' is not a valid Normal type"));
+    if (newN01 > KINDERMAN_RAMAGE) {
+	warning(_("'.Random.seed[1]' is not a valid Normal type, so ignored"));
+	goto invalid;
+    }
     switch(newRNG) {
     case WICHMANN_HILL:
     case MARSAGLIA_MULTICARRY:
@@ -374,13 +379,20 @@ static void GetRNGkind(SEXP seeds)
     case LECUYER_CMRG:
 	break;
     case USER_UNIF:
-	if(!User_unif_fun)
-	    error(_("'.Random.seed[1] = 5' but no user-supplied generator"));
+	if(!User_unif_fun) {
+	    warning(_("'.Random.seed[1] = 5' but no user-supplied generator, so ignored"));
+	    goto invalid;
+	}
 	break;
     default:
-	error(_("'.Random.seed[1]' is not a valid RNG kind"));
+	warning(_("'.Random.seed[1]' is not a valid RNG kind so ignored"));
+	goto invalid;
     }
     RNG_kind = newRNG; N01_kind = newN01;
+    return;
+invalid:
+    RNG_kind = RNG_DEFAULT; N01_kind = N01_DEFAULT;
+    Randomize(RNG_kind);
     return;
 }
 
@@ -441,7 +453,7 @@ static void RNGkind(RNGtype newkind)
 /* Choose a new kind of RNG.
  * Initialize its seed by calling the old RNG's unif_rand()
  */
-    if (newkind == -1) newkind = RNG_DEFAULT;
+    if (newkind == (RNGtype)-1) newkind = RNG_DEFAULT;
     switch(newkind) {
     case WICHMANN_HILL:
     case MARSAGLIA_MULTICARRY:
@@ -465,7 +477,7 @@ static void Norm_kind(N01type kind)
 {
     /* N01type is an enumeration type, so this will probably get
        mapped to an unsigned integer type. */
-    if (kind == -1) kind = N01_DEFAULT;
+    if (kind == (N01type)-1) kind = N01_DEFAULT;
     if (kind > KINDERMAN_RAMAGE)
 	error(_("invalid Normal type in 'RNGkind'"));
     if (kind == USER_NORM) {
