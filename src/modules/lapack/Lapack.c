@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001--2012  The R Core Team.
+ *  Copyright (C) 2001--2013  The R Core Team.
  *  Copyright (C) 2003--2010  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,9 @@
 #include <ctype.h> /* for toupper */
 
 #include "Lapack.h"
+
+extern void F77_NAME(ilaver)(int *major, int *minor, int *patch);
+
 
 /* NB: the handling of dims is odd here.  Most are coerced to be
  * integers (which dimgets currently guarantees), but a couple were
@@ -142,7 +145,7 @@ static SEXP La_svd(SEXP jobu, SEXP x, SEXP s, SEXP u, SEXP vt)
 static SEXP La_rs(SEXP x, SEXP only_values)
 {
     int *xdims, n, lwork, info = 0, ov;
-    char jobv[1], uplo[1], range[1];
+    char jobv[2] = "U", uplo[2] = "L", range[2] = "A";
     SEXP z = R_NilValue;
     double *work, *rx, *rvalues, tmp, *rz = NULL;
     int liwork, *iwork, itmp, m;
@@ -151,7 +154,6 @@ static SEXP La_rs(SEXP x, SEXP only_values)
        not to be used if range='a' */
     int il, iu, *isuppz;
 
-    uplo[0] = 'L';
     xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
     n = xdims[0];
     if (n != xdims[1]) error(_("'x' must be a square numeric matrix"));
@@ -171,7 +173,6 @@ static SEXP La_rs(SEXP x, SEXP only_values)
     SEXP values = PROTECT(allocVector(REALSXP, n));
     rvalues = REAL(values);
 
-    range[0] = 'A';
     if (!ov) {
 	z = PROTECT(allocMatrix(REALSXP, n, n));
 	rz = REAL(z);
@@ -245,7 +246,7 @@ static SEXP La_rg(SEXP x, SEXP only_values)
     Rboolean vectors, complexValues;
     int i, n, lwork, info, *xdims, ov;
     double *work, *wR, *wI, *left, *right, *xvals, tmp;
-    char jobVL[1], jobVR[1];
+    char jobVL[2] = "N", jobVR[2] = "N";
 
     xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
     n = xdims[0];
@@ -265,7 +266,6 @@ static SEXP La_rg(SEXP x, SEXP only_values)
     ov = asLogical(only_values);
     if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
     vectors = !ov;
-    jobVL[0] = jobVR[0] = 'N';
     left = right = (double *) 0;
     if (vectors) {
 	jobVR[0] = 'V';
@@ -806,11 +806,10 @@ static SEXP La_rs_cmplx(SEXP xin, SEXP only_values)
 {
 #ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
     int *xdims, n, lwork, info, ov;
-    char jobv[1], uplo[1];
+    char jobv[2] = "N", uplo[2] = "L";
     Rcomplex *work, *rx, tmp;
     double *rwork, *rvalues;
 
-    uplo[0] = 'L';
     xdims = INTEGER(coerceVector(getAttrib(xin, R_DimSymbol), INTSXP));
     n = xdims[0];
     if (n != xdims[1]) error(_("'x' must be a square complex matrix"));
@@ -866,7 +865,7 @@ static SEXP La_rg_cmplx(SEXP x, SEXP only_values)
     int  n, lwork, info, *xdims, ov;
     Rcomplex *work, *left, *right, *xvals, tmp;
     double *rwork;
-    char jobVL[1], jobVR[1];
+    char jobVL[2] = "N", jobVR[2] = "N";
     SEXP ret, nm, values, val = R_NilValue;
 
     xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
@@ -878,7 +877,6 @@ static SEXP La_rg_cmplx(SEXP x, SEXP only_values)
     Memcpy(xvals, COMPLEX(x), (size_t) n * n);
     ov = asLogical(only_values);
     if (ov == NA_LOGICAL) error(_("invalid '%s' argument"), "only.values");
-    jobVL[0] = jobVR[0] = 'N';
     left = right = (Rcomplex *) 0;
     if (!ov) {
 	jobVR[0] = 'V';
@@ -1095,9 +1093,10 @@ static SEXP La_solve(SEXP A, SEXP Bin, SEXP tolin)
 	error(_("Lapack routine %s: system is exactly singular: U[%d,%d] = 0"),
 	      "dgesv", info, info);
     if(tol > 0) {
-	anorm = F77_CALL(dlange)("1", &n, &n, REAL(A), &n, (double*) NULL);
+	char one[2] = "1";
+	anorm = F77_CALL(dlange)(one, &n, &n, REAL(A), &n, (double*) NULL);
 	work = (double *) R_alloc(4*(size_t)n, sizeof(double));
-	F77_CALL(dgecon)("1", &n, avals, &n, &anorm, &rcond, work, ipiv, &info);
+	F77_CALL(dgecon)(one, &n, avals, &n, &anorm, &rcond, work, ipiv, &info);
 	if (rcond < tol)
 	    error(_("system is computationally singular: reciprocal condition number = %g"),
 		  rcond);
@@ -1344,6 +1343,15 @@ static SEXP mod_do_lapack(SEXP call, SEXP op, SEXP args, SEXP env)
 	a4 = CAR(args); args = CDR(args);
 	a5 = CAR(args); args = CDR(args);
 	ans = La_svd_cmplx(a1, a2, a3, a4, a5, CAR(args));
+	break;
+    }
+    case 1000:
+    {
+	int major, minor, patch;
+	char str[20];
+	F77_CALL(ilaver)(&major, &minor, &patch);
+	snprintf(str, 20, "%d.%d.%d", major, minor, patch);
+	ans = mkString(str);
 	break;
     }
     }

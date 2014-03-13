@@ -571,6 +571,8 @@ SEXP attribute_hidden do_filesymlink(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    struct _stati64 sb;
 	    from[PATH_MAX] = L'\0';
 	    wcsncpy(from, filenameToWchar(STRING_ELT(f1, i%n1), TRUE), PATH_MAX);
+	    /* This Windows system call does not accept slashes */
+	    for (wchar_t *p = from; *p; p++) if (*p == L'/') *p = L'\\';
 	    to = filenameToWchar(STRING_ELT(f2, i%n2), TRUE);
 	    _wstati64(from, &sb);
 	    int isDir = (sb.st_mode & S_IFDIR) > 0;
@@ -1674,6 +1676,8 @@ extern void invalidate_cached_recodings(void);  /* from sysutils.c */
 
 extern void resetICUcollator(void); /* from util.c */
 
+extern void dt_invalidate_locale(); /* from Rstrptime.h */
+
 /* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1718,12 +1722,18 @@ SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 	break;
     case 5:
 	cat = LC_NUMERIC;
-	warning(_("setting 'LC_NUMERIC' may cause R to function strangely"));
-	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	{
+	    const char *new_lc_num = CHAR(STRING_ELT(locale, 0));
+	    if (strcmp(new_lc_num, "C")) /* do not complain about C locale - that's the only
+					    reliable way to restore sanity */
+		warning(_("setting 'LC_NUMERIC' may cause R to function strangely"));
+	    p = setlocale(cat, new_lc_num);
+	}
 	break;
     case 6:
 	cat = LC_TIME;
 	p = setlocale(cat, CHAR(STRING_ELT(locale, 0)));
+	dt_invalidate_locale();
 	break;
 #if defined LC_MESSAGES
     case 7:

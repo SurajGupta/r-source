@@ -1,6 +1,6 @@
 % File src/library/parallel/man/unix/mcfork.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2009-13 R Core Team
+% Copyright 2009-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -80,8 +80,8 @@ mcexit(exit.code = 0L, send = NULL)
   taken to make this usable in \command{R.app} on OS X, but users of
   third-party front-ends should consult their documentation.
 
-  This can also apply to other connections, e.g. to an X server, created
-  before forking.
+  This can also apply to other connections (e.g. to an X server) created
+  before forking, and to files opened by e.g. graphics devices.
 
   Note that \pkg{tcltk} counts as a GUI for these purposes since
   \command{Tcl} runs an event loop.  That event loop is inhibited in a

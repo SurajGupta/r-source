@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/windows/png.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{png}
@@ -74,8 +74,8 @@ tiff(filename = "Rplot\%03d.tif",
     argument is missing the default is taken from
     \code{windows.options()$bitmap.aa.win}.
 
-    For allowed values and their effect (on fonts
-    and lines) with \code{type = "cairo"} see \code{\link{svg}}.}
+    For allowed values and their effect (on fonts and lines, but not
+    fills) with \code{type = "cairo"} see \code{\link{svg}}.}
 }
 \details{
   Plots in PNG and JPEG format can easily be converted to many other
@@ -94,10 +94,10 @@ tiff(filename = "Rplot\%03d.tif",
   \eqn{2^{15}-1}{2^15-1}.  In addition, there are limits on the total
   number of pixels which depend on the graphics hardware.
 
-  By default no resolution is recorded in the file.  Viewers will often
-  assume a nominal resolution of 72 ppi when none is recorded.  As
-  resolutions in PNG files are recorded in pixels/metre, the reported
-  ppi value will be changed slightly.
+  By default no resolution is recorded in the file (except for BMP).
+  Viewers will often assume a nominal resolution of 72 ppi when none is
+  recorded.  As resolutions in PNG files are recorded in pixels/metre,
+  the reported ppi value will be changed slightly.
 
   For graphics parameters that make use of dimensions in inches,
   \code{res} ppi (default 72) is assumed.
@@ -120,6 +120,9 @@ tiff(filename = "Rplot\%03d.tif",
   slightly off-white background and hence the pixels are opaque.
 
   Not all PNG viewers render files with transparency correctly.
+  
+  Prior to \R 3.0.3 unknown resolutions in BMP files were sometimes
+  recorded incorrectly: they are now recorded as 72 ppi.
 }
 
 \value{
@@ -145,7 +148,7 @@ tiff(filename = "Rplot\%03d.tif",
     \item On platforms with support for X11, plotting to a hidden X11
     display.
 
-    \item On Mac OS X when working at the console and when \R is
+    \item On OS X when working at the console and when \R is
     compiled with suitable support, using Apple's Quartz plotting
     system.
 
@@ -177,6 +180,12 @@ tiff(filename = "Rplot\%03d.tif",
   compact files
 }
 
+\references{
+  The PNG specification, \url{http://www.w3.org/TR/PNG/}.
+  
+  The TIFF specification, including extensions, at
+  \url{http://partners.adobe.com/public/developer/tiff/}.
+}
 \seealso{
   \code{\link{Devices}}, \code{\link{dev.print}}
 

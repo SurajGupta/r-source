@@ -79,11 +79,6 @@ int matherr(struct exception *exc)
 #endif
 #endif
 
-#ifndef _AIX
-static const double R_Zero_Hack = 0.0;	/* Silence the Sun compiler */
-#else
-static double R_Zero_Hack = 0.0;
-#endif
 typedef union
 {
     double value;
@@ -111,7 +106,7 @@ static CONST int lw = 0;
 
 static double R_ValueOfNA(void)
 {
-    /* The gcc shipping with RedHat 9 gets this wrong without
+    /* The gcc shipping with Fedora 9 gets this wrong without
      * the volatile declaration. Thanks to Marc Schwartz. */
     volatile ieee_double x;
     x.word[hw] = 0x7ff00000;
@@ -165,10 +160,17 @@ int R_finite(double x)
 void attribute_hidden InitArithmetic()
 {
     R_NaInt = INT_MIN;
-    R_NaN = 0.0/R_Zero_Hack;
     R_NaReal = R_ValueOfNA();
+// we assume C99, so
+#ifndef OLD
+    R_NaN = NAN;
+    R_PosInf = INFINITY;
+    R_NegInf = -INFINITY;
+#else
+    R_NaN = 0.0/R_Zero_Hack;
     R_PosInf = 1.0/R_Zero_Hack;
     R_NegInf = -1.0/R_Zero_Hack;
+#endif
 }
 
 /* Keep these two in step */
@@ -177,10 +179,8 @@ void attribute_hidden InitArithmetic()
  */
 static double myfmod(double x1, double x2)
 {
-    double q = x1 / x2, tmp;
-
     if (x2 == 0.0) return R_NaN;
-    tmp = x1 - floor(q) * x2;
+    double q = x1 / x2, tmp = x1 - floor(q) * x2;
     if(R_FINITE(q) && (fabs(q) > 1/R_AccuracyInfo.eps))
 	warning(_("probable complete loss of accuracy in modulus"));
     q = floor(tmp/x2);

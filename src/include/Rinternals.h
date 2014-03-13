@@ -408,6 +408,13 @@ Rboolean (Rf_isObject)(SEXP s);
 
 #endif /* USE_RINTERNALS */
 
+/* Macros for common NAMED and SET_NAMED idioms. */
+#define NAMEDMAX 2
+#define MAYBE_SHARED(x) (NAMED(x) > 1)
+#define NO_REFERENCES(x) (NAMED(x) == 0)
+#define MARK_NOT_MUTABLE(x) SET_NAMED(x, NAMEDMAX)
+#define MAYBE_REFERENCED(x) (! NO_REFERENCES(x))
+
 /* Accessor functions.  Many are declared using () to avoid the macro
    definitions in the USE_RINTERNALS section.
    The function STRING_ELT is used as an argument to arrayAssign even
@@ -762,6 +769,7 @@ void R_RegisterFinalizer(SEXP s, SEXP fun);
 void R_RegisterCFinalizer(SEXP s, R_CFinalizer_t fun);
 void R_RegisterFinalizerEx(SEXP s, SEXP fun, Rboolean onexit);
 void R_RegisterCFinalizerEx(SEXP s, R_CFinalizer_t fun, Rboolean onexit);
+void R_RunPendingFinalizers(void);
 
 /* Weak reference interface */
 SEXP R_MakeWeakRef(SEXP key, SEXP val, SEXP fin, Rboolean onexit);

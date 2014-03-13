@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2013  The R Core Team
+ *  Copyright (C) 1997--2014  The R Core Team
  *  Copyright (C) 2002--2009  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1430,7 +1430,9 @@ SEXP C_plotXY(SEXP args)
 	    GConvert(&xx, &yy, USER, INCHES, dd);
 	    if (R_FINITE(xold) && R_FINITE(yold) &&
 		R_FINITE(xx) && R_FINITE(yy)) {
-		if ((f = d/hypot(xx-xold, yy-yold)) < 0.5) {
+		// might divide by zero
+		if (d < 0.5 * hypot(xx-xold, yy-yold)) {
+		    f = d/hypot(xx-xold, yy-yold);
 		    GLine(xold + f * (xx - xold),
 			  yold + f * (yy - yold),
 			  xx + f * (xold - xx),
@@ -1842,6 +1844,9 @@ SEXP C_raster(SEXP args)
 
     raster = CAR(args); args = CDR(args);
     n = LENGTH(raster);
+    if (n <= 0) {
+        error(_("Empty raster"));  
+    }
     dim = getAttrib(raster, R_DimSymbol);
 
     vmax = vmaxget();

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2012  The R Core Team.
+ *  Copyright (C) 2000-2014  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -393,14 +393,14 @@ static double mktime0 (struct tm *tm, const int local)
 #else
 	errno = 79;
 #endif
-	return (double)(-1);
+	return -1.;
     }
     if(!local) return mktime00(tm);
 
     OK = tm->tm_year < 138 && tm->tm_year >= (have_broken_mktime() ? 70 : 02);
     if(OK) {
 	res = (double) mktime(tm);
-	if (res == (double)-1) return res;
+	if (res == -1.) return res;
 #ifndef HAVE_POSIX_LEAPSECONDS
 	for(i = 0; i < n_leapseconds; i++)
 	    if(res > leapseconds[i]) res -= 1.0;
@@ -414,7 +414,7 @@ static double mktime0 (struct tm *tm, const int local)
 static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
 {
     double d = *tp;
-    int y, tmp, mon, left, diff, diff2;
+    int y, tmp;
     struct tm *res= ltm;
     time_t t;
 
@@ -425,13 +425,13 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
 	   fix t instead as needed. */
 	if (d < 0.0 && (double) t != d) t--;
 #ifndef HAVE_POSIX_LEAPSECONDS
-	for(y = 0; y < n_leapseconds; y++) if(t > leapseconds[y] + y - 1) t++;
+	for(int y = 0; y < n_leapseconds; y++) if(t > leapseconds[y] + y - 1) t++;
 #endif
 	return local ? localtime(&t) : gmtime(&t);
     }
 
     int day = (int) floor(d/86400.0);
-    left = (int) (d - day * 86400.0 + 1e-6); // allow for fractional secs
+    int left = (int) (d - day * 86400.0 + 1e-6); // allow for fractional secs
 
     /* hour, min, and sec */
     res->tm_hour = left / 3600;
@@ -453,6 +453,7 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
     res->tm_yday = day;
 
     /* month within year */
+    int mon;
     for (mon = 0;
 	 day >= (tmp = (days_in_month[mon]) + ((mon==1 && isleap(y+1900))?1:0));
 	 day -= tmp, mon++);
@@ -460,24 +461,37 @@ static struct tm * localtime0(const double *tp, const int local, struct tm *ltm)
     res->tm_mday = day + 1;
 
     if(local) {
-	int shift;
+	double shift;
 	/*  daylight saving time is unknown */
 	res->tm_isdst = -1;
 
-	/* Try to fix up timezone differences */
-	diff = (int)(guess_offset(res)/60);
-	shift = res->tm_min + 60*res->tm_hour;
+	/* Try to fix up time zone differences: cf PR#15480 */
+	int sdiff = (int)guess_offset(res);
+	int diff = sdiff/60;
+	// just in case secs are out of range and might affect this.
+	shift = 60.*res->tm_hour + res->tm_min + res->tm_sec/60.;
 	res->tm_min -= diff;
+	res->tm_sec -= (sdiff % 60);
 	validate_tm(res);
 	res->tm_isdst = -1;
 	/* now this might be a different day */
-	if(shift - diff < 0) res->tm_yday--;
-	if(shift - diff > 24) res->tm_yday++;
-	diff2 = (int)(guess_offset(res)/60);
+	if(shift - diff < 0.) {
+	    res->tm_yday--;
+	    res->tm_wday--;
+	}
+	else if(shift - diff >= 24. * 60.) {
+	    res->tm_yday++;
+	    res->tm_wday++;
+	}
+	int sdiff2 = (int)guess_offset(res);
+	int diff2 = sdiff2/60;
 	if(diff2 != diff) {
 	    res->tm_min += (diff - diff2);
+	    res->tm_sec += (sdiff % 60) - (sdiff2 % 60);
 	    validate_tm(res);
 	}
+	// No DST before 1916
+	if(res->tm_year < 16) res->tm_isdst = 0;
 	return res;
     } else {
 	res->tm_isdst = 0; /* no dst in GMT */
@@ -663,6 +677,10 @@ makelt(struct tm *tm, SEXP ans, R_xlen_t i, int valid, double frac_secs)
 }
 
 
+             /* --------- R interfaces --------- */
+
+// We assume time zone names/abbreviations are ASCII, as all known ones are.
+
 SEXP attribute_hidden do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP stz, x, ans, ansnames, klass, tzone;
@@ -723,6 +741,8 @@ SEXP attribute_hidden do_asPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	SET_STRING_ELT(tzone, 2, mkChar(tzname[1]));
     }
     setAttrib(ans, install("tzone"), tzone);
+    SEXP nm = getAttrib(x, R_NamesSymbol);
+    if(nm != R_NilValue) setAttrib(VECTOR_ELT(ans, 5), R_NamesSymbol, nm);
     UNPROTECT(6);
 
     if(settz) reset_tz(oldtz);
@@ -780,7 +800,8 @@ SEXP attribute_hidden do_asPOSIXct(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(REALSXP, n));
     for(R_xlen_t i = 0; i < n; i++) {
 	double secs = REAL(VECTOR_ELT(x, 0))[i%nlen[0]], fsecs = floor(secs);
-	tm.tm_sec   = (int) fsecs;
+	// avoid (int) NAN
+	tm.tm_sec   = R_FINITE(secs) ? (int) fsecs: NA_INTEGER;
 	tm.tm_min   = INTEGER(VECTOR_ELT(x, 1))[i%nlen[1]];
 	tm.tm_hour  = INTEGER(VECTOR_ELT(x, 2))[i%nlen[2]];
 	tm.tm_mday  = INTEGER(VECTOR_ELT(x, 3))[i%nlen[3]];
@@ -798,10 +819,10 @@ SEXP attribute_hidden do_asPOSIXct(SEXP call, SEXP op, SEXP args, SEXP env)
 #ifdef MKTIME_SETS_ERRNO
 	    REAL(ans)[i] = errno ? NA_REAL : tmp + (secs - fsecs);
 #else
-	    REAL(ans)[i] = ((tmp == (double)(-1))
+	    REAL(ans)[i] = ((tmp == -1.)
 			    /* avoid silly gotcha at epoch minus one sec */
-			    && (tm.tm_sec == 59)
-			    && ((tm.tm_sec = 58), (mktime0(&tm, 1 - isgmt) != (double)(-2)))
+			    && (tm.tm_sec != 59)
+			    && ((tm.tm_sec = 58), (mktime0(&tm, 1 - isgmt) != -2.))
 			    ) ?
 	      NA_REAL : tmp + (secs - fsecs);
 #endif
@@ -841,7 +862,7 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	   we need to try to set TZ accordingly */
 	int needTZ = 0;
 	for(i = 0; i < m; i++) {
-	    const char *p = CHAR(STRING_ELT(sformat, i));
+	    const char *p = translateChar(STRING_ELT(sformat, i));
 	    if (strstr(p, "%Z") || strstr(p, "%z")) {needTZ = 1; break;}
 	}
 	if(needTZ) settz = set_tz(tz1, oldtz);
@@ -868,7 +889,8 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(ans = allocVector(STRSXP, N));
     for(i = 0; i < N; i++) {
 	double secs = REAL(VECTOR_ELT(x, 0))[i%nlen[0]], fsecs = floor(secs);
-	tm.tm_sec   = (int) fsecs;
+	// avoid (int) NAN
+	tm.tm_sec   = R_FINITE(secs) ? (int) fsecs: NA_INTEGER;
 	tm.tm_min   = INTEGER(VECTOR_ELT(x, 1))[i%nlen[1]];
 	tm.tm_hour  = INTEGER(VECTOR_ELT(x, 2))[i%nlen[2]];
 	tm.tm_mday  = INTEGER(VECTOR_ELT(x, 3))[i%nlen[3]];
@@ -884,7 +906,7 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	} else {
 	    if(validate_tm(&tm) < 0) SET_STRING_ELT(ans, i, NA_STRING);
 	    else {
-		const char *q = CHAR(STRING_ELT(sformat, i%m));
+		const char *q = translateChar(STRING_ELT(sformat, i%m));
 		int n = (int) strlen(q) + 50;
 		char buf2[n];
 #ifdef Win32
@@ -925,13 +947,13 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 		}
 		strftime(buff, 256, buf2, &tm);
 		if(UseTZ && !isNull(tz)) {
-		    int i = 0;
+		    int ii = 0;
 		    if(LENGTH(tz) == 3) {
-			if(tm.tm_isdst > 0) i = 2;
-			else if(tm.tm_isdst == 0) i = 1;
-			else i = 0; /* Use base timezone name */
+			if(tm.tm_isdst > 0) ii = 2;
+			else if(tm.tm_isdst == 0) ii = 1;
+			else ii = 0; /* Use base timezone name */
 		    }
-		    p = CHAR(STRING_ELT(tz, i));
+		    p = CHAR(STRING_ELT(tz, ii));
 		    if(strlen(p)) {
 			strcat(buff, " ");
 			strcat(buff, p);
@@ -987,7 +1009,7 @@ static void glibc_fix(struct tm *tm, int *invalid)
 
 SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP x, sformat, ans, ansnames, klass, stz, tzone;
+    SEXP x, sformat, ans, ansnames, klass, stz, tzone = R_NilValue;
     int invalid, isgmt = 0, settz = 0, offset;
     struct tm tm, tm2, *ptm = &tm;
     const char *tz = NULL;
@@ -1016,6 +1038,17 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
     if(strcmp(tz, "GMT") == 0  || strcmp(tz, "UTC") == 0) isgmt = 1;
     if(!isgmt && strlen(tz) > 0) settz = set_tz(tz, oldtz);
 
+    // in case this gets changed by conversions.
+    if (isgmt) {
+	PROTECT(tzone = mkString(tz));
+    } else if(strlen(tz)) {
+	PROTECT(tzone = allocVector(STRSXP, 3));
+	SET_STRING_ELT(tzone, 0, mkChar(tz));
+	SET_STRING_ELT(tzone, 1, mkChar(tzname[0]));
+	SET_STRING_ELT(tzone, 2, mkChar(tzname[1]));
+	
+    } else PROTECT(tzone); // for balance
+
     n = XLENGTH(x); m = XLENGTH(sformat);
     if(n > 0) N = (m > n) ? m : n; else N = 0;
 
@@ -1037,8 +1070,9 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
 	tm.tm_isdst = -1;
 	offset = NA_INTEGER;
 	invalid = STRING_ELT(x, i%n) == NA_STRING ||
-	    !R_strptime(CHAR(STRING_ELT(x, i%n)),
-			CHAR(STRING_ELT(sformat, i%m)), &tm, &psecs, &offset);
+	    !R_strptime(translateChar(STRING_ELT(x, i%n)),
+			translateChar(STRING_ELT(sformat, i%m)),
+			&tm, &psecs, &offset);
 	if(!invalid) {
 	    /* Solaris sets missing fields to 0 */
 	    if(tm.tm_mday == 0) tm.tm_mday = NA_INTEGER;
@@ -1076,21 +1110,10 @@ SEXP attribute_hidden do_strptime(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(klass, 0, mkChar("POSIXlt"));
     SET_STRING_ELT(klass, 1, mkChar("POSIXt"));
     classgets(ans, klass);
-    if (isgmt) {
-	PROTECT(tzone = mkString(tz));
-	setAttrib(ans, install("tzone"), tzone);
-	UNPROTECT(1);
-    } else if(strlen(tz)) {
-	PROTECT(tzone = allocVector(STRSXP, 3));
-	SET_STRING_ELT(tzone, 0, mkChar(tz));
-	SET_STRING_ELT(tzone, 1, mkChar(tzname[0]));
-	SET_STRING_ELT(tzone, 2, mkChar(tzname[1]));
-	setAttrib(ans, install("tzone"), tzone);
-	UNPROTECT(1);
-    }
     if(settz) reset_tz(oldtz);
+    if(isString(tzone)) setAttrib(ans, install("tzone"), tzone);
 
-    UNPROTECT(4);
+    UNPROTECT(5);
     return ans;
 }
 
@@ -1148,6 +1171,8 @@ SEXP attribute_hidden do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(klass, 1, mkChar("POSIXt"));
     classgets(ans, klass);
     setAttrib(ans, install("tzone"), mkString("UTC"));
+    SEXP nm = getAttrib(x, R_NamesSymbol);
+    if(nm != R_NilValue) setAttrib(VECTOR_ELT(ans, 5), R_NamesSymbol, nm);
     UNPROTECT(4);
 
     return ans;

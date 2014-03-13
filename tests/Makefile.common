@@ -341,7 +341,8 @@ test-Packages-Recommended:
 	  gzip -dc "$(top_srcdir)/src/library/Recommended/$${p}.tgz" | \
 	    (cd RecPackages && $(TAR) xf -) ; \
 	  $(ECHO) "checking package '$${p}'"; \
-	  R_LIBS="$(top_builddir)/library:$${R_LIBS}" _R_CHECK_FORCE_SUGGESTS_=FALSE $(R3) --install=skip \
+	  R_LIBS="$(top_builddir)/library:$${R_LIBS}" \
+            _R_CHECK_FORCE_SUGGESTS_=FALSE $(R3) --install=skip \
 	    --library="$(top_builddir)/library" RecPackages/$${p} || $(ECHO); \
 	done
 

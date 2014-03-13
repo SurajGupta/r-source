@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  file registry.c
- *  Copyright (C) 2005--2012  The R Core Team
+ *  Copyright (C) 2005--2013  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -178,17 +178,8 @@ static SEXP readRegistryKey(HKEY hkey, int depth, int view)
 	      formatError(res));
     size0 = max(maxsubkeylen, maxvalnamlen) + 1;
     name = (wchar_t *) R_alloc(size0, sizeof(wchar_t));
-    tmp = readRegistryKey1(hkey, L"");
-    if (tmp != R_NilValue) {
-	PROTECT(ans = allocVector(VECSXP, nval + nsubkeys + 1));
-	PROTECT(nm = allocVector(STRSXP, nval+ nsubkeys + 1));
-	SET_VECTOR_ELT(ans, 0, tmp);
-	SET_STRING_ELT(nm, 0, mkChar("(Default)"));
-	k++;
-    } else {
-	PROTECT(ans = allocVector(VECSXP, nval + nsubkeys));
-	PROTECT(nm = allocVector(STRSXP, nval+ nsubkeys));
-    }
+    PROTECT(ans = allocVector(VECSXP, nval + nsubkeys));
+    PROTECT(nm = allocVector(STRSXP, nval+ nsubkeys));
     if (nval > 0) {
 	PROTECT(ans0 = allocVector(VECSXP, nval));
 	PROTECT(nm0 = allocVector(STRSXP, nval));
@@ -206,7 +197,10 @@ static SEXP readRegistryKey(HKEY hkey, int depth, int view)
 	orderVector1(indx, nval, nm0, TRUE, FALSE, R_NilValue);
 	for (i = 0; i < nval; i++, k++) {
 	    SET_VECTOR_ELT(ans, k, VECTOR_ELT(ans0, indx[i]));
-	    SET_STRING_ELT(nm, k, STRING_ELT(nm0, indx[i]));
+	    if (LENGTH(tmp = STRING_ELT(nm0, indx[i])))
+	    	SET_STRING_ELT(nm, k, tmp);
+	    else
+	    	SET_STRING_ELT(nm, k, mkChar("(Default)"));
 	}
 	UNPROTECT(3);
     }

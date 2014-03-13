@@ -1,7 +1,7 @@
 #  File src/library/tools/R/Rd2pdf.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@
                          "}\\\\email{\\1@\\2}\\\\AsIs{",
                          text, useBytes = TRUE)
         if(f == "URL")
-            text <- gsub("(http://|ftp://)([^[:space:]]+)",
+            text <- gsub("(http://|ftp://)([^[:space:],]+)",
                          "}\\\\url{\\1\\2}\\\\AsIs{",
                          text, useBytes = TRUE)
         text <- paste0("\\AsIs{", text, "}")

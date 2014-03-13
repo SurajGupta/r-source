@@ -1,6 +1,6 @@
 % File src/library/grDevices/man/rgb2hsv.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{rgb2hsv}
@@ -106,7 +106,7 @@ rgb2hsvR <- function(rgb, gamma = 1, maxColorValue = 255)
 
 ## confirm the equivalence:
 all.equal(rgb2hsv (rgb3),
-          rgb2hsvR(rgb3), tol = 1e-14) # TRUE
+          rgb2hsvR(rgb3), tolerance = 1e-14) # TRUE
 }
 \keyword{color}
 \keyword{dplot}

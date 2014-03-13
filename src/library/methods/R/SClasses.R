@@ -1,7 +1,7 @@
 #  File src/library/methods/R/SClasses.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -765,8 +765,10 @@ findClass <- function(Class, where = topenv(parent.frame()), unique = "") {
         }
     }
     else if(length(where) > 1L) {
-        pkgs <- sapply(where, getPackageName)
-        where <- where[!duplicated(pkgs)]
+        pkgs <- sapply(where, getPackageName, create = FALSE)
+        ## not all environments need be packages (e.g., imports)
+        ## We only try to eliminate duplicate package namespaces
+        where <- where[!(nzchar(pkgs) & duplicated(pkgs))]
         if(length(where) > 1L)
             if(nzchar(unique)) {
                 pkgs <- base::unique(pkgs)

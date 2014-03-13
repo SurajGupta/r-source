@@ -1,7 +1,7 @@
 #  File src/library/stats/R/StructTS.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 2002-12 The R Core Team
+#  Copyright (C) 2002-14 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,12 +19,6 @@
 StructTS <- function(x, type = c("level", "trend", "BSM"),
                      init = NULL, fixed = NULL, optim.control = NULL)
 {
-    KalmanLike2 <- function (y, mod, nit = 0)
-    {
-        x <- .Call(C_KalmanLike, y, mod$Z, mod$a, mod$P, mod$T, mod$V,
-                   mod$h, mod$Pn, as.integer(nit), FALSE, fast=TRUE)
-        0.5 * sum(x)/length(y)
-    }
     makeLevel <- function(x)
     {
         T <- matrix(1., 1L, 1L)
@@ -34,9 +28,10 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
         a <- xm
         P <- Pn <- matrix(0., 1L, 1L)
         h <- 1.0
-        V <- diag(1)
+        V <- diag(1L)
         return(list(Z=Z, a=a, P=P, T=T, V=V, h=h, Pn=Pn))
     }
+
     makeTrend <- function(x)
     {
         T <- matrix(c(1.,0.,1.,1.), 2L, 2L)
@@ -46,9 +41,10 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
         a <- c(xm, 0)
         P <- Pn <- matrix(0., 2L, 2L)
         h <- 1.0
-        V <- diag(2)
+        V <- diag(2L)
         return(list(Z=Z, a=a, P=P, T=T, V=V, h=h, Pn=Pn))
     }
+
     makeBSM <- function(x, nf)
     {
         ## See Harvey (1993, p.143)
@@ -69,16 +65,19 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
         V <- diag(c(1., 1., 1., rep(0., nf-2L)))
         return(list(Z=Z, a=a, P=P, T=T, V=V, h=h, Pn=Pn))
     }
+
     getLike <- function(par)
     {
         p <- cf
         p[mask] <- par
         if(all(p == 0)) return(1000)
         Z$V[cbind(1L:np, 1L:np)] <- p[-(np+1L)]*vx
-        Z$h <- p[np+1]*vx
+        Z$h <- p[np+1L]*vx
         Z$P[] <- 1e6*vx
-        Z$a <- a0
-        KalmanLike2(y, Z, -1.0)
+        Z$a[] <- a0
+        x <- .Call(C_KalmanLike, y, Z$Z, Z$a, Z$P, Z$T, Z$V, Z$h, Z$Pn,
+                   -1L, FALSE, TRUE)
+        0.5 * sum(x[1:2])/x[3L]
     }
 
     series <- deparse(substitute(x))
@@ -107,7 +106,7 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
     mask <- is.na(fixed)
     if(!any(mask)) stop("all parameters were fixed")
     cf <- fixed/vx
-    if(is.null(init)) init <- rep(1, np+1) else init <- init/vx
+    if(is.null(init)) init <- rep(1, np+1L) else init <- init/vx
 
     y <- x
     res <- optim(init[mask], getLike, method = "L-BFGS-B",
@@ -119,13 +118,13 @@ StructTS <- function(x, type = c("level", "trend", "BSM"),
     coef <- cf
     coef[mask] <- res$par
     Z$V[cbind(1L:np, 1L:np)] <- coef[1L:np]*vx
-    Z$h <- coef[np+1]*vx
+    Z$h <- coef[np+1L]*vx
     Z$P[] <- 1e6*vx
     Z$a <- a0
     z <- KalmanRun(y, Z, -1)
     resid <- ts(z$resid)
     tsp(resid) <- xtsp
-    Z0 <- Z; Z0$P[] <- 1e6*vx; Z0$a <- a0
+    Z0 <- Z; Z0$P[] <- 1e6*vx; Z0$Pn[] <- 0; Z0$a <- a0
 
     cn <- switch(type,
                  "level" = c("level"),

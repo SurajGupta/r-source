@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2012  The R Core Team
+ *  Copyright (C) 1997--2013  The R Core Team
  *  Copyright (C) 2002--2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -278,12 +278,14 @@ LogicalAnswer(SEXP x, struct BindData *data, SEXP call)
 	    LOGICAL(data->ans_ptr)[data->ans_length++] = LOGICAL(x)[i];
 	break;
     case INTSXP:
-	for (i = 0; i < XLENGTH(x); i++)
-	    LOGICAL(data->ans_ptr)[data->ans_length++] = INTEGER(x)[i];
+	for (i = 0; i < XLENGTH(x); i++) {
+	    int v = INTEGER(x)[i];
+	    LOGICAL(data->ans_ptr)[data->ans_length++] = (v == NA_INTEGER) ? NA_LOGICAL : ( v != 0 );
+	}
 	break;
     case RAWSXP:
 	for (i = 0; i < XLENGTH(x); i++)
-	    LOGICAL(data->ans_ptr)[data->ans_length++] = (int)RAW(x)[i];
+	    LOGICAL(data->ans_ptr)[data->ans_length++] = (int)RAW(x)[i] != 0;
 	break;
     default:
 	errorcall(call, _("type '%s' is unimplemented in '%s'"),
@@ -1240,7 +1242,8 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
     else if (mode == VECSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (isMatrix(u) || length(u) >= lenmin) {
+	    int umatrix = isMatrix(u); /* might be lost in coercion to VECSXP */
+	    if (umatrix || length(u) >= lenmin) {
 		/* we cannot assume here that coercion will work */
 		switch(TYPEOF(u)) {
 		case NILSXP:
@@ -1256,7 +1259,7 @@ static SEXP cbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
 		    PROTECT(u = coerceVector(u, mode));
 		    k = LENGTH(u);
 		    if (k > 0) {
-			idx = (!isMatrix(u)) ? rows : k;
+			idx = (!umatrix) ? rows : k;
 			for (i = 0; i < idx; i++)
 			    SET_VECTOR_ELT(result, n++,
 					   duplicate(VECTOR_ELT(u, i % k)));
@@ -1490,10 +1493,11 @@ static SEXP rbind(SEXP call, SEXP args, SEXPTYPE mode, SEXP rho,
     else if (mode == VECSXP) {
 	for (t = args; t != R_NilValue; t = CDR(t)) {
 	    u = PRVALUE(CAR(t));
-	    if (isMatrix(u) || length(u) >= lenmin) {
+ 	    int umatrix = isMatrix(u), urows = umatrix ? nrows(u) : 1; /* coercing to VECSXP will lose these. PR#15468 */
+	    if (umatrix || length(u) >= lenmin) {
 		PROTECT(u = coerceVector(u, mode));
 		k = LENGTH(u);
-		idx = (isMatrix(u)) ? nrows(u) : (k > 0);
+		idx = umatrix ? urows : (k > 0);
 		for (i = 0; i < idx; i++)
 		    for (j = 0; j < cols; j++)
 		      SET_VECTOR_ELT(result, i + n + (j * rows),

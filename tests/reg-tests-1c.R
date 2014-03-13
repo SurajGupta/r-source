@@ -46,3 +46,49 @@ writeLines(x, f)
 stopifnot(identical(count.fields(f), c(3L, 3L, NA_integer_, 3L)))
 stopifnot(identical(read.table(f), y))
 stopifnot(identical(scan(f, ""), as.character(t(as.matrix(y)))))
+
+## PR#15004
+n <- 10
+s <- 3
+l <- 10000
+m <- 20
+x <- data.frame(x1 = 1:n, x2 = 1:n)
+by <- data.frame(V1 = factor(rep(1:3, n %/% s + 1)[1:n], levels = 1:s))
+for(i in 1:m) {
+    by[[i + 1]] <- factor(rep(l, n), levels = 1:l)
+}
+agg <- aggregate.data.frame(x, by, mean)
+stopifnot(nrow(unique(by)) == nrow(agg))
+## rounding caused groups to be falsely merged
+
+## PR#15454
+set.seed(357)
+z <- matrix(c(runif(50, -1, 1), runif(50, -1e-190, 1e-190)), nrow = 10)
+contour(z)
+## failed because rounding made crossing tests inconsistent
+
+## Various cases where zero length vectors were not handled properly
+## by functions in base and utils, including PR#15499
+y <- as.data.frame(list())
+format(y)
+format(I(integer()))
+gl(0, 2)
+z <- list(numeric(0), 1)
+stopifnot(identical(relist(unlist(z), z), z))
+summary(y)
+## all failed in 3.0.2
+
+
+## PR#15535 c() "promoted" raw vectors to bad logical values
+stopifnot( c(as.raw(11), TRUE) == TRUE )
+## as.raw(11) became a logical value coded as 11, and did not test equal to TRUE.
+
+
+## PR#15621 backticks could not be escaped
+stopifnot(deparse(as.name("`"), backtick=TRUE) == "`\\``")
+assign("`", TRUE)
+`\``
+tools::assertError(parse("```"))
+## 
+
+proc.time()

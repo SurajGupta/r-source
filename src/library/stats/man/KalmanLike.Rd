@@ -1,6 +1,6 @@
 % File src/library/stats/man/KalmanLike.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{KalmanLike}
@@ -15,17 +15,17 @@
   forecasting or smoothing.
 }
 \usage{
-KalmanLike(y, mod, nit = 0, fast = TRUE)
-KalmanRun(y, mod, nit = 0, fast = TRUE)
-KalmanSmooth(y, mod, nit = 0)
-KalmanForecast(n.ahead = 10, mod, fast = TRUE)
+KalmanLike(y, mod, nit = 0L, fast = TRUE)
+KalmanRun(y, mod, nit = 0L, fast = TRUE)
+KalmanSmooth(y, mod, nit = 0L)
+KalmanForecast(n.ahead = 10L, mod, fast = FALSE)
 makeARIMA(phi, theta, Delta, kappa = 1e6)
 }
 \arguments{
   \item{y}{a univariate time series.}
   \item{mod}{A list describing the state-space model: see \sQuote{Details}.}
   \item{nit}{The time at which the initialization is computed.
-    \code{nit = 0} implies that the initialization is for a one-step
+    \code{nit = 0L} implies that the initialization is for a one-step
     prediction, so \code{Pn} should not be computed at the first step.}
   \item{n.ahead}{The number of steps ahead for which prediction is
     required.}
@@ -94,7 +94,7 @@ makeARIMA(phi, theta, Delta, kappa = 1e6)
 
   In particular, \code{KalmanLike} alters the objects passed as
   the elements \code{a}, \code{P} and \code{Pn} of \code{mod}, so these
-  should not be shared. Use \code{fast=FALSE} to prevent this.
+  should not be shared.  Use \code{fast = FALSE} to prevent this.
 }
 
 \references{
@@ -103,6 +103,24 @@ makeARIMA(phi, theta, Delta, kappa = 1e6)
 }
 
 \seealso{
-   \code{\link{arima}}, \code{\link{StructTS}}. \code{\link{tsSmooth}}.
- }
+  \code{\link{arima}}, \code{\link{StructTS}}. \code{\link{tsSmooth}}.
+}
+
+\examples{
+## an ARIMA fit
+fit3 <- arima(presidents, c(3, 0, 0))
+predict(fit3, 12)
+## reconstruct this
+pr <- KalmanForecast(12, fit3$model)
+pr$pred + fit3$coef[4]
+sqrt(pr$var * fit3$sigma2)
+## and now do it year by year
+mod <- fit3$model
+for(y in 1:3) {
+  pr <- KalmanForecast(4, mod, TRUE)
+  print(list(pred = pr$pred + fit3$coef["intercept"], 
+             se = sqrt(pr$var * fit3$sigma2)))
+}
+}
+
 \keyword{ts}

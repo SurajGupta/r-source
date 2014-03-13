@@ -1,6 +1,6 @@
 % File src/library/utils/man/unzip.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{unzip}
@@ -55,7 +55,7 @@ unzip(zipfile, files = NULL, list = FALSE, overwrite = TRUE,
   If \code{unzip} specifies a program, the format of the dates listed
   with \code{list = TRUE} is unknown (on Windows it can even depend on
   the current locale) and the return values could be \code{NA} or
-  expressed in the wrong timezone or misinterpreted (the latter being
+  expressed in the wrong time zone or misinterpreted (the latter being
   far less likely as from \command{unzip 6.00}).
 
   File times in zip files are stored in the style of MS-DOS, as local times

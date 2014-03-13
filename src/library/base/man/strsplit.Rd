@@ -1,6 +1,6 @@
 % File src/library/base/man/strsplit.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{strsplit}
@@ -46,7 +46,7 @@ strsplit(x, split, fixed = FALSE, perl = FALSE, useBytes = FALSE)
   equivalent.  The definition of \sQuote{character} here depends on the
   locale: in a single-byte locale it is a byte, and in a multi-byte
   locale it is the unit represented by a \sQuote{wide character} (almost
-  always a Unicode point).
+  always a Unicode code point).
 
   A missing value of \code{split} does not split the corresponding
   element(s) of \code{x} at all.

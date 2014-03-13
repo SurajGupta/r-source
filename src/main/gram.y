@@ -2,7 +2,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2013  The R Core Team
+ *  Copyright (C) 1997--2014  The R Core Team
  *  Copyright (C) 2009--2011  Romain Francois
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -2134,6 +2134,10 @@ static int NumericValue(int c)
 	YYTEXT_PUSH(c, yyp);
 	last = c;
     }
+    
+    if(c == 'i')
+	YYTEXT_PUSH(c, yyp); /* for getParseData */
+	
     YYTEXT_PUSH('\0', yyp);    
     /* Make certain that things are okay. */
     if(c == 'L') {
@@ -2455,6 +2459,7 @@ static int StringValue(int c, Rboolean forSymbol)
 		    break;
 		case '"':
 		case '\'':
+		case '`':
 		case ' ':
 		case '\n':
 		    break;
@@ -3397,7 +3402,14 @@ static void finalizeData( ){
         int xlat = yytranslate[token];
         if (xlat == 2) /* "unknown" */
             xlat = token;
-    	SET_STRING_ELT(tokens, i, mkChar(yytname[xlat]));
+        if (xlat < YYNTOKENS + YYNNTS)
+    	    SET_STRING_ELT(tokens, i, mkChar(yytname[xlat]));
+    	else { /* we have a token which doesn't have a name, e.g. an illegal character as in PR#15518 */
+    	    char name[2];
+    	    name[0] = (char) xlat;
+    	    name[1] = 0;
+    	    SET_STRING_ELT(tokens, i, mkChar(name));
+    	}
     	_TERMINAL(i) = xlat < YYNTOKENS;
     }
     setAttrib( ParseState.data, install("tokens"), tokens );

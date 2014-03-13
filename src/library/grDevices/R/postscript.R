@@ -1,7 +1,7 @@
 #  File src/library/grDevices/R/postscript.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -260,7 +260,8 @@ postscript <- function(file = ifelse(onefile, "Rplots.ps", "Rplot%03d.ps"),
     }
 
     onefile <- old$onefile # for 'file'
-    if(!checkIntFormat(file)) stop("invalid 'file'")
+    if(!checkIntFormat(file))
+        stop(gettextf("invalid 'file' argument '%s'", file), domain = NA)
     .External(C_PostScript,
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
               old$width, old$height, old$horizontal, old$pointsize,
@@ -282,7 +283,8 @@ xfig <- function (file = ifelse(onefile,"Rplots.fig", "Rplot%03d.fig"),
     ## do initialization if needed
     initPSandPDFfonts()
 
-    if(!checkIntFormat(file)) stop("invalid 'file'")
+    if(!checkIntFormat(file))
+        stop(gettextf("invalid 'file' argument '%s'", file), domain = NA)
     .External(C_XFig, file, paper, family, bg, fg,
               width, height, horizontal, pointsize,
               onefile, pagecentre, defaultfont, textspecial, encoding)
@@ -360,7 +362,8 @@ pdf <- function(file = ifelse(onefile, "Rplots.pdf", "Rplot%03d.pdf"),
         stop("invalid PDF version")
 
     onefile <- old$onefile # needed to set 'file'
-    if(!checkIntFormat(file)) stop("invalid 'file'")
+    if(!checkIntFormat(file))
+        stop(gettextf("invalid 'file' argument '%s'", file), domain = NA)
     .External(C_PDF,
               file, old$paper, old$family, old$encoding, old$bg, old$fg,
               old$width, old$height, old$pointsize, onefile, old$pagecentre,

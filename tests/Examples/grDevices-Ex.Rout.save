@@ -1,6 +1,6 @@
 
-R version 3.0.2 RC (2013-09-22 r63960) -- "Frisbee Sailing"
-Copyright (C) 2013 The R Foundation for Statistical Computing
+R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -2143,7 +2143,7 @@ character(0)
 +               is.numeric(chroma), chroma >= 0, (nch <- length(chroma)) >= 1)
 +     if(is.unsorted(hues)) hues <- sort(hues)
 +     if(nch > 1) {
-+         op <- par(mfrow= n2mfrow(nch), mar = c(0,0,0,0))
++         op <- par(mfrow= n2mfrow(nch), mar = c(0,0,0,0), xpd = TRUE)
 +         on.exit(par(op))
 +     }
 +     for(i.c in 1:nch) {
@@ -3446,7 +3446,7 @@ v 0.98039216 0.7647059 0.4588235 0.8549020 0.9960784
 > 
 > ## confirm the equivalence:
 > all.equal(rgb2hsv (rgb3),
-+           rgb2hsvR(rgb3), tol = 1e-14) # TRUE
++           rgb2hsvR(rgb3), tolerance = 1e-14) # TRUE
 [1] TRUE
 > 
 > 
@@ -3698,7 +3698,7 @@ $zlab
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  13.527 0.199 13.779 0 0 
+Time elapsed:  8.927 0.188 9.143 0 0 
 > grDevices::dev.off()
 null device 
           1 

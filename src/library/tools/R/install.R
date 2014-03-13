@@ -1,7 +1,7 @@
 #  File src/library/tools/R/install.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 # NB: also copyright dates in Usages.
 #
@@ -110,7 +110,9 @@
     SHLIB_EXT <- if (WINDOWS) ".dll" else {
         ## can we do better?
         mconf <- file.path(R.home(), paste0("etc", rarch), "Makeconf")
-        sub(".*= ", "", grep("^SHLIB_EXT", readLines(mconf), value = TRUE))
+        ## PCRE needed for Debian arm* platforms
+        sub(".*= ", "", grep("^SHLIB_EXT", readLines(mconf), value = TRUE,
+                             perl = TRUE))
     }
 
     options(warn = 1)
@@ -139,7 +141,7 @@
             "  -v, --version		print INSTALL version info and exit",
             "  -c, --clean		remove files created during installation",
             "      --preclean	remove files created during a previous run",
-            "  -d, --debug		turn on debugging messaages",
+	    "  -d, --debug		turn on debugging messages",
             if(WINDOWS) "			and build a debug DLL",
             "  -l, --library=LIB	install packages to library tree LIB",
             "      --no-configure    do not use the package's configure script",
@@ -494,7 +496,7 @@
                                "R CMD SHLIB ", paste(args, collapse = " "),
                                domain = NA)
             if (.shlib_internal(args) == 0L) {
-                if(WINDOWS) {
+                if(WINDOWS && !file.exists("install.libs.R")) {
                     files <- Sys.glob(paste0("*", SHLIB_EXT))
                     if(!length(files)) return(TRUE)
                 }
@@ -889,7 +891,15 @@
 
 	    if (file.exists(f <- file.path("R", "sysdata.rda"))) {
                 comp <- TRUE
-                if (file.info(f)$size > 1e6) comp <- 3 # "xz"
+                ## (We set .libPaths)
+                if(!is.na(lazycompress <- desc["SysDataCompression"])) {
+                    comp <- switch(lazycompress,
+                                   "none" = FALSE,
+                                   "gzip" = TRUE,
+                                   "bzip2" = 2L,
+                                   "xz" = 3L,
+                                   TRUE)  # default to gzip
+                } else if(file.info(f)$size > 1e6) comp <- 3L # "xz"
 		res <- try(sysdata2LazyLoadDB(f, file.path(instdir, "R"),
                                               compress = comp))
 		if (inherits(res, "try-error"))
@@ -972,8 +982,8 @@
                         data_compress <- switch(lazycompress,
                                                 "none" = FALSE,
                                                 "gzip" = TRUE,
-                                                "bzip2" = 2,
-                                                "xz" = 3,
+                                                "bzip2" = 2L,
+                                                "xz" = 3L,
                                                 TRUE)  # default to gzip
 		    res <- try(data2LazyLoadDB(pkg_name, lib,
 					       compress = data_compress))
@@ -1140,6 +1150,7 @@
 		dir.create(destdir <- file.path(instdir, "help", "figures"))
 		file.copy(Sys.glob(c(file.path(figdir, "*.png"),
 		                     file.path(figdir, "*.jpg"),
+		                     file.path(figdir, "*.jpeg"),
 				     file.path(figdir, "*.svg"),
 				     file.path(figdir, "*.pdf"))), destdir)
 	    }
@@ -1155,7 +1166,8 @@
                 starsmsg(stars, "installing vignettes")
                 enc <- desc["Encoding"]
                 if (is.na(enc)) enc <- ""
-		if (file_test("-f", file.path("build", "vignette.rds")))
+		if (!fake &&
+                    file_test("-f", file.path("build", "vignette.rds")))
 		    installer <- .install_package_vignettes3
 		# FIXME:  this handles pre-3.0.2 tarballs.  In the long run, delete the alternative.
 		else
@@ -1676,8 +1688,10 @@
         mconf <- readLines(file.path(R.home(),
                                      paste0("etc", Sys.getenv("R_ARCH")),
                                      "Makeconf"))
-        SHLIB_EXT <- sub(".*= ", "", grep("^SHLIB_EXT", mconf, value = TRUE))
-        SHLIB_LIBADD <- sub(".*= ", "", grep("^SHLIB_LIBADD", mconf, value = TRUE))
+        SHLIB_EXT <- sub(".*= ", "", grep("^SHLIB_EXT", mconf, value = TRUE,
+                                          perl = TRUE))
+        SHLIB_LIBADD <- sub(".*= ", "", grep("^SHLIB_LIBADD", mconf,
+                                             value = TRUE, perl = TRUE))
         MAKE <- Sys.getenv("MAKE")
         rarch <- Sys.getenv("R_ARCH")
     } else {
@@ -2071,7 +2085,7 @@
     }
 
     dirname <- c("html", "latex", "R-ex")
-    ext <- c(".html", ".tex", ".R", ".html")
+    ext     <- c(".html", ".tex", ".R")
     names(dirname) <- names(ext) <- c("html", "latex", "example")
     mandir <- file.path(dir, "man")
     if (!file_test("-d", mandir)) return()
@@ -2104,10 +2118,7 @@
                    error = function(e) NULL)
     ## If not, we build the Rd db from the sources:
     if (is.null(db)) db <- Rd_db(dir = dir)
-
     if (!length(db)) return()
-
-    files <- names(db)
 
     .whandler <-  function(e) {
         .messages <<- c(.messages,
@@ -2122,12 +2133,14 @@
     .convert <- function(expr)
         withCallingHandlers(tryCatch(expr, error = .ehandler),
                             warning = .whandler)
-
-    for(f in files) {
+    
+    files <- names(db) # not full file names
+    for(nf in files) {
         .messages <- character()
-        Rd <- db[[f]]
+        Rd <- db[[nf]]
         attr(Rd, "source") <- NULL
-        bf <- sub("\\.[Rr]d$", "", basename(f))
+	bf <- sub("\\.[Rr]d$", "", basename(nf)) # e.g. nf = "unix/Signals.Rd"
+	f <- attr(Rd, "Rdfile")# full file name
 
         shown <- FALSE
 

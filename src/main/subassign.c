@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997-2012   The R Core Team
+ *  Copyright (C) 1997-2013   The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1285,7 +1285,7 @@ static SEXP SimpleListAssign(SEXP call, SEXP x, SEXP s, SEXP y, int ind)
 
 static SEXP listRemove(SEXP x, SEXP s, int ind)
 {
-    SEXP a, pa, px;
+    SEXP a, pa, px, val;
     int i, ii, *indx, ns, nx;
     R_xlen_t stretch=0;
     const void *vmax = vmaxget();
@@ -1320,13 +1320,16 @@ static SEXP listRemove(SEXP x, SEXP s, int ind)
 	    px = CDR(px);
 	}
     }
-    SET_ATTRIB(CDR(a), ATTRIB(x));
-    IS_S4_OBJECT(x) ?  SET_S4_OBJECT(CDR(a)) : UNSET_S4_OBJECT(CDR(a));
-    SET_OBJECT(CDR(a), OBJECT(x));
-    SET_NAMED(CDR(a), NAMED(x));
+    val = CDR(a);
+    if (val != R_NilValue) {
+	SET_ATTRIB(val, ATTRIB(x));
+	IS_S4_OBJECT(x) ?  SET_S4_OBJECT(val) : UNSET_S4_OBJECT(val);
+	SET_OBJECT(val, OBJECT(x));
+	SET_NAMED(val, NAMED(x));
+    }
     UNPROTECT(3);
     vmaxset(vmax);
-    return CDR(a);
+    return val;
 }
 
 

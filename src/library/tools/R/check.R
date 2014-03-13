@@ -1,7 +1,7 @@
 #  File src/library/tools/R/check.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 # NB: also copyright date in Usage.
 #
@@ -260,6 +260,7 @@ setRlibs <-
         haveR <- dir.exists("R") && !extra_arch
 
         if (!extra_arch) {
+            if(dir.exists("build")) check_build()
             check_meta()  # Check DESCRIPTION meta-information.
             check_top_level()
             check_detritus()
@@ -315,6 +316,34 @@ setRlibs <-
         }
         if (dir.exists("inst/doc") && do_install) check_doc_contents()
         if (dir.exists("vignettes")) check_vign_contents()
+        if (dir.exists("inst/doc") && !dir.exists("vignettes")) {
+            pattern <- vignetteEngine("Sweave")$pattern
+            sources <- setdiff(list.files(file.path("inst", "doc"),
+                                          pattern = pattern),
+                               list.files("vignettes", pattern = pattern))
+            buildPkgs <- .get_package_metadata(".")["VignetteBuilder"]
+            if (!is.na(buildPkgs)) {
+                buildPkgs <- unlist(strsplit(buildPkgs, ","))
+                buildPkgs <- unique(gsub('[[:space:]]', '', buildPkgs))
+                engineList <- vignetteEngine(package = buildPkgs)
+                for(nm in names(engineList)) {
+                    pattern <- engineList[[nm]]$pattern
+                    sources <- c(sources,
+                                 setdiff(list.files(file.path("inst", "doc"),
+                                                    pattern = pattern),
+                                         list.files("vignettes", pattern = pattern)))
+                }
+            }
+            sources <- unique(sources)
+            if(length(sources)) {
+                checkingLog(Log, "for old-style vignette sources")
+                msg <- c("Vignette sources only in 'inst/doc':",
+                         strwrap(paste(sQuote(sources), collapse = ", "),
+                                 indent = 2L, exdent = 2L),
+                         "A 'vignettes' directory will be required as from R 3.1.0")
+                noteLog(Log, paste(msg, collapse = "\n"))
+            }
+        }
 
         setwd(pkgoutdir)
 
@@ -637,6 +666,34 @@ setRlibs <-
         if (!any) resultLog(Log, "OK")
     }
 
+    check_build <- function()
+    {
+        fv <- file.path("build", "vignette.rds")
+        if(!file.exists(fv)) return()
+        checkingLog(Log, "'build' directory")
+        any <- FALSE
+        db <- readRDS(fv)
+        ## do as CRAN-pack does
+        keep <- nzchar(db$PDF)
+        if(any(!keep)) {
+            if(!any) warningLog(Log)
+            any <- TRUE
+            msg <- c("Vignette(s) without any output listed in 'build/vignette.rds'",
+                     strwrap(sQuote(db$file[!keep]), indent = 2L, exdent = 2L))
+            printLog(Log, paste(msg, collapse = "\n"), "\n")
+        }
+        pdfs <- file.path("inst", "doc", db[keep, ]$PDF)
+        missing <- !file.exists(pdfs)
+        if(any(missing)) {
+            if(!any) warningLog(Log)
+            any <- TRUE
+            msg <- c("Output(s) listed in 'build/vignette.rds' but not in package:",
+                     strwrap(sQuote(pdfs[missing]), indent = 2L, exdent = 2L))
+            printLog(Log, paste(msg, collapse = "\n"), "\n")
+        }
+        if (!any) resultLog(Log, "OK")
+    }
+
     check_top_level <- function()
     {
         checkingLog(Log, "top-level files")
@@ -713,13 +770,15 @@ setRlibs <-
                        "BUGS", "Bugs",
                        "ChangeLog", "Changelog", "CHANGELOG", "CHANGES", "Changes",
                        "INSTALL", "README", "THANKS", "TODO", "ToDo",
-                       "README.md", # seems popular
+                       "INSTALL.windows",
+                       "README.md",   # seems popular
                        "configure", "configure.win", "cleanup", "cleanup.win",
                        "configure.ac", "configure.in",
                        "datafiles",
                        "R", "data", "demo", "exec", "inst", "man",
                        "po", "src", "tests", "vignettes",
-                       "build", # used by R CMD build
+                       "build",       # used by R CMD build
+                       ".aspell",     # used for spell checking packages
                        "java", "tools") # common dirs in packages.
             topfiles <- setdiff(topfiles, known)
             if (file.exists(file.path("inst", "AUTHORS")))
@@ -999,7 +1058,8 @@ setRlibs <-
             ## that source files have the predefined extensions.
             ## </NOTE>
             if (!any(file.exists(file.path("src",
-                                           c("Makefile", "Makefile.win"))))) {
+                                           c("Makefile", "Makefile.win",
+                                             "install.libs.R"))))) {
                 if (!length(dir("src", pattern = "\\.([cfmM]|cc|cpp|f90|f95|mm)"))) {
                     if (!any) warningLog(Log)
                     printLog(Log, "Subdirectory 'src' contains no source files.\n")
@@ -1904,7 +1964,7 @@ setRlibs <-
                 gs_cmd <- find_gs_cmd(Sys.getenv("R_GSCMD", ""))
                 if (nzchar(gs_cmd)) {
                     res <- compactPDF(td, gs_cmd = gs_cmd, gs_quality = "ebook")
-                    res <- format(res, diff = 2.5e5) # 250 KB for now
+                    res <- format(res, diff = 2.56e5) # 250 KB for now
                     if(length(res)) {
                         if (!any) warningLog(Log)
                         any <- TRUE
@@ -2619,7 +2679,7 @@ setRlibs <-
                                  stdout = outfile, stderr = outfile)
                 t2b <- proc.time()
                 out <- readLines(outfile, warn = FALSE)
-                savefile <- paste0(name, ".Rout.save")
+                savefile <- file.path(dirname(file), paste0(name, ".Rout.save"))
                 if(length(grep("^  When (running|tangling|sourcing)", out,
                                useBytes = TRUE))) {
                     cat(" failed\n")
@@ -2877,7 +2937,9 @@ setRlibs <-
                 ## known false positives
                 for(fp in  c("foreign/tests/datefactor.dta",
                              "msProcess/inst/data[12]/.*.txt",
-                             "WMBrukerParser/inst/Examples/C3ValidationExtractSmall/RobotRun1/2-100kDa/0_B1/1/1SLin/fid") )
+                             "WMBrukerParser/inst/Examples/C3ValidationExtractSmall/RobotRun1/2-100kDa/0_B1/1/1SLin/fid",
+                             "bayesLife/inst/ex-data/bayesLife.output/predictions/traj_country104.rda" # file 5.16
+                             ) )
                     known <- known | grepl(fp, pexecs)
                 execs <- execs[!known]
             }
@@ -2928,7 +2990,7 @@ setRlibs <-
         dots <- sub("^./","", dots)
         allowed <-
             c(".Rbuildignore", ".Rinstignore", "vignettes/.install_extras",
-              ".install_timestamp") # Kurt uses this
+              ".install_timestamp") # Kurt used to use this
         dots <- dots[!dots %in% allowed]
         alldirs <- list.dirs(".", full.names = TRUE, recursive = TRUE)
         alldirs <- sub("^./","", alldirs)
@@ -3315,7 +3377,9 @@ setRlibs <-
                 printLog(Log, paste(c(out, ""), collapse = "\n"))
                 do_exit(1L)
             } else if(length(res$bad_version) ||
-                      identical(res$foss_with_BuildVigettes, TRUE))
+                      identical(res$foss_with_BuildVigettes, TRUE) ||
+                      res$empty_Maintainer_name ||
+                      res$Maintainer_needs_quotes)
                 warningLog(Log)
             else if(length(res) > 1L) noteLog(Log)
             else resultLog(Log, "OK")
@@ -3365,9 +3429,32 @@ setRlibs <-
                      })
             nS3methods <- nrow(ns$S3methods)
             if (nS3methods > 500L) {
-                msg <- sprintf("R < 3.0.2 had a limit of 500 registered S3 methods: found %d",
-                               nS3methods)
-                noteLog(Log, msg)
+                ## check that this is installable in R 3.0.1
+                meta <- .read_description(file.path(pkgdir, "DESCRIPTION"))
+                deps <- .split_description(meta, verbose = TRUE)$Rdepends2
+                status <- 0L
+                current <- as.numeric_version("3.0.1")
+                for(depends in deps) {
+                    ## .check_package_description will insist on these operators
+                    if(!depends$op %in% c("<=", ">=", "<", ">", "==", "!="))
+                        next
+                    status <- if(inherits(depends$version, "numeric_version"))
+                        !do.call(depends$op, list(current, depends$version))
+                    else {
+                        ver <- R.version
+                        if (ver$status %in% c("", "Patched")) FALSE
+                        else !do.call(depends$op,
+                                      list(ver[["svn rev"]],
+                                           as.numeric(sub("^r", "", depends$version))))
+                    }
+                    if(status != 0L)  break
+                }
+                if (status == 0L) {
+                    msg <- sprintf("R < 3.0.2 had a limit of 500 registered S3 methods: found %d",
+                                   nS3methods)
+                    noteLog(Log, msg)
+                } else
+                    resultLog(Log, "OK")
             } else
                 resultLog(Log, "OK")
         }
@@ -3865,6 +3952,11 @@ setRlibs <-
         Sys.setenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE")
         Sys.setenv("_R_CHECK_DOT_FIRSTLIB_" = "TRUE")
         Sys.setenv("_R_CHECK_REPLACING_IMPORTS_" = "TRUE")
+        Sys.setenv("_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_" = "TRUE")
+        prev <- Sys.getenv("_R_CHECK_LIMIT_CORES_", NA)
+        if(is.na(prev)) Sys.setenv("_R_CHECK_LIMIT_CORES_" = "TRUE")
+        prev <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", NA)
+        if(is.na(prev)) Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "stop")
         R_check_vc_dirs <- TRUE
         R_check_executables_exclusions <- FALSE
         R_check_doc_sizes2 <- TRUE

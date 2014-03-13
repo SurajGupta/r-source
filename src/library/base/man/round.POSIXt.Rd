@@ -1,6 +1,6 @@
 % File src/library/base/man/round.POSIXt.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{round.POSIXt}
@@ -27,8 +27,8 @@
 }
 \details{
   The time is rounded or truncated to the second, minute, hour or day.
-  Timezones are only relevant to days, when midnight in the current
-  \link{timezone} is used.
+  Time zones are only relevant to days, when midnight in the current
+  \link{time zone} is used.
 
   The methods for class \code{"Date"} are of little use except to remove
   fractional days.

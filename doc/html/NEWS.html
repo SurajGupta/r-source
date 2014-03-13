@@ -6,7 +6,383 @@
 
 <table width="100%" summary="page for NEWS"><tr><td>NEWS</td><td align="right">R Documentation</td></tr></table>
 
-<h2> R News</h2>
+<h2>R News</h2>
+
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.0.3</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li><p> On Windows there is support for making &lsquo;<span class="file">.texi</span>&rsquo; manuals
+using <CODE>texinfo</CODE> 5.0 or later: the setting is in file
+&lsquo;<span class="file">src/gnuwin32/MkRules.dist</span>&rsquo;.
+</p>
+<p>A packaging of the Perl script and modules for <CODE>texinfo</CODE>
+5.2 has been made available at
+<a href="http://www.stats.ox.ac.uk/pub/Rtools/">http://www.stats.ox.ac.uk/pub/Rtools/</a>.
+</p>
+</li>
+<li> <p><code>write.table()</code> now handles matrices of
+<i>2^31</i> or more elements, for those with large amounts
+of patience and disc space.
+</p>
+</li>
+<li><p> There is a new function, <code>La_version()</code>, to report the
+version of LAPACK in use.
+</p>
+</li>
+<li><p> The HTML version of &lsquo;An Introduction to R&rsquo; now has
+links to PNG versions of the figures.
+</p>
+</li>
+<li><p> There is some support to produce manuals in ebook
+formats. (See &lsquo;<span class="file">doc/manual/Makefile</span>&rsquo;.  Suggested by Mauro
+Cavalcanti.)
+</p>
+</li>
+<li><p> On a Unix-alike <code>Sys.timezone()</code> returns <code>NA</code> if
+the environment variable <span class="env">TZ</span> is unset, to distinguish it from
+an empty string which on some OSes means the <span class="samp">UTC</span> time zone.
+</p>
+</li>
+<li><p> The backtick may now be escaped in strings, to allow names
+containing them to be constructed, e.g. <code>`\``</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15621">PR#15621</a>)
+</p>
+</li>
+<li> <p><code>read.table()</code>, <code>readLines()</code> and <code>scan()</code>
+now warn when an embedded nul is found in the input.  (Related to
+<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15625">PR#15625</a> which was puzzled by the behaviour in this unsupported
+case.)
+</p>
+</li>
+<li><p> (Windows only.)  <code>file.symlink()</code> works around the
+undocumented restriction of the Windows system call to
+backslashes.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15631">PR#15631</a>.)
+</p>
+</li>
+<li> <p><code>KalmanForecast(fast = FALSE)</code> is now the default, and
+the help contains an example of how <code>fast = TRUE</code> can be used
+in this version.  (The usage will change in 3.1.0.)
+</p>
+</li>
+<li> <p><code>strptime()</code> now checks the locale only when
+locale-specific formats are used and caches the locale in use:
+this can halve the time taken on OSes with slow system
+functions (e.g. OS X).
+</p>
+</li>
+<li> <p><code>strptime()</code> and the <code>format()</code> methods for
+classes <code>"POSIXct"</code>, <code>"POSIXlt"</code> and <code>"Date"</code>
+recognize strings with marked encodings: this allows, for example,
+UTF-8 French month names to be read on (French) Windows.
+</p>
+</li>
+<li> <p><code>iconv(to = "utf8")</code> is now accepted on all platforms
+(some implementations did already, but GNU <span class="pkg">libiconv</span> did not:
+however converted strings were not marked as being in UTF-8).  The
+official name, <code>"UTF-8"</code> is still preferred.
+</p>
+</li>
+<li> <p><code>available.packages()</code> is better protected against
+corrupt metadata files.  (A recurring problem with Debian package
+<span class="pkg">shogun-r</span>: <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14713">PR#14713</a>.)
+</p>
+</li>
+<li><p> Finalizers are marked to be run at garbage collection, but
+run only at a somewhat safer later time (when interrupts are
+checked).  This circumvents some problems with finalizers running
+arbitrary code during garbage collection (the known instances being
+running <code>options()</code> and (C-level) <code>path.expand()</code>
+re-entrantly).
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION and INCLUDED SOFTWARE</h4>
+
+
+<ul>
+<li><p> The included version of PCRE has been updated to 8.34.  This
+fixes bugs and makes the behaviour closer to Perl 5.18.  In
+particular, the concept of &lsquo;space&rsquo; includes <span class="samp">VT</span> and
+hence agrees with POSIX's.
+</p>
+</li></ul>
+
+
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+
+<ul>
+<li><p> The new field <span class="samp">SysDataCompression</span> in the
+&lsquo;<span class="file">DESCRIPTION</span>&rsquo; file allows user control over the compression
+used for &lsquo;<span class="file">sysdata.rda</span>&rsquo; objects in the lazy-load database.
+</p>
+</li>
+<li> <p><code>install.packages(dependencies = value)</code> for <code>value =
+	NA</code> (the default) or <code>value = TRUE</code> omits packages only in
+<code>LinkingTo</code> for binary package installs.
+</p>
+</li></ul>
+
+
+
+
+<h4>C-LEVEL FACILITIES</h4>
+
+
+<ul>
+<li><p> The long undocumented remapping of <code>rround()</code> to
+<code>Rf_fround()</code> in header &lsquo;<span class="file">Rmath.h</span>&rsquo; is now formally
+deprecated: use <code>fround()</code> directly.
+</p>
+</li>
+<li><p> Remapping of <code>prec()</code> and <code>trunc()</code> in the
+&lsquo;<span class="file">Rmath.h</span>&rsquo; header has been disabled in C++ code (it has caused
+breakage with <code>libc++</code> headers).
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>getParseData()</code> truncated the imaginary part of
+complex number constants.  (Reported by Yihui Xie.)
+</p>
+</li>
+<li> <p><code>dbeta(x, a, b)</code> with <code>a</code> or <code>b</code> within a
+factor of 2 of the largest representable number could
+infinite-loop.  (Reported by Ioannis Kosmidis.)
+</p>
+</li>
+<li> <p><code>provideDimnames()</code> failed for arrays with a 0
+dimension. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15465">PR#15465</a>)
+</p>
+</li>
+<li> <p><code>rbind()</code> and <code>cbind()</code> did not handle
+list objects correctly. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15468">PR#15468</a>)
+</p>
+</li>
+<li> <p><code>replayPlot()</code> now checks if it is replaying a plot
+from the same session.
+</p>
+</li>
+<li> <p><code>rasterImage()</code> and <code>grid.raster()</code> now give
+error on an empty (zero-length) raster.  (Reported by Ben North.)
+</p>
+</li>
+<li> <p><code>plot.lm()</code> would sometimes scramble the labels
+in plot type 5.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15458">PR#15458</a> and <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14837">PR#14837</a>)
+</p>
+</li>
+<li> <p><code>min()</code> did not handle <code>NA_character_</code> values
+properly.  (Reported by Magnus Thor Torfason.)
+</p>
+</li>
+<li><p> (Windows only.)  <code>readRegistry()</code> would duplicate
+default values for keys.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15455">PR#15455</a>)
+</p>
+</li>
+<li> <p><code>str(..., strict.width = "cut")</code> did not handle
+it properly when more than one line needed to be cut.  (Reported
+by Gerrit Eichner.)
+</p>
+</li>
+<li><p> Removing subclass back-references when S4 classes were
+removed or their namespace unloaded had several bugs (e.g., <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15481">PR#15481</a>).
+</p>
+</li>
+<li> <p><code>aggregate()</code> could fail when there were too many
+levels present in the <code>by</code> argument.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15004">PR#15004</a>)
+</p>
+</li>
+<li> <p><code>namespaceImportFrom()</code> needed to detect primitive
+functions when checking for duplicated imports (reported by
+Karl Forner).
+</p>
+</li>
+<li> <p><code>getGraphicsEvent()</code> did not exit when a user closed
+the graphics window.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15208">PR#15208</a>)
+</p>
+</li>
+<li><p> Errors in vignettes were not always captured and displayed
+properly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15495">PR#15495</a>)
+</p>
+</li>
+<li> <p><code>contour()</code> could fail when dealing with extremely
+small z values.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15454">PR#15454</a>)
+</p>
+</li>
+<li><p> Several functions did not handle zero-length vectors properly,
+including <code>browseEnv()</code>, <code>format()</code>, <code>gl()</code>,
+<code>relist()</code> and <code>summary.data.frame()</code>.  (E.g., <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15499">PR#15499</a>)
+</p>
+</li>
+<li> <p><code>Sweave()</code> did not restore the <font face="Courier New,Courier" color="#666666"><b>R</b></font> output to the
+console if it was interrupted by a user in the middle of evaluating
+a code chunk.  (Reported by Michael Sumner.)
+</p>
+</li>
+<li><p> Fake installs of packages with vignettes work again.
+</p>
+</li>
+<li><p> Illegal characters in the input caused <code>parse()</code>
+(and thus <code>source()</code>) to segfault.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15518">PR#15518</a>)
+</p>
+</li>
+<li><p> The nonsensical use of <code>nmax = 1</code> in
+<code>duplicated()</code> or <code>unique()</code> is now silently ignored.
+</p>
+</li>
+<li> <p><code>qcauchy(p, *)</code> is now fully accurate even when p is
+very close to 1. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15521">PR#15521</a>)
+</p>
+</li>
+<li><p> The <code>validmu()</code> and <code>valideta()</code> functions in the
+standard <code>glm()</code> families now also report non-finite values,
+rather than failing.
+</p>
+</li>
+<li><p> Saved vignette results (in a &lsquo;<span class="file">.Rout.save</span>&rsquo; file) were
+not being compared to the new ones during <CODE>R CMD check</CODE>.
+</p>
+</li>
+<li><p> Double-clicking outside of the list box (e.g. on the scrollbar)
+of a Tk listbox widget generated by <code>tk_select.list()</code> no
+longer causes the window to close. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15407">PR#15407</a>)
+</p>
+</li>
+<li><p> Improved handling of edge cases in
+<code>parallel::splitindices()</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15552">PR#15552</a>)
+</p>
+</li>
+<li><p> HTML display of results from <code>help.search()</code> and
+<code>??</code> sometimes contained badly constructed links.
+</p>
+</li>
+<li> <p><code>c()</code> and related functions such as <code>unlist()</code>
+converted raw vectors to invalid logical vectors. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15535">PR#15535</a>)
+</p>
+</li>
+<li><p> (Windows only) When a call to <code>system2()</code> specified
+one of <code>stdin</code>, <code>stdout</code> or <code>stderr</code> to be a file,
+but the command was not found (e.g. it contained its arguments,
+or the program was not on the <span class="env">PATH</span>), it left the file open
+and unusable until <font face="Courier New,Courier" color="#666666"><b>R</b></font> terminated.  (Reported by Mathew McLean.)
+</p>
+</li>
+<li><p> The <code>bmp()</code> device was not recording <code>res = NA</code>
+correctly: it is now recorded as 72 ppi.
+</p>
+</li>
+<li><p> Several potential problems with compiler-specific behaviour
+have been identified using the &lsquo;Undefined Behaviour
+Sanitizer&rsquo; in conjunction with the <CODE>clang</CODE> compiler.
+</p>
+</li>
+<li> <p><code>hcl()</code> now honours <code>NA</code> inputs (previously they
+were mapped to black).
+</p>
+</li>
+<li><p> Some translations in base packages were being looked up in
+the main catalog rather than that for the package.
+</p>
+</li>
+<li><p> As a result of the 3.0.2 change about &lsquo;the last
+second before the epoch&rsquo;, most conversions which should have given
+<code>NA</code> returned that time.  (The platforms affected include
+Linux and OS X, but not Windows nor Solaris.)
+</p>
+</li>
+<li> <p><code>rowsum()</code> has more support for matrices and dataframes
+with <i>2^31</i> or more elements. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15587">PR#15587</a>)
+</p>
+</li>
+<li> <p><code>predict(&lt;lm object&gt;, interval = "confidence", scale =
+	&lt;something&gt;)</code> now works.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15564">PR#15564</a>)
+</p>
+</li>
+<li><p> The bug fix in 3.0.2 for <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15411">PR#15411</a> was too aggressive,
+and sometimes removed spaces that should not have been removed.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15583">PR#15583</a>)
+</p>
+</li>
+<li><p> Running <font face="Courier New,Courier" color="#666666"><b>R</b></font> code in a <span class="pkg">tcltk</span> callback failed to set the
+busy flag, which will be needed to tell OS X not to &lsquo;App Nap&rsquo;.
+</p>
+</li>
+<li><p> The code for date-times before 1902 assumed that the offset
+from GMT in 1902 was a whole number of minutes: that was not true
+of Paris (as recorded on some platforms).
+</p>
+</li>
+<li><p> Using <code>Sys.setlocale</code> to set <code>LC_NUMERIC</code> to
+<code>"C"</code> (to restore the sane behavior) no longer gives a
+warning.
+</p>
+</li>
+<li> <p><code>deparse()</code> now deparses complex vectors in a way that
+re-parses to the original values.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15534">PR#15534</a>, patch based on code
+submitted by Alex Bertram.)
+</p>
+</li>
+<li><p> In some extreme cases (more than <i>10^15</i>)
+integer inputs to <code>dpqrxxx()</code> functions might have been
+rounded up by one (with a warning about being non-integer).
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15624">PR#15624</a>)
+</p>
+</li>
+<li><p> Plotting symbol <code>pch = 14</code> had the triangle upside down
+on some devices (typically screen devices). The triangle is
+supposed to be point up.  (Reported by Bill Venables.)
+</p>
+</li>
+<li> <p><code>getSrcref()</code> did not work on method definitions if
+<code>rematchDefinition()</code> had been used.
+</p>
+</li>
+<li> <p><code>KalmanForecast(fast = FALSE)</code> reported a (harmless)
+stack imbalance.
+</p>
+</li>
+<li><p> The count of observations used by <code>KalmanRun()</code> did not
+take missing values into account.
+</p>
+</li>
+<li><p> In locales where the abbreviated name of one month is a
+partial match for the full name of a later one, the <code>%B</code>
+format in <code>strptime()</code> could fail.  An example was French on
+OS X, where <span class="samp">juin</span> is abbreviated to <span class="samp">jui</span> and partially
+matches <code>juillet</code>.  Similarly for weekday names.
+</p>
+</li>
+<li> <p><code>pbeta(x, a, b, log.p = TRUE)</code> sometimes underflowed to
+zero for very small and very differently sized <code>a</code>, <code>b</code>.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15641">PR#15641</a>)
+</p>
+</li>
+<li> <p><code>approx()</code> and <code>approxfun()</code> now handle infinite
+values with the <code>"constant"</code> method. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15655">PR#15655</a>)
+</p>
+</li>
+<li> <p><code>stripchart()</code> again respects reversed limits in
+<code>xlim</code> and <code>ylim</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15664">PR#15664</a>)
+</p>
+</li></ul>
+
+
+
 
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.0.2</h3>
 
@@ -116,8 +492,9 @@ the result, to avoid misuse creating invalid objects as in
 <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15303">PR#15303</a>.  A warning is given if a class is discarded.
 </p>
 </li>
-<li><p> Dataset <code>npk</code> has been copied from <span class="pkg">MASS</span> to allow
-more tests to be run without recommended packages being installed.
+<li><p> Dataset <code>npk</code> has been copied from <a href="http://CRAN.R-project.org/package=MASS"><span class="pkg">MASS</span></a> to
+allow more tests to be run without recommended packages being
+installed.
 </p>
 </li>
 <li><p> The initialization of the regression coefficients for
@@ -151,7 +528,7 @@ instead of causing corresponding components to be deleted.
 </li>
 <li> <p><code>tools::pkgVignettes()</code> gains argument <code>check</code>;
 if set to <code>TRUE</code>, it will warn when it appears a vignette requests
-a non-existent vignette engine. 
+a non-existent vignette engine.
 </p>
 </li></ul>
 
@@ -271,6 +648,9 @@ default for Sweave vignettes.
 <li> <p><CODE>R CMD build</CODE> makes more use of the &lsquo;<span class="file">build</span>&rsquo;
 sub-directory of package sources, for example to record
 information about the vignettes.
+</p>
+</li>
+<li> <p><CODE>R CMD check</CODE> analyses <code>:::</code> calls.
 </p>
 </li></ul>
 
@@ -650,7 +1030,7 @@ rather than in its namespace.)
 (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15170">PR#15170</a>)
 </p>
 </li>
-<li> <p><code>format()</code> sometimes added unnecessary spaces. 
+<li> <p><code>format()</code> sometimes added unnecessary spaces.
 (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15411">PR#15411</a>)
 </p>
 </li>
@@ -667,7 +1047,7 @@ was not respected in some locales. (<a href="https://bugs.R-project.org/bugzilla
 </p>
 </li>
 <li> <p><code>plot()</code> for <code>TukeyHSD</code> objects did not balance
-<code>dev.hold()</code> and <code>dev.flush()</code> calls on multi-page plots. 
+<code>dev.hold()</code> and <code>dev.flush()</code> calls on multi-page plots.
 (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15449">PR#15449</a>)
 </p>
 </li></ul>
@@ -1334,7 +1714,7 @@ functional behavior.  See <code>?LocalReferenceClasses</code>.
 <li> <p><code>untar()</code> has a new argument <code>restore_times</code> which
 if false (not the default) discards the times in the tarball.
 This is useful if they are incorrect (some tarballs submitted to
-<acronym><span class="acronym">CRAN</span></acronym> have times in a local timezone or many years in the
+<acronym><span class="acronym">CRAN</span></acronym> have times in a local time zone or many years in the
 past even though the standard required them to be in UTC).
 </p>
 </li>

@@ -304,9 +304,10 @@ makeRweaveLatexCodeRunner <- function(evalFunc = RweaveEvalWithOpt)
             if (options$eval) {
                 tmpcon <- file()
                 sink(file = tmpcon)
-                err <- evalFunc(ce, options)
-                cat("\n")           # make sure final line is complete
-                sink()
+                err <- tryCatch(evalFunc(ce, options), finally = {
+                     cat("\n")           # make sure final line is complete
+                     sink()
+                })
                 output <- readLines(tmpcon)
                 close(tmpcon)
                 ## delete empty output
@@ -526,22 +527,24 @@ RweaveLatexFinish <- function(object, error = FALSE)
         linesout <- object$linesout
         filenumout <- object$filenumout
         filenames <- object$srcFilenames[filenumout]
-        filegps <- rle(filenames)
-        offset <- 0L
-        for (i in seq_along(filegps$lengths)) {
-            len <- filegps$lengths[i]
-            inputname <- filegps$values[i]
-            vals <- rle(diff(linesout[offset + seq_len(len)]))
-            vals <- c(linesout[offset + 1L], as.numeric(rbind(vals$lengths, vals$values)))
-    	    concordance <- paste(strwrap(paste(vals, collapse = " ")), collapse = " %\n")
-    	    special <- paste0("\\Sconcordance{concordance:", outputname, ":",
-                         inputname, ":",
-                         if (offset) paste0("ofs ", offset, ":") else "",
-                         "%\n",
-                         concordance,"}\n")
-    	    cat(special, file = object$concordfile, append=offset > 0L)
-    	    offset <- offset + len
-    	}
+	if (!is.null(filenames)) {  # Might be NULL if an error occurred
+	    filegps <- rle(filenames)
+	    offset <- 0L
+	    for (i in seq_along(filegps$lengths)) {
+		len <- filegps$lengths[i]
+		inputname <- filegps$values[i]
+		vals <- rle(diff(linesout[offset + seq_len(len)]))
+		vals <- c(linesout[offset + 1L], as.numeric(rbind(vals$lengths, vals$values)))
+		concordance <- paste(strwrap(paste(vals, collapse = " ")), collapse = " %\n")
+		special <- paste0("\\Sconcordance{concordance:", outputname, ":",
+			     inputname, ":",
+			     if (offset) paste0("ofs ", offset, ":") else "",
+			     "%\n",
+			     concordance,"}\n")
+		cat(special, file = object$concordfile, append=offset > 0L)
+		offset <- offset + len
+	    }
+	}
     }
     invisible(outputname)
 }

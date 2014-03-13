@@ -2,7 +2,7 @@
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 1999-1999 Saikat DebRoy, Douglas M. Bates, Jose C. Pinheiro
-#  Copyright (C) 2000-13   The R Core Team
+#  Copyright (C) 2000-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -598,7 +598,7 @@ nls <-
     }
     ## Iterate
     if (algorithm != "port") {
-	if (!missing(lower) || !missing(upper))
+	if (!identical(lower, -Inf) || !identical(upper, +Inf))
 	    warning('upper and lower bounds ignored unless algorithm = "port"')
         convInfo <- .Call(C_nls_iter, m, ctrl, trace)
 	nls.out <- list(m = m, convInfo = convInfo,

@@ -1,6 +1,6 @@
 % File src/library/base/man/scan.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{scan}
@@ -159,7 +159,8 @@ scan(file = "", what = double(), nmax = -1, n = -1, sep = "",
   \item{encoding}{encoding to be assumed for input strings.  If the
     value is \code{"latin1"} or \code{"UTF-8"} it is used to mark
     character strings as known to be in Latin-1 or UTF-8: it is not used
-    to re-encode the input (see \code{fileEncoding}.  See also \sQuote{Details}.
+    to re-encode the input (see \code{fileEncoding}).
+    See also \sQuote{Details}.
   }
 
   \item{text}{character string: if \code{file} is not supplied and this is,
@@ -179,7 +180,7 @@ scan(file = "", what = double(), nmax = -1, n = -1, sep = "",
 
   \sQuote{White space} is defined for the purposes of this function as
   one or more contiguous characters from the set space, horizontal tab,
-  carriage return and line feed.  It does not include form feed or
+  carriage return and line feed.  It does not include form feed nor
   vertical tab, but in Latin-1 and Windows 8-bit locales 'space'
   includes non-breaking space.
 
@@ -236,6 +237,9 @@ scan(file = "", what = double(), nmax = -1, n = -1, sep = "",
   non-default \code{encoding} argument, the text is converted to UTF-8
   and declared as such (and the \code{encoding} argument to \code{scan}
   is ignored).  See the examples of \code{\link{readLines}}.
+
+  Embedded nuls in the input stream will terminate the field currently
+  being read, with a warning once per call to \code{scan}.
 }
 \value{
   if \code{what} is a list, a list of the same length and same names (as

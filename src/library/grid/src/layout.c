@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003 The R Core Team
+ *                2003-2013 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -216,7 +216,9 @@ void allocateRespected(SEXP layout,
 	/* Determine whether aspect ratio of available space is
 	 * bigger or smaller than aspect ratio of layout
 	 */
-	if ((tempHeightCM / tempWidthCM) > (sumHeight / sumWidth)) {
+	// NB: widths could be zero
+	// if ((tempHeightCM / tempWidthCM) > (sumHeight / sumWidth)) {
+	if ( tempHeightCM * sumWidth > sumHeight * tempWidthCM) {
 	    denom = sumWidth;
 	    mult = tempWidthCM;
 	}

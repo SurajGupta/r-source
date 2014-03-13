@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2012  The R Core Team
+ *  Copyright (C) 1999-2013  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -262,7 +262,9 @@ vmmin(int n0, double *b, double *Fmin, optimfn fminfn, optimgr fmingr,
 #define big             1.0e+35   /*a very large number*/
 
 
-/* Nelder-Mead */
+/* Nelder-Mead, based on Pascal code
+   in J.C. Nash, `Compact Numerical Methods for Computers', 2nd edition,
+   converted by p2c then re-crafted by B.D. Ripley */
 void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
 	   int *fail, double abstol, double intol, void *ex,
 	   double alpha, double bet, double gamm, int trace,
@@ -462,6 +464,9 @@ void nmmin(int n, double *Bvec, double *X, double *Fmin, optimfn fminfn,
     *fncount = funcount;
 }
 
+/* Conjugate gradients, based on Pascal code
+   in J.C. Nash, `Compact Numerical Methods for Computers', 2nd edition,
+   converted by p2c then re-crafted by B.D. Ripley */
 void cgmin(int n, double *Bvec, double *X, double *Fmin,
 	   optimfn fminfn, optimgr fmingr, int *fail,
 	   double abstol, double intol, void *ex, int type, int trace,
@@ -631,6 +636,7 @@ void cgmin(int n, double *Bvec, double *X, double *Fmin,
     *grcount = gradcount;
 }
 
+/* include setulb() */
 #include "lbfgsb.c"
 
 void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
@@ -673,7 +679,6 @@ void lbfgsb(int n, int m, double *x, double *l, double *u, int *nbd,
     iwa = (int *) R_alloc(3*n, sizeof(int));
     strcpy(task, "START");
     while(1) {
-	/* Main workhorse setulb() from ../appl/lbfgsb.c : */
 	setulb(n, m, x, l, u, nbd, &f, g, factr, &pgtol, wa, iwa, task,
 	       tr, lsave, isave, dsave);
 /*	Rprintf("in lbfgsb - %s\n", task);*/

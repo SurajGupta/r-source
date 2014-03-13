@@ -1,7 +1,7 @@
 #  File src/library/stats/R/loglin.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ loglin <- function(table, margin, start = rep(1, length(table)), fit =
             tmp <- match(tmp, varnames)
             margin[[k]] <- tmp
         }
+        if (!is.numeric(tmp) || any(is.na(tmp) | tmp <= 0))
+            stop("'margin' must contain names or numbers corresponding to 'table'")
         conf[seq_along(tmp), k] <- tmp
         nmar <- nmar + prod(dtab[tmp])
     }

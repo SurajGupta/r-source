@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-13   The R Core Team.
+ *  Copyright (C) 2000-2014   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1046,6 +1046,7 @@ static Rboolean pipe_open(Rconnection con)
 {
     FILE *fp;
     char mode[3];
+    Rfileconn this = con->private;
 
 #ifdef Win32
     strncpy(mode, con->mode, 2);
@@ -1075,12 +1076,14 @@ static Rboolean pipe_open(Rconnection con)
 		strerror(errno));
 	return FALSE;
     }
-    ((Rfileconn)(con->private))->fp = fp;
+    this->fp = fp;
     con->isopen = TRUE;
     con->canwrite = (con->mode[0] == 'w');
     con->canread = !con->canwrite;
     if(strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
     else con->text = TRUE;
+    this->last_was_write = !con->canread;
+    this->rpos = this->wpos = 0;
     set_iconv(con);
     con->save = -1000;
     return TRUE;
@@ -3384,6 +3387,8 @@ SEXP attribute_hidden do_readLines(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (nread == 0 && utf8locale &&
 	    !memcmp(buf, "\xef\xbb\xbf", 3)) qbuf = buf + 3;
 	SET_STRING_ELT(ans, nread, mkCharCE(qbuf, oenc));
+	if (warn && strlen(buf) < nbuf)
+	    warning(_("line %d appears to contain an embedded nul"), nread + 1);
 	if(c == R_EOF) goto no_more_lines;
     }
     if(!wasopen) {endcontext(&cntxt); con->close(con);}

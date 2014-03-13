@@ -1,6 +1,6 @@
 % File src/library/stats/man/smooth.spline.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{smooth.spline}
@@ -256,7 +256,7 @@ lines(predict(s02, xx), col = 3); mtext(deparse(s02$call), col = 3)
 
 \dontshow{
 stopifnot(all.equal(predict(s02, xx),
-		    predict(s02., xx), tol = 1e-15))
+		    predict(s02., xx), tolerance = 1e-15))
 }
 \donttest{
 ## The following shows the problematic behavior of 'spar' searching:

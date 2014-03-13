@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998--2012  The R Core Team
+ *  Copyright (C) 1998--2014  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -593,12 +593,16 @@ static void DrawFacets(double *z, double *x, double *y, int nx, int ny,
 	if (nv > 2) {
 	    newcol = col[icol];
 	    if (DoLighting) {
-		r = (int)(shade * R_RED(newcol));
-		g = (int)(shade * R_GREEN(newcol));
-		b = (int)(shade * R_BLUE(newcol));
-		newcol = R_RGB(r, g, b);
-	    }
-	    GPolygon(nv, xx, yy, USER, newcol, border, dd);
+		// shade can degenerate to NaN
+		if(R_FINITE(shade)) {
+		    r = (int)(shade * R_RED(newcol));
+		    g = (int)(shade * R_GREEN(newcol));
+		    b = (int)(shade * R_BLUE(newcol));
+		    newcol = R_RGB(r, g, b);
+		    GPolygon(nv, xx, yy, USER, newcol, border, dd);
+		}
+	    } else 
+		GPolygon(nv, xx, yy, USER, newcol, border, dd);
 	}
     }
 }

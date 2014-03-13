@@ -1,5 +1,269 @@
 R News
 
+CHANGES IN R 3.0.3:
+
+  NEW FEATURES:
+
+    * On Windows there is support for making .texi manuals using
+      texinfo 5.0 or later: the setting is in file
+      src/gnuwin32/MkRules.dist.
+
+      A packaging of the Perl script and modules for texinfo 5.2 has
+      been made available at <URL:
+      http://www.stats.ox.ac.uk/pub/Rtools/>.
+
+    * write.table() now handles matrices of 2^31 or more elements, for
+      those with large amounts of patience and disc space.
+
+    * There is a new function, La_version(), to report the version of
+      LAPACK in use.
+
+    * The HTML version of 'An Introduction to R' now has links to PNG
+      versions of the figures.
+
+    * There is some support to produce manuals in ebook formats. (See
+      doc/manual/Makefile.  Suggested by Mauro Cavalcanti.)
+
+    * On a Unix-alike Sys.timezone() returns NA if the environment
+      variable TZ is unset, to distinguish it from an empty string
+      which on some OSes means the UTC time zone.
+
+    * The backtick may now be escaped in strings, to allow names
+      containing them to be constructed, e.g. `\``.  (PR#15621)
+
+    * read.table(), readLines() and scan() now warn when an embedded
+      nul is found in the input.  (Related to PR#15625 which was
+      puzzled by the behaviour in this unsupported case.)
+
+    * (Windows only.)  file.symlink() works around the undocumented
+      restriction of the Windows system call to backslashes.  (Wish of
+      PR#15631.)
+
+    * KalmanForecast(fast = FALSE) is now the default, and the help
+      contains an example of how fast = TRUE can be used in this
+      version.  (The usage will change in 3.1.0.)
+
+    * strptime() now checks the locale only when locale-specific
+      formats are used and caches the locale in use: this can halve the
+      time taken on OSes with slow system functions (e.g. OS X).
+
+    * strptime() and the format() methods for classes "POSIXct",
+      "POSIXlt" and "Date" recognize strings with marked encodings:
+      this allows, for example, UTF-8 French month names to be read on
+      (French) Windows.
+
+    * iconv(to = "utf8") is now accepted on all platforms (some
+      implementations did already, but GNU libiconv did not: however
+      converted strings were not marked as being in UTF-8).  The
+      official name, "UTF-8" is still preferred.
+
+    * available.packages() is better protected against corrupt metadata
+      files.  (A recurring problem with Debian package shogun-r:
+      PR#14713.)
+
+    * Finalizers are marked to be run at garbage collection, but run
+      only at a somewhat safer later time (when interrupts are
+      checked).  This circumvents some problems with finalizers running
+      arbitrary code during garbage collection (the known instances
+      being running options() and (C-level) path.expand()
+      re-entrantly).
+
+  INSTALLATION and INCLUDED SOFTWARE:
+
+    * The included version of PCRE has been updated to 8.34.  This
+      fixes bugs and makes the behaviour closer to Perl 5.18.  In
+      particular, the concept of 'space' includes VT and hence agrees
+      with POSIX's.
+
+  PACKAGE INSTALLATION:
+
+    * The new field SysDataCompression in the DESCRIPTION file allows
+      user control over the compression used for sysdata.rda objects in
+      the lazy-load database.
+
+    * install.packages(dependencies = value) for value = NA (the
+      default) or value = TRUE omits packages only in LinkingTo for
+      binary package installs.
+
+  C-LEVEL FACILITIES:
+
+    * The long undocumented remapping of rround() to Rf_fround() in
+      header Rmath.h is now formally deprecated: use fround() directly.
+
+    * Remapping of prec() and trunc() in the Rmath.h header has been
+      disabled in C++ code (it has caused breakage with libc++
+      headers).
+
+  BUG FIXES:
+
+    * getParseData() truncated the imaginary part of complex number
+      constants.  (Reported by Yihui Xie.)
+
+    * dbeta(x, a, b) with a or b within a factor of 2 of the largest
+      representable number could infinite-loop.  (Reported by Ioannis
+      Kosmidis.)
+
+    * provideDimnames() failed for arrays with a 0 dimension.
+      (PR#15465)
+
+    * rbind() and cbind() did not handle list objects correctly.
+      (PR#15468)
+
+    * replayPlot() now checks if it is replaying a plot from the same
+      session.
+
+    * rasterImage() and grid.raster() now give error on an empty
+      (zero-length) raster.  (Reported by Ben North.)
+
+    * plot.lm() would sometimes scramble the labels in plot type 5.
+      (PR#15458 and PR#14837)
+
+    * min() did not handle NA_character_ values properly.  (Reported by
+      Magnus Thor Torfason.)
+
+    * (Windows only.)  readRegistry() would duplicate default values
+      for keys.  (PR#15455)
+
+    * str(..., strict.width = "cut") did not handle it properly when
+      more than one line needed to be cut.  (Reported by Gerrit
+      Eichner.)
+
+    * Removing subclass back-references when S4 classes were removed or
+      their namespace unloaded had several bugs (e.g., PR#15481).
+
+    * aggregate() could fail when there were too many levels present in
+      the by argument.  (PR#15004)
+
+    * namespaceImportFrom() needed to detect primitive functions when
+      checking for duplicated imports (reported by Karl Forner).
+
+    * getGraphicsEvent() did not exit when a user closed the graphics
+      window.  (PR#15208)
+
+    * Errors in vignettes were not always captured and displayed
+      properly.  (PR#15495)
+
+    * contour() could fail when dealing with extremely small z values.
+      (PR#15454)
+
+    * Several functions did not handle zero-length vectors properly,
+      including browseEnv(), format(), gl(), relist() and
+      summary.data.frame().  (E.g., PR#15499)
+
+    * Sweave() did not restore the R output to the console if it was
+      interrupted by a user in the middle of evaluating a code chunk.
+      (Reported by Michael Sumner.)
+
+    * Fake installs of packages with vignettes work again.
+
+    * Illegal characters in the input caused parse() (and thus
+      source()) to segfault.  (PR#15518)
+
+    * The nonsensical use of nmax = 1 in duplicated() or unique() is
+      now silently ignored.
+
+    * qcauchy(p, *) is now fully accurate even when p is very close to
+      1. (PR#15521)
+
+    * The validmu() and valideta() functions in the standard glm()
+      families now also report non-finite values, rather than failing.
+
+    * Saved vignette results (in a .Rout.save file) were not being
+      compared to the new ones during R CMD check.
+
+    * Double-clicking outside of the list box (e.g. on the scrollbar)
+      of a Tk listbox widget generated by tk_select.list() no longer
+      causes the window to close. (PR#15407)
+
+    * Improved handling of edge cases in parallel::splitindices().
+      (PR#15552)
+
+    * HTML display of results from help.search() and ?? sometimes
+      contained badly constructed links.
+
+    * c() and related functions such as unlist() converted raw vectors
+      to invalid logical vectors. (PR#15535)
+
+    * (Windows only) When a call to system2() specified one of stdin,
+      stdout or stderr to be a file, but the command was not found
+      (e.g. it contained its arguments, or the program was not on the
+      PATH), it left the file open and unusable until R terminated.
+      (Reported by Mathew McLean.)
+
+    * The bmp() device was not recording res = NA correctly: it is now
+      recorded as 72 ppi.
+
+    * Several potential problems with compiler-specific behaviour have
+      been identified using the 'Undefined Behaviour Sanitizer' in
+      conjunction with the clang compiler.
+
+    * hcl() now honours NA inputs (previously they were mapped to
+      black).
+
+    * Some translations in base packages were being looked up in the
+      main catalog rather than that for the package.
+
+    * As a result of the 3.0.2 change about 'the last second before the
+      epoch', most conversions which should have given NA returned that
+      time.  (The platforms affected include Linux and OS X, but not
+      Windows nor Solaris.)
+
+    * rowsum() has more support for matrices and dataframes with 2^31
+      or more elements. (PR#15587)
+
+    * predict(<lm object>, interval = "confidence", scale =
+      <something>) now works.  (PR#15564)
+
+    * The bug fix in 3.0.2 for PR#15411 was too aggressive, and
+      sometimes removed spaces that should not have been removed.
+      (PR#15583)
+
+    * Running R code in a tcltk callback failed to set the busy flag,
+      which will be needed to tell OS X not to 'App Nap'.
+
+    * The code for date-times before 1902 assumed that the offset from
+      GMT in 1902 was a whole number of minutes: that was not true of
+      Paris (as recorded on some platforms).
+
+    * Using Sys.setlocale to set LC_NUMERIC to "C" (to restore the sane
+      behavior) no longer gives a warning.
+
+    * deparse() now deparses complex vectors in a way that re-parses to
+      the original values.  (PR#15534, patch based on code submitted by
+      Alex Bertram.)
+
+    * In some extreme cases (more than 10^15) integer inputs to
+      dpqrxxx() functions might have been rounded up by one (with a
+      warning about being non-integer).  (PR#15624)
+
+    * Plotting symbol pch = 14 had the triangle upside down on some
+      devices (typically screen devices). The triangle is supposed to
+      be point up.  (Reported by Bill Venables.)
+
+    * getSrcref() did not work on method definitions if
+      rematchDefinition() had been used.
+
+    * KalmanForecast(fast = FALSE) reported a (harmless) stack
+      imbalance.
+
+    * The count of observations used by KalmanRun() did not take
+      missing values into account.
+
+    * In locales where the abbreviated name of one month is a partial
+      match for the full name of a later one, the %B format in
+      strptime() could fail.  An example was French on OS X, where juin
+      is abbreviated to jui and partially matches juillet.  Similarly
+      for weekday names.
+
+    * pbeta(x, a, b, log.p = TRUE) sometimes underflowed to zero for
+      very small and very differently sized a, b.  (PR#15641)
+
+    * approx() and approxfun() now handle infinite values with the
+      "constant" method. (PR#15655)
+
+    * stripchart() again respects reversed limits in xlim and ylim.
+      (PR#15664)
+
 CHANGES IN R 3.0.2:
 
   NEW FEATURES:
@@ -194,6 +458,8 @@ CHANGES IN R 3.0.2:
 
     * R CMD build makes more use of the build sub-directory of package
       sources, for example to record information about the vignettes.
+
+    * R CMD check analyses ::: calls.
 
   INSTALLATION and INCLUDED SOFTWARE:
 
@@ -938,7 +1204,7 @@ CHANGES IN R 3.0.0:
     * untar() has a new argument restore_times which if false (not the
       default) discards the times in the tarball.  This is useful if
       they are incorrect (some tarballs submitted to CRAN have times in
-      a local timezone or many years in the past even though the
+      a local time zone or many years in the past even though the
       standard required them to be in UTC).
 
     * replayplot() cannot (and will not attempt to) replay plots

@@ -1,7 +1,7 @@
 #  File src/library/utils/R/str.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ str.default <-
 	    ss <- strwrap(ss, width = width, exdent = nind)
 					# wraps at white space (only)
 	}
-	if(any(iLong <- nchar(ss) > width)) { ## cut hard
+	if(length(iLong <- which(nchar(ss) > width))) { ## cut hard
 	    sL <- ss[iLong]
 	    k <- as.integer(width-2)
 	    if(any(i <- grepl("\"", substr(sL, k +1L, nchar(sL))))) {

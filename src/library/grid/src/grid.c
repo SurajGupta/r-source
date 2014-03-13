@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 2001-3 Paul Murrell
- *                2003-13 The R Core Team
+ *                2003-2013 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2844,6 +2844,9 @@ SEXP L_raster(SEXP raster, SEXP x, SEXP y, SEXP w, SEXP h,
     getViewportContext(currentvp, &vpc);
     /* Convert the raster matrix to R internal colours */
     n = LENGTH(raster);
+    if (n <= 0) {
+        error(_("Empty raster"));  
+    }
     vmax = vmaxget();
     /* raster is rather inefficient so allow a native representation as
        an integer array which requires no conversion */

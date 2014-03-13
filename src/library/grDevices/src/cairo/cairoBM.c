@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2011  The R Core Team
+ *  Copyright (C) 1997--2014  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,6 +57,15 @@
 #include "Fileio.h"		/* R_fopen */
 
 #include "cairoBM.h"
+
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#undef _
+#define _(String) dgettext ("grDevices", String)
+#else
+#define _(String) (String)
+#endif
+
 
 static double RedGamma	 = 1.0;
 static double GreenGamma = 1.0;

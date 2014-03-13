@@ -1,7 +1,7 @@
 #  File src/library/base/R/datetime.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,33 +18,20 @@
 
 Sys.time <- function() .POSIXct(.Internal(Sys.time()))
 
-Sys.timezone <- function() Sys.getenv("TZ", names = FALSE)
+Sys.timezone <- function() Sys.getenv("TZ", unset = NA_character_)
 
 as.POSIXlt <- function(x, tz = "", ...) UseMethod("as.POSIXlt")
 
-as.POSIXlt.Date <- function(x, ...)
-{
-    ## <FIXME>
-    ## Move names handling to C code eventually ...
-    y <- .Internal(Date2POSIXlt(x))
-    names(y$year) <- names(x)
-    y
-    ## </FIXME>
-}
+as.POSIXlt.Date <- function(x, ...) .Internal(Date2POSIXlt(x))
 
 as.POSIXlt.date <- as.POSIXlt.dates <- function(x, ...)
     as.POSIXlt(as.POSIXct(x), ...)
 
 as.POSIXlt.POSIXct <- function(x, tz = "", ...)
 {
-    tzone <- attr(x, "tzone")
-    if((missing(tz) || is.null(tz)) && !is.null(tzone)) tz <- tzone[1L]
-    ## <FIXME>
-    ## Move names handling to C code eventually ...
-    y <- .Internal(as.POSIXlt(x, tz))
-    names(y$year) <- names(x)
-    y
-    ## </FIXME>
+    if((missing(tz) || is.null(tz)) &&
+       !is.null(tzone <- attr(x, "tzone"))) tz <- tzone[1L]
+    .Internal(as.POSIXlt(x, tz))
 }
 
 as.POSIXlt.factor <- function(x, ...)
@@ -950,7 +937,7 @@ diff.POSIXt <- function (x, lag = 1L, differences = 1L, ...)
     ismat <- is.matrix(x)
     r <- if(inherits(x, "POSIXlt")) as.POSIXct(x) else x
     xlen <- if (ismat) dim(x)[1L] else length(r)
-    if (length(lag) > 1L || length(differences) > 1L || lag < 1L || differences < 1L)
+    if (length(lag) != 1L || length(differences) > 1L || lag < 1L || differences < 1L)
         stop("'lag' and 'differences' must be integers >= 1")
     if (lag * differences >= xlen) return(.difftime(numeric(), "secs"))
     i1 <- -seq_len(lag)

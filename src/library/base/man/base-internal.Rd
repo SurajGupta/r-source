@@ -1,6 +1,6 @@
 % File src/library/base/man/base-internal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{base-internal}
@@ -130,7 +130,7 @@ lazyLoadDBfetch(key, file, compressed, hook)
   \item{strictly}{logical.}
   \item{obj}{an \R object.}
   \item{xx}{a classless object to be placed into the class.}
-  \item{tz}{an optional timezone.}
+  \item{tz}{an optional time zone.}
   \item{units}{see \code{\link{difftime}}.}
   \item{\dots}{Arguments passed to non-dot name versions.}
     \item{FUN}{function to apply, found via \code{\link{match.fun}}.}
