@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53\n"
+"POT-Creation-Date: 2014-01-26 09:09\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
@@ -178,9 +178,6 @@ msgstr "域内有非-ASCII的值values:"
 msgid "These fields must have ASCII values."
 msgstr "这些域必需要有ASCII值."
 
-msgid "Required fields missing:"
-msgstr "所需要的域缺少:"
-
 msgid "Malformed package version."
 msgstr "畸形程辑包版本."
 
@@ -213,6 +210,14 @@ msgid ""
 "Version numbers must be sequences of at least two non-negative integers, "
 "separated by single '.' or '-'."
 msgstr "版本数目至少要由两个非负整数组成，中间用单一的'.'或'-'符号分开."
+
+#, fuzzy
+msgid "Invalid VignetteBuilder field."
+msgstr "Priority域不对."
+
+msgid ""
+"This field must contain one or more packages (and no version requirement)."
+msgstr ""
 
 msgid "Invalid Priority field."
 msgstr "Priority域不对."
@@ -261,14 +266,25 @@ msgstr "可以标准化：%s"
 msgid "Standardized license specification:"
 msgstr "标准执照规格："
 
+msgid "Deprecated license: %s"
+msgstr ""
+
 msgid "Invalid license file pointers: %s"
 msgstr "执照文件指示器无效：%s"
 
-msgid "Components with restrictions not permitted:"
+#, fuzzy
+msgid "License components with restrictions not permitted:"
+msgstr "不允许有限制的组件"
+
+#, fuzzy
+msgid "License components which are templates and need '+ file LICENSE':"
 msgstr "不允许有限制的组件"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "变量'%s'里有不可便携的标志:"
+
+msgid "Variables overriding user/site settings:"
+msgstr ""
 
 msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be "
@@ -338,11 +354,67 @@ msgstr "'library'或'require'调用没有被声明:"
 msgid "'library' or 'require' call not declared from: %s"
 msgstr "'library'或'require'调用没有被声明: %s"
 
+#, fuzzy
+msgid "'library' or 'require' calls to packages already attached by Depends:"
+msgstr "'library'或'require'调用没有被声明:"
+
+#, fuzzy
+msgid ""
+"'library' or 'require' call to %s which was already attached by Depends."
+msgstr "'library'或'require'调用没有被声明: %s"
+
+msgid "Namespaces in Imports field not imported from:"
+msgstr ""
+
+#, fuzzy
+msgid "Namespace in Imports field not imported from: %s"
+msgstr "不需要名字空间从属: %s"
+
+msgid "Packages in Depends field not imported from:"
+msgstr ""
+
+msgid "Package in Depends field not imported from: %s"
+msgstr ""
+
+msgid "Missing or unexported objects:"
+msgstr ""
+
+msgid "Missing or unexported object: %s"
+msgstr ""
+
+msgid "':::' calls which should be '::':"
+msgstr ""
+
+msgid "':::' call which should be '::': %s"
+msgstr ""
+
+msgid "Missing objects imported by ':::' calls:"
+msgstr ""
+
+msgid "Missing object imported by a ':::' call: %s"
+msgstr ""
+
+msgid "Unexported objects imported by ':::' calls:"
+msgstr ""
+
+msgid "Unexported object imported by a ':::' call: %s"
+msgstr ""
+
+msgid "Unavailable namespaces imported from by ':::' calls:"
+msgstr ""
+
+msgid "Unavailable namespace imported from by a ':::' call: %s"
+msgstr ""
+
 msgid "'data(package=)' calls not declared from:"
 msgstr "'data(package=)'调用没有被声明:"
 
 msgid "'data(package=)' call not declared from: %s"
 msgstr "'data(package=)'调用没有被声明: %s"
+
+#, fuzzy
+msgid "Package has no 'Version' field"
+msgstr "程辑包'%s'里没有.rda文件"
 
 msgid "NB: need Internet access to use CRAN incoming checks"
 msgstr "注：需要上网才能用CRAN传入检查"
@@ -445,38 +517,19 @@ msgstr "'%s'值无效：%s"
 msgid "Only one Rd section per %s is supported."
 msgstr "每%s只支持一个Rd章节"
 
-msgid "Vignette product"
-msgstr "产品简介："
-
-msgid "does not have a known filename extension ("
+#, fuzzy
+msgid "Vignette product %s does not have a known filename extension (%s)"
 msgstr "没有一个已知的文件扩展名"
 
-msgid ","
-msgstr ","
+msgid ""
+"Failed to locate the %s output file (by engine %s) for vignette with name "
+"%s. The following files exist in directory %s: %s"
+msgstr ""
 
-msgid ")"
-msgstr ")"
-
-msgid "Failed to locate the"
-msgstr "无法找到"
-
-msgid "output file (by engine"
-msgstr "输出文件（由引擎"
-
-msgid "%s::%s"
-msgstr "%s::%s"
-
-msgid ") for vignette with name"
-msgstr ")为带这个名字的简介"
-
-msgid ". The following files exists in directory"
-msgstr "。目录里有这些文件"
-
-msgid ":"
-msgstr "："
-
-msgid "Located more than one"
-msgstr "找到一个以上的"
+msgid ""
+"Located more than one %s output file (by engine %s) for vignette with name "
+"%s: %s"
+msgstr ""
 
 msgid "unable to create temp directory %s"
 msgstr "无法建立临时目录%s"
@@ -485,22 +538,13 @@ msgstr "无法建立临时目录%s"
 msgid "Running"
 msgstr "执行%s"
 
-msgid "Vignette"
-msgstr "简介："
+msgid "Vignette %s overwrites the following %s output by vignette %s: %s"
+msgstr ""
 
-msgid "overwrites the following"
-msgstr "覆盖下面的"
-
-msgid "output by vignette"
-msgstr "简介输出的"
-
-msgid "Detected vignette source files ("
-msgstr "找到了简介的源代码（"
-
-msgid ") with shared names ("
-msgstr "）和分用的名字（"
-
-msgid ") and therefore risking overwriting each others output files"
+#, fuzzy
+msgid ""
+"Detected vignette source files (%s) with shared names (%s) and therefore "
+"risking overwriting each others output files"
 msgstr "）因此可以冒险各个输出文件"
 
 msgid ""
@@ -520,67 +564,58 @@ msgstr ""
 msgid "running 'make' failed"
 msgstr "调用'make'失败"
 
+msgid "file '%s' not found"
+msgstr "找不到'%s'这个文件"
+
+msgid "vignette filename '%s' does not match any of the '%s' filename patterns"
+msgstr ""
+
+#, fuzzy
+msgid "Inconsistent encoding specifications:"
+msgstr "非标准执照规格"
+
+msgid "with %\\SweaveUTF8"
+msgstr ""
+
 msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
 msgstr "'%s'简介里'%s'和'%s'的名字是一样的"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "参数'vignette'的长度必需为一"
 
-msgid "file '%s' not found"
-msgstr "找不到'%s'这个文件"
+#, fuzzy
+msgid "Vignette engine package not specified"
+msgstr "不需要标头从属:"
 
 msgid "Unsupported engine name"
 msgstr "不支持这样的引擎名"
 
-msgid "None of packages"
-msgstr "所有的程序包都没有"
-
-msgid "have registered vignette engines"
+#, fuzzy
+msgid "None of packages %s have registered vignette engines"
 msgstr "注册简介引擎"
 
-msgid "Vignette engine"
-msgstr "小简介引擎"
+#, fuzzy
+msgid "Vignette engine %s is not registered"
+msgstr "不需要标头从属:"
 
-msgid "is not registered"
-msgstr "没有注册"
-
-msgid "is not registered by any of the packages"
+#, fuzzy
+msgid "Vignette engine %s is not registered by any of the packages %s"
 msgstr "没有被它所要用的程序包所注册"
 
-msgid "Engine name"
-msgstr "引擎名字"
+#, fuzzy
+msgid "Engine name %s and package %s do not match"
+msgstr "程序包%s里的链结%s不存在"
 
-msgid "and package"
-msgstr "和程辑包"
-
-msgid "do not match"
-msgstr "不匹配"
-
-msgid "Argument"
-msgstr "参数"
-
-msgid "weave"
-msgstr "weave"
-
-msgid "must be a function and not"
+#, fuzzy
+msgid "Argument %s must be a function and not %s"
 msgstr "必需是个函数，还不能"
 
-msgid "tangle"
-msgstr "纠缠"
-
-msgid "pattern"
-msgstr "模式"
-
-msgid "must be a character vector or NULL and not"
+#, fuzzy
+msgid "Argument %s must be a character vector or NULL and not %s"
 msgstr "必需是字符串或联结"
 
-msgid "Cannot change the"
-msgstr "无法改变"
-
-msgid "Sweave"
-msgstr "Sweave"
-
-msgid "engine or use an engine of that name"
+#, fuzzy
+msgid "Cannot change the %s engine or use an engine of that name"
 msgstr "引擎或用带那个名字的引擎"
 
 msgid "vignette builder '%s' not found"
@@ -651,6 +686,33 @@ msgstr "错误：R的版本是%s，需要的是版本为%s %s的R"
 
 msgid "loading failed"
 msgstr "载入失败"
+
+msgid "assertConditon: Successfully caught a condition"
+msgstr ""
+
+msgid "assertCondition: caught %s"
+msgstr ""
+
+msgid ","
+msgstr ","
+
+msgid "Got %s in evaluating %s; wanted %s"
+msgstr ""
+
+msgid "Failed to get %s in evaluating %s"
+msgstr ""
+
+msgid "Failed to get error in evaluating %s"
+msgstr ""
+
+msgid "Asserted error: %s"
+msgstr ""
+
+msgid "Got warning in evaluating %s, but also an error"
+msgstr ""
+
+msgid "Asserted warning: %s"
+msgstr ""
 
 msgid "Changes require specified 'style'"
 msgstr "改动需要特别'style'"
@@ -787,6 +849,10 @@ msgstr "有'cleanup'但它不是执行文件--请参考'R安装和管理手册'"
 msgid "generating debug symbols (%s)"
 msgstr "产生调试符号(%s)"
 
+#, fuzzy
+msgid "no DLL was created"
+msgstr "无法产生文件'%s'"
+
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "成功将%s程序包解包并MD5和检查"
 
@@ -794,6 +860,9 @@ msgid ""
 "R include directory is empty -- perhaps need to install R-devel.rpm or "
 "similar"
 msgstr "R包含目录是空的--也许你需要安装R-devel.rpm或类似的程序包"
+
+msgid "package %s %s was found, but %s %s is required by %s"
+msgstr ""
 
 msgid "no source files found"
 msgstr "找不到源程序文件"
@@ -1000,9 +1069,6 @@ msgstr "程辑包'%s'的从属被减低成最小集."
 msgid "argument '%s' must be a character string or connection"
 msgstr "参数'%s'必需是字符串或联结"
 
-msgid "'file' must be a character string or connection"
-msgstr "参数'file'必需是字符串或联结"
-
 msgid "unimplemented encoding"
 msgstr "还没有实现的编码"
 
@@ -1011,6 +1077,9 @@ msgstr "找到了%s,可能是从%s来的"
 
 msgid "testing '%s' failed"
 msgstr "试用'%s'失败了"
+
+msgid "%d of the package tests failed"
+msgstr ""
 
 msgid "Testing examples for package %s"
 msgstr "试验程序包%s的范例"
@@ -1165,17 +1234,28 @@ msgid_plural ""
 "Found .Internal calls in methods for the following reference classes:"
 msgstr[0] "下面的引用类里的方法调用了.Internal:"
 
-msgid "Found an obsolete call in the following function:"
-msgid_plural "Found an obsolete call in the following functions:"
+#, fuzzy
+msgid "Found an obsolete/platform-specific call in the following function:"
+msgid_plural ""
+"Found an obsolete/platform-specific call in the following functions:"
 msgstr[0] "下面的函数里出现了过时的调用"
 
-msgid "Found an obsolete call in methods for the following S4 generic:"
-msgid_plural "Found an obsolete call in methods for the following S4 generics:"
+#, fuzzy
+msgid ""
+"Found an obsolete/platform-specific call in methods for the following S4 "
+"generic:"
+msgid_plural ""
+"Found an obsolete/platform-specific call in methods for the following S4 "
+"generics:"
 msgstr[0] "下面S4泛型函数里出现了过时的调用"
 
-msgid "Found an obsolete call in methods for the following reference class:"
+#, fuzzy
+msgid ""
+"Found an obsolete/platform-specific call in methods for the following "
+"reference class:"
 msgid_plural ""
-"Found an obsolete call in methods for the following reference classes:"
+"Found an obsolete/platform-specific call in methods for the following "
+"reference classes:"
 msgstr[0] "下面引用类型里出现了过时的调用"
 
 msgid "Found the deprecated function:"
@@ -1185,6 +1265,10 @@ msgstr[0] "出现了不推荐使用的功能"
 msgid "Found the defunct/removed function:"
 msgid_plural "Found the defunct/removed functions:"
 msgstr[0] "出现已不存在的或是被取消的功能"
+
+msgid "Found the platform-specific device:"
+msgid_plural "Found the platform-specific devices:"
+msgstr[0] ""
 
 msgid "Generic without any methods in %s: %s"
 msgid_plural "Generics without any methods in %s: %s"
@@ -1204,6 +1288,11 @@ msgid "unable to re-encode %s line %s"
 msgid_plural "unable to re-encode %s lines %s"
 msgstr[0] "无法重新编码%s行%s"
 
+#, fuzzy
+msgid "Required field missing or empty:"
+msgid_plural "Required fields missing or empty:"
+msgstr[0] "所需要的域缺少:"
+
 msgid "Help on topic '%s' was found in the following package:"
 msgid_plural "Help on topic '%s' was found in the following packages:"
 msgstr[0] "在以下这些程序包里找到了关于'%s'主题的帮助:"
@@ -1212,14 +1301,92 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "不能用多个数据调用来产生对象%s"
 
+#~ msgid "Vignette product"
+#~ msgstr "产品简介："
+
+#~ msgid ")"
+#~ msgstr ")"
+
+#~ msgid "Failed to locate the"
+#~ msgstr "无法找到"
+
+#~ msgid "output file (by engine"
+#~ msgstr "输出文件（由引擎"
+
+#~ msgid "%s::%s"
+#~ msgstr "%s::%s"
+
+#~ msgid ") for vignette with name"
+#~ msgstr ")为带这个名字的简介"
+
+#~ msgid ". The following files exists in directory"
+#~ msgstr "。目录里有这些文件"
+
+#~ msgid ":"
+#~ msgstr "："
+
+#~ msgid "Located more than one"
+#~ msgstr "找到一个以上的"
+
+#~ msgid "Vignette"
+#~ msgstr "简介："
+
+#~ msgid "overwrites the following"
+#~ msgstr "覆盖下面的"
+
+#~ msgid "output by vignette"
+#~ msgstr "简介输出的"
+
+#~ msgid "Detected vignette source files ("
+#~ msgstr "找到了简介的源代码（"
+
+#~ msgid ") with shared names ("
+#~ msgstr "）和分用的名字（"
+
+#~ msgid "None of packages"
+#~ msgstr "所有的程序包都没有"
+
+#~ msgid "Vignette engine"
+#~ msgstr "小简介引擎"
+
+#~ msgid "is not registered"
+#~ msgstr "没有注册"
+
+#~ msgid "Engine name"
+#~ msgstr "引擎名字"
+
+#~ msgid "and package"
+#~ msgstr "和程辑包"
+
+#~ msgid "do not match"
+#~ msgstr "不匹配"
+
+#~ msgid "Argument"
+#~ msgstr "参数"
+
+#~ msgid "weave"
+#~ msgstr "weave"
+
+#~ msgid "tangle"
+#~ msgstr "纠缠"
+
+#~ msgid "pattern"
+#~ msgstr "模式"
+
+#~ msgid "Cannot change the"
+#~ msgstr "无法改变"
+
+#~ msgid "Sweave"
+#~ msgstr "Sweave"
+
+#~ msgid "'file' must be a character string or connection"
+#~ msgstr "参数'file'必需是字符串或联结"
+
 #~ msgid "not found"
 #~ msgstr "找不到"
 
 #~ msgid "engine"
 #~ msgstr "引擎"
-
-#~ msgid "file '%s' was not created"
-#~ msgstr "无法产生文件'%s'"
 
 #~ msgid "found %s"
 #~ msgstr "找到了%s"
@@ -1537,17 +1704,11 @@ msgstr[0] "不能用多个数据调用来产生对象%s"
 #~ msgid "Package which this enhances but not available for checking: %s"
 #~ msgstr "无法检查被加强功能的程辑包:%s"
 
-#~ msgid "Vignette dependencies not required:"
-#~ msgstr "不需要标头从属:"
-
 #~ msgid "Vignette dependencies not required: %s"
 #~ msgstr "不需要标头从属: %s"
 
 #~ msgid "Namespace dependencies not required:"
 #~ msgstr "不需要名字空间从属:"
-
-#~ msgid "Namespace dependency not required: %s"
-#~ msgstr "不需要名字空间从属: %s"
 
 #~ msgid "Package name and namespace differ."
 #~ msgstr "程辑包的名字和它的名字空间不一样."
@@ -1643,9 +1804,6 @@ msgstr[0] "不能用多个数据调用来产生对象%s"
 
 #~ msgid "Bundle 'DESCRIPTION' is missing."
 #~ msgstr "缺少'DESCRIPTION'一捆文件"
-
-#~ msgid "package '%s' has no .rda file"
-#~ msgstr "程辑包'%s'里没有.rda文件"
 
 #~ msgid "Rd files with syntax errors:"
 #~ msgstr "Rd文件里有语法错误:"

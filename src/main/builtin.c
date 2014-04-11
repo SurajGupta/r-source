@@ -291,7 +291,7 @@ SEXP attribute_hidden do_envirgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    isNull(env))) {
 	if (isNull(env))
 	    error(_("use of NULL environment is defunct"));
-	if(NAMED(s) > 1)
+	if(MAYBE_SHARED(s))
 	    /* this copies but does not duplicate args or code */
 	    s = duplicate(s);
 	if (TYPEOF(BODY(s)) == BCODESXP)
@@ -662,24 +662,30 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_makelist(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP list, names;
+    SEXP list, names, next;
     int i, n, havenames;
-    havenames = 0;
-    n = length(args);
+
+    /* compute number of args and check for names */
+    for (next = args, n = 0, havenames = FALSE;
+	 next != R_NilValue;
+	 next = CDR(next)) {
+	if (TAG(next) != R_NilValue)
+	    havenames = TRUE;
+	n++;
+    }
+
     PROTECT(list = allocVector(VECSXP, n));
-    PROTECT(names = allocVector(STRSXP, n));
+    PROTECT(names = havenames ? allocVector(STRSXP, n) : R_NilValue);
     for (i = 0; i < n; i++) {
-	if (TAG(args) != R_NilValue) {
-	    SET_STRING_ELT(names, i, PRINTNAME(TAG(args)));
-	    havenames = 1;
-	}
-	else {
-	    SET_STRING_ELT(names, i, R_BlankString);
+	if (havenames) {
+	    if (TAG(args) != R_NilValue)
+		SET_STRING_ELT(names, i, PRINTNAME(TAG(args)));
+	    else
+		SET_STRING_ELT(names, i, R_BlankString);
 	}
 	if (NAMED(CAR(args)))
-	    SET_VECTOR_ELT(list, i, duplicate(CAR(args)));
-	else
-	    SET_VECTOR_ELT(list, i, CAR(args));
+	    INCREMENT_NAMED(CAR(args));
+	SET_VECTOR_ELT(list, i, CAR(args));
 	args = CDR(args);
     }
     if (havenames) {
@@ -699,7 +705,7 @@ SEXP attribute_hidden do_expression(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(ans = allocVector(EXPRSXP, n));
     a = args;
     for (i = 0; i < n; i++) {
-	if(NAMED(CAR(a)))
+	if(MAYBE_REFERENCED(CAR(a)))
 	    SET_VECTOR_ELT(ans, i, duplicate(CAR(a)));
 	else
 	    SET_VECTOR_ELT(ans, i, CAR(a));
@@ -907,7 +913,7 @@ SEXP attribute_hidden do_lengthgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 #ifdef LONG_VECTOR_SUPPORT
 	return xlengthgets(x, len);
 #else
-	error(_("vector size specified is too large"));
+        error(_("vector size specified is too large"));
 	return x; /* -Wall */
 #endif
     }
@@ -951,12 +957,12 @@ static SEXP expandDots(SEXP el, SEXP rho)
 static SEXP setDflt(SEXP arg, SEXP dflt)
 {
     if (dflt) {
-	SEXP dflt1, dflt2;
-	PROTECT(dflt1 = deparse1line(dflt, TRUE));
-	PROTECT(dflt2 = deparse1line(CAR(arg), TRUE));
-	error(_("duplicate 'switch' defaults: '%s' and '%s'"),
+    	SEXP dflt1, dflt2;
+    	PROTECT(dflt1 = deparse1line(dflt, TRUE));
+    	PROTECT(dflt2 = deparse1line(CAR(arg), TRUE));
+    	error(_("duplicate 'switch' defaults: '%s' and '%s'"),
 	      CHAR(STRING_ELT(dflt1, 0)), CHAR(STRING_ELT(dflt2, 0)));
-	UNPROTECT(2); /* won't get here, but just for good form */
+    	UNPROTECT(2); /* won't get here, but just for good form */
     }
     return(CAR(arg));
 }
@@ -992,6 +998,11 @@ SEXP attribute_hidden do_switch(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(x = eval(CAR(args), rho));
     if (!isVector(x) || length(x) != 1)
 	errorcall(call, _("EXPR must be a length 1 vector"));
+    if (isFactor(x))
+	warningcall(call,
+		    _("EXPR is a \"factor\", treated as integer.\n"
+		      " Consider using '%s' instead."),
+		    "switch(as.character( * ), ...)");
     if (nargs > 1) {
 	/* There is a complication: if called from lapply
 	   there may be a ... argument */
@@ -1026,7 +1037,7 @@ SEXP attribute_hidden do_switch(SEXP call, SEXP op, SEXP args, SEXP rho)
 		} else
 		    dflt = setDflt(y, dflt);
 	    }
-	    if (dflt) {
+ 	    if (dflt) {
 		ans =  eval(dflt, rho);
 		UNPROTECT(2);
 		return ans;

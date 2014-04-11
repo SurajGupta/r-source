@@ -22,6 +22,7 @@ test-src-sloppy-1 = \
 	print-tests.R \
 	lapack.R \
 	datasets.R \
+	datetime.R \
 	iec60559.R
 test-src-sloppy-auto =
 
@@ -32,6 +33,7 @@ test-src-sloppy = $(test-src-sloppy-1) $(test-src-sloppy-auto)
 test-src-strict = $(test-src-strict-1) $(test-src-strict-auto)
 test-src = $(test-src-strict) $(test-src-sloppy)
 
+test-src-dt = datetime2.R
 test-src-demo = demos.R demos2.R
 test-src-internet = internet.R
 test-src-isas = isas-tests.R
@@ -54,6 +56,7 @@ test-out-sloppy = $(test-src-sloppy:.R=.Rout)
 test-out-gct = $(test-src-gct:.R=.Rout-gct)
 test-out-valgct = $(test-src-gct:.R=.Rout-valgct)
 
+test-out-dt = $(test-src-dt:.R=.Rout)
 test-out-demo = $(test-src-demo:.R=.Rout)
 test-out-internet = $(test-src-internet:.R=.Rout)
 test-out-isas = $(test-src-isas:.R=.Rout)
@@ -72,7 +75,7 @@ test-out = $(test-src:.R=.Rout) $(test-out-demo) $(test-out-gct) \
 	$(test-out-primitive) utf8-regex.Rout
 
 .SUFFIXES:
-.SUFFIXES: .R .Rin .Rout .Rout-gct .Rout-valgct
+.SUFFIXES: .R .Rin .Rout .Rout-gct .Rout-valgct .trin .tsin .log
 
 $(test-out): FORCE
 
@@ -83,28 +86,32 @@ FORCE:
 	@$(R) < $< > /dev/null
 
 .R.Rout:
-	@rm -f $@ $@.fail
-	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
-	@$(R) < $< > $@ 2>&1 || (mv $@ $@.fail && exit 1)
-	@$(ECHO) "$(ECHO_T) OK"
+	@rm -f $@ $@.fail $@.log
+	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)" > $@.log
+	@$(R) < $< > $@.fail 2>&1 || (cat $@.log && rm $@.log && exit 1)
+	@$(ECHO) "$(ECHO_T) OK" >> $@.log
 	@if test -f $(srcdir)/$@.save ; then \
-	  mv $@ $@.fail; \
 	  $(ECHO) $(ECHO_N) \
-	    "  comparing '$@' to '$(srcdir)/$@.save' ...$(ECHO_C)"; \
-	  $(RDIFF) $@.fail $(srcdir)/$@.save $(RVAL_IF_DIFF) || exit 1; \
+	    "  comparing '$@' to '$(srcdir)/$@.save' ...$(ECHO_C)" >> $@.log; \
+	  $(RDIFF) $@.fail $(srcdir)/$@.save $(RVAL_IF_DIFF) >> $@.log \
+	    || (cat $@.log && rm $@.log && exit 1) || exit 1; \
 	  mv $@.fail $@; \
-	  $(ECHO) "$(ECHO_T) OK"; \
+	  $(ECHO) "$(ECHO_T) OK" >> $@.log; \
+	else \
+	  mv $@.fail $@; \
 	fi
+	@cat $@.log; rm $@.log
 
 reg-plot.Rout: reg-plot.R
-	@rm -f $@ $@.fail
-	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
-	@$(R) < $< > $@ 2>&1 || (mv $@ $@.fail && exit 1)
-	@$(ECHO) "$(ECHO_T) OK"
+	@rm -f $@ $@.fail $@.log
+	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)" > $@.log
+	@$(R) < $< > $@ 2>&1 || (mv $@ $@.fail && cat $@.log && rm $@.log && exit 1)
+	@$(ECHO) "$(ECHO_T) OK" >> $@.log
 	@$(ECHO) $(ECHO_N) \
-	  "  comparing 'reg-plot.pdf' to '$(srcdir)/reg-plot.pdf.save' ...$(ECHO_C)"
-	@$(RDIFF) reg-plot.pdf $(srcdir)/reg-plot.pdf.save
-	@$(ECHO) "$(ECHO_T) OK"
+	  "  comparing 'reg-plot.pdf' to '$(srcdir)/reg-plot.pdf.save' ...$(ECHO_C)" >> $@.log
+	@$(RDIFF) reg-plot.pdf $(srcdir)/reg-plot.pdf.save >> $@.log
+	@$(ECHO) "$(ECHO_T) OK" >> $@.log
+	@cat $@.log; rm $@.log
 
 ## allow this to fail, as it may if the locale does not support Latin-1 chars
 reg-plot-latin1.Rout: reg-plot-latin1.R
@@ -142,12 +149,14 @@ R-valgrind = $(R) --debugger="valgrind --tool=memcheck"
 	  cat $< $(srcdir)/gct-foot.R) | $(R-valgrind) > $@ 2>&1
 	grep "==[0-9]*==" $@
 
-
+all-basic-tests = Examples Specific Reg Internet
 test-all-basics:
 	@for name in $(all-basic-tests); do \
 	  $(MK) test-$${name} || exit 1; \
 	done
 
+all-devel-tests = DateTime Docs IsAs Random Demo Primitive Regexp \
+    Segfault Standalone Packages
 test-all-devel:
 	@for name in $(all-devel-tests); do \
 	  $(MK) test-$${name} || exit 1; \
@@ -167,16 +176,49 @@ test-Specific:
 	@$(MK) test-Specific-sloppy RVAL_IF_DIFF=0
 
 test-Packages:
+	@if test -n "${TEST_MC_CORES}"; then \
+	  $(ECHO) "Using ${TEST_MC_CORES} cores to check packages"; \
+	  $(MK) -j ${TEST_MC_CORES} test-Packages2; \
+	else \
+	  $(MK) test-Packages1; \
+	fi
+
+test-Packages1:
 	@for p in $(R_PKGS_BASE); do \
 	  $(ECHO) "checking package '$${p}'"; \
+	  _R_CHECK_FF_CALLS_=registration \
 	  $(top_builddir)/bin/R CMD check --install=skip \
 	    --no-build-vignettes \
 	    $(top_srcdir)/src/library/$${p} || $(ECHO); \
 	done
 
+PKG_OBJECTS = $(R_PKGS_BASE:=.log)
+
+test-Packages2:
+	@for p in $(R_PKGS_BASE); do \
+	  touch $${p}.tsin; \
+	done
+	+@$(MK) stamp-Packages
+	@rm -f *.tsin
+stamp-Packages: $(PKG_OBJECTS)
+
+.tsin.log:
+	@$(ECHO) "begin checking package '`basename $@ .log`'"
+	@rm -f $@
+	@_R_CHECK_FF_CALLS_=registration \
+	$(top_builddir)/bin/R CMD check --install=skip --no-build-vignettes \
+	  $(top_srcdir)/src/library/`basename $@ .log` > $@ 2>&1
+	@cat $@
+
 test-Gct: $(test-out-gct)
 
 test-Vgct: $(test-out-valgct)
+
+test-DateTime:
+	@$(ECHO) "running tests of date-time printing"
+	@$(ECHO) "  expect platform-specific differences"
+	@$(RM) -f $(test-out-dt)
+	@$(MK) $(test-out-dt) RVAL_IF_DIFF=0
 
 test-Docs:
 	@$(ECHO) "running tests of documentation examples"
@@ -205,19 +247,28 @@ test-Random:
 
 test-Reg:
 	@$(ECHO) "running regression tests ..."
-	@$(MK) $(test-out-reg) RVAL_IF_DIFF=1
+	@if test -n "${TEST_MC_CORES}"; then \
+	  $(MK) -j ${TEST_MC_CORES} $(test-out-reg) RVAL_IF_DIFF=1; \
+	else \
+	  $(MK) $(test-out-reg) RVAL_IF_DIFF=1; \
+	fi
 	@$(MK) $(test-out-reg3) RVAL_IF_DIFF=0
 
 test-Regexp:
 	@$(ECHO) "running regexp regression tests"
 	@$(R2) < $(srcdir)/utf8-regex.R > utf8-regex.Rout 2>&1 || (mv utf8-regex.Rout utf8-regex.Rout.fail && exit 1)
 
-## There can be problems with PACKAGES vs Packages on case-insenstive OSes
 test-Segfault:
 	@$(ECHO) "running tests to possibly trigger segfaults"
 	@$(MK) $(test-out-segfault) RVAL_IF_DIFF=0
 	-@rm -rf data dumpdata.R F.Rd c0.Rd df0.Rd l0.Rd m0.Rd Rprof.out Rplots* PACKAGES PACKAGES.gz FALSE-package.Rd FALSE.* ./-Ex.R
 
+## Avoid site library, which could be very large
+no-segfault.Rout: no-segfault.R
+	@rm -f $@ $@.fail
+	@$(ECHO) $(ECHO_N) "running code in '$<' ...$(ECHO_C)"
+	@R_LIBS_SITE=no-such-dir $(R) < $< > $@ 2>&1 || (mv $@ $@.fail && exit 1)
+	@$(ECHO) "$(ECHO_T) OK"
 
 test-Rd: $(srcdir)/testit.Rd $(srcdir)/ver20.Rd
 	@$(ECHO) "testing Rd conversion"
@@ -336,20 +387,52 @@ test-undoc:
 	done
 
 test-Packages-Recommended:
+	@if test -n "${TEST_MC_CORES}"; then \
+	  $(ECHO) "Using ${TEST_MC_CORES} cores to check packages"; \
+	  $(MK) -j ${TEST_MC_CORES} test-Packages2-Recommended; \
+	else \
+	  $(MK) test-Packages1-Recommended; \
+	fi
+
+test-Packages1-Recommended:
 	@test -d RecPackages || mkdir RecPackages
 	@for p in $(R_PKGS_RECOMMENDED); do \
+	  rm -rf RecPackages/$${p}; \
 	  gzip -dc "$(top_srcdir)/src/library/Recommended/$${p}.tgz" | \
 	    (cd RecPackages && $(TAR) xf -) ; \
 	  $(ECHO) "checking package '$${p}'"; \
 	  R_LIBS="$(top_builddir)/library:$${R_LIBS}" \
-            _R_CHECK_FORCE_SUGGESTS_=FALSE $(R3) --install=skip \
+	    _R_CHECK_FORCE_SUGGESTS_=FALSE $(R3) --install=skip \
 	    --library="$(top_builddir)/library" RecPackages/$${p} || $(ECHO); \
 	done
+
+PKG_ROBJECTS = $(R_PKGS_RECOMMENDED:=.log)
+
+test-Packages2-Recommended:
+	@test -d RecPackages || mkdir RecPackages
+	@for p in $(R_PKGS_RECOMMENDED); do \
+	  touch $${p}.trin; \
+	done
+	+@$(MK) stamp-Packages2
+	@rm -f *.trin
+stamp-Packages2: $(PKG_ROBJECTS)
+
+.trin.log:
+	@p=`basename $@ .log`; \
+	rm -rf RecPackages/$${p}; \
+	gzip -dc "$(top_srcdir)/src/library/Recommended/$${p}.tgz" | \
+	    (cd RecPackages && $(TAR) xf -) ; \
+	  $(ECHO) "begin checking package '$${p}'"; \
+	  R_LIBS="$(top_builddir)/library:$${R_LIBS}" \
+	 _R_CHECK_FORCE_SUGGESTS_=FALSE $(R3) --install=skip \
+	    --library="$(top_builddir)/library" RecPackages/$${p}  > $@ 2>&1
+	@cat $@
 
 INSTFILES = README \
 	$(test-src-strict-1) $(test-src-strict-1:.R=.Rout.save) \
 	$(test-src-sloppy-1) $(test-src-sloppy-1:.R=.Rout.save) \
 	$(test-src-auto:.R=.Rin) isas-tests.Rout.save \
+	$(test-src-dt) datetime2.Rout.save \
 	$(test-src-demo) demos.Rout.save \
 	$(test-src-internet) internet.Rout.save \
 	$(test-src-primitive) \
@@ -360,4 +443,4 @@ INSTFILES = README \
 	  reg-plot.pdf.save reg-tests-2.Rout.save reg-tests-3.Rout.save \
 	  reg-examples3.Rout.save reg-plot-latin1.pdf.save \
 	  encodings.R utf8-regex.R \
-	  nanbug.rda WinUnicode.dat
+	  nanbug.rda WinUnicode.dat arima.rda EmbeddedNuls.csv

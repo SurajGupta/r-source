@@ -24,7 +24,8 @@ check_packages_in_dir(dir,
                       clean = TRUE,
                       ...)
 
-summarize_check_packages_in_dir_results(dir, all = TRUE)
+summarize_check_packages_in_dir_results(dir, all = TRUE,
+                                        full = FALSE)
 summarize_check_packages_in_dir_timings(dir, all = FALSE,
                                         full = FALSE)
 summarize_check_packages_in_dir_depends(dir, all = FALSE)
@@ -61,13 +62,19 @@ summarize_check_packages_in_dir_depends(dir, all = FALSE)
   \item{...}{currently not used.}
   \item{all}{a logical indicating whether to also summarize the reverse
     dependencies checked.}
-  \item{full}{a logical indicating whether to also summarize check
-    example timings (if available).}
+  \item{full}{a logical indicating whether to also give details for
+    checks with non-ok results, or summarize check example timings (if
+    available).}
 }
 \details{
   \code{check_packages_in_dir} allows to conveniently check source
   package \file{.tar.gz} files in the given directory \code{dir}, along
   with their reverse dependencies as controlled by \code{reverse}.
+
+  The \code{"which"} component of \code{reverse} can also be a list, in
+  which case reverse dependencies are obtained for each element of the
+  list and the corresponding element of the \code{"recursive"} component
+  of \code{reverse} (which is recycled as needed).
 
   If needed, the source \file{.tar.gz} files of the reverse dependencies
   to be checked as well are downloaded into \code{dir} (and removed at

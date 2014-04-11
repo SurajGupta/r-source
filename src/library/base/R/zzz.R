@@ -140,7 +140,7 @@ assign("untracemem", function(x) NULL, envir = .ArgsEnv)
 
 
 .S3PrimitiveGenerics <-
-  c("as.character", "as.complex", "as.double", "as.environment",
+  c("anyNA", "as.character", "as.complex", "as.double", "as.environment",
     "as.integer", "as.logical", "as.numeric", "as.raw",
     "c", "dim", "dim<-", "dimnames", "dimnames<-",
     "is.array", "is.finite",
@@ -164,6 +164,7 @@ assign("untracemem", function(x) NULL, envir = .ArgsEnv)
                "exp", "expm1", "log1p", "log10", "log2",
                "cos", "sin", "tan", "acos", "asin", "atan", "cosh", "sinh",
                "tanh", "acosh", "asinh", "atanh",
+	       "cospi", "sinpi", "tanpi",
                "gamma", "lgamma", "digamma", "trigamma",
                "cumsum", "cumprod", "cummax", "cummin")) {
         body(fx) <- substitute(UseMethod(ff), list(ff=f))

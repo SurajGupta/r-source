@@ -29,6 +29,7 @@
 \alias{as.data.frame.POSIXlt}
 \alias{as.list.POSIXct}
 \alias{.leap.seconds}
+\alias{anyNA.POSIXlt}
 \alias{is.na.POSIXlt}
 \alias{c.POSIXct}
 \alias{c.POSIXlt}
@@ -84,23 +85,32 @@
     \item{\code{sec}}{0--61: seconds.}
     \item{\code{min}}{0--59: minutes.}
     \item{\code{hour}}{0--23: hours.}
-    \item{\code{mday}}{1--31: day of the month.}
+    \item{\code{mday}}{1--31: day of the month}
     \item{\code{mon}}{0--11: months after the first of the year.}
     \item{\code{year}}{years since 1900.}
     \item{\code{wday}}{0--6 day of the week, starting on Sunday.}
     \item{\code{yday}}{0--365: day of the year.}
     \item{\code{isdst}}{Daylight Saving Time flag.  Positive if in
       force, zero if not, negative if unknown.}
+    \item{\code{zone}}{(Optional.) The abbreviation for the time zone in
+      force at that time: \code{""} if unknown (but \code{""} might also
+      be used for UTC).}
+    \item{\code{gmtoff}}{(Optional.) The offset in minutes from GMT:
+      positive values are East of the meridian.  Usually \code{NA} if
+      unknown, but \code{0} could mean unknown.}
   }
-  (There may be other components).  Note that the internal list
-  structure is somewhat hidden, as many methods (including
-  \code{\link{length}(x)}, \code{\link{print}()} and \code{\link{str}})
-  apply to the abstract date-time vector, as for \code{"POSIXct"}.  The
-  classes correspond to the POSIX/C99 constructs of \sQuote{calendar
-    time} (the \code{time_t} data type) and \sQuote{local time} (or
-  broken-down time, the \code{struct tm} data type), from which they
-  also inherit their names.  The components of \code{"POSIXlt"} are
-  integer vectors, except \code{sec} .
+  (The last two components not present for times in UTC and are
+  platform-dependent: they are supported on platforms based on BSD or
+  \code{glibc}, including Linux and OS X, but are not necessarily set.).
+  Note that the internal list structure is somewhat hidden, as many
+  methods (including \code{\link{length}(x)}, \code{\link{print}()} and
+  \code{\link{str}}) apply to the abstract date-time vector, as for
+  \code{"POSIXct"}.  The classes correspond to the POSIX/C99 constructs
+  of \sQuote{calendar time} (the \code{time_t} data type) and
+  \sQuote{local time} (or broken-down time, the \code{struct tm} data
+  type), from which they also inherit their names.  The components of
+  \code{"POSIXlt"} are integer vectors, except \code{sec} and
+  \code{zone}.
 
   \code{"POSIXct"} is more convenient for including in data frames, and
   \code{"POSIXlt"} is closer to human-readable forms.  A virtual class
@@ -195,17 +205,24 @@
   
   Most operating systems represent \code{POSIXct} times as C type
   \code{long}. This means that on 32-bit OSes this covers the period
-  1902 to 2037.  On most 64-bit platforms, the range of representable
-  times is billions of years.  A few benighted OSes used a unsigned type
-  and so cannot represent times before 1970.
+  1902 to 2037.  On all known 64-bit platforms and for the code we use
+  on 32-bit Windows, the range of representable times is billions of
+  years: however, not all can convert correctly times before 1902 or
+  after 2037.  A few benighted OSes used a unsigned type and so cannot
+  represent times before 1970.
+  % glibc in 2003/4, AIX?
 
-  Currently OS services are used from 1902 (or 1970) to 2037: outside
-  the limits we use our own C code.  This uses the offset from GMT in
-  use either for 1902 (when there was no DST) or that predicted for one
-  of 2030 to 2037 (chosen so that the likely DST transition days are
-  Sundays), and uses the alternate (daylight-saving) time zone only if
-  \code{isdst} is positive or (if \code{-1}) if DST was predicted to be
-  in operation in the 2030s on that day.
+  Where possible the platform limits are detected, and outside
+  the limits we use our own C code.  This uses the offset from
+  GMT in use either for 1902 (when there was no DST) or that predicted
+  for one of 2030 to 2037 (chosen so that the likely DST transition days
+  are Sundays), and uses the alternate (daylight-saving) time zone only
+  if \code{isdst} is positive or (if \code{-1}) if DST was predicted to
+  be in operation in the 2030s on that day.
+
+  Note that there are places (e.g. Rome) whose offset from UTC varied
+  in the years prior to 1902, and these will be handled correctly only
+  where there is OS support.
 
   There is no reason to suppose that the DST rules will remain the same
   in the future, and indeed the US legislated in 2005 to change its

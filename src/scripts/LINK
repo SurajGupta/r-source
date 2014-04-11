@@ -1,7 +1,7 @@
 ##
 ## ${R_HOME}/bin/LINK
 
-revision='$Rev: 63540 $'
+revision='$Rev: 63539 $'
 version=`set - ${revision}; echo ${2}`
 version="R linker front end: ${R_VERSION} (r${version})
 

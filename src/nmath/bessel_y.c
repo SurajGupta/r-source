@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2013 Ross Ihaka and the R Core team.
+ *  Copyright (C) 1998-2014 Ross Ihaka and the R Core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,12 +32,12 @@
 
 #define min0(x, y) (((x) <= (y)) ? (x) : (y))
 
-static void Y_bessel(double *x, double *alpha, long *nb,
-		     double *by, long *ncalc);
+static void Y_bessel(double *x, double *alpha, int *nb,
+		     double *by, int *ncalc);
 
 double bessel_y(double x, double alpha)
 {
-    long nb, ncalc;
+    int nb, ncalc;
     double na, *by;
 #ifndef MATHLIB_STANDALONE
     const void *vmax;
@@ -55,11 +55,11 @@ double bessel_y(double x, double alpha)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_y(x, -alpha) * cos(M_PI * alpha) -
+	return(bessel_y(x, -alpha) * cospi(alpha) -
 	       ((alpha == na) ? 0 :
-		bessel_j(x, -alpha) * sin(M_PI * alpha)));
+		bessel_j(x, -alpha) * sinpi(alpha)));
     }
-    nb = 1+ (long)na;/* nb-1 <= alpha < nb */
+    nb = 1+ (int)na;/* nb-1 <= alpha < nb */
     alpha -= (double)(nb-1);
 #ifdef MATHLIB_STANDALONE
     by = (double *) calloc(nb, sizeof(double));
@@ -98,7 +98,7 @@ double bessel_y(double x, double alpha)
    allocating one. */
 double bessel_y_ex(double x, double alpha, double *by)
 {
-    long nb, ncalc;
+    int nb, ncalc;
     double na;
 
 #ifdef IEEE_754
@@ -113,11 +113,11 @@ double bessel_y_ex(double x, double alpha, double *by)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_y_ex(x, -alpha, by) * cos(M_PI * alpha) -
+	return(bessel_y_ex(x, -alpha, by) * cospi(alpha) -
 	       ((alpha == na) ? 0 :
-		bessel_j_ex(x, -alpha, by) * sin(M_PI * alpha)));
+		bessel_j_ex(x, -alpha, by) * sinpi(alpha)));
     }
-    nb = 1+ (long)na;/* nb-1 <= alpha < nb */
+    nb = 1+ (int)na;/* nb-1 <= alpha < nb */
     alpha -= (double)(nb-1);
     Y_bessel(&x, &alpha, &nb, by, &ncalc);
     if(ncalc != nb) {/* error input */
@@ -134,13 +134,13 @@ double bessel_y_ex(double x, double alpha, double *by)
     return x;
 }
 
-static void Y_bessel(double *x, double *alpha, long *nb,
-		     double *by, long *ncalc)
+static void Y_bessel(double *x, double *alpha, int *nb,
+		     double *by, int *ncalc)
 {
 /* ----------------------------------------------------------------------
 
  This routine calculates Bessel functions Y_(N+ALPHA) (X)
- for non-negative argument X, and non-negative order N+ALPHA.
+v for non-negative argument X, and non-negative order N+ALPHA.
 
 
  Explanation of variables in the calling sequence
@@ -242,7 +242,7 @@ static void Y_bessel(double *x, double *alpha, long *nb,
 	    -.28387654227602353814,.92187029365045265648 };
 
     /* Local variables */
-    long i, k, na;
+    int i, k, na;
 
     double alfa, div, ddiv, even, gamma, term, cosmu, sinmu,
 	b, c, d, e, f, g, h, p, q, r, s, d1, d2, q0, pa,pa1, qa,qa1,
@@ -264,8 +264,8 @@ static void Y_bessel(double *x, double *alpha, long *nb,
 		by[i] = by[0];
 	    return;
 	}
-	xna = ftrunc(nu + .5);
-	na = (long) xna;
+	xna = trunc(nu + .5);
+	na = (int) xna;
 	if (na == 1) {/* <==>  .5 <= *alpha < 1	 <==>  -5. <= nu < 0 */
 	    nu -= xna;
 	}
@@ -284,7 +284,7 @@ static void Y_bessel(double *x, double *alpha, long *nb,
 	    if (fabs(nu) < M_eps_sinc)
 		c = M_1_PI;
 	    else
-		c = nu / sin(nu * M_PI);
+		c = nu / sinpi(nu);
 
 	    /* ------------------------------------------------------------
 	       Computation of sinh(f)/f
@@ -328,7 +328,7 @@ static void Y_bessel(double *x, double *alpha, long *nb,
 	    if (fabs(c) < M_eps_sinc)
 		r = 1.;
 	    else
-		r = sin(c) / c;
+		r = sinpi(nu/2) / c;
 
 	    r = M_PI * c * r * r;
 	    c = 1.;
@@ -358,7 +358,7 @@ static void Y_bessel(double *x, double *alpha, long *nb,
 	       -------------------------------------------------------------- */
 	    c = (.5 - nu) * (.5 + nu);
 	    b = ex + ex;
-	    e = ex * M_1_PI * cos(nu * M_PI) / DBL_EPSILON;
+	    e = ex * M_1_PI * cospi(nu) / DBL_EPSILON;
 	    e *= e;
 	    p = 1.;
 	    q = -ex;
@@ -411,8 +411,8 @@ L220:
 	       Use Campbell's asymptotic scheme.
 	       ---------------------------------------------------------- */
 	    na = 0;
-	    d1 = ftrunc(ex / fivpi);
-	    i = (long) d1;
+	    d1 = trunc(ex / fivpi);
+	    i = (int) d1;
 	    dmu = ex - 15. * d1 - d1 * pim5 - (*alpha + .5) * M_PI_2;
 	    if (i - (i / 2 << 1) == 0) {
 		cosmu = cos(dmu);

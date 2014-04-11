@@ -121,8 +121,11 @@ shell <- function(cmd, shell, flag = "/c", intern = FALSE,
 
 shell.exec <- function(file) .Internal(shell.exec(file))
 
-Sys.timezone <- function()
+Sys.timezone <- function(location = TRUE)
 {
+    tz <- Sys.getenv("TZ", names = FALSE)
+    if(nzchar(tz)) return(tz)
+    if(location) return(.Internal(tzone_name()))
     z <- as.POSIXlt(Sys.time())
     zz <- attr(z, "tzone")
     if(length(zz) == 3L) zz[2L + z$isdst] else zz[1L]

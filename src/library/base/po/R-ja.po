@@ -2,9 +2,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0 \n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
-"PO-Revision-Date: 2013-03-02 09:39+0200 \n"
-"Last-Translator: Triad sou <triadsou@gmail.com> \n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
+"PO-Revision-Date: 2014-03-26 13:57+0200 \n"
+"Last-Translator: Masafumi  \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "Language: ja \n"
 "MIME-Version: 1.0 \n"
@@ -43,12 +43,6 @@ msgstr " 'x' に無限値か欠測値があります "
 msgid "a dimension is zero"
 msgstr " 次元が 0 です "
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr " 'nu' は 0、または nrow(x) または ncol(x) でなければなりません "
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr " 'nv' は 0、または nrow(x) または ncol(x) でなければなりません "
-
 msgid "second argument must be a list"
 msgstr " 第二引数はリストでなければなりません "
 
@@ -72,6 +66,15 @@ msgstr " 正しい形式のバージョン文字列ではありません "
 
 msgid "target is %s, current is %s"
 msgstr " 引数 target は %s、引数 current は %s です "
+
+msgid "'tolerance' should be numeric"
+msgstr " 'tolerance' は数値でなければなりません "
+
+msgid "'scale' should be numeric or NULL"
+msgstr " 'scale' は 数値もしくはNULLでなければなりません "
+
+msgid "'%s' must be logical"
+msgstr " '%s' は論理値でなければなりません "
 
 msgid "dim(X) must have a positive length"
 msgstr " dim(X) は正の長さを持たねばなりません "
@@ -143,21 +146,6 @@ msgstr " 自動ローダーは '%s' を '%s' 中に見つけられませんで�
 
 msgid "complex matrices not permitted at present"
 msgstr " 複素行列は現在許可されていません "
-
-msgid "non-square matrix in 'chol'"
-msgstr " 'chol' に非正方行列が指定されています "
-
-msgid "non-matrix argument to 'chol'"
-msgstr " 'chol' に行列でない引数が指定されています "
-
-msgid "invalid nrow(x)"
-msgstr " nrow(x) が不正です "
-
-msgid "too large a matrix for LINPACK"
-msgstr " LINPACK には大きすぎる行列です "
-
-msgid "matrix not positive definite"
-msgstr " 行列は正定値符号ではありません "
 
 msgid "'x' must be an array of at least two dimensions"
 msgstr " 'x' は少なくとも二次元の配列でなければなりません "
@@ -309,6 +297,9 @@ msgstr " 存在しない列中の要素の置き換えです: %s "
 
 msgid "only a single element should be replaced"
 msgstr " ただ一つの要素しか置き換えられるべきではありません "
+
+msgid "Name partially matched in data frame"
+msgstr " データフレーム中の名前は部分的にマッチしました "
 
 msgid "names do not match previous names"
 msgstr " 名前が以前の名前と一致しません "
@@ -475,6 +466,9 @@ msgstr " 'from' は \"POSIXt\" オブジェクトでなければなりません 
 msgid "'to' must be a \"POSIXt\" object"
 msgstr " 'to' は \"POSIXt\" のオブジェクトでなければなりません "
 
+msgid "no Olson database found"
+msgstr "Olson データベースが見つかりません "
+
 msgid "'file' must be a character string or connection"
 msgstr " 'file' は文字列かコネクションでなければなりません "
 
@@ -549,6 +543,9 @@ msgstr " 0 x 0 行列です "
 
 msgid "non-square matrix in 'eigen'"
 msgstr " 'eigen' に非正方行列が与えられました "
+
+msgid "invalid nrow(x)"
+msgstr " nrow(x) が不正です "
 
 msgid "invalid 'labels'; length %d should be 1 or %d"
 msgstr " 無効な 'labels' です; 長さ %d は 1 または %d であるべきです "
@@ -625,6 +622,9 @@ msgstr " 'vec' は非減少順にソートされていなければいけませ�
 msgid "using the first element of 'value' of type \"expression\""
 msgstr " タイプ \"expression\" の 'value' の最初の要素だけを使います "
 
+msgid "class of 'x' was discarded"
+msgstr " クラス 'x' は捨てられました "
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr ""
 " 'mode' は \"double\" (\"real\") , \"integer\" または \"character\" でなけれ"
@@ -695,6 +695,9 @@ msgstr " 非マッチに対する置換が必要です "
 
 msgid "must have replacements for matches"
 msgstr " マッチに対する置換が必要です "
+
+msgid "No factors specified"
+msgstr " 因子が指定されていません "
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr " norm '%s' は現在は常に exact = FALSE を使用します "
@@ -921,7 +924,7 @@ msgid "must specify names of formal arguments for 'vectorize'"
 msgstr " 'vectorize.args' には仮引数名しか指定出来ません "
 
 msgid "'arg' must be NULL or a character vector"
-msgstr " 'arg' は、NULL かひとつの文字列ベクトルでなければなりません "
+msgstr " 'arg' は、NULL かひとつの文字ベクトルでなければなりません "
 
 msgid "'arg' must be of length 1"
 msgstr " 'arg' は長さ 1 でなければなりません "
@@ -994,6 +997,8 @@ msgid ""
 "namespace %s is not available and has been replaced\n"
 "by .GlobalEnv when processing object %s"
 msgstr ""
+" オブジェクト %2$s を処理する際、名前空間 %1$s は使用できないため .GlobalEnv "
+"によって置き換えられました "
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr ""
@@ -1095,8 +1100,8 @@ msgstr " ローカル変数をインポート %s で置き換えています (%s
 msgid "cannot import into a sealed namespace"
 msgstr " 封印された名前空間にはインポートできません "
 
-msgid "replacing previous import %s when loading %s"
-msgstr " 以前のインポート %s を置き換えています (%s のロード中) "
+msgid "replacing previous import by %s when loading %s"
+msgstr " %2$s のロード中に、以前のインポート %1$s を置き換えています "
 
 msgid "invalid import target"
 msgstr " 無効なインポート対象です "
@@ -1132,14 +1137,11 @@ msgstr " パッケージ %s には 'NAMESPACE' ファイルがありません "
 msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr " 'NAMESPACE' ファイル中のディレクティブ '%s' 中には名前がありません "
 
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr " 重複したシンボル名 %s が useDynlib(\"%s\") 中に見つかりました "
 
 msgid "bad 'S3method' directive: %s"
 msgstr " 誤った 'S3method' 指令です: %s "
-
-msgid "too many 'S3method' directives"
-msgstr " 'S3method' 指令が多すぎます "
 
 msgid "unknown namespace directive: %s"
 msgstr " 未知の名前空間指令です: %s "
@@ -1178,6 +1180,9 @@ msgstr " 引数は繰り返して使われます "
 
 msgid "invalid ncol(x)"
 msgstr " ncol(x) が不正です  "
+
+msgid "too large a matrix for LINPACK"
+msgstr " LINPACK には大きすぎる行列です "
 
 msgid "first argument must be a QR decomposition"
 msgstr " 最初の引数は QR 分解でなければなりません "
@@ -1221,8 +1226,8 @@ msgstr " ピボット操作が起きたので、より大きな 'ncol' 値が必
 msgid "invalid NCOL(R)"
 msgstr " NCOL(R) が不正です "
 
-msgid "'x' must be an atomic vector"
-msgstr " 'x' はベクトルでなければなりません "
+msgid "'x' must be a vector of an atomic type"
+msgstr " 'x' はアトミックな型のベクトルでなければなりません "
 
 msgid "invalid 'rle' structure"
 msgstr " 無効な 'rle' 構造です "
@@ -1248,11 +1253,17 @@ msgstr " 'scale' の長さは 'x' の列数に等しくなければなりませ�
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr " 'nmax' か 'n' を指定して下さい。しかし両方はだめです "
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr " 'from' はNA, NaN, infinite であってはなりません "
+
 msgid "argument 'length.out' must be of length 1"
 msgstr " 引数 'length.out' は長さ 1 でなければなりません "
 
 msgid "first element used of 'length.out' argument"
 msgstr " 最初の要素は 引数 'length.out' として使われます "
+
+msgid "'to' cannot be NA, NaN or infinite"
+msgstr " 'to' はNA, NaN, infinite であってはなりません "
 
 msgid "invalid (to - from)/by in seq(.)"
 msgstr " seq(.) 中の (to - from)/by が不正です "
@@ -1680,6 +1691,24 @@ msgstr[0] " %s は TRUE ではありません "
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] " 警告メッセージ: \n"
+
+#~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
+#~ msgstr " 'nu' は 0、または nrow(x) または ncol(x) でなければなりません "
+
+#~ msgid "'nv' must be 0, nrow(x) or ncol(x)"
+#~ msgstr " 'nv' は 0、または nrow(x) または ncol(x) でなければなりません "
+
+#~ msgid "too many 'S3method' directives"
+#~ msgstr " 'S3method' 指令が多すぎます "
+
+#~ msgid "non-square matrix in 'chol'"
+#~ msgstr " 'chol' に非正方行列が指定されています "
+
+#~ msgid "non-matrix argument to 'chol'"
+#~ msgstr " 'chol' に行列でない引数が指定されています "
+
+#~ msgid "matrix not positive definite"
+#~ msgstr " 行列は正定値符号ではありません "
 
 #~ msgid "'keep.source' is deprecated and will be ignored"
 #~ msgstr " 'keep.source'は現在は非推奨で、今後は無視されます "

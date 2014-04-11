@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53\n"
-"PO-Revision-Date: 2013-03-19 21:46-0600\n"
+"POT-Creation-Date: 2014-03-27 07:47\n"
+"PO-Revision-Date: 2014-03-11 10:32-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -285,6 +285,9 @@ msgstr "'order.max' должен быть >= 1"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max' должен быть < 'n.used'"
 
+msgid "zero-variance series"
+msgstr ""
+
 msgid "'n.ahead' must be at least 1"
 msgstr "'n.ahead' должен быть по меньшей мере 1"
 
@@ -349,6 +352,14 @@ msgstr "часть скользящего среднего из модели не обратима"
 msgid "seasonal MA part of model is not invertible"
 msgstr "сезонная часть скользящего среднего из модели необратима"
 
+#, fuzzy
+msgid "NAs in '%s'"
+msgstr "NAs в 'x'"
+
+#, fuzzy
+msgid "invalid 'SSinit'"
+msgstr "неправильный 'nb'"
+
 msgid "converting non-invertible initial MA values"
 msgstr "конвертирую не-необратимые начальные значения скользящего среднего"
 
@@ -397,6 +408,10 @@ msgstr "все наблюдения находятся в одной группе"
 
 msgid "there must be at least 2 observations in each group"
 msgstr "тут должно быть как минимум 2 наблюдения в каждой группе"
+
+#, fuzzy
+msgid "'formula' should be of the form response ~ group"
+msgstr "формула '%s' должна быть в виде '~expr'"
 
 msgid "'x' must be nonnegative and integer"
 msgstr "'x' должен быть неотрицательным и целым"
@@ -927,7 +942,8 @@ msgstr "'x' должен иметь по крайней мере 2 строки и колонки"
 msgid "'x' has entries too large to be integer"
 msgstr "у 'x' есть элементы, слишком большие чтобы быть целыми"
 
-msgid "'x' has been rounded to integer: %d"
+#, fuzzy
+msgid "'x' has been rounded to integer: %s"
 msgstr "'x' был округлен до целого: %d"
 
 msgid "if 'x' is not a matrix, 'y' must be given"
@@ -1119,6 +1135,10 @@ msgstr "не все модели были подогнаны под размер данных"
 msgid "observations with zero weight not used for calculating dispersion"
 msgstr "наблюдения с нулевым весом не использовались при вычислении дисперсии"
 
+msgid ""
+"The \"ward\" method has been renamed to \"ward.D\"; note new \"ward.D2\""
+msgstr ""
+
 msgid "invalid clustering method"
 msgstr "неправильный метод кластеризации"
 
@@ -1218,6 +1238,9 @@ msgstr "пустой кластер: попробуйте другой набор исходных центров"
 msgid "number of cluster centres must lie between 1 and nrow(x)"
 msgstr "количество центров кластеров должно быть в пределах между 1 и nrow(x)"
 
+msgid "Quick-TRANSfer stage steps exceeded maximum (= %d)"
+msgstr ""
+
 msgid "invalid nrow(x)"
 msgstr "неправильный nrow(x)"
 
@@ -1302,6 +1325,10 @@ msgstr "вызываю summary.lm(<fake-lm-object>) ..."
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr ""
 "остаточные степени свободы в объекте указывают, что это не подгонка \"lm\""
+
+#, fuzzy
+msgid "essentially perfect fit: summary may be unreliable"
+msgstr "применение F-критерия для в целом хорошей подгонки бессмысленно"
 
 msgid ""
 "lm object does not have a proper 'qr' component.\n"
@@ -1421,6 +1448,9 @@ msgstr "недоступен атрибут \"nobs\""
 
 msgid "no 'nobs' method is available"
 msgstr "нет доступного метода 'nobs'"
+
+msgid "'margin' must contain names or numbers corresponding to 'table'"
+msgstr ""
 
 msgid "'start' and 'table' must be same length"
 msgstr "'start' и 'table' должны быть одной длины"
@@ -1602,8 +1632,24 @@ msgstr "f.lower = f(lower) -- это NA"
 msgid "f.upper = f(upper) is NA"
 msgstr "f.upper = f(upper) -- это NA"
 
+#, fuzzy
+msgid "invalid 'extendInt'; please report"
+msgstr "недопустимый аргумент 'method'"
+
+#, fuzzy
+msgid "no sign change found in %d iterations"
+msgstr "не сошлось за %d итерацию"
+
+msgid ""
+"did not succeed extending the interval endpoints for f(lower) * f(upper) <= 0"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "f() значений на концевых точках не противоположного знака"
+
+#, fuzzy
+msgid "convergence problem in zero finding:"
+msgstr "возможно, проблема сходимости: 'optim' выдал код= %d"
 
 msgid "'control' argument must be a named list"
 msgstr "аргумент 'control' должен быть именованным списком"
@@ -2442,28 +2488,24 @@ msgstr[0] "%d пропущенное значение удалено"
 msgstr[1] "%d пропущенных значения удалено"
 msgstr[2] "%d пропущенных значений удалено"
 
-#, fuzzy
 msgid "'X' matrix has %d case (row)"
 msgid_plural "'X' matrix has %d cases (rows)"
-msgstr[0] "'X'-матрица имеет %d отклик"
-msgstr[1] "'X'-матрица имеет %d отклика"
-msgstr[2] "'X'-матрица имеет %d откликов"
+msgstr[0] "'X'-матрица имеет %d отклик (строку)"
+msgstr[1] "'X'-матрица имеет %d отклика (строки)"
+msgstr[2] "'X'-матрица имеет %d откликов (строк)"
 
-#, fuzzy
 msgid "'Y' has %d case (row)"
 msgid_plural "'Y' has %d cases (rows)"
-msgstr[0] "'Y' вызвал %d отклик"
-msgstr[1] "'Y' вызвал %d отклика"
-msgstr[2] "'Y' вызвал %d откликов"
+msgstr[0] "'Y' вызвал %d отклик (строку)"
+msgstr[1] "'Y' вызвал %d отклика (строки)"
+msgstr[2] "'Y' вызвал %d откликов (строк)"
 
-#, fuzzy
 msgid "only %d case"
 msgid_plural "only %d cases"
-msgstr[0] "но только %d переменную"
-msgstr[1] "но только %d переменных"
-msgstr[2] "но только %d переменных"
+msgstr[0] "но только %d случай"
+msgstr[1] "но только %d случая"
+msgstr[2] "но только %d случаев"
 
-#, fuzzy
 msgid "but %d variable"
 msgid_plural "but %d variables"
 msgstr[0] "но только %d переменную"

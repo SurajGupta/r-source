@@ -1,7 +1,7 @@
 #  File src/library/base/R/stop.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-20123 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ stop <- function(..., call. = TRUE, domain = NULL)
         .Internal(.signalCondition(cond, message, call))
         .Internal(.dfltStop(message, call))
     } else
-        .Internal(stop(as.logical(call.), .makeMessage(..., domain = domain)))
+        .Internal(stop(call., .makeMessage(..., domain = domain)))
 }
 
 stopifnot <- function(...)
@@ -38,7 +38,7 @@ stopifnot <- function(...)
 	return(invisible())
     mc <- match.call()
     for(i in 1L:n)
-	if(!(is.logical(r <- ll[[i]]) && !any(is.na(r)) && all(r))) {
+	if(!(is.logical(r <- ll[[i]]) && !anyNA(r) && all(r))) {
 	    ch <- deparse(mc[[i+1]], width.cutoff = 60L)
 	    if(length(ch) > 1L) ch <- paste(ch[1L], "....")
             stop(sprintf(ngettext(length(r),
@@ -49,7 +49,8 @@ stopifnot <- function(...)
     invisible()
 }
 
-warning <- function(..., call. = TRUE, immediate. = FALSE, domain = NULL)
+warning <- function(..., call. = TRUE, immediate. = FALSE,
+                    noBreaks. = FALSE, domain = NULL)
 {
     args <- list(...)
     if (length(args) == 1L && inherits(args[[1L]], "condition")) {
@@ -65,7 +66,7 @@ warning <- function(..., call. = TRUE, immediate. = FALSE, domain = NULL)
             }, muffleWarning = function() NULL) #**** allow simpler form??
         invisible(message)
     } else
-        .Internal(warning(as.logical(call.), as.logical(immediate.),
+        .Internal(warning(call., immediate., noBreaks.,
                           .makeMessage(..., domain = domain)))
 }
 

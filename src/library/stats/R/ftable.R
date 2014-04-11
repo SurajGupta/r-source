@@ -39,7 +39,7 @@ ftable.default <- function(..., exclude = c(NA, NaN),
     if(!is.null(row.vars)) {
 	if(is.character(row.vars)) {
 	    i <- pmatch(row.vars, names(dn))
-	    if(any(is.na(i)))
+	    if(anyNA(i))
 		stop("incorrect specification for 'row.vars'")
 	    row.vars <- i
 	} else if(any((row.vars < 1) | (row.vars > n)))
@@ -48,7 +48,7 @@ ftable.default <- function(..., exclude = c(NA, NaN),
     if(!is.null(col.vars)) {
 	if(is.character(col.vars)) {
 	    i <- pmatch(col.vars, names(dn))
-	    if(any(is.na(i)))
+	    if(anyNA(i))
 	     stop("incorrect specification for 'col.vars'")
 	    col.vars <- i
 	} else if(any((col.vars < 1) | (col.vars > n)))
@@ -114,7 +114,7 @@ ftable.formula <- function(formula, data = NULL, subset, na.action, ...)
             rvars <- NULL
         else {
             i <- pmatch(rvars, varnames)
-            if(any(is.na(i)))
+            if(anyNA(i))
                 stop("incorrect variable names in rhs of formula")
             rvars <- i
         }
@@ -122,7 +122,7 @@ ftable.formula <- function(formula, data = NULL, subset, na.action, ...)
             cvars <- NULL
         else {
             i <- pmatch(cvars, varnames)
-            if(any(is.na(i)))
+            if(anyNA(i))
                 stop("incorrect variable names in lhs of formula")
             cvars <- i
         }
@@ -405,3 +405,23 @@ read.ftable <- function(file, sep = "", quote = "\"", row.var.names,
 as.data.frame.ftable <-
 function(x, row.names = NULL, optional = FALSE, ...)
     as.data.frame(as.table(x), row.names, optional)
+
+as.matrix.ftable <-
+function(x, sep = "_", ...)
+{
+    if(!inherits(x, "ftable"))
+	stop("'x' must be an \"ftable\" object")
+
+    make_dimnames <- function(vars) {
+        structure(list(do.call(paste,
+                               c(rev(expand.grid(rev(vars))), 
+                                 list(sep=sep)))),
+                  names = paste(collapse=sep, names(vars)))
+    }
+
+    structure(unclass(x),
+              dimnames = c(make_dimnames(attr(x, "row.vars")),
+                           make_dimnames(attr(x, "col.vars"))),
+              row.vars = NULL,
+              col.vars = NULL)
+}    

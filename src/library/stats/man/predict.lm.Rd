@@ -6,7 +6,7 @@
 \name{predict.lm}
 \title{Predict method for Linear Model Fits}
 \alias{predict.lm}
-\alias{predict.mlm}
+%\alias{predict.mlm}
 \concept{regression}
 \description{
   Predicted values based on linear model object.

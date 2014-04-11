@@ -4,9 +4,12 @@
  *=========== was part of	ribesl (Bessel I(.))
  *===========			~~~~~~
  */
+
+// used in bessel_i.c and bessel_j.c, hidden if possible.
+
 #include "nmath.h"
 
-double attribute_hidden gamma_cody(double x)
+double attribute_hidden Rf_gamma_cody(double x)
 {
 /* ----------------------------------------------------------------------
 
@@ -136,8 +139,8 @@ double attribute_hidden gamma_cody(double x)
 	.0057083835261 };
 
     /* Local variables */
-    long i, n;
-    long int parity;/*logical*/
+    int i, n;
+    int parity;/*logical*/
     double fact, xden, xnum, y, z, yi, res, sum, ysq;
 
     parity = (0);
@@ -149,12 +152,12 @@ double attribute_hidden gamma_cody(double x)
 	   Argument is negative
 	   ------------------------------------------------------------- */
 	y = -x;
-	yi = ftrunc(y);
+	yi = trunc(y);
 	res = y - yi;
 	if (res != 0.) {
-	    if (yi != ftrunc(yi * .5) * 2.)
+	    if (yi != trunc(yi * .5) * 2.)
 		parity = (1);
-	    fact = -M_PI / sin(M_PI * res);
+	    fact = -M_PI / sinpi(res);
 	    y += 1.;
 	} else {
 	    return(ML_POSINF);
@@ -184,7 +187,7 @@ double attribute_hidden gamma_cody(double x)
 	    /* -----------------------------------------------------------
 	       1 <= argument < 12, reduce argument if necessary
 	       ----------------------------------------------------------- */
-	    n = (long) y - 1;
+	    n = (int) y - 1;
 	    y -= (double) n;
 	    z = y - 1.;
 	}

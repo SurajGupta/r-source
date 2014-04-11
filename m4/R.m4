@@ -1,6 +1,6 @@
 ### R.m4 -- extra macros for configuring R		-*- Autoconf -*-
 ###
-### Copyright (C) 1998-2013 R Core Team
+### Copyright (C) 1998-2014 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -3156,6 +3156,26 @@ fi
 AM_CONDITIONAL(BUILD_BZLIB, [test "x${have_bzlib}" = xno])
 ])# R_BZLIB
 
+## R_TRE
+## -------
+## Try finding tre library and headers.
+## We check that both are installed,
+AC_DEFUN([R_TRE],
+[if test "x${use_system_tre}" = xyes; then
+  AC_CHECK_LIB(tre, tre_regncompb, [have_tre=yes], [have_tre=no])
+  if test "${have_tre}" = yes; then
+    AC_CHECK_HEADERS(tre/tre.h, [have_tre=yes], [have_tre=no])
+  fi
+if test "x${have_tre}" = xyes; then
+  AC_DEFINE(HAVE_TRE, 1, [Define if your system has tre.])
+  LIBS="-ltre ${LIBS}"
+fi
+else
+  have_tre="no"
+fi
+AM_CONDITIONAL(BUILD_TRE, [test x${have_tre} != xyes])
+])# R_TRE
+
 ## R_LZMA
 ## -------
 ## Try finding liblzma library and headers.
@@ -3924,6 +3944,99 @@ esac
 fi
 AC_SUBST(R_SYSTEM_ABI)
 ]) # R_ABI
+
+## R_FUNC_MKTIME
+## ------------
+AC_DEFUN([R_FUNC_MKTIME],
+[AC_CACHE_CHECK([whether mktime works correctly outside 1902-2037],
+                [r_cv_working_mktime],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <time.h>
+
+main() {
+    if(sizeof(time_t) < 8) exit(1);
+
+    struct tm tm;
+    time_t res;
+    putenv("TZ=Europe/London");
+    tm.tm_sec = tm.tm_min = 0; tm.tm_hour = 12;
+    tm.tm_mday = 1; tm.tm_mon = 0; tm.tm_year = 80; tm.tm_isdst = 0;
+    res = mktime(&tm);
+    if(res == (time_t)-1) exit(2);
+    tm.tm_mday = 1; tm.tm_year = 01; tm.tm_isdst = 0;
+    res = mktime(&tm);
+    if(res == (time_t)-1) exit(3);
+    tm.tm_year = 140;
+    res = mktime(&tm);
+    if(res != 2209032000L) exit(4);
+    tm.tm_mon = 6; tm.tm_isdst = 1;
+    res = mktime(&tm);
+    if(res != 2224753200L) exit(5);
+
+    exit(0);
+}
+]])],
+              [r_cv_working_mktime=yes],
+              [r_cv_working_mktime=no],
+              [r_cv_working_mktime=no])])
+if test "x${r_cv_working_mktime}" = xyes; then
+  AC_DEFINE(HAVE_WORKING_64BIT_MKTIME, 1,
+            [Define if your mktime works correctly outside 1902-2037.])
+fi
+])# R_FUNC_MKTIME
+
+## R_CXX1X
+## -------
+## Support for C++11 and later, for use in packages.
+AC_DEFUN([R_CXX1X],
+[r_save_CXX="${CXX}"
+r_save_CXXFLAGS="${CXXFLAGS}"
+
+: ${CXX1X=${CXX}}
+: ${CXX1XFLAGS=${CXXFLAGS}}
+: ${CXX1XPICFLAGS=${CXXPICFLAGS}}
+
+CXX="${CXX1X} ${CXX1XSTD}"
+CXXFLAGS="${CXX1XFLAGS} ${CXX1XPICFLAGS}"
+AC_LANG_PUSH([C++])dnl
+AX_CXX_COMPILE_STDCXX_11([noext], [optional])
+AC_LANG_POP([C++])dnl Seems the macro does not always get this right
+CXX="${r_save_CXX}"
+CXXFLAGS="${r_save_CXXFLAGS}"
+if test "${HAVE_CXX11}" = "1"; then
+  CXX1XSTD="${CXX1XSTD} ${switch}"
+else
+  CXX1X=""
+  CXX1XSTD=""
+  CXX1XFLAGS=""
+  CXX1XPICFLAGS=""
+fi
+
+AC_SUBST(CXX1X)
+AC_SUBST(CXX1XSTD)
+AC_SUBST(CXX1XFLAGS)
+AC_SUBST(CXX1XPICFLAGS)
+if test -z "${SHLIB_CXX1XLD}"; then
+  SHLIB_CXX1XLD="\$(CXX1X) \$(CXX1XSTD)"
+fi
+AC_SUBST(SHLIB_CXX1XLD)
+: ${SHLIB_CXX1XLDFLAGS=${SHLIB_CXXLDFLAGS}}
+AC_SUBST(SHLIB_CXX1XLDFLAGS)
+
+AC_ARG_VAR([CXX1X], [C++11 compiler command])
+AC_ARG_VAR([CXX1XSTD],
+           [special flag for compiling and for linking C++11 code, e.g. -std=c++11])
+AC_ARG_VAR([CXX1XFLAGS], [C++11 compiler flags])
+AC_ARG_VAR([CXX1XPICFLAGS],
+           [special flags for compiling C++11 code to be turned into a
+            shared object])
+AC_ARG_VAR([SHLIB_CXX1XLD],
+           [command for linking shared objects which contain object
+            files from the C++11 compiler])
+AC_ARG_VAR([SHLIB_CXX1XLDFLAGS], [special flags used by SHLIB_CXX1XLD])
+])# R_CXX1X
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

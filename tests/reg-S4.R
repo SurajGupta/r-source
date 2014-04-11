@@ -1,7 +1,7 @@
 ####--- S4 Methods (and Classes)  --- see also ../src/library/methods/tests/
 options(useFancyQuotes=FALSE)
 require(methods)
-assertCondition <- tools::assertCondition # "import"
+assertError <- tools::assertError # "import"
 ##too fragile: showMethods(where = "package:methods")
 
 ##-- S4 classes with S3 slots [moved from ./reg-tests-1.R]
@@ -182,9 +182,9 @@ logic2 <- function(e1,e2) logic.brob.error(.Generic)
 setMethod("Logic", signature("brob", "ANY"), logic2)
 setMethod("Logic", signature("ANY", "brob"), logic2)
 ## Now ensure that using group members gives error:
-assertCondition(b & b, "error")
-assertCondition(b | 1, "error")
-assertCondition(TRUE & b, "error")
+assertError(b & b)
+assertError(b | 1)
+assertError(TRUE & b)
 
 
 ## methods' hidden cbind() / rbind:
@@ -413,7 +413,7 @@ stopifnot(dim(x) == c(1,1), is(tt, "ts"), is(t2, "ts"),
 ## Method with wrong argument order :
 setGeneric("test1", function(x, printit = TRUE, name = "tmp")
            standardGeneric("test1"))
-assertCondition(
+tools::assertCondition(
 setMethod("test1", "numeric", function(x, name, printit) match.call()),
 "warning", "error")## did not warn or error in R 2.7.0 and earlier
 
@@ -486,10 +486,10 @@ stopifnot(packageSlot(class(S <- new("SIG"))) == ".GlobalEnv",
 ## Invalid "factor"s -- now "caught" by  validity check :
  ok.f <- gl(3,5, labels = letters[1:3])
 bad.f <- structure(rep(1:3, each=5), levels=c("a","a","b"), class="factor")
-validObject(ok.f) ; assertCondition(validObject(bad.f), "error")
+validObject(ok.f) ; assertError(validObject(bad.f))
 setClass("myF", contains = "factor")
 validObject(new("myF", ok.f))
-assertCondition(validObject(new("myF", bad.f)), "error")
+assertError(validObject(new("myF", bad.f)))
 removeClass("myF")
 ## no validity check in R <= 2.9.0
 
@@ -595,18 +595,30 @@ aa <- 11:16
 a <- new("A", aa=aa)
 setMethod(length, "A", function(x) length(x@aa))
 setMethod(`[[`,   "A", function(x, i, j, ...) x@aa[[i]])
+setMethod(`[`,    "A", function(x, i, j, ...) new("A", aa = x@aa[i]))
 stopifnot(length(a) == 6, identical(a[[5]], aa[[5]]),
+          identical(a, rev(rev(a))), # using '['
 	  identical(mapply(`*`, aa, rep(1:3, 2)),
 		    mapply(`*`, a,  rep(1:3, 2))))
 ## Up to R 2.15.2, internally 'a' is treated as if it was of length 1
 ## because internal dispatch did not work for length().
 
+## is.unsorted() for formal classes - and R > 3.0.0 :
+## Fails, unfortunately (from C, base::.gtn() is called w/o dispatch)
+## setMethod("anyNA", "A", function(x) anyNA(x@aa))
+## setMethod(".gtn", "A", function(x,strictly) .gtn(x@aa, strictly))
+## but this now works (thanks to DispatchOrEval() ):
+setMethod("is.unsorted", "A", function(x, na.rm=FALSE, strictly=FALSE)
+    is.unsorted(x@aa, na.rm=na.rm, strictly=strictly))
+
+stopifnot(!is.unsorted(a), # 11:16 *is* sorted
+	  is.unsorted(rev(a)))
 
 # getSrcref failed when rematchDefinition was used
 text <- '
 setClass("MyClass", representation(val = "numeric"))
-setMethod("plot", signature(x = "MyClass"), 
-    function(x, y, ...) { 
+setMethod("plot", signature(x = "MyClass"),
+    function(x, y, ...) {
         # comment
 	NULL
     })
@@ -620,3 +632,39 @@ setMethod("initialize", signature = "MyClass",
 source(textConnection(text), keep.source = TRUE)
 getSrcref(getMethod("plot", "MyClass"))
 getSrcref(getMethod("initialize", "MyClass"))
+
+
+## PR#15691
+setGeneric("fun", function(x, ...) standardGeneric("fun"))
+setMethod("fun", "character", identity)
+setMethod("fun", "numeric", function(x) {
+  x <- as.character(x)
+  callGeneric()
+})
+
+stopifnot(identical(fun(1), do.call(fun, list(1))))
+## failed in R < 3.1.0
+
+
+## PR#15680
+setGeneric("f", function(x, y) standardGeneric("f"))
+setMethod("f", c("numeric", "missing"), function(x, y) x)
+try(?f(1))
+
+## "..." is not handled
+setGeneric("f", function(...) standardGeneric("f"))
+setMethod("f", "numeric", function(...) c(...))
+try(?f(1,2))
+
+## defaults in the generic formal arguments are not considered
+setGeneric("f", function(x, y=0) standardGeneric("f"))
+setMethod("f", c("numeric", "numeric"), function(x, y) x+y)
+try(?f(1))
+
+## Objects with S3 classes fail earlier
+setGeneric("f", function(x) standardGeneric("f"))
+setMethod("f", "numeric", function(x) x)
+setOldClass(c("foo", "numeric"))
+n <- structure(1, class=c("foo", "numeric"))
+try(?f(n))
+## different failures in R < 3.1.0.

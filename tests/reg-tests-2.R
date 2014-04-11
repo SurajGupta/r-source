@@ -2609,9 +2609,9 @@ is.unsorted(data.frame(x=3:4, y=1:2))
 
 
 library("methods")# (not needed here)
-assertCondition <- tools::assertCondition
-assertCondition( getMethod(ls, "bar", fdef=ls), "error", verbose=TRUE)
-assertCondition( getMethod(show, "bar"),        "error", verbose=TRUE)
+assertError <- tools::assertError
+assertError( getMethod(ls, "bar", fdef=ls), verbose=TRUE)
+assertError( getMethod(show, "bar"), verbose=TRUE)
 ## R < 2.15.1 gave
 ##   cannot coerce type 'closure' to vector of type 'character'
 
@@ -2660,6 +2660,7 @@ lns <- capture.output(
 sub("^ +", '', lns[2* 1:3])
 ## *values* were cutoff when printed
 
+
 ## allows deparse limits to be set
 form <- reallylongnamey ~ reallylongnamex0 + reallylongnamex1 + reallylongnamex2 + reallylongnamex3
 form
@@ -2670,10 +2671,12 @@ form
 options(op)
 ## fixed to 60 in R 2.15.x
 
+
 ## PR#15179: user defined binary ops were not deparsed properly
 quote( `%^%`(x, `%^%`(y,z)) )
 quote( `%^%`(x) )
 ##
+
 
 ## Anonymous function calls were not deparsed properly
 substitute(f(x), list(f = function(x) x + 1))
@@ -2684,14 +2687,17 @@ substitute(f(x), list(f = quote(a[n])))
 substitute(f(x), list(f = quote(g(y))))
 ## The first three need parens, the last three don't.
 
+
 ## PR#15247 : str() on invalid data frame names (where print() works):
 d <- data.frame(1:3, "B", 4); names(d) <- c("A", "B\xba","C\xabcd")
 str(d)
 ## gave an error in R <= 3.0.0
 
+
 ## PR#15299 : adding a simple vector to a classed object produced a bad result:
 1:2 + table(1:2)
 ## Printed the class attribute in R <= 3.0.0
+
 
 ## PR#15311 : regmatches<- mishandled regexpr results.
   x <- c('1', 'B', '3')
@@ -2700,9 +2706,170 @@ str(d)
   print(x)
 ## Gave a warning and a wrong result up to 3.0.1
 
+
 ## Bad warning found by Radford Neal
   saveopt <- options(warnPartialMatchDollar=TRUE)
   pl <- pairlist(abc=1, def=2)
   pl$ab
   if (!is.null(saveopt[["warnPartialMatchDollar"]])) options(saveopt)
 ## 'abc' was just ''
+
+
+## seq() with NaN etc inputs now gives explicit error messages
+try(seq(NaN))
+try(seq(to = NaN))
+try(seq(NaN, NaN))
+try(seq.int(NaN))
+try(seq.int(to = NaN))
+try(seq.int(NaN, NaN))
+## R 3.0.1 gave messages from ':' or about negative-length vectors.
+
+
+## Some dimnames were lost from 1D arrays: PR#15301
+x <- array(0:2, dim=3, dimnames=list(d1=LETTERS[1:3]))
+x
+x[]
+x[3:1]
+x <- array(0, dimnames=list(d1="A"))
+x
+x[]
+x[drop = FALSE]
+## lost dimnames in 3.0.1
+
+
+## PR#15396
+load(file.path(Sys.getenv('SRCDIR'), 'arima.rda'))
+(f1 <- arima(x, xreg = xreg, order = c(1,1,1), seasonal = c(1,0,1)))
+(f2 <- arima(diff(x), xreg = diff(xreg), order = c(1,0,1), seasonal = c(1,0,1),
+             include.mean = FALSE))
+stopifnot(all.equal(coef(f1), coef(f2), tolerance = 1e-3, check.names = FALSE))
+## first gave local optim in 3.0.1
+
+## all.equal always checked the names
+x <- c(a=1, b=2)
+y <- c(a=1, d=2)
+all.equal(x, y, check.names = FALSE)
+## failed on mismatched attributes
+
+
+## PR#15411, plus digits change
+format(9992, digits = 3)
+format(9996, digits = 3)
+format(0.0002, digits = 0, nsmall = 2)
+format(pi*10, digits = 0, nsmall = 1)
+## second added an extra space; 3rd and 4th were not allowed.
+
+## and one branch of this was wrong:
+xx <- c(-86870268, 107833358, 302536985, 481015309, 675718935, 854197259,
+        1016450281, 1178703303, 1324731023, 1454533441)
+xx
+## dropped spaces without long doubles
+
+## and rounding was being detected improperly (PR#15583)
+1000* ((10^(1/4)) ^ c(0:4))
+7/0.07
+## Spacing was incorrect
+
+
+## PR#15468
+M <- matrix(11:14, ncol=2, dimnames=list(paste0("Row", 1:2), paste0("Col",
+1:2)))
+L <- list(elem1=1, elem2=2)
+rbind(M, L)
+rbind(L, M)
+cbind(M, L)
+cbind(L, M)
+## lost the dim of M, so returned NULL entries
+
+
+## NA_character_ was not handled properly in min and max (reported by Magnus Thor Torfason)
+str(min(NA, "bla"))
+str(min("bla", NA))
+str(min(NA_character_, "bla"))
+str(max(NA, "bla"))
+str(max("bla", NA))
+str(max(NA_character_, "bla"))
+## NA_character_ could be treated as "NA"; depending on the locale, it would not necessarily
+## be the min or max.
+
+
+## When two entries needed to be cut to width, str() mixed up
+## the values (reported by Gerrit Eichner)
+oldopts <- options(width=70, stringsAsFactors=TRUE)
+n <- 11      # number of rows of data frame
+M <- 10000   # order of magnitude of numerical values
+longer.char.string <- "zjtvorkmoydsepnxkabmeondrjaanutjmfxlgzmrbjp"
+X <- data.frame( A = 1:n * M,
+                 B = rep( longer.char.string, n))
+str( X, strict.width = "cut")
+options(oldopts)
+## The first row of the str() result was duplicated.
+
+
+## PR15624: rounding in extreme cases
+dpois(2^52,1,1)
+dpois(2^52+1,1,1)
+## second warned in R 3.0.2.
+
+
+## Example from PR15625
+f <- file.path(Sys.getenv('SRCDIR'), 'EmbeddedNuls.csv')
+## This is a file with a UTF-8 BOM and some fields which are a single nul.
+## The output does rely on this being run in a non-UTF-8 locale (C in tests).
+read.csv(f) # warns
+read.csv(f, skipNul = TRUE, fileEncoding = "UTF-8-BOM")
+## 'skipNul' is new in 3.1.0.  Should not warn on BOM, ignore in second.
+
+
+## all.equal datetime method
+x <- Sys.time()
+all.equal(x,x)
+all.equal(x, as.POSIXlt(x))
+all.equal(x, as.POSIXlt(x, tz = "EST5EDT"))
+all.equal(x, x+1e-4)
+isTRUE(all.equal(x, x+0.002)) # message will depend on representation error
+## as.POSIXt method is new in 3.1.0.
+
+
+
+## Misuse of PR#15633
+try(bartlett.test(yield ~ block*N, data = npk))
+try(fligner.test (yield ~ block*N, data = npk))
+## used the first factor with an incorrect description in R < 3.0.3
+
+
+## Misguided expectation of PR#15687
+xx <- window(AirPassengers, start = 1960)
+cbind(xx, xx)
+op <- options(digits = 2)
+cbind(xx, xx)
+options(op)
+## 'digits' was applied to the time.
+
+
+## Related to PR#15190
+difftime(
+    as.POSIXct(c("1970-01-01 00:00:00", "1970-01-01 12:00:00"), tz="EST5EDT"),
+    as.POSIXct(c("1970-01-01 00:00:00", "1970-01-01 00:00:00"), tz="UTC"))
+## kept tzone from first arg.
+
+
+## PR#15706
+x1 <- as.dendrogram(hclust(dist(c(i=1,ii=2,iii=3,v=5,vi=6,vii=7))))
+attr(cophenetic(x1), "Labels")
+## gave a matrix in 3.0.3
+
+
+## PR#15708
+aa <- anova( lm(sr ~ ., data = LifeCycleSavings) )
+op <- options(width = 50)
+aa
+op <- options(width = 40)
+aa ; options(op)
+## did not line wrap "Signif. codes" previously
+
+
+## PR#15718
+d <- data.frame(a=1)
+d[integer(), "a"] <- 2
+## warned in 3.0.3.

@@ -20,7 +20,7 @@
 ## A copy of the GNU General Public License is available at
 ## http://www.r-project.org/Licenses/
 
-revision='$Revision: 62845 $'
+revision='$Revision: 65341 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 
@@ -38,9 +38,9 @@ Options:
   -h, --help            print short help message and exit
   -v, --version         print version info and exit
       --cppflags        print pre-processor flags required to compile
-			a program using R as a library
-      --ldflags         print linker flags needed for linking against
-			the R library
+			a C/C++ file using R as a library
+      --ldflags         print linker flags needed for linking a front-end
+                        against the R library
       --no-user-files  ignore customization files under ~/.R
       --no-site-files  ignore site customization files under R_HOME/etc
 
@@ -53,11 +53,17 @@ Variables:
   CPP           C preprocessor
   CPPFLAGS      C/C++ preprocessor flags, e.g. -I<dir> if you have
 		headers in a nonstandard directory <dir>
-  CXX           C++ compiler command
+  CXX           C++ compiler command for C++98 code
   CXXCPP        C++ preprocessor
   CXXFLAGS      C++ compiler flags
   CXXPICFLAGS   special flags for compiling C++ code to be turned into a
 		shared library
+  CXX1X         C++ compiler command for C++11 code
+  CXX1XSTD      flag used to enable C++11 support
+  CXX1XFLAGS    C++11 compiler flags
+  CXX1XXPICFLAGS
+                special flags for compiling C++11 code to be turned into
+                a shared library
   DYLIB_EXT	file extension (including '.') for dynamic libraries
   DYLIB_LD      command for linking dynamic libraries which contain
 		object files from a C or Fortran compiler only
@@ -143,6 +149,9 @@ query="${MAKE} -s ${makefiles} print R_HOME=${R_HOME}"
 
 LIBR=`eval $query VAR=LIBR`
 STATIC_LIBR=`eval $query VAR=STATIC_LIBR`
+MAIN_LDFLAGS=`eval $query VAR=MAIN_LDFLAGS`
+LIBS=`eval $query VAR=LIBS`
+
 
 if test -n "${R_ARCH}"; then
   includes="-I${R_INCLUDE_DIR} -I${R_INCLUDE_DIR}${R_ARCH}"
@@ -172,14 +181,15 @@ while test -n "${1}"; do
       exit 0
       ;;
     --ldflags)
+      ## changed in R 3.1.0 to be those needed to link a front-end
       if test -z "${LIBR}"; then
 	if test -z "${STATIC_LIBR}"; then
 	  echo "R was not built as a library" >&2
 	else
-	  echo "${STATIC_LIBR}"
+	  echo "${MAIN_LDFLAGS} ${LDFLAGS} ${STATIC_LIBR}"
 	fi
       else
-	echo "${LIBR}"
+	echo "${MAIN_LDFLAGS} ${LDFLAGS} ${LIBR} ${LIBS}"
       fi
       exit 0
       ;;
@@ -232,7 +242,7 @@ fi
 query="${MAKE} -s ${makefiles} print R_HOME=${R_HOME}"
 
 ok_c_vars="CC CFLAGS CPICFLAGS CPP CPPFLAGS"
-ok_cxx_vars="CXX CXXCPP CXXFLAGS CXXPICFLAGS"
+ok_cxx_vars="CXX CXXCPP CXXFLAGS CXXPICFLAGS CXX1X CXX1XSTD CXX1XFLAGS CXX1XPICFLAGS"
 ok_dylib_vars="DYLIB_EXT DYLIB_LD DYLIB_LDFLAGS"
 ok_objc_vars="OBJC OBJCFLAGS"
 ok_java_vars="JAVA JAVAC JAVAH JAR JAVA_HOME JAVA_LIBS JAVA_CPPFLAGS"

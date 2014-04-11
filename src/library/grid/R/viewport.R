@@ -46,11 +46,14 @@ valid.viewport <- function(x, y, width, height, just,
                    off=NA,
                    inherit=FALSE,
                    stop("invalid 'clip' value"))
+  # Ensure both 'xscale' and 'yscale' are numeric (brute force defense)
+  xscale <- as.numeric(xscale)
+  yscale <- as.numeric(yscale)
   if (!is.numeric(xscale) || length(xscale) != 2 ||
-      any(!is.finite(xscale)))
+      any(!is.finite(xscale)) || diff(xscale) == 0)
     stop("invalid 'xscale' in viewport")
   if (!is.numeric(yscale) || length(yscale) != 2 ||
-      any(!is.finite(yscale)))
+      any(!is.finite(yscale)) || diff(yscale) == 0)
     stop("invalid 'yscale' in viewport")
   if (!is.numeric(angle) || length(angle) != 1 ||
       !is.finite(angle))
@@ -95,8 +98,11 @@ valid.viewport <- function(x, y, width, height, just,
 # at the time of being pushed (this is all used to return to this
 # viewport without having to repush it)
 pushedvp <- function(vp) {
-  pvp <- c(vp, list(gpar = NULL,
-                    trans = NULL,
+    # NOTE that this function is only called from C code:
+    # either directly from L_setviewport() or indirectly from initVP()
+    # via grid.top.level.vp()
+    # vp$gpar and vp$parentgpar are both set previously in push.vp.viewport()
+  pvp <- c(vp, list(trans = NULL,
                     widths = NULL,
                     heights = NULL,
                     width.cm = NULL,
@@ -111,10 +117,7 @@ pushedvp <- function(vp) {
                     # be pushed "properly" the first time, calculating
                     # transformations, etc ...
                     devwidthcm = 0,
-                    devheightcm = 0,
-                    # This is down here because need to keep
-                    # #defines in grid.h consistent with order here
-                    parentgpar = NULL))
+                    devheightcm = 0))
   class(pvp) <- c("pushedvp", class(vp))
   pvp
 }
@@ -160,34 +163,34 @@ height.details.viewport <- function(x) {
 }
 
 # How many "levels" in viewport object
-depth <- function(vp) {
+depth <- function(x, ...) {
   UseMethod("depth")
 }
 
-depth.viewport <- function(vp) {
+depth.viewport <- function(x, ...) {
   1
 }
 
-depth.vpList <- function(vp) {
+depth.vpList <- function(x, ...) {
   # When pushed, the last element of the vpList is pushed last
   # so we are left whereever that leaves us
-  depth(vp[[length(vp)]])
+  depth(x[[length(x)]], ...)
 }
 
-depth.vpStack <- function(vp) {
+depth.vpStack <- function(x, ...) {
   # Elements in the stack may be vpStacks or vpLists or vpTrees
   # so need to sum all the depths
-  sum(sapply(vp, depth, simplify=TRUE))
+  sum(sapply(x, depth, ..., simplify=TRUE))
 }
 
-depth.vpTree <- function(vp) {
+depth.vpTree <- function(x, ...) {
   # When pushed, the last element of the vpTree$children is
   # pushed last so we are left wherever that leaves us
-  depth(vp$parent) + depth(vp$children[[length(vp$children)]])
+  depth(x$parent, ...) + depth(x$children[[length(x$children)]], ...)
 }
 
-depth.path <- function(path) {
-  path$n
+depth.path <- function(x, ...) {
+  x$n
 }
 
 ####################
@@ -199,7 +202,7 @@ viewport.layout <- function(vp) {
 }
 
 viewport.transform <- function(vp) {
-  .Deprecated("current.transform")
+    .Defunct("current.transform")
 }
 
 ####################
@@ -317,14 +320,15 @@ setvpgpar.vpTree <- function(vp) {
 .grid.pathSep <- "::"
 
 vpPathFromVector <- function(names) {
-  n <- length(names)
-  if (n < 1)
-    stop("a viewport path must contain at least one viewport name")
   if (any(bad <- !is.character(names)))
       stop(ngettext(sum(bad),
                     "invalid viewport name",
                     "invalid viewport names"),
            domain = NA)
+  names <- unlist(strsplit(names, .grid.pathSep))
+  n <- length(names)
+  if (n < 1)
+    stop("a viewport path must contain at least one viewport name")
   path <- list(path=if (n==1) NULL else
                paste(names[seq_len(n-1L)], collapse=.grid.pathSep),
                name=names[n],
@@ -335,12 +339,6 @@ vpPathFromVector <- function(names) {
 
 vpPath <- function(...) {
   names <- c(...)
-  vpPathFromVector(names)
-}
-
-# Create vpPath from string with embedded VpPathSep(s)
-vpPathDirect <- function(path) {
-  names <- unlist(strsplit(path, .grid.pathSep))
   vpPathFromVector(names)
 }
 
@@ -362,8 +360,19 @@ print.path <- function(x, ...) {
 }
 
 # Explode path$path
-explodePath <- function(path) {
-  unlist(strsplit(path, .grid.pathSep))
+explode <- function(x) {
+    UseMethod("explode")
+}
+
+explode.character <- function(x) {
+    unlist(strsplit(x, .grid.pathSep))
+}
+
+explode.path <- function(x) {
+  if (x$n == 1)
+    x$name
+  else
+    c(explode(x$path), x$name)
 }
 
 

@@ -772,7 +772,12 @@ postscriptFonts(# Default Serif font is Times
                 URWTimes = Type1Font("URWTimes",
                   c("n021003l.afm", "n021004l.afm",
                     "n021023l.afm", "n021024l.afm",
-                    "s050000l.afm"))
+                    "s050000l.afm")),
+                ## And Monotype Arial
+                ArialMT = Type1Font("ArialMT",
+                  c("ArialMT.afm", "ArialMT-Bold.afm",
+                    "ArialMT-Italic.afm", "ArialMT-BoldItalic.afm",
+                    "Symbol.afm"))
                 )
 
 ## All of the above Type1 fonts are the same for PostScript and PDF

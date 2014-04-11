@@ -248,7 +248,7 @@ parApply <- function(cl = NULL, X, MARGIN, FUN, ...)
         if(is.null(dnn <- names(dn))) # names(NULL) is NULL
            stop("'X' must have named dimnames")
         MARGIN <- match(MARGIN, dnn)
-        if (any(is.na(MARGIN)))
+        if (anyNA(MARGIN))
             stop("not all elements of 'MARGIN' are names of dimensions")
     }
     s.call <- ds[-MARGIN]

@@ -36,7 +36,12 @@ massageExamples <-
 
     lines <- c(paste0('pkgname <- "', pkg, '"'),
                'source(file.path(R.home("share"), "R", "examples-header.R"))',
-               if (use_gct) "gctorture(TRUE)",
+               if (use_gct) {
+                   gct_n <- as.integer(Sys.getenv("_R_CHECK_GCT_N_", 0))
+                   if(!is.na(gct_n) && gct_n > 0L)
+                       sprintf("gctorture2(%s)", gct_n)
+                   else "gctorture(TRUE)"
+               },
                "options(warn = 1)")
     cat(lines, sep = "\n", file = out)
     if(.Platform$OS.type == "windows")
@@ -173,8 +178,12 @@ Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE,
         right <- clean2(right)
     }
     if (!useDiff && (length(left) == length(right))) {
-        bleft <- gsub("[[:space:]]+", " ", left)
-        bright <- gsub("[[:space:]]+", " ", right)
+        ## The idea is to emulate diff -b, as documented by POSIX:
+        ## http://pubs.opengroup.org/onlinepubs/9699919799/utilities/diff.html
+        bleft <- gsub("[[:space:]]*$", "", left)
+        bright <- gsub("[[:space:]]*$", "", right)
+        bleft <- gsub("[[:space:]]+", " ", bleft)
+        bright <- gsub("[[:space:]]+", " ", bright)
         if(all(bleft == bright))
             return(if(Log) list(status = 0L, out = character()) else 0L)
         cat("\n")
@@ -225,16 +234,36 @@ testInstalledPackages <-
         pkgs <- known_packages$base
     if (scope %in% c("both", "recommended"))
         pkgs <- c(pkgs, known_packages$recommended)
-    ## It *should* be an error if any of these are missing
-    for (pkg in pkgs) {
-        if(is.null(srcdir) && pkg %in% known_packages$base)
-            srcdir <- R.home("tests/Examples")
-        res <- testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts)
-        if (res) {
-            status <- 1L
-            msg <- gettextf("testing '%s' failed", pkg)
-            if (errorsAreFatal) stop(msg, domain = NA, call. = FALSE)
-            else warning(msg, domain = NA, call. = FALSE, immediate. = TRUE)
+    mc.cores <- as.integer(Sys.getenv("TEST_MC_CORES", 1L))
+    if (.Platform$OS.type != "windows" &&
+        !is.na(mc.cores) && mc.cores > 1L) {
+        do_one <- function(pkg) {
+            if(is.null(srcdir) && pkg %in% known_packages$base)
+                srcdir <- R.home("tests/Examples")
+            testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts)
+        }
+        res <- parallel::mclapply(pkgs, do_one, mc.cores = mc.cores,
+                                  mc.preschedule = FALSE)
+        res <- unlist(res) != 0L
+        if (any(res)) {
+            for(i in which(res))
+                warning(gettextf("testing '%s' failed", pkgs[i]),
+                        domain = NA, call. = FALSE, immediate. = TRUE)
+            if (errorsAreFatal)
+                stop(gettextf("%d of the package tests failed", sum(res)),
+                     domain = NA, call. = FALSE)
+        }
+    } else {
+        for (pkg in pkgs) {
+            if(is.null(srcdir) && pkg %in% known_packages$base)
+                srcdir <- R.home("tests/Examples")
+            res <- testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts)
+            if (res) {
+                status <- 1L
+                msg <- gettextf("testing '%s' failed", pkg)
+                if (errorsAreFatal) stop(msg, domain = NA, call. = FALSE)
+                else warning(msg, domain = NA, call. = FALSE, immediate. = TRUE)
+            }
         }
     }
     invisible(status)
@@ -473,7 +502,7 @@ testInstalledPackage <-
                          appendLF = FALSE, domain = NA)
     files <- names(db)
     if (pkg == "grDevices")
-        files <- files[!grepl("/unix|windows/", files)]
+        files <- files[!grepl("^(unix|windows)/", files)]
     filedir <- tempfile()
     dir.create(filedir)
     on.exit(unlink(filedir, recursive = TRUE))

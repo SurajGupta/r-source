@@ -340,6 +340,13 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     options = SYMVALUE(Options());
 
+    /* This code is not re-entrant and people have used it in
+       finalizers.
+
+       If a re-entrancy lock needs to be added, note that it
+       would apply to R_SetOption* too.
+    */
+
     if (args == R_NilValue) {
 	/* This is the zero argument case.
 	   We alloc up a vector list and write the system values into it.

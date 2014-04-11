@@ -29,9 +29,6 @@
 
 #include "Lapack.h"
 
-extern void F77_NAME(ilaver)(int *major, int *minor, int *patch);
-
-
 /* NB: the handling of dims is odd here.  Most are coerced to be
  * integers (which dimgets currently guarantees), but a couple were
  * used unchecked. 
@@ -106,24 +103,21 @@ static SEXP La_svd(SEXP jobu, SEXP x, SEXP s, SEXP u, SEXP vt)
     if (TYPEOF(dims) != INTSXP) error("non-integer dims");
     int ldvt = INTEGER(dims)[0];
     double tmp;
-    /* min(n,p) large is implausible, but ... */
+    /* min(n,p) large is implausible, but cast to be sure */
     int *iwork= (int *) R_alloc(8*(size_t)(n < p ? n : p), sizeof(int));
 
     /* ask for optimal size of work array */
+    const char *ju = CHAR(STRING_ELT(jobu, 0));
     int lwork = -1;
-    F77_CALL(dgesdd)(CHAR(STRING_ELT(jobu, 0)),
-		     &n, &p, xvals, &n, REAL(s),
-		     REAL(u), &ldu,
-		     REAL(vt), &ldvt,
+    F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s),
+		     REAL(u), &ldu, REAL(vt), &ldvt,
 		     &tmp, &lwork, iwork, &info);
     if (info != 0)
 	error(_("error code %d from Lapack routine '%s'"), info, "dgesdd");
     lwork = (int) tmp;
     double *work = (double *) R_alloc(lwork, sizeof(double));
-    F77_CALL(dgesdd)(CHAR(STRING_ELT(jobu, 0)),
-		     &n, &p, xvals, &n, REAL(s),
-		     REAL(u), &ldu,
-		     REAL(vt), &ldvt,
+    F77_CALL(dgesdd)(ju, &n, &p, xvals, &n, REAL(s),
+		     REAL(u), &ldu, REAL(vt), &ldvt,
 		     work, &lwork, iwork, &info);
     if (info != 0)
 	error(_("error code %d from Lapack routine '%s'"), info, "dgesdd");
@@ -742,25 +736,33 @@ static SEXP qr_qy_cmplx(SEXP Q, SEXP Bin, SEXP trans)
 #endif
 }
 
-static SEXP La_svd_cmplx(SEXP jobu, SEXP jobv, SEXP x, SEXP s, SEXP u, SEXP v)
+static SEXP La_svd_cmplx(SEXP jobu, SEXP x, SEXP s, SEXP u, SEXP v)
 {
 #ifdef HAVE_FORTRAN_DOUBLE_COMPLEX
-    if (!(isString(jobu) && isString(jobv)))
-	error(_("'jobu' and 'jobv' must be character strings"));
+    if (!(isString(jobu)))
+	error(_("'jobu' must be a character string"));
     int *xdims = INTEGER(coerceVector(getAttrib(x, R_DimSymbol), INTSXP));
     int n = xdims[0], p = xdims[1];
+    const char *jz = CHAR(STRING_ELT(jobu, 0));
 
     /* The underlying LAPACK, specifically ZLARF, does not work with
      * long arrays */
     if ((double)n * (double)p > INT_MAX)
 	error(_("matrices of 2^31 or more elements are not supported"));
-    double *rwork = (double *) R_alloc(5*(size_t)(n < p ? n:p), sizeof(double));
 
-    /* work on a copy of x: duplicate would copy too much, like dimnames */
+    /* work on a copy of x */
     Rcomplex *xvals = (Rcomplex *) R_alloc(n * (size_t) p, sizeof(Rcomplex));
     Memcpy(xvals, COMPLEX(x), n * (size_t) p);
 
-    /* ask for optimal size of work array */
+    int *iwork= (int *) R_alloc(8*(size_t)(n < p ? n : p), sizeof(int));
+    size_t mn0 = (n < p ? n : p), mn1 = (n > p ? n : p), lrwork;
+    if (strcmp(jz, "N")) {
+	size_t f1 = 5 * mn1 + 7, f2 = 2 * mn1 + 2 * mn0 + 1;
+	lrwork = (f1 > f2 ? f1 : f2) * mn0;
+	// 7 replaces 5: bug 111 in http://www.netlib.org/lapack/Errata/index2.html
+    } else lrwork = 7 * mn0;
+    double *rwork  = (double *) R_alloc(lrwork, sizeof(double));
+    /* ask for optimal size of lwork array */
     int lwork = -1, info;
     Rcomplex tmp;
     int ldu, ldv;
@@ -770,20 +772,19 @@ static SEXP La_svd_cmplx(SEXP jobu, SEXP jobv, SEXP x, SEXP s, SEXP u, SEXP v)
     dims = getAttrib(v, R_DimSymbol);
     if (TYPEOF(dims) != INTSXP) error("non-integer dims");
     ldv = INTEGER(dims)[0];
-    F77_CALL(zgesvd)(CHAR(STRING_ELT(jobu, 0)), CHAR(STRING_ELT(jobv, 0)),
-		     &n, &p, xvals, &n, REAL(s),
+    F77_CALL(zgesdd)(jz, &n, &p, xvals, &n, REAL(s),
 		     COMPLEX(u), &ldu, COMPLEX(v), &ldv,
-		     &tmp, &lwork, rwork, &info);
+		     &tmp, &lwork, rwork, iwork, &info);
     if (info != 0)
-	error(_("error code %d from Lapack routine '%s'"), info, "zgesvd");
+	error(_("error code %d from Lapack routine '%s'"), info, "zgesdd");
     lwork = (int) tmp.r;
     Rcomplex *work = (Rcomplex *) R_alloc(lwork, sizeof(Rcomplex));
-    F77_CALL(zgesvd)(CHAR(STRING_ELT(jobu, 0)), CHAR(STRING_ELT(jobv, 0)),
-		     &n, &p, xvals, &n, REAL(s),
+    F77_CALL(zgesdd)(jz, &n, &p, xvals, &n, REAL(s),
 		     COMPLEX(u), &ldu, COMPLEX(v), &ldv,
-		     work, &lwork, rwork, &info);
+		     work, &lwork, rwork, iwork, &info);
     if (info != 0)
-	error(_("error code %d from Lapack routine '%s'"), info, "zgesvd");
+	error(_("error code %d from Lapack routine '%s'"), info, "zgesdd");
+
     SEXP val = PROTECT(allocVector(VECSXP, 3));
     SEXP nm = PROTECT(allocVector(STRSXP, 3));
     SET_STRING_ELT(nm, 0, mkChar("d"));
@@ -1336,13 +1337,12 @@ static SEXP mod_do_lapack(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     case 401:
     {
-	SEXP a1, a2, a3, a4, a5;
+	SEXP a1, a2, a3, a4;
 	a1 = CAR(args); args = CDR(args);
 	a2 = CAR(args); args = CDR(args);
 	a3 = CAR(args); args = CDR(args);
 	a4 = CAR(args); args = CDR(args);
-	a5 = CAR(args); args = CDR(args);
-	ans = La_svd_cmplx(a1, a2, a3, a4, a5, CAR(args));
+	ans = La_svd_cmplx(a1, a2, a3, a4, CAR(args));
 	break;
     }
     case 1000:

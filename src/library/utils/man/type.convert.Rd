@@ -1,6 +1,6 @@
 % File src/library/utils/man/type.convert.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2013 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{type.convert}
@@ -29,8 +29,7 @@ type.convert(x, na.strings = "NA", as.is = FALSE, dec = ".")
   Given a character vector, it attempts to convert it to logical,
   integer, numeric or complex, and failing that converts it to factor
   unless \code{as.is = TRUE}.  The first type that can accept all the
-  non-missing values is chosen (numeric and complex return values will
-  represented approximately, of course).
+  non-missing values is chosen.
 
   Vectors which are entirely missing values are converted to logical,
   since \code{NA} is primarily logical.
@@ -43,13 +42,15 @@ type.convert(x, na.strings = "NA", as.is = FALSE, dec = ".")
   followed by other decimal or hexadecimal constants (see
   \link{NumericConstants}), or \code{NaN}, \code{Inf} or \code{infinity}
   (ignoring case) or values from \code{na.strings} are converted to
-  numeric.
+  numeric.  As from \R 3.1.0, where converting inputs to numeric or
+  complex would result in loss of accuracy they are returned as strings
+  (for \code{as.is = TRUE}) or factors.
 
   Since this is a helper function, the caller should always pass an
   appropriate value of \code{as.is}.
 }
 \value{
-  A vector of the selected class, or a factor.
+  An atomic vector or (for \code{as.is = FALSE}) a factor.
 }
 
 \seealso{\code{\link{read.table}}}

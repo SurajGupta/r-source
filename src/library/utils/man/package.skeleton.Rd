@@ -15,7 +15,7 @@
 \usage{
 package.skeleton(name = "anRpackage", list,
                  environment = .GlobalEnv,
-                 path = ".", force = FALSE, namespace = TRUE,
+                 path = ".", force = FALSE,
                  code_files = character())
 }
 \arguments{
@@ -28,7 +28,6 @@ package.skeleton(name = "anRpackage", list,
     \sQuote{Details}.}
   \item{path}{path to put the package directory in.}
   \item{force}{If \code{FALSE} will not overwrite an existing directory.}
-  \item{namespace}{a logical, no longer used, and hence deprecated.}
   \item{code_files}{a character vector with the paths to R code files to
     build the package around.  See \sQuote{Details}.}
 }

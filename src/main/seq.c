@@ -95,20 +95,14 @@ static SEXP cross_colon(SEXP call, SEXP s, SEXP t)
 
 static SEXP seq_colon(double n1, double n2, SEXP call)
 {
-    int in1;
-    R_xlen_t n;
-    double r;
-    SEXP ans;
-    Rboolean useInt;
-
-    r = fabs(n2 - n1);
+    double r = fabs(n2 - n1);
     if(r >= R_XLEN_T_MAX) 
 	errorcall(call, _("result would be too long a vector"));
 
-    n = (R_xlen_t)(r + 1 + FLT_EPSILON);
+    SEXP ans;
+    R_xlen_t n = (R_xlen_t)(r + 1 + FLT_EPSILON);
 
-    in1 = (int)(n1);
-    useInt = (n1 == in1);
+    Rboolean useInt = (n1 <= INT_MAX) &&  (n1 == (int) n1);
     if(useInt) {
 	if(n1 <= INT_MIN || n1 > INT_MAX)
 	    useInt = FALSE;
@@ -120,6 +114,7 @@ static SEXP seq_colon(double n1, double n2, SEXP call)
 	}
     }
     if (useInt) {
+	int in1 = (int)(n1);
 	ans = allocVector(INTSXP, n);
 	if (n1 <= n2)
 	    for (int i = 0; i < n; i++) {
@@ -238,7 +233,7 @@ static SEXP rep2(SEXP s, SEXP ncopy)
     case EXPRSXP:
 	for (i = 0; i < nc; i++) {
 //	    if ((i+1) % ni == 0) R_CheckUserInterrupt();
-	    SEXP elt = duplicate(VECTOR_ELT(s, i));
+	    SEXP elt = lazy_duplicate(VECTOR_ELT(s, i));
 	    for (j = 0; j < INTEGER(t)[i]; j++)
 		SET_VECTOR_ELT(a, n++, elt);
 	    if (j > 1) SET_NAMED(elt, 2);
@@ -315,7 +310,7 @@ static SEXP rep3(SEXP s, R_xlen_t ns, R_xlen_t na)
 	for (i = 0, j = 0; i < na;) {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
 	    if (j >= ns) j = 0;
-	    SET_VECTOR_ELT(a, i++, duplicate(VECTOR_ELT(s, j++)));
+	    SET_VECTOR_ELT(a, i++, lazy_duplicate(VECTOR_ELT(s, j++)));
 	}
 	break;
     default:

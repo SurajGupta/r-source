@@ -135,7 +135,7 @@ static const unsigned short int __mon_yday[2][13] =
 
 /* Compute the day of the week.  */
 static void
-day_of_the_week (struct tm *tm)
+day_of_the_week (stm *tm)
 {
     /* We know that January 1st 1970 was a Thursday (= 4).  Compute the
        the difference between this data in the one on TM and so determine
@@ -160,7 +160,7 @@ day_of_the_week (struct tm *tm)
 
 /* Compute the day of the year.  */
 static void
-day_of_the_year (struct tm *tm)
+day_of_the_year (stm *tm)
 {
     /* R bug fix: day_of_the_year needs year, month, mday set */
     if(tm->tm_year == NA_INTEGER ||
@@ -215,7 +215,7 @@ static int Rwcsncasecmp(const wchar_t *cs1, const wchar_t *s2)
    && (rp = w_strptime_internal (rp, (new_fmt), tm, psecs, poffset)) != NULL)
 
 static wchar_t *
-w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
+w_strptime_internal (wchar_t *rp, const wchar_t *fmt, stm *tm,
 		     double *psecs, int *poffset)
 {
     int cnt;
@@ -416,9 +416,11 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 	    }
 	    while (*rp >= L'0' && *rp <= L'9');
 
-	    if ((tm = localtime (&secs)) == NULL)
-		/* Error in function.  */
-		return NULL;
+#ifdef HAVE_LOCALTIME_R
+	    if ((tm = localtime_r (&secs, tm)) == NULL) return NULL;
+#else
+	    if ((tm = localtime (&secs)) == NULL) return NULL;
+#endif
 	}
 	break;
 	case L'S':
@@ -684,7 +686,7 @@ w_strptime_internal (wchar_t *rp, const wchar_t *fmt, struct tm *tm,
 
 
 static char *
-strptime_internal (const char *rp, const char *fmt, struct tm *tm,
+strptime_internal (const char *rp, const char *fmt, stm *tm,
 		   double *psecs, int *poffset)
 {
     int cnt;
@@ -877,9 +879,11 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
 	    }
 	    while (*rp >= '0' && *rp <= '9');
 
-	    if ((tm = localtime (&secs)) == NULL)
-		/* Error in function.  */
-		return NULL;
+#ifdef HAVE_LOCALTIME_R
+	    if ((tm = localtime_r (&secs, tm)) == NULL) return NULL;
+#else
+	    if ((tm = localtime (&secs)) == NULL) return NULL;
+#endif
 	}
 	break;
 	case 'S':
@@ -1145,6 +1149,12 @@ strptime_internal (const char *rp, const char *fmt, struct tm *tm,
     return (char *) rp;
 }
 
+/*
+  We could use nl_langinfo() here: see src/extra/timezone/strftime.c
+  But we would stil need to do it this way on Windows, and it is not clear
+  if nl_langinfo() has wchar_t versions (some OSes do, some do not).
+*/
+
 attribute_hidden
 void dt_invalidate_locale() // used in plaform.c
 {
@@ -1222,7 +1232,7 @@ static void get_locale_w_strings(void)
 
 /* We only care if the result is null or not */
 static void *
-R_strptime (const char *buf, const char *format, struct tm *tm, 
+R_strptime (const char *buf, const char *format, stm *tm, 
 	    double *psecs, int *poffset)
 {
 #if defined(HAVE_WCSTOD)

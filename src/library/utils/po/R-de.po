@@ -1,13 +1,13 @@
 # Translation of src/library/utils/po/R-utils.pot to German.
-# Copyright (C) 2008-2013 The R Foundation
+# Copyright (C) 2008-2014 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2008-2013.
+# Detlef Steuer <steuer@hsu-hh.de>, 2008-2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.0.0\n"
+"Project-Id-Version: R 3.1.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-21 09:14\n"
+"POT-Creation-Date: 2014-02-27 17:14\n"
 "PO-Revision-Date: 2013-03-18 10:11+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
@@ -70,8 +70,8 @@ msgstr ""
 msgid "Warning: unknown option %s"
 msgstr "Warnung: unbekannte Option %s"
 
-msgid "Created PDF document %s"
-msgstr "Erzeugtes PDF Dokument %s"
+msgid "Output file:"
+msgstr "Ausgabedateien:"
 
 msgid "Compacting PDF document"
 msgstr "Komprimieren PDF Dokument"
@@ -145,6 +145,12 @@ msgstr "'file' muss NULL, eine Zeichenkette oder eine Verbindung sein"
 msgid "bad argument"
 msgstr "unbrauchbares Argument"
 
+msgid "'full.names' must be TRUE for multiple paths."
+msgstr "'full.names' muss TRUE sein bei mehrfachen Pfaden."
+
+msgid "Timestamp file no longer exists."
+msgstr "Zeitstempel exisitiert nicht länger."
+
 msgid ""
 "Not all arguments are of the same length, the following need to be recycled: "
 "%s"
@@ -194,9 +200,6 @@ msgstr ""
 
 msgid "package %s not found"
 msgstr "Paket %s nicht gefunden"
-
-msgid "broken installation, no CITATION file in the base package."
-msgstr "defekte installation, keine Datei CITATION im Base-Paket"
 
 msgid "no date field in DESCRIPTION file of package %s"
 msgstr "kein Datumsfeld in der Datei DESCRIPTION des Paketes %s"
@@ -273,6 +276,9 @@ msgstr "'dump' gehört nicht zur Klasse %s"
 
 msgid "Message:"
 msgstr "Nachricht:"
+
+msgid "'dump' is empty"
+msgstr "'dump' ist leer"
 
 msgid "Available environments had calls:"
 msgstr "Verfügbare Umgebungen hatte Aufrufe:"
@@ -718,10 +724,10 @@ msgid "files: %s"
 msgstr "files: %s"
 
 msgid ""
-"installation of one of more packages failed,\n"
+"installation of one or more packages failed,\n"
 "  probably %s"
 msgstr ""
-"Installation eines oder mehrer Pakete schlug fehl,\n"
+"Installation eines oder mehrerer Pakete schlug fehl,\n"
 " vermutlich %s"
 
 msgid ""
@@ -882,6 +888,9 @@ msgstr ""
 msgid "cannot coerce 'x' to roman"
 msgstr "kann 'x' nicht nach Roman unwandeln"
 
+msgid "Could not create file %s, aborting"
+msgstr "Konnte Datei %s nicht erzeugen, abgebrochen"
+
 msgid "no valid packages were specified"
 msgstr "keine gültigen Pakete angegeben"
 
@@ -966,10 +975,16 @@ msgid "file '%s' not found"
 msgstr "File '%s' nicht gefunden"
 
 msgid "file '%s' did not have execute permissions: corrected"
-msgstr ""
+msgstr "Datei '%s' hatte keine Ausführungsrechte: korrigiert"
 
 msgid "file size is limited to 8GB"
 msgstr "Dateigröße limitiert auf 8GB"
+
+msgid "invalid uid value replaced by that for user 'nobody'"
+msgstr "ungültiger uid Wert durch den für 'nobody' ersetzt "
+
+msgid "invalid gid value replaced by that for user 'nobody'"
+msgstr "ungültiger gid Wert durch den für 'nobody' ersetzt "
 
 msgid ""
 "vignette %s found more than once,\n"
@@ -981,9 +996,11 @@ msgstr ""
 msgid "vignette %s not found"
 msgstr "Vignette %s nicht gefunden"
 
-#, fuzzy
 msgid "vignette %s has no PDF/HTML"
-msgstr "Vignette %s enthält kein PDF"
+msgstr "Vignette %s enthält kein PDF/HTML"
+
+msgid "vignette %s has no R code"
+msgstr "Vignette %s hat keinen R Kode"
 
 msgid "select.list() cannot be used non-interactively"
 msgstr "select.list() kann nicht nicht-interaktiv benutzt werden"
@@ -1048,6 +1065,9 @@ msgstr "'ccaddress' muss von der Länge 1 sein"
 
 msgid "no download method found"
 msgstr "keine Downloadmethode gefunden"
+
+msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
+msgstr "Methode 'lynx' ist ugetestet und ab R 3.1.0 veraltet"
 
 msgid "download had nonzero exit status"
 msgstr "Download hatte Exit-Status ungleich 0"
@@ -1259,6 +1279,12 @@ msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "Paket %s wird gerade benutzt und deshab nicht installiert"
 msgstr[1] "Pakete %s werden gerade bennutzt und deshalb nicht installiert"
+
+#~ msgid "broken installation, no CITATION file in the base package."
+#~ msgstr "defekte installation, keine Datei CITATION im Base-Paket"
+
+#~ msgid "Created PDF document %s"
+#~ msgstr "Erzeugtes PDF Dokument %s"
 
 #~ msgid "file path is too long"
 #~ msgstr "Pfad ist zu lang"
@@ -1533,9 +1559,6 @@ msgstr[1] "Pakete %s werden gerade bennutzt und deshalb nicht installiert"
 
 #~ msgid "'latexcmd' is empty"
 #~ msgstr "'latexcmd' ist leer"
-
-#~ msgid "'dvipscmd' is empty"
-#~ msgstr "'dvipscmd'ist leer"
 
 #~ msgid ""
 #~ "Changing the default browser (as specified by the 'browser' option) to "

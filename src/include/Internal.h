@@ -35,6 +35,7 @@ SEXP do_mkjunction(SEXP, SEXP, SEXP, SEXP);
 SEXP do_shellexec(SEXP, SEXP, SEXP, SEXP);
 SEXP do_setInternet2(SEXP, SEXP, SEXP, SEXP);
 SEXP do_syswhich(SEXP, SEXP, SEXP, SEXP);
+SEXP do_tzone_name(SEXP, SEXP, SEXP, SEXP);
 #else
 SEXP do_X11(SEXP, SEXP, SEXP, SEXP);
 #endif
@@ -47,6 +48,7 @@ SEXP do_addTryHandlers(SEXP, SEXP, SEXP, SEXP);
 SEXP do_adist(SEXP, SEXP, SEXP, SEXP);
 SEXP do_agrep(SEXP, SEXP, SEXP, SEXP);
 SEXP do_allnames(SEXP, SEXP, SEXP, SEXP);
+SEXP do_anyNA(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aperm(SEXP, SEXP, SEXP, SEXP);
 SEXP do_aregexec(SEXP, SEXP, SEXP, SEXP);
 SEXP do_args(SEXP, SEXP, SEXP, SEXP);

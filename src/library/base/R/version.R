@@ -1,7 +1,7 @@
 #  File src/library/base/R/version.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -177,7 +177,7 @@ function(x, i, j)
     else
         lapply(unclass(x)[i], "[", j)
     ## Change sequences which are NULL or contains NAs to integer().
-    bad <- vapply(y, function(t) is.null(t) || any(is.na(t)), NA)
+    bad <- vapply(y, function(t) is.null(t) || anyNA(t), NA)
     if(any(bad))
         y[bad] <- rep.int(list(integer()), length(bad))
     class(y) <- class(x)
@@ -309,9 +309,8 @@ function(x, ...)
     y
 }
 
-is.na.numeric_version <-
-function(x)
-    is.na(.encode_numeric_version(x))
+is.na.numeric_version <- function(x) is.na(.encode_numeric_version(x))
+anyNA.numeric_version <- function(x) anyNA(.encode_numeric_version(x))
 
 print.numeric_version <-
 function(x, ...)

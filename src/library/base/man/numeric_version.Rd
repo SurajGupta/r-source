@@ -1,6 +1,6 @@
 % File src/library/base/man/numeric_version.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2008 R Core Team
+% Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
 \name{numeric_version}
@@ -19,6 +19,7 @@
 \alias{[[<-.numeric_version}
 \alias{Ops.numeric_version}
 \alias{Summary.numeric_version}
+\alias{anyNA.numeric_version}
 \alias{as.character.numeric_version}
 \alias{as.data.frame.numeric_version}
 \alias{as.list.numeric_version}
@@ -74,7 +75,10 @@ getRversion()
   access the integers of a version use two indices: see the examples.
 }
 \seealso{
-  \code{\link{compareVersion}}
+  \code{\link{compareVersion}};
+  \code{\link{packageVersion}} for the version of a specific \R package.
+  \code{\link{R.version}} etc for the version of \R (and the information
+  underlying \code{getRversion()}).
 }
 \examples{
 x <- package_version(c("1.2-4", "1.2-3", "2.1"))
@@ -96,5 +100,9 @@ x[[2, 3]] <- 0   # zero the patchlevel
 x[[c(2, 3)]] <- 0 # same
 x
 x[[3]] <- "2.2.3"; x
+x <- c(x, package_version("0.0"))
+is.na(x)[4] <- TRUE
+stopifnot(identical(is.na(x), c(rep(FALSE,3), TRUE)),
+	  anyNA(x))
 }
 \keyword{utilities}

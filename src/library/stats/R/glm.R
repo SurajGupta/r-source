@@ -191,7 +191,7 @@ glm.fit <-
         dev <- sum(dev.resids(y, mu, weights))
         w <- ((weights * mu.eta(eta)^2)/variance(mu))^0.5
         residuals <- (y - mu)/mu.eta(eta)
-        good <- rep(TRUE, length(residuals))
+        good <- rep_len(TRUE, length(residuals))
         boundary <- conv <- TRUE
         coef <- numeric()
         iter <- 0L
@@ -219,7 +219,7 @@ glm.fit <-
         for (iter in 1L:control$maxit) {
             good <- weights > 0
             varmu <- variance(mu)[good]
-            if (any(is.na(varmu)))
+            if (anyNA(varmu))
                 stop("NAs in V(mu)")
             if (any(varmu == 0))
                 stop("0s in V(mu)")
@@ -240,7 +240,7 @@ glm.fit <-
             ngoodobs <- as.integer(nobs - sum(!good))
             ## call Fortran code via C wrapper
             fit <- .Call(C_Cdqrls, x[good, , drop = FALSE] * w, z * w,
-                         min(1e-7, control$epsilon/1000))
+                         min(1e-7, control$epsilon/1000), check=FALSE)
             if (any(!is.finite(fit$coefficients))) {
                 conv <- FALSE
                 warning(gettextf("non-finite coefficients at iteration %d", iter), domain = NA)
@@ -410,16 +410,19 @@ anova.glm <- function(object, ..., dispersion = NULL, test = NULL)
     ## check for multiple objects
     dotargs <- list(...)
     named <- if (is.null(names(dotargs)))
-	rep(FALSE, length(dotargs)) else (names(dotargs) != "")
+	rep_len(FALSE, length(dotargs)) else (names(dotargs) != "")
     if(any(named))
 	warning("the following arguments to 'anova.glm' are invalid and dropped: ",
 		paste(deparse(dotargs[named]), collapse=", "))
     dotargs <- dotargs[!named]
-    is.glm <- unlist(lapply(dotargs,function(x) inherits(x,"glm")))
+    is.glm <- vapply(dotargs,function(x) inherits(x,"glm"), NA)
     dotargs <- dotargs[is.glm]
+
+    ## do not copy this: anova.glmlist is not an exported object.
+    ## use anova(structure(list(object, dotargs), class = "glmlist"))
     if (length(dotargs))
 	return(anova.glmlist(c(list(object), dotargs),
-			     dispersion = dispersion, test=test))
+			     dispersion = dispersion, test = test))
 
     ## score tests require a bit of extra computing
     doscore <- !is.null(test) && test=="Rao"
@@ -494,7 +497,7 @@ anova.glm <- function(object, ..., dispersion = NULL, test = NULL)
                           x=x,
                           y=r,
                           weights=w))
-          score[nvars] <-  zz$null.deviance - zz$deviance
+          score[nvars] <- zz$null.deviance - zz$deviance
         }
     }
 

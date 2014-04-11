@@ -1730,7 +1730,7 @@ setupScreenDevice(pDevDesc dd, gadesc *xd, double w, double h,
     setresize(xd->gawin, HelpResize);
     setredraw(xd->gawin, HelpExpose);
     setmousedown(xd->gawin, HelpMouseClick);
-    setmousemove(xd->gawin, HelpMouseMove);
+    setmousemove(xd->gawin, HelpMouseMove); 
     setmousedrag(xd->gawin, HelpMouseMove);
     setmouseup(xd->gawin, HelpMouseUp);
     setkeydown(xd->gawin, NHelpKeyIn);
@@ -3149,7 +3149,7 @@ static Rboolean GA_Locator(double *x, double *y, pDevDesc dd)
 
     while (!xd->clicked) {
 	SH;
-	if (!peekevent()) WaitMessage();
+	R_WaitEvent();
 	R_ProcessEvents();
     }
 
@@ -3322,6 +3322,8 @@ Rboolean GADeviceDriver(pDevDesc dd, const char *display, double width,
     dd->right = dd->left + rr.width - 0.0001;	/* right */
     dd->top = (xd->kind == PRINTER) ? rr.y : 0;	/* top */
     dd->bottom = dd->top + rr.height - 0.0001;	/* bottom */
+    dd->clipLeft = dd->left; dd->clipRight = dd->right;
+    dd->clipBottom = dd->bottom; dd->clipTop = dd->top;
 
     if (resize == 3) { /* might have got a shrunken window */
 	int iw = width/pixelWidth(NULL) + 0.5,
@@ -3779,7 +3781,7 @@ static Rboolean GA_NewFrameConfirm(pDevDesc dev)
     dev->onExit = GA_onExit;  /* install callback for cleanup */
     while (!xd->clicked && !xd->enterkey) {
 	SH;
-	if (!peekevent()) WaitMessage();
+	R_WaitEvent();
 	R_ProcessEvents(); /* May not return if user interrupts */
     }
     dev->onExit(dev);

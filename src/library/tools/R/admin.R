@@ -804,7 +804,9 @@ function(dir, outDir, encoding = "unknown")
         db <- .build_Rd_db(dir, manfiles, db_file = db_file,
                            encoding = encoding, built_file = built_file)
         nm <- as.character(names(db)) # Might be NULL
-        saveRDS(nm, pathsFile)
+        saveRDS(structure(nm,
+                          first = nchar(file.path(mandir, "")) + 1L),
+                pathsFile)
         names(db) <- sub("\\.[Rr]d$", "", basename(nm))
         makeLazyLoadDB(db, file.path(manOutDir, basename(outDir)))
     }
@@ -927,7 +929,7 @@ checkRdaFiles <- function(paths)
     res <- data.frame(size = NA_real_, ASCII = NA,
                       compress = NA_character_, version = NA_integer_,
                       stringsAsFactors = FALSE)
-    res <- res[rep(1L, length(paths)), ]
+    res <- res[rep_len(1L, length(paths)), ]
     row.names(res) <- paths
     keep <- file.exists(paths)
     res$size[keep] <- file.info(paths)$size[keep]
@@ -1043,14 +1045,17 @@ compactPDF <-
     structure(na.omit(ans), class = c("compactPDF", "data.frame"))
 }
 
-find_gs_cmd <- function(gs_cmd)
+find_gs_cmd <- function(gs_cmd = "")
 {
     if(!nzchar(gs_cmd)) {
         if(.Platform$OS.type == "windows") {
-            gs_cmd <- Sys.which("gswin64c")
+            gsexe <- Sys.getenv("R_GSCMD")
+            if (!nzchar(gsexe)) gsexe <- Sys.getenv("GSC")
+            gs_cmd <- Sys.which(gsexe)
+            if (!nzchar(gs_cmd)) gs_cmd <- Sys.which("gswin64c")
             if (!nzchar(gs_cmd)) gs_cmd <- Sys.which("gswin32c")
             gs_cmd
-        } else Sys.which("gs")
+        } else Sys.which(Sys.getenv("R_GSCMD", "gs"))
     } else Sys.which(gs_cmd)
 }
 

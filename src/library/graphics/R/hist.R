@@ -63,6 +63,13 @@ hist.default <-
 	} else if(is.function(breaks)) {
 	    breaks <- breaks(x)
 	}
+        ## if(!is.numeric(breaks) || !is.finite(breaks) || breaks < 1L)
+        ##     stop("invalid number of 'breaks'")
+        ## breaks <- pretty (range(x), n = breaks, min.n = 1)
+        ## nB <- length(breaks)
+        ## if(nB <= 1) ##-- Impossible !
+        ##     stop(gettextf("hist.default: pretty() error, breaks=%s",
+        ##                   format(breaks)), domain = NA)
         if (length(breaks) == 1) {
             if(!is.numeric(breaks) || !is.finite(breaks) || breaks < 1L)
                 stop("invalid number of 'breaks'")

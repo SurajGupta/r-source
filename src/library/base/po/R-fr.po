@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
-"PO-Revision-Date: 2013-03-18 21:58+0100\n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
+"PO-Revision-Date: 2014-03-17 10:41+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Poedit 1.6.4\n"
 
 msgid "'%s' is defunct."
 msgstr "'%s' est obsolète et retiré de R."
@@ -48,12 +48,6 @@ msgstr "valeurs infinies ou manquantes dans 'x'"
 msgid "a dimension is zero"
 msgstr "une dimension est nulle"
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr "'nu' doit être 0, nrow(x) ou ncol(x)"
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr "'nv' doit être 0, nrow(x) ou ncol(x)"
-
 msgid "second argument must be a list"
 msgstr "le second argument doit être une liste"
 
@@ -78,6 +72,15 @@ msgstr "chaîne de caractères de version incorrecte"
 
 msgid "target is %s, current is %s"
 msgstr "la cible est %s, l'actuel est %s"
+
+msgid "'tolerance' should be numeric"
+msgstr "'tolerance' doit être numérique"
+
+msgid "'scale' should be numeric or NULL"
+msgstr "'scale' doit être numérique ou NULL"
+
+msgid "'%s' must be logical"
+msgstr "'%s' doit être une valeur logique"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) doit avoir un longueur positive"
@@ -151,21 +154,6 @@ msgstr "le chargement automatique n'a pas trouvé '%s' dans '%s'"
 
 msgid "complex matrices not permitted at present"
 msgstr "les matrices complexes ne sont pas encore traitées"
-
-msgid "non-square matrix in 'chol'"
-msgstr "la matrice doit être carrée pour 'chol'"
-
-msgid "non-matrix argument to 'chol'"
-msgstr "l'argument doit être une matrice pour 'chol'"
-
-msgid "invalid nrow(x)"
-msgstr "nrow(x) incorrect"
-
-msgid "too large a matrix for LINPACK"
-msgstr "matrice trop large pour LINPACK"
-
-msgid "matrix not positive definite"
-msgstr "la matrice n'est pas définie positive"
 
 msgid "'x' must be an array of at least two dimensions"
 msgstr "'x' doit être un tableau ayant au moins 2 dimensions"
@@ -326,6 +314,9 @@ msgstr "remplacement d'élément dans une colonne non existante : %s"
 
 msgid "only a single element should be replaced"
 msgstr "seulement un élement devrait être remplacé"
+
+msgid "Name partially matched in data frame"
+msgstr "Nom sélectionné avec correspondance partielle dans le data frame"
 
 msgid "names do not match previous names"
 msgstr "les noms ne correspondent pas aux noms précédents"
@@ -497,6 +488,9 @@ msgstr "'from' doit être un objet \"POSIXt\""
 msgid "'to' must be a \"POSIXt\" object"
 msgstr "'to' doit être un objet \"POSIXt\""
 
+msgid "no Olson database found"
+msgstr "aucune base de donnée Olson trouvée"
+
 msgid "'file' must be a character string or connection"
 msgstr "'file' doit être une chîne de caractères ou une connection"
 
@@ -574,6 +568,9 @@ msgstr "matrice 0 x 0"
 msgid "non-square matrix in 'eigen'"
 msgstr "la matrice n'est pas carrée dans 'eigen'"
 
+msgid "invalid nrow(x)"
+msgstr "nrow(x) incorrect"
+
 msgid "invalid 'labels'; length %d should be 1 or %d"
 msgstr "'labels' incorrect ; la longueur %d doit être 1 ou %d"
 
@@ -648,6 +645,9 @@ msgstr "'vec' doit être trié par ordre croissant"
 msgid "using the first element of 'value' of type \"expression\""
 msgstr "utilisation du premier élément de 'value' de type \"expression\""
 
+msgid "class of 'x' was discarded"
+msgstr "la classe de 'x' est éliminée"
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr ""
 "'mode' doit être un de \"double\" (\"real\"), \"integer\" ou \"character\""
@@ -720,6 +720,9 @@ msgstr "des remplacements doivent être fournis pour les non-correspondances"
 
 msgid "must have replacements for matches"
 msgstr "des remplacements doivent être fournis pour les correspondances"
+
+msgid "No factors specified"
+msgstr "Aucunes variables 'factor's spécifiées"
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr "norm '%s' utilise systématiquement 'exact = FALSE' pour l'instant"
@@ -1024,6 +1027,8 @@ msgid ""
 "namespace %s is not available and has been replaced\n"
 "by .GlobalEnv when processing object %s"
 msgstr ""
+"l'espace de nom %s n'est pas disponible et a été remplacé\n"
+"par .GlobalEnv lors du traitement de l'objet %s"
 
 msgid "'%s' is not an exported object from 'namespace:%s'"
 msgstr "'%s' n'est pas un objet exporté depuis 'namespace:%s'"
@@ -1125,8 +1130,9 @@ msgstr ""
 msgid "cannot import into a sealed namespace"
 msgstr "impossible d'importer vers un espace de noms verrouillé"
 
-msgid "replacing previous import %s when loading %s"
-msgstr "remplacement de l'importation précédente %s lors du chargement de %s"
+msgid "replacing previous import by %s when loading %s"
+msgstr ""
+"remplacement de l'importation précédente par %s lors du chargement de %s"
 
 msgid "invalid import target"
 msgstr "cible d'importation incorrecte"
@@ -1163,14 +1169,11 @@ msgstr "le package %s n'a aucun fichier 'NAMESPACE'"
 msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr "nom vide dans la directive '%s' dans le fichier 'NAMESPACE'"
 
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr "noms de symboles dupliqués %s dans useDynlib(\"%s\")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "mauvaise directive 'S3method' : %s"
-
-msgid "too many 'S3method' directives"
-msgstr "trop de directives 'S3method'"
 
 msgid "unknown namespace directive: %s"
 msgstr "directive inconnue dans l'espace de noms : %s"
@@ -1208,6 +1211,9 @@ msgstr "un argument sera recyclé partiellement"
 
 msgid "invalid ncol(x)"
 msgstr "ncol(x) incorrect"
+
+msgid "too large a matrix for LINPACK"
+msgstr "matrice trop large pour LINPACK"
 
 msgid "first argument must be a QR decomposition"
 msgstr "le premier argument doit être une décomposition QR"
@@ -1253,7 +1259,7 @@ msgstr ""
 msgid "invalid NCOL(R)"
 msgstr "NCOL(R) incorrecte"
 
-msgid "'x' must be an atomic vector"
+msgid "'x' must be a vector of an atomic type"
 msgstr "'x' doit être un vecteur atomique"
 
 msgid "invalid 'rle' structure"
@@ -1280,11 +1286,17 @@ msgstr "la longueur de 'scale' doit être égale au nombre de colonnes de 'x'"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "spécifiez soit 'nmax', soit 'n', mais pas les deux à la fois"
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr "'from' ne peut être NA, NaN ou infini"
+
 msgid "argument 'length.out' must be of length 1"
 msgstr "l'argument 'length.out' doit être de longueur 1"
 
 msgid "first element used of 'length.out' argument"
 msgstr "seul le premier élément de 'length.out' est utilisé"
+
+msgid "'to' cannot be NA, NaN or infinite"
+msgstr "'to' ne peut être NA, NaN ou infini"
 
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "(to - from) / by incorrect dans seq(.)"
@@ -1745,6 +1757,24 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Message d'avis :\n"
 msgstr[1] "Messages d'avis :\n"
+
+#~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nu' doit être 0, nrow(x) ou ncol(x)"
+
+#~ msgid "'nv' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nv' doit être 0, nrow(x) ou ncol(x)"
+
+#~ msgid "too many 'S3method' directives"
+#~ msgstr "trop de directives 'S3method'"
+
+#~ msgid "non-square matrix in 'chol'"
+#~ msgstr "la matrice doit être carrée pour 'chol'"
+
+#~ msgid "non-matrix argument to 'chol'"
+#~ msgstr "l'argument doit être une matrice pour 'chol'"
+
+#~ msgid "matrix not positive definite"
+#~ msgstr "la matrice n'est pas définie positive"
 
 #~ msgid "'keep.source' is deprecated and will be ignored"
 #~ msgstr "'keep.source' est obsolète et sera ignoré"

@@ -1,7 +1,7 @@
 #  File src/library/grDevices/R/unix/x11.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -57,6 +57,15 @@ X11 <- function(display = "", width, height, pointsize, gamma,
                 bg, canvas, fonts, family,
                 xpos, ypos, title, type, antialias)
 {
+    if(display != "XImage") { # used by tkrplot
+        check <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", "")
+        msg <- "screen devices should not be used in examples etc"
+        if (identical(check, "stop"))
+            stop(msg, domain = NA)
+        else if (identical(check, "warn"))
+            warning(msg, immediate. = TRUE, noBreaks. = TRUE, domain = NA)
+    }
+
     if(display == "" && .Platform$GUI == "AQUA" &&
        is.na(Sys.getenv("DISPLAY", NA))) Sys.setenv(DISPLAY = ":0")
 

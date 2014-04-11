@@ -45,7 +45,7 @@ stripchart(x, \dots)
     when the data contain \code{NA}s.  The default is to ignore missing
     values in either the response or the group.}
   \item{\dots}{additional parameters passed to the default method, or by
-    it to \code{\link{plot.default}}, \code{\link{points}},
+    it to \code{\link{plot.window}}, \code{\link{points}},
     \code{\link{axis}} and \code{\link{title}} to control the appearance
     of the plot.} 
   \item{method}{the method to be used to separate coincident points.

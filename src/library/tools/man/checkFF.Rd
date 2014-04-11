@@ -1,6 +1,6 @@
 % File src/library/tools/man/checkFF.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2013 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{checkFF}
@@ -9,6 +9,7 @@
 \title{Check Foreign Function Calls}
 \usage{
 checkFF(package, dir, file, lib.loc = NULL,
+        registration = FALSE, check_DUP = FALSE,
         verbose = getOption("verbose"))
 }
 \description{
@@ -30,6 +31,10 @@ checkFF(package, dir, file, lib.loc = NULL,
     or \code{NULL}.  The default value of \code{NULL} corresponds to all
     libraries currently known.  The specified library trees are used to
     search for \code{package}.}
+  \item{registration}{a logical.  If \code{TRUE}, checks
+    the registration information on the call (if available).}
+  \item{check_DUP}{a logical.  If \code{TRUE}, \code{.C} and
+    \code{.Fortran} calls with \code{DUP = FALSE} are reported.}
   \item{verbose}{a logical.  If \code{TRUE}, additional diagnostics are
     printed (and the result is returned invisibly).}
 }
@@ -51,7 +56,7 @@ checkFF(package, dir, file, lib.loc = NULL,
 \value{
   An object of class \code{"checkFF"}.
 
-  There are \code{formaat} and  \code{print} methods to display the
+  There are \code{\link{format}} and \code{print} methods to display the
   information contained in such objects.
 }
 \seealso{

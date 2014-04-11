@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -1318,7 +1318,16 @@ Warning messages:
 +           )
 > ## pbx had two -Inf; y was all Inf  for R <= 2.15.3;  PR#15162
 > 
+> ## dnorm(x) for "large" |x|
+> stopifnot(abs(1 - dnorm(35+3^-9)/ 3.933395747534971e-267) < 1e-15)
+> ## has been losing up to 8 bit precision for R <= 3.0.x
+> 
+> ## pbeta(x, <small a>,<small b>, .., log):
+> ldp <- diff(log(diff(pbeta(0.5, 2^-(90+ 1:25), 2^-60, log.p=TRUE))))
+> stopifnot(abs(ldp - log(1/2)) < 1e-9)
+> ## pbeta(*, log) lost all precision here, for R <= 3.0.x (PR#15641)
+> 
 > 
 > cat("Time elapsed: ", proc.time() - .ptime,"\n")
-Time elapsed:  0.846 0.014 0.862 0 0 
+Time elapsed:  0.657 0.009 0.668 0 0 
 > 

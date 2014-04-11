@@ -38,25 +38,22 @@ vignette(topic, package = NULL, lib.loc = NULL, all = TRUE)
 \details{
   Function \code{vignette} returns an object of the same class, the
   print method opens a viewer for it.
-  Currently, only PDF versions of vignettes can be viewed.
 #ifdef unix
-  The program specified by the \code{pdfviewer} option is used for this.
+  The program specified by the \code{pdfviewer} option is used for
+  viewing PDF versions of vignettes.
 #endif
-  If several vignettes have PDF versions with base name identical to
-  \code{topic}, the first one found is used.
+  If several vignettes have PDF/HTML versions with base name identical
+  to \code{topic}, the first one found is used.
 
   If no topics are given, all available vignettes are listed.  The
   corresponding information is returned in an object of class
   \code{"packageIQR"}.
 
-  The \code{edit} method
-  extracts the \R code from the vignette to a temporary file and
-  opens the file in an editor (see \code{\link{edit}}). This makes it
-  very easy to execute the commands line by line, modify them in any way
-  you want to help you test variants, etc.. An alternative way of
-  extracting the \R code from the vignette is to run
-  \code{\link{Stangle}} on the source code of the vignette,
-  see the examples below.
+  The \code{edit} method copies the \R code extracted from the vignette
+  to a temporary file and opens the file in an editor (see
+  \code{\link{edit}}). This makes it very easy to execute the commands
+  line by line, modify them in any way you want to help you test
+  variants, etc.  
 }
 \seealso{
   \code{\link{browseVignettes}} for an HTML-based vignette browser.

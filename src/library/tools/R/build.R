@@ -25,103 +25,8 @@
 ## be what commandArgs(TRUE) would return, that is a character vector
 ## of (space-delimited) terms that would be passed to R CMD build.
 
-
-### emulation of Perl Logfile.pm
-
-newLog <- function(filename = "")
-{
-    con <- if(nzchar(filename)) file(filename, "wt") else 0L
-
-    Log <- new.env(parent = emptyenv())
-    Log$con <- con
-    Log$filename <- filename
-    Log$stars <- "*"
-    Log$warnings <- 0L
-    Log$notes <- 0L
-
-    Log
-}
-
-closeLog <- function(Log) if (Log$con > 2L) close(Log$con)
-
-printLog <- function(Log, ...)
-{
-    quotes <- function(x) gsub("'([^']*)'", sQuote("\\1"), x)
-    args <- lapply(list(...), quotes)
-    do.call(cat, c(args, sep = ""))
-    if (Log$con > 0L) do.call(cat, c(args, sep = "", file = Log$con))
-}
-
-printLog0 <- function(Log, ...)
-{
-    cat(..., sep = "")
-    if (Log$con > 0L) cat(..., file = Log$con, sep = "")
-}
-
-## unused
-## setStars <- function(Log, stars) {Log$stars <- stars; Log}
-
-checkingLog <- function(Log, ...)
-    printLog(Log, Log$stars, " checking ", ..., " ...")
-
-creatingLog <- function(Log, text)
-    printLog(Log, Log$stars, " creating ", text, " ...")
-
-messageLog <- function(Log, ...)
-    printLog(Log, Log$stars, " ", ..., "\n")
-
-resultLog <- function(Log, text)
-    printLog(Log, " ", text, "\n")
-
-errorLog <- function(Log, ...)
-{
-    resultLog(Log, "ERROR")
-    text <- paste0(...)
-    if (length(text) && nzchar(text)) printLog(Log, ..., "\n")
-}
-
-## <NOTE>
-## Perhaps the arguments to errorLog(), warningLog() and noteLog()
-## should be synchronized?
-## </NOTE>
-
-warningLog <- function(Log, text = "")
-{
-    resultLog(Log, "WARNING")
-    if(nzchar(text)) printLog(Log, text, "\n")
-    Log$warnings <- Log$warnings + 1L
-}
-
-noteLog <- function(Log, text = "")
-{
-    resultLog(Log, "NOTE")
-    if(nzchar(text)) printLog(Log, text, "\n")
-    Log$notes <- Log$notes + 1L
-}
-
-summaryLog <- function(Log)
-{
-    if((Log$warnings > 0L) || (Log$notes > 0L)) {
-        if(Log$warnings > 1L)
-            printLog(Log,
-                     sprintf("WARNING: There were %d warnings.\n",
-                             Log$warnings))
-        else if(Log$warnings == 1L)
-            printLog(Log,
-                     sprintf("WARNING: There was 1 warning.\n"))
-        if(Log$notes > 1L)
-            printLog(Log,
-                     sprintf("NOTE: There were %d notes.\n",
-                             Log$notes))
-        else if(Log$notes == 1L)
-            printLog(Log,
-                     sprintf("NOTE: There was 1 note.\n"))
-        cat(sprintf("See\n  %s\nfor details.\n", sQuote(Log$filename)))
-    }
-}
-
 writeDefaultNamespace <-
-    function(filename, desc = file.path(dirname(filename), "DESCRIPTION"))
+function(filename, desc = file.path(dirname(filename), "DESCRIPTION"))
 {
     pkgInfo <- .split_description(.read_description(desc))
     pkgs <- unique(c(names(pkgInfo$Imports), names(pkgInfo$Depends)))
@@ -285,7 +190,7 @@ get_exclude_patterns <- function()
 	res <- system_with_capture(cmd, args)
 	if (res$status) {
 	    printLog(Log, "      -----------------------------------\n")
-	    printLog(Log, paste(c(res$stdout, ""),  collapse = "\n"))
+	    printLog0(Log, paste(c(res$stdout, ""),  collapse = "\n"))
 	    printLog(Log, "      -----------------------------------\n")
 	    unlink(libdir, recursive = TRUE)
 	    printLog(Log, "ERROR: package installation failed\n")
@@ -363,7 +268,7 @@ get_exclude_patterns <- function()
                 Sys.setenv(PATH = oPATH)
                 if (res$status) {
                     resultLog(Log, "ERROR")
-                    printLog(Log, paste(c(res$stdout, ""),  collapse = "\n"))
+                    printLog0(Log, paste(c(res$stdout, ""),  collapse = "\n"))
                     do_exit(1L)
                 } else {
                     # Rescan for weave and tangle output files
@@ -377,13 +282,8 @@ get_exclude_patterns <- function()
                 if (basename(vigns$dir) == "vignettes") {
                     ## inst may not yet exist
                     dir.create(doc_dir, recursive = TRUE, showWarnings = FALSE)
-		    # Copy vignette files from vignettes directory
-		    vign_files <- c(vigns$docs, vigns$outputs, unlist(vigns$sources))
-		    # not those already in inst/doc
-		    vign_files <- vign_files[substr(vign_files, 1, nchar(vigns$dir)) == vigns$dir]
-                    file.copy(vign_files, doc_dir)
-		    # Remove product files from vignettes
-		    unlink(setdiff(vign_files, vigns$docs))
+                    file.copy(c(vigns$docs, vigns$outputs, unlist(vigns$sources)), doc_dir)
+                    unlink(c(vigns$outputs, unlist(vigns$sources)))
                     extras_file <- file.path("vignettes", ".install_extras")
                     if (file.exists(extras_file)) {
                         extras <- readLines(extras_file, warn = FALSE)
@@ -394,7 +294,7 @@ get_exclude_patterns <- function()
                             inst <- rep(FALSE, length(allfiles))
                             for (e in extras)
                                 inst <- inst | grepl(e, allfiles, perl = TRUE,
-                                                     ignore.case = WINDOWS)
+                                                     ignore.case = TRUE)
                             file.copy(allfiles[inst], doc_dir, recursive = TRUE)
                         }
                     }
@@ -443,7 +343,7 @@ get_exclude_patterns <- function()
                                full.names = TRUE))) {
             messageLog(Log, "compacting vignettes and other PDF files")
             if(compact_vignettes %in% c("gs", "gs+qpdf", "both")) {
-                gs_cmd <- find_gs_cmd(Sys.getenv("R_GSCMD", ""))
+                gs_cmd <- find_gs_cmd()
                 gs_quality <- "ebook"
             } else {
                 gs_cmd <- ""
@@ -456,7 +356,7 @@ get_exclude_patterns <- function()
                               gs_cmd = gs_cmd, gs_quality = gs_quality)
             res <- format(res, diff = 1e5)
             if(length(res))
-                printLog(Log, paste(" ", format(res), collapse = "\n"), "\n")
+                printLog0(Log, paste(" ", format(res), collapse = "\n"), "\n")
         }
         if (pkgInstalled) {
             unlink(libdir, recursive = TRUE)
@@ -865,9 +765,8 @@ get_exclude_patterns <- function()
         } else if (a == "--no-build-vignettes") {
             vignettes <- FALSE
         } else if (a == "--no-vignettes") { # pre-3.0.0 version
-            warning("'--no-vignettes' is deprecated:\n  use '--no-build-vignettes' instead",
-                    immediate. = TRUE, call. = FALSE, domain = NA)
-            vignettes <- FALSE
+            stop("'--no-vignettes' is defunct:\n  use '--no-build-vignettes' instead",
+                 call. = FALSE, domain = NA)
         } else if (a == "--resave-data") {
             resave_data <- "best"
         } else if (a == "--no-resave-data") {
@@ -995,7 +894,7 @@ get_exclude_patterns <- function()
             ignore <- c(ignore, readLines(ignore_file, warn = FALSE))
         for(e in ignore[nzchar(ignore)])
             exclude <- exclude | grepl(e, allfiles, perl = TRUE,
-                                       ignore.case = WINDOWS)
+                                       ignore.case = TRUE)
 
         isdir <- file_test("-d", allfiles)
         ## old (pre-2.10.0) dirnames

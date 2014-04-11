@@ -5,6 +5,7 @@
 
 \name{object.size}
 \alias{object.size}
+\alias{format.object_size}
 \alias{print.object_size}
 \title{Report the Space Allocated for an Object}
 \description{
@@ -13,6 +14,7 @@
 \usage{
 object.size(x)
 
+\method{format}{object_size}(x, units = "b", \dots)
 \method{print}{object_size}(x, quote = FALSE, units = "b", \dots)
 }
 \arguments{
@@ -44,9 +46,10 @@ object.size(x)
   very likely be the same on different platforms with the same word
   length and pointer size.
 
-  \code{units = "auto"} in the \code{print} method chooses the largest
-  units in which the result is one or more (before rounding).  Values in
-  kilobytes, megabytes or gigabytes are rounded to the nearest \code{0.1}.
+  \code{units = "auto"} in the \code{format} and \code{print} methods
+  chooses the largest units in which the result is one or more (before
+  rounding).  Values in kilobytes, megabytes or gigabytes are rounded to
+  the nearest \code{0.1}.
 }
 \value{
   An object of class \code{"object_size"} with a length-one double value,
@@ -59,7 +62,7 @@ object.size(x)
 \examples{
 object.size(letters)
 object.size(ls)
-print(object.size(library), units = "auto")
+format(object.size(library), units = "auto")
 ## find the 10 largest objects in the base package
 z <- sapply(ls("package:base"), function(x)
             object.size(get(x, envir = baseenv())))

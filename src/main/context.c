@@ -240,8 +240,10 @@ void begincontext(RCNTXT * cptr, int flags,
 #ifdef BC_INT_STACK
     cptr->intstack = R_BCIntStackTop;
 #endif
-    cptr->srcref = R_Srcref;
+    cptr->srcref = R_Srcref;    
+    cptr->browserfinish = R_GlobalContext->browserfinish;
     cptr->nextcontext = R_GlobalContext;
+
     R_GlobalContext = cptr;
 }
 
@@ -406,7 +408,7 @@ SEXP attribute_hidden R_syscall(int n, RCNTXT *cptr)
     while (cptr->nextcontext != NULL) {
 	if (cptr->callflag & CTXT_FUNCTION ) {
 	    if (n == 0) {
-	    	PROTECT(result = duplicate(cptr->call));
+	    	PROTECT(result = shallow_duplicate(cptr->call));
 	    	if (cptr->srcref && !isNull(cptr->srcref))
 	    	    setAttrib(result, R_SrcrefSymbol, duplicate(cptr->srcref));
 	    	UNPROTECT(1);
@@ -417,7 +419,7 @@ SEXP attribute_hidden R_syscall(int n, RCNTXT *cptr)
 	cptr = cptr->nextcontext;
     }
     if (n == 0 && cptr->nextcontext == NULL) {
-	PROTECT(result = duplicate(cptr->call));
+	PROTECT(result = shallow_duplicate(cptr->call));
 	if (cptr->srcref && !isNull(cptr->srcref))
 	    setAttrib(result, R_SrcrefSymbol, duplicate(cptr->srcref));
 	UNPROTECT(1);
@@ -785,4 +787,22 @@ SEXP R_tryEvalSilent(SEXP e, SEXP env, int *ErrorOccurred)
     val = R_tryEval(e, env, ErrorOccurred);
     R_ShowErrorMessages = oldshow;
     return val;
+}
+
+SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
+		       void (*cleanfun)(void *), void *cleandata)
+{
+    RCNTXT cntxt;
+    SEXP result;
+
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = cleanfun;
+    cntxt.cenddata = cleandata;
+
+    result = fun(data);
+    cleanfun(cleandata);
+
+    endcontext(&cntxt);
+    return result;
 }

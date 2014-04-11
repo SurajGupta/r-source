@@ -24,8 +24,11 @@ arrayInd(ind, .dim, .dimnames = NULL, useNames = FALSE)
  \item{ind}{integer-valued index vector, as resulting from
    \code{which(x)}.}
  \item{.dim}{\code{\link{dim}(.)} integer vector}
- \item{.dimnames}{optional list of character \code{\link{dimnames}(.)},
-   of which only \code{.dimnames[[1]]} is used.}
+ \item{.dimnames}{optional list of character \code{\link{dimnames}(.)}.
+   If \code{useNames} is true, to be used for constructing dimnames for
+   \code{arrayInd()} (and hence, \code{which(*, arr.ind=TRUE)}).
+   If \code{\link{names}(.dimnames)} is not empty, these are used as
+   column names.  \code{.dimnames[[1]]} is used as row names.}
  \item{useNames}{logical indicating if the value of \code{arrayInd()}
    should have (non-null) dimnames at all.}
 }
@@ -68,7 +71,21 @@ which(div.3, arr.ind = TRUE)
 
 vm <- c(m)
 dim(vm) <- length(vm) #-- funny thing with  length(dim(...)) == 1
-which(vm \%\% 3 == 0, arr.ind = TRUE)
+which(div.3, arr.ind = TRUE)
+\dontshow{
+dimnames(m) <- list(X = c("U", "V"), Z = c("y","z"), three = LETTERS[1:3])
+wm <- which(m \%\% 3 == 0, arr.ind = TRUE)
+vn <- vm; dimnames(vn) <- list(LETTERS[1:12])
+wv <- which(vn \%\% 3 == 0, arr.ind = TRUE)
+
+stopifnot(identical(wv, array(3L*(1:4), dim = c(4, 1),
+                              dimnames = list(c("C", "F", "I", "L"), "dim1"))),
+          identical(wm, array(c(1:2, 1:2, 2:1, 1:2, 1:3, 3L),
+                              dim = 4:3,
+                              dimnames = list(rep(c("U","V"),2),
+                                              c("X", "Z", "three"))))
+)
+}%dont
 }
 \keyword{logic}
 \keyword{attribute}

@@ -63,8 +63,8 @@
  R_BCNodeStackTop
  R_BrowseLevel
  R_BrowseLines
+ R_BrowserLastCommand
  R_CBoundsCheck
- R_CStackDir
  R_ChooseFile
  R_CollectWarnings
  R_Collected
@@ -208,7 +208,9 @@
  R_getS4DataSlot
  R_getSymbolInfo
  R_gmtime
+ R_gmtime_r
  R_has_methods
+ R_initAsignSymbols
  R_init_base
  R_init_jit_enabled
  R_initialize_bcode
@@ -219,6 +221,7 @@
  R_jit_enabled
  R_lazyLoadDBinsertValue
  R_localtime
+ R_localtime_r
  R_max_memory
  R_max_num_math_threads
  R_mktime
@@ -236,11 +239,16 @@
  R_seemsOldStyleS4Object
  R_serialize
  R_serializeb
+ R_strftime
  R_subset3_dflt
  R_syscall
  R_sysframe
  R_sysfunction
  R_sysparent
+ R_timegm
+ R_tzname
+ R_tzset
+ R_tzsetwall
  R_unary
  R_unserialize
  R_warn_partial_match_args
@@ -402,7 +410,6 @@
  Rsockselect
  Rstrlen
  Rstrwid
- Rtzname
  Rwin_rename
  Rwin_wrename
  SET_ACTIVE_BINDING_BIT
@@ -546,6 +553,7 @@
  do_adist
  do_agrep
  do_allnames
+ do_anyNA
  do_aperm
  do_aregexec
  do_args
@@ -980,6 +988,7 @@
  do_trunc
  do_truncate
  do_typeof
+ do_tzone_name
  do_unclass
  do_unlink
  do_unlist

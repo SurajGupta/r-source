@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.1.1 \n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53+0100\n"
-"PO-Revision-Date: 2013-02-28 05:38+0200 \n"
-"Last-Translator: Triad sou <triadsou@gmail.com> \n"
+"POT-Creation-Date: 2014-02-19 07:55+0000\n"
+"PO-Revision-Date: 2014-03-26 10:02+0200 \n"
+"Last-Translator: Masafumi  \n"
 "Language-Team: RjpWiki Message Translation Team <mokada@md.tsukuba.ac.jp> \n"
 "Language: ja \n"
 "MIME-Version: 1.0 \n"
@@ -22,53 +22,57 @@ msgstr ""
 msgid "cannot clip to rotated viewport"
 msgstr " rotated viewport のクリップは出来ません "
 
-#: grid.c:684 grid.c:689 grid.c:778 grid.c:783
+#: grid.c:691 grid.c:696 grid.c:785 grid.c:790
 msgid "cannot pop the top-level viewport ('grid' and 'graphics' output mixed?)"
 msgstr ""
 " トップレベルの viewport は pop することが出来ません ('grid' と 'graphics' の"
 "出力を混同していませんか?) "
 
-#: grid.c:963
+#: grid.c:970
 msgid "attempt to plot on null device"
 msgstr " ナルデバイスにプロットしようとしています "
 
-#: grid.c:1243
+#: grid.c:1302
 msgid "there is no layout defined"
 msgstr " レイアウトが定義されていません "
 
-#: grid.c:1463
+#: grid.c:1522
 msgid "polygon edge not found (zero-width or zero-height?)"
 msgstr " 多角形の頂点が見付かりません (幅もしくは高さがゼロ？) "
 
-#: grid.c:1472
+#: grid.c:1531
 msgid "polygon edge not found"
 msgstr " 多角形の頂点が見付かりません "
 
-#: grid.c:1626
+#: grid.c:1685
 msgid "require at least two points to draw arrow"
 msgstr " 矢印を書くためには少なくとも二つの点が必要です "
 
-#: grid.c:1942
+#: grid.c:2001
 msgid "non-finite control point in Xspline"
 msgstr " Xspline 中に有限でない制御点 "
 
-#: grid.c:2807
+#: grid.c:2866
 msgid "non-finite x or y in graphics path"
 msgstr " グラフィックパスに有限でない x か y があります "
 
-#: grid.c:3297
+#: grid.c:2907
+msgid "Empty raster"
+msgstr " ラスターが空です "
+
+#: grid.c:3359
 msgid "invalid plotting symbol"
 msgstr " 不正なプロット記号です "
 
-#: grid.c:3383
+#: grid.c:3445
 msgid "unable to clip to rotated rectangle"
 msgstr " 回転された矩形へクリップ出来ません "
 
-#: layout.c:587
+#: layout.c:589
 msgid "invalid 'layout.pos.row'"
 msgstr " 不正な 'layout.pos.row' です "
 
-#: layout.c:591
+#: layout.c:593
 msgid "invalid 'layout.pos.col'"
 msgstr " 不正な 'layout.pos.col' です "
 
@@ -82,23 +86,31 @@ msgstr ""
 " 現在の 'grid' の状態を保持することが出来ません。デバイスを開きすぎていません"
 "か? "
 
-#: unit.c:260 unit.c:410 unit.c:1204 unit.c:1284 unit.c:1364 unit.c:1444
+#: unit.c:260 unit.c:410 unit.c:1210 unit.c:1290 unit.c:1370 unit.c:1450
 msgid "unimplemented unit function"
 msgstr " 未実装の単位 (unit) 関数です "
 
-#: unit.c:893 unit.c:1639
+#: unit.c:893 unit.c:1645
 msgid "invalid unit or unit not yet implemented"
 msgstr " 不正な単位 (unit) か、まだ実装されていない単位 (unit) です "
 
-#: unit.c:1798
+#: unit.c:1702 unit.c:1733
+msgid "Viewport has zero dimension(s)"
+msgstr " ビューポートの次元数がゼロです "
+
+#: unit.c:1765 unit.c:1780 unit.c:1795 unit.c:1810
+msgid "Unsupported unit conversion"
+msgstr " 対応していない単位変換です "
+
+#: unit.c:1898
 msgid "Invalid unit"
 msgstr " 不正な単位 (unit) です "
 
-#: unit.c:1814
+#: unit.c:1914
 msgid "'units' must be character"
 msgstr " 単位 ('units') は文字型でなければなりません "
 
-#: unit.c:1817
+#: unit.c:1917
 msgid "'units' must be of length > 0"
 msgstr " 単位 ('units') の長さは 0 より大きくなければなりません "
 

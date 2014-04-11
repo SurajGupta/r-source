@@ -3,7 +3,20 @@
 % Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
+
 \name{family}
+\alias{family}
+\alias{binomial}
+\alias{gaussian}
+\alias{Gamma}
+\alias{inverse.gaussian}
+\alias{poisson}
+\alias{quasi}
+\alias{quasibinomial}
+\alias{quasipoisson}
+%\alias{print.family}
+
 \title{Family Objects for Models}
 \usage{
 family(object, \dots)
@@ -17,16 +30,6 @@ quasi(link = "identity", variance = "constant")
 quasibinomial(link = "logit")
 quasipoisson(link = "log")
 }
-\alias{family}
-\alias{binomial}
-\alias{gaussian}
-\alias{Gamma}
-\alias{inverse.gaussian}
-\alias{poisson}
-\alias{quasi}
-\alias{quasibinomial}
-\alias{quasipoisson}
-\alias{print.family}
 \arguments{
   \item{link}{a specification for the model link function.  This can be
     a name/expression, a literal character string, a length-one character
@@ -82,7 +85,7 @@ quasipoisson(link = "log")
   the \code{binomial} and \code{poisson} families only in that the
   dispersion parameter is not fixed at one, so they can model
   over-dispersion.  For the binomial case see McCullagh and Nelder
-  (1989, pp. 124--8).  Although they show that there is (under some
+  (1989, pp.\sspace{}124--8).  Although they show that there is (under some
   restrictions) a model with
   variance proportional to mean as in the quasi-binomial model, note
   that \code{glm} does not compute maximum-likelihood estimates in that

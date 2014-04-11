@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-21 09:14\n"
+"POT-Creation-Date: 2014-02-27 17:14\n"
 "PO-Revision-Date: 2011-01-18 13:56+0000\n"
 "Last-Translator: 陈斐 <FeiC@normipaiva.com>\n"
 "Language-Team: Chinese\n"
@@ -68,8 +68,8 @@ msgstr ""
 msgid "Warning: unknown option %s"
 msgstr "警告：没有%s这样的选项"
 
-msgid "Created PDF document %s"
-msgstr "建立了PDF%s文件"
+msgid "Output file:"
+msgstr ""
 
 msgid "Compacting PDF document"
 msgstr "压缩了PDF文件"
@@ -143,6 +143,12 @@ msgstr "'file'的值必需是NULL，字符串或联结"
 msgid "bad argument"
 msgstr "参数不对"
 
+msgid "'full.names' must be TRUE for multiple paths."
+msgstr ""
+
+msgid "Timestamp file no longer exists."
+msgstr ""
+
 msgid ""
 "Not all arguments are of the same length, the following need to be recycled: "
 "%s"
@@ -190,9 +196,6 @@ msgstr ""
 
 msgid "package %s not found"
 msgstr "没有%s这一个程序包"
-
-msgid "broken installation, no CITATION file in the base package."
-msgstr "安装出错，基本程序包里没有CITATION这一文件。"
 
 msgid "no date field in DESCRIPTION file of package %s"
 msgstr "程序包%s里的DESCRIPTION文件中没有日期这一域"
@@ -268,6 +271,9 @@ msgstr "'dump'必需是类别为%s的对象"
 
 msgid "Message:"
 msgstr "訊息:"
+
+msgid "'dump' is empty"
+msgstr ""
 
 msgid "Available environments had calls:"
 msgstr "可用的环境中有这样的調用载入:"
@@ -691,8 +697,9 @@ msgstr "foundpkgs: %s"
 msgid "files: %s"
 msgstr "文件: %s"
 
+#, fuzzy
 msgid ""
-"installation of one of more packages failed,\n"
+"installation of one or more packages failed,\n"
 "  probably %s"
 msgstr ""
 "安装程序包时出了错，\n"
@@ -850,6 +857,10 @@ msgstr ""
 msgid "cannot coerce 'x' to roman"
 msgstr "无法将'x'转变成罗马数"
 
+#, fuzzy
+msgid "Could not create file %s, aborting"
+msgstr "无法恢復种类的信息"
+
 msgid "no valid packages were specified"
 msgstr "没有设定程序包"
 
@@ -937,6 +948,12 @@ msgstr ""
 msgid "file size is limited to 8GB"
 msgstr "文件大小限制为8GB"
 
+msgid "invalid uid value replaced by that for user 'nobody'"
+msgstr ""
+
+msgid "invalid gid value replaced by that for user 'nobody'"
+msgstr ""
+
 msgid ""
 "vignette %s found more than once,\n"
 "using the one found in %s"
@@ -950,6 +967,10 @@ msgstr "没有找到小文品%s"
 #, fuzzy
 msgid "vignette %s has no PDF/HTML"
 msgstr "小文品%s没有PDF文件"
+
+#, fuzzy
+msgid "vignette %s has no R code"
+msgstr "没有找到小文品%s"
 
 msgid "select.list() cannot be used non-interactively"
 msgstr "select.list()不能在非互交形式下使用"
@@ -1009,6 +1030,9 @@ msgstr "'ccaddress'的长度必需为一"
 
 msgid "no download method found"
 msgstr "没有下载方法"
+
+msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
+msgstr ""
 
 msgid "download had nonzero exit status"
 msgstr "下载退出状态不是零"
@@ -1182,6 +1206,12 @@ msgstr[0] "罗马数字不对：%s"
 msgid "package %s is in use and will not be installed"
 msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "正在使用%s这个程序包，因此不会被安装"
+
+#~ msgid "broken installation, no CITATION file in the base package."
+#~ msgstr "安装出错，基本程序包里没有CITATION这一文件。"
+
+#~ msgid "Created PDF document %s"
+#~ msgstr "建立了PDF%s文件"
 
 #~ msgid "%d): succeeded '%s'"
 #~ msgstr "%d): 成功'%s'"

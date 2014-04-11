@@ -27,6 +27,7 @@ dev2bitmap <- function(file, type="png16m", height = 7, width = 7, res = 72,
     units <- match.arg(units, c("in", "px", "cm", "mm"))
     height <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * height
     width <- switch(units, "in"=1, "cm"=1/2.54, "mm"=1/25.4, "px"=1/res) * width
+    ## consider using tools::find_gs_cmd() here
     gsexe <- Sys.getenv("R_GSCMD")
     if(is.null(gsexe) || !nzchar(gsexe)) {
         gsexe <- "gs"

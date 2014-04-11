@@ -123,7 +123,7 @@ double gammafn(double x)
 
     /* If the argument is exactly zero or a negative integer
      * then return NaN. */
-    if (x == 0 || (x < 0 && x == (long)x)) {
+    if (x == 0 || (x < 0 && x == round(x))) {
 	ML_ERROR(ME_DOMAIN, "gammafn");
 	return ML_NAN;
     }
@@ -210,7 +210,7 @@ double gammafn(double x)
 	    ML_ERROR(ME_PRECISION, "gammafn");
 	}
 
-	sinpiy = sin(M_PI * y);
+	sinpiy = sinpi(y);
 	if (sinpiy == 0) {		/* Negative integer arg - overflow */
 	    ML_ERROR(ME_RANGE, "gammafn");
 	    return ML_POSINF;

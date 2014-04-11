@@ -72,13 +72,12 @@ strptime(x, format, tz = "")
   
   % strftime is C99: strptime is POSIX.
   The details of the formats are platform-specific, but the following are
-  defined by the ISO C99 / POSIX standard for \code{strftime} and are
-  likely to be widely available.  A \emph{conversion specification} is
-  introduced by \code{\%}, usually followed by a single letter or
-  \code{O} or \code{E} and then a single letter.
-  Any character in the format string not part of a conversion specification
-  is interpreted literally (and \code{\%\%} gives \code{\%}).  Widely
-  implemented conversion specifications include
+  defined by the POSIX standard and are likely to be widely available.
+  A \emph{conversion specification} is introduced by \code{\%}, usually
+  followed by a single letter or \code{O} or \code{E} and then a single
+  letter.  Any character in the format string not part of a conversion
+  specification is interpreted literally (and \code{\%\%} gives
+  \code{\%}).  Widely implemented conversion specifications include
   \describe{
     \item{\code{\%a}}{Abbreviated weekday name in the current
       locale.  (Also matches full name on input.)}
@@ -90,7 +89,20 @@ strptime(x, format, tz = "")
       matches abbreviated name on input.)}
     \item{\code{\%c}}{Date and time.   Locale-specific on output,
       \code{"\%a \%b \%e \%H:\%M:\%S \%Y"} on input.}
+    \item{\code{\%C}}{Century (00--99): the integer part of the year
+      divided by 100.}
     \item{\code{\%d}}{Day of the month as decimal number (01--31).}
+    \item{\code{\%D}}{Date format such as \code{\%m/\%d/\%y}: ISO C99
+      says it should be that exact format.}
+    \item{\code{\%e}}{Day of the month as decimal number (1--31), with
+      a leading space for a single-digit number.}
+    \item{\code{\%F}}{Equivalent to \%Y-\%m-\%d (the ISO 8601 date
+      format).}
+    \item{\code{\%g}}{The last two digits of the week-based year
+      (see \code{\%V}).  (Accepted but ignored on input.)}
+    \item{\code{\%G}}{The week-based year (see \code{\%V}) as a decimal
+      number.  (Accepted but ignored on input.)}
+    \item{\code{\%h}}{Equivalent to \code{\%b}.}
     \item{\code{\%H}}{Hours as decimal number (00--23).  As a special
       exception strings such as \samp{24:00:00} are accepted for input,
       since ISO 8601 allows these.}
@@ -98,20 +110,33 @@ strptime(x, format, tz = "")
     \item{\code{\%j}}{Day of year as decimal number (001--366).}
     \item{\code{\%m}}{Month as decimal number (01--12).}
     \item{\code{\%M}}{Minute as decimal number (00--59).}
+    \item{\code{\%n}}{Newline on output, arbitrary whitespace on input.}
     \item{\code{\%p}}{AM/PM indicator in the locale.  Used in
       conjunction with \code{\%I} and \bold{not} with \code{\%H}.  An
       empty string in some locales (and the behaviour is undefined if
       used for input in such a locale).
-  
+
       Some platforms accept \code{\%P} for output, which uses a lower-case
       version: others will output \code{P}.} 
-   \item{\code{\%S}}{Second as decimal number (00--61), allowing for
+    \item{\code{\%r}}{The 12-hour clock time (using the locale's AM or
+      PM).  Only defined in some locales.}
+    \item{\code{\%R}}{Equivalent to \code{\%H:\%M}.}
+    \item{\code{\%S}}{Second as decimal number (00--61), allowing for
       up to two leap-seconds (but POSIX-compliant implementations
       will ignore leap seconds).}
+    \item{\code{\%t}}{Tab on output, arbitrary whitespace on input.}
+    \item{\code{\%T}}{Equivalent to \code{\%H:\%M:\%S}.}
+    \item{\code{\%u}}{Weekday as a decimal number (1--7, Monday is 1).}
     % see http://en.wikipedia.org/wiki/Week_number#Week_number
     \item{\code{\%U}}{Week of the year as decimal number (00--53) using
       Sunday as the first day 1 of the week (and typically with the
       first Sunday of the year as day 1 of week 1).  The US convention.}
+    \item{\code{\%V}}{Week of the year as decimal number (00--53) as
+      defined in ISO 8601.
+      If the week (starting on Monday) containing 1 January has four or
+      more days in the new year, then it is considered week 1.  Otherwise, it
+      is the last week of the previous year, and the next week is week
+      1.  (Accepted but ignored on input.)}
     \item{\code{\%w}}{Weekday as decimal number (0--6, Sunday is 0).}
     \item{\code{\%W}}{Week of the year as decimal number (00--53) using
       Monday as the first day of week (and typically with the
@@ -131,10 +156,10 @@ strptime(x, format, tz = "")
       \url{http://en.wikipedia.org/wiki/0_(year)}.  Note that the standards
       also say that years before 1582 in its calendar should only be used
       with agreement of the parties involved.
-
+  
       For input, only years \code{0:9999} are accepted.}
-    \item{\code{\%z}}{Signed offset in hours and minutes from UTC, so
-      \code{-0800} is 8 hours behind UTC.}
+    \item{\code{\%z}}{Signed offset in hours and minutes
+      from UTC, so \code{-0800} is 8 hours behind UTC.} 
     \item{\code{\%Z}}{(Output only.) Time zone abbreviation as a
       character string (empty if not available).  This may not be reliable
       when a time zone has changed abbreviations over the years.}
@@ -153,41 +178,14 @@ strptime(x, format, tz = "")
   object with an assigned time zone an attempt is made to use the values
   for that time zone --- but it is not guaranteed to succeed.
   
-  Also defined in the current standards but less widely implemented
-  (e.g. not for output on Windows) are
+  Not in the standards and less widely implemented are
   \describe{
-    \item{\code{\%C}}{Century (00--99): the integer part of the year
-      divided by 100.}
-    \item{\code{\%D}}{Date format such as \code{\%m/\%d/\%y}: ISO C99
-      says it should be that exact format.}
-    \item{\code{\%e}}{Day of the month as decimal number (1--31), with
-      a leading space for a single-digit number.}
-    \item{\code{\%F}}{Equivalent to \%Y-\%m-\%d (the ISO 8601 date
-      format).}
-    \item{\code{\%g}}{The last two digits of the week-based year
-      (see \code{\%V}).  (Accepted but ignored on input.)}
-    \item{\code{\%G}}{The week-based year (see \code{\%V}) as a decimal
-      number.  (Accepted but ignored on input.)}
-    \item{\code{\%h}}{Equivalent to \code{\%b}.}
     \item{\code{\%k}}{The 24-hour clock time with single digits preceded
       by a blank.}
     \item{\code{\%l}}{The 12-hour clock time with single digits preceded
       by a blank.}
-    \item{\code{\%n}}{Newline on output, arbitrary whitespace on input.}
-    \item{\code{\%r}}{The 12-hour clock time (using the locale's AM or
-      PM).  Only defined in some locales.}
-    \item{\code{\%R}}{Equivalent to \code{\%H:\%M}.}
     \item{\code{\%s}}{(Output only.) The number of seconds since the
-      epoch. Not POSIX, not widely implemented.}
-    \item{\code{\%t}}{Tab on output, arbitrary whitespace on input.}
-    \item{\code{\%T}}{Equivalent to \code{\%H:\%M:\%S}.}
-    \item{\code{\%u}}{Weekday as a decimal number (1--7, Monday is 1).}
-    \item{\code{\%V}}{Week of the year as decimal number (00--53) as
-      defined in ISO 8601.
-      If the week (starting on Monday) containing 1 January has four or
-      more days in the new year, then it is considered week 1.  Otherwise, it
-      is the last week of the previous year, and the next week is week
-      1.  (Accepted but ignored on input.)}
+      epoch.}
     \item{\code{\%+}}{(Output only.) Similar to \code{\%c}, often
       \code{"\%a \%b \%e \%H:\%M:\%S \%Z \%Y"}. May depend on the locale.}
   }
@@ -242,7 +240,10 @@ strptime(x, format, tz = "")
 
   Some platforms support modifiers from POSIX 2008 (and others).  On
   Linux the format \code{"\%04Y"}) assures a minimum of four characters
-  and zero-padding.
+  and zero-padding.  The internal code (as used on Windows and by
+  default on OS X) uses zero-padding by default, and formats
+  \code{\%_4Y} and \code{\%_Y} can be used for space padding and no
+  padding.
 }
 
 \section{Time zone offsets}{
@@ -274,7 +275,8 @@ strptime(x, format, tz = "")
   For \code{strptime} the input string need not specify the date
   completely: it is assumed that unspecified seconds, minutes or hours
   are zero, and an unspecified year, month or day is the current one.
-  Some components may be returned as \code{NA}.
+  Some components may be returned as \code{NA} (but an unknown
+  \code{tzone} component is represented by an empty string).
 
   If the time zone specified is invalid on your system, what happens is
   system-specific but it will probably be ignored.
@@ -285,14 +287,23 @@ strptime(x, format, tz = "")
   validate such times (it does not assume a specific time zone), but
   conversion by \code{\link{as.POSIXct}} will do so.  Conversion by
   \code{strftime} and formatting/printing uses OS facilities and may
-  (and does on Windows) return nonsensical results for non-existent
-  times at DST transitions
+  return nonsensical results for non-existent times at DST transitions.
+  
+  Much less comprehensive support for output specifications was provided
+  on Windows before \R 3.1.0.
+  
+  In a C locale \code{\%c} is required to be
+  \code{"\%a \%b \%e \%H:\%M:\%S \%Y"}.  As Windows does not comply (and
+  uses a date format not understood outside N. America), that format is
+  used on Windows in all locales.
   
   That \code{\%A \%a \%B \%b} on input match both full and abbreviated names
   caused problems in some locales prior to \R 3.0.3: e.g. in French on
   OS X \samp{juillet} was matched by \code{jui}, the abbreviation for
   June.
+  
 }
+
 \references{
   International Organization for Standardization (2004, 2000, \dots)
   \emph{ISO 8601.  Data elements and interchange formats --
@@ -308,13 +319,9 @@ strptime(x, format, tz = "")
   \link{DateTimeClasses} for details of the date-time classes;
   \link{locales} to query or set a locale.
 
-  Your system's help pages on \code{strftime} and (not Windows)
-  \code{strptime} to see how to specify their formats.
-
-  On all platforms \code{strptime} is replaced by corrected code from
-  \samp{glibc}, when all the conversion specifications described here
-  are supported, but with no alternative number representation nor era
-  available in any locale.
+  Your system's help page on \code{strftime} to see how to specify their
+  formats.  (On some systems, including Windows, \code{strftime} is
+  replaced by more comprehensive internal code.)
 }
 \examples{\donttest{
 ## locale-specific version of date()

@@ -4,7 +4,7 @@
  *   October 23, 2000.
  *
  *  Merge in to R and further tweaks :
- *	Copyright (C) 2000-2013 The R Core Team
+ *	Copyright (C) 2000-2014 The R Core Team
  *	Copyright (C) 2008 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -68,7 +68,7 @@ dbinom_raw(double x, double n, double p, double q, int give_log)
     /* Upto R 2.7.1:
      * lf = log(M_2PI) + log(x) + log(n-x) - log(n);
      * -- following is much better for  x << n : */
-    lf = log(M_2PI) + log(x) + log1p(- x/n);
+    lf = M_LN_2PI + log(x) + log1p(- x/n);
 
     return R_D_exp(lc - 0.5*lf);
 }
@@ -85,8 +85,8 @@ double dbinom(double x, double n, double p, int give_log)
     R_D_nonint_check(x);
     if (x < 0 || !R_FINITE(x)) return R_D__0;
 
-    n = R_D_forceint(n);
-    x = R_D_forceint(x);
+    n = R_forceint(n);
+    x = R_forceint(x);
 
     return dbinom_raw(x, n, p, 1-p, give_log);
 }

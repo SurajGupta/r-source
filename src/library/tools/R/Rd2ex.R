@@ -26,7 +26,7 @@ Rd2ex <-
     WriteLines <- function(x, con, outputEncoding, ...) {
         if (outputEncoding != "UTF-8") {
             x <- iconv(x, "UTF-8", outputEncoding,  mark=FALSE)
-            if (any(is.na(x))) {
+            if (anyNA(x)) {
                 x <- iconv(x, "UTF-8", outputEncoding, sub="byte", mark=FALSE)
                 encode_warn <<- TRUE
             }
@@ -88,7 +88,7 @@ Rd2ex <-
                 if (!grepl("\n$", last[length(last)], perl = TRUE))
                     writeLines("", con)
                 if (commentDontrun)
-                    of1("## End(Not run)")
+                of1("## End(Not run)")
             }
         } else if (tag  == "\\donttest") {
             of1("## No test: ")

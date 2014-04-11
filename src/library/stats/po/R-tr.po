@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53\n"
+"POT-Creation-Date: 2014-03-27 07:47\n"
 "PO-Revision-Date: 2011-04-02 \n"
 "Last-Translator: Murat Alkan <muratalk@gmail.com>\n"
 "Language-Team: Turkish <muratalk@gmail.com>\n"
@@ -274,6 +274,9 @@ msgstr "'order.max' >= 1 olmalı"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max' < 'n.used' olmalı"
 
+msgid "zero-variance series"
+msgstr ""
+
 msgid "'n.ahead' must be at least 1"
 msgstr "'n.ahead' en az 1 olmalı"
 
@@ -340,6 +343,14 @@ msgstr ""
 msgid "seasonal MA part of model is not invertible"
 msgstr ""
 
+#, fuzzy
+msgid "NAs in '%s'"
+msgstr "'x' de NAs"
+
+#, fuzzy
+msgid "invalid 'SSinit'"
+msgstr "geçersiz 'x'"
+
 msgid "converting non-invertible initial MA values"
 msgstr ""
 
@@ -386,6 +397,9 @@ msgstr "tüm gözlemler aynı grupta"
 
 msgid "there must be at least 2 observations in each group"
 msgstr "her grupta en az 2 gözlem olmalı"
+
+msgid "'formula' should be of the form response ~ group"
+msgstr ""
 
 msgid "'x' must be nonnegative and integer"
 msgstr "'x' bir tamsayı olmalı ve negatif olmamalı"
@@ -916,7 +930,7 @@ msgid "'x' has entries too large to be integer"
 msgstr "'x' tamsayı olamayacak kadar büyük girdilere sahip"
 
 #, fuzzy
-msgid "'x' has been rounded to integer: %d"
+msgid "'x' has been rounded to integer: %s"
 msgstr "'x' tamsayıya yuvarlandı:"
 
 msgid "if 'x' is not a matrix, 'y' must be given"
@@ -1111,6 +1125,10 @@ msgstr ""
 msgid "observations with zero weight not used for calculating dispersion"
 msgstr ""
 
+msgid ""
+"The \"ward\" method has been renamed to \"ward.D\"; note new \"ward.D2\""
+msgstr ""
+
 msgid "invalid clustering method"
 msgstr ""
 
@@ -1213,6 +1231,9 @@ msgstr ""
 msgid "number of cluster centres must lie between 1 and nrow(x)"
 msgstr ""
 
+msgid "Quick-TRANSfer stage steps exceeded maximum (= %d)"
+msgstr ""
+
 #, fuzzy
 msgid "invalid nrow(x)"
 msgstr "geçersiz 'x'"
@@ -1294,6 +1315,9 @@ msgid "calling summary.lm(<fake-lm-object>) ..."
 msgstr ""
 
 msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
+msgstr ""
+
+msgid "essentially perfect fit: summary may be unreliable"
 msgstr ""
 
 msgid ""
@@ -1409,6 +1433,9 @@ msgid "no \"nobs\" attribute is available"
 msgstr ""
 
 msgid "no 'nobs' method is available"
+msgstr ""
+
+msgid "'margin' must contain names or numbers corresponding to 'table'"
 msgstr ""
 
 msgid "'start' and 'table' must be same length"
@@ -1589,8 +1616,23 @@ msgstr "f.lower = f(lower) NA"
 msgid "f.upper = f(upper) is NA"
 msgstr "f.upper = f(upper) NA"
 
+#, fuzzy
+msgid "invalid 'extendInt'; please report"
+msgstr "geçersiz 'method' argümanı"
+
+#, fuzzy
+msgid "no sign change found in %d iterations"
+msgstr "%d ötelemede yakınsamadı"
+
+msgid ""
+"did not succeed extending the interval endpoints for f(lower) * f(upper) <= 0"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "bitiş noktalarındaki f() değerleri ters işaretli değil"
+
+msgid "convergence problem in zero finding:"
+msgstr ""
 
 #, fuzzy
 msgid "'control' argument must be a named list"

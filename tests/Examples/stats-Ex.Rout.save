@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -547,6 +547,7 @@ $se
 +   pr <- KalmanForecast(4, mod, TRUE)
 +   print(list(pred = pr$pred + fit3$coef["intercept"], 
 +              se = sqrt(pr$var * fit3$sigma2)))
++   mod <- attr(pr, "mod")
 + }
 $pred
 [1] 29.84194 34.41014 39.30815 43.02779
@@ -1190,33 +1191,28 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 
 Residual standard error: 0.04103 on 7 degrees of freedom
 
-> ## Don't show: 
+> 
+> ## Show the model components visually
 >   require(graphics)
 > 
 >   xx <- seq(0, 5, len = 101)
 >   y1 <- 3.5 * exp(-4*xx)
 >   y2 <- 1.5 * exp(-xx)
->   yy <- y1 + y2
->   par(mar = c(0, 0, 3.5, 0))
->   plot(xx, yy, type = "n", axes = FALSE, ylim = c(-0.2,6), xlim = c(0, 5),
-+        xlab = "", ylab = "", main = "Components of the SSbiexp model")
->   usr <- par("usr")
->   lines(xx, y1, lty = 2, lwd = 0.75)
->   lines(xx, y2, lty = 3, lwd = 0.75)
->   lines(xx, yy, lwd = 2)
->   segments(1:5, 0, 1:5, -0.15)
->   segments(0, 1:5, -0.06, 1:5)
->   text(-0.1, 1:5, 1:5, adj = c(1, 0.25), cex = 0.7)
->   text(1:5, -0.15, 1:5, adj = c(0.5, 1), cex = 0.7)
->   arrows(usr[1], 0, usr[2], 0, length = 0.1, angle = 25)
->   arrows(0, usr[3], 0, usr[4], length = 0.1, angle = 25)
->   text(usr[2] - 0.2, 0.1, "x", adj = c(1, 0))
->   text(-0.1, usr[4], "y", adj = c(1, 1))
-> ## End Don't show
+>   plot(xx, y1 + y2, type = "l", lwd=2, ylim = c(-0.2,6), xlim = c(0, 5),
++        main = "Components of the SSbiexp model")
+>   lines(xx, y1, lty = 2, col="tomato"); abline(v=0, h=0, col="gray40")
+>   lines(xx, y2, lty = 3, col="blue2" )
+>   legend("topright", c("y1+y2", "y1 = 3.5 * exp(-4*x)", "y2 = 1.5 * exp(-x)"),
++          lty=1:3, col=c("black","tomato","blue2"), bty="n")
+>   axis(2, pos=0, at = c(3.5, 1.5), labels = c("A1","A2"), las=2)
+> 
+> ## and how you could have got their sum via SSbiexp():
+>   ySS <- SSbiexp(xx, 3.5, log(4), 1.5, log(1))
+>   ##                      ---          ---
+>   stopifnot(all.equal(y1+y2, ySS, tolerance = 1e-15))
 > 
 > 
 > 
-> graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
 > nameEx("SSfol")
 > ### * SSfol
@@ -1782,7 +1778,7 @@ Variances:
 > 
 > ### Name: TukeyHSD
 > ### Title: Compute Tukey Honest Significant Differences
-> ### Aliases: TukeyHSD TukeyHSD.aov print.TukeyHSD plot.TukeyHSD
+> ### Aliases: TukeyHSD
 > ### Keywords: models design
 > 
 > ### ** Examples
@@ -2517,7 +2513,7 @@ Frequency = 1
 > 
 > ### Name: anova.glm
 > ### Title: Analysis of Deviance for Generalized Linear Model Fits
-> ### Aliases: anova.glm anova.glmlist
+> ### Aliases: anova.glm
 > ### Keywords: models regression
 > 
 > ### ** Examples
@@ -2668,7 +2664,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > 
 > ### Name: anova.mlm
 > ### Title: Comparisons between Multivariate Linear Models
-> ### Aliases: anova.mlm anova.mlmlist
+> ### Aliases: anova.mlm
 > ### Keywords: regression models multivariate
 > 
 > ### ** Examples
@@ -3476,7 +3472,7 @@ s.e.  0.1414   0.1702   0.1473     0.0983
 
 sigma^2 estimated as 0.1905:  part log likelihood = -28.31
 > 
-> arima(USAccDeaths, order = c(0,1,1), seasonal = list(order=c(0,1,1)))
+> arima(USAccDeaths, order = c(0,1,1), seasonal = list(order = c(0,1,1)))
 
 Call:
 arima(x = USAccDeaths, order = c(0, 1, 1), seasonal = list(order = c(0, 1, 1)))
@@ -3487,7 +3483,7 @@ Coefficients:
 s.e.   0.1228   0.1784
 
 sigma^2 estimated as 99347:  log likelihood = -425.44,  aic = 856.88
-> arima(USAccDeaths, order = c(0,1,1), seasonal = list(order=c(0,1,1)),
+> arima(USAccDeaths, order = c(0,1,1), seasonal = list(order = c(0,1,1)),
 +       method = "CSS") # drops first 13 observations.
 
 Call:
@@ -3502,7 +3498,7 @@ s.e.   0.1366   0.1436
 sigma^2 estimated as 110330:  part log likelihood = -426.25
 > # for a model with as few years as this, we want full ML
 > 
-> arima(LakeHuron, order = c(2,0,0), xreg = time(LakeHuron)-1920)
+> arima(LakeHuron, order = c(2,0,0), xreg = time(LakeHuron) - 1920)
 
 Call:
 arima(x = LakeHuron, order = c(2, 0, 0), xreg = time(LakeHuron) - 1920)
@@ -3541,6 +3537,17 @@ s.e.  0.0936  0.1140   0.0946     4.2845
 
 sigma^2 estimated as 81.12:  log likelihood = -414.08,  aic = 838.16
 > tsdiag(fit3)
+> 
+> ## An example of ARIMA forecasting:
+> predict(fit3, 3)
+$pred
+         Qtr1     Qtr2     Qtr3
+1975 29.84194 34.41014 39.30815
+
+$se
+         Qtr1     Qtr2     Qtr3
+1975  9.00655 11.25606 13.43389
+
 > 
 > 
 > 
@@ -3748,7 +3755,7 @@ sigma^2 estimated as 0.4566:  log likelihood = -101.2,  aic = 212.4
 > 
 > asOneSidedFormula("age")
 ~age
-<environment: 0x3944708>
+<environment: 0x3164708>
 > asOneSidedFormula(~ age)
 ~age
 > 
@@ -4288,7 +4295,7 @@ X-squared = 4.3, df = 4, p-value = 0.3669
 > 
 > ### Name: confint
 > ### Title: Confidence Intervals for Model Parameters
-> ### Aliases: confint confint.default
+> ### Aliases: confint confint.default confint.lm
 > ### Keywords: models
 > 
 > ### ** Examples
@@ -4711,7 +4718,7 @@ function (V)
     r[cbind(1L:p, 1L:p)] <- 1
     r
 }
-<bytecode: 0x5430300>
+<bytecode: 0x3739598>
 <environment: namespace:stats>
 > stopifnot(all.equal(Cl, cov2cor(cov(longley))),
 +           all.equal(cor(longley, method = "kendall"),
@@ -5686,6 +5693,101 @@ NULL
         |--leaf "Michigan" 
         '--leaf "Nevada" 
 > 
+> ## to peak at the inner structure "if you must", use '[..]' indexing :
+> str(d3[2][[1]]) ## or the full
+List of 2
+ $ :List of 2
+  ..$ : atomic [1:1] 13
+  .. ..- attr(*, "label")= chr "Illinois"
+  .. ..- attr(*, "members")= int 1
+  .. ..- attr(*, "height")= num 0
+  .. ..- attr(*, "leaf")= logi TRUE
+  ..$ : atomic [1:1] 32
+  .. ..- attr(*, "label")= chr "New York"
+  .. ..- attr(*, "members")= int 1
+  .. ..- attr(*, "height")= num 0
+  .. ..- attr(*, "leaf")= logi TRUE
+  ..- attr(*, "members")= int 2
+  ..- attr(*, "midpoint")= num 0.5
+  ..- attr(*, "height")= num 6.24
+ $ :List of 2
+  ..$ : atomic [1:1] 22
+  .. ..- attr(*, "label")= chr "Michigan"
+  .. ..- attr(*, "members")= int 1
+  .. ..- attr(*, "height")= num 0
+  .. ..- attr(*, "leaf")= logi TRUE
+  ..$ : atomic [1:1] 28
+  .. ..- attr(*, "label")= chr "Nevada"
+  .. ..- attr(*, "members")= int 1
+  .. ..- attr(*, "height")= num 0
+  .. ..- attr(*, "leaf")= logi TRUE
+  ..- attr(*, "members")= int 2
+  ..- attr(*, "midpoint")= num 0.5
+  ..- attr(*, "height")= num 13.3
+ - attr(*, "members")= int 4
+ - attr(*, "midpoint")= num 1.5
+ - attr(*, "height")= num 18.4
+> str(d3[])
+List of 2
+ $ :List of 2
+  ..$ : atomic [1:1] 8
+  .. ..- attr(*, "members")= int 1
+  .. ..- attr(*, "height")= num 0
+  .. ..- attr(*, "label")= chr "Delaware"
+  .. ..- attr(*, "leaf")= logi TRUE
+  ..$ :List of 2
+  .. ..$ : atomic [1:1] 1
+  .. .. ..- attr(*, "label")= chr "Alabama"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..$ : atomic [1:1] 18
+  .. .. ..- attr(*, "label")= chr "Louisiana"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..- attr(*, "members")= int 2
+  .. ..- attr(*, "midpoint")= num 0.5
+  .. ..- attr(*, "height")= num 15.5
+  ..- attr(*, "members")= int 3
+  ..- attr(*, "midpoint")= num 0.75
+  ..- attr(*, "height")= num 16.9
+ $ :List of 2
+  ..$ :List of 2
+  .. ..$ : atomic [1:1] 13
+  .. .. ..- attr(*, "label")= chr "Illinois"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..$ : atomic [1:1] 32
+  .. .. ..- attr(*, "label")= chr "New York"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..- attr(*, "members")= int 2
+  .. ..- attr(*, "midpoint")= num 0.5
+  .. ..- attr(*, "height")= num 6.24
+  ..$ :List of 2
+  .. ..$ : atomic [1:1] 22
+  .. .. ..- attr(*, "label")= chr "Michigan"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..$ : atomic [1:1] 28
+  .. .. ..- attr(*, "label")= chr "Nevada"
+  .. .. ..- attr(*, "members")= int 1
+  .. .. ..- attr(*, "height")= num 0
+  .. .. ..- attr(*, "leaf")= logi TRUE
+  .. ..- attr(*, "members")= int 2
+  .. ..- attr(*, "midpoint")= num 0.5
+  .. ..- attr(*, "height")= num 13.3
+  ..- attr(*, "members")= int 4
+  ..- attr(*, "midpoint")= num 1.5
+  ..- attr(*, "height")= num 18.4
+ - attr(*, "members")= int 7
+ - attr(*, "midpoint")= num 2.62
+ - attr(*, "height")= num 26.4
+> 
 > ## merge() to join dendrograms:
 > (d13 <- merge(dend2$lower[[1]], dend2$lower[[3]]))
 'dendrogram' with 2 branches and 16 members total, at height 49.32173 
@@ -5728,7 +5830,7 @@ NULL
 > 
 > ### Name: density
 > ### Title: Kernel Density Estimation
-> ### Aliases: density density.default print.density
+> ### Aliases: density density.default
 > ### Keywords: distribution smooth
 > 
 > ### ** Examples
@@ -6675,7 +6777,7 @@ The degrees of freedom for the model is 0 and the fit was 0.4755
 > ### Name: family
 > ### Title: Family Objects for Models
 > ### Aliases: family binomial gaussian Gamma inverse.gaussian poisson quasi
-> ###   quasibinomial quasipoisson print.family
+> ###   quasibinomial quasipoisson
 > ### Keywords: models
 > 
 > ### ** Examples
@@ -7128,7 +7230,7 @@ attr(,".Environment")
 > environment(as.formula("y ~ x"))
 <environment: R_GlobalEnv>
 > environment(as.formula("y ~ x", env = new.env()))
-<environment: 0x4b08a68>
+<environment: 0x3855548>
 > 
 > 
 > ## Create a formula for a model with a large number of variables:
@@ -7511,7 +7613,7 @@ Crew  Child        0      0
 > 
 > ### Name: glm
 > ### Title: Fitting Generalized Linear Models
-> ### Aliases: glm glm.fit weights.glm print.glm
+> ### Aliases: glm glm.fit weights.glm
 > ### Keywords: models regression
 > 
 > ### ** Examples
@@ -7644,6 +7746,8 @@ Number of Fisher Scoring iterations: 3
 > ### ** Examples
 > 
 > require(graphics)
+> 
+> ### Example 1: Violent crime rates by US state
 > 
 > hc <- hclust(dist(USArrests), "ave")
 > plot(hc)
@@ -7844,10 +7948,10 @@ FAMI   -3   87   84   84   96   94   94   94   98   99   99  100
 > 
 > ### Name: influence.measures
 > ### Title: Regression Deletion Diagnostics
-> ### Aliases: influence.measures print.infl summary.infl hat hatvalues
-> ###   hatvalues.lm rstandard rstandard.lm rstandard.glm rstudent
-> ###   rstudent.lm rstudent.glm dfbeta dfbeta.lm dfbetas dfbetas.lm dffits
-> ###   covratio cooks.distance cooks.distance.lm cooks.distance.glm
+> ### Aliases: influence.measures hat hatvalues hatvalues.lm rstandard
+> ###   rstandard.lm rstandard.glm rstudent rstudent.lm rstudent.glm dfbeta
+> ###   dfbeta.lm dfbetas dfbetas.lm dffits covratio cooks.distance
+> ###   cooks.distance.lm cooks.distance.glm
 > ### Keywords: regression
 > 
 > ### ** Examples
@@ -8496,7 +8600,7 @@ Coefficients:
 > 
 > ### Name: lm
 > ### Title: Fitting Linear Models
-> ### Aliases: lm print.lm
+> ### Aliases: lm
 > ### Keywords: regression
 > 
 > ### ** Examples
@@ -8625,13 +8729,14 @@ groupCtl groupTrt
 > 
 > ### Name: lm.fit
 > ### Title: Fitter Functions for Linear Models
-> ### Aliases: lm.fit lm.wfit
+> ### Aliases: lm.fit lm.wfit .lm.fit
 > ### Keywords: regression array
 > 
 > ### ** Examples
 > 
 > require(utils)
 > set.seed(129)
+> 
 > n <- 7 ; p <- 2
 > X <- matrix(rnorm(n * p), n, p) # no intercept!
 > y <- rnorm(n)
@@ -8675,7 +8780,22 @@ List of 8
   ..$ rank : int 2
   ..- attr(*, "class")= chr "qr"
  $ df.residual  : int 5
-> 
+> ## Don't show: 
+>   ## These are the same calculations at C level, but a parallel BLAS
+>   ## might not do them the same way twice, and if seems serial MKL does not.
+>   lm.. <- .lm.fit(X,y)
+>   lm.w <- .lm.fit(X*sqrt(w), y*sqrt(w))
+>   id <- function(x, y) all.equal(x, y, tolerance = 1e-15, scale = 1)
+>   stopifnot(id(unname(lm.$coef), lm..$coef),
++ 	    id(unname(lmw$coef), lm.w$coef))
+> ## End Don't show
+> ## Not run: 
+> ##D if(require("microbenchmark")) {
+> ##D   mb <- microbenchmark(lm(y~X), lm.fit(X,y), .lm.fit(X,y))
+> ##D   print(mb)
+> ##D   boxplot(mb, notch=TRUE)
+> ##D }
+> ## End(Not run)
 > 
 > 
 > 
@@ -8761,7 +8881,7 @@ $df
 > 
 > ### Name: logLik
 > ### Title: Extract Log-Likelihood
-> ### Aliases: logLik print.logLik str.logLik logLik.lm
+> ### Aliases: logLik logLik.lm
 > ### Keywords: models
 > 
 > ### ** Examples
@@ -9053,7 +9173,7 @@ resp 1           185.2867
 resp 2             7.8286
 Deg. of Freedom        12
 
-Residual standard error: 3.9294470.8077039
+Residual standard errors: 3.929447 0.8077039
 1 out of 13 effects not estimable
 Estimated effects are balanced
 > summary(npk2.aov)
@@ -9086,7 +9206,7 @@ resp 1           37.00167 306.29333
 resp 2            0.06988   2.88496
 Deg. of Freedom         1         4
 
-Residual standard error: 8.7506190.8492579
+Residual standard errors: 8.750619 0.8492579
 Estimated effects are balanced
 
 Stratum 2: Within
@@ -9101,7 +9221,7 @@ resp 1          185.28667
 resp 2            7.82863
 Deg. of Freedom        12
 
-Residual standard error: 3.9294470.8077039
+Residual standard errors: 3.929447 0.8077039
 Estimated effects are balanced
 > summary(npk2.aovE)
 
@@ -11222,7 +11342,7 @@ Warning in xy.coords(x, y, xlabel, ylabel, log) :
 > 
 > ### Name: plot.lm
 > ### Title: Plot Diagnostics for an lm Object
-> ### Aliases: plot.lm plot.mlm
+> ### Aliases: plot.lm
 > ### Keywords: hplot regression
 > 
 > ### ** Examples
@@ -11596,14 +11716,14 @@ attr(,"class")
 $linkfun
 function (mu) 
 mu^lambda
-<bytecode: 0x6fe9d30>
-<environment: 0x6fde200>
+<bytecode: 0x3f5c100>
+<environment: 0x3f691d0>
 
 $linkinv
 function (eta) 
 pmax(eta^(1/lambda), .Machine$double.eps)
-<bytecode: 0x6fe9e48>
-<environment: 0x6fde200>
+<bytecode: 0x3f5bfe8>
+<environment: 0x3f691d0>
 
 > 
 > 
@@ -12206,7 +12326,7 @@ Number of Fisher Scoring iterations: 4
 > 
 > ### Name: predict.lm
 > ### Title: Predict method for Linear Model Fits
-> ### Aliases: predict.lm predict.mlm
+> ### Aliases: predict.lm
 > ### Keywords: regression
 > 
 > ### ** Examples
@@ -12805,7 +12925,7 @@ Importance of components:
 Standard deviation     1.5748783 0.9948694 0.5971291 0.41644938
 Proportion of Variance 0.6200604 0.2474413 0.0891408 0.04335752
 Cumulative Proportion  0.6200604 0.8675017 0.9566425 1.00000000
-> loadings(pc.cr)  ## note that blank entries are small but not zero
+> loadings(pc.cr)  # note that blank entries are small but not zero
 
 Loadings:
          Comp.1 Comp.2 Comp.3 Comp.4
@@ -12818,6 +12938,7 @@ Rape     -0.543 -0.167  0.818
 SS loadings      1.00   1.00   1.00   1.00
 Proportion Var   0.25   0.25   0.25   0.25
 Cumulative Var   0.25   0.50   0.75   1.00
+> ## The signs of the columns are arbitrary
 > plot(pc.cr) # shows a screeplot.
 > biplot(pc.cr)
 > 
@@ -12857,8 +12978,8 @@ Standard deviations:
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: print.ts
-> ### Title: Printing Time-Series Objects
-> ### Aliases: print.ts
+> ### Title: Printing and Formatting of Time-Series Objects
+> ### Aliases: .preformat.ts print.ts
 > ### Keywords: ts
 > 
 > ### ** Examples
@@ -12867,6 +12988,18 @@ Standard deviations:
    p1 p2 p3 p4 p5 p6 p7
 12     1  2  3  4  5  6
 13  7  8  9 10         
+> 
+> print(sunsp.1 <- window(sunspot.month, end=c(1756, 12)))
+       Jan   Feb   Mar   Apr   May   Jun   Jul   Aug   Sep   Oct   Nov   Dec
+1749  58.0  62.6  70.0  55.7  85.0  83.5  94.8  66.3  75.9  75.5 158.6  85.2
+1750  73.3  75.9  89.2  88.3  90.0 100.0  85.4 103.0  91.2  65.7  63.3  75.4
+1751  70.0  43.5  45.3  56.4  60.7  50.7  66.3  59.8  23.5  23.2  28.5  44.0
+1752  35.0  50.0  71.0  59.3  59.7  39.6  78.4  29.3  27.1  46.6  37.6  40.0
+1753  44.0  32.0  45.7  38.0  36.0  31.7  22.0  39.0  28.0  25.0  20.0   6.7
+1754   0.0   3.0   1.7  13.7  20.7  26.7  18.8  12.3   8.2  24.1  13.2   4.2
+1755  10.2  11.2   6.8   6.5   0.0   0.0   8.6   3.2  17.8  23.7   6.8  20.0
+1756  12.5   7.1   5.4   9.4  12.5  12.9   3.6   6.4  11.8  14.3  17.0   9.4
+> m <- .preformat.ts(sunsp.1) # a character matrix
 > 
 > 
 > 
@@ -15372,8 +15505,8 @@ Step function with continuity 'f'= 0.2 ,  3 knots at
 > unclass(sfun0)
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x3e053f8>
-<environment: 0x4d3ad28>
+<bytecode: 0x3351da0>
+<environment: 0x366fee0>
 attr(,"call")
 stepfun(1:3, y0, f = 0)
 > ls(envir = environment(sfun0))
@@ -15683,6 +15816,7 @@ Importance of components:
 Standard deviation     1.5748783 0.9948694 0.5971291 0.41644938
 Proportion of Variance 0.6200604 0.2474413 0.0891408 0.04335752
 Cumulative Proportion  0.6200604 0.8675017 0.9566425 1.00000000
+> ## The signs of the loading columns are arbitrary
 > print(summary(princomp(USArrests, cor = TRUE),
 +               loadings = TRUE, cutoff = 0.2), digits = 2)
 Importance of components:
@@ -16756,6 +16890,101 @@ Frequency = 1
 > 
 > ### ** Examples
 > 
+> ##--- uniroot() with new interval extension + checking features: --------------
+> 
+> f1 <- function(x) (121 - x^2)/(x^2+1)
+> f2 <- function(x) exp(-x)*(x - 12)
+> 
+> try(uniroot(f1, c(0,10)))
+Error in uniroot(f1, c(0, 10)) : 
+  f() values at end points not of opposite sign
+> try(uniroot(f2, c(0, 2)))
+Error in uniroot(f2, c(0, 2)) : 
+  f() values at end points not of opposite sign
+> ##--> error: f() .. end points not of opposite sign
+> 
+> ## where as  'extendInt="yes"'  simply first enlarges the search interval:
+> u1 <- uniroot(f1, c(0,10),extendInt="yes", trace=1)
+search in [0,10] ... extended to [-1.5e-05, 11.5] in 4 steps
+> u2 <- uniroot(f2, c(0,2), extendInt="yes", trace=2)
+search in [0,2]
+ .. modified lower,upper: (         -1e-06,           2.02)
+ .. modified lower,upper: (         -3e-06,           2.06)
+ .. modified lower,upper: (         -7e-06,           2.14)
+ .. modified lower,upper: (       -1.5e-05,            2.3)
+ .. modified lower,upper: (       -3.1e-05,           2.62)
+ .. modified lower,upper: (       -6.3e-05,           3.26)
+ .. modified lower,upper: (      -0.000127,           4.54)
+ .. modified lower,upper: (      -0.000255,            7.1)
+ .. modified lower,upper: (      -0.000511,          12.22)
+> stopifnot(all.equal(u1$root, 11, tolerance = 1e-5),
++           all.equal(u2$root, 12, tolerance = 6e-6))
+> 
+> ## The *danger* of interval extension:
+> ## No way to find a zero of a positive function, but
+> ## numerically, f(-|M|) becomes zero :
+> u3 <- uniroot(exp, c(0,2), extendInt="yes", trace=TRUE)
+search in [0,2] ... extended to [-1073.74, 2.14748e+07] in 30 steps
+> 
+> ## Nonsense example (must give an error):
+> tools::assertCondition( uniroot(function(x) 1, 0:1, extendInt="yes"),
++                        "error", verbose=TRUE)
+assertCondition: caught “error”
+> 
+> ## Convergence checking :
+> sinc <- function(x) ifelse(x == 0, 1, sin(x)/x)
+> curve(sinc, -6,18); abline(h=0,v=0, lty=3, col=adjustcolor("gray", 0.8))
+> ## Don't show: 
+> tools::assertWarning(
++ ## End Don't show
++ uniroot(sinc, c(0,5), extendInt="yes", maxiter=4) #-> "just" a warning
++ ## Don't show: 
++  , verbose=TRUE)
+Asserted warning: _NOT_ converged in 4 iterations
+> ## End Don't show
+> 
+> ## now with  check.conv=TRUE, must signal a convergence error :
+> ## Don't show: 
+> tools::assertError(
++ ## End Don't show
++ uniroot(sinc, c(0,5), extendInt="yes", maxiter=4, check.conv=TRUE)
++ ## Don't show: 
++  , verbose=TRUE)
+Asserted error: _NOT_ converged in 4 iterations
+> ## End Don't show
+> 
+> ### Weibull cumulative hazard (example origin, Ravi Varadhan):
+> cumhaz <- function(t, a, b) b * (t/b)^a
+> froot <- function(x, u, a, b) cumhaz(x, a, b) - u
+> 
+> n <- 1000
+> u <- -log(runif(n))
+> a <- 1/2
+> b <- 1
+> ## Find failure times
+> ru <- sapply(u, function(x)
++    uniroot(froot, u=x, a=a, b=b, interval= c(1.e-14, 1e04),
++            extendInt="yes")$root)
+> ru2 <- sapply(u, function(x)
++    uniroot(froot, u=x, a=a, b=b, interval= c(0.01,  10),
++            extendInt="yes")$root)
+> stopifnot(all.equal(ru, ru2, tolerance = 6e-6))
+> 
+> r1 <- uniroot(froot, u= 0.99, a=a, b=b, interval= c(0.01, 10),
++              extendInt="up")
+> stopifnot(all.equal(0.99, cumhaz(r1$root, a=a, b=b)))
+> 
+> ## An error if 'extendInt' assumes "wrong zero-crossing direction":
+> ## Don't show: 
+> tools::assertError(
++ ## End Don't show
++ uniroot(froot, u= 0.99, a=a, b=b, interval= c(0.1, 10), extendInt="down")
++ ## Don't show: 
++  , verbose=TRUE)
+Asserted error: no sign change found in 1000 iterations
+> ## End Don't show
+> 
+> 
 > 
 > cleanEx()
 > nameEx("update")
@@ -17580,7 +17809,7 @@ Number of Fisher Scoring iterations: 6
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  5.721 0.139 5.885 0 0 
+Time elapsed:  4.692 0.096 4.803 0 0 
 > grDevices::dev.off()
 null device 
           1 

@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -173,4 +173,10 @@ Warning in x(x) : NaNs produced
 Warning in dotchart(table(infert$education)) :
   'x' is neither a vector nor a matrix: using as.numeric(x)
 > ## failed in 2.12.[12]
+> 
+> ## cex as "..."  in "high level" function
+> hc <- hclust(dst <- dist(c(1:2, 5)), method="ave")
+> plot(hc, cex = 2, axes=FALSE, ann=FALSE)
+> ## cex was not used in 3.0.[01]
+> 
 > 

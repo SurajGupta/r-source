@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53\n"
-"PO-Revision-Date: 2013-03-19 21:22+0100\n"
+"POT-Creation-Date: 2014-01-26 09:09\n"
+"PO-Revision-Date: 2014-03-17 11:53+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.5.5\n"
+"X-Generator: Poedit 1.6.4\n"
 
 msgid "argument 'package' must be of length 1"
 msgstr "l'argument 'package' doit être de longueur 1"
@@ -194,9 +194,6 @@ msgstr "Champs comportant des valeurs non ASCII :"
 msgid "These fields must have ASCII values."
 msgstr "Ces champs doivent avoir des valeurs ASCII."
 
-msgid "Required fields missing:"
-msgstr "Champs requis mais manquants :"
-
 msgid "Malformed package version."
 msgstr "Version de package mal orthographiée."
 
@@ -231,6 +228,15 @@ msgid ""
 msgstr ""
 "Les numéros de version doivent être des séquences d'au moins deux entiers "
 "non négatifs, séparés par un seul '.' ou '-'."
+
+msgid "Invalid VignetteBuilder field."
+msgstr "Champ 'VignetteBuilder' incorrect."
+
+msgid ""
+"This field must contain one or more packages (and no version requirement)."
+msgstr ""
+"Ce champ doit contenir un ou plusieurs packages (et aucune indication de "
+"version)."
 
 msgid "Invalid Priority field."
 msgstr "Champ 'Priority' incorrect."
@@ -284,14 +290,25 @@ msgstr "Standardisable : %s"
 msgid "Standardized license specification:"
 msgstr "Spécification de licence standard :"
 
+msgid "Deprecated license: %s"
+msgstr "Licence dépréciée : %s"
+
 msgid "Invalid license file pointers: %s"
 msgstr "Pointeur de fichier licence incorrect : %s"
 
-msgid "Components with restrictions not permitted:"
-msgstr "Le composants avec restrictions ne sont pas autorisés :"
+msgid "License components with restrictions not permitted:"
+msgstr "Les composants avec restrictions de licence ne sont pas autorisés :"
+
+msgid "License components which are templates and need '+ file LICENSE':"
+msgstr ""
+"Les composants avec restrictions de licence qui sont des modèles et qui "
+"nécessitent '+ file LICENSE' :"
 
 msgid "Non-portable flags in variable '%s':"
 msgstr "Indicateur non portable dans la variable '%s' :"
+
+msgid "Variables overriding user/site settings:"
+msgstr "Des variables remplacent les valeurs utilisateur/site :"
 
 msgid ""
 "package %s exists but was not installed under R >= 2.10.0 so xrefs cannot be "
@@ -373,11 +390,67 @@ msgstr "appels 'library' ou 'require' non déclarés depuis :"
 msgid "'library' or 'require' call not declared from: %s"
 msgstr "appels 'library' ou 'require' non déclarés depuis : %s"
 
+msgid "'library' or 'require' calls to packages already attached by Depends:"
+msgstr ""
+"appels 'library' ou 'require' vers des packages déjà attachés depuis "
+"Depends :"
+
+msgid ""
+"'library' or 'require' call to %s which was already attached by Depends."
+msgstr ""
+"appels 'library' ou 'require' à %s qui est déjà attaché depuis Depends."
+
+msgid "Namespaces in Imports field not imported from:"
+msgstr "Espaces de noms dans le champ Imports non importés depuis :"
+
+msgid "Namespace in Imports field not imported from: %s"
+msgstr ""
+"Dépendance d'espace de nom dans le champ Imports non importé depuis : %s"
+
+msgid "Packages in Depends field not imported from:"
+msgstr "Packages dans le champ Depends non importés depuis :"
+
+msgid "Package in Depends field not imported from: %s"
+msgstr "Package dans le champ Depends non importé depuis : %s"
+
+msgid "Missing or unexported objects:"
+msgstr "Objets manquants ou non exportés :"
+
+msgid "Missing or unexported object: %s"
+msgstr "Objet manquant ou non exporté : %s"
+
+msgid "':::' calls which should be '::':"
+msgstr "appels ':::' qui devrait être '::' :"
+
+msgid "':::' call which should be '::': %s"
+msgstr "appel ':::' qui devrait être '::' : %s"
+
+msgid "Missing objects imported by ':::' calls:"
+msgstr "Objets manquants importés par appels ':::' :"
+
+msgid "Missing object imported by a ':::' call: %s"
+msgstr "Objet manquant importé par appel ':::' : %s"
+
+msgid "Unexported objects imported by ':::' calls:"
+msgstr "Objets non exportés importés par appels ':::' :"
+
+msgid "Unexported object imported by a ':::' call: %s"
+msgstr "Objet non exporté importé par appel ':::' : %s"
+
+msgid "Unavailable namespaces imported from by ':::' calls:"
+msgstr "Espaces de noms non disponibles importés par des appels ':::' :"
+
+msgid "Unavailable namespace imported from by a ':::' call: %s"
+msgstr "Espace de nom non disponible importé par un appel ':::' : %s"
+
 msgid "'data(package=)' calls not declared from:"
 msgstr "appel 'data(package=)' non déclaré depuis :"
 
 msgid "'data(package=)' call not declared from: %s"
 msgstr "appel 'data(package=)' non déclaré depuis : %s"
+
+msgid "Package has no 'Version' field"
+msgstr "Le package n'a pas de champ 'Version'"
 
 msgid "NB: need Internet access to use CRAN incoming checks"
 msgstr ""
@@ -396,9 +469,8 @@ msgstr "Arguments sans description dans l'objet Rd '%s' :"
 msgid "Auto-generated content requiring editing in Rd object '%s':"
 msgstr "Contenu automatique de l'objet Rd '%s' à éditer :"
 
-#, fuzzy
 msgid "no Rd sections specified"
-msgstr "aucun 'type' spécifié"
+msgstr "aucune section Rd n'est spécifiée"
 
 msgid ""
 "Generics 'g' in 'env' %s where '%s' errors: %s\n"
@@ -487,64 +559,42 @@ msgstr "valeur inexacte pour '%s' : %s"
 msgid "Only one Rd section per %s is supported."
 msgstr "Seulement une section Rd par %s est supportée."
 
-msgid "Vignette product"
-msgstr "Vignette produit"
+msgid "Vignette product %s does not have a known filename extension (%s)"
+msgstr ""
+"Le fichier porduit pour la vignette %s n'a pas une extension de fichier "
+"connue (%s)"
 
-msgid "does not have a known filename extension ("
-msgstr "n'a pas une extension de fichier connue ("
+msgid ""
+"Failed to locate the %s output file (by engine %s) for vignette with name "
+"%s. The following files exist in directory %s: %s"
+msgstr ""
+"Impossible de localiser le fichier de sortie %s (par le moteur %s) pour la "
+"vignette de nom %s. Les fichiers suivants existent dans le répertoire %s : %s"
 
-msgid ","
-msgstr ","
-
-msgid ")"
-msgstr ")"
-
-msgid "Failed to locate the"
-msgstr "impossible de créer"
-
-msgid "output file (by engine"
-msgstr "fichier en sortie (par engin"
-
-msgid "%s::%s"
-msgstr "%s::%s"
-
-msgid ") for vignette with name"
-msgstr ") pour la vignette avec le nom"
-
-msgid ". The following files exists in directory"
-msgstr ". Les fichiers sont dans ce répertoire"
-
-msgid ":"
-msgstr " :"
-
-msgid "Located more than one"
-msgstr "Localisation plus d'une fois"
+msgid ""
+"Located more than one %s output file (by engine %s) for vignette with name "
+"%s: %s"
+msgstr ""
+"Plus d'un fichier de sortie %s localisé (par le moteur %s) pour la vignette "
+"portant le nom %s : %s"
 
 msgid "unable to create temp directory %s"
 msgstr "impossible de créer le répertoire temporaire %s"
 
-#, fuzzy
 msgid "Running"
-msgstr "Exécution de %s"
+msgstr "Exécution"
 
-msgid "Vignette"
-msgstr "Vignette"
-
-msgid "overwrites the following"
-msgstr "remplace le suivant"
-
-msgid "output by vignette"
-msgstr "sortie par vignette"
-
-msgid "Detected vignette source files ("
-msgstr "Fichiers source de vignettes détectés ("
-
-msgid ") with shared names ("
-msgstr ") avec les mêmes noms ("
-
-msgid ") and therefore risking overwriting each others output files"
+msgid "Vignette %s overwrites the following %s output by vignette %s: %s"
 msgstr ""
-") et qui risquent donc de remplacer mutuellement leurs fichiers en sortie"
+"La vignette %s réécrit sur la sortie %s de la  vignette suivante %s : %s"
+
+msgid ""
+"Detected vignette source files (%s) with shared names (%s) and therefore "
+"risking overwriting each others output files"
+msgstr ""
+"Fichiers sources pour des vignettes (%s) détectés avec des noms partagés "
+"(%s) et qui risquent donc de se réécrire les uns sur les autres pour les "
+"fichiers de sortie"
 
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
@@ -563,68 +613,55 @@ msgstr ""
 msgid "running 'make' failed"
 msgstr "l'exécution de 'make' a échoué"
 
+msgid "file '%s' not found"
+msgstr "le fichier '%s' est introuvable"
+
+msgid "vignette filename '%s' does not match any of the '%s' filename patterns"
+msgstr ""
+"le nom de fichier '%s' pour la vignette ne correspond pas au pattern de nom "
+"de fichier '%s'"
+
+msgid "Inconsistent encoding specifications:"
+msgstr "Spécifications d'encodage incohérentes :"
+
+msgid "with %\\SweaveUTF8"
+msgstr "avec %\\SweaveUTF8"
+
 msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
 msgstr "Dans '%s' les vignettes '%s' et '%s' ont le même nom de vignette"
 
 msgid "argument 'vignette' must be of length 1"
 msgstr "l'argument 'vignette' doit être de longueur 1"
 
-msgid "file '%s' not found"
-msgstr "le fichier '%s' est introuvable"
+msgid "Vignette engine package not specified"
+msgstr "Package du moteur de vignettes non spécifié"
 
 msgid "Unsupported engine name"
 msgstr "Module de traitement non supporté"
 
-msgid "None of packages"
-msgstr "Aucun des packages"
+msgid "None of packages %s have registered vignette engines"
+msgstr ""
+"Aucun des packages %s n'a enregistré de module de traitement de vignettes"
 
-msgid "have registered vignette engines"
-msgstr "a enregisté les modules de traitement de vignettes"
+msgid "Vignette engine %s is not registered"
+msgstr "Moteur de vignette %s non enregistré"
 
-msgid "Vignette engine"
-msgstr "Module de traitement de vignette"
+msgid "Vignette engine %s is not registered by any of the packages %s"
+msgstr "Moteur de vignette %s non enregistré dans aucun des packages %s"
 
-msgid "is not registered"
-msgstr "n'est pas enregisté"
+msgid "Engine name %s and package %s do not match"
+msgstr "Le nom de generateur %s dans le package %s ne peut être localisé"
 
-msgid "is not registered by any of the packages"
-msgstr "n'est enregisté par aucun des packages"
+msgid "Argument %s must be a function and not %s"
+msgstr "L'argument %s doit être une fonction et pas %s"
 
-msgid "Engine name"
-msgstr "Nom du module de traitement"
+msgid "Argument %s must be a character vector or NULL and not %s"
+msgstr "L'argument %s doit être une chaîne de caractères ou NULL et pas %s"
 
-msgid "and package"
-msgstr "et le package"
-
-msgid "do not match"
-msgstr "ne correspond pas"
-
-msgid "Argument"
-msgstr "Argument"
-
-msgid "weave"
-msgstr "weave"
-
-msgid "must be a function and not"
-msgstr "doit être une fonction et pas"
-
-msgid "tangle"
-msgstr "tangle"
-
-msgid "pattern"
-msgstr "motif"
-
-msgid "must be a character vector or NULL and not"
-msgstr "doit être une chaîne de caractères ou NULL et pas"
-
-msgid "Cannot change the"
-msgstr "impossible de changer le"
-
-msgid "Sweave"
-msgstr "Sweave"
-
-msgid "engine or use an engine of that name"
-msgstr "module de traitement ou utilise un module de ce nom"
+msgid "Cannot change the %s engine or use an engine of that name"
+msgstr ""
+"Impossible de changer le module de traitement %s ou utiliser un module de ce "
+"nom"
 
 msgid "vignette builder '%s' not found"
 msgstr "créateur de vignette '%s' introuvable"
@@ -697,6 +734,35 @@ msgstr "ERREUR : cette version de R est %s, requis R %s %s "
 
 msgid "loading failed"
 msgstr "le chargement a échoué"
+
+msgid "assertConditon: Successfully caught a condition"
+msgstr "assertCondition : Une condition a été capturée avec succès"
+
+msgid "assertCondition: caught %s"
+msgstr "assertCondition : capture de %s"
+
+msgid ","
+msgstr ","
+
+msgid "Got %s in evaluating %s; wanted %s"
+msgstr "%s a été obtenu lors de l'évaluation de %s ; il fallait %s"
+
+msgid "Failed to get %s in evaluating %s"
+msgstr "%s n'a pas été obtenu lors de l'évaluation de %s"
+
+msgid "Failed to get error in evaluating %s"
+msgstr "Aucune erreur n'a été renvoyée lors de l'évaluation de %s"
+
+msgid "Asserted error: %s"
+msgstr "Assertion d'erreur : %s"
+
+msgid "Got warning in evaluating %s, but also an error"
+msgstr ""
+"Un message d'avis (warning) a été obtenu en évaluant %s, mais aussi une "
+"erreur"
+
+msgid "Asserted warning: %s"
+msgstr "Message d'avis (warning) dans l'assertion : %s"
 
 msgid "Changes require specified 'style'"
 msgstr "Les modifications nécessite le 'style' spécifié"
@@ -839,6 +905,9 @@ msgstr ""
 msgid "generating debug symbols (%s)"
 msgstr "génération des symboles de débogage (%s)"
 
+msgid "no DLL was created"
+msgstr "aucune DLL n'a pas été créé"
+
 msgid "package %s successfully unpacked and MD5 sums checked"
 msgstr "package %s correctement décompressé et sommes MD5 vérifiées"
 
@@ -848,6 +917,9 @@ msgid ""
 msgstr ""
 "le répertoire include de R est vide -- il faut peut-être installer R-devel."
 "rpm ou similaire"
+
+msgid "package %s %s was found, but %s %s is required by %s"
+msgstr "package %s %s trouvé, mais %s %s est nécessaire pour %s"
 
 msgid "no source files found"
 msgstr "aucun fichier source n'est trouvé"
@@ -1062,9 +1134,6 @@ msgstr "Le package '%s' a ses dépendances réduites à un ensemble minimal."
 msgid "argument '%s' must be a character string or connection"
 msgstr "l'argument '%s' doit être une chaîne de caractères ou une connexion"
 
-msgid "'file' must be a character string or connection"
-msgstr "'file' doit être une chaîne de caractères ou une connexion"
-
 msgid "unimplemented encoding"
 msgstr "encodage non implémenté"
 
@@ -1073,6 +1142,9 @@ msgstr "%s est trouvé, sans doute depuis %s"
 
 msgid "testing '%s' failed"
 msgstr "le test '%s' a échoué"
+
+msgid "%d of the package tests failed"
+msgstr "%d des tests du package ont échoué"
 
 msgid "Testing examples for package %s"
 msgstr "Vérification des exemples du package %s"
@@ -1108,7 +1180,7 @@ msgid "FAILED"
 msgstr "ECHEC"
 
 msgid "DIFFERED"
-msgstr ""
+msgstr "DIFFERE"
 
 msgid "running tests of random deviate generation -- fails occasionally"
 msgstr ""
@@ -1253,27 +1325,40 @@ msgstr[1] ""
 "Appels .Internal trouvés dans les méthodes pour les classes de références "
 "suivantes :"
 
-msgid "Found an obsolete call in the following function:"
-msgid_plural "Found an obsolete call in the following functions:"
-msgstr[0] "Appel obsolète trouvé dans la fonction suivante :"
-msgstr[1] "Appels obsolète trouvés dans les fonctions suivantes :"
-
-msgid "Found an obsolete call in methods for the following S4 generic:"
-msgid_plural "Found an obsolete call in methods for the following S4 generics:"
-msgstr[0] ""
-"Appel obsolète trouvé dans les méthodes pour le générique S4 suivant :"
-msgstr[1] ""
-"Appel obsolète trouvé dans les méthodes pour les génériques S4 suivants :"
-
-msgid "Found an obsolete call in methods for the following reference class:"
+msgid "Found an obsolete/platform-specific call in the following function:"
 msgid_plural ""
-"Found an obsolete call in methods for the following reference classes:"
+"Found an obsolete/platform-specific call in the following functions:"
 msgstr[0] ""
-"Appel obsolète trouvé dans les méthodes pour la classe de référence "
-"suivante :"
+"Appel obsolète/spécifique d'une plateforme trouvé dans la fonction suivante :"
 msgstr[1] ""
-"Appel obsolète trouvé dans les méthodes pour les classes de référence "
+"Appels obsolètes/spécifiques d'une plateforme trouvés dans les fonctions "
 "suivantes :"
+
+msgid ""
+"Found an obsolete/platform-specific call in methods for the following S4 "
+"generic:"
+msgid_plural ""
+"Found an obsolete/platform-specific call in methods for the following S4 "
+"generics:"
+msgstr[0] ""
+"Appel obsolète/spécifique d'une plateforme trouvé dans les méthodes pour le "
+"générique S4 suivant :"
+msgstr[1] ""
+"Appel obsolète/spécifique d'une plateforme trouvé dans les méthodes pour les "
+"génériques S4 suivants :"
+
+msgid ""
+"Found an obsolete/platform-specific call in methods for the following "
+"reference class:"
+msgid_plural ""
+"Found an obsolete/platform-specific call in methods for the following "
+"reference classes:"
+msgstr[0] ""
+"Appel obsolète/spécifique d'une plateforme trouvé dans les méthodes pour la "
+"classe de référence suivante :"
+msgstr[1] ""
+"Appel obsolète/spécifique d'une plateforme trouvé dans les méthodes pour les "
+"classes de référence suivantes :"
 
 msgid "Found the deprecated function:"
 msgid_plural "Found the deprecated functions:"
@@ -1284,6 +1369,11 @@ msgid "Found the defunct/removed function:"
 msgid_plural "Found the defunct/removed functions:"
 msgstr[0] "Fonction obsolète ou éliminée trouvée : "
 msgstr[1] "Fonctions obsolètes ou éliminées trouvées : "
+
+msgid "Found the platform-specific device:"
+msgid_plural "Found the platform-specific devices:"
+msgstr[0] "un périphérique spécifique à une plateforme est rencontré :"
+msgstr[1] "des périphériques spécifiques à une plateforme sont rencontrés :"
 
 msgid "Generic without any methods in %s: %s"
 msgid_plural "Generics without any methods in %s: %s"
@@ -1308,6 +1398,11 @@ msgid_plural "unable to re-encode %s lines %s"
 msgstr[0] "impossible de réencoder %s ligne %s"
 msgstr[1] "impossible de réencoder %s lignes %s"
 
+msgid "Required field missing or empty:"
+msgid_plural "Required fields missing or empty:"
+msgstr[0] "Champ requis mais manquant ou vide :"
+msgstr[1] "Champs requis mais manquants ou vides :"
+
 msgid "Help on topic '%s' was found in the following package:"
 msgid_plural "Help on topic '%s' was found in the following packages:"
 msgstr[0] "L'aide pour le mot '%s' est trouvée dans le package suivant :"
@@ -1318,12 +1413,90 @@ msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "l'objet %s est créé par plus d'un appel aux données"
 msgstr[1] "les objets %s sont créés par plus d'un appel aux données"
 
+#~ msgid "Vignette product"
+#~ msgstr "Vignette produit"
+
+#~ msgid ")"
+#~ msgstr ")"
+
+#~ msgid "Failed to locate the"
+#~ msgstr "impossible de créer"
+
+#~ msgid "output file (by engine"
+#~ msgstr "fichier en sortie (par engin"
+
+#~ msgid "%s::%s"
+#~ msgstr "%s::%s"
+
+#~ msgid ") for vignette with name"
+#~ msgstr ") pour la vignette avec le nom"
+
+#~ msgid ". The following files exists in directory"
+#~ msgstr ". Les fichiers sont dans ce répertoire"
+
+#~ msgid ":"
+#~ msgstr " :"
+
+#~ msgid "Located more than one"
+#~ msgstr "Localisation plus d'une fois"
+
+#~ msgid "Vignette"
+#~ msgstr "Vignette"
+
+#~ msgid "overwrites the following"
+#~ msgstr "remplace le suivant"
+
+#~ msgid "output by vignette"
+#~ msgstr "sortie par vignette"
+
+#~ msgid "Detected vignette source files ("
+#~ msgstr "Fichiers source de vignettes détectés ("
+
+#~ msgid ") with shared names ("
+#~ msgstr ") avec les mêmes noms ("
+
+#~ msgid "None of packages"
+#~ msgstr "Aucun des packages"
+
+#~ msgid "Vignette engine"
+#~ msgstr "Module de traitement de vignette"
+
+#~ msgid "is not registered"
+#~ msgstr "n'est pas enregisté"
+
+#~ msgid "Engine name"
+#~ msgstr "Nom du module de traitement"
+
+#~ msgid "and package"
+#~ msgstr "et le package"
+
+#~ msgid "do not match"
+#~ msgstr "ne correspond pas"
+
+#~ msgid "Argument"
+#~ msgstr "Argument"
+
+#~ msgid "weave"
+#~ msgstr "weave"
+
+#~ msgid "tangle"
+#~ msgstr "tangle"
+
+#~ msgid "pattern"
+#~ msgstr "motif"
+
+#~ msgid "Cannot change the"
+#~ msgstr "impossible de changer le"
+
+#~ msgid "Sweave"
+#~ msgstr "Sweave"
+
+#~ msgid "'file' must be a character string or connection"
+#~ msgstr "'file' doit être une chaîne de caractères ou une connexion"
+
 #, fuzzy
 #~ msgid "not found"
 #~ msgstr "introuvable"
-
-#~ msgid "file '%s' was not created"
-#~ msgstr "le fichier '%s' n'a pas été créé"
 
 #~ msgid "found %s"
 #~ msgstr "trouvé(s) %s"
@@ -1667,16 +1840,10 @@ msgstr[1] "les objets %s sont créés par plus d'un appel aux données"
 #~ "Package qui serait amélioré mais qui n'est pas disponible pour la "
 #~ "vérification :"
 
-#~ msgid "Vignette dependencies not required:"
-#~ msgstr "Dependences de vignette non requises :"
-
 #~ msgid "Vignette dependencies not required: %s"
 #~ msgstr "Dépendences de vignette non requises :"
 
 #~ msgid "Namespace dependencies not required:"
-#~ msgstr "Dépendances d'espaces de noms non requises :"
-
-#~ msgid "Namespace dependency not required: %s"
 #~ msgstr "Dépendances d'espaces de noms non requises :"
 
 #~ msgid "Package name and namespace differ."

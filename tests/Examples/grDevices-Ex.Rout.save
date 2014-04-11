@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -1516,11 +1516,11 @@ List of 150
 [5,]   0.00 255.00    0
 > colorRampPalette(c("blue", "red"))( 4 ) ## (n)
 [1] "#0000FF" "#5500AA" "#AA0055" "#FF0000"
-> ## Don't show: 
-> ## special case, invalid in R <= 2.15.0:
-> bb <- colorRampPalette(2)(4)
-> stopifnot(bb[1] == bb)
-> ## End Don't show
+> ## a ramp in opacity of blue values
+> colorRampPalette(c(rgb(0,0,1,1), rgb(0,0,1,0)), alpha = TRUE)(8)
+[1] "#0000FFFF" "#0000FFDA" "#0000FFB6" "#0000FF91" "#0000FF6D" "#0000FF48"
+[7] "#0000FF24" "#0000FF00"
+> 
 > require(graphics)
 > 
 > ## Here space="rgb" gives palettes that vary only in saturation,
@@ -2936,6 +2936,20 @@ $encoding
 attr(,"class")
 [1] "Type1Font"
 
+$ArialMT
+$family
+[1] "ArialMT"
+
+$metrics
+[1] "ArialMT.afm"            "ArialMT-Bold.afm"       "ArialMT-Italic.afm"    
+[4] "ArialMT-BoldItalic.afm" "Symbol.afm"            
+
+$encoding
+[1] "default"
+
+attr(,"class")
+[1] "Type1Font"
+
 $ComputerModern
 $family
 [1] "ComputerModern"
@@ -3141,9 +3155,10 @@ attr(,"class")
 [13] "URWBookman"           "NimbusMon"            "NimbusSan"           
 [16] "URWHelvetica"         "NimbusSanCond"        "CenturySch"          
 [19] "URWPalladio"          "NimbusRom"            "URWTimes"            
-[22] "Japan1"               "Japan1HeiMin"         "Japan1GothicBBB"     
-[25] "Japan1Ryumin"         "Korea1"               "Korea1deb"           
-[28] "CNS1"                 "GB1"                  "Jp_UCS-2"            
+[22] "ArialMT"              "Japan1"               "Japan1HeiMin"        
+[25] "Japan1GothicBBB"      "Japan1Ryumin"         "Korea1"              
+[28] "Korea1deb"            "CNS1"                 "GB1"                 
+[31] "Jp_UCS-2"            
 > 
 > 
 > 
@@ -3698,7 +3713,7 @@ $zlab
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  8.927 0.188 9.143 0 0 
+Time elapsed:  8.084 0.121 8.226 0 0 
 > grDevices::dev.off()
 null device 
           1 

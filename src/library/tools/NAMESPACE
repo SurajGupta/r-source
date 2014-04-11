@@ -4,21 +4,21 @@ export("Adobe_glyphs", "HTMLheader", "Rd2HTML", "Rd2ex", "Rd2latex",
        "Rd2txt", "Rd2txt_options", "RdTextFilter", "Rd_db", "Rdiff",
        "Rdindex", "SweaveTeXFilter", "add_datalist",
        "assertCondition", "assertError", "assertWarning", "bibstyle",
-       "buildVignettes", "charset_to_Unicode", "checkDocFiles",
-       "checkDocStyle", "checkFF", "checkMD5sums", "checkNEWS",
-       "checkRd", "checkPoFile", "checkPoFiles", "checkRdaFiles",
-       "checkReplaceFuns", "checkS3methods", "checkTnF",
-       "checkVignettes", "codoc", "codocClasses", "codocData",
-       "compactPDF", "delimMatch", "deparseLatex", "dependsOnPkgs",
-       "encoded_text_to_latex", "file_ext", "file_path_as_absolute",
-       "file_path_sans_ext", "findHTMLlinks", "getBibstyle",
-       "getDepList", "getVignetteInfo", "installFoundDepends",
-       "latexToUtf8", "list_files_with_exts", "list_files_with_type",
-       "make_translations_pkg", "md5sum", "package.dependencies",
-       "package_dependencies", "parseLatex", "parse_Rd", "pkgDepends",
-       "pkgVignettes", "pskill", "psnice", "read.00Index", "readNEWS",
-       "resaveRdaFiles", "showNonASCII", "showNonASCIIfile",
-       "startDynamicHelp", "testInstalledBasic",
+       "buildVignette", "buildVignettes", "charset_to_Unicode",
+       "checkDocFiles", "checkDocStyle", "checkFF", "checkMD5sums",
+       "checkNEWS", "checkRd", "checkPoFile", "checkPoFiles",
+       "checkRdaFiles", "checkReplaceFuns", "checkS3methods",
+       "checkTnF", "checkVignettes", "codoc", "codocClasses",
+       "codocData", "compactPDF", "delimMatch", "deparseLatex",
+       "dependsOnPkgs", "encoded_text_to_latex", "file_ext",
+       "file_path_as_absolute", "file_path_sans_ext", "findHTMLlinks",
+       "find_gs_cmd", "getBibstyle", "getDepList", "getVignetteInfo",
+       "installFoundDepends", "latexToUtf8", "list_files_with_exts",
+       "list_files_with_type", "make_translations_pkg", "md5sum",
+       "package.dependencies", "package_dependencies", "parseLatex",
+       "parse_Rd", "pkgDepends", "pkgVignettes", "pskill", "psnice",
+       "read.00Index", "readNEWS", "resaveRdaFiles", "showNonASCII",
+       "showNonASCIIfile", "startDynamicHelp", "testInstalledBasic",
        "testInstalledPackage", "testInstalledPackages", "texi2dvi",
        "texi2pdf", "toHTML", "toRd", "undoc", "update_pkg_po",
        "vignetteDepends", "vignetteEngine", "write_PACKAGES",
@@ -54,6 +54,7 @@ S3method("format", "check_package_code_attach")
 S3method("format", "check_package_code_startup_functions")
 S3method("format", "check_package_datasets")
 S3method("format", "check_package_depends")
+S3method("format", "check_package_description2")
 S3method("format", "check_package_description_encoding")
 S3method("format", "check_package_license")
 S3method("format", "check_packages_used")
@@ -69,6 +70,7 @@ S3method("format", "codocClasses")
 S3method("format", "codocData")
 S3method("format", "compactPDF")
 S3method("format", "subdir_tests")
+S3method("format", "summarize_CRAN_check_status")
 S3method("format", "undoc")
 
 S3method("format", "pdf_fonts")
@@ -142,6 +144,7 @@ S3method("print", "check_po_files")
 S3method("print", "check_so_symbols", .print.via.format)
 S3method("print", "check_nonAPI_calls", .print.via.format)
 S3method("print", "check_vignette_index")
+S3method("print", "summarize_CRAN_check_status")
 
 S3method("summary", "PDF_Dictionary")
 S3method("summary", "PDF_Stream")

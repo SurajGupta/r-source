@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -43,4 +43,4 @@ Calculations on Transformed Scale;  Intervals on Original Scale
 > 
 > proc.time()
    user  system elapsed 
-  0.147   0.019   0.254 
+  0.302   0.029   0.229 

@@ -1,7 +1,7 @@
 #  File src/library/utils/R/sourceutils.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ getSrcfile <- function(x) {
 }
 
 substr_with_tabs <- function(x, start, stop, tabsize = 8) {
-    widths <- rep(1, nchar(x))
+    widths <- rep_len(1, nchar(x))
     tabs <- which(strsplit(x,"")[[1]] == "\t")
     for (i in tabs) {
 	cols <- cumsum(widths)

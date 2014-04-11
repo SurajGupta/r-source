@@ -174,7 +174,7 @@ coplot <-
 	    }
 	}
     }
-    if(any(is.na(a.intervals)) || (have.b && any(is.na(b.intervals))))
+    if(anyNA(a.intervals) || (have.b && anyNA(b.intervals)))
 	bad.givens()
 
     ## compute the page layout
@@ -245,7 +245,7 @@ coplot <-
 	par(mfg = c(i, j, total.rows, total.columns))
 	plot.new()
 	plot.window(xlim, ylim)
-	if(any(is.na(id))) id[is.na(id)] <- FALSE
+	if(anyNA(id)) id[is.na(id)] <- FALSE
 	if(any(id)) {
 	    grid(lty="solid")
 	    if(subscripts)

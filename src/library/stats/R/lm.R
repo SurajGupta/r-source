@@ -1,7 +1,7 @@
 #  File src/library/stats/R/lm.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2013 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     else if(length(dots) == 1L)
 	warning("extra argument ", sQuote(names(dots)),
                 " is disregarded.", domain = NA)
-    z <- .Call(C_Cdqrls, x, y, tol)
+    z <- .Call(C_Cdqrls, x, y, tol, FALSE)
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
     coef <- z$coefficients
     pivot <- z$pivot
@@ -147,6 +147,8 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
 	   qr = structure(qr, class="qr"),
 	   df.residual = n - z$rank))
 }
+
+.lm.fit <- function(x, y, tol = 1e-07) .Call(C_Cdqrls, x, y, tol, check=TRUE)
 
 lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
                      singular.ok = TRUE, ...)
@@ -195,8 +197,13 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
                     fitted.values = 0 * y, weights = w, rank = 0L,
                     df.residual = length(y)))
     }
+    if (n == 0) { # all cases have weight zero
+        return(list(coefficients = rep(NA_real_, p), residuals = y,
+                    fitted.values = 0 * y, weights = w, rank = 0L,
+                    df.residual = 0L))
+    }
     wts <- sqrt(w)
-    z <- .Call(C_Cdqrls, x * wts, y * wts, tol)
+    z <- .Call(C_Cdqrls, x * wts, y * wts, tol, FALSE)
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
     coef <- z$coefficients
     pivot <- z$pivot
@@ -298,7 +305,6 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
     n <- NROW(Qr$qr)
     if(is.na(z$df.residual) || n - p != z$df.residual)
         warning("residual degrees of freedom in object suggest this is not an \"lm\" fit")
-    p1 <- 1L:p
     ## do not want missing values substituted here
     r <- z$residuals
     f <- z$fitted.values
@@ -316,6 +322,11 @@ summary.lm <- function (object, correlation = FALSE, symbolic.cor = FALSE, ...)
         r <- sqrt(w) * r
     }
     resvar <- rss/rdf
+    ## see thread at https://stat.ethz.ch/pipermail/r-help/2014-March/367585.html
+    if (is.finite(resvar) &&
+        resvar < (mean(f)^2 + var(f)) * 1e-30)  # a few times .Machine$double.eps^2
+        warning("essentially perfect fit: summary may be unreliable")
+    p1 <- 1L:p
     R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
     se <- sqrt(diag(R) * resvar)
     est <- z$coefficients[Qr$pivot[p1]]
@@ -551,8 +562,10 @@ case.names.lm <- function(object, full = FALSE, ...)
 
 anova.lm <- function(object, ...)
 {
-    if(length(list(object, ...)) > 1L)
-	return(anova.lmlist(object, ...))
+    ## Do not copy this: anova.lmlist is not an exported object.
+    ## See anova.glm for further comments.
+    if(length(list(object, ...)) > 1L) return(anova.lmlist(object, ...))
+
     if(!inherits(object, "lm"))
 	warning("calling anova.lm(<fake-lm-object>) ...")
     w <- object$weights

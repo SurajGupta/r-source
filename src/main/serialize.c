@@ -2539,7 +2539,7 @@ static SEXP appendRawToFile(SEXP file, SEXP bytes)
 {
     FILE *fp;
     size_t len, out;
-    long pos;
+    long pos;  // what ftell gives: won't work for > 2GB files
     SEXP val;
 
     if (! IS_PROPER_STRING(file))
@@ -2724,7 +2724,7 @@ static SEXP R_getVarsFromFrame(SEXP vars, SEXP env, SEXP forcesxp)
 	if (tmp == R_UnboundValue) {
 /*		PrintValue(env);
 		PrintValue(R_GetTraceback(0)); */  /* DJM debugging */
-	    error(_("object '%s' not found"), CHAR(STRING_ELT(vars, i)));
+	    error(_("object '%s' not found"), EncodeChar(STRING_ELT(vars, i)));
 	    }
 	if (force && TYPEOF(tmp) == PROMSXP) {
 	    PROTECT(tmp);
@@ -2754,7 +2754,7 @@ SEXP R_decompress3(SEXP in, Rboolean *err);
    result to a file.  Returns the key position/length key for
    retrieving the value */
 
-SEXP attribute_hidden
+static SEXP
 R_lazyLoadDBinsertValue(SEXP value, SEXP file, SEXP ascii,
 			SEXP compsxp, SEXP hook)
 {

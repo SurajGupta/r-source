@@ -38,14 +38,22 @@
 #include <Rconfig.h>
 #include <Rmath.h>
 
+/* Used internally only */
 double  Rf_d1mach(int);
-#define gamma_cody	Rf_gamma_cody
-double	gamma_cody(double);
+double	Rf_gamma_cody(double);
 
 #include <R_ext/RS.h>
 
 /* possibly needed for debugging */
 #include <R_ext/Print.h>
+
+/* moved from dpq.h */
+#ifdef HAVE_NEARYINT
+# define R_forceint(x)   nearbyint()
+#else
+# define R_forceint(x)   round(x)
+#endif
+# define R_nonint(x) 	  (fabs((x) - R_forceint(x)) > 1e-7)
 
 
 #ifndef MATHLIB_STANDALONE
@@ -169,9 +177,6 @@ int R_finite(double);
 #define lfastchoose	Rf_lfastchoose
 #define lgammacor	Rf_lgammacor
 #define stirlerr       	Rf_stirlerr
-/* in Rmath.h
-#define gamma_cody      Rf_gamma_cody
-*/
 
 	/* Chebyshev Series */
 

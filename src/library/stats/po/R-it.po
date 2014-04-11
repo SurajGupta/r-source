@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:53\n"
+"POT-Creation-Date: 2014-03-27 07:47\n"
 "PO-Revision-Date: 2005-04-14 18:07+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -292,6 +292,9 @@ msgstr "'order.max' deve essere >= 1"
 msgid "'order.max' must be < 'n.used'"
 msgstr "'order.max' deve essere >= 1"
 
+msgid "zero-variance series"
+msgstr ""
+
 #, fuzzy
 msgid "'n.ahead' must be at least 1"
 msgstr "'lag.max' deve essere almeno 1"
@@ -358,6 +361,14 @@ msgstr "la parte MA del modello non è invertibile"
 msgid "seasonal MA part of model is not invertible"
 msgstr "la parte stagionale MA del modello non è invertibile"
 
+#, fuzzy
+msgid "NAs in '%s'"
+msgstr "valori NA in 'x'"
+
+#, fuzzy
+msgid "invalid 'SSinit'"
+msgstr "'x' non valida"
+
 msgid "converting non-invertible initial MA values"
 msgstr "conversione di valori iniziali MA non invertibili"
 
@@ -404,6 +415,10 @@ msgstr "tutte le osservazioni sono nello stesso gruppo"
 
 msgid "there must be at least 2 observations in each group"
 msgstr "devono esserci almeno 2 osservazioni in ogni gruppo"
+
+#, fuzzy
+msgid "'formula' should be of the form response ~ group"
+msgstr "formula '%s' deve essere della forma '~expr'"
 
 msgid "'x' must be nonnegative and integer"
 msgstr "'x' deve essere un intero non negativo"
@@ -977,7 +992,7 @@ msgid "'x' has entries too large to be integer"
 msgstr "'x' contiene elementi troppo grandi per essere utilizzati con integer"
 
 #, fuzzy
-msgid "'x' has been rounded to integer: %d"
+msgid "'x' has been rounded to integer: %s"
 msgstr "'x' arrotondata a integer:"
 
 msgid "if 'x' is not a matrix, 'y' must be given"
@@ -1183,6 +1198,10 @@ msgid "observations with zero weight not used for calculating dispersion"
 msgstr ""
 "osservazioni con pesi zero non vengono usate per il calcolo della dispersione"
 
+msgid ""
+"The \"ward\" method has been renamed to \"ward.D\"; note new \"ward.D2\""
+msgstr ""
+
 msgid "invalid clustering method"
 msgstr "metodo di cluster non valido"
 
@@ -1286,6 +1305,9 @@ msgstr "cluster vuoto: provare con un insieme di centri iniziali migliore"
 msgid "number of cluster centres must lie between 1 and nrow(x)"
 msgstr "il numero di centri dei cluster deve essere tra 1 e nrow(x)"
 
+msgid "Quick-TRANSfer stage steps exceeded maximum (= %d)"
+msgstr ""
+
 #, fuzzy
 msgid "invalid nrow(x)"
 msgstr "'x' non valida"
@@ -1376,6 +1398,9 @@ msgid "residual degrees of freedom in object suggest this is not an \"lm\" fit"
 msgstr ""
 "numero di gradi di libertà dei residui dell'oggetto suggeriscono che questo "
 "non una stima \"lm\""
+
+msgid "essentially perfect fit: summary may be unreliable"
+msgstr ""
 
 msgid ""
 "lm object does not have a proper 'qr' component.\n"
@@ -1494,6 +1519,9 @@ msgstr ""
 #, fuzzy
 msgid "no 'nobs' method is available"
 msgstr "nessun metodo 'as.stepfun' disponibile per 'x'"
+
+msgid "'margin' must contain names or numbers corresponding to 'table'"
+msgstr ""
 
 msgid "'start' and 'table' must be same length"
 msgstr "'start' e 'table' devono avere la stessa lunghezza"
@@ -1688,8 +1716,24 @@ msgstr ""
 msgid "f.upper = f(upper) is NA"
 msgstr ""
 
+#, fuzzy
+msgid "invalid 'extendInt'; please report"
+msgstr "argomento 'data' non valido"
+
+#, fuzzy
+msgid "no sign change found in %d iterations"
+msgstr "non converge in %d iterazioni"
+
+msgid ""
+"did not succeed extending the interval endpoints for f(lower) * f(upper) <= 0"
+msgstr ""
+
 msgid "f() values at end points not of opposite sign"
 msgstr "i valori di f() negli estremi hanno segno opposto"
+
+#, fuzzy
+msgid "convergence problem in zero finding:"
+msgstr "probabile errore di convergenza: optim ha restituito codice="
 
 #, fuzzy
 msgid "'control' argument must be a named list"

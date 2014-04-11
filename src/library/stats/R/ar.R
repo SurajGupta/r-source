@@ -51,7 +51,7 @@ ar.yw.default <-
     x <- as.matrix(x)
     if(!is.numeric(x))
         stop("'x' must be numeric")
-    if(any(is.na(x))) stop("NAs in 'x'")
+    if(anyNA(x)) stop("NAs in 'x'")
     nser <- ncol(x)
     if (demean) {
         xm <- colMeans(x)
@@ -125,6 +125,7 @@ ar.yw.default <-
         dimnames(partialacf) <- list(seq_len(order.max), snames, snames)
         colnames(resid) <- colnames(x)
     } else {
+        if (xacf[1L] == 0) stop("zero-variance series")
         ## univariate case
         r <- as.double(drop(xacf))
         z <- .Fortran(C_eureka, as.integer(order.max), r, r,
@@ -260,7 +261,7 @@ ar.mle <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     if (!is.null(dim(x)))
         stop("MLE only implemented for univariate series")
     x <- na.action(as.ts(x))
-    if(any(is.na(x))) stop("NAs in 'x'")
+    if(anyNA(x)) stop("NAs in 'x'")
     if(!is.numeric(x))
         stop("'x' must be numeric")
     if(ists)  xtsp <- tsp(x)
@@ -335,7 +336,7 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     rescale <- TRUE
     ists <- is.ts(x)
     x <- na.action(as.ts(x))
-    if(any(is.na(x))) stop("NAs in 'x'")
+    if(anyNA(x)) stop("NAs in 'x'")
     if(ists)  xtsp <- tsp(x)
     xfreq <- frequency(x)
     x <- as.matrix(x)
@@ -403,7 +404,7 @@ ar.ols <- function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     }
 
     # Determine best model
-    m <- if(aic) which(xaic == min(xaic))[1L] + order.min - 1L else order.max
+    m <- if(aic) which.max(xaic == min(xaic)) + order.min - 1L else order.max
 
     ## Recalculate residuals of best model
 
@@ -474,7 +475,7 @@ function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     if (is.null(series)) series <- deparse(substitute(x))
     if (ists <- is.ts(x)) xtsp <- tsp(x)
     x <- na.action(as.ts(x))
-    if (any(is.na(x))) stop("NAs in 'x'")
+    if (anyNA(x)) stop("NAs in 'x'")
     if (ists) xtsp <- tsp(x)
     xfreq <- frequency(x)
     x <- as.matrix(x)
@@ -539,7 +540,7 @@ ar.burg.default <-
     if(is.null(series)) series <- deparse(substitute(x))
     if (ists <- is.ts(x)) xtsp <- tsp(x)
     x <- na.action(as.ts(x))
-    if(any(is.na(x))) stop("NAs in 'x'")
+    if(anyNA(x)) stop("NAs in 'x'")
     if (ists)  xtsp <- tsp(x)
     xfreq <- frequency(x)
     x <- as.vector(x) # drop attributes including class
@@ -558,6 +559,7 @@ ar.burg.default <-
     coefs <- matrix(z[[1L]], order.max, order.max)
     partialacf <- array(diag(coefs), dim = c(order.max, 1L, 1L))
     var.pred <- if(var.method == 1L) z[[2L]] else z[[3L]]
+    if (any(is.nan(var.pred))) stop("zero-variance series")
     xaic <- n.used * log(var.pred) + 2 * (0L:order.max) + 2 * demean
     maic <- min(aic)
     xaic <- setNames(if(is.finite(maic)) xaic - min(xaic) else
@@ -593,7 +595,7 @@ function (x, aic = TRUE, order.max = NULL, na.action = na.fail,
     if (ists <- is.ts(x))
         xtsp <- tsp(x)
     x <- na.action(as.ts(x))
-    if (any(is.na(x)))
+    if (anyNA(x))
         stop("NAs in 'x'")
     if (ists)
         xtsp <- tsp(x)

@@ -38,19 +38,37 @@ static SEXP binaryLogic2(int code, SEXP s1, SEXP s2);
 /* & | ! */
 SEXP attribute_hidden do_logic(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
+    SEXP ans, arg1, arg2;
+    int argc;
 
-    if (DispatchGroup("Ops",call, op, args, env, &ans))
-	return ans;
-    switch (length(args)) {
-    case 1:
-	return lunary(call, op, CAR(args));
-    case 2:
-	return lbinary(call, op, args);
-    default:
-	error(_("binary operations require two arguments"));
-	return R_NilValue;	/* for -Wall */
+    if (args == R_NilValue)
+	argc = 0;
+    else if (CDR(args) == R_NilValue)
+	argc = 1;
+    else if (CDDR(args) == R_NilValue)
+	argc = 2;
+    else
+	argc = length(args);
+    arg1 = CAR(args);
+    arg2 = CADR(args);
+
+    if (ATTRIB(arg1) != R_NilValue || ATTRIB(arg2) != R_NilValue) {
+	if (DispatchGroup("Ops",call, op, args, env, &ans))
+	    return ans;
     }
+    else if (argc == 1 && IS_SCALAR(arg1, LGLSXP)) {
+	/* directly handle '!' operator for simple logical scalars. */
+        int v = LOGICAL(arg1)[0];
+        return ScalarLogical(v == NA_LOGICAL ? v : ! v);
+    }
+
+    if (argc == 1)
+	return lunary(call, op, arg1);
+    else if (argc == 2)
+	return lbinary(call, op, args);
+    else
+	error(_("binary operations require two arguments"));
+    return R_NilValue;	/* for -Wall */
 }
 
 #define isRaw(x) (TYPEOF(x) == RAWSXP)
@@ -170,10 +188,18 @@ static SEXP lunary(SEXP call, SEXP op, SEXP arg)
 	if (!len) return allocVector(LGLSXP, 0);
 	errorcall(call, _("invalid argument type"));
     }
-    PROTECT(names = getAttrib(arg, R_NamesSymbol));
-    PROTECT(dim = getAttrib(arg, R_DimSymbol));
-    PROTECT(dimnames = getAttrib(arg, R_DimNamesSymbol));
-    PROTECT(x = allocVector(isRaw(arg) ? RAWSXP : LGLSXP, len));
+    if (isLogical(arg) || isRaw(arg))
+	x = PROTECT(duplicate(arg));  // copy all attributes in this case 
+    else {
+	x = PROTECT(allocVector(isRaw(arg) ? RAWSXP : LGLSXP, len));
+	PROTECT(names = getAttrib(arg, R_NamesSymbol));
+	PROTECT(dim = getAttrib(arg, R_DimSymbol));
+	PROTECT(dimnames = getAttrib(arg, R_DimNamesSymbol));
+	if(names != R_NilValue) setAttrib(x, R_NamesSymbol, names);
+	if(dim != R_NilValue) setAttrib(x, R_DimSymbol, dim);
+	if(dimnames != R_NilValue) setAttrib(x, R_DimNamesSymbol, dimnames);
+	UNPROTECT(3);
+    }
     switch(TYPEOF(arg)) {
     case LGLSXP:
 	for (i = 0; i < len; i++) {
@@ -212,10 +238,7 @@ static SEXP lunary(SEXP call, SEXP op, SEXP arg)
     default:
 	UNIMPLEMENTED_TYPE("lunary", arg);
     }
-    if(names != R_NilValue) setAttrib(x, R_NamesSymbol, names);
-    if(dim != R_NilValue) setAttrib(x, R_DimSymbol, dim);
-    if(dimnames != R_NilValue) setAttrib(x, R_DimNamesSymbol, dimnames);
-    UNPROTECT(4);
+    UNPROTECT(1);
     return x;
 }
 
@@ -225,7 +248,7 @@ SEXP attribute_hidden do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
 /*  &&	and  ||	 */
     SEXP s1, s2;
     int x1, x2;
-    SEXP ans;
+    int ans = FALSE;
 
     if (length(args) != 2)
 	error(_("'%s' operator requires 2 arguments"),
@@ -233,7 +256,6 @@ SEXP attribute_hidden do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
 
     s1 = CAR(args);
     s2 = CADR(args);
-    PROTECT(ans = allocVector(LGLSXP, 1));
     s1 = eval(s1, env);
     if (!isNumber(s1))
 	errorcall(call, _("invalid 'x' type in 'x %s y'"),
@@ -250,28 +272,27 @@ SEXP attribute_hidden do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
     switch (PRIMVAL(op)) {
     case 1: /* && */
 	if (x1 == FALSE)
-	    LOGICAL(ans)[0] = FALSE;
+	    ans = FALSE;
 	else {
 	    get_2nd;
 	    if (x1 == NA_LOGICAL)
-		LOGICAL(ans)[0] = (x2 == NA_LOGICAL || x2) ? NA_LOGICAL : x2;
+		ans = (x2 == NA_LOGICAL || x2) ? NA_LOGICAL : x2;
 	    else /* x1 == TRUE */
-		LOGICAL(ans)[0] = x2;
+		ans = x2;
 	}
 	break;
     case 2: /* || */
 	if (x1 == TRUE)
-	    LOGICAL(ans)[0] = TRUE;
+	    ans = TRUE;
 	else {
 	    get_2nd;
 	    if (x1 == NA_LOGICAL)
-		LOGICAL(ans)[0] = (x2 == NA_LOGICAL || !x2) ? NA_LOGICAL : x2;
+		ans = (x2 == NA_LOGICAL || !x2) ? NA_LOGICAL : x2;
 	    else /* x1 == FALSE */
-		LOGICAL(ans)[0] = x2;
+		ans = x2;
 	}
     }
-    UNPROTECT(1);
-    return ans;
+    return ScalarLogical(ans);
 }
 
 static SEXP binaryLogic(int code, SEXP s1, SEXP s2)

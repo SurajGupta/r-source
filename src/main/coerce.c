@@ -1047,13 +1047,13 @@ static SEXP coerceVectorList(SEXP v, SEXPTYPE type)
     /* expression -> list, new in R 2.4.0 */
     if (type == VECSXP && TYPEOF(v) == EXPRSXP) {
 	/* This is sneaky but saves us rewriting a lot of the duplicate code */
-	rval = NAMED(v) ? duplicate(v) : v;
+	rval = MAYBE_REFERENCED(v) ? duplicate(v) : v;
 	SET_TYPEOF(rval, VECSXP);
 	return rval;
     }
 
     if (type == EXPRSXP && TYPEOF(v) == VECSXP) {
-	rval = NAMED(v) ? duplicate(v) : v;
+	rval = MAYBE_REFERENCED(v) ? duplicate(v) : v;
 	SET_TYPEOF(rval, EXPRSXP);
 	return rval;
     }
@@ -1296,7 +1296,7 @@ static SEXP asFunction(SEXP x)
     if (isFunction(x)) return x;
     PROTECT(f = allocSExp(CLOSXP));
     SET_CLOENV(f, R_GlobalEnv);
-    if (NAMED(x)) PROTECT(x = duplicate(x));
+    if (MAYBE_REFERENCED(x)) PROTECT(x = duplicate(x));
     else PROTECT(x);
 
     if (isNull(x) || !isList(x)) {
@@ -1344,7 +1344,7 @@ static SEXP ascommon(SEXP call, SEXP u, SEXPTYPE type)
 	   Generally coerceVector will copy over attributes.
 	*/
 	if (type != ANYSXP && TYPEOF(u) != type) v = coerceVector(u, type);
-	else if (NAMED(u)) v = duplicate(u);
+	else if (MAYBE_REFERENCED(u)) v = duplicate(u);
 
 	/* drop attributes() and class() in some cases for as.pairlist:
 	   But why?  (And who actually coerces to pairlists?)
@@ -1426,7 +1426,7 @@ SEXP attribute_hidden do_ascharacter(SEXP call, SEXP op, SEXP args, SEXP rho)
     x = CAR(args);
     if(TYPEOF(x) == type) {
 	if(ATTRIB(x) == R_NilValue) return x;
-	ans = NAMED(x) ? duplicate(x) : x;
+	ans = MAYBE_REFERENCED(x) ? duplicate(x) : x;
 	CLEAR_ATTRIB(ans);
 	return ans;
     }
@@ -1468,7 +1468,7 @@ SEXP attribute_hidden do_asvector(SEXP call, SEXP op, SEXP args, SEXP rho)
 	case STRSXP:
 	case RAWSXP:
 	    if(ATTRIB(x) == R_NilValue) return x;
-	    ans  = NAMED(x) ? duplicate(x) : x;
+	    ans  = MAYBE_REFERENCED(x) ? duplicate(x) : x;
 	    CLEAR_ATTRIB(ans);
 	    return ans;
 	case EXPRSXP:
@@ -2086,6 +2086,83 @@ SEXP attribute_hidden do_isna(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
+// Check if x has missing values; the anyNA.default() method
+static Rboolean anyNA(SEXP x, SEXP env)
+/* Original code:
+   Copyright 2012 Google Inc. All Rights Reserved.
+   Author: Tim Hesterberg <rocket@google.com>
+   Distributed under GPL 2 or later
+*/
+{
+    SEXPTYPE xT = TYPEOF(x);
+    if (OBJECT(x) || xT == VECSXP || xT == LISTSXP) {
+	SEXP e0 = PROTECT(lang2(install("is.na"), x));
+	SEXP e = PROTECT(lang2(install("any"), e0));
+	SEXP res = PROTECT(eval(e, env));
+	int ans = asLogical(res);
+	UNPROTECT(3);
+	return ans == 1; // so NA answer is false.
+    }
+
+    R_xlen_t i, n = xlength(x);
+    switch (xT) {
+    case REALSXP:
+    {
+	double *xD = REAL(x);
+	for (i = 0; i < n; i++)
+	    if (ISNAN(xD[i])) return TRUE;
+	break;
+    }
+    case INTSXP:
+    {
+	int *xI = INTEGER(x);
+	for (i = 0; i < n; i++)
+	    if (xI[i] == NA_INTEGER) return TRUE;
+	break;
+    }
+    case LGLSXP:
+    {
+	int *xI = LOGICAL(x);
+	for (i = 0; i < n; i++)
+	    if (xI[i] == NA_LOGICAL) return TRUE;
+	break;
+    }
+    case CPLXSXP:
+    {
+	Rcomplex *xC = COMPLEX(x);
+	for (i = 0; i < n; i++)
+	    if (ISNAN(xC[i].r) || ISNAN(xC[i].i)) return TRUE;
+	break;
+    }
+    case STRSXP:
+	for (i = 0; i < n; i++)
+	    if (STRING_ELT(x, i) == NA_STRING) return TRUE;
+	break;
+    case RAWSXP: /* no such thing as a raw NA:  is.na(.) gives FALSE always */
+	return FALSE;
+    case NILSXP: // is.na() gives a warning..., but we do not.
+	return FALSE;
+
+    default:
+	error("anyNA() applied to non-(list or vector) of type '%s'",
+	      type2char(TYPEOF(x)));
+    }
+    return FALSE;
+} // anyNA()
+
+SEXP attribute_hidden do_anyNA(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    check1arg(args, call, "x");
+
+    SEXP ans;
+    if (DispatchOrEval(call, op, "anyNA", args, rho, &ans, 0, 1))
+	return(ans);
+    // else
+    return ScalarLogical(anyNA(CAR(args), rho));
+}
+
+
 SEXP attribute_hidden do_isnan(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP ans, dims, names, x;
@@ -2295,7 +2372,7 @@ SEXP attribute_hidden do_call(SEXP call, SEXP op, SEXP args, SEXP rho)
     PROTECT(evargs = duplicate(CDR(args)));
     for (rest = evargs; rest != R_NilValue; rest = CDR(rest)) {
 	PROTECT(tmp = eval(CAR(rest), rho));
-	if (NAMED(tmp)) tmp = duplicate(tmp);
+	if (MAYBE_REFERENCED(tmp)) tmp = duplicate(tmp);
 	SETCAR(rest, tmp);
 	UNPROTECT(1);
     }
@@ -2323,8 +2400,13 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
     if( !(isString(fun) && length(fun) == 1) && !isFunction(fun) )
 	error(_("'what' must be a character string or a function"));
 
+#ifdef __maybe_in_the_future__
+    if (!isNull(args) && !isVectorList(args))
+	error(_("'args' must be a list or expression"));
+#else
     if (!isNull(args) && !isNewList(args))
 	error(_("'args' must be a list"));
+#endif
 
     if (!isEnvironment(envir))
 	error(_("'envir' must be an environment"));

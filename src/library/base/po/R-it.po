@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
@@ -47,12 +47,6 @@ msgstr "valori infiniti o mancanti in 'x'"
 msgid "a dimension is zero"
 msgstr ""
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr "'nu' deve essere 0, nrow(x) o ncol(x)"
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr "'nv' deve essere 0, nrow(x) o ncol(x)"
-
 msgid "second argument must be a list"
 msgstr "il secondo argomento deve essere di tipo list"
 
@@ -79,6 +73,18 @@ msgstr "versione stringa mal composta"
 
 msgid "target is %s, current is %s"
 msgstr ""
+
+#, fuzzy
+msgid "'tolerance' should be numeric"
+msgstr "'x' deve essere numerico"
+
+#, fuzzy
+msgid "'scale' should be numeric or NULL"
+msgstr "'arg' deve essere uno tra"
+
+#, fuzzy
+msgid "'%s' must be logical"
+msgstr "'subset' deve essere di tipo logico"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) deve avere lunghezza positiva"
@@ -154,22 +160,6 @@ msgstr "l'autocaricatore non trova '%s' in '%s'"
 
 msgid "complex matrices not permitted at present"
 msgstr "matrici complesse non ammesse al momento"
-
-msgid "non-square matrix in 'chol'"
-msgstr "matrice non quadrata in 'chol'"
-
-msgid "non-matrix argument to 'chol'"
-msgstr "argomento di 'chol' deve essere una matrice"
-
-#, fuzzy
-msgid "invalid nrow(x)"
-msgstr "nome non valido"
-
-msgid "too large a matrix for LINPACK"
-msgstr ""
-
-msgid "matrix not positive definite"
-msgstr "matrice non definita positiva"
 
 msgid "'x' must be an array of at least two dimensions"
 msgstr "'x' deve essere un array con almeno due dimensioni"
@@ -339,6 +329,10 @@ msgstr "sostituzione di un elemento nella colonna non esistente:"
 
 msgid "only a single element should be replaced"
 msgstr "si può sostituire un solo elemento alla volta"
+
+#, fuzzy
+msgid "Name partially matched in data frame"
+msgstr "variabile non numerica nel data frame:"
 
 #, fuzzy
 msgid "names do not match previous names"
@@ -528,6 +522,10 @@ msgstr "'from' deve essere un oggetto POSIXt"
 msgid "'to' must be a \"POSIXt\" object"
 msgstr "'to' deve essere un oggetto POSIXt"
 
+#, fuzzy
+msgid "no Olson database found"
+msgstr "non trovato"
+
 msgid "'file' must be a character string or connection"
 msgstr "'file' deve essere una string di caratteri o una connessione"
 
@@ -603,6 +601,10 @@ msgstr "matrice 0 x 0"
 
 msgid "non-square matrix in 'eigen'"
 msgstr "matrice non quadrata in 'eigen'"
+
+#, fuzzy
+msgid "invalid nrow(x)"
+msgstr "nome non valido"
 
 #, fuzzy
 msgid "invalid 'labels'; length %d should be 1 or %d"
@@ -685,6 +687,9 @@ msgstr "'vec' deve essere ordinato in ordine non decrescente"
 msgid "using the first element of 'value' of type \"expression\""
 msgstr ""
 
+msgid "class of 'x' was discarded"
+msgstr ""
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr "'mode' deve essere \"double\" (\"real\"), \"integer\" o \"character\""
 
@@ -758,6 +763,10 @@ msgstr ""
 
 msgid "must have replacements for matches"
 msgstr ""
+
+#, fuzzy
+msgid "No factors specified"
+msgstr "non è stata specificata alcuna libreria condivisa"
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr ""
@@ -1195,7 +1204,7 @@ msgstr ""
 msgid "cannot import into a sealed namespace"
 msgstr "non posso importare in un namespace sigillato"
 
-msgid "replacing previous import %s when loading %s"
+msgid "replacing previous import by %s when loading %s"
 msgstr ""
 
 msgid "invalid import target"
@@ -1234,14 +1243,11 @@ msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr "il pacchetto '%s' non ha il file NAMESPACE"
 
 #, fuzzy
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr "nomi importati doppi"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "direttiva S3method sbagliata: %s"
-
-msgid "too many 'S3method' directives"
-msgstr "troppe direttive 'S3method'"
 
 msgid "unknown namespace directive: %s"
 msgstr "direttiva namespace sconosciuta:i %s"
@@ -1284,6 +1290,9 @@ msgstr "l'argomento drop verrà ignorato"
 #, fuzzy
 msgid "invalid ncol(x)"
 msgstr "nome non valido"
+
+msgid "too large a matrix for LINPACK"
+msgstr ""
 
 msgid "first argument must be a QR decomposition"
 msgstr "il primo argomento deve essere una decomposizione QR"
@@ -1332,7 +1341,7 @@ msgid "invalid NCOL(R)"
 msgstr ""
 
 #, fuzzy
-msgid "'x' must be an atomic vector"
+msgid "'x' must be a vector of an atomic type"
 msgstr "'x' deve essere un vettore"
 
 msgid "invalid 'rle' structure"
@@ -1361,11 +1370,17 @@ msgstr "la lunghezza di 'scale' deve essere uguale al numero di colonne di 'x'"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "si specifichi 'nmax' o 'n', ma non entrambi"
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr ""
+
 #, fuzzy
 msgid "argument 'length.out' must be of length 1"
 msgstr "'lenght.out' deve avere lunghezza 1"
 
 msgid "first element used of 'length.out' argument"
+msgstr ""
+
+msgid "'to' cannot be NA, NaN or infinite"
 msgstr ""
 
 msgid "invalid (to - from)/by in seq(.)"
@@ -1842,6 +1857,24 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
+
+#~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nu' deve essere 0, nrow(x) o ncol(x)"
+
+#~ msgid "'nv' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nv' deve essere 0, nrow(x) o ncol(x)"
+
+#~ msgid "too many 'S3method' directives"
+#~ msgstr "troppe direttive 'S3method'"
+
+#~ msgid "non-square matrix in 'chol'"
+#~ msgstr "matrice non quadrata in 'chol'"
+
+#~ msgid "non-matrix argument to 'chol'"
+#~ msgstr "argomento di 'chol' deve essere una matrice"
+
+#~ msgid "matrix not positive definite"
+#~ msgstr "matrice non definita positiva"
 
 #~ msgid "non-positive definite matrix in 'chol'"
 #~ msgstr "matrice non definita positiva in 'chol'"

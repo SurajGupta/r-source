@@ -100,7 +100,7 @@ stopifnot(all(x == sqrt(1:1000)))
 # So let's get some random dates first
 # (A small test only with 2 cores: set options("mc.cores")
 # and increase N for a larger-scale test.)
-N <- 1e4
+N <- 1e5
 dates <- sprintf('\%04d-\%02d-\%02d', as.integer(2000+rnorm(N)),
                  as.integer(runif(N, 1, 12)), as.integer(runif(N, 1, 28)))
 

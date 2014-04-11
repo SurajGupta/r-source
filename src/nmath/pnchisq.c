@@ -64,7 +64,7 @@ double pnchisq(double x, double df, double ncp, int lower_tail, int log_p)
 }
 
 double attribute_hidden
-pnchisq_raw(double x, double f, double theta,
+pnchisq_raw(double x, double f, double theta /* = ncp */,
 	    double errmax, double reltol, int itrmax, Rboolean lower_tail)
 {
     double lam, x2, f2, term, bound, f_x_2n, f_2n;
@@ -90,17 +90,22 @@ pnchisq_raw(double x, double f, double theta,
 #endif
 
     if(theta < 80) { /* use 110 for Inf, as ppois(110, 80/2, lower.tail=FALSE) is 2e-20 */
-	LDOUBLE sum = 0, sum2 = 0, lambda = 0.5*theta, 
+	LDOUBLE sum = 0, sum2 = 0, lambda = 0.5*theta,
 	    pr = EXP(-lambda); // does this need a feature test?
 	double ans;
 	int i;
 	/* we need to renormalize here: the result could be very close to 1 */
 	for(i = 0; i < 110;  pr *= lambda/++i) {
+	    // pr == exp(-lambda) lambda^i / i!  ==  dpois(i, lambda)
 	    sum2 += pr;
 	    sum += pr * pchisq(x, f+2*i, lower_tail, FALSE);
 	    if (sum2 >= 1-1e-15) break;
 	}
 	ans = (double) (sum/sum2);
+#ifdef DEBUG_pnch
+    REprintf("pnchisq(x=%g, f=%g, theta=%g); theta < 80: i = %d,  sum2 = %g\n",
+	     x,f,theta, i, sum2);
+#endif
 	return ans;
     }
 
@@ -136,7 +141,7 @@ pnchisq_raw(double x, double f, double theta,
        sqrt(DBL_EPSILON) * f2) {
 	/* evade cancellation error */
 	/* t = exp((1 - t)*(2 - t/(f2 + 1))) / sqrt(2*M_PI*(f2 + 1));*/
-        lt = (1 - t)*(2 - t/(f2 + 1)) - 0.5 * log(2*M_PI*(f2 + 1));
+        lt = (1 - t)*(2 - t/(f2 + 1)) - M_LN_SQRT_2PI - 0.5 * log(f2 + 1);
 #ifdef DEBUG_pnch
 	REprintf(" (case I) ==> ");
 #endif

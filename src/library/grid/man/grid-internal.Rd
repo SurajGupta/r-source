@@ -185,14 +185,12 @@
 %% Part of the sensible export list but (currently?) documented as
 %% internal (or waiting for documentation to be written):
 %% <LIST>
-\alias{grid.legend}
 \alias{grid.multipanel}
 \alias{grid.panel}
 \alias{grid.strip}
 \alias{is.unit}
 \alias{layoutRegion}
 \alias{viewport.layout}
-\alias{viewport.transform}
 \alias{layout.heights}
 \alias{layout.widths}
 %% </LIST>

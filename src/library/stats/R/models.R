@@ -495,7 +495,7 @@ model.matrix.default <- function(object, data = environment(object),
             paste(deparse(x, width.cutoff = 500L), collapse = " ")
 	reorder <- match(sapply(attr(t, "variables"), deparse2)[-1L],
                          names(data))
-	if (any(is.na(reorder)))
+	if (anyNA(reorder))
 	    stop("model frame and formula mismatch in model.matrix()")
 	if(!identical(reorder, seq_len(ncol(data))))
 	    data <- data[,reorder, drop=FALSE]
@@ -609,9 +609,9 @@ makepredictcall.default  <- function(var, call)
     xvars <- sapply(attr(Terms, "variables"), deparse2)[-1L]
     if((yvar <- attr(Terms, "response")) > 0) xvars <- xvars[-yvar]
     if(length(xvars)) {
-        xlev <- lapply(m[xvars], 
-        	    function(x) 
-        	    	if(is.factor(x)) levels(x) 
+        xlev <- lapply(m[xvars],
+        	    function(x)
+        	    	if(is.factor(x)) levels(x)
         	    	else if (is.character(x)) levels(as.factor(x))
         	    	else NULL)
         xlev[!vapply(xlev, is.null, NA)]

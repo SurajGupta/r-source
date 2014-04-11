@@ -1,9 +1,10 @@
 % File src/library/base/man/Trig.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Trig}
+\title{Trigonometric Functions}
 \alias{Trig}
 \alias{cos}
 \alias{sin}
@@ -12,20 +13,30 @@
 \alias{asin}
 \alias{atan}
 \alias{atan2}
-\title{Trigonometric Functions}
+\alias{cospi}
+\alias{sinpi}
+\alias{tanpi}
 \description{
   These functions give the obvious trigonometric functions.  They
   respectively compute the cosine, sine, tangent, arc-cosine, arc-sine,
   arc-tangent, and the two-argument arc-tangent.
+
+  \code{cospi(x)}, \code{sinpi(x)}, and \code{tanpi(x)}, compute
+  \code{cos(pi*x)}, \code{sin(pi*x)}, and \code{tan(pi*x)}.
 }
 \usage{
 cos(x)
 sin(x)
 tan(x)
+
 acos(x)
 asin(x)
 atan(x)
 atan2(y, x)
+
+cospi(x)
+sinpi(x)
+tanpi(x)
 }
 \arguments{
    \item{x, y}{numeric or complex vectors.}
@@ -35,13 +46,23 @@ atan2(y, x)
   between the x-axis and the vector from the origin to \eqn{(x, y)},
   i.e., for positive arguments \code{atan2(y, x) == atan(y/x)}.
 
-  Angles are in radians, not degrees (i.e., a right angle is
-  \eqn{\pi/2}).
-
+  Angles are in radians, not degrees, for the standard versions (i.e., a
+  right angle is \eqn{\pi/2}), and in \sQuote{half-rotations} for
+  \code{cospi} etc.
+  
+  \code{cospi(x)}, \code{sinpi(x)}, and \code{tanpi(x)} are accurate
+  for \code{x} which are multiples of a half.
+   
   All except \code{atan2} are \link{internal generic} \link{primitive}
   functions: methods can be defined for them individually or via the
   \code{\link[=S3groupGeneric]{Math}} group generic.
 }
+
+\value{
+  \code{tanpi(0.5)} is \code{\link{NaN}}.  Similarly for other inputs
+  with fractional part \code{0.5}.
+}
+
 \section{Complex values}{
    For the inverse trigonometric functions, branch cuts are defined as in
    Abramowitz and Stegun, figure 4.4, page 79.
@@ -57,6 +78,9 @@ atan2(y, x)
    The behaviour actually on the cuts follows the C99 standard which
    requires continuity coming round the endpoint in a counter-clockwise
    direction.
+
+   Complex arguments for  \code{cospi}, \code{sinpi}, and \code{tanpi}
+   are not yet implemented.% but patches are welcome
 }
 \section{S4 methods}{
   All except \code{atan2} are S4 generic functions: methods can be defined
@@ -72,5 +96,18 @@ atan2(y, x)
     Mathematical Functions}. New York: Dover.\cr
   Chapter 4. Elementary Transcendental Functions: Logarithmic,
   Exponential, Circular and Hyperbolic Functions
- }
+
+  For \code{cospi}, \code{sinpi}, and \code{tanpi} the draft C11
+  extension ISO/IEC TS 18661
+  (\url{http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1785.pdf}).
+}
+\examples{
+x <- seq(-3, 7, by = 1/8)
+tx <- cbind(x, cos(pi*x), cospi(x), sin(pi*x), sinpi(x),
+               tan(pi*x), tanpi(x), deparse.level=2)
+op <- options(digits = 4, width = 90) # for nice formatting
+head(tx)
+tx[ (x \%\% 1) \%in\% c(0, 0.5) ,]
+options(op)
+}
 \keyword{math}

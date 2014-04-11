@@ -37,14 +37,71 @@ static SEXP complex_relop(RELOP_TYPE code, SEXP s1, SEXP s2, SEXP call);
 static SEXP string_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 static SEXP raw_relop(RELOP_TYPE code, SEXP s1, SEXP s2);
 
+#define DO_SCALAR_RELOP(oper, x, y) do {			\
+	switch (oper) {						\
+	case EQOP: return ScalarLogical((x) == (y));		\
+	case NEOP: return ScalarLogical((x) != (y));		\
+	case LTOP: return ScalarLogical((x) < (y));		\
+	case GTOP: return ScalarLogical((x) > (y));		\
+	case LEOP: return ScalarLogical((x) <= (y));		\
+	case GEOP: return ScalarLogical((x) >= (y));		\
+	}							\
+    } while (0)
+
 SEXP attribute_hidden do_relop(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP ans;
+    SEXP ans, arg1, arg2;
+    int argc;
+    int oper = PRIMVAL(op);
 
-    if (DispatchGroup("Ops", call, op, args, env, &ans))
-	return ans;
-    checkArity(op, args);
-    return do_relop_dflt(call, op, CAR(args), CADR(args));
+    if (args != R_NilValue &&
+	CDR(args) != R_NilValue &&
+	CDDR(args) == R_NilValue)
+	argc = 2;
+    else
+	argc = length(args);
+    arg1 = CAR(args);
+    arg2 = CADR(args);
+
+    if (ATTRIB(arg1) != R_NilValue || ATTRIB(arg2) != R_NilValue) {
+	if (DispatchGroup("Ops", call, op, args, env, &ans))
+	    return ans;
+    }
+    else if (argc == 2) {
+	if (IS_SCALAR(arg1, INTSXP)) {
+	    int ix = INTEGER(arg1)[0];
+	    if (IS_SCALAR(arg2, INTSXP)) {
+		int iy = INTEGER(arg2)[0];
+		if (ix == NA_INTEGER || iy == NA_INTEGER)
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(oper, ix, iy);
+	    }
+	    else if (IS_SCALAR(arg2, REALSXP)) {
+		double dy = REAL(arg2)[0];
+		if (ix == NA_INTEGER || ISNAN(dy))
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(oper, ix, dy);
+	    }
+	}
+	else if (IS_SCALAR(arg1, REALSXP)) {
+	    double dx = REAL(arg1)[0];
+	    if (IS_SCALAR(arg2, INTSXP)) {
+		int iy = INTEGER(arg2)[0];
+		if (ISNAN(dx) || iy == NA_INTEGER)
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(oper, dx, iy);
+	    }
+	    else if (IS_SCALAR(arg2, REALSXP)) {
+		double dy = REAL(arg2)[0];
+		if (ISNAN(dx) || ISNAN(dy))
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(oper, dx, dy);
+	    }
+	}
+    }
+    else error("operator needs two arguments");
+
+    return do_relop_dflt(call, op, arg1, arg2);
 }
 
 SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
@@ -54,28 +111,68 @@ SEXP attribute_hidden do_relop_dflt(SEXP call, SEXP op, SEXP x, SEXP y)
     int xarray, yarray, xts, yts;
     Rboolean mismatch = FALSE, iS;
     PROTECT_INDEX xpi, ypi;
+    SEXPTYPE typex, typey;
 
-    PROTECT_WITH_INDEX(x, &xpi);
-    PROTECT_WITH_INDEX(y, &ypi);
     nx = xlength(x);
     ny = xlength(y);
+    typex = TYPEOF(x);
+    typey = TYPEOF(y);
 
     /* pre-test to handle the most common case quickly.
        Used to skip warning too ....
      */
     if (ATTRIB(x) == R_NilValue && ATTRIB(y) == R_NilValue &&
-	TYPEOF(x) == REALSXP && TYPEOF(y) == REALSXP && nx > 0 && ny > 0) {
-	SEXP ans = real_relop((RELOP_TYPE) PRIMVAL(op), x, y);
+	(typex == REALSXP || typex == INTSXP) &&
+	(typey == REALSXP || typey == INTSXP) &&
+	nx > 0 && ny > 0) {
+
+	/* handle the scalar case */
+	if (nx == 1 && ny == 1) {
+	    if (typex == INTSXP && typey == INTSXP) {
+		int ix = INTEGER(x)[0];
+		int iy = INTEGER(y)[0];
+		if (ix == NA_INTEGER || iy == NA_INTEGER)
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(PRIMVAL(op), ix, iy);
+	    }
+	    else {
+		double dx = typex == REALSXP ? REAL(x)[0] :
+		    INTEGER(x)[0] != NA_INTEGER ? INTEGER(x)[0] : NA_REAL;
+		double dy = typey == REALSXP ? REAL(y)[0] :
+		    INTEGER(y)[0] != NA_INTEGER ? INTEGER(y)[0] : NA_REAL;
+		if (ISNAN(dx) || ISNAN(dy))
+		    return ScalarLogical(NA_LOGICAL);
+		DO_SCALAR_RELOP(PRIMVAL(op), dx, dy);
+	    }
+	}
+
+	/* non-scalar case */
+	PROTECT_WITH_INDEX(x, &xpi);
+	PROTECT_WITH_INDEX(y, &ypi);
+	SEXP ans;
+	if (typex == INTSXP && typey == INTSXP) 
+	    ans = integer_relop(PRIMVAL(op), x, y);
+	else {
+	    if (typex == INTSXP)
+		REPROTECT(x = coerceVector(x, REALSXP), xpi);
+	    if (typey == INTSXP)
+		REPROTECT(y = coerceVector(y, REALSXP), ypi);
+	    ans = real_relop(PRIMVAL(op), x, y);
+	}
 	if (nx > 0 && ny > 0)
 	    mismatch = ((nx > ny) ? nx % ny : ny % nx) != 0;
 	if (mismatch) {
 	    PROTECT(ans);
-	    warningcall(call, _("longer object length is not a multiple of shorter object length"));
+	    warningcall(call, _("longer object length is not "
+				"a multiple of shorter object length"));
 	    UNPROTECT(1);
 	}
 	UNPROTECT(2);
 	return ans;
     }
+
+    PROTECT_WITH_INDEX(x, &xpi);
+    PROTECT_WITH_INDEX(y, &ypi);
 
     /* That symbols and calls were allowed was undocumented prior to
        R 2.5.0.  We deparse them as deparse() would, minus attributes */

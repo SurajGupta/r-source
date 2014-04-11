@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2013  The R Core Team.
+ *  Copyright (C) 1995--2014  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ static int inError = 0;
 static int inWarning = 0;
 static int inPrintWarnings = 0;
 static int immediateWarning = 0;
+static int noBreakWarning = 0;
 
 static void try_jump_to_restart(void);
 // The next is crucial to the use of NORET attributes.
@@ -83,27 +84,33 @@ static void reset_stack_limit(void *data)
     R_CStackLimit = *limit;
 }
 
-void R_CheckStack(void)
+void R_SignalCStackOverflow(intptr_t usage)
+{
+    /* We do need some stack space to process error recovery, so
+       temporarily raise the limit.  We have 5% head room because we
+       reduced R_CStackLimit to 95% of the initial value in
+       setup_Rmainloop.
+    */
+    RCNTXT cntxt;
+    uintptr_t stacklimit = R_CStackLimit;
+    R_CStackLimit += 0.05*R_CStackLimit;
+    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
+		 R_NilValue, R_NilValue);
+    cntxt.cend = &reset_stack_limit;
+    cntxt.cenddata = &stacklimit;
+
+    errorcall(R_NilValue, "C stack usage  %ld is too close to the limit", usage);
+    /* Do not translate this, to save stack space */
+}
+
+void (R_CheckStack)(void)
 {
     int dummy;
     intptr_t usage = R_CStackDir * (R_CStackStart - (uintptr_t)&dummy);
 
     /* printf("usage %ld\n", usage); */
-    if(R_CStackLimit != -1 && usage > 0.95 * R_CStackLimit) {
-	/* We do need some stack space to process error recovery,
-	   so temporarily raise the limit.
-	 */
-	RCNTXT cntxt;
-	uintptr_t stacklimit = R_CStackLimit;
-	R_CStackLimit += 0.05*R_CStackLimit;
-	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
-		     R_NilValue, R_NilValue);
-	cntxt.cend = &reset_stack_limit;
-	cntxt.cenddata = &stacklimit;
-
-	errorcall(R_NilValue, "C stack usage is too close to the limit");
-	/* Do not translate this, to save stack space */
-    }
+    if(R_CStackLimit != -1 && usage > ((intptr_t) R_CStackLimit))
+	R_SignalCStackOverflow(usage);
 }
 
 void R_CheckStack2(size_t extra)
@@ -114,21 +121,9 @@ void R_CheckStack2(size_t extra)
     /* do it this way, as some compilers do usage + extra 
        in unsigned arithmetic */
     usage += extra;
-    if(R_CStackLimit != -1 && usage > 0.95 * R_CStackLimit) {
-	/* We do need some stack space to process error recovery,
-	   so temporarily raise the limit.
-	 */
-	RCNTXT cntxt;
-	uintptr_t stacklimit = R_CStackLimit;
-	R_CStackLimit += 0.05*R_CStackLimit;
-	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
-		     R_NilValue, R_NilValue);
-	cntxt.cend = &reset_stack_limit;
-	cntxt.cenddata = &stacklimit;
+    if(R_CStackLimit != -1 && usage > ((intptr_t) R_CStackLimit))
+	R_SignalCStackOverflow(usage);
 
-	errorcall(R_NilValue, "C stack usage is too close to the limit");
-	/* Do not translate this, to save stack space */
-    }
 }
 
 void R_CheckUserInterrupt(void)
@@ -362,10 +357,9 @@ static void vwarningcall_dflt(SEXP call, const char *format, va_list ap)
 	    strcat(buf, " [... truncated]");
 	if(dcall[0] == '\0')
 	    REprintf(_("Warning: %s\n"), buf);
-	else if(mbcslocale &&
-		18 + wd(dcall) + wd(buf) <= LONGWARN)
-	    REprintf(_("Warning in %s : %s\n"), dcall, buf);
-	else if(18+strlen(dcall)+strlen(buf) <= LONGWARN)
+	else if(noBreakWarning || 
+		(mbcslocale && 18 + wd(dcall) + wd(buf) <= LONGWARN) ||
+		(!mbcslocale && 18+strlen(dcall)+strlen(buf) <= LONGWARN) )
 	    REprintf(_("Warning in %s : %s\n"), dcall, buf);
 	else
 	    REprintf(_("Warning in %s :\n  %s\n"), dcall, buf);
@@ -1157,6 +1151,11 @@ SEXP attribute_hidden do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
     } else
 	immediateWarning = 0;
     args = CDR(args);
+    if(asLogical(CAR(args))) { /* noBreak = TRUE */
+	noBreakWarning = 1;
+    } else
+	noBreakWarning = 0;
+    args = CDR(args);
     if (CAR(args) != R_NilValue) {
 	SETCAR(args, coerceVector(CAR(args), STRSXP));
 	if(!isValidString(CAR(args)))
@@ -1167,6 +1166,7 @@ SEXP attribute_hidden do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	warningcall(c_call, "");
     immediateWarning = 0; /* reset to internal calls */
+    noBreakWarning = 0;
 
     return CAR(args);
 }

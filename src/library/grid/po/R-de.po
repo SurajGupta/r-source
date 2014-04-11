@@ -1,12 +1,12 @@
 # Translation of src/library/graphics/po/R-grid.pot to German.
-# Copyright (C) 2005-2013 The R Foundation
+# Copyright (C) 2005-2014 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <steuer@hsu-hh.de>, 2007-2013.
+# Detlef Steuer <steuer@hsu-hh.de>, 2007-2014.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.0.0\n"
+"Project-Id-Version: R 3.1.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-01-12 10:57\n"
+"POT-Creation-Date: 2014-02-27 17:14\n"
 "PO-Revision-Date: 2013-03-01 15:59+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-Core <R-core@r-project.org>\n"
@@ -79,12 +79,16 @@ msgstr "unzulässige 'row' Spezifikation"
 msgid ""
 "cannot specify more than one of 'side=[\"left\", \"right\"]', 'col', 'col."
 "before', or 'col.after'"
-msgstr "es kann nicht mehr als ein Parameter aus 'side=[\"left\", \"right\"]', 'col', 'col.before' oder 'col.after' angegeben werden"
+msgstr ""
+"es kann nicht mehr als ein Parameter aus 'side=[\"left\", \"right\"]', "
+"'col', 'col.before' oder 'col.after' angegeben werden"
 
 msgid ""
 "must specify exactly one of 'side=[\"top\", \"bottom\"]', 'row', 'row."
 "before', or 'row.after'"
-msgstr "es muss genau ein Parameter aus 'side=[\"left\", \"right\"]', 'row', 'row.before' oder 'row.after' angegeben werden"
+msgstr ""
+"es muss genau ein Parameter aus 'side=[\"left\", \"right\"]', 'row', 'row."
+"before' oder 'row.after' angegeben werden"
 
 msgid "invalid 'n'"
 msgstr "unzulässiges 'n'"
@@ -107,8 +111,8 @@ msgstr "unzulässiger Wert für 'alpha'"
 msgid "must specify only one of 'font' and 'fontface'"
 msgstr "es darf nur entweder 'font' oder 'fontface' angegeben werden"
 
-msgid "invalid font face"
-msgstr "ungültiger Fontface"
+msgid "invalid fontface"
+msgstr "ungültige Zeichensatzerscheinung"
 
 msgid "argument must be a 'gpar' object"
 msgstr "Argument muss ein 'gpar' Objekt sein"
@@ -121,7 +125,9 @@ msgstr "ungültiges Displaylisten-Element"
 
 msgid ""
 "one of more grobs overwritten (grab WILL not be faithful; try 'wrap = TRUE')"
-msgstr "ein oder mehrere grobs überschrieben (grab NICHT zuverlässig; versuche 'wrap=TRUE'"
+msgstr ""
+"ein oder mehrere grobs überschrieben (grab NICHT zuverlässig; versuche "
+"'wrap=TRUE'"
 
 msgid "viewport overwritten (grab MAY not be faithful)"
 msgstr "Viewport überschrieben (grab EVTL. nicht zuverlässig)"
@@ -138,14 +144,20 @@ msgstr "Viewports dürfen nur ge\"pushed\" werden"
 msgid "must specify at least one viewport"
 msgstr "es muss zumindest ein Viewport angegeben werden"
 
+msgid "Down viewport failed to record on display list"
+msgstr "Abgeschalteter Viewport konnte nicht in die Displayliste aufnehmen"
+
+msgid "Down viewport incorrectly recorded on display list"
+msgstr "Abgeschalteter Viewport fälschlicherweise  in die Displayliste aufgenommen"
+
 msgid "must pop at least one viewport"
 msgstr "es muss zumindest ein Viewport von Stack geholt werden"
 
 msgid "must navigate up at least one viewport"
 msgstr "es muss mindestens ein Viewport nach oben navigiert werden"
 
-msgid "the 'vp' argument is deprecated"
-msgstr "'vp' Argument ist veraltet"
+msgid "Invalid number of generations"
+msgstr "Ungültige Anzahl von Generationen"
 
 msgid "invalid object inserted on the display list"
 msgstr "unzulässiges Objekt in die Displayliste eingefügt"
@@ -167,9 +179,6 @@ msgstr "unzulässiger 'gp' Slot"
 
 msgid "invalid 'grob' class"
 msgstr "ungültige 'grob' Klasse"
-
-msgid "grid.grob() is deprecated; please use grob() instead"
-msgstr "grid.grob() ist veraltet; bitte stattdessen grob() nutzen"
 
 msgid "a 'grob' path must contain at least one 'grob' name"
 msgstr "ein 'grob' Pfad muss mindestens einen 'grob' Namen enthalten"
@@ -257,6 +266,12 @@ msgstr "Grob '%s' nicht gefunden"
 msgid "invalid element in the display list"
 msgstr "unzulässiges Element in der Display-Liste"
 
+msgid "Invalid force target"
+msgstr "ungültiges Zwangsziel"
+
+msgid "Invalid revert target"
+msgstr "ungültiges Ziel für das Rückgängigmachen"
+
 msgid "can only reorder 'children' for a \"gTree\""
 msgstr "kann nur 'children' für einen \"gTree\" setzen"
 
@@ -274,6 +289,15 @@ msgstr "'hgap' muss eine einzelne Stelle sein"
 
 msgid "'vgap' must be single unit"
 msgstr "'vgap' muss eine einzelne Stelle sein"
+
+msgid "'nrow' must be >= 1"
+msgstr "'nrow' must >= 1 sein"
+
+msgid "'ncol' must be >= 1"
+msgstr "'ncol' must >= 1 sein"
+
+msgid "nrow * ncol < #{legend labels}"
+msgstr "nrow * ncol < #{legend labels}"
 
 msgid "invalid justification"
 msgstr "unzulässige Ausrichtung"
@@ -298,6 +322,9 @@ msgstr "ungültiges Listing"
 
 msgid "invalid 'listing'"
 msgstr "ungültiges 'listing'"
+
+msgid "Nothing on the display list"
+msgstr "Nichts in der Display-Liste"
 
 msgid "invalid 'origin'"
 msgstr "unzulässiger 'origin'"
@@ -337,11 +364,6 @@ msgstr "'x' und 'y' müssen Einheiten oder NULL sein"
 
 msgid "corrupt 'arrows' object"
 msgstr "korruptes 'arrows' Objekt"
-
-msgid "the 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
-msgstr ""
-"Das 'grob' Argument muss entweder ein 'line.to', 'lines' oder 'segments' "
-"Grob sein"
 
 msgid "x and y must be units"
 msgstr "x und y müssen Einheiten sein"
@@ -437,7 +459,8 @@ msgid "index out of bounds (unit list subsetting)"
 msgstr "Index außerhalb des Bereichs (Einheitenlistenteilauswahl)"
 
 msgid "it is invalid to combine 'unit' objects with other types"
-msgstr "unzulässig 'unit' Objekte können nicht mit anderen Typen zu kombinieren"
+msgstr ""
+"unzulässig 'unit' Objekte können nicht mit anderen Typen zu kombinieren"
 
 msgid "invalid 'unit' object"
 msgstr "Unzulässiges 'unit' Objekt"
@@ -504,6 +527,17 @@ msgid "invalid viewport name"
 msgid_plural "invalid viewport names"
 msgstr[0] "Unzulässiger Viewport-Name"
 msgstr[1] "Unzulässige Viewport-Namen"
+
+#~ msgid "the 'vp' argument is deprecated"
+#~ msgstr "'vp' Argument ist veraltet"
+
+#~ msgid "grid.grob() is deprecated; please use grob() instead"
+#~ msgstr "grid.grob() ist veraltet; bitte stattdessen grob() nutzen"
+
+#~ msgid "the 'grob' argument must be a 'line.to', 'lines', or 'segments' grob"
+#~ msgstr ""
+#~ "Das 'grob' Argument muss entweder ein 'line.to', 'lines' oder 'segments' "
+#~ "Grob sein"
 
 #, fuzzy
 #~ msgid "invalid 'ask' value"

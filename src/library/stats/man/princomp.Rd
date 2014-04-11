@@ -20,7 +20,7 @@ princomp(x, \dots)
 \method{princomp}{formula}(formula, data = NULL, subset, na.action, \dots)
 
 \method{princomp}{default}(x, cor = FALSE, scores = TRUE, covmat = NULL,
-         subset = rep(TRUE, nrow(as.matrix(x))), \dots)
+         subset = rep_len(TRUE, nrow(as.matrix(x))), \dots)
 
 \method{predict}{princomp}(object, newdata, \dots)
 }
@@ -141,7 +141,8 @@ princomp(USArrests, cor = TRUE) # =^= prcomp(USArrests, scale=TRUE)
 ## The standard deviations differ by a factor of sqrt(49/50)
 
 summary(pc.cr <- princomp(USArrests, cor = TRUE))
-loadings(pc.cr)  ## note that blank entries are small but not zero
+loadings(pc.cr)  # note that blank entries are small but not zero
+## The signs of the columns are arbitrary
 plot(pc.cr) # shows a screeplot.
 biplot(pc.cr)
 

@@ -6,8 +6,13 @@ pdf("reg-tests-1a.pdf", encoding = "ISOLatin1.enc")
 options(stringsAsFactors=TRUE)
 ## .Machine
 (Meps <- .Machine$double.eps)# and use it in this file
+## Facilitate diagnosing of testing startup:
+envLst <- c(t(outer(c("R_ENVIRON","R_PROFILE"), c("","_USER"), paste0)),
+	    "R_CHECK_ENVIRON","R_LIBS")
+cbind(Sys.getenv(envLst))
+.libPaths()
 
-assertCondition <- tools::assertCondition
+assertError <- tools::assertError
 
 ## regression test for PR#376
 aggregate(ts(1:20), nfreq=1/3)
@@ -494,8 +499,7 @@ stopifnot(
     !is.nan(c(1,NA)),
     c(FALSE,TRUE,FALSE) == is.nan(c   (1,NaN,NA))
 )
-assertCondition(is.nan(list(1,NaN,NA)),
-		"error") #-> result allowed but varies in older versions
+assertError(is.nan(list(1,NaN,NA))) #-> result allowed but varies in older versions
 
 
 stopifnot(identical(lgamma(Inf), Inf))
@@ -4363,12 +4367,6 @@ A <- matrix(NA, 0, 0)
 stopifnot(identical(rownames(A, do.NULL = FALSE), character(0)))
 stopifnot(identical(colnames(A, do.NULL = FALSE), character(0)))
 ## were 'row' etc in 2.3.1.
-
-
-## misuse of a method (based on example from package mmlcr)
-model.matrix.lm(height ~ weight, women)
-# although it is an incorrect call, it should not crash in NextMethod.
-## fixed in 2.4.0
 
 
 ## grep(value = TRUE) sometimes preserved names, sometimes not

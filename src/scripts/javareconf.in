@@ -9,7 +9,7 @@ fi
 DYLIB_EXT=`${R_HOME}/bin/R CMD config DYLIB_EXT`
 tools_classpath=${R_SHARE_DIR}/java
 
-revision='$Rev: 63872 $'
+revision='$Rev: 63871 $'
 version=`set - ${revision}; echo ${2}`
 version="R Java configurator: ${R_VERSION} (r${version})
 

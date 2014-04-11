@@ -2005,7 +2005,7 @@ void GESymbol(double x, double y, int pch, double size,
     if(pch == NA_INTEGER) /* do nothing */;
     else if(pch < 0) {
 	size_t res;
-	char str[16];
+	char str[16]; // probably 7 would do
 	if(gc->fontface == 5)
 	    error("use of negative pch with symbol font is invalid");
 	res = ucstoutf8(str, -pch); // throws error if unsuccessful 

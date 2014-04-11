@@ -125,14 +125,28 @@ function(dir,
         pos <- pmatch(names(reverse), names(defaults), nomatch = 0L)
         defaults[pos] <- reverse[pos > 0L]
 
-        rnames <-
+        rnames <- if(is.list(defaults$which)) {
+            ## No recycling of repos for now.
+            defaults$recursive <- rep_len(as.list(defaults$recursive),
+                                          length(defaults$which))
+            unlist(Map(function(w, r)
+                       package_dependencies(setdiff(pnames,
+                                                    pnames_using_install_no),
+                                            available,
+                                            which = w,
+                                            recursive = r,
+                                            reverse = TRUE),
+                       defaults$which,
+                       defaults$recursive),
+                   use.names = FALSE)
+        } else {
             package_dependencies(setdiff(pnames,
                                          pnames_using_install_no),
                                  available,
                                  which = defaults$which,
-                                 recursive =
-                                 defaults$recursive,
+                                 recursive = defaults$recursive,
                                  reverse = TRUE)
+        }
 
         rnames <- intersect(unlist(rnames, use.names = FALSE),
                             available[, "Package"])
@@ -202,18 +216,28 @@ function(dir,
         ##   outdir/install_stderr.txt
         ## But using several CPUs uses Make to install, which seems to
         ## write to stdout/stderr "directly" ... so using sink() will
-        ## not work.
+        ## not work.  Hence, use 'keep_outputs' to capture "outputs"
+        ## (combining install stdout and stderr into one file).
         message("")
         iflags <- as.list(rep.int("--fake",
                                   length(pnames_using_install_fake)))
         names(iflags) <- pnames_using_install_fake
+        tmpdir <- tempfile(tmpdir = outdir)
+        dir.create(tmpdir)
         utils::install.packages(depends, lib = libdir,
                                 contriburl = curls,
                                 available = available,
                                 dependencies = TRUE,
                                 INSTALL_opts = iflags,
+                                keep_outputs = tmpdir,
                                 Ncpus = Ncpus, 
                                 type = "source")
+        outfiles <- Sys.glob(file.path(tmpdir, "*.out"))
+        file.rename(outfiles,
+                    file.path(outdir,
+                              sprintf("install_%s",
+                                      basename(outfiles))))
+        unlink(tmpdir, recursive = TRUE)
         message("")
         ## </NOTE>
     }
@@ -403,30 +427,43 @@ function(dir, all = FALSE)
 }
 
 summarize_check_packages_in_dir_results <-
-function(dir, all = TRUE)
+function(dir, all = TRUE, full = FALSE)
 {
     dir <- normalizePath(dir)
     outdirs <- R_check_outdirs(dir, all = all)
     ## Re-arrange to have reverse dependencies last.
     ind <- grepl("^rdepends_", basename(outdirs))
     outdirs <- c(outdirs[!ind], outdirs[ind])
-    for(d in outdirs) {
-        pname <- sub("\\.Rcheck$", "", basename(d))
-        log <- readLines(file.path(d, "00check.log"), warn = FALSE)
-        m <- regexpr("\\.\\.\\. *(\\[.*\\])? *(NOTE|WARN|ERROR)", log,
-                     useBytes = TRUE)
-        ind <- (m > 0L)
-        if(any(ind)) {
-            status <- if(all(grepl("NOTE$", regmatches(log, m),
-                                   useBytes = TRUE))) {
-                "NOTE"
-            } else "PROBLEM"
-            writeLines(c(sprintf("%s ... %s", pname, status),
-                         log[ind]))
-        } else {
-            writeLines(sprintf("%s ... OK", pname))
-        }
+    logs <- file.path(outdirs, "00check.log")
+    logs <- logs[file_test("-f", logs)]
+    
+    results <- check_packages_in_dir_results(logs = logs)
+
+    Map(function(p, r) {
+        writeLines(c(sprintf("%s ... %s", p, r$status), r$lines))
+    },
+        names(results),
+        results)
+
+    if(full &&
+       !all(as.character(unlist(lapply(results, `[[`, "status"))) ==
+            "OK")) {
+        writeLines("")
+        details <- check_packages_in_dir_details(logs = logs)
+        flags <- details$Flags
+        out <- cbind(sprintf("Package: %s %s",
+                             details$Package, details$Version),
+                     ifelse(nzchar(flags),
+                            sprintf("Flags: %s\n", flags),
+                            ""),
+                     sprintf("Check: %s, Result: %s",
+                             details$Check, details$Status),
+                     c(gsub("\n", "\n  ", details$Output,
+                            perl = TRUE, useBytes = TRUE)))
+        cat(t(out), sep = c("\n", "", "\n  ", "\n\n"))
     }
+
+    invisible()
 }
 
 summarize_check_packages_in_dir_timings <-
@@ -470,4 +507,227 @@ function(dir, all = FALSE, full = FALSE)
         },
                       names(timings), timings))
     }
+}
+
+read_check_log <-
+function(log)
+{
+    lines <- readLines(log, warn = FALSE)
+
+    ## Drop CRAN check status footer.
+    ## Ideally, we would have a more general mechanism to detect footer
+    ## information to be skipped (e.g., a line consisting of a single
+    ## non-printing control character?)
+    pos <- grep("^Current CRAN status:", lines,
+                perl = TRUE, useBytes = TRUE)
+    if(length(pos) && lines[pos <- (pos[1L] - 1L)] == "") {
+        lines <- lines[seq_len(pos - 1L)]
+    }
+
+    lines
+}
+
+
+check_packages_in_dir_results <-
+function(dir, logs = NULL)
+{
+    if(is.null(logs))
+        logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
+
+    results <- lapply(logs, function(log) {
+        lines <- read_check_log(log)
+        m <- regexpr("^\\*.*\\.\\.\\. *(\\[.*\\])? *(NOTE|WARN|ERROR)", 
+                     lines, perl = TRUE, useBytes = TRUE)
+        ind <- (m > 0L)
+        status <- if(any(ind)) {
+            if(all(grepl("NOTE$", regmatches(lines, m), useBytes = TRUE))) {
+                "NOTE"
+            } else {
+                "PROBLEM"
+            }
+        } else {
+            "OK"
+        }
+        list(status = status, lines = lines[ind])
+    })
+    names(results) <- sub("\\.Rcheck$", "", basename(dirname(logs)))
+
+    results
+}
+
+analyze_check_log <-
+function(log, drop_ok = TRUE)
+{
+    make_results <- function(package, version, flags, chunks)
+        list(Package = package, Version = version,
+             Flags = flags, Chunks = chunks)
+
+    ## Alternatives for left and right quotes.
+    lqa <- "'|\xe2\x80\x98"
+    rqa <- "'|\xe2\x80\x99"
+    ## Group when used ...
+
+    drop_ok_status_tags <- c("OK", "NONE", "SKIPPED")
+
+    ## Start by reading in.
+    lines <- read_check_log(log)
+
+    ## Re-encode to UTF-8 using the session charset info.
+    ## All regexp computations will be done using perl = TRUE and
+    ## useBytes = TRUE.
+    re <- "^\\* using session charset: "
+    pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+    if(length(pos)) {
+        enc <- sub(re, "", lines[pos[1L]])
+        lines <- iconv(lines, enc, "UTF-8", sub = "byte")
+        ## If the check log uses ASCII, there should be no non-ASCII
+        ## characters in the message lines: could check for this.
+    } else return()
+
+    ## Get header.
+    re <- sprintf("^\\* this is package (%s)(.*)(%s) version (%s)(.*)(%s)$",
+                  lqa, rqa, lqa, rqa)
+    pos <- grep(re, lines, perl = TRUE, useBytes = TRUE)
+    if(length(pos)) {
+        pos <- pos[1L]
+        txt <- lines[pos]
+        package <- sub(re, "\\2", txt, perl = TRUE, useBytes = TRUE)
+        version <- sub(re, "\\5", txt, perl = TRUE, useBytes = TRUE)
+        header <- lines[seq_len(pos - 1L)]
+        lines <- lines[-seq_len(pos)]
+        ## Get check options from header.
+        re <- sprintf("^\\* using options? (%s)(.*)(%s)$", lqa, rqa)
+        flags <- if(length(pos <- grep(re, header,
+                                       perl = TRUE, useBytes = TRUE))) {
+            sub(re, "\\1", header[pos[1L]],
+                perl = TRUE, useBytes = TRUE)
+        } else ""
+    } else return()
+
+    ## Get footer.
+    ## Some check systems explicitly record the elapsed time in the
+    ## last line:
+    len <- length(lines)
+    if(grepl("^\\* elapsed time ", lines[len],
+             perl = TRUE, useBytes = TRUE)) {
+        lines <- lines[-len]
+        len <- len - 1L
+    }
+    num <- length(grep("^(NOTE|WARNING): There",
+                       lines[c(len - 1L, len)]))
+    if(num > 0L) {
+        pos <- seq.int(len - num + 1L, len)
+        lines <- lines[-pos]
+    }
+
+    analyze_lines <- function(lines) {
+        ## We might still have
+        ##   * package encoding:
+        ## entries for packages declaring a package encoding.
+        ## Hopefully all other log entries we still have are
+        ##   * checking
+        ##   * creating
+        ## ones ... apparently, with the exception of
+        ##   ** running examples for arch
+        ##   ** running tests for arch
+        ## So let's drop everything up to the first such entry.
+        re <- "^\\*\\*? ((checking|creating|running examples for arch|running tests for arch) .*) \\.\\.\\.( (\\[[^ ]*\\]))? (.*)$"
+        ind <- grepl(re, lines, perl = TRUE, useBytes = TRUE)
+        csi <- cumsum(ind)
+        ind <- (csi > 0)
+        chunks <- 
+            lapply(split(lines[ind], csi[ind]),
+                   function(s) {
+                       ## Note that setting
+                       ##   _R_CHECK_TEST_TIMING_=yes
+                       ##   _R_CHECK_VIGNETTE_TIMING_=yes
+                       ## will result in a different chunk format ...
+                       line <- s[1L]
+                       list(check =
+                            sub(re, "\\1", line, perl = TRUE, useBytes = TRUE),
+                            status =
+                            sub(re, "\\5", line, perl = TRUE, useBytes = TRUE),
+                            output = paste(s[-1L], collapse = "\n"))
+                   })
+
+        status <- vapply(chunks, `[[`, "", "status")
+        if(identical(drop_ok, TRUE) ||
+           (is.na(drop_ok) && all(status != "ERROR")))
+            chunks <- chunks[is.na(match(status, drop_ok_status_tags))]
+        
+        chunks
+    }
+
+    chunks <- analyze_lines(lines)
+    if(!length(chunks) && is.na(drop_ok)) {
+        chunks <- list(list(check = "*", status = "OK", output = ""))
+    }
+
+    make_results(package, version, flags, chunks)
+}
+
+check_packages_in_dir_details <-
+function(dir, logs = NULL, drop_ok = TRUE)
+{
+    ## Build a data frame with columns
+    ##   Package Version Check Status Output Flags
+    ## and some optimizations (in particular, Check Status Flags can be
+    ## factors).
+
+    db_from_logs <- function(logs, drop_ok) {
+        out <- lapply(logs, analyze_check_log, drop_ok)
+        out <- out[sapply(out, length) > 0L]
+        if(!length(out))
+            return(matrix(character(), ncol = 6L))
+        chunks <- lapply(out, `[[`, "Chunks")
+        package <- sapply(out, `[[`, "Package")
+        lens <- sapply(chunks, length)
+        cbind(rep.int(package, lens),
+              rep.int(sapply(out, `[[`, "Version"), lens),
+              matrix(as.character(unlist(chunks)), ncol = 3L,
+                     byrow = TRUE),
+              rep.int(sapply(out, `[[`, "Flags"),
+                      lens))
+    }
+
+    if(is.null(logs))
+        logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
+
+    db <- db_from_logs(logs, drop_ok)
+    colnames(db) <- c("Package", "Version", "Check", "Status",
+                      "Output", "Flags")
+
+    ## Now some cleanups.
+    
+    ## Alternatives for left and right quotes.
+    lqa <- "'|\xe2\x80\x98"
+    rqa <- "'|\xe2\x80\x99"
+    ## Group when used ...
+
+    mysub <- function(p, r, x) sub(p, r, x, perl = TRUE, useBytes = TRUE)
+    
+    checks <- db[, "Check"]
+    checks <- mysub(sprintf("checking whether package (%s).*(%s) can be installed",
+                            lqa, rqa),
+                    "checking whether package can be installed", checks)
+    checks <- mysub("creating .*-Ex.R",
+                    "checking examples creation", checks)
+    checks <- mysub("creating .*-manual\\.tex",
+                    "checking manual creation", checks)
+    checks <- mysub("checking .*-manual\\.tex", "checking manual", checks)
+    checks <- mysub(sprintf("checking package vignettes in (%s)inst/doc(%s)",
+                            lqa, rqa),
+                    "checking package vignettes", checks)
+    checks <- mysub("^checking *", "", checks)
+    db[, "Check"] <- checks
+    ## In fact, for tabulation purposes it would even be more convenient
+    ## to shorten the check names ...
+    
+    db[, "Output"] <- mysub("[[:space:]]+$", "", db[, "Output"])
+    
+    db <- as.data.frame(db, stringsAsFactors = FALSE)
+    db$Check <- as.factor(db$Check)
+    db$Status <- as.factor(db$Status)
+
+    db
 }

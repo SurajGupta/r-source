@@ -46,8 +46,7 @@ valid.unit <- function(x, units, data) {
 grid.convert <- function(x, unitTo, axisFrom="x", typeFrom="location",
                          axisTo=axisFrom, typeTo=typeFrom,
                          valueOnly=FALSE) {
-  .Deprecated("convertUnit")
-  convertUnit(x, unitTo, axisFrom, typeFrom, axisTo, typeTo, valueOnly)
+    .Defunct("convertUnit")
 }
 
 convertUnit <- function(x, unitTo, axisFrom="x", typeFrom="location",
@@ -70,8 +69,7 @@ convertUnit <- function(x, unitTo, axisFrom="x", typeFrom="location",
 }
 
 grid.convertX <- function(x, unitTo, valueOnly=FALSE) {
-  .Deprecated("convertX")
-  convertX(x, unitTo, valueOnly)
+  .Defunct("convertX")
 }
 
 convertX <- function(x, unitTo, valueOnly=FALSE) {
@@ -80,8 +78,7 @@ convertX <- function(x, unitTo, valueOnly=FALSE) {
 }
 
 grid.convertY <- function(x, unitTo, valueOnly=FALSE) {
-  .Deprecated("convertY")
-  convertY(x, unitTo, valueOnly)
+  .Defunct("convertY")
 }
 
 convertY <- function(x, unitTo, valueOnly=FALSE) {
@@ -90,8 +87,7 @@ convertY <- function(x, unitTo, valueOnly=FALSE) {
 }
 
 grid.convertWidth <- function(x, unitTo, valueOnly=FALSE) {
-  .Deprecated("convertWidth")
-  convertWidth(x, unitTo, valueOnly)
+  .Defunct("convertWidth")
 }
 
 convertWidth <- function(x, unitTo, valueOnly=FALSE) {
@@ -100,8 +96,7 @@ convertWidth <- function(x, unitTo, valueOnly=FALSE) {
 }
 
 grid.convertHeight <- function(x, unitTo, valueOnly=FALSE) {
-  .Deprecated("convertHeight")
-  convertHeight(x, unitTo, valueOnly)
+  .Defunct("convertHeight")
 }
 
 convertHeight <- function(x, unitTo, valueOnly=FALSE) {
@@ -110,9 +105,7 @@ convertHeight <- function(x, unitTo, valueOnly=FALSE) {
 }
 
 convertNative <- function(unit, dimension="x", type="location") {
-  .Deprecated("convertUnit")
-  convertUnit(unit, "native", dimension, type, dimension, type,
-              valueOnly=TRUE)
+  .Defunct("convertUnit")
 }
 
 # This is like the "convert" functions:  it evaluates units (immediately)
@@ -199,7 +192,7 @@ valid.data <- function(units, data) {
                    is.character(data[[i]]))))
                 stop("no 'grob' supplied for 'grobwidth/height' unit")
             if (is.character(data[[i]]))
-                data[[i]] <- gPathDirect(data[[i]])
+                data[[i]] <- gPath(data[[i]])
             if (inherits(data[[i]], "gPath"))
                 if (depth(data[[i]]) > 1)
                     stop("'gPath' must have depth 1 in 'grobwidth/height' units")
@@ -602,7 +595,7 @@ stringWidth <- function(string) {
     } else {
         data <- as.list(as.character(string))
     }
-    unit(rep(1, n), "strwidth", data=data)
+    unit(rep_len(1, n), "strwidth", data=data)
 }
 
 stringHeight <- function(string) {
@@ -614,7 +607,7 @@ stringHeight <- function(string) {
     } else {
         data <- as.list(as.character(string))
     }
-    unit(rep(1, n), "strheight", data=data)
+    unit(rep_len(1, n), "strheight", data=data)
 }
 
 stringAscent <- function(string) {
@@ -626,7 +619,7 @@ stringAscent <- function(string) {
     } else {
         data <- as.list(as.character(string))
     }
-    unit(rep(1, n), "strascent", data=data)
+    unit(rep_len(1, n), "strascent", data=data)
 }
 
 stringDescent <- function(string) {
@@ -638,7 +631,7 @@ stringDescent <- function(string) {
     } else {
         data <- as.list(as.character(string))
     }
-    unit(rep(1, n), "strdescent", data=data)
+    unit(rep_len(1, n), "strdescent", data=data)
 }
 
 convertTheta <- function(theta) {
@@ -673,7 +666,7 @@ grobX.gPath <- function(x, theta) {
 }
 
 grobX.default <- function(x, theta) {
-  unit(convertTheta(theta), "grobx", data=gPathDirect(as.character(x)))
+  unit(convertTheta(theta), "grobx", data=gPath(as.character(x)))
 }
 
 # grobY
@@ -694,7 +687,7 @@ grobY.gPath <- function(x, theta) {
 }
 
 grobY.default <- function(x, theta) {
-  unit(convertTheta(theta), "groby", data=gPathDirect(as.character(x)))
+  unit(convertTheta(theta), "groby", data=gPath(as.character(x)))
 }
 
 # grobWidth
@@ -707,7 +700,7 @@ grobWidth.grob <- function(x) {
 }
 
 grobWidth.gList <- function(x) {
-  unit(rep(1, length(gList)), "grobwidth", data=x)
+  unit(rep_len(1, length(gList)), "grobwidth", data=x)
 }
 
 grobWidth.gPath <- function(x) {
@@ -715,7 +708,7 @@ grobWidth.gPath <- function(x) {
 }
 
 grobWidth.default <- function(x) {
-  unit(1, "grobwidth", data=gPathDirect(as.character(x)))
+  unit(1, "grobwidth", data=gPath(as.character(x)))
 }
 
 # grobHeight
@@ -728,7 +721,7 @@ grobHeight.grob <- function(x) {
 }
 
 grobHeight.gList <- function(x) {
-  unit(rep(1, length(gList)), "grobheight", data=x)
+  unit(rep_len(1, length(gList)), "grobheight", data=x)
 }
 
 grobHeight.gPath <- function(x) {
@@ -736,7 +729,7 @@ grobHeight.gPath <- function(x) {
 }
 
 grobHeight.default <- function(x) {
-  unit(1, "grobheight", data=gPathDirect(as.character(x)))
+  unit(1, "grobheight", data=gPath(as.character(x)))
 }
 
 # grobAscent
@@ -749,7 +742,7 @@ grobAscent.grob <- function(x) {
 }
 
 grobAscent.gList <- function(x) {
-  unit(rep(1, length(gList)), "grobascent", data=x)
+  unit(rep_len(1, length(gList)), "grobascent", data=x)
 }
 
 grobAscent.gPath <- function(x) {
@@ -757,7 +750,7 @@ grobAscent.gPath <- function(x) {
 }
 
 grobAscent.default <- function(x) {
-  unit(1, "grobascent", data=gPathDirect(as.character(x)))
+  unit(1, "grobascent", data=gPath(as.character(x)))
 }
 
 # grobDescent
@@ -770,7 +763,7 @@ grobDescent.grob <- function(x) {
 }
 
 grobDescent.gList <- function(x) {
-  unit(rep(1, length(gList)), "grobdescent", data=x)
+  unit(rep_len(1, length(gList)), "grobdescent", data=x)
 }
 
 grobDescent.gPath <- function(x) {
@@ -778,7 +771,7 @@ grobDescent.gPath <- function(x) {
 }
 
 grobDescent.default <- function(x) {
-  unit(1, "grobdescent", data=gPathDirect(as.character(x)))
+  unit(1, "grobdescent", data=gPath(as.character(x)))
 }
 
 #########################

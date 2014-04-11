@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2012 Ross Ihaka and the R Core team.
+ *  Copyright (C) 1998-2014 Ross Ihaka and the R Core team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,12 +33,12 @@
 
 #define min0(x, y) (((x) <= (y)) ? (x) : (y))
 
-static void J_bessel(double *x, double *alpha, long *nb,
-		     double *b, long *ncalc);
+static void J_bessel(double *x, double *alpha, int *nb,
+		     double *b, int *ncalc);
 
 double bessel_j(double x, double alpha)
 {
-    long nb, ncalc;
+    int nb, ncalc;
     double na, *bj;
 #ifndef MATHLIB_STANDALONE
     const void *vmax;
@@ -56,11 +56,11 @@ double bessel_j(double x, double alpha)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_j(x, -alpha) * cos(M_PI * alpha) +
+	return(bessel_j(x, -alpha) * cospi(alpha) +
 	       ((alpha == na) ? 0 :
-	       bessel_y(x, -alpha) * sin(M_PI * alpha)));
+	       bessel_y(x, -alpha) * sinpi(alpha)));
     }
-    nb = 1 + (long)na; /* nb-1 <= alpha < nb */
+    nb = 1 + (int)na; /* nb-1 <= alpha < nb */
     alpha -= (double)(nb-1);
 #ifdef MATHLIB_STANDALONE
     bj = (double *) calloc(nb, sizeof(double));
@@ -91,7 +91,7 @@ double bessel_j(double x, double alpha)
    allocating one. */
 double bessel_j_ex(double x, double alpha, double *bj)
 {
-    long nb, ncalc;
+    int nb, ncalc;
     double na;
 
 #ifdef IEEE_754
@@ -106,11 +106,11 @@ double bessel_j_ex(double x, double alpha, double *bj)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_j_ex(x, -alpha, bj) * cos(M_PI * alpha) +
+	return(bessel_j_ex(x, -alpha, bj) * cospi(alpha) +
 	       ((alpha == na) ? 0 :
-		bessel_y_ex(x, -alpha, bj) * sin(M_PI * alpha)));
+		bessel_y_ex(x, -alpha, bj) * sinpi(alpha)));
     }
-    nb = 1 + (long)na; /* nb-1 <= alpha < nb */
+    nb = 1 + (int)na; /* nb-1 <= alpha < nb */
     alpha -= (double)(nb-1);
     J_bessel(&x, &alpha, &nb, bj, &ncalc);
     if(ncalc != nb) {/* error input */
@@ -125,8 +125,8 @@ double bessel_j_ex(double x, double alpha, double *bj)
     return x;
 }
 
-static void J_bessel(double *x, double *alpha, long *nb,
-		     double *b, long *ncalc)
+static void J_bessel(double *x, double *alpha, int *nb,
+		     double *b, int *ncalc)
 {
 /*
  Calculates Bessel functions J_{n+alpha} (x)
@@ -222,7 +222,7 @@ static void J_bessel(double *x, double *alpha, long *nb,
 	    6.2044840173323943936e23 };
 
     /* Local variables */
-    long nend, intx, nbmx, i, j, k, l, m, n, nstart;
+    int nend, intx, nbmx, i, j, k, l, m, n, nstart;
 
     double nu, twonu, capp, capq, pold, vcos, test, vsin;
     double p, s, t, z, alpem, halfx, aa, bb, cc, psave, plast;
@@ -249,7 +249,7 @@ static void J_bessel(double *x, double *alpha, long *nb,
 		b[i] = 0.; /*was ML_POSINF (really nonsense) */
 	    return;
 	}
-	intx = (long) (*x);
+	intx = (int) (*x);
 	/* Initialize result array to zero. */
 	for (i = 1; i <= *nb; ++i)
 	    b[i] = 0.;
@@ -268,7 +268,7 @@ static void J_bessel(double *x, double *alpha, long *nb,
 	    alpem = 1. + nu;
 
 	    halfx = (*x > enmten_BESS) ? .5 * *x :  0.;
-	    aa	  = (nu != 0.)	  ? pow(halfx, nu) / (nu * gamma_cody(nu)) : 1.;
+	    aa	  = (nu != 0.)	  ? pow(halfx, nu) / (nu * Rf_gamma_cody(nu)) : 1.;
 	    bb	  = (*x + 1. > 1.)? -halfx * halfx : 0.;
 	    b[1] = aa + aa * bb / alpem;
 	    if (*x != 0. && b[1] == 0.)
@@ -314,7 +314,7 @@ static void J_bessel(double *x, double *alpha, long *nb,
 	    /* ------------------------------------------------
 	       Argument reduction for SIN and COS routines.
 	       ------------------------------------------------ */
-	    t = ftrunc(*x / (twopi1 + twopi2) + .5);
+	    t = trunc(*x / (twopi1 + twopi2) + .5);
 	    z = (*x - t * twopi1) - t * twopi2 - (nu + .5) / pi2;
 	    vsin = sin(z);
 	    vcos = cos(z);
@@ -555,7 +555,7 @@ L250:
 	       ---------------------------------------------------*/
 /*	    if (nu + 1. != 1.) poor test */
 	    if(fabs(nu) > 1e-15)
-		sum *= (gamma_cody(nu) * pow(.5* *x, -nu));
+		sum *= (Rf_gamma_cody(nu) * pow(.5* *x, -nu));
 
 	    aa = enmten_BESS;
 	    if (sum > 1.)

@@ -3,9 +3,11 @@
 % Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
+
 \name{anova.mlm}
 \alias{anova.mlm}
-\alias{anova.mlmlist}
+%\alias{anova.mlmlist}
 \title{Comparisons between Multivariate Linear Models}
 \description{
   Compute a (generalized) analysis of variance table for one or more
@@ -74,7 +76,7 @@
 }
 \note{
   The Huynh--Feldt epsilon differs from that calculated by SAS (as of
-  v. 8.2) except when the DF is equal to the number of observations
+  v.\sspace{}8.2) except when the DF is equal to the number of observations
   minus one.  This is believed to be a bug in SAS, not in \R.
 }
 

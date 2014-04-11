@@ -562,10 +562,6 @@ function(package, dir, lib.loc = NULL,
     db_names <- db_names[!ind]
 
     db_usages <- lapply(db, .Rd_get_section, "usage")
-    db_synopses <- lapply(db, .Rd_get_section, "synopsis")
-    ind <- sapply(db_synopses, length) > 0L
-    db_usages[ind] <- db_synopses[ind]
-    with_synopsis <- as.character(db_names[ind])
     db_usages <- lapply(db_usages, .parse_usage_as_much_as_possible)
     ind <- as.logical(sapply(db_usages,
                              function(x) !is.null(attr(x, "bad_lines"))))
@@ -742,7 +738,6 @@ function(package, dir, lib.loc = NULL,
     attr(bad_doc_objects, "functions_missing_from_usages") <-
         functions_missing_from_usages
     attr(bad_doc_objects, "has_namespace") <- has_namespace
-    attr(bad_doc_objects, "with_synopsis") <- with_synopsis
     attr(bad_doc_objects, "bad_lines") <- bad_lines
     class(bad_doc_objects) <- "codoc"
     bad_doc_objects
@@ -1762,13 +1757,22 @@ function(x, ...)
     as.character(unlist(lapply(names(x), .fmt)))
 }
 
+
 ### * checkFF
 
 checkFF <-
 function(package, dir, file, lib.loc = NULL,
+         registration = FALSE, check_DUP = FALSE,
          verbose = getOption("verbose"))
 {
+    allow_suppress <- !nzchar(Sys.getenv("_R_CHECK_FF_AS_CRAN_"))
+    suppressCheck <- function(e)
+        allow_suppress &&
+            length(e) == 2L && is.call(e) && is.symbol(e[[1L]]) &&
+                as.character(e[[1L]]) == "dontCheck"
+
     has_namespace <- FALSE
+    is_installed_msg <- is_installed <- FALSE
     ## Argument handling.
     if(!missing(package)) {
         if(length(package) != 1L)
@@ -1783,22 +1787,30 @@ function(package, dir, file, lib.loc = NULL,
             stop(gettextf("directory '%s' does not contain R code",
                           dir),
                  domain = NA)
-        if(basename(dir) != "base")
+        have_registration <- FALSE
+        if(basename(dir) != "base") {
             .load_package_quietly(package, lib.loc)
-        else has_namespace <- TRUE
-        code_env <- if(packageHasNamespace(package, dirname(dir))) {
-            ce <- asNamespace(package)
-            if(exists("DLLs", envir = ce$.__NAMESPACE__.)) {
-                DLLs <- get("DLLs", envir = ce$.__NAMESPACE__.)
-                has_namespace <- length(DLLs) > 0L
-                if(length(DLLs) && inherits(DLLs[[1L]], "DLLInfo"))
-                    pkgDLL <- unclass(DLLs[[1L]])$name # different for data.tabl
+            code_env <- asNamespace(package)
+            if(exists("DLLs", envir = code_env$.__NAMESPACE__.)) {
+                DLLs <- get("DLLs", envir = code_env$.__NAMESPACE__.)
+                ## fake installs have this, of class DLLInfoList
+                if(length(DLLs)) has_namespace <- TRUE
+                if(length(DLLs) && inherits(DLLs[[1L]], "DLLInfo")) {
+                    pkgDLL <- unclass(DLLs[[1L]])$name # different for data.table
+                    if(registration) {
+                        reg <- getDLLRegisteredRoutines(DLLs[[1L]])
+                        have_registration <- sum(sapply(reg, length)) > 0L
+                    }
+                }
             }
-            ce
-        } else
-            .package_env(package)
+        } else {
+            has_namespace <- have_registration <- TRUE
+            code_env <-.package_env(package)
+        }
+        is_installed <- TRUE
     }
     else if(!missing(dir)) {
+        have_registration <- FALSE
         ## Using sources from directory @code{dir} ...
         if(!file_test("-d", dir))
             stop(gettextf("directory '%s' does not exist", dir),
@@ -1849,8 +1861,10 @@ function(package, dir, file, lib.loc = NULL,
     ## *invisibly* (so that output is not duplicated).
     ## Otherwise, if not verbose, we return the list of bad FF calls.
 
-    bad_exprs <- empty_exprs <- wrong_pkg <- list()
+    bad_exprs <- empty_exprs <- wrong_pkg <- other_problem <- list()
+    other_desc <- character()
     bad_pkg <- character()
+    dup_false <- list()
     FF_funs <- FF_fun_names <- c(".C", ".Fortran", ".Call", ".External",
                                  ".Call.graphics", ".External.graphics")
     ## As pointed out by DTL, packages could use non-base FF calls for
@@ -1870,6 +1884,132 @@ function(package, dir, file, lib.loc = NULL,
 
     allowed <- character()
 
+    check_registration <- function(e, fr) {
+    	sym <- e[[2L]]
+    	name <- deparse(sym, nlines = 1L)
+        if (name == "...")
+            return ("SYMBOL OK") # we cannot check this, e.g. RProtoBuf
+
+        if (is.character(sym)) {
+            if (!have_registration) return ("SYMBOL OK")
+            FF_fun <- as.character(e[[1L]])
+            sym <- reg[[FF_fun]][[sym]]
+            if(is.null(sym)) return ("SYMBOL OK")
+        }
+
+        if (!is_installed) {
+            if (!is_installed_msg) {
+        	other_problem <<- c(other_problem, e)
+        	other_desc <<- c(other_desc, "foreign function registration not tested, as package was not installed")
+        	is_installed_msg <<- TRUE
+            }
+            return("OTHER") # registration checks need the package to be installed
+        }
+    	if (is.symbol(sym)) { # it might be something like pkg::sym (that's a call)
+	    if (!exists(name, code_env, inherits = FALSE)) {
+		if (allow_suppress &&
+                    name %in% suppressForeignCheck(, package))
+		    return ("SYMBOL OK") # skip false positives
+                if (have_registration) {
+                    if (name %in% fr) {
+                        other_problem <<- c(other_problem, e)
+                        other_desc <<-
+                            c(other_desc,
+                              sprintf("symbol %s in the local frame",
+                                      sQuote(name)))
+                    } else {
+                        other_problem <<- c(other_problem, e)
+                        other_desc <<-
+                            c(other_desc,
+                              sprintf("symbol %s not in namespace",
+                                      sQuote(name)))
+                    }
+                }
+    	    	return("OTHER")
+    	    }
+    	} else if (suppressCheck(sym))
+    	    return("SKIPPED")
+
+    	sym <- tryCatch(eval(sym, code_env), error = function(e) e)
+    	if (inherits(sym, "error")) {
+            if (have_registration || !allow_suppress)  {
+                other_problem <<- c(other_problem, e)
+                other_desc <<-
+                    c(other_desc, sprintf("Evaluating %s during check gives error\n%s",
+                                          sQuote(name), sQuote(sym$message)))
+            }
+    	    return("OTHER")
+    	}
+
+        FF_fun <- as.character(e[[1L]])
+        ## lmom's sym evaluate to character, so try to look up.
+        ## FIXME: maybe check this is not PACKAGE = "another package"
+        if (is.character(sym)) {
+            if (!have_registration) return ("SYMBOL OK")
+            sym <- reg[[FF_fun]][[sym]]
+            if(is.null(sym)) return ("SYMBOL OK")
+        }
+
+        ## These are allowed and used by SU's packages so skip for now
+    	if (inherits(sym, "RegisteredNativeSymbol")
+            || inherits(sym, "NativeSymbol"))
+            return ("SYMBOL OK")
+
+        if (!inherits(sym, "NativeSymbolInfo")) {
+    	    other_problem <<- c(other_problem, e)
+            ## other_desc <<- c(other_desc, sprintf("\"%s\" is not of class \"%s\"", name, "NativeSymbolInfo"))
+    	    other_desc <<- c(other_desc, sprintf("%s is of class \"%s\"",
+                                                 sQuote(name), class(sym)))
+    	    return("OTHER")
+    	}
+        ## This might be symbol from another (base?) package.
+        ## Allow for Rcpp modules
+        parg <- unclass(sym$dll)$name
+        if(length(parg) == 1L && ! parg %in% c("Rcpp", pkgDLL)) {
+            wrong_pkg <<- c(wrong_pkg, e)
+            bad_pkg <<- c(bad_pkg, parg)
+        }
+    	numparms <- sym$numParameters
+        if (length(numparms) && numparms >= 0) {
+            ## We have to be careful if ... is in the call.
+            if (any(as.character(e) == "...")) {
+                other_problem <<- c(other_problem, e)
+                other_desc <<-
+                    c(other_desc,
+                      sprintf("call includes ..., expected %d %s",
+                              numparms,
+                              if(numparms > 1L) "parameters" else "parameter"))
+            } else {
+                callparms <- length(e) - 2L
+                if ("PACKAGE" %in% names(e)) callparms <- callparms - 1L
+                if (FF_fun %in% c(".C", ".Fortran"))
+                    callparms <- callparms - length(intersect(names(e), c("NAOK", "DUP", "ENCODING")))
+                if (!is.null(numparms) && numparms >= 0L && numparms != callparms) {
+                    other_problem <<- c(other_problem, e)
+                    other_desc <<-
+                        c(other_desc,
+                          sprintf("call to %s with %d %s, expected %d",
+                                  sQuote(name), callparms,
+                                  if(callparms > 1L) "parameters" else "parameter",
+                                  numparms))
+                    return("OTHER")
+                }
+            }
+        }
+    	if (inherits(sym, "CallRoutine") && !(FF_fun %in% c(".Call", ".Call.graphics"))) {
+    	    other_problem <<- c(other_problem, e)
+    	    other_desc <<- c(other_desc, sprintf("%s registered as %s, but called with %s", sQuote(name), ".Call", FF_fun))
+    	    return("OTHER")
+    	}
+    	if (inherits(sym, "ExternalRoutine") && !(FF_fun %in% c(".External", ".External.graphics"))) {
+	    other_problem <<- c(other_problem, e)
+	    other_desc <<- c(other_desc, sprintf("%s registered as %s, but called with %s", sQuote(name), ".External", FF_fun))
+	    return("OTHER")
+	}
+
+        "SYMBOL OK"
+    }
+
     find_bad_exprs <- function(e) {
         if(is.call(e) || is.expression(e)) {
             ## <NOTE>
@@ -1879,6 +2019,10 @@ function(package, dir, file, lib.loc = NULL,
             ## BDR 2002-11-28
             ## </NOTE>
             if(deparse(e[[1L]])[1L] %in% FF_funs) {
+                if(registration) check_registration(e, fr)
+                dup <- e[["DUP"]]
+                if(identical(dup, FALSE))
+                    dup_false <<- c(dup_false, e)
                 this <- ""
                 this <- parg <- e[["PACKAGE"]]
                 if (!is.na(pkg) && is.character(parg) &&
@@ -1891,14 +2035,17 @@ function(package, dir, file, lib.loc = NULL,
                     empty_exprs <<- c(empty_exprs, e)
                     "EMPTY"
                 } else if(!is.character(sym <- e[[2L]])) {
-                    sym <- tryCatch(eval(sym, code_env), error = function(e) e)
-                    if (inherits(sym, "NativeSymbolInfo")) {
-                        ## This might be symbol from another (base?) package.
-                        ## Allow for Rcpp modules
-                        parg <- unclass(sym$dll)$name
-                        if(length(parg) == 1L && !parg %in% c("Rcpp", pkgDLL)) {
-                            wrong_pkg <<- c(wrong_pkg, e)
-                            bad_pkg <<- c(bad_pkg, parg)
+                    if (!registration) {
+                        sym <- tryCatch(eval(sym, code_env),
+                                        error = function(e) e)
+                        if (inherits(sym, "NativeSymbolInfo")) {
+                            ## This might be symbol from another package.
+                            ## Allow for Rcpp modules
+                            parg <- unclass(sym$dll)$name
+                            if(length(parg) == 1L && !parg %in% c("Rcpp", pkgDLL)) {
+                                wrong_pkg <<- c(wrong_pkg, e)
+                                bad_pkg <<- c(bad_pkg, parg)
+                            }
                         }
                     }
                     "Called with symbol"
@@ -1914,6 +2061,8 @@ function(package, dir, file, lib.loc = NULL,
                         cat(deparse(e[[1L]]), "(", deparse(e[[2L]]),
                             ", ..., PACKAGE = \"", this, "\"): ",
                             parg, "\n", sep = "")
+            } else if (deparse(e[[1L]])[1L] %in% "<-") {
+                fr <<- c(fr, as.character(e[[2L]]))
             }
             for(i in seq_along(e)) Recall(e[[i]])
         }
@@ -1930,7 +2079,7 @@ function(package, dir, file, lib.loc = NULL,
             } else NULL
         exprs <- lapply(ls(envir = code_env, all.names = TRUE),
                         function(f) {
-                            f <- get(f, envir = code_env)  # get is expensive
+                            f <- get(f, envir = code_env) # get is expensive
                             checkFFmy(f)
                         })
         if(.isMethodsDispatchOn()) {
@@ -1960,13 +2109,19 @@ function(package, dir, file, lib.loc = NULL,
                      stop(gettextf("parse error in file '%s':\n%s",
                                    file,
                                    .massage_file_parse_error_message(conditionMessage(e))),
-                               domain = NA, call. = FALSE))
+                          domain = NA, call. = FALSE))
     }
-    for(i in seq_along(exprs)) find_bad_exprs(exprs[[i]])
+    for(i in seq_along(exprs)) {
+        fr <- character()
+        find_bad_exprs(exprs[[i]])
+    }
     attr(bad_exprs, "wrong_pkg") <- wrong_pkg
     attr(bad_exprs, "bad_pkg") <- bad_pkg
     attr(bad_exprs, "empty") <- empty_exprs
-    if (length(bad_pkg)) { # check against dependencies.
+    attr(bad_exprs, "other_problem") <- other_problem
+    attr(bad_exprs, "other_desc") <- other_desc
+    if(check_DUP) attr(bad_exprs, "dup_false") <- dup_false
+    if (length(bad_pkg)) {              # check against dependencies.
         bases <- .get_standard_package_names()$base
         bad <- bad_pkg[!bad_pkg %in% bases]
         if (length(bad)) {
@@ -1992,6 +2147,7 @@ function(x, ...)
     y <- attr(x, "wrong_pkg")
     z <- attr(x, "bad_pkg")
     zz <- attr(x, "undeclared")
+    other_problem <- attr(x, "other_problem")
 
     res <- character()
     if (length(x)) {
@@ -2052,7 +2208,30 @@ function(x, ...)
                         domain = NA)
         res <- c(res, msg, paste("  ", paste(sQuote(sort(zz)), collapse = ", ")))
     }
-    res
+    if (length(other_problem)) {
+    	msg <- ngettext(length(other_problem),
+    		        "Registration problem:",
+    		        "Registration problems:",
+    		        domain = NA)
+        res <- c(res, msg)
+        other_desc <- attr(x, "other_desc")
+        for (i in seq_along(other_problem)) {
+            res <- c(res, paste0("  ", other_desc[i], ":"),
+                          paste0("   ", deparse(other_problem[[i]])))
+        }
+    }
+    z3 <- attr(x, "dup_false")
+     if (length(z3)) {
+    	msg <- ngettext(length(z3),
+    		        "Call with DUP = FALSE:",
+    		        "Calls with DUP = FALSE:",
+    		        domain = NA)
+        res <- c(res, msg)
+        for (i in seq_along(z3)) {
+            res <- c(res, paste0("   ", deparse(z3[[i]])))
+        }
+    }
+   res
 }
 
 ### * checkS3methods
@@ -2570,9 +2749,37 @@ function(x, ...)
 
 ## changed in 2.3.0 to refer to a source dir.
 
+
 .check_package_depends <-
-function(dir, force_suggests = TRUE)
+function(dir, force_suggests = TRUE, check_incoming = FALSE)
 {
+    .check_dependency_cycles <-
+        function(db, available = available.packages(),
+                 dependencies = c("Depends", "Imports", "LinkingTo"))
+        {
+            ## given a package, find its recursive dependencies.
+            ## We want the dependencies of the current package,
+            ## not of a version on the repository.
+            pkg <- db[["Package"]]
+            this <- db[dependencies]; names(this) <- dependencies;
+            known <- setdiff(utils:::.clean_up_dependencies(this), "R")
+            info <- available[, dependencies, drop = FALSE]
+            rn <- rownames(info)
+            deps <- function(p) {
+                if(!(p %in% rn)) return(character())
+                this <- utils:::.clean_up_dependencies(info[p, ])
+                setdiff(this, "R")
+            }
+            extra <- known
+            repeat {
+                extra <- unlist(lapply(extra, deps))
+                extra <- setdiff(extra, known)
+                if(!length(extra)) break
+                known <- c(known, extra)
+            }
+            known
+        }
+
     if(length(dir) != 1L)
         stop("argument 'package' must be of length 1")
 
@@ -2584,10 +2791,23 @@ function(dir, force_suggests = TRUE)
     if(!identical(package_name, dir_name) &&
        (!is.character(package_name) || !nzchar(package_name))) {
 	message(sprintf(
-	"package name '%s' seems invalid; using directory name '%s' instead",
-			package_name, dir_name))
+            "package name '%s' seems invalid; using directory name '%s' instead",
+            package_name, dir_name))
 	package_name <- dir_name
     }
+
+    bad_depends <- list()
+    ## and we cannot have cycles
+    ## this check needs a package db from repository(s), so
+    if(!any(grepl("@CRAN@", getOption("repos")))) {
+        ad <- .check_dependency_cycles(db)
+        pkgname <- db[["Package"]]
+        if(pkgname %in% ad)
+            bad_depends$all_depends <- setdiff(ad, pkgname)
+    } else if (check_incoming)
+        bad_depends$skipped <-
+            "  No repository set, so cyclic dependency check skipped"
+
     ldepends <-  .get_requires_with_version_from_package_db(db, "Depends")
     limports <-  .get_requires_with_version_from_package_db(db, "Imports")
     llinks <-  .get_requires_with_version_from_package_db(db, "LinkingTo")
@@ -2601,8 +2821,6 @@ function(dir, force_suggests = TRUE)
     suggests <- sapply(lsuggests, `[[`, 1L)
 
     standard_package_names <- .get_standard_package_names()
-
-    bad_depends <- list()
 
     ## Are all packages listed in Depends/Suggests/Imports/LinkingTo installed?
     lreqs <- c(ldepends, limports, llinks,
@@ -2646,7 +2864,7 @@ function(dir, force_suggests = TRUE)
                     if(!length(where)) next
                     ## want the first one
                     desc <- readRDS(file.path(installed_in[where[1L]], pkg,
-                                               "Meta", "package.rds"))
+                                              "Meta", "package.rds"))
                     current <- desc$DESCRIPTION["Version"]
                     target <- as.package_version(r[[3L]])
                     if(eval(parse(text = paste("!(current", op, "target)"))))
@@ -2678,9 +2896,9 @@ function(dir, force_suggests = TRUE)
     vigns <- pkgVignettes(dir = dir, subdirs = file.path("inst", "doc"),
                           check = !defer)
 
-     if(length(vigns$msg))
-         bad_depends$bad_engine <- vigns$msg
-   if (!is.null(vigns) && length(vigns$docs) > 0L) {
+    if(length(vigns$msg))
+        bad_depends$bad_engine <- vigns$msg
+    if (!is.null(vigns) && length(vigns$docs) > 0L) {
         reqs <- unique(unlist(.build_vignette_index(vigns)$Depends))
         ## For the time being, ignore base packages missing from the
         ## DESCRIPTION dependencies even if explicitly given as vignette
@@ -2708,6 +2926,18 @@ function(dir, force_suggests = TRUE)
             bad_depends$missing_namespace_depends <- reqs
     }
 
+    ## Check for excessive 'Depends'
+    deps <- setdiff(depends, c("R", "base", "datasets", "grDevices",
+                               "graphics", "methods", "utils", "stats"))
+    if(length(deps) > 5L) bad_depends$many_depends <- deps
+
+    ## check header-only packages
+    if (check_incoming) {
+        hdOnly <- c("BH", "RcppArmadillo", "RcppEigen")
+        hd <- intersect(hdOnly, c(depends, imports))
+        if(length(hd)) bad_depends$hdOnly <- hd
+    }
+
     class(bad_depends) <- "check_package_depends"
     bad_depends
 }
@@ -2716,6 +2946,13 @@ format.check_package_depends <-
 function(x, ...)
 {
     c(character(),
+      if(length(x$skipped)) c(x$skipped, ""),
+      if(length(x$all_depends)) {
+          c("There is circular dependency in the installation order:",
+            .pretty_format2("  One or more packages in", x$all_depends),
+            "  depend on this package (for the versions on the repositories).",
+            "")
+      },
       if(length(bad <- x$required_but_not_installed) > 1L) {
           c(.pretty_format2("Packages required but not available:", bad), "")
       } else if(length(bad)) {
@@ -2774,16 +3011,31 @@ function(x, ...)
       } else if(length(bad)) {
           c(sprintf("Namespace dependency not required: %s", sQuote(bad)), "")
       },
+      if(length(y <- x$many_depends)) {
+          c(.pretty_format2("Depends: includes the non-default packages:", y),
+            strwrap(paste("Adding so many packages to the search path",
+                          "is excessive",
+                          "and importing selectively is preferable."
+                          , collapse = ", ")),
+            "")
+      },
       if(length(y <- x$bad_engine)) {
           c(y, "")
+      },
+      if(length(bad <- x$hdOnly)) {
+          c(if(length(bad) > 1L)
+            c("Packages in Depends/Imports which should probably only be in LinkingTo:", .pretty_format(bad))
+          else
+            sprintf("Package in Depends/Imports which should probably only be in LinkingTo: %s", sQuote(bad)),
+            "")
       }
       )
-}
+  }
 
 ### * .check_package_description
 
 .check_package_description <-
-function(dfile)
+function(dfile, strict = FALSE)
 {
     dfile <- file_path_as_absolute(dfile)
     db <- .read_description(dfile)
@@ -2915,6 +3167,11 @@ function(dfile)
                      bad_dep_op = bad_dep_op,
                      bad_dep_version = bad_dep_version)
     }
+    if(strict && !is.na(val <- db["VignetteBuilder"])) {
+        depends <- .strip_whitespace(unlist(strsplit(val, ",")))
+        if(length(depends) < 1L || !all(grepl("^[[:alnum:].]*$", depends)))
+            out$bad_vignettebuilder <- TRUE
+    }
     if(!is.na(val <- db["Priority"])
        && !is.na(package_name)
        && (tolower(val) %in% c("base", "recommended", "defunct-base"))
@@ -2987,6 +3244,11 @@ function(x, ...)
         }
         writeLines("")
     }
+    if(identical(x$bad_vignettebuilder, TRUE)) {
+        writeLines(c(gettext("Invalid VignetteBuilder field."),
+                     strwrap(gettextf("This field must contain one or more packages (and no version requirement).")),
+                     ""))
+    }
 
     if(length(x$bad_priority))
         writeLines(c(gettext("Invalid Priority field."),
@@ -3013,9 +3275,14 @@ function(dfile)
     enhances <- .get_requires_from_package_db(db, "Enhances")
     allpkgs <- c(depends, imports, suggests, enhances)
     out <- unique(allpkgs[duplicated(allpkgs)])
-    links <- character()
+    links <- missing_incs <- character()
     llinks <-  .get_requires_with_version_from_package_db(db, "LinkingTo")
+    have_src <- TRUE # dummy
     if(length(llinks)) {
+        ## This is pointless unless there is compilable code
+        dir.exists <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
+        have_src <- dir.exists(file.path(dirname(dfile), "src"))
+
         ## See if this is installable under 3.0.1:
         ## if so check for versioned specs
         deps <- .split_description(db, verbose = TRUE)$Rdepends2
@@ -3037,9 +3304,14 @@ function(dfile)
             llinks <- llinks[sapply(llinks, length) > 1L]
             if(length(llinks)) links <- sapply(llinks, `[[`, 1L)
         }
+        ## and check if we can actually link to these.
+        llinks <-  .get_requires_from_package_db(db, "LinkingTo")
+        incs <- lapply(llinks, function(x) system.file("include", package = x))
+        missing_incs <- as.vector(llinks[!nzchar(incs)])
     }
     out <- list(duplicates = unique(allpkgs[duplicated(allpkgs)]),
-                bad_links = links)
+                bad_links = links, missing_incs = missing_incs,
+                have_src = have_src)
     class(out) <- "check_package_description2"
     out
 }
@@ -3054,6 +3326,7 @@ format.check_package_description2 <- function(x, ...)
           paste(c(" ", sQuote(xx)), collapse = " "),
           "A package should be listed in only one of these fields.")
     },
+      if(!x$have_src) "'LinkingTo' field is unused: package has no 'src' directory",
       if(length(xx <- x$bad_links)) {
           if(length(xx) > 1L)
               c("Versioned 'LinkingTo' values for",
@@ -3062,6 +3335,14 @@ format.check_package_description2 <- function(x, ...)
           else
               sprintf("Versioned 'LinkingTo' value for %s is only usable in R >= 3.0.2",
                       sQuote(xx))
+      },
+      if(x$have_src && length(xx <- x$missing_incs)) {
+          if(length(xx) > 1L)
+              c("'LinkingTo' for",
+                paste(c(" ", sQuote(xx)), collapse = " "),
+                "are unused as they have no 'include' directory")
+          else
+              sprintf("'LinkingTo' for %s is unused as it has no 'include' directory", sQuote(xx))
       })
 }
 
@@ -3233,7 +3514,7 @@ function(dfile, dir)
                 ok <- FALSE
             }
         }
-        depr <- c("X11", "BSD")
+        depr <- c("Modified BSD License", "BSD")
         if(any(status$components %in% depr)) {
             status$deprecated <- intersect(status$components, depr)
             ok <- FALSE
@@ -3244,10 +3525,12 @@ function(dfile, dir)
             status$bad_extensions <- extensions$components[ind]
             ok <- FALSE
         }
-        ## Components which need extensions:
-        if(any(ind <- grepl("^(MIT|BSD_2_clause|BSD_3_clause)",
-                            status$components) &
-               !grepl("+ file", status$components))) {
+        ## Components which need extensions (note that such components
+        ## could use the name or abbrev from the license db):
+        if(any(ind <- status$components %in%
+               c("MIT License", "MIT",
+                 "BSD 2-clause License", "BSD_2_clause",
+                 "BSD 3-clause License", "BSD_3_clause"))) {
             status$miss_extension <- status$components[ind]
             ok <- FALSE
         }
@@ -3288,11 +3571,8 @@ function(x, ...)
             })
       },
       if(length(y <- x$deprecated)) {
-          if(length(y) > 1L)
-              gettextf("Deprecated licenses: %s",
-                       paste(y, collapse = ", "))
-          else
-              gettextf("Deprecated license: %s", y)
+          c(gettextf("Deprecated license: %s",
+                     paste(y, collapse = " ")))
       },
       if(length(y <- x$bad_pointers)) {
           c(gettextf("Invalid license file pointers: %s",
@@ -4110,6 +4390,7 @@ function(dir, doDelete = FALSE)
         }
     }
 
+    ## check installed vignette material
     subdir <- file.path("inst", "doc")
     vigns <- pkgVignettes(dir = dir, subdirs = subdir)
     if (!is.null(vigns) && length(vigns$docs)) {
@@ -4793,8 +5074,14 @@ function(package, dir, lib.loc = NULL)
             .package_env(package)
         dfile <- file.path(dir, "DESCRIPTION")
         db <- .read_description(dfile)
+        ## fake installs do not have this.
         nsfile <- file.path(dir, "Meta", "nsInfo.rds")
         if (file.exists(nsfile)) ns <- readRDS(nsfile)
+        else {
+            nsfile <- file.path(dir, "NAMESPACE")
+            if(file.exists(nsfile))
+                ns <- parseNamespaceFile(basename(dir), dirname(dir))
+        }
     }
     else if(!missing(dir)) {
         ## Using sources from directory @code{dir} ...
@@ -5169,11 +5456,12 @@ function(x, ...)
           msg <- "See the note in ?`:::` about the use of this operator."
           msg <- strwrap(paste(msg, collapse = " "), indent = 2L, exdent = 2L)
           if(incoming) {
+              z <- sub(":::.*", "", xxx)
               base <- unlist(.get_standard_package_names()[c("base", "recommended")])
-              if (any(xxx %in% base))
+              if (any(z %in% base))
                   msg <- c(msg,
                            "  Including base/recommended package(s):",
-                           .pretty_format(intersect(base, xx)))
+                           .pretty_format(intersect(base, z)))
           }
           if(length(xxx) > 1L) {
               c(gettext("Unexported objects imported by ':::' calls:"),
@@ -5382,42 +5670,16 @@ function(dir, lib.loc = NULL)
 ### * .check_packages_used_in_vignettes
 
 .check_packages_used_in_vignettes <-
-function(package, dir, lib.loc = NULL)
+function(package, lib.loc = NULL)
 {
     ## Argument handling.
-    if(!missing(package)) {
-        if(length(package) != 1L)
-            stop("argument 'package' must be of length 1")
-        dir <- find.package(package, lib.loc)
-        dfile <- file.path(dir, "DESCRIPTION")
-        db <- .read_description(dfile)
-        ## fake installs do not have this.
-        testsrcdir <- file.path(dir, "doc")
-    }
-    else if(!missing(dir)) {
-        ## Using sources from directory @code{dir} ...
-        ## not currently used
-        if(!file_test("-d", dir))
-            stop(gettextf("directory '%s' does not exist", dir), domain = NA)
-        else
-            dir <- file_path_as_absolute(dir)
-        dfile <- file.path(dir, "DESCRIPTION")
-        db <- .read_description(dfile)
-        testsrcdir <- file.path(dir, "inst", "doc")
-        ## FIXME: this isn't right, as we've not tangled in this dir
-    }
-    Rfiles <- if (file_test("-d", testsrcdir)) {
-        od <- setwd(testsrcdir)
-        on.exit(setwd(od))
-        vign_exts <- .make_file_exts( "vignette")
-        Rfiles <- dir(".", pattern="[.]R$")
-        if (length(Rfiles))
-        ## check they have a matching vignette
-        Rfiles[sapply(Rfiles,
-                      function(x) any(file.exists(paste(sub("[.]R$", "", x),
-                                                        vign_exts, sep = "."))))]
-        else Rfiles
-    } else character()
+    if(missing(package) || length(package) != 1L)
+        stop("argument 'package' must be of length 1")
+    dir <- find.package(package, lib.loc)
+    ## FIXME: use Meta directory.
+    db <- .read_description(file.path(dir, "DESCRIPTION"))
+    vinfo <- pkgVignettes(dir = dir, subdirs = "doc", source = TRUE)
+    Rfiles <- unique(as.character(unlist(vinfo$sources)))
     .check_packages_used_helper(db, Rfiles)
 }
 
@@ -5833,7 +6095,7 @@ function(dir, silent = FALSE, def_enc = FALSE, minlevel = -1)
 .check_depdef <-
 function(package, dir, lib.loc = NULL, WINDOWS = FALSE)
 {
-    bad_depr <- c(".find.package", ".path.package", "plclust")
+    bad_depr <- c("plclust")
 
     bad_def <- c("La.eigen", "tetragamma", "pentagamma",
                  "package.description", "gammaCody",
@@ -5844,7 +6106,8 @@ function(package, dir, lib.loc = NULL, WINDOWS = FALSE)
                  "tkfile.tail", "tkfile.dir", "tkopen", "tkclose",
                  "tkputs", "tkread", "Rd_parse", "CRAN.packages",
                  "zip.file.extract",
-                 "real", "as.real", "is.real")
+                 "real", "as.real", "is.real",
+                 ".find.package", ".path.package")
 
     ## X11 may not work on even a Unix-alike: it needs X support
     ## (optional) at install time and and an X server at run time.
@@ -6239,15 +6502,15 @@ function(dir)
     BUGS <- character()
     for (field in c("Depends", "Imports", "Suggests")) {
         p <- strsplit(meta[field], " *, *")[[1L]]
-        p2 <- grep("^(multicore|igraph0)( |\\(|$)", p, value = TRUE)
+        p2 <- grep("^(multicore|snow|igraph0)( |\\(|$)", p, value = TRUE)
         uses <- c(uses, p2)
-        p2 <- grep("^(BRugs|R2OpenBUGS)( |\\(|$)", p, value = TRUE)
+        p2 <- grep("^(BRugs|R2OpenBUGS|R2WinBUGS)( |\\(|$)", p, value = TRUE)
         BUGS <- c(BUGS, p2)
     }
     if (length(uses)) out$uses <- sort(unique(uses))
     if (length(BUGS)) out$BUGS <- sort(unique(BUGS))
 
-    ## Check for non-Sweave vignettes (as indicated by the presense of a
+    ## Check for non-Sweave vignettes (as indicated by the presence of a
     ## 'VignetteBuilder' field in DESCRIPTION) without
     ## 'build/vignette.rds'.
 
@@ -6279,7 +6542,6 @@ function(dir)
     }
 
     ## Is this an update for a package already on CRAN?
-    ## Things from now on should be.
     db <- db[(packages == package) &
              (db[, "Repository"] == CRAN) &
              is.na(db[, "Path"]), , drop = FALSE]
@@ -6300,13 +6562,18 @@ function(dir)
             out$bad_license <- meta["License"]
         return(out)
     }
+
+    ## Checks from this point down should be for a package already on CRAN
+
     ## For now, there should be no duplicates ...
 
     ## Package versions should be newer than what we already have on CRAN.
 
     v_m <- package_version(meta["Version"])
     v_d <- max(package_version(db[, "Version"]))
-    if(v_m <= v_d)
+    if((v_m <= v_d) &&
+       !config_val_to_logical(Sys.getenv("_R_CHECK_CRAN_INCOMING_SKIP_VERSIONS_",
+                                         FALSE)))
         out$bad_version <- list(v_m, v_d)
     if((v_m$major == v_d$major) & (v_m$minor >= v_d$minor + 10))
         out$version_with_jump_in_minor <- list(v_m, v_d)
@@ -6357,17 +6624,6 @@ function(dir)
     l_d <- db[db[, "Package"] == package, "License"]
     if(!foss && analyze_license(l_d)$is_verified)
         out$new_license <- list(meta["License"], l_d)
-
-    ## Check for excessive 'Depends'
-    deps <- strsplit(meta["Depends"], ", *")[[1]]
-    deps <- sub("[ (].*$", "", deps)
-    ## and seems some spaces get through
-    deps <- sub("^\\s+", "", deps, perl = TRUE)
-    deps <- sub("\\s+$", "", deps, perl = TRUE)
-
-    deps <- setdiff(deps, c("R", "base", "datasets", "grDevices", "graphics",
-                            "methods", "utils", "stats"))
-    if(length(deps) > 5) out$many_depends <- deps
 
     out
 }
@@ -6486,17 +6742,11 @@ function(x, ...)
               c("Vignette sources in 'inst/doc' with no 'vignettes' directory:",
                 strwrap(paste(sQuote(y), collapse = ", "),
                         indent = 2L, exdent = 2L),
-                "A 'vignettes' directory has been preferred since R 2.14.0",
-                "and will be required as from 3.1.0.")
+                "A 'vignettes' directory is required as from R 3.1.0")
           else
               c("Vignette sources in 'inst/doc' missing from the 'vignettes' directory:",
                 strwrap(paste(sQuote(y), collapse = ", "),
                         indent = 2L, exdent = 2L))
-      },
-      if(length(y <- x$many_depends)) {
-          c(.pretty_format2("Depends: includes the non-default packages:", y),
-            "Adding so many packages to the search path is excessive",
-            "and importing selectively is preferable.")
       },
       if(length(y <- x$missing_vignette_index)) {
           "Package has a VignetteBuilder field but no prebuilt vignette index."
@@ -7409,6 +7659,7 @@ function(x)
 
     out
 }
+
 
 ### Local variables: ***
 ### mode: outline-minor ***

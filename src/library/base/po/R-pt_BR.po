@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
 "PO-Revision-Date: 2011-03-26 08:54-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -47,12 +47,6 @@ msgstr "valores infinitos ou faltantes em 'x'"
 msgid "a dimension is zero"
 msgstr ""
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr "'nu' deve ser 0, nrow(x) ou ncol(x)"
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr "'nv' deve ser 0, nrow(x) ou ncol(x)"
-
 msgid "second argument must be a list"
 msgstr "segundo argumento deve ser uma lista"
 
@@ -77,6 +71,18 @@ msgstr "string de versão mal formada"
 
 msgid "target is %s, current is %s"
 msgstr "alvo é %s, atual é %s"
+
+#, fuzzy
+msgid "'tolerance' should be numeric"
+msgstr "'x' deve ser numérico"
+
+#, fuzzy
+msgid "'scale' should be numeric or NULL"
+msgstr "'arg' deve ser um dentre %s"
+
+#, fuzzy
+msgid "'%s' must be logical"
+msgstr "'subset' deve ser lógico"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) deve ter um comprimento positivo"
@@ -151,21 +157,6 @@ msgstr "autocarregador não encontrou '%s' em '%s'"
 
 msgid "complex matrices not permitted at present"
 msgstr "matrizes complexas não permitidas atualmente"
-
-msgid "non-square matrix in 'chol'"
-msgstr "matriz não quadrada em 'chol'"
-
-msgid "non-matrix argument to 'chol'"
-msgstr "argumento não matricial para 'chol'"
-
-msgid "invalid nrow(x)"
-msgstr ""
-
-msgid "too large a matrix for LINPACK"
-msgstr ""
-
-msgid "matrix not positive definite"
-msgstr "matriz não é positiva definida"
 
 msgid "'x' must be an array of at least two dimensions"
 msgstr "'x' deve ser um array de pelo menos duas dimensões"
@@ -329,6 +320,10 @@ msgstr "substituindo elemento em coluna não existente:"
 
 msgid "only a single element should be replaced"
 msgstr "somente um único elemento deve ser substituido"
+
+#, fuzzy
+msgid "Name partially matched in data frame"
+msgstr "variável não numérica no data frame:"
 
 msgid "names do not match previous names"
 msgstr "nomes não correspondem aos nomes anteriores"
@@ -508,6 +503,10 @@ msgstr "'from' deve ser um objeto POSIXt"
 msgid "'to' must be a \"POSIXt\" object"
 msgstr "'to' deve ser um objeto POSIXt"
 
+#, fuzzy
+msgid "no Olson database found"
+msgstr "nenhum arquivo encontrado"
+
 msgid "'file' must be a character string or connection"
 msgstr "'file' deve ser uma string de caracteres ou uma conexão"
 
@@ -590,6 +589,9 @@ msgstr "matriz 0 x 0"
 msgid "non-square matrix in 'eigen'"
 msgstr "matriz não quadrada em 'eigen'"
 
+msgid "invalid nrow(x)"
+msgstr ""
+
 #, fuzzy
 msgid "invalid 'labels'; length %d should be 1 or %d"
 msgstr "rótulos inválidos; comprimento %d deve ser 1 ou %d"
@@ -666,6 +668,9 @@ msgstr "'vec' deve ser ordenado de forma não-decrescente"
 msgid "using the first element of 'value' of type \"expression\""
 msgstr "usando o primeiro elemento de 'value' da expressão de tipo"
 
+msgid "class of 'x' was discarded"
+msgstr ""
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr "'mode' deve ser \"double\" (\"real\"), \"integer\" ou \"character\""
 
@@ -739,6 +744,10 @@ msgstr ""
 
 msgid "must have replacements for matches"
 msgstr ""
+
+#, fuzzy
+msgid "No factors specified"
+msgstr "nenhuma DLL foi especificada"
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr "norma '%s' atualmente sempre usa exact = FALSE"
@@ -1182,7 +1191,8 @@ msgstr "substituindo valor local com import %s quando carregando %s"
 msgid "cannot import into a sealed namespace"
 msgstr "não é possível importar em um espaço de nomes selado"
 
-msgid "replacing previous import %s when loading %s"
+#, fuzzy
+msgid "replacing previous import by %s when loading %s"
 msgstr "substituindo importação %s quando carregando %s"
 
 msgid "invalid import target"
@@ -1220,14 +1230,11 @@ msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr "nome vazio na diretiva '%s' do arquivo NAMESPACE"
 
 #, fuzzy
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr "nomes de símbolos duplicados %s em useDynlib(\"%s\")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "diretiva 'S3method' inválida: %s"
-
-msgid "too many 'S3method' directives"
-msgstr "diretivas 'S3method' demais"
 
 msgid "unknown namespace directive: %s"
 msgstr "diretiva de espaço de nomes desconhecida: %s"
@@ -1268,6 +1275,9 @@ msgstr "argumento 'drop' será ignorado"
 #, fuzzy
 msgid "invalid ncol(x)"
 msgstr "valor inválido"
+
+msgid "too large a matrix for LINPACK"
+msgstr ""
 
 msgid "first argument must be a QR decomposition"
 msgstr "primeiro argumento deve ser uma decomposição QR"
@@ -1313,7 +1323,8 @@ msgstr "necessário valor maior de 'ncol', pois houve pivotamento"
 msgid "invalid NCOL(R)"
 msgstr ""
 
-msgid "'x' must be an atomic vector"
+#, fuzzy
+msgid "'x' must be a vector of an atomic type"
 msgstr "'x' deve ser um vetor atômico"
 
 msgid "invalid 'rle' structure"
@@ -1340,10 +1351,16 @@ msgstr "comprimento de 'scale' deve ser igual ao número de colunas de 'x'"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "especifique 'nmax' ou 'n', mas não ambos."
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr ""
+
 msgid "argument 'length.out' must be of length 1"
 msgstr "argumento 'length.out' deve ter comprimento 1"
 
 msgid "first element used of 'length.out' argument"
+msgstr ""
+
+msgid "'to' cannot be NA, NaN or infinite"
 msgstr ""
 
 msgid "invalid (to - from)/by in seq(.)"
@@ -1819,6 +1836,24 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Mensagem de aviso:\n"
 msgstr[1] "Mensagens de aviso:\n"
+
+#~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nu' deve ser 0, nrow(x) ou ncol(x)"
+
+#~ msgid "'nv' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "'nv' deve ser 0, nrow(x) ou ncol(x)"
+
+#~ msgid "too many 'S3method' directives"
+#~ msgstr "diretivas 'S3method' demais"
+
+#~ msgid "non-square matrix in 'chol'"
+#~ msgstr "matriz não quadrada em 'chol'"
+
+#~ msgid "non-matrix argument to 'chol'"
+#~ msgstr "argumento não matricial para 'chol'"
+
+#~ msgid "matrix not positive definite"
+#~ msgstr "matriz não é positiva definida"
 
 #~ msgid "non-positive definite matrix in 'chol'"
 #~ msgstr "matriz nãoo positiva definida em 'chol'"

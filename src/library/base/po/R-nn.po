@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.1\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
 "PO-Revision-Date: 2012-09-28 22:18+0200\n"
 "Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -44,12 +44,6 @@ msgstr "uendelege eller manglande verdiar i «x»"
 msgid "a dimension is zero"
 msgstr ""
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr "«nu» må vera 0, nrow(x) eller ncol(x)"
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr "«nv» må vera 0, nrow(x) eller ncol(x)"
-
 msgid "second argument must be a list"
 msgstr "det andre argumentet må vera ei liste"
 
@@ -75,6 +69,18 @@ msgstr "ugyldig versjonsstreng"
 
 msgid "target is %s, current is %s"
 msgstr "målet er «%s» og gjeldande er «%s»"
+
+#, fuzzy
+msgid "'tolerance' should be numeric"
+msgstr "«x» må vera numerisk"
+
+#, fuzzy
+msgid "'scale' should be numeric or NULL"
+msgstr "«arg» skal vera éin av %s"
+
+#, fuzzy
+msgid "'%s' must be logical"
+msgstr "«subset» må vera ein logisk vektor"
 
 msgid "dim(X) must have a positive length"
 msgstr "dim(X) må ha lengd større enn 0"
@@ -149,21 +155,6 @@ msgstr "autolastaren fann ikkje «%s» i «%s»"
 
 msgid "complex matrices not permitted at present"
 msgstr "komplekse matriser er førebels ikkje støtta"
-
-msgid "non-square matrix in 'chol'"
-msgstr "ikkje-kvadratisk matrise i «chol»"
-
-msgid "non-matrix argument to 'chol'"
-msgstr "ikkje-matrise-argument i «chol»"
-
-msgid "invalid nrow(x)"
-msgstr "ugyldig nrow(x)"
-
-msgid "too large a matrix for LINPACK"
-msgstr ""
-
-msgid "matrix not positive definite"
-msgstr "matrisa er ikkje positiv definitt"
 
 msgid "'x' must be an array of at least two dimensions"
 msgstr "«x» må vera eit array-objekt med minst to dimensjonar"
@@ -322,6 +313,10 @@ msgstr "byt ut element i ikkje-eksisterande kolonne:"
 
 msgid "only a single element should be replaced"
 msgstr "berre eit enkeltelement skal erstattast"
+
+#, fuzzy
+msgid "Name partially matched in data frame"
+msgstr "ikkje numerisk variabel i dataramme:"
 
 msgid "names do not match previous names"
 msgstr "namna er ikkje i samsvar med dei gamle namna"
@@ -496,6 +491,10 @@ msgstr "«from» må vera eit «POSIXt»-objekt"
 msgid "'to' must be a \"POSIXt\" object"
 msgstr "«to» må vera eit «POSIXt»-objekt"
 
+#, fuzzy
+msgid "no Olson database found"
+msgstr "fann ingen filer"
+
 msgid "'file' must be a character string or connection"
 msgstr "«file» må vera ein teiknstreng eller eit samband"
 
@@ -576,6 +575,9 @@ msgstr "0 × 0-matrise"
 msgid "non-square matrix in 'eigen'"
 msgstr "ikkje-kvadratisk matrise i «eigen»"
 
+msgid "invalid nrow(x)"
+msgstr "ugyldig nrow(x)"
+
 #, fuzzy
 msgid "invalid 'labels'; length %d should be 1 or %d"
 msgstr "ugyldige merkelappar – lengd %d må vera 1 eller %d"
@@ -652,6 +654,9 @@ msgstr "«vec» må vera sortert aukande rekkjefølgja"
 msgid "using the first element of 'value' of type \"expression\""
 msgstr "brukar første element av «value» i uttrykket"
 
+msgid "class of 'x' was discarded"
+msgstr ""
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr "«mode» må vera «double» («real»), «integer» eller «character»"
 
@@ -719,6 +724,10 @@ msgstr "må har erstattingsverdiar for ikkje-treff"
 
 msgid "must have replacements for matches"
 msgstr "må har erstattingsverdiar for treff"
+
+#, fuzzy
+msgid "No factors specified"
+msgstr "ingen DLL definert"
 
 msgid "norm '%s' currently always uses exact = FALSE"
 msgstr "norma «%s» brukar alltid «exact = FALSE»"
@@ -1121,7 +1130,8 @@ msgstr "byt ut lokal verdi med import «%s» ved lasting av «%s»"
 msgid "cannot import into a sealed namespace"
 msgstr "kan ikkje importera til eit forsegla namnerom"
 
-msgid "replacing previous import %s when loading %s"
+#, fuzzy
+msgid "replacing previous import by %s when loading %s"
 msgstr "byt ut førre import «%s» ved lasting av «%s»"
 
 msgid "invalid import target"
@@ -1161,14 +1171,11 @@ msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr "tomt namn i direktivet «%s» i NAMESPACE-fila"
 
 #, fuzzy
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr "dupliserte symbolnamn %s i useDynlib(\"%s\")"
 
 msgid "bad 'S3method' directive: %s"
 msgstr "ugyldig «S3method»-direktiv: %s"
-
-msgid "too many 'S3method' directives"
-msgstr "for mange «S3method»-direktiv"
 
 msgid "unknown namespace directive: %s"
 msgstr "ukjent namneromdirektiv: %s"
@@ -1207,6 +1214,9 @@ msgstr "eit argument vert delvis resirkulert"
 
 msgid "invalid ncol(x)"
 msgstr "ugyldig ncol(x)"
+
+msgid "too large a matrix for LINPACK"
+msgstr ""
 
 msgid "first argument must be a QR decomposition"
 msgstr "det første argumentet må vera ei QR-dekomponering"
@@ -1250,7 +1260,8 @@ msgstr "treng større verdiar av «ncol» på grunn av pivotering"
 msgid "invalid NCOL(R)"
 msgstr "ugyldig NCOL(R)"
 
-msgid "'x' must be an atomic vector"
+#, fuzzy
+msgid "'x' must be a vector of an atomic type"
 msgstr "«x» må vera ein atomsk vektor"
 
 msgid "invalid 'rle' structure"
@@ -1277,11 +1288,17 @@ msgstr "lengda av «scale» må vera lik talet på kolonnar til «x»"
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr "oppgje «nmax» eller «n», men ikkje begge"
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr ""
+
 msgid "argument 'length.out' must be of length 1"
 msgstr "argumentet «length.out» må ha lengd 1"
 
 msgid "first element used of 'length.out' argument"
 msgstr "det første element i «length.out» vert brukt"
+
+msgid "'to' cannot be NA, NaN or infinite"
+msgstr ""
 
 msgid "invalid (to - from)/by in seq(.)"
 msgstr "ugyldig (to - from)/by i seq(.)"
@@ -1752,6 +1769,24 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Åtvaring:\n"
 msgstr[1] "Åtvaringar:\n"
+
+#~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "«nu» må vera 0, nrow(x) eller ncol(x)"
+
+#~ msgid "'nv' must be 0, nrow(x) or ncol(x)"
+#~ msgstr "«nv» må vera 0, nrow(x) eller ncol(x)"
+
+#~ msgid "too many 'S3method' directives"
+#~ msgstr "for mange «S3method»-direktiv"
+
+#~ msgid "non-square matrix in 'chol'"
+#~ msgstr "ikkje-kvadratisk matrise i «chol»"
+
+#~ msgid "non-matrix argument to 'chol'"
+#~ msgstr "ikkje-matrise-argument i «chol»"
+
+#~ msgid "matrix not positive definite"
+#~ msgstr "matrisa er ikkje positiv definitt"
 
 #~ msgid "'keep.source' is deprecated and will be ignored"
 #~ msgstr "«keep.source» er forelda, og vert ikkje brukt"

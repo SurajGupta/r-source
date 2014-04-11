@@ -269,6 +269,9 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         out <- .system_with_capture(texi2dvi, "--help")
         if(length(grep("--no-line-error", out$stdout)))
             opt_extra <- "--no-line-error"
+        ## This is present in texinfo after late 2009, so really 5.x.
+        if(length(grep("--max-iterations=N", out$stdout)))
+            opt_extra <- c(opt_extra, "--max-iterations=20")
         ## (Maybe change eventually: the current heuristics for finding
         ## error messages in log files should work for both regular and
         ## file line error indicators.)
@@ -350,9 +353,10 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         if(length(grep("MiKTeX", ver[1L]))) {
             ## AFAICS need separate -I for each element of texinputs.
             texinputs <- c(texinputs0, Rtexinputs, Rbstinputs)
-	    texinputs <- gsub("\\", "/", texinputs, fixed = TRUE)
-	    paths <- paste ("-I", shQuote(texinputs))
-            extra <- paste(extra, paste(paths, collapse = " "))
+            texinputs <- gsub("\\", "/", texinputs, fixed = TRUE)
+            paths <- paste ("-I", shQuote(texinputs))
+            extra <- "--max-iterations=20"
+           extra <- paste(extra, paste(paths, collapse = " "))
         }
         ## 'file' could be a file path
         base <- basename(file_path_sans_ext(file))
@@ -439,7 +443,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    numeric_version(Sys.getenv("R_BIOC_VERSION", "2.13"))
+    numeric_version(Sys.getenv("R_BIOC_VERSION", "2.14"))
 ## Things are more complicated from R-2.15.x with still two BioC
 ## releases a year, so we do need to set this manually.
 
@@ -1029,6 +1033,7 @@ function()
                "Date/Publication",
                "LastChangedDate",
                "LastChangedRevision",
+               "Revision",
                "RcmdrModels",
                "RcppModules",
                "biocViews")
@@ -1107,13 +1112,13 @@ function(fname, envir, mustMatch = TRUE)
     ## If we use something like: a generic has to be
     ##      function(e) <UME>  # UME = UseMethod Expression
     ## with
-    ##	    <UME> = UseMethod(...) |
+    ##      <UME> = UseMethod(...) |
     ##             if (...) <UME> [else ...] |
     ##             if (...) ... else <UME>
     ##             { ... <UME> ... }
     ## then a recognizer for UME might be as follows.
 
-    f <- get(fname, envir = envir, inherits = FALSE)
+    f <- suppressMessages(get(fname, envir = envir, inherits = FALSE))
     if(!is.function(f)) return(FALSE)
     isUMEbrace <- function(e) {
         for (ee in as.list(e[-1L])) if (nzchar(res <- isUME(ee))) return(res)
@@ -1169,6 +1174,10 @@ function(package, lib.loc)
 }
 
 ### ** .make_file_exts
+
+## <FIXME>
+## Remove support for type "vignette" eventually ...
+## </FIXME>
 
 .make_file_exts <-
 function(type = c("code", "data", "demo", "docs", "vignette"))
@@ -1431,7 +1440,7 @@ function(dfile)
                                   dfile),
                          domain = NA, call. = FALSE))
     if (nrow(out) != 1)
-    	stop("contains a blank line", call. = FALSE)
+        stop("contains a blank line", call. = FALSE)
     out <- out[1,]
     if(!is.na(encoding <- out["Encoding"])) {
         ## could convert everything to UTF-8
@@ -1470,7 +1479,7 @@ function(x, dfile)
     Encoding(x) <- "unknown"
     ## Avoid folding for fields where we keep whitespace when reading.
     write.dcf(rbind(x), dfile,
-              keep.white = .keep_white_description_fields)
+              keep.white = c(.keep_white_description_fields, "Maintainer"))
 }
 
 ### ** .read_repositories

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2013  The R Core Team
+ *  Copyright (C) 1997--2014  The R Core Team
  *  Copyright (C) 2003, 2004  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -127,7 +127,7 @@ FUNTAB R_FunTab[] =
 /* .Internals */
 
 {"stop",	do_stop,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
-{"warning",	do_warning,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	  0}},
+{"warning",	do_warning,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	  0}},
 {"gettext",	do_gettext,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
 {"ngettext",	do_ngettext,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	  0}},
 {"bindtextdomain",do_bindtextdomain,0,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
@@ -244,6 +244,7 @@ FUNTAB R_FunTab[] =
 {"duplicated",	do_duplicated,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"unique",	do_duplicated,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"anyDuplicated",do_duplicated,	2,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"anyNA",	do_anyNA,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"which",	do_which,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"which.min",	do_first_min,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"pmin",	do_pmin,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -300,6 +301,10 @@ FUNTAB R_FunTab[] =
 {"digamma",	do_math1,	42,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"trigamma",	do_math1,	43,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 /* see "psigamma" below !*/
+
+{"cospi",	do_math1,	47,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"sinpi",	do_math1,	48,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"tanpi",	do_math1,	49,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 /* Mathematical Functions of Two Numeric (+ 1-2 int) Variables */
 
@@ -527,7 +532,8 @@ FUNTAB R_FunTab[] =
 {"regexpr",	do_regexpr,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"gregexpr",	do_regexpr,	1,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"regexec",	do_regexec,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"agrep",	do_agrep,	1,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
+{"agrep",	do_agrep,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
+{"agrepl",	do_agrep,	1,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"adist",	do_adist,	1,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"aregexec",	do_aregexec,	1,	11,	7,	{PP_FUNCALL, PREC_FN,	0}},
 {"tolower",	do_tolower,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -644,6 +650,7 @@ FUNTAB R_FunTab[] =
 {"Sys.which",	do_syswhich,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"useInternet2",do_setInternet2,0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"mkjunction", do_mkjunction,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"tzone_name", do_tzone_name,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 #endif
 
 {"parse",	do_parse,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
@@ -698,7 +705,7 @@ FUNTAB R_FunTab[] =
 {"radixsort",	do_radixsort,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"order",	do_order,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rank",	do_rank,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"scan",	do_scan,	0,	11,	18,	{PP_FUNCALL, PREC_FN,	0}},
+{"scan",	do_scan,	0,	11,	19,	{PP_FUNCALL, PREC_FN,	0}},
 {"t.default",	do_transpose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"aperm",	do_aperm,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"builtins",	do_builtins,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -742,7 +749,7 @@ FUNTAB R_FunTab[] =
 {"file.append",	do_fileappend,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.symlink",do_filesymlink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.link",	do_filelink,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
-{"file.copy",	do_filecopy,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
+{"file.copy",	do_filecopy,	0,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
 {"list.files",	do_listfiles,	0,	11,	8,	{PP_FUNCALL, PREC_FN,	0}},
 {"list.dirs",	do_listdirs,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.exists", do_fileexists,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -815,7 +822,7 @@ FUNTAB R_FunTab[] =
 {"stdout",	do_stdout,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"stderr",	do_stderr,	0,      11,     0,      {PP_FUNCALL, PREC_FN,	0}},
 {"isatty",	do_isatty,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
-{"readLines",	do_readLines,	0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
+{"readLines",	do_readLines,	0,      11,     6,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeLines",	do_writelines,	0,      111,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"readBin",	do_readbin,	0,      11,     6,      {PP_FUNCALL, PREC_FN,	0}},
 {"writeBin",	do_writebin,	0,      211,    5,      {PP_FUNCALL, PREC_FN,	0}},
@@ -837,7 +844,7 @@ FUNTAB R_FunTab[] =
 {"unz",		do_unz,		0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"seek",	do_seek,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"truncate",	do_truncate,	0,      11,     1,      {PP_FUNCALL, PREC_FN,	0}},
-{"pushBack",	do_pushback,	0,     111,     3,      {PP_FUNCALL, PREC_FN,	0}},
+{"pushBack",	do_pushback,	0,     111,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"clearPushBack",do_clearpushback,0,   111,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"pushBackLength",do_pushbacklength,0,  11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"rawConnection",do_rawconnection,0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
@@ -935,11 +942,36 @@ FUNTAB R_FunTab[] =
 {"qr_qy_cmpl",	do_lapack,     	304,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"La_svd",	do_lapack,     	400,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
-{"La_svd_cmplx",do_lapack,     	401,	11,	6,	{PP_FUNCALL, PREC_FN,	0}},
+{"La_svd_cmplx",do_lapack,     	401,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"La_version",	do_lapack,     	1000,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 
 {NULL,		NULL,		0,	0,	0,	{PP_INVALID, PREC_FN,	0}},
 };
+
+
+/* Table of special names.  These are marked as special with
+   SET_SPECIAL_SYMBOL.  Environments on the function call stack that
+   have never contained such a symbol are marked as such, so they can
+   be quickly skipped when searching for a function named by such a
+   special symbol.
+
+   Any symbols can be put here, but ones that contain special
+   characters, or are reserved words, are the ones unlikely to be
+   defined in any environment other than base, and hence the ones
+   where this is most likely to help. */
+
+static char *Spec_name[] = {
+    "if", "while", "repeat", "for", "break", "next", "return", "function",
+    "(", "{",
+    "+", "-", "*", "/", "^", "%%", "%/%", "%*%", ":",
+    "==", "!=", "<", ">", "<=", ">=",
+    "&", "|", "&&", "||", "!",
+    "<-", "<<-", "=",
+    "$", "[", "[[",
+    "$<-", "[<-", "[[<-",
+    0
+};
+
 
 /* also used in eval.c */
 SEXP attribute_hidden R_Primitive(const char *primname)
@@ -1001,7 +1033,17 @@ static void SymbolShortcuts(void)
     R_DollarSymbol = install("$");
     R_DotsSymbol = install("...");
     R_DropSymbol = install("drop");
+
+    /* The last value symbol is used by the interpreter for recording
+       the value of the most recently evaluated top level
+       expression. To avoid creating an additional reference that
+       would requires duplicating on modification this symbol does not
+       increment reference counts on its symbol value.  This is safe
+       since the symbol value corresponds to the base environment
+       where complex assignments are not allowed.  */
     R_LastvalueSymbol = install(".Last.value");
+    DISABLE_REFCNT(R_LastvalueSymbol);
+
     R_LevelsSymbol = install("levels");
     R_ModeSymbol = install("mode");
     R_NameSymbol  = install("name");
@@ -1071,14 +1113,22 @@ void attribute_hidden InitNames()
     R_print.na_string = NA_STRING;
     /* R_BlankString */
     R_BlankString = mkChar("");
+
     /* Initialize the symbol Table */
     for (int i = 0; i < HSIZE; i++) R_SymbolTable[i] = R_NilValue;
+
     /* Set up a set of globals so that a symbol table search can be
        avoided when matching something like dim or dimnames. */
     SymbolShortcuts();
+
     /*  Builtin Functions */
     for (int i = 0; R_FunTab[i].name; i++) installFunTab(i);
 
+    /* Special base functions */
+    for (int i = 0; Spec_name[i]; i++)
+        SET_SPECIAL_SYMBOL(install(Spec_name[i]));
+
+    R_initAsignSymbols();
     R_initialize_bcode();
 }
 
@@ -1105,6 +1155,7 @@ SEXP install(const char *name)
     sym = mkSYMSXP(mkChar(name), R_UnboundValue);
     SET_HASHVALUE(PRINTNAME(sym), hashcode);
     SET_HASHASH(PRINTNAME(sym), 1);
+
     R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);
     return (sym);
 }

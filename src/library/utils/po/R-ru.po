@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-21 09:14\n"
-"PO-Revision-Date: 2013-03-19 22:58-0600\n"
+"POT-Creation-Date: 2014-02-27 17:14\n"
+"PO-Revision-Date: 2014-03-11 10:35-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: \n"
@@ -76,8 +76,8 @@ msgstr ""
 msgid "Warning: unknown option %s"
 msgstr "Предупреждение: неизвестная опция %s"
 
-msgid "Created PDF document %s"
-msgstr "Созданный документ PDF %s"
+msgid "Output file:"
+msgstr ""
 
 msgid "Compacting PDF document"
 msgstr "Сжимаю документ PDF"
@@ -151,6 +151,12 @@ msgstr "'file' должен быть NULL, текстовой строкой или соединением"
 msgid "bad argument"
 msgstr "неправильный аргумент"
 
+msgid "'full.names' must be TRUE for multiple paths."
+msgstr ""
+
+msgid "Timestamp file no longer exists."
+msgstr ""
+
 msgid ""
 "Not all arguments are of the same length, the following need to be recycled: "
 "%s"
@@ -198,9 +204,6 @@ msgstr ""
 
 msgid "package %s not found"
 msgstr "пакет %s не найден"
-
-msgid "broken installation, no CITATION file in the base package."
-msgstr "нерабочая установка, в пакете base нет файла CITATION."
 
 msgid "no date field in DESCRIPTION file of package %s"
 msgstr "в файле DESCRIPTION пакета %s нет поля date"
@@ -277,6 +280,10 @@ msgstr "'dump' не является объектом класса %s"
 
 msgid "Message:"
 msgstr "Сообщение:"
+
+#, fuzzy
+msgid "'dump' is empty"
+msgstr "опция 'dvipscmd' пуста"
 
 msgid "Available environments had calls:"
 msgstr "Доступные окружения имеют вызовы:"
@@ -719,8 +726,9 @@ msgstr "foundpkgs: %s"
 msgid "files: %s"
 msgstr "files: %s"
 
+#, fuzzy
 msgid ""
-"installation of one of more packages failed,\n"
+"installation of one or more packages failed,\n"
 "  probably %s"
 msgstr ""
 "установка одного (или более) пакетов завершилась с ошибкой,\n"
@@ -887,6 +895,10 @@ msgstr ""
 msgid "cannot coerce 'x' to roman"
 msgstr "не могу перевести 'x' в римскую"
 
+#, fuzzy
+msgid "Could not create file %s, aborting"
+msgstr "не могу восстановить информацию о типе"
+
 msgid "no valid packages were specified"
 msgstr "правильные пакеты не указаны"
 
@@ -969,10 +981,16 @@ msgid "file '%s' not found"
 msgstr "файл '%s' не найден"
 
 msgid "file '%s' did not have execute permissions: corrected"
-msgstr ""
+msgstr "у файла '%s' нет прав на исполнение: исправлено"
 
 msgid "file size is limited to 8GB"
 msgstr "размер файла ограничен 8GB"
+
+msgid "invalid uid value replaced by that for user 'nobody'"
+msgstr ""
+
+msgid "invalid gid value replaced by that for user 'nobody'"
+msgstr ""
 
 msgid ""
 "vignette %s found more than once,\n"
@@ -984,9 +1002,12 @@ msgstr ""
 msgid "vignette %s not found"
 msgstr "миниатюра %s не найдена"
 
-#, fuzzy
 msgid "vignette %s has no PDF/HTML"
-msgstr "у миниатюры %s нет PDF"
+msgstr "у миниатюры %s нет PDF/HTML"
+
+#, fuzzy
+msgid "vignette %s has no R code"
+msgstr "миниатюра %s не найдена"
 
 msgid "select.list() cannot be used non-interactively"
 msgstr "select.list() нельзя использовать неинтерактивно"
@@ -1052,6 +1073,9 @@ msgstr "'ccaddress' должен быть длиной 1"
 
 msgid "no download method found"
 msgstr "не найдено метода скачивания"
+
+msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
+msgstr ""
 
 msgid "download had nonzero exit status"
 msgstr "у скачивания ненулевой статус выхода"
@@ -1289,6 +1313,12 @@ msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "пакет '%s' сейчас используется и не будет установлен"
 msgstr[1] "пакеты '%s' сейчас используются и не будут установлены"
 msgstr[2] "пакеты '%s' сейчас используются и не будут установлены"
+
+#~ msgid "Created PDF document %s"
+#~ msgstr "Созданный документ PDF %s"
+
+#~ msgid "broken installation, no CITATION file in the base package."
+#~ msgstr "нерабочая установка, в пакете base нет файла CITATION."
 
 #~ msgid "file path is too long"
 #~ msgstr "путь к файлу слишком длинный"
@@ -1565,9 +1595,6 @@ msgstr[2] "пакеты '%s' сейчас используются и не будут установлены"
 
 #~ msgid "'latexcmd' is empty"
 #~ msgstr "опция 'latexcmd' пуста"
-
-#~ msgid "'dvipscmd' is empty"
-#~ msgstr "опция 'dvipscmd' пуста"
 
 #~ msgid ""
 #~ "Changing the default browser (as specified by the 'browser' option) to "

@@ -3,9 +3,11 @@
 % Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
+
 \name{plot.lm}
 \alias{plot.lm}
-\alias{plot.mlm}%which is .NotYetImplemented()
+% \alias{plot.mlm} %which is .NotYetImplemented()
 \title{Plot Diagnostics for an lm Object}
 \usage{
 \method{plot}{lm}(x, which = c(1:3, 5), %% was which = 1:4
@@ -107,7 +109,7 @@
   London: Chapman and Hall.
 
   Firth, D. (1991) Generalized Linear Models.  In Hinkley, D. V. and
-  Reid, N. and Snell, E. J., eds: Pp. 55-82 in Statistical Theory and
+  Reid, N. and Snell, E. J., eds: Pp.\sspace{}55-82 in Statistical Theory and
   Modelling. In Honour of Sir David Cox, FRS.  London: Chapman and Hall.
 
   Hinkley, D. V. (1975) On power transformations to

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-06-09 21:52\n"
+"POT-Creation-Date: 2014-02-13 14:10\n"
 "PO-Revision-Date: 2011-04-01 04:29+0200\n"
 "Last-Translator: Murat Alkan <muratalk@gmail.com>\n"
 "Language-Team: Turkish <muratalk@gmail.com>\n"
@@ -50,12 +50,6 @@ msgstr ""
 msgid "a dimension is zero"
 msgstr ""
 
-msgid "'nu' must be 0, nrow(x) or ncol(x)"
-msgstr ""
-
-msgid "'nv' must be 0, nrow(x) or ncol(x)"
-msgstr ""
-
 msgid "second argument must be a list"
 msgstr ""
 
@@ -78,6 +72,15 @@ msgid "malformed version string"
 msgstr ""
 
 msgid "target is %s, current is %s"
+msgstr ""
+
+msgid "'tolerance' should be numeric"
+msgstr ""
+
+msgid "'scale' should be numeric or NULL"
+msgstr ""
+
+msgid "'%s' must be logical"
 msgstr ""
 
 msgid "dim(X) must have a positive length"
@@ -144,21 +147,6 @@ msgid "autoloader did not find '%s' in '%s'"
 msgstr ""
 
 msgid "complex matrices not permitted at present"
-msgstr ""
-
-msgid "non-square matrix in 'chol'"
-msgstr ""
-
-msgid "non-matrix argument to 'chol'"
-msgstr ""
-
-msgid "invalid nrow(x)"
-msgstr ""
-
-msgid "too large a matrix for LINPACK"
-msgstr ""
-
-msgid "matrix not positive definite"
 msgstr ""
 
 msgid "'x' must be an array of at least two dimensions"
@@ -307,6 +295,9 @@ msgid "replacing element in non-existent column: %s"
 msgstr ""
 
 msgid "only a single element should be replaced"
+msgstr ""
+
+msgid "Name partially matched in data frame"
 msgstr ""
 
 msgid "names do not match previous names"
@@ -469,6 +460,9 @@ msgstr ""
 msgid "'to' must be a \"POSIXt\" object"
 msgstr ""
 
+msgid "no Olson database found"
+msgstr ""
+
 msgid "'file' must be a character string or connection"
 msgstr ""
 
@@ -530,6 +524,9 @@ msgid "0 x 0 matrix"
 msgstr ""
 
 msgid "non-square matrix in 'eigen'"
+msgstr ""
+
+msgid "invalid nrow(x)"
 msgstr ""
 
 msgid "invalid 'labels'; length %d should be 1 or %d"
@@ -605,6 +602,9 @@ msgstr ""
 msgid "using the first element of 'value' of type \"expression\""
 msgstr ""
 
+msgid "class of 'x' was discarded"
+msgstr ""
+
 msgid "'mode' must be \"double\" (\"real\"), \"integer\" or \"character\""
 msgstr ""
 
@@ -670,6 +670,9 @@ msgid "must have replacements for non-matches"
 msgstr ""
 
 msgid "must have replacements for matches"
+msgstr ""
+
+msgid "No factors specified"
 msgstr ""
 
 msgid "norm '%s' currently always uses exact = FALSE"
@@ -1045,7 +1048,7 @@ msgstr ""
 msgid "cannot import into a sealed namespace"
 msgstr ""
 
-msgid "replacing previous import %s when loading %s"
+msgid "replacing previous import by %s when loading %s"
 msgstr ""
 
 msgid "invalid import target"
@@ -1077,13 +1080,10 @@ msgstr ""
 msgid "empty name in directive '%s' in 'NAMESPACE' file"
 msgstr ""
 
-msgid "duplicated symbol names %s in useDynLib(\"%s\")"
+msgid "duplicate symbol names %s in useDynLib(\"%s\")"
 msgstr ""
 
 msgid "bad 'S3method' directive: %s"
-msgstr ""
-
-msgid "too many 'S3method' directives"
 msgstr ""
 
 msgid "unknown namespace directive: %s"
@@ -1120,6 +1120,9 @@ msgid "an argument will be fractionally recycled"
 msgstr ""
 
 msgid "invalid ncol(x)"
+msgstr ""
+
+msgid "too large a matrix for LINPACK"
 msgstr ""
 
 msgid "first argument must be a QR decomposition"
@@ -1164,7 +1167,7 @@ msgstr ""
 msgid "invalid NCOL(R)"
 msgstr ""
 
-msgid "'x' must be an atomic vector"
+msgid "'x' must be a vector of an atomic type"
 msgstr ""
 
 msgid "invalid 'rle' structure"
@@ -1191,10 +1194,16 @@ msgstr ""
 msgid "either specify 'nmax' or 'n', but not both."
 msgstr ""
 
+msgid "'from' cannot be NA, NaN or infinite"
+msgstr ""
+
 msgid "argument 'length.out' must be of length 1"
 msgstr ""
 
 msgid "first element used of 'length.out' argument"
+msgstr ""
+
+msgid "'to' cannot be NA, NaN or infinite"
 msgstr ""
 
 msgid "invalid (to - from)/by in seq(.)"

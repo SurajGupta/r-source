@@ -1,5 +1,5 @@
 
-R version 3.0.3 RC (2014-02-27 r65086) -- "Warm Puppy"
+R version 3.1.0 RC (2014-04-04 r65373) -- "Spring Dance"
 Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -187,7 +187,7 @@ Error in assertWarning(ff()) :
 > bibstyle("unsorted", sortKeys = function(refs) seq_along(refs),
 +     fmtPrefix = function(paper) paste0("[", paper$.index, "]"),
 +        .init = TRUE)
-<environment: 0x1f22e80>
+<environment: 0x21dba78>
 > print(refs, .bibstyle = "unsorted")
 [1] R Core Team (2013). _R: A Language and Environment for Statistical
 Computing_. R Foundation for Statistical Computing, Vienna, Austria.
@@ -522,6 +522,24 @@ attr(,"match.length")
 > ### Keywords: file
 > 
 > ### ** Examples
+> 
+> 
+> cleanEx()
+> nameEx("find_gs_cmd")
+> ### * find_gs_cmd
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: find_gs_cmd
+> ### Title: Find a GhostScript Executable
+> ### Aliases: find_gs_cmd
+> 
+> ### ** Examples
+> ## Not run: 
+> ##D ## Suppose a Solaris system has GhostScript 9.00 on the path and
+> ##D ## 9.07 in /opt/csw/bin.  Then one might set
+> ##D Sys.setenv(R_GSCMD = "/opt/csw/bin/gs")
+> ## End(Not run)
 > 
 > 
 > cleanEx()
@@ -866,12 +884,15 @@ attr(,"class")
 > ### ** Examples
 > 
 > str(vignetteEngine("Sweave"))
-List of 5
+List of 6
  $ name   : chr "Sweave"
  $ package: chr "utils"
  $ pattern: chr "[.][rRsS](nw|tex)$"
  $ weave  :function (...)  
  $ tangle :function (...)  
+ $ aspell :List of 2
+  ..$ filter : chr "Sweave"
+  ..$ control: chr "-t"
 > 
 > 
 > 
@@ -917,7 +938,7 @@ List of 5
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.305 0.005 0.312 0 0 
+Time elapsed:  0.197 0.003 0.201 0 0 
 > grDevices::dev.off()
 null device 
           1 

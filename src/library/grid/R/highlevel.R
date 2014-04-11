@@ -129,7 +129,7 @@ grid.multipanel <- function(x = stats::runif(90), y = stats::runif(90),
         popViewport()
 }
 
-grid.show.layout <- function(l, newpage=TRUE,
+grid.show.layout <- function(l, newpage=TRUE, vp.ex=0.8,
                              bg="light grey",
                              cell.border="blue", cell.fill="light blue",
                              cell.label=TRUE, label.col="blue",
@@ -141,7 +141,7 @@ grid.show.layout <- function(l, newpage=TRUE,
   if (!is.null(vp))
     pushViewport(vp)
   grid.rect(gp=gpar(col=NULL, fill=bg))
-  vp.mid <- viewport(0.5, 0.5, 0.8, 0.8, layout=l)
+  vp.mid <- viewport(0.5, 0.5, vp.ex, vp.ex, layout=l)
   pushViewport(vp.mid)
   grid.rect(gp=gpar(fill="white"))
   gp.red <- gpar(col=unit.col)
@@ -183,7 +183,7 @@ grid.show.layout <- function(l, newpage=TRUE,
   invisible(vp.mid)
 }
 
-grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE,
+grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE, vp.ex=0.8,
                                border.fill="light grey",
                                vp.col="blue", vp.fill="light blue",
                                scale.col="red",
@@ -196,7 +196,7 @@ grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE,
         !is.null(parent.layout)) {
         if (!is.null(vp))
             pushViewport(vp)
-        vp.mid <- grid.show.layout(parent.layout,
+        vp.mid <- grid.show.layout(parent.layout, vp.ex=vp.ex,
                                    cell.border="grey", cell.fill="white",
                                    cell.label=FALSE, newpage=newpage)
         pushViewport(vp.mid)
@@ -220,7 +220,7 @@ grid.show.viewport <- function(v, parent.layout=NULL, newpage=TRUE,
         ## parent viewport of the viewport we are "show"ing (v).
         ## This is so that annotations at the edges of the
         ## parent viewport will be at least partially visible
-        vp.mid <- viewport(0.5, 0.5, 0.8, 0.8)
+        vp.mid <- viewport(0.5, 0.5, vp.ex, vp.ex)
         pushViewport(vp.mid)
         grid.rect(gp=gpar(fill="white"))
         x <- v$x
@@ -301,42 +301,98 @@ function(pch, labels, frame=TRUE,
   gf
 }
 
-grid.legend <-
-function(pch, labels, frame=TRUE,
-                        hgap=unit(0.5, "lines"), vgap=unit(0.5, "lines"),
-                        default.units="lines",
-                        gp=gpar(), draw=TRUE,
-                        vp=NULL) {
-  ## Type checking on arguments
-  labels <- as.character(labels)
-  nkeys <- length(labels)
-  if (length(pch) != nkeys)
-    stop("'pch' and 'labels' not the same length")
-  if (!is.unit(hgap))
-    hgap <- unit(hgap, default.units)
-  if (length(hgap) != 1)
-    stop("'hgap' must be single unit")
-  if (!is.unit(vgap))
-    vgap <- unit(vgap, default.units)
-  if (length(vgap) != 1)
-    stop("'vgap' must be single unit")
-  legend.layout <-
-    grid.layout(nkeys, 3,
-                widths=unit.c(unit(2, "lines"),
-                  max(unit(rep(1, nkeys), "strwidth", as.list(labels))),
-                  hgap),
-                heights=unit.pmax(unit(2, "lines"),
-                  vgap + unit(rep(1, nkeys), "strheight", as.list(labels))))
-  fg <- frameGrob(layout=legend.layout, vp=vp, gp=gp)
-  for (i in 1L:nkeys) {
-    fg <- placeGrob(fg, pointsGrob(.5, .5, pch=pch[i]), col=1, row=i)
-    fg <- placeGrob(fg, textGrob(labels[i], x=0, y=.5,
-                                 just=c("left", "centre")),
-                    col=2, row=i)
-  }
-  if (draw)
-    grid.draw(fg)
-  fg
+
+legendGrob <-
+    function(labels, nrow, ncol, byrow=FALSE,
+	     do.lines = has.lty || has.lwd, lines.first=TRUE,
+	     hgap=unit(1, "lines"), vgap=unit(1, "lines"),
+	     default.units="lines",
+	     pch, gp=gpar(), vp=NULL)
+{
+    ## Type checking on arguments; labels: character, symbol or expression:
+    labels <- as.graphicsAnnot(labels)
+    labels <- if(is.character(labels)) as.list(labels) else as.expression(labels)
+    nkeys <- if(is.call(labels)) 1 else length(labels)
+    if(nkeys == 0) return(nullGrob(vp=vp))
+    if (!is.unit(hgap))
+	hgap <- unit(hgap, default.units)
+    if (length(hgap) != 1) stop("'hgap' must be single unit")
+    if (!is.unit(vgap))
+	vgap <- unit(vgap, default.units)
+    if (length(vgap) != 1) stop("'vgap' must be single unit")
+    ## nrow, ncol
+    miss.nrow <- missing(nrow)
+    miss.ncol <- missing(ncol)
+    if(miss.nrow && miss.ncol) {ncol <- 1; nrow <- nkeys} # defaults to 1-column legend
+    else if( miss.nrow && !miss.ncol) nrow <- ceiling(nkeys / ncol)
+    else if(!miss.nrow &&  miss.ncol) ncol <- ceiling(nkeys / nrow)
+    if(nrow < 1) stop("'nrow' must be >= 1")
+    if(ncol < 1) stop("'ncol' must be >= 1")
+    if(nrow * ncol < nkeys)
+        stop("nrow * ncol < #{legend labels}")
+    ## pch, gp
+    if(has.pch <- !missing(pch) && length(pch) > 0) pch <- rep_len(pch, nkeys)
+    if(doGP <- length(nmgp <- names(gp)) > 0) {
+	if(has.lty  <-  "lty" %in% nmgp) gp$lty  <- rep_len(gp$lty, nkeys)
+	if(has.lwd  <-  "lwd" %in% nmgp) gp$lwd  <- rep_len(gp$lwd, nkeys)
+	if(has.col  <-  "col" %in% nmgp) gp$col  <- rep_len(gp$col,  nkeys)
+	if(has.fill <- "fill" %in% nmgp) gp$fill <- rep_len(gp$fill, nkeys)
+    } else {
+	gpi <- gp
+	if(missing(do.lines)) do.lines <- FALSE
+    }
+
+    ## main
+    u0 <- unit(0, "npc")
+    u1 <- unit(1, "char")
+    ord <- if(lines.first) 1:2 else 2:1
+    fg <- frameGrob(vp = vp)	  # set up basic frame grob (for packing)
+    for (i in seq_len(nkeys)) {
+	if(doGP) {
+	    gpi <- gp
+	    if(has.lty)	 gpi$lty <- gp$lty[i]
+	    if(has.lwd)	 gpi$lwd <- gp$lwd[i]
+	    if(has.col)	 gpi$col <- gp$col[i]
+	    if(has.fill) gpi$fill<- gp$fill[i]
+	}
+	if(byrow) {
+	    ci <- 1+ (i-1) %%  ncol
+	    ri <- 1+ (i-1) %/% ncol
+	} else {
+	    ci <- 1+ (i-1) %/% nrow
+	    ri <- 1+ (i-1) %%  nrow
+	}
+	## borders; unit.c creates a 4-vector of borders (bottom, left, top, right)
+	vg <- if(ri != nrow) vgap else u0
+	symbol.border <- unit.c(vg, u0, u0, 0.5 * hgap)
+	text.border   <- unit.c(vg, u0, u0, if(ci != ncol) hgap else u0)
+
+	## points/lines grob:
+	plGrob <- if(has.pch && do.lines)
+	    gTree(children = gList(linesGrob (0:1, 0.5, gp=gpi),
+		  pointsGrob(0.5, 0.5, default.units="npc", pch=pch[i], gp=gpi))[ord])
+	else if(has.pch) pointsGrob(0.5, 0.5, default.units="npc", pch=pch[i], gp=gpi)
+	else if(do.lines) linesGrob(0:1, 0.5, gp=gpi)
+	else nullGrob() # should not happen...
+	fg <- packGrob(fg, plGrob,
+		       col = 2*ci-1, row = ri, border = symbol.border,
+		       width = u1, height = u1, force.width = TRUE)
+	## text grob: add the labels
+	gpi. <- gpi
+	gpi.$col <- "black" # maybe needs its own 'gp' in the long run (?)
+	fg <- packGrob(fg, textGrob(labels[[i]], x = 0, y = 0.5,
+				    just = c("left", "centre"), gp=gpi.),
+		       col = 2*ci, row = ri, border = text.border)
+    }
+    fg
+}
+
+grid.legend <- function(..., draw=TRUE)
+{
+    g <- legendGrob(...)# will error out if '...' has nonsense
+    if (draw)
+	grid.draw(g)
+    invisible(g)
 }
 
 ## Just a wrapper for a sample series of grid commands
@@ -356,7 +412,7 @@ grid.plot.and.legend <- function() {
                   xaxisGrob(),
                   yaxisGrob()))
   lf <- packGrob(lf, plot)
-  lf <- packGrob(lf, grid.legend(pch, labels, draw=FALSE),
+  lf <- packGrob(lf, grid.legend(labels, pch=pch, draw=FALSE),
                  height=unit(1,"null"), side="right")
   grid.draw(lf)
 }
