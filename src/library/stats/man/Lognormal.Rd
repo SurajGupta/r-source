@@ -1,6 +1,6 @@
 % File src/library/stats/man/Lognormal.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2013 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Lognormal}
@@ -40,11 +40,13 @@ rlnorm(n, meanlog = 0, sdlog = 1)
   
   The length of the result is determined by \code{n} for
   \code{rlnorm}, and is the maximum of the lengths of the
-  numerical parameters for the other functions.  
+  numerical arguments for the other functions.  
   
-  The numerical parameters other than \code{n} are recycled to the
+  The numerical arguments other than \code{n} are recycled to the
   length of the result.  Only the first elements of the logical
-  parameters are used.
+  arguments are used.
+
+  \code{sdlog <= 0} is an error and returns \code{NaN}.
 }
 \source{
   \code{dlnorm} is calculated from the definition (in \sQuote{Details}).

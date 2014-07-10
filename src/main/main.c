@@ -248,6 +248,9 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 		R_IoBufferWriteReset(&R_ConsoleIob);
 		return 0;
 	    }
+	    /* PR#15770 We don't want to step into expressions entered at the debug prompt. 
+	       The 'S' will be changed back to 's' after the next eval. */
+	    if (R_BrowserLastCommand == 's') R_BrowserLastCommand = 'S';  
 	}
 	R_Visible = FALSE;
 	R_EvalDepth = 0;
@@ -264,6 +267,7 @@ Rf_ReplIteration(SEXP rho, int savestack, int browselevel, R_ReplState *state)
 	Rf_callToplevelHandlers(thisExpr, value, TRUE, wasDisplayed);
 	R_CurrentExpr = value; /* Necessary? Doubt it. */
 	UNPROTECT(1);
+	if (R_BrowserLastCommand == 'S') R_BrowserLastCommand = 's';  
 	R_IoBufferWriteReset(&R_ConsoleIob);
 	state->prompt_type = 1;
 	return(1);
@@ -667,7 +671,7 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
 
 int R_SignalHandlers = 1;  /* Exposed in R_interface.h */
 
-unsigned int TimeToSeed(void); /* datetime.c */
+unsigned int TimeToSeed(void); // times.c
 
 const char* get_workspace_name();  /* from startup.c */
 
@@ -682,7 +686,7 @@ void attribute_hidden BindDomain(char *R_Home)
     else snprintf(localedir, PATH_MAX+20, "%s/library/translations", R_Home);
     bindtextdomain(PACKAGE, localedir); // PACKAGE = DOMAIN = "R"
     bindtextdomain("R-base", localedir);
-# ifdef WIN32
+# ifdef _WIN32
     bindtextdomain("RGui", localedir);
 # endif
 #endif
@@ -1578,7 +1582,11 @@ void attribute_hidden dummy12345(void)
     F77_CALL(intpr)("dummy", &i, &i, &i);
 }
 
-/* Used in unix/system.c, avoid inlining */
+/* Used in unix/system.c, avoid inlining by using an extern there.
+
+   This is intended to return a local address.  
+   Use -Wno-return-local-addr when compiling.
+ */
 uintptr_t dummy_ii(void)
 {
     int ii;

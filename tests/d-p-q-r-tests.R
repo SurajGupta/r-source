@@ -694,6 +694,11 @@ stopifnot(d < 0, diff(d) > 0, d[1] < 1e-10)
 mu <- 1e12 * 2^(0:20)
 stopifnot(all.equal(1/(1+mu), dnbinom(0, size = 1, mu = mu), tolerance = 1e-13))
 ## was wrong in 2.7.2 (only)
+mu <- sort(outer(1:7, 10^c(0:10,50*(1:6))))
+NB <- dnbinom(5, size=1e305, mu=mu, log=TRUE)
+P  <- dpois  (5,                mu, log=TRUE)
+stopifnot(abs(rErr(NB,P)) < 9*Meps)# seen 2.5*
+## wrong in 3.1.0 and earlier
 
 
 ## Non-central F for large x
@@ -758,6 +763,17 @@ stopifnot(all(qpois((0:8)/8, lambda=0) == 0))
 ## extreme tail of non-central chisquare
 stopifnot(all.equal(pchisq(200, 4, ncp=.001, log.p=TRUE), -3.851e-42))
 ## jumped to zero too early up to R 2.10.1 (PR#14216)
+## left "extreme tail"
+lp <- pchisq(2^-(0:200), 100, 1, log=TRUE)
+stopifnot(is.finite(lp), lp < -184,
+	  all.equal(lp[201], -7115.10693158))
+dlp <- diff(lp)
+dd <- abs(dlp[-(1:30)] - -34.65735902799)
+stopifnot(-34.66 < dlp, dlp < -34.41, dd < 1e-8)# 2.2e-10 64bit Lnx
+## underflowed to -Inf much too early in R <= 3.1.0
+for(e in c(0, 2e-16))# continuity at 80 (= branch point)
+stopifnot(all.equal(pchisq(1:2, 1.01, ncp = 80*(1-e), log=TRUE),
+		    c(-34.57369629, -31.31514671)))
 
 ## logit() == qlogit() on the right extreme:
 x <- c(10:80, 80 + 5*(1:24), 200 + 20*(1:25))
@@ -791,6 +807,26 @@ stopifnot(abs(1 - dnorm(35+3^-9)/ 3.933395747534971e-267) < 1e-15)
 ldp <- diff(log(diff(pbeta(0.5, 2^-(90+ 1:25), 2^-60, log.p=TRUE))))
 stopifnot(abs(ldp - log(1/2)) < 1e-9)
 ## pbeta(*, log) lost all precision here, for R <= 3.0.x (PR#15641)
+##
+## "stair function" effect (from denormalized numbers)
+a <- 43779; b <- 0.06728
+x. <- .9833 + (0:100)*1e-6
+px <- pbeta(x., a,b, log=TRUE) # plot(x., px) # -> "stair"
+d2. <- diff(dpx <- diff(px))
+stopifnot(all.equal(px[1], -746.0986886924, tol=1e-12),
+          0.0445741 < dpx, dpx < 0.0445783,
+          -4.2e-8 < d2., d2. < -4.18e-8)
+## were way off in R <= 3.1.0
+
+
+## pbinom(), dbinom(), dhyper(),.. : R allows "almost integer" n
+for (FUN in c(function(n) dbinom(1,n,0.5), function(n) pbinom(1,n,0.5),
+              function(n) dpois(n, n), function(n) dhyper(n+1, n+5,n+5, n)))
+    try( lapply(sample(10000, size=1000), function(M) {
+    ## invisible(lapply(sample(10000, size=1000), function(M) {
+        n <- (M/100)*10^(2:20); if(anyNA(P <- FUN(n)))
+            stop("NA for M=",M, "; 10ex=",paste((2:20)[is.na(P)], collapse=", "))}))
+## check was too tight for large n in R <= 3.1.0 (PR#15734)
 
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

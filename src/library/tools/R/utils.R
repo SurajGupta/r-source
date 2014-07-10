@@ -442,8 +442,10 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 
 ### ** .BioC_version_associated_with_R_version
 
-.BioC_version_associated_with_R_version <-
+..BioC_version_associated_with_R_version <- function()
     numeric_version(Sys.getenv("R_BIOC_VERSION", "2.14"))
+.BioC_version_associated_with_R_version <-
+    ..BioC_version_associated_with_R_version()
 ## Things are more complicated from R-2.15.x with still two BioC
 ## releases a year, so we do need to set this manually.
 
@@ -791,7 +793,8 @@ function(dir, installed = FALSE)
 
 .get_requires_from_package_db <-
 function(db,
-         category = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"))
+         category = c("Depends", "Imports", "LinkingTo", "VignetteBuilder",
+         "Suggests", "Enhances"))
 {
     category <- match.arg(category)
     if(category %in% names(db)) {
@@ -810,7 +813,8 @@ function(db,
 
 .get_requires_with_version_from_package_db <-
 function(db,
-         category = c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances"))
+         category = c("Depends", "Imports", "LinkingTo", "VignetteBuilder",
+         "Suggests", "Enhances"))
 {
     category <- match.arg(category)
     if(category %in% names(db)) {
@@ -1503,7 +1507,7 @@ function(x)
                                     "http://www.bioconductor.org")),
              x, fixed = TRUE)
     sub("%v",
-        as.character(.BioC_version_associated_with_R_version),
+        as.character(..BioC_version_associated_with_R_version()),
         x, fixed = TRUE)
 }
 

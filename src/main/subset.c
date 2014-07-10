@@ -963,8 +963,24 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SEXP thesub = CAR(subs);
 	int len = length(thesub);
 
-	if (len > 1)
+	if (len > 1) {
+#ifdef SWITCH_TO_REFCNT
+	    if (IS_GETTER_CALL(call)) {
+		/* this is (most likely) a getter call in a complex
+		   assighment so we duplicate as needed. The original
+		   x should have been duplicated if it might be
+		   shared */
+		if (MAYBE_SHARED(x))
+		    error("getter call used outside of a complex assignment.");
+		x = vectorIndex(x, thesub, 0, len-1, pok, call, TRUE);
+	    }
+	    else
+		x = vectorIndex(x, thesub, 0, len-1, pok, call, FALSE);
+#else
 	    x = vectorIndex(x, thesub, 0, len-1, pok, call, FALSE);
+#endif
+	    named_x = NAMED(x);
+	}
 	    
 	offset = get1index(thesub, getAttrib(x, R_NamesSymbol),
 			   xlength(x), pok, len > 1 ? len-1 : -1, call);

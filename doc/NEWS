@@ -1,5 +1,243 @@
 R News
 
+CHANGES IN R 3.1.1:
+
+  NEW FEATURES:
+
+    * When attach() reports conflicts, it does so compatibly with
+      library() by using message().
+
+    * R CMD Sweave no longer cleans any files by default, compatibly
+      with versions of R prior to 3.1.0.  There are new options
+      --clean, --clean=default and --clean=keepOuts.
+
+    * tools::buildVignette() and tools::buildVignettes() with clean =
+      FALSE no longer remove any created files.  buildvignette() gains
+      a keep argument for more cleaning customization.
+
+    * The Bioconductor 'version' used by setRepositories() can now be
+      set by environment variable R_BIOC_VERSION at runtime, not just
+      when R is installed.  (It has been stated that Bioconductor will
+      switch from 'version' 2.14 to 'version' 3.0 during the lifetime
+      of the R 3.1 series.)
+
+    * Error messages from bugs in embedded Sexpr code in Sweave
+      documents now report the source location.
+
+    * type.convert(), read.table() and similar read.*() functions get a
+      new numerals argument, specifying how numeric input is converted
+      when its conversion to double precision loses accuracy.  The
+      default value, "allow.loss" allows accuracy loss, as in R
+      versions before 3.1.0.
+
+    * For some compilers, integer addition could overflow without a
+      warning.  R's internal code for both integer addition and
+      subtraction is more robust now.  (PR#15774)
+
+    * The function determining the default number of knots for
+      smooth.spline() is now exported, as .nknots.smspl().
+
+    * dbeta(, a,b), pbeta(), qbeta() and rbeta() are now defined also
+      for a = 0, b = 0, or infinite a and b (where they typically
+      returned NaN before).
+
+    * Many package authors report that the RStudio graphics device does
+      not work correctly with their package's use of dev.new().  The
+      new option dev.new(noRStudioGD = TRUE) replaces the RStudio
+      override by the default device as selected by R itself, still
+      respecting environment variables R_INTERACTIVE_DEVICE and
+      R_DEFAULT_DEVICE.
+
+    * readRDS() now returns visibly.
+
+    * Modifying internal logical scalar constants now results in an
+      error instead of a warning.
+
+    * install.packages(repos = NULL) now accepts http:// or ftp:// URLs
+      of package archives as well as file paths, and will download as
+      required.  In most cases repos = NULL can be deduced from the
+      extension of the URL.
+
+    * The warning when using partial matching with the $ operator on
+      data frames is now only given when
+      options("warnPartialMatchDollar") is TRUE.
+
+    * Package help requests like package?foo now try the package foo
+      whether loaded or not.
+
+    * General help requests now default to trying all loaded packages,
+      not just those on the search path.
+
+    * Added a new function promptImport(), to generate a help page for
+      a function that was imported from another package (and presumably
+      re-exported, or help would not be needed).
+
+  INSTALLATION and INCLUDED SOFTWARE:
+
+    * configure option --with-internal-tzcode can now be used with
+      variable rsharedir.
+
+    * The included version of PCRE has been updated to 8.35.
+
+    * There is a new target make uninstall-libR to remove an installed
+      shared/static libR.
+
+      make install-libR now works if a sub-architecture is used,
+      although the user will need to specify libdir differently for
+      different sub-architectures.
+
+    * There is more extensive advice on which LaTeX packages are
+      required to install R or to make package manuals (as done by R
+      CMD check) in the 'Writing R Extensions' manual.
+
+    * Compilers/linkers were handling the visibility controls in
+      src/extra/xz inconsistently (and apparently in some cases
+      incorrectly), so it has been simplified.  (PR#15327)
+
+    * (Windows) There is updated support for the use of ICU for
+      collation: see the 'R Installation and Administration Manual'.
+
+  BUG FIXES:
+
+    * dbinom(x, n), pbinom(), dpois(), etc, are slightly less
+      restrictive in checking if n is integer-valued.  (Wish of
+      PR#15734.)
+
+    * pchisq(x, df, ncp, log.p = TRUE) is more accurate and no longer
+      underflows for small x and ncp < 80, e.g, for pchisq(1e-5, df =
+      100, ncp = 1, log = TRUE).  (Based on PR#15635 and a suggestion
+      by Roby Joehanes.)
+
+    * The s ("step into") command in the debugger would cause R to step
+      into expressions evaluated there, not just into functions being
+      debugged.  (PR#15770)
+
+    * The C code used by strptime() rejected time-zone offsets of more
+      than +1200 (+1245, +1300 and +1400 can occur).  (PR#15768)
+
+    * (Windows only.)  png(type = "cairo", antialias = "gray") was not
+      accepted.  (PR#15760)
+
+    * Use of save(..., envir=) with named objects could fail.
+      (PR#15758)
+
+    * Sweave() mis-parsed Sexpr expressions that contained backslashes.
+      (PR#15779)
+
+    * The return value from options(foo = NULL) was not the previous
+      value of the option.  (PR#15781)
+
+    * enc2utf8() and enc2native() did not always mark the encoding of
+      the return values when it was known.
+
+    * dnbinom(x, size = <large>, mu, log = TRUE) no longer underflows
+      to -Inf for large mu, thanks to a suggestion from Alessandro
+      Mammana (MPI MolGen, Berlin).
+
+    * pbeta(x, a, b, log = TRUE) no longer behaves discontinuously (in
+      a small x-region) because of denormalized numbers.  Also,
+      pbeta(1-1e-12, 1e30, 1.001, log=TRUE) now terminates "in real
+      time".
+
+    * The "CRAN" filter (see available.packages()) no longer removes
+      duplicates other than of packages on CRAN, and does not fail if
+      there is no CRAN repository in getOption("repos").
+
+    * The device listing from dev2bitmap() and bitmap() was truncated
+      to 1000 characters: modern versions of GhostScript on most
+      platforms have many more devices.
+
+    * (Windows.)  Commands such as Sys.which() and pipe() which needed
+      to find the full path to a command could segfault if the 'long'
+      path name was much longer than the 'short' path name (which
+      Sys.which() returns), as the behaviour of the Windows API call
+      had changed.
+
+    * R CMD build will fail with an error if one of the packages
+      specified in the VignetteBuilder field is not installed.
+      (Without loading those packages it cannot be ascertained which
+      files are intended to be vignettes. This means that the
+      VignetteBuilder packages have to be installed for package
+      checking too.)  (Wish of PR#15775.)
+
+    * Misguided attempts to use chull() with non-finite points now give
+      an error (related to PR#15777).
+
+    * For a formula with exactly 32 variables the 32nd variable was
+      aliased to the intercept in some C-level computations of terms,
+      so that for example attempting to remove it would remove the
+      intercept instead (and leave a corrupt internal structure).
+      (PR#15735)
+
+    * anyDuplicated() silently returned wrong values when the first
+      duplicate was at an index which was too large to be stored in an
+      integer vector (although a lot of RAM and patience would have
+      been needed to encounter this).
+
+    * tools::Rd2ex(commentDontrun = FALSE) failed if the block had only
+      one line.
+
+    * Hexadecimal constants such as 0x110p-5L which were incorrectly
+      qualified by L were parsed incorrectly since R 3.0.0, with a
+      slightly garbled warning. (PR#15753)
+
+    * system() returned success on some platforms even if the system
+      was unable to launch a process. (PR#15796)
+
+    * (Windows Rgui console.)  Unbuffered output was sometimes not
+      output immediately if the prompt was not on the last line of the
+      console.
+
+    * The built-in help server did not declare the encoding for the
+      DESCRIPTION or other text files to be the package encoding, so
+      non-ASCII characters could be displayed incorrectly.
+
+    * R is now trying harder to not cleanup child processes that were
+      not spawned by mcparallel() on platforms that provide information
+      about the source process of the SIGCHLD signal. This allows 3rd
+      party libraries to manage the exit status of children that they
+      spawn without R interfering.
+
+    * mcmapply() was only parallelizing if the number of jobs was
+      bigger than the number of cores. It now parallelizes if the
+      number of jobs is more than one.
+
+    * Auto-printing would re-evaluate its argument when trying to
+      dispatch to a print method.  This is now avoided when possible.
+
+    * Unserializing (including load() and readRDS()) could silently
+      return incorrect numeric values from ASCII saves if there was a
+      read error.
+
+    * getParseData() could return incorrect values for the parents of
+      some elements. (Reported by Andrew Redd.)
+
+    * Attempting to use data frames of 2^31 or more rows with merge()
+      or to create a merged data frame of that size now gives a clearer
+      error message.
+
+    * parse() did not check its file argument was a connection if it
+      was not a character string, so e.g. parse(FALSE) attempted to
+      read from stdin.
+
+      Nor did dump() and dput().
+
+    * The "help.try.all.packages" option was ignored when the shortcut
+      syntax for help was used, e.g. ?foo.
+
+    * A potential segfault in string allocation has been fixed.  (Found
+      by Radford Neal.)
+
+    * Potential memory protection errors in sort() and D() have been
+      fixed. (Found by Radford Neal.)
+
+    * Fixed a lack of error checking in graphics event functions.
+      (Found by Radford Neal; a different patch used here than the one
+      in pqR.)
+
+    * numericDeriv() sometimes miscalculated the gradient.  (PR#15849,
+      reported originally by Radford Neal)
+
 CHANGES IN R 3.1.0:
 
   NEW FEATURES:
@@ -99,9 +337,9 @@ CHANGES IN R 3.1.0:
       X.)
 
       Currently time_t is usually long and hence 64-bit on Unix-alike
-      64-bit platforms: however it several cases the time-zone database
-      is 32-bit.  On R for Windows it is 64-bit (for both architectures
-      as from this version).
+      64-bit platforms: however in several cases the time-zone database
+      is 32-bit.  For R for Windows it is 64-bit (for both
+      architectures as from this version).
 
     * The "save.defaults" option can include a value for
       compression_level.  (Wish of PR#15579.)
@@ -1084,7 +1322,7 @@ CHANGES IN R 3.0.2:
 
     * The default 'version' of Bioconductor for its packages has been
       changed to the upcoming 2.13, but this can be set by the
-      environment variable R_BIOC_VERSION, e.g.  in file Renviron.site.
+      environment variable R_BIOC_VERSION when R is installed.
 
   C-LEVEL FACILITIES:
 

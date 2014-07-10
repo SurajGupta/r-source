@@ -51,7 +51,8 @@ OlsonNames()
 
   If \env{TZ} is set but empty or invalid, most platforms default to
   \samp{UTC}, the time zone colloquially known as \samp{GMT} (see
-  \url{http://en.wikipedia.org/wiki/Coordinated_Universal_Time}).
+  \url{http://en.wikipedia.org/wiki/Coordinated_Universal_Time}).  (Some
+  but not all platforms will give a warning for invalid timezones.)
 
   Time zones did not come into use until the second half of the
   nineteenth century and were not widely adopted until the twentieth,
@@ -68,12 +69,13 @@ OlsonNames()
   1902 (so used local \sQuote{mean time} based on longitude) but for
   some places there had been time-zone changes before then.  64-bit
   representations are becoming common; unfortunately on some 64-bit OSes
-  the database information is only available for the range 1901--2038.
+  (notably OS X) the database information is only available for the
+  range 1901--2038, and incompletely for the end years.
 }
 
 \value{
   \code{Sys.timezone} returns an OS-specific character string, possibly
-  \code{NA} or an empty string (which on some OSes means \samp{UTC})..
+  \code{NA} or an empty string (which on some OSes means \samp{UTC}).
   For the default \code{location = TRUE} this will be a location such as
   \code{"Europe/London"} if one can be ascertained.  For \code{location
   = FALSE} this may be an abbreviation such as \code{"EST"} or
@@ -97,7 +99,7 @@ OlsonNames()
   city) e.g. \code{Europe/London}, \code{America/Los_Angeles},
   \code{Pacific/Easter}.  Some traditional designations are also allowed
   such as \code{EST5EDT} or \code{GB}.  (Beware that some of these
-  designations may not be what you think: in particular \code{EST} is a
+  designations may not be what you expect: in particular \code{EST} is a
   time zone used in Canada \emph{without} daylight saving time, and not
   \code{EST5EDT} nor (Australian) Eastern Standard Time.)  The
   designation can also be an optional colon prepended to the path to a
@@ -129,11 +131,12 @@ OlsonNames()
 #ifdef unix
 
   Where \R was configured with option \option{--with-internal-tzcode}
-  (the default on OS X and Windows: recommended on Solaris), the
-  database at \code{file.path(R.home("share"), "zoneinfo")} is used by
-  default: file \file{VERSION} in that directory states the version.
-  Environment variable \env{TZDIR} can be used to point to a different
-  \file{zoneinfo} directory.
+  (the default on OS X: recommended on Solaris), the database at
+  \code{file.path(R.home("share"), "zoneinfo")} is used by default: file
+  \file{VERSION} in that directory states the version.  Environment
+  variable \env{TZDIR} can be used to point to a different
+  \file{zoneinfo} directory (this is also supported by some OSes,
+  e.g. Linux).
 #endif
 #ifdef windows
 
@@ -160,6 +163,14 @@ OlsonNames()
   Contrary to some expectations (but consistent with names such as
   \samp{PST8PDT}), negative offsets are times ahead of (east of) UTC,
   positive offsets are times behind (west of) UTC.
+  
+  Immediately prior to the advent of legislated time zones, people used
+  time based on their longitude, known as \sQuote{Local Mean Time} and
+  abbreviated as \samp{LMT} in the databases.  Often this was codified
+  by a name such as \sQuote{Copenhagen Mean Time} for a period before
+  the switch to standard time zones (such as \samp{GMT+5}).  For
+  example, Paris codified its LMT as \sQuote{Paris Mean Time} in 1891,
+  switched to \samp{GMT+0} in 1911 and to \samp{GMT-1} in 1945.
 }
 
 \note{
@@ -175,7 +186,7 @@ OlsonNames()
   Incorrect results will never be an \R issue, so please ensure that you
   have the courtesy not to blame \R for them.
 }
-% Unlike Tony Plate.
+% Unlike Tony Plate and John Pfuntner
 
 \seealso{
   \code{\link{Sys.time}}, \code{\link{as.POSIXlt}}.

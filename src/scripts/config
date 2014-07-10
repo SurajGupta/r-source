@@ -5,7 +5,7 @@
 ## Usage:
 ##   R CMD config [options] [VAR]
 
-## Copyright (C) 2002-13 The R Core Team
+## Copyright (C) 2002-2013 The R Core Team
 ##
 ## This document is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 ## A copy of the GNU General Public License is available at
 ## http://www.r-project.org/Licenses/
 
-revision='$Revision: 65341 $'
+revision='$Revision: 65647 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 
-Copyright (C) 2002-13 The R Core Team.
+Copyright (C) 2002-2013 The R Core Team.
 This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 

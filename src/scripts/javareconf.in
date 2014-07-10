@@ -9,11 +9,11 @@ fi
 DYLIB_EXT=`${R_HOME}/bin/R CMD config DYLIB_EXT`
 tools_classpath=${R_SHARE_DIR}/java
 
-revision='$Rev: 63871 $'
+revision='$Rev: 65645 $'
 version=`set - ${revision}; echo ${2}`
 version="R Java configurator: ${R_VERSION} (r${version})
 
-Copyright (C) 2002-13 The R Core Team.
+Copyright (C) 2002-2013 The R Core Team.
 This is free software; see the GNU General Public License version 2
 or later for copying conditions.  There is NO warranty."
 

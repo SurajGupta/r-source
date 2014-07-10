@@ -258,6 +258,9 @@ extern int putenv(char *string);
 /* seems this is now defined by MinGW to be 259, whereas FILENAME_MAX
    and MAX_PATH are 260.  It is not clear that this really is in bytes,
    but might be chars for the Unicode interfaces.
+
+   260 is d:\ plus 256 chars plus nul.  Some but not all API calls
+   allow filepaths of the form \\?\D:\very_long_path .
 */
 #    define PATH_MAX 260
 #  else
@@ -1057,6 +1060,8 @@ SEXP mkCLOSXP(SEXP, SEXP, SEXP);
 SEXP mkFalse(void);
 SEXP mkPRIMSXP (int, int);
 SEXP mkPROMISE(SEXP, SEXP);
+SEXP R_mkEVPROMISE(SEXP, SEXP);
+SEXP R_mkEVPROMISE_NR(SEXP, SEXP);
 SEXP mkQUOTE(SEXP);
 SEXP mkSYMSXP(SEXP, SEXP);
 SEXP mkTrue(void);

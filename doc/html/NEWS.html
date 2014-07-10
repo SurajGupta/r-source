@@ -8,6 +8,332 @@
 
 <h2>R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.1.1</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li><p> When <code>attach()</code> reports conflicts, it does so
+compatibly with <code>library()</code> by using <code>message()</code>.
+</p>
+</li>
+<li> <p><CODE>R CMD Sweave</CODE> no longer cleans any files by
+default, compatibly with versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> prior to 3.1.0.  There are
+new options <span class="option">--clean</span>, <span class="option">--clean=default</span> and
+<span class="option">--clean=keepOuts</span>.
+</p>
+</li>
+<li> <p><code>tools::buildVignette()</code> and <code>tools::buildVignettes()</code>
+with <code>clean = FALSE</code> no longer remove any created files.
+<code>buildvignette()</code> gains a <code>keep</code> argument for more
+cleaning customization.
+</p>
+</li>
+<li><p> The Bioconductor &lsquo;version&rsquo; used by
+<code>setRepositories()</code> can now be set by environment variable
+<span class="env">R_BIOC_VERSION</span> at runtime, not just when <font face="Courier New,Courier" color="#666666"><b>R</b></font> is installed.
+(It has been stated that Bioconductor will switch from
+&lsquo;version&rsquo; 2.14 to &lsquo;version&rsquo; 3.0 during the lifetime
+of the <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1 series.)
+</p>
+</li>
+<li><p> Error messages from bugs in embedded <span class="samp">Sexpr</span> code
+in Sweave documents now report the source location.
+</p>
+</li>
+<li> <p><code>type.convert()</code>, <code>read.table()</code> and similar
+<code>read.*()</code> functions get a new <code>numerals</code> argument,
+specifying how numeric input is converted when its conversion to
+double precision loses accuracy.  The default value,
+<code>"allow.loss"</code> allows accuracy loss, as in <font face="Courier New,Courier" color="#666666"><b>R</b></font> versions before
+3.1.0.
+</p>
+</li>
+<li><p> For some compilers, integer addition could overflow without
+a warning.  <font face="Courier New,Courier" color="#666666"><b>R</b></font>'s internal code for both integer addition and
+subtraction is more robust now.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15774">PR#15774</a>)
+</p>
+</li>
+<li><p> The function determining the default number of knots for
+<code>smooth.spline()</code> is now exported, as <code>.nknots.smspl()</code>.
+</p>
+</li>
+<li> <p><code>dbeta(, a,b)</code>, <code>pbeta()</code>, <code>qbeta()</code> and
+<code>rbeta()</code> are now defined also for <i>a = 0</i>, <i>b = 0</i>,
+or infinite <i>a</i> and <i>b</i> (where they typically returned
+<code>NaN</code> before).
+</p>
+</li>
+<li><p> Many package authors report that the RStudio graphics device
+does not work correctly with their package's use of
+<code>dev.new()</code>.  The new option <code>dev.new(noRStudioGD =
+      TRUE)</code> replaces the RStudio override by the default device as
+selected by <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself, still respecting environment variables
+<span class="env">R_INTERACTIVE_DEVICE</span> and <span class="env">R_DEFAULT_DEVICE</span>.
+</p>
+</li>
+<li> <p><code>readRDS()</code> now returns visibly.
+</p>
+</li>
+<li><p> Modifying internal logical scalar constants now results in
+an error instead of a warning.
+</p>
+</li>
+<li> <p><code>install.packages(repos = NULL)</code> now accepts
+<code>http://</code> or <code>ftp://</code> URLs of package archives as well
+as file paths, and will download as required.  In most cases
+<code>repos = NULL</code> can be deduced from the extension of the URL.
+</p>
+</li>
+<li><p> The warning when using partial matching with the <code>$</code>
+operator on data frames is now only given when
+<code>options("warnPartialMatchDollar")</code> is <code>TRUE</code>.
+</p>
+</li>
+<li><p> Package help requests like <code>package?foo</code> now 
+try the package <code>foo</code> whether loaded or not.
+</p>
+</li>
+<li><p> General help requests now default to trying all loaded 
+packages, not just those on the search path.
+</p>
+</li>
+<li><p> Added a new function <code>promptImport()</code>, to generate a
+help page for a function that was imported from another package
+(and presumably re-exported, or help would not be needed).
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION and INCLUDED SOFTWARE</h4>
+
+
+<ul>
+<li> <p><CODE>configure</CODE> option <span class="option">--with-internal-tzcode</span>
+can now be used with variable <code>rsharedir</code>.
+</p>
+</li>
+<li><p> The included version of PCRE has been updated to 8.35.
+</p>
+</li>
+<li><p> There is a new target <CODE>make uninstall-libR</CODE> to
+remove an installed shared/static &lsquo;<span class="file">libR</span>&rsquo;.
+</p>
+<p><CODE>make install-libR</CODE> now works if a sub-architecture is
+used, although the user will need to specify <code>libdir</code>
+differently for different sub-architectures.
+</p>
+</li>
+<li><p> There is more extensive advice on which LaTeX packages are
+required to install <font face="Courier New,Courier" color="#666666"><b>R</b></font> or to make package manuals (as done by
+<CODE>R CMD check</CODE>) in the &lsquo;Writing R Extensions&rsquo;
+manual.
+</p>
+</li>
+<li><p> Compilers/linkers were handling the visibility controls in
+&lsquo;<span class="file">src/extra/xz</span>&rsquo; inconsistently (and apparently in some cases
+incorrectly), so it has been simplified.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15327">PR#15327</a>)
+</p>
+</li>
+<li><p> (Windows)  There is updated support for the use of ICU for
+collation: see the &lsquo;R Installation and Administration Manual&rsquo;.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>dbinom(x, n)</code>, <code>pbinom()</code>, <code>dpois()</code>, etc,
+are slightly less restrictive in checking if <code>n</code> is
+integer-valued.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15734">PR#15734</a>.)
+</p>
+</li>
+<li> <p><code>pchisq(x, df, ncp, log.p = TRUE)</code> is more accurate and
+no longer underflows for small <code>x</code> and <code>ncp &lt; 80</code>, e.g,
+for <code>pchisq(1e-5, df = 100, ncp = 1, log = TRUE)</code>.
+(Based on <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15635">PR#15635</a> and a suggestion by Roby Joehanes.)
+</p>
+</li>
+<li><p> The <code>s</code> (&ldquo;step into&rdquo;) command in the debugger
+would cause <font face="Courier New,Courier" color="#666666"><b>R</b></font> to step into expressions evaluated there,
+not just into functions being debugged.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15770">PR#15770</a>)
+</p>
+</li>
+<li><p> The C code used by <code>strptime()</code> rejected time-zone
+offsets of more than <code>+1200</code> (<code>+1245</code>, <code>+1300</code> and
+<code>+1400</code> can occur).  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15768">PR#15768</a>)
+</p>
+</li>
+<li><p> (Windows only.)
+<code>png(type = "cairo", antialias = "gray")</code>
+was not accepted.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15760">PR#15760</a>)
+</p>
+</li>
+<li><p> Use of <code>save(..., envir=)</code> with named objects could
+fail.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15758">PR#15758</a>)
+</p>
+</li>
+<li> <p><code>Sweave()</code> mis-parsed <span class="samp">Sexpr</span> expressions that
+contained backslashes.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15779">PR#15779</a>)
+</p>
+</li>
+<li><p> The return value from <code>options(foo = NULL)</code> was not
+the previous value of the option.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15781">PR#15781</a>)
+</p>
+</li>
+<li> <p><code>enc2utf8()</code> and <code>enc2native()</code> did not always
+mark the encoding of the return values when it was known.
+</p>
+</li>
+<li> <p><code>dnbinom(x, size = &lt;large&gt;, mu, log = TRUE)</code> no longer
+underflows to -Inf for large <code>mu</code>, thanks to a suggestion
+from Alessandro Mammana (MPI MolGen, Berlin).
+</p>
+</li>
+<li> <p><code>pbeta(x, a, b, log = TRUE)</code> no longer behaves
+discontinuously (in a small x-region) because of denormalized
+numbers.  Also, <code>pbeta(1-1e-12, 1e30, 1.001, log=TRUE)</code> now
+terminates &ldquo;in real time&rdquo;.
+</p>
+</li>
+<li><p> The <code>"CRAN"</code> filter (see <code>available.packages()</code>)
+no longer removes duplicates other than of packages on CRAN, and
+does not fail if there is no CRAN repository in
+<code>getOption("repos")</code>.
+</p>
+</li>
+<li><p> The device listing from <code>dev2bitmap()</code> and
+<code>bitmap()</code> was truncated to 1000 characters: modern versions
+of GhostScript on most platforms have many more devices.
+</p>
+</li>
+<li><p> (Windows.)  Commands such as <code>Sys.which()</code> and
+<code>pipe()</code> which needed to find the full path to a command
+could segfault if the &lsquo;long&rsquo; path name was much longer than
+the &lsquo;short&rsquo; path name (which <code>Sys.which()</code> returns),
+as the behaviour of the Windows API call had changed.
+</p>
+</li>
+<li> <p><CODE>R CMD build</CODE> will fail with an error if one of the
+packages specified in the <span class="samp">VignetteBuilder</span> field is not
+installed.  (Without loading those packages it cannot be
+ascertained which files are intended to be vignettes. This means
+that the <span class="samp">VignetteBuilder</span> packages have to be installed for
+package checking too.)
+(Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15775">PR#15775</a>.)
+</p>
+</li>
+<li><p> Misguided attempts to use <code>chull()</code> with non-finite
+points now give an error (related to <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15777">PR#15777</a>).
+</p>
+</li>
+<li><p> For a formula with exactly 32 variables the 32nd variable
+was aliased to the intercept in some C-level computations of
+terms, so that for example attempting to remove it would remove
+the intercept instead (and leave a corrupt internal structure).
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15735">PR#15735</a>)
+</p>
+</li>
+<li> <p><code>anyDuplicated()</code> silently returned wrong values when
+the first duplicate was at an index which was too large to be
+stored in an integer vector (although a lot of RAM and patience
+would have been needed to encounter this).
+</p>
+</li>
+<li> <p><code>tools::Rd2ex(commentDontrun = FALSE)</code> failed if the
+block had only one line.
+</p>
+</li>
+<li><p> Hexadecimal constants such as <code>0x110p-5L</code> which were
+incorrectly qualified by <code>L</code> were parsed incorrectly since <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+3.0.0, with a slightly garbled warning. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15753">PR#15753</a>)
+</p>
+</li>
+<li> <p><code>system()</code> returned success on some platforms even if
+the system was unable to launch a process. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15796">PR#15796</a>)
+</p>
+</li>
+<li><p> (Windows <CODE>Rgui</CODE> console.)  Unbuffered output was
+sometimes not output immediately if the prompt was not on the last
+line of the console.
+</p>
+</li>
+<li><p> The built-in help server did not declare the encoding for
+the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; or other text files to be the package
+encoding, so non-ASCII characters could be displayed incorrectly.
+</p>
+</li>
+<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> is now trying harder to not cleanup child processes
+that were not spawned by <code>mcparallel()</code> on platforms that
+provide information about the source process of the <code>SIGCHLD</code>
+signal. This allows 3rd party libraries to manage the exit status
+of children that they spawn without <font face="Courier New,Courier" color="#666666"><b>R</b></font> interfering.
+</p>
+</li>
+<li> <p><code>mcmapply()</code> was only parallelizing if the number of
+jobs was bigger than the number of cores. It now parallelizes if
+the number of jobs is more than one.
+</p>
+</li>
+<li><p> Auto-printing would re-evaluate its argument when trying to
+dispatch to a print method.  This is now avoided when possible.
+</p>
+</li>
+<li><p> Unserializing (including <code>load()</code> and <code>readRDS()</code>)
+could silently return incorrect numeric values from ASCII saves if
+there was a read error.
+</p>
+</li>
+<li> <p><code>getParseData()</code> could return incorrect values for
+the parents of some elements. (Reported by Andrew Redd.)
+</p>
+</li>
+<li><p> Attempting to use data frames of 2^31 or more rows with
+<code>merge()</code> or to create a merged data frame of that size now
+gives a clearer error message.
+</p>
+</li>
+<li> <p><code>parse()</code> did not check its <code>file</code> argument was a
+connection if it was not a character string, so
+e.g. <code>parse(FALSE)</code> attempted to read from <code>stdin</code>.
+</p>
+<p>Nor did <code>dump()</code> and <code>dput()</code>.
+</p>
+</li>
+<li><p> The <code>"help.try.all.packages"</code> option was ignored when
+the shortcut syntax for help was used, e.g. <code>?foo</code>.  
+</p>
+</li>
+<li><p> A potential segfault in string allocation has been fixed.
+(Found by Radford Neal.)
+</p>
+</li>
+<li><p> Potential memory protection errors in <code>sort()</code> and 
+<code>D()</code> have been fixed. (Found by Radford Neal.)
+</p>
+</li>
+<li><p> Fixed a lack of error checking in graphics event functions.
+(Found by Radford Neal; a different patch used here than the
+one in pqR.)
+</p>
+</li>
+<li> <p><code>numericDeriv()</code> sometimes miscalculated the gradient.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15849">PR#15849</a>, reported originally by Radford Neal)
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.1.0</h3>
 
 
@@ -144,9 +470,9 @@ is speculative at best, and the OS services are tested for known
 errors and so not used on OS X.)
 </p>
 <p>Currently <code>time_t</code> is usually <code>long</code> and hence 64-bit on
-Unix-alike 64-bit platforms: however it several cases the
-time-zone database is 32-bit.  On <font face="Courier New,Courier" color="#666666"><b>R</b></font> for Windows it is 64-bit (for
-both architectures as from this version).
+Unix-alike 64-bit platforms: however in several cases the
+time-zone database is 32-bit.  For <font face="Courier New,Courier" color="#666666"><b>R</b></font> for Windows it is 64-bit
+(for both architectures as from this version).
 </p>
 </li>
 <li><p> The <code>"save.defaults"</code> option can include a value for
@@ -1520,8 +1846,8 @@ version requirements were previously silently ignored.)
 </li>
 <li><p> The default &lsquo;version&rsquo; of Bioconductor for its
 packages has been changed to the upcoming <span class="samp">2.13</span>, but this
-can be set by the environment variable <span class="env">R_BIOC_VERSION</span>, e.g.
-in file &lsquo;<span class="file">Renviron.site</span>&rsquo;.
+can be set by the environment variable <span class="env">R_BIOC_VERSION</span> when
+<font face="Courier New,Courier" color="#666666"><b>R</b></font> is installed.
 </p>
 </li></ul>
 
@@ -3382,11 +3708,11 @@ class definitions containing <code>"array"</code> or <code>"matrix"</code>.
 
 
 <ul>
-<li>
-<p>Older news can be found in text format in files
+<li><p> Older news can be found in text format in files
 <a href="../NEWS.0">NEWS.0</a>, <a href="../NEWS.1">NEWS.1</a>
-and <a href="../NEWS.2">NEWS.2</a> in the &lsquo;<span class="file">doc</span>&rsquo; directory.  News in HTML format for
-<font face="Courier New,Courier" color="#666666"><b>R</b></font>  versions from 2.10.0 to 2.15.3 is in
+and <a href="../NEWS.2">NEWS.2</a>
+in the &lsquo;<span class="file">doc</span>&rsquo; directory.  News in HTML format for
+<font face="Courier New,Courier" color="#666666"><b>R</b></font> versions from 2.10.0 to 2.15.3 is in
 <a href="NEWS.2.html">NEWS.2.html</a>.
 </p>
 </li></ul>

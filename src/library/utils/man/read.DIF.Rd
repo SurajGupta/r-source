@@ -1,6 +1,6 @@
 % File src/library/utils/man/read.DIF.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{read.DIF}
@@ -12,13 +12,12 @@
 }
 \usage{
 read.DIF(file, header = FALSE,
-           dec = ".", row.names, col.names,
-           as.is = !stringsAsFactors,
-           na.strings = "NA", colClasses = NA, nrows = -1,
-           skip = 0, check.names = TRUE,
-           blank.lines.skip = TRUE,
-           stringsAsFactors = default.stringsAsFactors(),
-           transpose = FALSE)
+         dec = ".", numerals = c("allow.loss", "warn.loss", "no.loss"),
+         row.names, col.names, as.is = !stringsAsFactors,
+         na.strings = "NA", colClasses = NA, nrows = -1,
+         skip = 0, check.names = TRUE, blank.lines.skip = TRUE,
+         stringsAsFactors = default.stringsAsFactors(),
+         transpose = FALSE)
 }
 \arguments{
   \item{file}{the name of the file which the data are to be read from,
@@ -36,6 +35,9 @@ read.DIF(file, header = FALSE,
     the top left cell is empty.}
 
   \item{dec}{the character used in the file for decimal points.}
+
+  \item{numerals}{string indicating how to convert numbers whose conversion
+    to double precision would lose accuracy, see \code{\link{type.convert}}.}
 
   \item{row.names}{a vector of row names.  This can be a vector giving
     the actual row names, or a single number giving the column of the
@@ -152,7 +154,7 @@ read.DIF(file, header = FALSE,
   its WinFX system, which may or may not be compatible.
 }
 \examples{
-## read.DIF() needs transpose = TRUE for file exported from Excel
+## read.DIF() may need transpose = TRUE for a file exported from Excel
 udir <- system.file("misc", package = "utils")
 dd <- read.DIF(file.path(udir, "exDIF.dif"), header = TRUE, transpose = TRUE)
 dc <- read.csv(file.path(udir, "exDIF.csv"), header = TRUE)

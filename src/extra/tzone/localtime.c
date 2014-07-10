@@ -53,7 +53,7 @@ use of tm_zone and tm_gmtoff on all platforms.
 #include <stdio.h>
 #include <fcntl.h> // for open + modes
 
-#ifndef WIN32
+#ifndef _WIN32
 # include <unistd.h> // for access, read, close
 #endif
 
@@ -389,7 +389,11 @@ tzload(const char * name, struct state * const sp, const int doextend)
 	    char buf[1000];
 	    p = getenv("TZDIR");
 	    if (p == NULL) {
-		snprintf(buf, 1000, "%s/share/zoneinfo", getenv("R_HOME"));
+		p = getenv("R_SHARE_DIR");
+		if(p)
+		    snprintf(buf, 1000, "%s/zoneinfo", p);
+		else
+		    snprintf(buf, 1000, "%s/share/zoneinfo", getenv("R_HOME"));
 		buf[999] = '\0';
 		p = buf;
 	    }

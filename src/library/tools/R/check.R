@@ -2849,7 +2849,7 @@ setRlibs <-
                 ## since so many people use 'R CMD' in Makefiles,
                 oPATH <- Sys.getenv("PATH")
                 Sys.setenv(PATH = paste(R.home("bin"), oPATH,
-                           sep = .Platform$path.sep))
+                                        sep = .Platform$path.sep))
                 on.exit(Sys.setenv(PATH = oPATH))
                 ## And too many inst/doc/Makefile are not safe for
                 ## parallel makes
@@ -2865,16 +2865,27 @@ setRlibs <-
                 status <- R_runR(Rcmd, R_opts2, jitstr,
                                  stdout = outfile, stderr = outfile)
                 t2 <- proc.time()
+                out <- readLines(outfile, warn = FALSE)
+                if(R_check_suppress_RandR_message)
+                    out <- grep('^Xlib: *extension "RANDR" missing on display',
+                                out, invert = TRUE, value = TRUE,
+                                useBytes = TRUE)
+                warns <- grep("^Warning: file .* is not portable",
+                              out, value = TRUE, useBytes = TRUE)
                 if (status) {
                     noteLog(Log)
-                    out <- readLines(outfile, warn = FALSE)
-                    if (R_check_suppress_RandR_message)
-                        out <- grep('^Xlib: *extension "RANDR" missing on display', out,
-                                    invert = TRUE, value = TRUE, useBytes = TRUE)
                     out <- utils::tail(out, 25)
                     printLog0(Log,
                               paste(c("Error in re-building vignettes:",
                                       "  ...", out, "", ""), collapse = "\n"))
+                } else if(nw <- length(warns)) {
+                    noteLog(Log)
+                    msg <- ngettext(nw,
+                                    "Warning in re-building vignettes:\n",
+                                    "Warnings in re-building vignettes:\n",
+                                    domain = NA)
+                    wrapLog(msg)
+                    printLog0(Log, .format_lines_with_indent(warns), "\n")
                 } else {
                     ## clean up
                     if (config_val_to_logical(Sys.getenv("_R_CHECK_CLEAN_VIGN_TEST_", "true")))
@@ -3032,7 +3043,8 @@ setRlibs <-
                 for(fp in  c("foreign/tests/datefactor.dta",
                              "msProcess/inst/data[12]/.*.txt",
                              "WMBrukerParser/inst/Examples/C3ValidationExtractSmall/RobotRun1/2-100kDa/0_B1/1/1SLin/fid",
-                             "bayesLife/inst/ex-data/bayesLife.output/predictions/traj_country104.rda" # file 5.16
+                             "bayesLife/inst/ex-data/bayesLife.output/predictions/traj_country104.rda", # file 5.16
+                             "alm/inst/vign/cache/signposts1_c96f55a749822dd089b636087766def2.rdb" # Sparc Solaris, file 5.16
                              ) )
                     known <- known | grepl(fp, pexecs)
                 execs <- execs[!known]
@@ -3249,9 +3261,30 @@ setRlibs <-
                 warn_re <- c(warn_re,
                              ": warning: .* \\[-Wreturn-type-c-linkage\\]")
 
+                ## gcc and clang warnings about sequencing
+
+                ## gcc warnings
+                warn_re <- c(warn_re,
+                             ": warning: pointer of type .* used in arithmetic",
+                             ": warning: .* \\[-Wformat-contains-nul\\]",
+                             ": warning: .* \\[-Wformat-zero-length\\]",
+                             ": warning: .* \\[-Wpointer-to-int-cast\\]",
+                             ": warning: .* \\[-Wsequence-point\\]")
+
+                ## clang warnings
+                warn_re <- c(warn_re,
+                             ": warning: .* GNU extension",
+                             ": warning: .* \\[-Wdeprecated-register\\]",
+                             ": warning: .* \\[-Wformat-extra-args\\]", # also gcc
+                             ": warning: .* \\[-Wformat-security\\]",
+                             ": warning: .* \\[-Wheader-guard\\]",
+                             ": warning: .* \\[-Wpointer-arith\\]",
+                             ": warning: .* \\[-Wunsequenced\\]")
+
                 warn_re <- paste0("(", paste(warn_re, collapse = "|"), ")")
 
                 lines <- grep(warn_re, lines, value = TRUE, useBytes = TRUE)
+
 
                 ## Ignore install-time readLines() warnings about
                 ## files with incomplete final lines.  Most of these
@@ -3362,9 +3395,28 @@ setRlibs <-
                     lines <- grep("Warning: ignoring .First.lib()", lines,
                                   fixed = TRUE, invert = TRUE, value = TRUE)
 
+                lines <- unique(lines)
+
+                note_re <-
+                    "warning: control may reach end of non-void function"
+
+                notes <- grep(note_re, lines0, value = TRUE, useBytes = TRUE)
+                notes <- unique(notes)
+
                 if (length(lines)) {
                     warningLog(Log, "Found the following significant warnings:")
                     printLog0(Log, .format_lines_with_indent(lines), "\n")
+                    if(length(notes)) {
+                        printLog(Log,
+                                 "Found the following additional warnings:\n")
+                        printLog0(Log, .format_lines_with_indent(notes),
+                                  "\n")
+                    }
+                    printLog0(Log, sprintf("See %s for details.\n",
+                                           sQuote(outfile)))
+                } else if(length(notes)) {
+                    noteLog(Log, "Found the following warnings:")
+                    printLog0(Log, .format_lines_with_indent(notes), "\n")
                     printLog0(Log, sprintf("See %s for details.\n",
                                            sQuote(outfile)))
                 } else resultLog(Log, "OK")
@@ -3668,7 +3720,7 @@ setRlibs <-
                     srcfiles <- dir(".", all.files = TRUE)
                     fi <- file.info(srcfiles)
                     srcfiles <- srcfiles[!fi$isdir]
-                    srcfiles <- grep("(\\.([cfmCM]|cc|cpp|f90|f95|mm|h|o|so)$|^Makevars|-win\\.def$)",
+                    srcfiles <- grep("(\\.([cfmCM]|cc|cpp|f90|f95|mm|h|o|so)$|^Makevars|-win\\.def|^install\\.libs\\.R$)",
                                      srcfiles,
                                      invert = TRUE, value = TRUE)
                     if (length(srcfiles)) {
@@ -4607,12 +4659,12 @@ function(x, ...)
 CRAN_check_results <-
 function()
 {
-    rds <- gzcon(url(sprintf("%s/%s",
-                             getOption("repos")["CRAN"],
+    ## This allows for partial local mirrors, or to
+    ## look at a more-freqently-updated mirror
+    CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
+    rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
                              "web/checks/check_results.rds"),
                      open = "rb"))
-    ## We could make the location of the local CRAN web/checks rsync
-    ## settable via some env var.
     results <- readRDS(rds)
     close(rds)
 
@@ -4622,12 +4674,10 @@ function()
 CRAN_check_details <-
 function()
 {
-    rds <- gzcon(url(sprintf("%s/%s",
-                             getOption("repos")["CRAN"],
+    CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
+    rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
                              "web/checks/check_details.rds"),
                      open = "rb"))
-    ## We could make the location of the local CRAN web/checks rsync
-    ## settable via some env var.
     details <- readRDS(rds)
     close(rds)
 
@@ -4637,12 +4687,10 @@ function()
 CRAN_memtest_notes <-
 function()
 {
-    rds <- gzcon(url(sprintf("%s/%s",
-                             getOption("repos")["CRAN"],
+    CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
+    rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
                              "web/checks/memtest_notes.rds"),
                      open = "rb"))
-    ## We could make the location of the local CRAN web/checks rsync
-    ## settable via some env var.
     mtnotes <- readRDS(rds)
     close(rds)
 

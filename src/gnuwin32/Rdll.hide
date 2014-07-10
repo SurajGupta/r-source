@@ -125,9 +125,6 @@
  R_OpenSiteFile
  R_OpenSysInitFile
  R_OutputCon
- R_PPStack
- R_PPStackSize
- R_PPStackTop
  R_Parse1Buffer
  R_Parse1File
  R_ParseBuffer
@@ -229,7 +226,6 @@
  R_newsock
  R_newunz
  R_newurl
- R_num_math_threads
  R_nwarnings
  R_osDynSymbol
  R_possible_dispatch

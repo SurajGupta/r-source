@@ -1125,6 +1125,51 @@ function(package, lib.loc = NULL)
 
     names(db) <- .Rd_get_names_from_Rd_db(db)
 
+    .get_var_names_from_item_tags <- function(s, nice = TRUE) {
+        if(!length(s)) return(character())
+
+        nms <- character()
+        ## Handle trailing colons and leading/trailing white space.
+        s <- sub("^ *", "", sub("( *:)? *$", "", s))
+        ## Handle \samp entries: need to match until the first unescaped
+        ## rbrace.
+        re <- "\\\\samp\\{(([^\\}]|[\\].)*)\\}( *, *)?"
+        m <- gregexpr(re, s)
+        if(any(unlist(m) > -1)) {
+            nms <- sub(re, "\\1", unlist(regmatches(s, m)))
+            ## Unescape Rd escapes.
+            nms <- gsub("\\\\([{}%])", "\\1", nms)
+            regmatches(s, m) <- ""
+        }
+        ## Handle \code entries, assuming that they can be taken literally
+        ## (no escaping or quoting to obtain valid R syntax).
+        re <- "\\\\code\\{([^}]*)\\}( *, *)?"
+        m <- gregexpr(re, s)
+        add <- regmatches(s, m)
+        lens <- sapply(add, length)
+        add <- sub(re, "\\1", unlist(add))
+        ## The old code base simply dropped the \code markup via
+        ##   gsub("\\\\code\\{(.*)\\}:?", "\\1", s)
+        ## unescaped underscores and stripped whitespace.
+        ## Let us be nice about such whitespace inside a single \code (by
+        ## default), as this should always render ok in the manual, but not
+        ## about escaped underscores e.g.,
+        ##   ElemStatLearn/man/marketing.Rd: Dual\_Income
+        ## and comma-separated lists inside
+        ## \code, e.g.,
+        ##   prefmod/man/trdel.Rd: \code{V1,V2,V3,V4,V5,V6,V7,V8,V9,V10}
+        ## as these will not render correctly.
+        if(nice) {
+            ind <- rep.int(lens == 1L, lens)
+            add[ind] <- tools:::.strip_whitespace(add[ind])
+        }
+        nms <- c(nms, add)
+        regmatches(s, m) <- ""
+        ## Handle rest.
+        nms <- c(nms, unlist(strsplit(s, " *, *")))
+        nms
+    }
+
     .get_data_frame_var_names <- function(x) {
         ## Make sure that there is exactly one format section:
         ## using .Rd_get_section() would get the first one.
@@ -1143,16 +1188,9 @@ function(package, lib.loc = NULL)
         ## Should this allow for several \describe blocks?
         x <- .Rd_get_section(x, "describe")
         ## Get the \item tags inside \describe.
-        txt <- .Rd_get_item_tags(x)
-        if(!length(txt)) return(character())
-        txt <- gsub("(.*):$", "\\1", as.character(txt))
-        txt <- gsub("\\\\code\\{(.*)\\}:?", "\\1", txt)
-        ## Argh.  Of course, variable names can have a '_', which needs
-        ## to be escaped if not in \code{}, and the prompt() default is
-        ## not to put variable names inside \code{}.
-        txt <- gsub("\\\\_", "_", txt)
-        txt <- unlist(strsplit(txt, ", *"))
-        .strip_whitespace(txt)
+        x <- .Rd_get_item_tags(x)
+        ## And extract the variable names from these.
+        .get_var_names_from_item_tags(x)
     }
 
     Rd_var_names <- lapply(db, .get_data_frame_var_names)
@@ -2814,6 +2852,8 @@ function(dir, force_suggests = TRUE, check_incoming = FALSE)
     lsuggests <- .get_requires_with_version_from_package_db(db, "Suggests")
     ## NB: no one checks version for 'Enhances'.
     lenhances <- .get_requires_with_version_from_package_db(db, "Enhances")
+    ## VignetteBuilder packages are needed to ascertain what is a vignette.
+    VB <- .get_requires_from_package_db(db, "VignetteBuilder")
 
     depends <- sapply(ldepends, `[[`, 1L)
     imports <- sapply(limports, `[[`, 1L)
@@ -2883,6 +2923,18 @@ function(dir, force_suggests = TRUE, check_incoming = FALSE)
             m <- setdiff(sapply(lsuggests, `[[`, 1L), installed)
             if(length(m))
                 bad_depends$suggests_but_not_installed <- m
+        }
+        if (length(VB)) {
+            ## These need both to be declared and installed
+            ## If people explicitly state 'utils' they ought really to
+            ## declare it, but skip for now.
+            bad <- VB[! VB %in% c(package_name, "utils", depends, imports, suggests)]
+            if(length(bad))
+                bad_depends$required_for_checking_but_not_declared <- bad
+            bad2 <- VB[! VB %in% c(package_name, installed)]
+            bad2 <- setdiff(bad2, bad)
+            if(length(bad2))
+                bad_depends$required_for_checking_but_not_installed <- bad2
         }
     }
     ## FIXME: is this still needed now we do dependency analysis?
@@ -2995,6 +3047,16 @@ function(x, ...)
       } else if(length(bad)) {
           c(sprintf("Package which this enhances but not available for checking: %s", sQuote(bad)),
             "")
+      },
+      if(length(bad <- x$required_for_checking_but_not_declared) > 1L) {
+          c(.pretty_format2("VignetteBuilder packages not declared:", bad), "")
+      } else if(length(bad)) {
+          c(sprintf("VignetteBuilder package not declared: %s", sQuote(bad)), "")
+      },
+      if(length(bad <- x$required_for_checking_but_not_installed) > 1L) {
+          c(.pretty_format2("VignetteBuilder packages required for checking but not installed:", bad), "")
+      } else if(length(bad)) {
+          c(sprintf("VignetteBuilder package required for checking but installed: %s", sQuote(bad)), "")
       },
       if(length(bad <- x$missing_vignette_depends)) {
           c(if(length(bad) > 1L) {
@@ -6498,6 +6560,66 @@ function(dir)
     if(length(repositories))
         out$repositories <- repositories
 
+    ## Does this have Suggests or Enhances not in mainstream
+    ## repositories?
+
+    suggests_or_enhances <-
+        setdiff(unique(c(.extract_dependency_package_names(meta["Suggests"]),
+                         .extract_dependency_package_names(meta["Enhances"]))),
+                c(.get_standard_package_names()$base, db[, "Package"]))
+    if(length(suggests_or_enhances)) {
+        out$suggests_or_enhances_not_in_mainstream_repositories <-
+            suggests_or_enhances
+        if(!is.na(aurls <- meta["Additional_repositories"])) {
+            aurls <- unique(unlist(strsplit(aurls, ", *")))
+            adb <-
+                tryCatch(utils::available.packages(utils::contrib.url(aurls,
+                                                                      "source"),
+                                                   filters =
+                                                   c("R_version",
+                                                     "duplicates")))
+            if(inherits(adb, "error")) {
+                out$additional_repositories_analysis_failed_with <-
+                    conditionMessage(adb)
+            } else {
+                pos <- match(suggests_or_enhances, rownames(adb), nomatch =
+                             0L)
+                ind <- (pos > 0L)
+                tab <- matrix(character(), nrow = 0L, ncol = 3L)
+                if(any(ind))
+                    tab <- rbind(tab,
+                                 cbind(suggests_or_enhances[ind],
+                                       "yes",
+                                       adb[pos[ind], "Repository"]))
+                ind <- !ind
+                if(any(ind))
+                    tab <- rbind(tab,
+                                 cbind(suggests_or_enhances[ind],
+                                       "no",
+                                       ""))
+                ## Map Repository fields to URLs, and determine unused
+                ## URLs.
+                ## Note that available.packages() possibly adds Path
+                ## information in the Repository field, so matching
+                ## given contrib URLs to these fields is not trivial.
+                unused <- character()
+                for(u in aurls) {
+                    cu <- utils::contrib.url(u, "source")
+                    ind <- substring(tab[, 3L], 1, nchar(cu)) == cu
+                    if(any(ind)) {
+                        tab[ind, 3L] <- u
+                    } else {
+                        unused <- c(unused, u)
+                    }
+                }
+                if(length(unused))
+                    tab <- rbind(tab, cbind("", "", unused))
+                dimnames(tab) <- NULL
+                out$additional_repositories_analysis_results <- tab
+            }
+        }
+    }
+
     uses <- character()
     BUGS <- character()
     for (field in c("Depends", "Imports", "Suggests")) {
@@ -6521,6 +6643,27 @@ function(dir)
         else
             vds <- readRDS(vds)[, "File"]
     }
+
+    ## Check for missing build/{partial.rdb,pkgname.pdf}
+    ## copy code from build.R
+    Rdb <- .build_Rd_db(dir, stages = NULL,
+                        os = c("unix", "windows"), step = 1)
+    if(length(Rdb)) {
+        names(Rdb) <-
+            substring(names(Rdb), nchar(file.path(dir, "man")) + 2L)
+        containsBuildSexprs <-
+            any(sapply(Rdb, function(Rd) any(getDynamicFlags(Rd)["build"])))
+        if(containsBuildSexprs &&
+           !file.exists(file.path(dir, "build", "partial.rdb")))
+            out$missing_manual_rdb <- TRUE
+        needRefMan <-
+            any(sapply(Rdb, function(Rd) any(getDynamicFlags(Rd)[c("install", "render")])))
+        if(needRefMan &&
+           !file.exists(file.path(dir, "build",
+                                  paste0( meta[["Package"]], ".pdf"))))
+            out$missing_manual_pdf <- TRUE
+    }
+
 
     ## Check for vignette source (only) in old-style 'inst/doc' rather
     ## than 'vignettes'.
@@ -6693,7 +6836,7 @@ function(x, ...)
           "FOSS licence with BuildVignettes: false"
       },
       if(length(y <- x$fields)) {
-          c("Possibly mis-spelled fields in DESCRIPTION:",
+          c("Unknown, possibly mis-spelled, fields in DESCRIPTION:",
             sprintf("  %s", paste(sQuote(y), collapse = " ")))
       },
       if(length(y <- x$overrides)) {
@@ -6725,6 +6868,24 @@ function(x, ...)
 	    "package which may restrict use:",
             strwrap(paste(y, collapse = ", "), indent = 2L, exdent = 4L))
       },
+      if(length(y <-
+                x$suggests_or_enhances_not_in_mainstream_repositories)) {
+          c("Suggests or Enhances not in mainstream repositories:",
+            strwrap(paste(y, collapse = ", "),
+                    indent = 2L, exdent = 4L),
+            if(length(y <-
+                      x$additional_repositories_analysis_failed_with)) {
+                c("Using Additional_repositories specification failed with:",
+                  paste(" ", y))
+            } else if(length(y <-
+                             x$additional_repositories_analysis_results)) {
+                c("Availability using Additional_repositories specification:",
+                  sprintf("  %s   %s   %s",
+                          format(y[, 1L], justify = "left"),
+                          format(y[, 2L], justify = "right"),
+                          format(y[, 3L], justify = "left")))
+            })
+      },
       if (length(y <- x$uses)) {
           paste(if(length(y) > 1L)
 		"Uses the superseded packages:" else
@@ -6750,6 +6911,12 @@ function(x, ...)
       },
       if(length(y <- x$missing_vignette_index)) {
           "Package has a VignetteBuilder field but no prebuilt vignette index."
+      },
+      if(length(y <- x$missing_manual_rdb)) {
+          "Package has help file(s) containing build-stage \\Sexpr{} expresssons but no build/partial.rdb."
+      },
+      if(length(y <- x$missing_manual_pdf)) {
+          "Package has help file(s) containing install/render-stage \\Sexpr{} expresssons but no prebuilt PDF manual."
       }
       )
 }

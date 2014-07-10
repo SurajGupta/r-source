@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2013   The R Core Team
+ *  Copyright (C) 1998-2014   The R Core Team
  *  Copyright (C) 2004        The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -653,11 +653,11 @@ static int equal(R_xlen_t i, R_xlen_t j, SEXP x, Rboolean nalast, SEXP rho)
     if (isObject(x) && !isNull(rho)) { /* so never any NAs */
 	/* evaluate .gt(x, i, j) */
 	SEXP si, sj, call;
-	si = ScalarInteger((int)i+1);
-	sj = ScalarInteger((int)j+1);
+	PROTECT(si = ScalarInteger((int)i+1));
+	PROTECT(sj = ScalarInteger((int)j+1));
 	PROTECT(call = lang4(install(".gt"), x, si, sj));
 	c = asInteger(eval(call, rho));
-	UNPROTECT(1);
+	UNPROTECT(3);
     } else {
 	switch (TYPEOF(x)) {
 	case LGLSXP:
@@ -691,11 +691,11 @@ static int greater(R_xlen_t i, R_xlen_t j, SEXP x, Rboolean nalast,
     if (isObject(x) && !isNull(rho)) { /* so never any NAs */
 	/* evaluate .gt(x, i, j) */
 	SEXP si, sj, call;
-	si = ScalarInteger((int)i+1);
-	sj = ScalarInteger((int)j+1);
+	PROTECT(si = ScalarInteger((int)i+1));
+	PROTECT(sj = ScalarInteger((int)j+1));
 	PROTECT(call = lang4(install(".gt"), x, si, sj));
 	c = asInteger(eval(call, rho));
-	UNPROTECT(1);
+	UNPROTECT(3);
     } else {
 	switch (TYPEOF(x)) {
 	case LGLSXP:
@@ -864,7 +864,7 @@ orderVectorl(R_xlen_t *indx, R_xlen_t n, SEXP key, Rboolean nalast,
 
     if (n < 2) return;
     for (t = 0; incs[t] > n; t++);
-    for (h = incs[t]; t < NI; h = sincs[++t])
+    for (h = incs[t]; t < NI; h = incs[++t])
 	R_CheckUserInterrupt();
 	for (i = h; i < n; i++) {
 	    itmp = indx[i];
