@@ -107,9 +107,19 @@ setRlibs <-
         }
     }
 
+    sug <- if (suggests)  names(pi$Suggests)
+    else {
+        ## we always need to be able to recognise 'vignettes'
+        VB <- unname(pi$DESCRIPTION["VignetteBuilder"])
+        if(is.na(VB)) character()
+        else {
+            VB <- unlist(strsplit(VB, ","))
+            unique(gsub('[[:space:]]', '', VB))
+        }
+    }
     deps <- unique(c(names(pi$Depends), names(pi$Imports),
                      if(LinkingTo) names(pi$LinkingTo),
-                     if(suggests) names(pi$Suggests)))
+                     sug))
     if(length(libdir) && self2) flink(file.path(libdir, thispkg), tmplib)
     ## .Library is not necessarily canonical, but the .libPaths version is.
     lp <- .libPaths()
@@ -160,7 +170,7 @@ setRlibs <-
       " R_LIBS_SITE='no_such_dir'")
 }
 
-###- The main function for "R CMD check"  {currently extends all the way to the end-of-file}
+###- The main function for "R CMD check"
 .check_packages <- function(args = NULL)
 {
     WINDOWS <- .Platform$OS.type == "windows"
@@ -820,7 +830,7 @@ setRlibs <-
                        "po", "src", "tests", "vignettes",
                        "build",       # used by R CMD build
                        ".aspell",     # used for spell checking packages
-                       "java", "tools") # common dirs in packages.
+                       "java", "tools", "noweb") # common dirs in packages.
             topfiles <- setdiff(topfiles, known)
             if (file.exists(file.path("inst", "AUTHORS")))
                 topfiles <- setdiff(topfiles, "AUTHORS")
@@ -1352,8 +1362,8 @@ setRlibs <-
                             "They are not part of the API,",
                             "for use only by R itself",
                             "and subject to change without notice.")
-                else if(any(grepl("with DUP = FALSE:", out)))
-                    wrapLog("DUP = FALSE is deprecated and may be",
+                else if(any(grepl("with DUP != TRUE:", out)))
+                    wrapLog("DUP = FALSE is deprecated and will be",
                             "disabled in future versions of R.")
                 else
                     wrapLog("See the chapter 'System and foreign language interfaces' of the 'Writing R Extensions' manual.\n")
@@ -1983,6 +1993,7 @@ setRlibs <-
         ## Now look for TeX leftovers (and soiltexture, Amelia ...).
         bad <- grepl("[.](log|aux|bbl|blg|dvi|toc|out|Rd|Rout|dbj|drv|ins)$",
                      files, ignore.case = TRUE)
+        bad <- bad | (files %in% c("Rplots.ps", "Rplots.pdf"))
         if (any(bad)) {
             if(!any) noteLog(Log)
             any <- TRUE
@@ -2163,8 +2174,10 @@ setRlibs <-
             ## If we have named objects then we have symbols.rds and
             ## will not be picking up symbols just in system libraries.
             haveObjs <- any(grepl("^ *Object", out))
-            if(haveObjs && any(grepl("(abort|assert|exit)", out)) &&
-               !pkgname %in% c("multicore", "parallel")) # these need to call exit
+            pat <- paste("possibly from",
+                         sQuote("(abort|assert|exit|_exit|_Exit)"))
+            if(haveObjs && any(grepl(pat, out)) &&
+               !pkgname %in% c("parallel", "fork")) # need _exit in forked child
                 warningLog(Log)
             else noteLog(Log)
             printLog0(Log, paste(c(out, ""), collapse = "\n"))
@@ -2174,11 +2187,12 @@ setRlibs <-
                 if(haveObjs)
                     c("Compiled code should not call entry points which",
                       "might terminate R nor write to stdout/stderr instead",
-                      "of to the console.\n")
+                      "of to the console, nor the C RNG.\n")
                 else
                     c("Compiled code should not call entry points which",
                       "might terminate R nor write to stdout/stderr instead",
-                      "of to the console.  The detected symbols are linked",
+                      "of to the console, nor the C RNG.",
+                      "The detected symbols are linked",
                       "into the code but might come from libraries",
                       "and not actually be called.\n")
             } else character()
@@ -2397,6 +2411,20 @@ setRlibs <-
             any <- any || bad
             if (!any) resultLog(Log, "OK")
 
+            if (do_timings) {
+                tfile <- paste0(pkgname, "-Ex.timings")
+		times <- read.table(tfile, header = TRUE, row.names = 1L,
+				    colClasses = c("character", rep("numeric", 3)))
+                o <- order(times[[1]]+times[[2]], decreasing = TRUE)
+                times <- times[o, ]
+                keep <- (times[[1]] + times[[2]] > 5) | (times[[3]] > 5)
+                if(any(keep)) {
+                    printLog(Log, "Examples with CPU or elapsed time > 5s\n")
+                    times <- capture.output(format(times[keep, ]))
+                    printLog0(Log, paste(times, collapse = "\n"), "\n")
+                }
+            }
+
             ## Try to compare results from running the examples to
             ## a saved previous version.
             exsave <- file.path(pkgdir, "tests", "Examples",
@@ -2408,22 +2436,11 @@ setRlibs <-
                 cmd <- paste0("invisible(tools::Rdiff('",
                               exout, "', '", exsave, "',TRUE,TRUE))")
                 out <- R_runR(cmd, R_opts2)
+                resultLog(Log, "OK")
                 if(length(out))
                     printLog0(Log, paste(c("", out, ""), collapse = "\n"))
-                resultLog(Log, "OK")
             }
-            if (do_timings) {
-                tfile <- paste0(pkgname, "-Ex.timings")
-                times <- read.table(tfile, header = TRUE, row.names = 1L, colClasses = c("character", rep("numeric", 3)))
-                o <- order(times[[1]]+times[[2]], decreasing = TRUE)
-                times <- times[o, ]
-                keep <- (times[[1]] + times[[2]] > 5) | (times[[3]] > 5)
-                if(any(keep)) {
-                    printLog(Log, "Examples with CPU or elapsed time > 5s\n")
-                    times <- capture.output(format(times[keep, ]))
-                    printLog0(Log, paste(times, collapse = "\n"), "\n")
-                }
-            }
+
             TRUE
         }
 
@@ -3110,7 +3127,7 @@ setRlibs <-
                   grepl("inst/doc/[.](Rinstignore|build[.]timestamp)$", dots) |
                   grepl("vignettes/[.]Rinstignore$", dots) |
                   grepl("^src.*/[.]deps$", dots)
-               if (all(known))
+		if (all(known))
                     printLog(Log, "\nCRAN-pack knows about all of these\n")
                 else if (any(!known)) {
                     printLog(Log, "\nCRAN-pack does not know about\n")
@@ -3237,6 +3254,7 @@ setRlibs <-
                              ## clang warning about invalid returns.
                              "warning: void function",
                              "warning: control reaches end of non-void function",
+                             "warning: control may reach end of non-void function",
                              "warning: no return statement in function returning non-void",
                              ": #warning",
                              # these are from era of static HTML
@@ -3279,11 +3297,21 @@ setRlibs <-
                              ": warning: .* \\[-Wformat-security\\]",
                              ": warning: .* \\[-Wheader-guard\\]",
                              ": warning: .* \\[-Wpointer-arith\\]",
-                             ": warning: .* \\[-Wunsequenced\\]")
+                             ": warning: .* \\[-Wunsequenced\\]",
+                             ": warning: .* \\[-Wvla-extension\\]",
+                             ": warning: format string contains '[\\]0'",
+                             ": warning: .* \\[-Wc[+][+]11-long-long\\]",
+                             ": warning: empty macro arguments are a C99 feature"
+                             )
 
                 warn_re <- paste0("(", paste(warn_re, collapse = "|"), ")")
 
                 lines <- grep(warn_re, lines, value = TRUE, useBytes = TRUE)
+
+                ## skip for now some c++11-long-long warnings.
+                ex_re <- "(/BH/include/boost/|/RcppParallel/include/|/usr/include/|/usr/local/include/|/opt/X11/include/|/usr/X11/include/).*\\[-Wc[+][+]11-long-long\\]"
+                lines <- grep(ex_re, lines, invert = TRUE, value = TRUE,
+                              useBytes = TRUE)
 
 
                 ## Ignore install-time readLines() warnings about
@@ -3591,6 +3619,23 @@ setRlibs <-
                          wrapLog(msg_NAMESPACE)
                          do_exit(1L)
                      })
+            OK <- TRUE
+            ## Look for empty importFrom
+            imp <- ns$imports
+            lens <- sapply(imp, length)
+            imp <- imp[lens == 2L]
+            nm <- sapply(imp, "[[", 1)
+            lens <- sapply(imp, function(x) length(x[[2]]))
+            bad <- nm[lens == 0L]
+            if(length(bad)) {
+                OK <- FALSE
+                msg <- if(length(bad) == 1L)
+                    sprintf("  Namespace with empty importFrom: %s", sQuote(bad))
+                else
+                    paste("  Namespaces with empty importFrom:",
+                          .pretty_format(sort(bad)), sep = "\n")
+                noteLog(Log, msg)
+            }
             nS3methods <- nrow(ns$S3methods)
             if (nS3methods > 500L) {
                 ## check that this is installable in R 3.0.1
@@ -3614,13 +3659,13 @@ setRlibs <-
                     if(status != 0L)  break
                 }
                 if (status == 0L) {
+                    OK <- FALSE
                     msg <- sprintf("R < 3.0.2 had a limit of 500 registered S3 methods: found %d",
                                    nS3methods)
                     noteLog(Log, msg)
-                } else
-                    resultLog(Log, "OK")
-            } else
-                resultLog(Log, "OK")
+                }
+            }
+            if(OK) resultLog(Log, "OK")
         }
 
         checkingLog(Log, "package dependencies")
@@ -3721,8 +3766,7 @@ setRlibs <-
                     fi <- file.info(srcfiles)
                     srcfiles <- srcfiles[!fi$isdir]
                     srcfiles <- grep("(\\.([cfmCM]|cc|cpp|f90|f95|mm|h|o|so)$|^Makevars|-win\\.def|^install\\.libs\\.R$)",
-                                     srcfiles,
-                                     invert = TRUE, value = TRUE)
+                                     srcfiles, invert = TRUE, value = TRUE)
                     if (length(srcfiles)) {
                         if (!any) warningLog(Log)
                         any <- TRUE
@@ -4125,6 +4169,7 @@ setRlibs <-
         if(is.na(prev)) Sys.setenv("_R_CHECK_LIMIT_CORES_" = "TRUE")
         prev <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", NA)
         if(is.na(prev)) Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "stop")
+        Sys.setenv("_R_CHECK_CODE_USAGE_VIA_NAMESPACES_" = "TRUE")
         R_check_vc_dirs <- TRUE
         R_check_executables_exclusions <- FALSE
         R_check_doc_sizes2 <- TRUE
@@ -4322,7 +4367,7 @@ setRlibs <-
                 do_exit(1L)
             }
             desc <- desc[1L, ]
-            if (desc["Priority"] == "base") {
+            if (identical(desc["Priority"], c(Priority = "base"))) {	# Priority might be missing
                 messageLog(Log, "looks like ", sQuote(pkgname0),
                            " is a base package")
                 messageLog(Log, "skipping installation test")
@@ -4335,7 +4380,7 @@ setRlibs <-
         if (!is_base_pkg) {
             desc <- check_description()
             pkgname <- desc["Package"]
-            is_rec_pkg <- desc["Priority"] %in% "recommended"
+            is_rec_pkg <- identical(desc["Priority"], c(Priority = "recommended"))
 
             ## Check if we have any hope of installing
             OS_type <- desc["OS_type"]
@@ -4481,6 +4526,7 @@ setRlibs <-
                 }
             }
         }
+        messageLog(Log, "DONE")
         if ((Log$warnings > 0L) || (Log$notes > 0L)) {
             message(""); summaryLog(Log)
         }
@@ -4498,7 +4544,8 @@ setRlibs <-
 
     } ## end for (pkg in pkgs)
 
-} ## end{ .check_packages }
+}
+###--- end{ .check_packages }
 
 .format_lines_with_indent <-
 function(x)

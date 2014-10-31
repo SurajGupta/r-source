@@ -1,7 +1,9 @@
 % File src/library/base/man/paste.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
+
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
 
 \name{paste}
 \title{Concatenate Strings}
@@ -33,7 +35,7 @@ paste0(\dots, collapse = NULL)
   Note that \code{paste()} coerces \code{\link{NA_character_}}, the
   character missing value, to \code{"NA"} which may seem
   undesirable, e.g., when pasting two character vectors, or very
-  desirable, e.g. in \code{paste("the value of p is ", p)}.
+  desirable, e.g.\sspace{}in \code{paste("the value of p is ", p)}.
 
   \code{paste0(\dots, collapse)} is equivalent to
   \code{paste(\dots, sep = "", collapse)}, slightly more efficiently.
@@ -48,11 +50,12 @@ paste0(\dots, collapse = NULL)
   which case it is a single empty string.
 
   If any input into an element of the result is in UTF-8 (and none are
-  declared with encoding \code{"bytes"}), that element will be in UTF-8,
-  otherwise in the current encoding in which case the encoding of the
-  element is declared if the current locale is either Latin-1 or UTF-8,
-  at least one of the corresponding inputs (including separators) had a
-  declared encoding and all inputs were either ASCII or declared.
+  declared with encoding \code{"bytes"}, (see \code{\link{Encoding}}),
+  that element will be in UTF-8, otherwise in the current encoding in
+  which case the encoding of the element is declared if the current
+  locale is either Latin-1 or UTF-8, at least one of the corresponding
+  inputs (including separators) had a declared encoding and all inputs
+  were either ASCII or declared.
 
   If an input into an element is declared with encoding \code{"bytes"},
   no translation will be done of any of the elements and the resulting

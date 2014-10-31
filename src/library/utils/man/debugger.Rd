@@ -1,7 +1,9 @@
 % File src/library/utils/man/debugger.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
+
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
 
 \name{debugger}
 \alias{debugger}
@@ -38,7 +40,7 @@ debugger(dump = last.dump)
   environments from which to select repeatedly.  When an environment is
   selected, it is copied and the \code{\link{browser}} called from
   within the copy.  Note that not all the information in the original
-  frame will be available, e.g. promises which have not yet been
+  frame will be available, e.g.\sspace{}promises which have not yet been
   evaluated and the contents of any \code{\dots} argument.
 
   If \code{dump.frames} is installed as the error handler, execution
@@ -66,6 +68,9 @@ debugger(dump = last.dump)
   Wadsworth & Brooks/Cole.
 }
 \seealso{
+  \code{\link{browser}} for the actions available at the \code{Browse}
+  prompt.
+  
   \code{\link{options}} for setting \code{error} options;
   \code{\link{recover}} is an interactive debugger working similarly to
   \code{debugger} but directly after the error occurs.

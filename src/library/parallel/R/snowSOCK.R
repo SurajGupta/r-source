@@ -47,8 +47,14 @@ newPSOCKnode <- function(machine = "localhost", ...,
     rscript <- if (getClusterOption("homogeneous", options)) {
         shQuote(getClusterOption("rscript", options))
     } else "Rscript"
+    rscript_args <- getClusterOption("rscript_args", options)
 
-    cmd <- paste(rscript, "-e", shQuote(arg), env)
+    ## in principle we should quote these,
+    ## but the current possible values do not need quoting
+    cmd <- if(length(rscript_args))
+        paste(rscript, paste(rscript_args, collapse = " "),
+              "-e", shQuote(arg), env)
+    else paste(rscript, "-e", shQuote(arg), env)
 
     ## We do redirection of connections at R level once the process is
     ## running.  We could instead do it at C level here, at least on
@@ -114,7 +120,11 @@ recvOneData.SOCKcluster <- function(cl)
 
 makePSOCKcluster <- function(names, ...)
 {
-    if (is.numeric(names)) names <- rep('localhost', names[1])
+    if (is.numeric(names)) {
+        names <- as.integer(names[1L])
+        if(is.na(names) || names < 1L) stop("numeric 'names' must be >= 1")
+        names <- rep('localhost', names)
+    }
     .check_ncores(length(names))
     options <- addClusterOptions(defaultClusterOptions, list(...))
     cl <- vector("list", length(names))

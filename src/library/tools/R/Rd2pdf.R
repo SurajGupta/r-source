@@ -1,7 +1,7 @@
 #  File src/library/tools/R/Rd2pdf.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,9 @@
 .DESCRIPTION_to_latex <- function(descfile, outfile, version = "Unknown")
 {
     desc <- read.dcf(descfile)[1, ]
+    ## Using
+    ##   desc <- .read_description(descfile)
+    ## would preserve leading white space in Description and Author ...
     if (is.character(outfile)) {
         out <- file(outfile, "a")
         on.exit(close(out))
@@ -166,7 +169,7 @@
             }
             cnt <- 0L
             for(f in names(Rd)) {
-                bf <- basename(f)
+##                bf <- basename(f)
                 cnt <- cnt + 1L
                 if (!silent && cnt %% 10L == 0L)
                     message(".", appendLF=FALSE, domain=NA)
@@ -756,7 +759,7 @@ setEncoding2, "
         } else if (a == "--only-meta") {
             only_meta <- TRUE
         } else if (substr(a, 1, 5) == "--OS=" || substr(a, 1, 5) == "--OS=") {
-            OS_type <- substr(a, 6, 1000)
+            OSdir <- substr(a, 6, 1000)
         } else if (substr(a, 1, 11) == "--encoding=") {
             enc <- substr(a, 12, 1000)
         } else if (substr(a, 1, 17) == "--outputEncoding=") {
@@ -829,10 +832,13 @@ setEncoding2, "
     setwd(build_dir)
 
     res <- try(texi2pdf('Rd2.tex', quiet = FALSE, index = index))
-    if (inherits(res, "try-error")) {
-        message("Error in running tools::texi2pdf()")
-        do_cleanup()
-        q("no", status = 1L, runLast = FALSE)
+    if(inherits(res, "try-error")) {
+        res <- try(texi2pdf('Rd2.tex', quiet = FALSE, index = index))
+        if(inherits(res, "try-error")) {
+            message("Error in running tools::texi2pdf()")
+            do_cleanup()
+            q("no", status = 1L, runLast = FALSE)
+        }
     }
 
     setwd(startdir)

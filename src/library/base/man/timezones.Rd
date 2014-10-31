@@ -3,6 +3,8 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
+
 \name{timezones}
 \alias{Sys.timezone}
 \alias{OlsonNames}
@@ -96,7 +98,7 @@ OlsonNames()
   Almost all \R platforms make use of a time-zone database originally
   compiled by Arthur David Olson and now managed by IANA, in which the
   preferred way to refer to a time zone is by a location (typically of a
-  city) e.g. \code{Europe/London}, \code{America/Los_Angeles},
+  city), e.g., \code{Europe/London}, \code{America/Los_Angeles},
   \code{Pacific/Easter}.  Some traditional designations are also allowed
   such as \code{EST5EDT} or \code{GB}.  (Beware that some of these
   designations may not be what you expect: in particular \code{EST} is a
@@ -121,7 +123,7 @@ OlsonNames()
   
   The function \code{OlsonNames} returns the time-zone names known to
   the Olson/IANA database on the current system. The system-specific
-  location in the file system varies, e.g.  \file{/usr/share/zoneinfo}
+  location in the file system varies, e.g.\sspace{}\file{/usr/share/zoneinfo}
   (Linux, OS X, FreeBSD), \file{/usr/share/lib/zoneinfo} (Solaris, AIX),
   \ldots.  It is likely that there is a file named something like
   \file{zone.tab} under that directory listing the locations known as
@@ -136,7 +138,7 @@ OlsonNames()
   \file{VERSION} in that directory states the version.  Environment
   variable \env{TZDIR} can be used to point to a different
   \file{zoneinfo} directory (this is also supported by some OSes,
-  e.g. Linux).
+  e.g.\sspace{}Linux).
 #endif
 #ifdef windows
 
@@ -179,6 +181,10 @@ OlsonNames()
   often have short notice and time-zone databases may not be up to date.
   (Chile has in the recent past announced changes at \emph{5 days}
   notice, and in 2014 Turkey gave only a month's notice.)
+
+  On platforms with case-insensitive file systems, time zone names will be
+  case-insensitive.  They may or may not be on other platforms and so,
+  for example,  \code{"gmt"} is valid on some platforms and not on others.
 
   Note that except where replaced, the operation of time zones is an OS
   service, and even where replaced a third-party database is used and

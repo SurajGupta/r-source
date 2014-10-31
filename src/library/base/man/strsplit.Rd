@@ -30,11 +30,12 @@ strsplit(x, split, fixed = FALSE, perl = FALSE, useBytes = FALSE)
     logical.  If \code{TRUE} match \code{split} exactly, otherwise
     use regular expressions.  Has priority over \code{perl}.
   }
-  \item{perl}{logical.  Should perl-compatible regexps be used?}
+  \item{perl}{logical.  Should Perl-compatible regexps be used?}
   \item{useBytes}{logical.  If \code{TRUE} the matching is done
     byte-by-byte rather than character-by-character, and inputs with
     marked encodings are not converted.  This is forced (with a warning)
-    if any input is found which is marked as \code{"bytes"}.}
+    if any input is found which is marked as \code{"bytes"}
+    (see \code{\link{Encoding}}).}
 }
 \details{
   Argument \code{split} will be coerced to character, so

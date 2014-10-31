@@ -3,6 +3,8 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
+\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
+
 \name{.Platform}
 \title{Platform Specific Variables}
 \usage{
@@ -44,7 +46,7 @@
   \item{endian}{
     character string, \code{"big"} or \code{"little"}, giving the
     endianness of the processor in use.  This is relevant when it is
-    necessary to know the order to read/write bytes of e.g. an integer or
+    necessary to know the order to read/write bytes of e.g.\sspace{}an integer or
     double from/to a \link{connection}: see \code{\link{readBin}}.
   }
   \item{pkgType}{
@@ -92,12 +94,13 @@
 
 \examples{
 ## Note: this can be done in a system-independent way
-## by file.info()$isdir: see utils::file_test
+##   by file.info()$isdir: see utils::file_test,
+##   and there is a built-in dir.exists() as from R 3.2.0.
 if(.Platform$OS.type == "unix") {
    system.test <- function(...) system(paste("test", ...)) == 0L
-   dir.exists <- function(dir)
+   dir.exists2 <- function(dir)
        sapply(dir, function(d) system.test("-d", d))
-   dir.exists(c(R.home(), "/tmp", "~", "/NO")) # > T T T F
+   dir.exists2(c(R.home(), "/tmp", "~", "/NO")) # > T T T F
 }
 }
 \keyword{file}

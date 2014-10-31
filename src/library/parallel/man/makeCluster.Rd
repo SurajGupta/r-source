@@ -11,6 +11,8 @@
 \alias{makeForkCluster}
 \alias{stopCluster}
 \alias{setDefaultCluster}
+\alias{R_PARALLEL_PORT}
+
 \title{
   Create a Parallel Socket Cluster
 }
@@ -44,11 +46,11 @@ setDefaultCluster(cl = NULL)
   \code{"FORK"} calls \code{makeForkCluster}.  Other types are passed to
   package \CRANpkg{snow}.
 
-  \code{makePSOCKcluster} is very similar to \code{makeSOCKcluster} in
-  package \CRANpkg{snow}.  It runs \command{Rscript} on the specified
-  host(s) to set up a worker process which listens on a socket for
-  expressions to evaluate, and returns the results (as serialized
-  objects).
+  \code{makePSOCKcluster} is an enhanced version of
+  \code{makeSOCKcluster} in package \CRANpkg{snow}.  It runs
+  \command{Rscript} on the specified host(s) to set up a worker process
+  which listens on a socket for expressions to evaluate, and returns the
+  results (as serialized objects).
 
   \code{makeForkCluster} is merely a stub on Windows.  On Unix-alike
   platforms it creates the worker process by forking.
@@ -84,6 +86,8 @@ setDefaultCluster(cl = NULL)
     \item{\code{rscript}}{The path to \command{Rscript} on the workers,
       used if \code{homogeneous} is true. Defaults to the full path on
       the master.}
+    \item{\code{rscript_args}}{Character vector of additional
+      arguments for \command{Rscript} such as \option{--no-environ}.}
     \item{\code{renice}}{A numerical \sQuote{niceness} to set for the
       worker processes, e.g.{} \code{15} for a low priority.
       OS-dependent: see \code{\link{psnice}} for details.}

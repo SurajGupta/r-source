@@ -1,6 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-12   The R Core Team.
+ *  Copyright (C) 1998-2001  Daniel Veillard.
+ *  Copyright (C) 2001-2014   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,10 +36,11 @@
  * daniel@veillard.com
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
+#include <sys/types.h> // for ssize_t
 
 #undef HAVE_ZLIB_H
 
@@ -207,7 +209,7 @@ typedef struct RxmlNanoHTTPCtxt {
     int returnValue;	/* the protocol return value */
     char *statusMsg;    /* the protocol status message */
     char *contentType;	/* the MIME type for the input */
-    int contentLength;	/* the reported length */
+    ssize_t contentLength;	/* the reported length */
     char *location;	/* the new URL in case of redirect */
     char *authHeader;	/* contents of {WWW,Proxy}-Authenticate header */
     char *encoding;	/* encoding extracted from the contentType */
@@ -571,9 +573,9 @@ RxmlNanoHTTPSend(RxmlNanoHTTPCtxtPtr ctxt)
     if (ctxt->state & XML_NANO_HTTP_WRITE) {
         unsigned int total_sent = 0;
         while (total_sent <strlen(ctxt->outptr)) {
-            unsigned int nsent = send(ctxt->fd, ctxt->outptr+total_sent,
-                                      strlen(ctxt->outptr)-total_sent, 0);
-            if (nsent>0)
+            ssize_t nsent = send(ctxt->fd, ctxt->outptr+total_sent,
+				 strlen(ctxt->outptr)-total_sent, 0);
+            if (nsent > 0)
                 total_sent += nsent;
 	}
         ctxt->last = total_sent;
@@ -610,8 +612,8 @@ RxmlNanoHTTPRecv(RxmlNanoHTTPCtxtPtr ctxt)
 	    ctxt->inptr = ctxt->content = ctxt->inrptr = ctxt->in;
 	}
 	if (ctxt->inrptr > ctxt->in + XML_NANO_HTTP_CHUNK) {
-	    int delta = ctxt->inrptr - ctxt->in;
-	    int len = ctxt->inptr - ctxt->inrptr;
+	    ssize_t delta = ctxt->inrptr - ctxt->in;
+	    size_t len = ctxt->inptr - ctxt->inrptr;
 
 	    memmove(ctxt->in, ctxt->inrptr, len);
 	    ctxt->inrptr -= delta;
@@ -619,9 +621,9 @@ RxmlNanoHTTPRecv(RxmlNanoHTTPCtxtPtr ctxt)
 	    ctxt->inptr -= delta;
 	}
         if ((ctxt->in + ctxt->inlen) < (ctxt->inptr + XML_NANO_HTTP_CHUNK)) {
-	    int d_inptr = ctxt->inptr - ctxt->in;
-	    int d_content = ctxt->content - ctxt->in;
-	    int d_inrptr = ctxt->inrptr - ctxt->in;
+	    ssize_t d_inptr = ctxt->inptr - ctxt->in;
+	    ssize_t d_content = ctxt->content - ctxt->in;
+	    ssize_t d_inrptr = ctxt->inrptr - ctxt->in;
 	    char *	tmp_ptr = ctxt->in;
 
 	    ctxt->inlen *= 2;
@@ -692,7 +694,7 @@ RxmlNanoHTTPRecv(RxmlNanoHTTPCtxtPtr ctxt)
 #endif
 
 	    /* was the socket */
-	    ctxt->last = recv(ctxt->fd, ctxt->inptr, XML_NANO_HTTP_CHUNK, 0);
+	    ctxt->last = (int) recv(ctxt->fd, ctxt->inptr, XML_NANO_HTTP_CHUNK, 0);
 	    if (ctxt->last > 0) {
 		ctxt->inptr += ctxt->last;
 		return(ctxt->last);
@@ -872,7 +874,12 @@ RxmlNanoHTTPScanAnswer(RxmlNanoHTTPCtxtPtr ctxt, const char *line)
     } else if (!xmlStrncasecmp(BAD_CAST line, BAD_CAST"Content-Length:", 15)) {
         cur += 15;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
-	ctxt->contentLength = atoi(cur);
+	{
+	    // was atoi, but ssize_t may be > long, let alone int.
+	    char *endp;
+	    double len = strtod(cur, &endp);
+	    ctxt->contentLength = (ssize_t) len;
+	}
     } else if (!xmlStrncasecmp(BAD_CAST line, BAD_CAST"Location:", 9)) {
         cur += 9;
 	while ((*cur == ' ') || (*cur == '\t')) cur++;
@@ -1121,9 +1128,9 @@ RxmlNanoHTTPConnectHost(const char *host, int port)
 	} else if (h->h_addrtype == AF_INET6) {
 	    /* AAAA records (IPv6) */
 	    memcpy(&ia6, h->h_addr_list[i], h->h_length);
-	    sockin6.sin_family = h->h_addrtype;
-	    sockin6.sin_addr   = ia6;
-	    sockin6.sin_port   = htons(port);
+	    sockin6.sin6_family = h->h_addrtype;
+	    sockin6.sin6_addr   = ia6;
+	    sockin6.sin6_port   = htons(port);
 	    addr = (struct sockaddr *)&sockin6;
 #endif
 	} else
@@ -1218,7 +1225,7 @@ RxmlNanoHTTPRead(void *ctx, void *dest, int len)
         if (RxmlNanoHTTPRecv(ctxt) <= 0) break;
     }
     if (ctxt->inptr - ctxt->inrptr < len)
-        len = ctxt->inptr - ctxt->inrptr;
+        len = (int)(ctxt->inptr - ctxt->inrptr);
     memcpy(dest, ctxt->inrptr, len);
     ctxt->inrptr += len;
     return(len);
@@ -1498,7 +1505,7 @@ RxmlNanoHTTPStatusMsg(void *ctx)
     return(ctxt->statusMsg);
 }
 
-int
+ssize_t
 RxmlNanoHTTPContentLength(void *ctx)
 {
     RxmlNanoHTTPCtxtPtr ctxt = (RxmlNanoHTTPCtxtPtr) ctx;

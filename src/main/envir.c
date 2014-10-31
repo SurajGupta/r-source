@@ -1642,13 +1642,13 @@ SEXP attribute_hidden do_list2env(SEXP call, SEXP op, SEXP args, SEXP rho)
     x = CAR(args);
     n = LENGTH(x);
     xnms = getAttrib(x, R_NamesSymbol);
-    if (TYPEOF(xnms) != STRSXP || LENGTH(xnms) != n)
+    if (n && (TYPEOF(xnms) != STRSXP || LENGTH(xnms) != n))
 	error(_("names(x) must be a character vector of the same length as x"));
     envir = CADR(args);
     if (TYPEOF(envir) != ENVSXP)
 	error(_("'envir' argument must be an environment"));
 
-    for(int i = 0; i < LENGTH(x) ; i++) {
+    for(int i = 0; i < n; i++) {
 	SEXP name = installTrChar(STRING_ELT(xnms, i));
 	defineVar(name, VECTOR_ELT(x, i), envir);
     }
@@ -2618,7 +2618,7 @@ SEXP attribute_hidden do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
     else
 	FrameNames(FRAME(env), all, names, &k);
 
-    setAttrib(ans, R_NamesSymbol, names);
+    if (k > 0) setAttrib(ans, R_NamesSymbol, names);
     UNPROTECT(2);
     return(ans);
 }

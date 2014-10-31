@@ -1772,8 +1772,20 @@ void uiter_setUTF8(UCharIterator *iter, const char *s, int32_t length);
 
 void uloc_setDefault(const char* localeID, UErrorCode* status);
 
+typedef enum {
+    ULOC_ACTUAL_LOCALE = 0,
+    ULOC_VALID_LOCALE = 1,
+    ULOC_DATA_LOCALE_TYPE_LIMIT = 3
+} ULocDataLocaleType ;
+
+
+const char* ucol_getLocaleByType(const UCollator *coll,
+				 ULocDataLocaleType type,
+				 UErrorCode *status);
+
 #define U_ZERO_ERROR 0
 #define U_FAILURE(x) ((x)>U_ZERO_ERROR)
+#define ULOC_ACTUAL_LOCALE 0
 
 #else
 #include <unicode/utypes.h>
@@ -1784,11 +1796,14 @@ void uloc_setDefault(const char* localeID, UErrorCode* status);
 
 static UCollator *collator = NULL;
 
+static Rboolean collationLocaleSet = FALSE;
+
 /* called from platform.c */
 void attribute_hidden resetICUcollator(void)
 {
     if (collator) ucol_close(collator);
     collator = NULL;
+    collationLocaleSet = FALSE;
 }
 
 static const struct {
@@ -1817,6 +1832,12 @@ static const struct {
     { NULL,  0 }
 };
 
+// Idea is to remap Windows' locale names by 3.2.0.
+static const char *getLocale(void)
+{
+    const char *p = getenv("R_ICU_LOCALE");
+    return (p && p[0]) ? p : setlocale(LC_COLLATE, NULL);
+}
 
 SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1833,12 +1854,23 @@ SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    error(_("invalid '%s' argument"), this);
 	s = CHAR(STRING_ELT(x, 0));
 	if (streql(this, "locale")) {
-	    if (collator) ucol_close(collator);
-	    uloc_setDefault(s, &status);
-	    if(U_FAILURE(status))
-		error("failed to set ICU locale");
-	    collator = ucol_open(NULL, &status);
-	    if (U_FAILURE(status)) error("failed to open ICU collator");
+	    if (collator) {
+		ucol_close(collator);
+		collator = NULL;
+	    }
+	    if(strcmp(s, "none")) {
+		if(streql(s, "default")) 
+		    uloc_setDefault(getLocale(), &status);
+		else uloc_setDefault(s, &status);
+		if(U_FAILURE(status))
+		    error("failed to set ICU locale %s (%d)", s, status);
+		collator = ucol_open(NULL, &status);
+		if (U_FAILURE(status)) {
+		    collator = NULL;
+		    error("failed to open ICU collator (%d)", status);
+		}
+	    }
+	    collationLocaleSet = TRUE;
 	} else {
 	    int i, at = -1, val = -1;
 	    for (i = 0; ATtable[i].str; i++)
@@ -1864,33 +1896,60 @@ SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
     return R_NilValue;
 }
 
+SEXP attribute_hidden do_ICUget(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    const char *ans = "unknown", *res;
+    checkArity(op, args);
+
+    if(collator) {
+	UErrorCode  status = U_ZERO_ERROR;
+	int type = asInteger(CAR(args));
+	if (type < 1 || type > 2)
+	    error(_("invalid '%s' value"), "type");
+	
+	res = ucol_getLocaleByType(collator, 
+				   type == 1 ? ULOC_ACTUAL_LOCALE : ULOC_VALID_LOCALE, 
+				   &status);
+	if(!U_FAILURE(status) && res) ans = res;
+    } else ans = "ICU not in use";
+    return mkString(ans);
+}
 
 /* Caller has to manage the R_alloc stack */
 /* NB: strings can have equal collation weight without being identical */
 attribute_hidden
 int Scollate(SEXP a, SEXP b)
 {
-    int result = 0;
-    UErrorCode  status = U_ZERO_ERROR;
-    UCharIterator aIter, bIter;
-    const char *as = translateCharUTF8(a), *bs = translateCharUTF8(b);
-    int len1 = (int) strlen(as), len2 = (int) strlen(bs);
-
-    if (collator == NULL && strcmp("C", setlocale(LC_COLLATE, NULL)) ) {
-	/* do better later */
-	uloc_setDefault(setlocale(LC_COLLATE, NULL), &status);
-	if(U_FAILURE(status))
-	    error("failed to set ICU locale");
-	collator = ucol_open(NULL, &status);
-	if (U_FAILURE(status)) error("failed to open ICU collator");
+    if (!collationLocaleSet) {
+	collationLocaleSet = TRUE;
+#ifndef Win32
+	if (strcmp("C", getLocale()) ) {
+#else
+	const char *p = getenv("R_ICU_LOCALE");
+        if(p && p[0]) {
+#endif
+	    UErrorCode status = U_ZERO_ERROR;
+	    uloc_setDefault(getLocale(), &status);
+	    if(U_FAILURE(status))
+		error("failed to set ICU locale (%d)", status);
+	    collator = ucol_open(NULL, &status);
+	    if (U_FAILURE(status)) {
+		collator = NULL;
+		error("failed to open ICU collator (%d)", status);
+	    }
+	}
     }
     if (collator == NULL)
 	return strcoll(translateChar(a), translateChar(b));
 
+    UCharIterator aIter, bIter;
+    const char *as = translateCharUTF8(a), *bs = translateCharUTF8(b);
+    int len1 = (int) strlen(as), len2 = (int) strlen(bs);
     uiter_setUTF8(&aIter, as, len1);
     uiter_setUTF8(&bIter, bs, len2);
-    result = ucol_strcollIter(collator, &aIter, &bIter, &status);
-    if (U_FAILURE(status)) error("could not collate");
+    UErrorCode status = U_ZERO_ERROR;
+    int result = ucol_strcollIter(collator, &aIter, &bIter, &status);
+    if (U_FAILURE(status)) error("could not collate using ICU");
     return result;
 }
 
@@ -1900,6 +1959,12 @@ SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     warning(_("ICU is not supported on this build"));
     return R_NilValue;
+}
+
+SEXP attribute_hidden do_ICUget(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    return mkString("ICU not in use");
 }
 
 void attribute_hidden resetICUcollator(void) {}

@@ -349,13 +349,60 @@ hw <- hclust(dist(sqrt(1:5)), method=c(M = "ward"))
 ## failed for 2 days in R-devel/-alpha
 
 
+
 ## numericDeriv failed to duplicate variables in
 ## the expression before modifying them.  PR#15849
 x <- 10; y <- 10
-d1 <- numericDeriv(quote(x+y),c("x","y")) 
+d1 <- numericDeriv(quote(x+y),c("x","y"))
 x <- y <- 10
 d2 <- numericDeriv(quote(x+y),c("x","y"))
 stopifnot(identical(d1,d2))
 ## The second gave the wrong answer
+
+
+## prettyNum(x, zero.print = .) failed when x had NAs
+pp <- sapply(list(TRUE, FALSE, ".", " "), function(.)
+	     prettyNum(c(0:1,NA), zero.print = . ))
+stopifnot(identical(pp[1,], c("0", " ", ".", " ")),
+	  pp[2:3,] == c("1","NA"))
+## all 4 prettyNum() would error out
+
+
+## PR#15935
+y <- 1:3
+drop1(lm(y ~ 1))
+drop1(glm(y ~ 1))
+stats:::drop1.default(glm(y ~ 1))
+## gave error in R < 3.1.2
+
+## getAnywhere() wrongly dealing with namespace hidden list object
+nm <- deparse(body(pbinom)[[2]])# == "C_pbinom" currently
+gg <- getAnywhere(nm)
+stopifnot(length(gg$objs) == 1)
+## was 4 and printed "4 differing objects matching ‘C_pbinom’ ..." in R <= 3.1.1
+
+
+## 0-length consistency of options(), PR#15979
+stopifnot(identical(options(list()), options(NULL)))
+## options(list()) failed in R <= 3.1.1
+
+
+## merge.dendrogram(), PR#15648
+mkDend <- function(n, lab, rGen = function(n) 1+round(16*abs(rnorm(n)))) {
+    stopifnot(is.numeric(n), length(n) == 1, n >= 1, is.character(lab))
+    a <- matrix(rGen(n*n), n, n)
+    colnames(a) <- rownames(a) <- paste0(lab, 1:n)
+    as.dendrogram(hclust(as.dist(a + t(a))))
+}
+set.seed(7)
+da <- mkDend(4, "A")
+db <- mkDend(3, "B")
+d.ab <- merge(da, db)
+hcab <- as.hclust(d.ab)
+stopifnot(hcab$order == c(2, 4, 1, 3, 7, 5, 6),
+	  hcab$labels == c(paste0("A", 1:4), paste0("B", 1:3)))
+## was wrong in R <= 3.1.1
+
+
 
 proc.time()

@@ -1,7 +1,7 @@
 #  File src/library/tools/R/utils.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -57,6 +57,8 @@ function(x, compression = FALSE)
 }
 
 ### ** file_test
+
+## exported/documented copy is in utils.
 
 file_test <-
 function(op, x, y)
@@ -443,7 +445,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 ..BioC_version_associated_with_R_version <- function()
-    numeric_version(Sys.getenv("R_BIOC_VERSION", "2.14"))
+    numeric_version(Sys.getenv("R_BIOC_VERSION", "3.0"))
 .BioC_version_associated_with_R_version <-
     ..BioC_version_associated_with_R_version()
 ## Things are more complicated from R-2.15.x with still two BioC
@@ -586,11 +588,14 @@ function(file1, file2)
 ### ** .file_path_relative_to_dir
 
 .file_path_relative_to_dir <-
-function(x, dir)
+function(x, dir, add = FALSE)
 {
     if(any(ind <- (substring(x, 1L, nchar(dir)) == dir))) {
         ## Assume .Platform$file.sep is a single character.
-        x[ind] <- substring(x, nchar(dir) + 2L)
+        x[ind] <- if(add)
+            file.path(basename(dir), substring(x[ind], nchar(dir) + 2L))
+        else
+            substring(x[ind], nchar(dir) + 2L)
     }
     x
 }
@@ -600,7 +605,7 @@ function(x, dir)
 .find_calls <-
 function(x, predicate = NULL, recursive = FALSE)
 {
-    x <- as.list(x)
+    x <- if(is.call(x)) list(x) else as.list(x)
 
     f <- if(is.null(predicate))
         function(e) is.call(e)
@@ -1031,6 +1036,8 @@ function()
                "Version",
                "VignetteBuilder",
                "ZipData"),
+             ## Should be documented in R-exts eventually:
+             c("Additional_repositories"),
              ## Others: adjust as needed.
              c("Repository",
                "Path",
@@ -1040,6 +1047,7 @@ function()
                "Revision",
                "RcmdrModels",
                "RcppModules",
+               "Roxygen",
                "biocViews")
              ))
 }
@@ -1055,6 +1063,46 @@ function(texi = NULL)
     lines <- readLines(texi)
     re <- "^@c DESCRIPTION field "
     sort(unique(sub(re, "", lines[grepl(re, lines)])))
+}
+
+### ** .gsub_with_transformed_matches
+
+.gsub_with_transformed_matches <-
+function(pattern, replacement, x, trafo, count, ...)
+{
+    ## gsub() with replacements featuring transformations of matches.
+    ##
+    ## Character string (%s) conversion specifications in 'replacement'
+    ## will be replaced by applying the respective transformations in
+    ## 'trafo' to the respective matches (parenthesized subexpressions of
+    ## 'pattern') specified by 'count'.
+    ##
+    ## Argument 'trafo' should be a single unary function, or a list of
+    ## such functions.
+    ## Argument 'count' should be a vector of with the numbers of
+    ## parenthesized subexpressions to be transformed (0 gives the whole
+    ## match).
+
+    replace <- function(yi) {
+        do.call(sprintf,
+                c(list(replacement),
+                  Map(function(tr, co) tr(yi[co]),
+                      trafo, count + 1L)))
+    }
+
+    if(!is.list(trafo)) trafo <- list(trafo)
+    m <- gregexpr(pattern, x, ...)
+    v <- lapply(regmatches(x, m),
+                function(e) {
+                    y <- regmatches(e, regexec(pattern, e, ...))
+                    unlist(Map(function(ei, yi) {
+                        sub(pattern, replace(yi), ei, ...)
+                    },
+                               e,
+                               y))
+                })
+    regmatches(x, m) <- v
+    x
 }
 
 ### ** .is_ASCII
@@ -1531,6 +1579,23 @@ function(x)
     y
 }
 
+### ** .replace_chars_by_hex_subs
+
+.replace_chars_by_hex_subs <-
+function(x, re) {
+    char_to_hex_sub <- function(s) {
+        paste0("<", charToRaw(s), ">", collapse = "")
+    }
+    vapply(strsplit(x, ""),
+           function(e) {
+               pos <- grep(re, e, perl = TRUE)
+               if(length(pos))
+                   e[pos] <- vapply(e[pos], char_to_hex_sub, "")
+               paste(e, collapse = "")
+           },
+           "")
+}
+
 ### ** .source_assignments
 
 .source_assignments <-
@@ -1625,6 +1690,14 @@ function(x)
 }
 
 ### ** .strip_whitespace
+
+## <NOTE>
+## Other languages have this as strtrim() (or variants for left or right
+## trimming only), but R has a different strtrim().
+## So perhaps strstrip()?
+## Could more generally do
+##   strstrip(x, pattern, which = c("both", "left", "right"))
+## </NOTE>
 
 .strip_whitespace <-
 function(x)

@@ -60,7 +60,7 @@ checkPoFiles(language, dir = ".")
   processed (as they are ignored by the message compiler).
 
   If a difference is found, the translated string is checked for variant
-  percent signs (e.g. the wide percent sign \code{"\uFF05"}).  Such signs
+  percent signs (e.g., the wide percent sign \code{"\uFF05"}).  Such signs
   will not be recognized as format specifiers, and are likely to be
   errors.
 }
@@ -77,7 +77,8 @@ checkPoFiles(language, dir = ".")
   Duncan Murdoch
 }
 \seealso{
-  \code{\link{xgettext}}, \code{\link{sprintf}}
+  \code{\link{update_pkg_po}()} which calls \code{checkPoFile()};
+  \code{\link{xgettext}}, \code{\link{sprintf}}.
 }
 \examples{
 \dontrun{

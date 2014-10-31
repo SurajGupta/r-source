@@ -16,18 +16,46 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
+check_for_XQuartz <- function()
+{
+    r_arch <- .Platform$r_arch
+    DSO <- file.path(R.home("modules"), "R_de.so")
+    out <- system2("otool", c("-L", shQuote(DSO)), stdout = TRUE)
+    ind <- grep("libX11[.][0-9]+[.]dylib", out)
+    if(length(ind)) {
+        this <- sub(" .*", "", sub("^\t", "", out[ind]))
+        if(!file.exists(this))
+            stop("X11 library is missing: install XQuartz from xquartz.macosforge.org", domain = NA)
+    }
+}
+
 dataentry <- function (data, modes)
 {
+    check <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", "")
+    msg <- "dataentry() should not be used in examples etc"
+    if (identical(check, "stop"))
+        stop(msg, domain = NA)
+    else if (identical(check, "warn"))
+        warning(msg, immediate. = TRUE, noBreaks. = TRUE, domain = NA)
+
     if(!is.list(data) || !length(data) || !all(sapply(data, is.vector)))
         stop("invalid 'data' argument")
     if(!is.list(modes) ||
        (length(modes) && !all(sapply(modes, is.character))))
         stop("invalid 'modes' argument")
+    if (grepl("darwin", R.version$os)) check_for_XQuartz()
     .External2(C_dataentry, data, modes)
 }
 
 View <- function (x, title)
 {
+    check <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", "")
+    msg <- "View() should not be used in examples etc"
+    if (identical(check, "stop"))
+        stop(msg, domain = NA)
+    else if (identical(check, "warn"))
+        warning(msg, immediate. = TRUE, noBreaks. = TRUE, domain = NA)
+
     ## could multi-line deparse with maliciously-designed inputs
     if(missing(title)) title <- paste("Data:", deparse(substitute(x))[1])
     as.num.or.char <- function(x)
@@ -43,6 +71,7 @@ View <- function (x, title)
     if(!is.list(x) || !length(x) || !all(sapply(x, is.atomic)) ||
        !max(sapply(x, length)))
         stop("invalid 'x' argument")
+    if (grepl("darwin", R.version$os)) check_for_XQuartz()
     invisible(.External2(C_dataviewer, x, title))
 }
 
@@ -53,7 +82,7 @@ edit.default <-
               editor = getOption("editor"), ...)
 {
     if (is.null(title)) title <- deparse(substitute(name))
-    if (is.function(editor)) invisible(editor(name, file, title))
+    if (is.function(editor)) invisible(editor(name = name, file = file, title = title))
     else .External2(C_edit, name, file, title, editor)
 }
 
@@ -69,6 +98,8 @@ edit.data.frame <-
     if (length(name) && !all(sapply(name, is.vector.unclass)
                                  | sapply(name, is.factor)))
         stop("can only handle vector and factor elements")
+
+    if (grepl("darwin", R.version$os)) check_for_XQuartz()
 
     factor.mode <- match.arg(factor.mode)
 
@@ -175,6 +206,9 @@ edit.matrix <-
        ! mode(name) %in% c("numeric", "character", "logical") ||
        any(dim(name) < 1))
         stop("invalid input matrix")
+
+    if (grepl("darwin", R.version$os)) check_for_XQuartz()
+
     ## logical matrices will be edited as character
     logicals <- is.logical(name)
     if (logicals) mode(name) <- "character"

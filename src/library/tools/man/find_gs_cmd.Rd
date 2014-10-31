@@ -1,10 +1,14 @@
 % File src/library/tools/man/find_gs_cmd.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2008-2013 R Core Team
+% Copyright 2008-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{find_gs_cmd}
 \alias{find_gs_cmd}
+
+\alias{R_GSCMD}
+\alias{GSC}
+
 \title{
   Find a GhostScript Executable
 }
@@ -30,7 +34,7 @@ find_gs_cmd(gs_cmd = "")
   \code{gs_cmd} then from the environment variables \env{R_GSCMD} and
   \env{GSC}.  If neither of those produces a suitable command name,
   \command{gswin64c} and \command{gswin32c} are tried in turn.  In all
-  cases the command is looked for on the system \env{PATH},
+  cases the command is looked for on the system \env{PATH}.
 
   Note that on Windows (and some other OSes) there are separate
   GhostScript executables to display Postscript/PDF files and to

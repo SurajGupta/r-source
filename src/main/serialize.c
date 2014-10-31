@@ -365,6 +365,11 @@ static int InInteger(R_inpstream_t stream)
     }
 }
 
+#ifdef Win32
+extern int trio_sscanf(const char *buffer, const char *format, ...);
+
+#endif
+
 static double InReal(R_inpstream_t stream)
 {
     char word[128];
@@ -382,7 +387,11 @@ static double InReal(R_inpstream_t stream)
 	else if (strcmp(buf, "-Inf") == 0)
 	    return R_NegInf;
 	else
+#ifdef Win32
+	    if(trio_sscanf(buf, "%lg", &d) != 1) error(_("read error"));
+#else
 	    if(sscanf(buf, "%lg", &d) != 1) error(_("read error"));
+#endif
 	return d;
     case R_pstream_binary_format:
 	stream->InBytes(stream, &d, sizeof(double));
@@ -2802,7 +2811,8 @@ do_lazyLoadDBfetch(SEXP call, SEXP op, SEXP args, SEXP env)
 	REPROTECT(val = R_decompress2(val, &err), vpi);
     else if (compressed)
 	REPROTECT(val = R_decompress1(val, &err), vpi);
-    if (err) error("lazy-load database '%s' is corrupt", file);
+    if (err) error("lazy-load database '%s' is corrupt",
+		   CHAR(STRING_ELT(file, 0)));
     val = R_unserialize(val, hook);
     if (TYPEOF(val) == PROMSXP) {
 	REPROTECT(val, vpi);

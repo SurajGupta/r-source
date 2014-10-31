@@ -284,10 +284,13 @@ AC_ARG_ENABLE([BLAS-shlib],
 [use_blas_shlib="${enableval}"],
 [use_blas_shlib="unset"])
 
+## As from R 3.2.0 split up -L... and -lR
 if test "${want_R_shlib}" = yes; then
-  LIBR="-L\$(R_HOME)/lib\$(R_ARCH) -lR"
+  LIBR0="-L\$(R_HOME)/lib\$(R_ARCH)"
+  LIBR1=-lR
 else
-  LIBR=
+  LIBR0=
+  LIBR1=
 fi
 
 ## Enable maintainer-specific portions of Makefiles.
@@ -2061,7 +2064,8 @@ fi
 ## check for vecLib framework (potentially to be used for BLAS)
 ## in theory vecLib is platform-independent, in practice only
 ## Apple's OS X is known to provide it
-R_CHECK_FRAMEWORK(cblas_cdotu_sub, vecLib)
+## However, as from 10.10 it only provides Accelerate.
+R_CHECK_FRAMEWORK(cblas_cdotu_sub, Accelerate)
 
 ## BLAS.
 ## <NOTE>
@@ -2100,7 +2104,9 @@ case "${host_os}" in
     fi
   ;;
 esac
-AC_SUBST(LIBR)
+## LIBR0 is for the -L part, LIBR1 for -lR (if needed)
+AC_SUBST(LIBR0)
+AC_SUBST(LIBR1)
 
 ## This version is used to build a shared BLAS lib
 BLAS_LIBS0=${BLAS_LIBS}
@@ -2798,10 +2804,14 @@ if test "${acx_blas_ok}" = "yes"; then
   ## Try to figure out which BLAS was used.
   case "${BLAS_LIBS0}" in
     *-latlas*) r_blas=ATLAS ;;
+    *-lgoto*) r_blas=Goto ;;
+    *-lopenblas*) r_blas=OpenBLAS ;;
+    *-lacml*) r_blas=ACML ;;
+    *-lmkl*) r_blas=MKL ;;
     *-lsgemm*) r_blas=PhiPack ;;
     *sunperf*) r_blas=SunPerf ;;
     *-lessl*)  r_blas=ESSL ;;
-    *vecLib*)  r_blas=vecLib ;;
+    *Accelerate*)  r_blas=Accelerate ;;
     "")        r_blas=none ;;
     *)         r_blas=generic ;;
   esac
@@ -2816,29 +2826,45 @@ if test "${acx_lapack_ok}" = "yes"; then
   esac
   R_SH_VAR_ADD(r_external_libs, [LAPACK(${r_lapack})], [, ])
 fi
-if test "${use_ICU}" = yes; then
-  R_SH_VAR_ADD(r_external_libs, [ICU], [, ])
-fi
 if test "${have_lzma}" = yes; then
   R_SH_VAR_ADD(r_external_libs, [lzma], [, ])
 fi
+
 r_capabilities=
+r_no_capabilities=
 if test "${have_png}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [PNG], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [PNG], [, ])
 fi
 if test "${have_jpeg}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [JPEG], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [JPEG], [, ])
 fi
 if test "${have_tiff}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [TIFF], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [TIFF], [, ])
 fi
 if test "${USE_NLS}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [NLS], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [NLS], [, ])
 fi
 if test "${r_cv_cairo_works}" = yes; then
   R_SH_VAR_ADD(r_capabilities, [cairo], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [cairo], [, ])
 fi
+if test "${use_ICU}" = yes; then
+  R_SH_VAR_ADD(r_capabilities, [ICU], [, ])
+else
+  R_SH_VAR_ADD(r_no_capabilities, [ICU], [, ])
+fi
+
 r_options=
+r_no_options=
 if test "${want_R_framework}" = yes; then
   R_SH_VAR_ADD(r_options, [framework], [, ])
 elif test "${want_R_shlib}" = yes; then
@@ -2848,21 +2874,24 @@ elif test "${want_R_static}" = yes; then
 fi
 if test "${use_blas_shlib}" = yes; then
   R_SH_VAR_ADD(r_options, [shared BLAS], [, ])
+else
+  R_SH_VAR_ADD(r_no_options, [shared BLAS], [, ])
 fi
 if test "${want_R_profiling}" = yes; then
   R_SH_VAR_ADD(r_options, [R profiling], [, ])
+else
+  R_SH_VAR_ADD(r_no_options, [R profiling], [, ])
 fi
 if test "${want_memory_profiling}" = yes; then
   R_SH_VAR_ADD(r_options, [memory profiling], [, ])
+else
+  R_SH_VAR_ADD(r_no_options, [memory profiling], [, ])
 fi
 if test "${use_maintainer_mode}" = yes; then
   R_SH_VAR_ADD(r_options, [maintainer mode], [, ])
 fi
 if test "${use_strict_barrier}" = yes; then
   R_SH_VAR_ADD(r_options, [strict barrier], [, ])
-fi
-if test "${want_linux_lfs}" = yes; then
-  R_SH_VAR_ADD(r_options, [Linux LFS], [, ])
 fi
 if test "${want_prebuilt_html}" = yes; then
   R_SH_VAR_ADD(r_options, [static HTML], [, ])
@@ -2887,6 +2916,9 @@ R is now configured for ${host}
   External libraries:        ${r_external_libs}
   Additional capabilities:   ${r_capabilities}
   Options enabled:           ${r_options}
+
+  Capabilities skipped:      ${r_no_capabilities}
+  Options not enabled:       ${r_no_options}
 
   Recommended packages:      ${use_recommended_packages} 
 ])

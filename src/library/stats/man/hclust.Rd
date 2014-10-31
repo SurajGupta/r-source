@@ -17,7 +17,7 @@
 \usage{
 hclust(d, method = "complete", members = NULL)
 
-\method{plot}{hclust}(x, labels = NULL, hang = 0.1,
+\method{plot}{hclust}(x, labels = NULL, hang = 0.1, check = TRUE,
      axes = TRUE, frame.plot = FALSE, ann = TRUE,
      main = "Cluster Dendrogram",
      sub = NULL, xlab = NULL, ylab = "Height", \dots)
@@ -25,7 +25,7 @@ hclust(d, method = "complete", members = NULL)
 \arguments{
   \item{d}{a dissimilarity structure as produced by \code{dist}.}
 
-  \item{method}{the agglomeration method to be used. This should
+  \item{method}{the agglomeration method to be used.  This should
     be (an unambiguous abbreviation of) one of
     \code{"ward.D"}, \code{"ward.D2"}, \code{"single"}, \code{"complete"},
     \code{"average"} (= UPGMA), \code{"mcquitty"} (= WPGMA),
@@ -39,17 +39,22 @@ hclust(d, method = "complete", members = NULL)
   \item{hang}{The fraction of the plot height by which labels should hang
     below the rest of the plot.
     A negative value will cause the labels to hang down from 0.}
-
+  \item{check}{logical indicating if the \code{x} object should be
+    checked for validity.  This check is not necessary when \code{x}
+    is known to be valid such as when it is the direct result of
+    \code{hclust()}.  The default is \code{check=TRUE}, as invalid
+    inputs may crash \R due to memory violation in the internal C
+    plotting code.}
   \item{labels}{A character vector of labels for the leaves of the
-    tree. By default the row names or row numbers of the original data are
-    used. If \code{labels = FALSE} no labels at all are plotted.}
+    tree.  By default the row names or row numbers of the original data are
+    used.  If \code{labels = FALSE} no labels at all are plotted.}
 
   \item{axes, frame.plot, ann}{logical flags as in \code{\link{plot.default}}.}
 
   \item{main, sub, xlab, ylab}{character strings for
     \code{\link{title}}.  \code{sub} and \code{xlab} have a non-NULL
     default when there's a \code{tree$call}.}
-  \item{\dots}{Further graphical arguments.  E.g. \code{cex} controls
+  \item{\dots}{Further graphical arguments.  E.g., \code{cex} controls
     the size of the labels (if plotted) in the same way as \code{\link{text}}.}
 }
 \value{
@@ -121,7 +126,7 @@ hclust(d, method = "complete", members = NULL)
   The one used by option \code{"ward.D"} (equivalent to the only Ward
   option \code{"ward"} in \R versions \eqn{\le}{<=} 3.0.3) \emph{does not} implement
   Ward's (1963) clustering criterion, whereas option \code{"ward.D2"} implements
-  that criterion (Murtagh and Legendre 2013).  With the latter, the
+  that criterion (Murtagh and Legendre 2014).  With the latter, the
   dissimilarities are \emph{squared} before cluster updating.
   Note that \code{\link[cluster]{agnes}(*, method="ward")} corresponds
   to \code{hclust(*, "ward.D2")}.
@@ -134,7 +139,7 @@ hclust(d, method = "complete", members = NULL)
   reconstruct the part of the tree above a cut (see examples).
   Dissimilarities between clusters can be efficiently computed (i.e.,
   without \code{hclust} itself) only for a limited number of
-  distance/linkage combinations, the simplest one being squared
+  distance/linkage combinations, the simplest one being \emph{squared}
   Euclidean distance and centroid linkage.  In this case the
   dissimilarities between the clusters are the squared Euclidean
   distances between cluster means.
@@ -151,6 +156,10 @@ hclust(d, method = "complete", members = NULL)
   Single observations are the tightest clusters possible,
   and merges involving two observations place them in order by their
   observation sequence number.
+}
+\note{
+  Method \code{"centroid"} is typically meant to be used with
+  \emph{squared} Euclidean distances.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -192,10 +201,10 @@ hclust(d, method = "complete", members = NULL)
   \emph{Numerical Ecology},
   3rd English ed. Amsterdam: Elsevier Science BV.
 
-  Murtagh, F. and Legendre, P. (2013).
+  Murtagh, Fionn and Legendre, Pierre (2014).
   Ward's hierarchical agglomerative clustering method: which algorithms
   implement Ward's criterion?
-  \emph{Journal of Classification} (in press).
+  \emph{Journal of Classification} \bold{31} (forthcoming).
 }
 \author{
   The \code{hclust} function is based on Fortran code
@@ -217,7 +226,7 @@ hc <- hclust(dist(USArrests), "ave")
 plot(hc)
 plot(hc, hang = -1)
 
-## Do the same with centroid clustering and squared Euclidean distance,
+## Do the same with centroid clustering and *squared* Euclidean distance,
 ## cut the tree into ten clusters and reconstruct the upper part of the
 ## tree from the cluster centers.
 hc <- hclust(dist(USArrests)^2, "cen")

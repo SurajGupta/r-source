@@ -73,6 +73,15 @@
     other \tab SEXP\tab not allowed\cr
   }
 
+  \emph{Note:} The C types corresponding to \code{integer} and
+  \code{logical} are \code{int}, not \code{long} as in S.  This
+  difference matters on most 64-bit platforms, where \code{int} is
+  32-bit and \code{long} is 64-bit (but not on 64-bit Windows).
+
+  \emph{Note:} The Fortran type corresponding to \code{logical} is
+  \code{integer}, not \code{logical}: the difference matters on some
+  Fortran compilers.
+  
   Numeric vectors in \R will be passed as type \code{double *} to C
   (and as \code{double precision} to Fortran) unless the argument has
   attribute \code{Csingle} set to \code{TRUE} (use
@@ -91,22 +100,13 @@
   three values: however non-zero values other than \code{INT_MIN} are
   mapped to \code{TRUE}.
 
-  \emph{Note:} The C types corresponding to \code{integer} and
-  \code{logical} are \code{int}, not \code{long} as in S.  This
-  difference matters on most 64-bit platforms, where \code{int} is
-  32-bit and \code{long} is 64-bit (but not on 64-bit Windows).
-
-  \emph{Note:} The Fortran type corresponding to \code{logical} is
-  \code{integer}, not \code{logical}: the difference matters on some
-  Fortran compilers.
-
   Missing (\code{NA}) string values are passed to \code{.C} as the string
   "NA". As the C \code{char} type can represent all possible bit patterns
   there appears to be no way to distinguish missing strings from the
   string \code{"NA"}.  If this distinction is important use \code{\link{.Call}}.
 
-  \code{.Fortran} passes the first (only) character string of a character
-  vector is passed as a C character array to Fortran: that may be usable
+  \code{.Fortran} passes the first (only) character string of a
+  character vector as a C character array to Fortran: that may be usable
   as \code{character*255} if its true length is passed separately.  Only
   up to 255 characters of the string are passed back.  (How well this
   works, and even if it works at all, depends on the C and Fortran
@@ -120,8 +120,8 @@
 }
 
 \section{Warning}{
-  \code{DUP = FALSE} \emph{is dangerous} and may be disabled in future
-  versions of \R.  It was deprecated in \R 3.1.0.
+  \code{DUP = FALSE} \emph{is dangerous}.  It was deprecated in \R 3.1.0
+  and will be disabled in \R 3.2.0.
 
   People concerned about performance and especially memory usage are
   strongly recommended to use the \code{\link{.Call}} interface instead
@@ -149,9 +149,8 @@
   the C function does not change its argument, and authors have
   frequently done so without realizing it.
 
-  However, in recent versions of \R most unnecessary copying is avoided:
-  on the other hand using \code{DUP = FALSE} can omit \emph{necessary}
-  copying.
+  In recent versions of \R most unnecessary copying is avoided: on the
+  other hand using \code{DUP = FALSE} can omit \emph{necessary} copying.
 }
 
 \section{Fortran symbol names}{
@@ -167,23 +166,20 @@
   Fortran names containing underscores.
 
   Use \code{.Fortran} with care for compiled Fortran 9x code: it may not
-  work if the Fortran 9x compiler used differs from the Fortran 77 compiler
-  used when configuring \R, especially if the subroutine name is not
-  lower-case or includes an underscore.  It is also possible to use
+  work if the Fortran 9x compiler used differs from the Fortran 77
+  compiler used when configuring \R, especially if the subroutine name
+  is not lower-case or includes an underscore.  It is possible to use
   \code{.C} and do any necessary symbol-name translation yourself.
 }
 
 \section{Copying of arguments}{
-  If \code{DUP = TRUE} there are up to two copies made of each argument
-  in \code{\dots}.
+  Character vectors are copied before calling the compiled code and to
+  collect the results.  For \code{DUP = TRUE} and other atomic vectors,
+  the argument is copied before calling the compiled code if it is
+  otherwise used in the calling code.
 
-  Prior to \R 2.15.1 there were always two for vectors (one before
-  calling the compiled code and one to collect the results), and this is
-  still the case for character vectors.  For other atomic vectors, the
-  argument is not copied before calling the compiled code if it is not
-  otherwise used in the calling code (such as \code{output} in the
-  example above).  Non-atomic-vector objects are read-only to the C code
-  and are never copied.
+  Non-atomic-vector objects are read-only to the C code and are never
+  copied.
 
   This behaviour can be changed by setting
   \code{\link{options}(CBoundsCheck = TRUE)}.  In that case raw,
@@ -203,14 +199,6 @@
   You may see \code{PACKAGE = "base"} for symbols linked into \R.  Do
   not use this in your own code: such symbols are not part of the API
   and may be changed without warning.
-
-  \code{PACKAGE = ""} used to be accepted (but was undocumented): it is
-  now an error.
-
-  The way \link{pairlist}s were passed by \code{.C} prior to \R 2.15.0
-  was not as documented.  This has been corrected, but the
-  \code{\link{.Call}} and \code{\link{.External}} interfaces are much
-  preferred for passing anything other than atomic vectors.
 }
 
 \references{
