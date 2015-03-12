@@ -1,6 +1,6 @@
 % File src/library/utils/man/install.packages.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
@@ -69,16 +69,18 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     URL(s) of the contrib sections of the repositories.  Use this
     argument if your repository mirror is incomplete, e.g., because
     you burned only the \file{contrib} section on a CD, or only have
-    binary packages.  Overrides argument \code{repos}.  Can also be
-    \code{NULL} to install from local files.
+    binary packages.  Overrides argument \code{repos}.
+    Incompatible with \code{type = "both"}.
   }
   \item{method}{
-    download method, see \code{\link{download.file}}.
+    download method, see \code{\link{download.file}}.  Unused if
+    a non-\code{NULL} \code{available} is supplied.
   }
   \item{available}{
-    an object as returned by \code{\link{available.packages}}
+    a matrix as returned by \code{\link{available.packages}}
     listing packages available at the repositories, or \code{NULL} when
     the function makes an internal call to \code{available.packages}.
+    Incompatible with \code{type = "both"}.
   }
   \item{destdir}{
     directory where downloaded packages are stored.  If it is
@@ -87,10 +89,10 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     directory will be used (and the files will be deleted
     at the end of the session).
   }
-  \item{dependencies}{logical indicating to also install uninstalled
-    packages which these packages depend on/link to/import/suggest
-    (and so on recursively).  Not used if \code{repos = NULL}.
-    Can also be a character vector, a subset of
+  \item{dependencies}{logical indicating whether to also install
+    uninstalled packages which these packages depend on/link
+    to/import/suggest (and so on recursively).  Not used if \code{repos
+    = NULL}.  Can also be a character vector, a subset of
     \code{c("Depends", "Imports", "LinkingTo", "Suggests", "Enhances")}.
 
     Only supported if \code{lib} is of length one (or missing),
@@ -119,13 +121,20 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     but not installed on other platforms.
 
     The default is the appropriate binary type on Windows and on the
-    CRAN binary OS X distributions, otherwise \code{"source"}.  For the
-    platforms where binary packages are the default, an alternative is
-    \code{"both"} which means \sQuote{try binary if available and
-    current, otherwise try source}.  (This will only choose the binary
-    package if its version number is no older than the source version.
-    In interactive use it will ask before attempting to install source
-    packages.)
+    CRAN binary OS X distributions, otherwise \code{"source"}.  Where
+    there is binary type, it can also be selected as \code{"binary"}.
+
+    For the platforms where binary packages are the default, an
+    alternative is \code{"both"} which means \sQuote{try binary if
+    available and current, otherwise try source}.  (This will only
+    prefer the binary version of a package if its version number is no
+    older than the source version.  In interactive use it will ask
+    before attempting to install source packages which may contain
+    compiled code.)
+
+    \code{type = "both"} will be silently changed to the appropriate
+    binary type if either \code{contriburl} or \code{available} is
+    specified.
   }
   \item{configure.args}{
     (Used only for source installs.) A character vector or a named list.
@@ -149,9 +158,8 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     for flag \option{--configure-vars}, which is used to set environment
     variables for the \command{configure} run.
   }
-  \item{clean}{a logical value indicating whether to specify
-    to add the \option{--clean} flag to the call to
-    \command{R CMD INSTALL}.
+  \item{clean}{a logical value indicating whether to add the
+    \option{--clean} flag to the call to \command{R CMD INSTALL}.
     This is sometimes used to perform additional operations at the end
     of the package installation in addition to removing intermediate files.
   }
@@ -161,11 +169,12 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     \code{Sys.getenv("MAKE", "make")} accepts argument \code{-k -j
     \var{Ncpus}}.
   }
-  \item{verbose}{a logical indicating if some \dQuote{progress report}
-    should happen.}
+  \item{verbose}{
+    a logical indicating if some \dQuote{progress report} should be given.
+  }
   \item{libs_only}{
     a logical value: should the \option{--libs-only} option be used to
-    install only additional sub-architectures?  (See also
+    install only additional sub-architectures for source installs?  (See also
     \code{INSTALL_opts}.)  This can also be used on Windows to install
     just the DLL(s) from a binary package, e.g.\sspace{}to add 64-bit
     DLLs to a 32-bit install.
@@ -175,16 +184,18 @@ install.packages(pkgs, lib, repos = getOption("repos"),
     \command{R CMD INSTALL} for a source package install.  E.g.,
     \code{c("--html", "--no-multiarch")}.
 
-    Can also be a named list of character vectors of to be used as
+    Can also be a named list of character vectors to be used as
     additional options, with names the respective package names.
   }
-  \item{quiet}{logical: if true, reduce the amount of output.}
-  \item{keep_outputs}{a logical: if true, keep the outputs from
-    installing source packages in the current working directory, with
-    the names of the output files the package names with \file{.out}
-    appended.  Alternatively, a character string giving the directory
-    where to save the outputs.  Ignored when installing from local
-    files.
+  \item{quiet}{
+    logical: if true, reduce the amount of output.
+  }
+  \item{keep_outputs}{
+    a logical: if true, keep the outputs from installing source packages
+    in the current working directory, with the names of the output files
+    the package names with \file{.out} appended.  Alternatively, a
+    character string giving the directory in which to save the outputs.
+    Ignored when installing from local files.
   }
   \item{\dots}{
     Arguments to be passed to \code{\link{download.file}} or to the
@@ -239,9 +250,6 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   \code{install.packages} to ensure that any already installed
   dependencies have their latest versions.
 
-  Argument \code{libs_only = TRUE} is supported for source installs and for
-  Windows binary installs.
-
   For binary installs, the function also checks for the availability of
   a source package on the same repository, and reports if the source
   package has a later version, or is available but no binary version
@@ -290,10 +298,11 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   Parallel installs are attempted if \code{pkgs} has length greater than
   one and \code{Ncpus > 1}.  It makes use of a parallel \command{make},
   so the \code{make} specified (default \command{make}) when \R was
-  built must be capable of supporting \code{make -j \var{n}}: GNU make
-  and \command{dmake} do, but FreeBSD and Solaris \command{make} do not:
-  if necessary environment variable \env{MAKE} can be set for the
-  current session to select a suitable \command{make}.
+  built must be capable of supporting \code{make -j \var{n}}: GNU make,
+  \command{dmake} and \command{pmake} do, but Solaris \command{make} and
+  older FreeBSD \command{make} do not: if necessary environment variable
+  \env{MAKE} can be set for the current session to select a suitable
+  \command{make}.
 
   \code{install.packages} needs to be able to compute all the
   dependencies of \code{pkgs} from \code{available}, including if one
@@ -322,10 +331,9 @@ install.packages(pkgs, lib, repos = getOption("repos"),
   on the library directories specified, but Windows reports unreliably.
   If there is only one library directory (the default), \R tries to
   find out by creating a test directory, but even this need not be the
-  whole story.  Under Windows Vista and later you may have permission to
-  write in a library directory but lack permission to write binary files
-  (such as \file{.dll} files) there.  See the \sQuote{R for Windows FAQ}
-  for workarounds.
+  whole story: you may have permission to write in a library directory
+  but lack permission to write binary files (such as \file{.dll} files)
+  there.  See the \sQuote{R for Windows FAQ} for workarounds.
 }
 #endif
 \seealso{
@@ -346,7 +354,7 @@ install.packages(pkgs, lib, repos = getOption("repos"),
 }
 
 \examples{\dontrun{
-## A Linux example for Fedora's layout
+## A Linux example for Fedora's layout of udunits2 headers.
 install.packages(c("ncdf4", "RNetCDF"),
   configure.args = c(RNetCDF = "--with-netcdf-include=/usr/include/udunits2"))
 }}

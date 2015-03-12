@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1998--2013	    The R Core Team.
- *  Copyright (C) 2003-4	    The R Foundation
+ *  Copyright (C) 2003--2015	    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1274,6 +1274,7 @@ SEXP attribute_hidden do_abs(SEXP call, SEXP op, SEXP args, SEXP env)
 	for(i = 0 ; i < n ; i++)
 	    REAL(s)[i] = fabs(REAL(x)[i]);
     } else if (isComplex(x)) {
+        SET_TAG(args, R_NilValue); /* cmathfuns want "z"; we might have "x" PR#16047 */
 	return do_cmathfuns(call, op, args, env);
     } else
 	errorcall(call, R_MSG_NONNUM_MATH);
@@ -1419,6 +1420,8 @@ static SEXP math2B(SEXP sa, SEXP sb, double (*f)(double, double, double *),
     double amax, *work;
     size_t nw;
 
+#define besselJY_max_nu 1e7
+
     if (!isNumeric(sa) || !isNumeric(sb))
 	errorcall(lcall, R_MSG_NONNUM_MATH);
 
@@ -1431,8 +1434,11 @@ static SEXP math2B(SEXP sa, SEXP sb, double (*f)(double, double, double *),
     amax = 0.0;
     for (i = 0; i < nb; i++) {
 	double av = b[i] < 0 ? -b[i] : b[i];
-	if (av > amax) amax = av;
+	if (amax < av)
+	    amax = av;
     }
+    if (amax > besselJY_max_nu)
+	amax = besselJY_max_nu; // and warning will happen in ../nmath/bessel_[jy].c
     const void *vmax = vmaxget();
     nw = 1 + (size_t)floor(amax);
     work = (double *) R_alloc(nw, sizeof(double));

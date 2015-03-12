@@ -1,6 +1,6 @@
 % File src/library/stats/man/nlm.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2012 R Core Team
+% Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
 \name{nlm}
@@ -78,9 +78,6 @@ nlm(f, p, \dots, hessian = FALSE, typsize = rep(1, length(p)),
   The functions supplied should always return finite (including not
   \code{NA} and not \code{NaN}) values: for the function value itself
   non-finite values are replaced by the maximum positive value with a warning.
-
-  The parameter vector passed to \code{f} and \code{hessian} has special
-  semantics and is shared between calls.  The functions should not copy it.
 }
 \value{
   A list containing the following components:

@@ -1,7 +1,7 @@
 #  File src/library/stats/R/dendrogram.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -20,19 +20,20 @@ as.dendrogram <- function(object, ...) UseMethod("as.dendrogram")
 
 as.dendrogram.dendrogram <- function(object, ...) object
 
-as.dendrogram.hclust <- function (object, hang = -1, ...)
+as.dendrogram.hclust <- function (object, hang = -1, check = TRUE, ...)
 ## hang = 0.1  is default for plot.hclust
 {
-    stopifnot(length(object$order) > 0L)
-    if (is.null(object$labels))
+    nolabels <- is.null(object$labels)
+    merge <- object$merge
+    if(check && !isTRUE(msg <- .validity.hclust(object, merge, order=nolabels)))
+	stop(msg)
+    if(nolabels)
 	object$labels <- seq_along(object$order)
     z <- list()
     nMerge <- length(oHgt <- object$height)
-    if (nMerge != nrow(object$merge))
-	stop("'merge' and 'height' do not fit!")
     hMax <- oHgt[nMerge]
     for (k in 1L:nMerge) {
-	x <- object$merge[k, ]# no sort() anymore!
+	x <- merge[k, ]# no sort() anymore!
 	if (any(neg <- x < 0))
 	    h0 <- if (hang < 0) 0 else max(0, oHgt[k] - hang * hMax)
 	if (all(neg)) {			# two leaves
@@ -77,9 +78,7 @@ as.dendrogram.hclust <- function (object, hang = -1, ...)
 	attr(zk, "height") <- oHgt[k]
 	z[[as.character(k)]] <- zk
     }
-    z <- z[[as.character(k)]]
-    class(z) <- "dendrogram"
-    z
+    structure(z[[as.character(k)]], class = "dendrogram")
 }
 
 ## Reversing the above (as much as possible)
@@ -91,7 +90,7 @@ as.hclust.dendrogram <- function(x, ...)
     iOrd <- sort.list(ord)
     if(!identical(ord[iOrd], seq_len(n)))
 	stop(gettextf(
-	    "dendrogram entries must be 1,2,..,%d (in any order), to be coercable to \"hclust\"",
+	    "dendrogram entries must be 1,2,..,%d (in any order), to be coercible to \"hclust\"",
 	    n), domain=NA)
     stopifnot(n == attr(x, "members"))
     n.h <- n - 1L

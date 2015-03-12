@@ -9,7 +9,7 @@ fi
 DYLIB_EXT=`${R_HOME}/bin/R CMD config DYLIB_EXT`
 tools_classpath=${R_SHARE_DIR}/java
 
-revision='$Rev: 65645 $'
+revision='$Rev: 67944 $'
 version=`set - ${revision}; echo ${2}`
 version="R Java configurator: ${R_VERSION} (r${version})
 
@@ -327,7 +327,7 @@ wd=${PWD}
 cd "${tempdir}"
 
 echo
-echo "trying to compile and link a JNI progam "
+echo "trying to compile and link a JNI program "
 echo "detected JNI cpp flags    : ${JAVA_CPPFLAGS}"
 echo "detected JNI linker flags : ${JAVA_LIBS}"
 
@@ -348,7 +348,8 @@ PKG_LIBS = ${JAVA_LIBS1}
 _ACEOF
 
 ## in case e.g. -k was passed in the environment
-export MAKEFLAGS=
+MAKEFLAGS=
+export MAKEFLAGS
 ${R_HOME}/bin/R CMD SHLIB conftest.c
 ac_status=$?
 

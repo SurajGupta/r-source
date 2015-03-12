@@ -1,7 +1,7 @@
 #  File src/library/tcltk/R/tkGUI.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ tkStartGUI <- function()
     tcl("source", file.path(.Library, "tcltk", "exec", "console.tcl"))
     .C(.C_RTcl_ActivateConsole)
     Menu <- .Tk.newwin(".menu")
-    Term <- .Tk.newwin(".tk-R.term")
+    .Tk.newwin(".tk-R.term") # result unused
     Toolbar <- .Tk.newwin(".tk-R.toolbar")
     options(pager=tkpager)
 

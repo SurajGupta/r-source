@@ -1,7 +1,7 @@
 #  File src/library/base/R/dates.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -470,8 +470,9 @@ is.numeric.Date <- function(x) FALSE
 split.Date <-
 function(x, f, drop = FALSE, ...)
 {
-    y <- split.default(as.integer(x), f, drop = drop)
-    for(i in seq_along(y)) class(y[[i]]) <- "Date"
+    oclass <- class(x)
+    y <- split.default(unclass(x), f, drop = drop)
+    for(i in seq_along(y)) class(y[[i]]) <- oclass
     y
 }
 

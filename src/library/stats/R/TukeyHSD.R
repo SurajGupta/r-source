@@ -2,7 +2,7 @@
 #  Part of the R package, http://www.R-project.org
 #
 #  Copyright (C) 2000-2001  Douglas M. Bates
-#  Copyright (C) 2002-2013  The R Core Team
+#  Copyright (C) 2002-2014  The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ TukeyHSD.aov <-
     for (nm in names(tabs)) {
         tab <- tabs[[nm]]
         means <- as.vector(tab)
-        nms <- if(length(d <- dim(tab)) > 1L) {
+        nms <- if(length(dim(tab)) > 1L) {
             dn <- dimnames(tab)
             apply(do.call("expand.grid", dn), 1L, paste, collapse = ":")
         } else names(tab)

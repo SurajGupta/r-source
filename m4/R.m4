@@ -216,7 +216,7 @@ AC_DEFUN([_R_PROG_MAKEINFO_VERSION],
 [AC_CACHE_CHECK([whether makeinfo version is at least 4.7],
                 [r_cv_prog_makeinfo_v4],
 [makeinfo_version=`${MAKEINFO} --version | \
-  grep "^makeinfo" | sed 's/[[^)]]*) \(.*\)/\1/'`
+  grep -E '^(makeinfo|texi2any)' | sed 's/[[^)]]*) \(.*\)/\1/'`
 makeinfo_version_maj=`echo ${makeinfo_version} | cut -f1 -d.`
 makeinfo_version_min=`echo ${makeinfo_version} | \
   cut -f2 -d. | tr -dc '0123456789.' `
@@ -2713,18 +2713,18 @@ fi
   if test -n "${r_cv_zdotu_is_usable}"; then
     AC_MSG_RESULT([yes])
   else
-    ## NB: this lot is not cached
-    if test "${r_cv_check_fw_accelerate}" != "no"; then
-      AC_MSG_RESULT([yes])
-      ## for vecLib we have a work-around by using cblas_..._sub
-      use_veclib_g95fix=yes
-      ## The fix may not work with internal lapack, but
-      ## is more likely to in R >= 2.15.2.
-    else
-      AC_MSG_RESULT([no])
-      BLAS_LIBS=
-      acx_blas_ok="no"
-    fi
+    case "${BLAS_LIBS}" in
+      *Accelerate* | *vecLib*)
+        ## for vecLib we have a work-around by using cblas_..._sub
+        AC_MSG_RESULT([yes])
+        use_veclib_g95fix=yes
+        ;;
+      *)  
+        AC_MSG_RESULT([no])
+        BLAS_LIBS=
+        acx_blas_ok="no"
+        ;;
+    esac
   fi
 fi
 if test "${acx_blas_ok}" = yes; then
@@ -3062,8 +3062,7 @@ caddr_t hello() {
 ## ------
 ## If selected, try finding system pcre library and headers.
 ## RedHat put the headers in /usr/include/pcre.
-## R (2.15.3, 3.0.0) includes 8.32: there are problems < 8.10 and
-## distros are often slow to update.
+## There are known problems < 8.10.
 AC_DEFUN([R_PCRE],
 [if test "x${use_system_pcre}" = xyes; then
   AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
@@ -3078,7 +3077,7 @@ else
   have_pcre=no
 fi
 if test "x${have_pcre}" = xyes; then
-AC_CACHE_CHECK([if PCRE version >= 8.10], [r_cv_have_pcre810],
+AC_CACHE_CHECK([if PCRE version >= 8.10 and < 10.0], [r_cv_have_pcre810],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #ifdef HAVE_PCRE_PCRE_H
 #include <pcre/pcre.h>
@@ -3090,7 +3089,7 @@ AC_CACHE_CHECK([if PCRE version >= 8.10], [r_cv_have_pcre810],
 int main() {
 #ifdef PCRE_MAJOR
 #if PCRE_MAJOR > 8
-  exit(0);
+  exit(1);
 #elif PCRE_MAJOR == 8 && PCRE_MINOR >= 10
   exit(0);
 #else

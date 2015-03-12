@@ -1,7 +1,7 @@
 #  File src/library/utils/R/packageStatus.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -90,7 +90,6 @@ summary.packageStatus <- function(object, ...)
     Libs <- levels(object$inst$LibPath)
     Repos <- levels(object$avail$Repository)
 
-    byLib <- split(object$inst, object$inst$LibPath)
     Libs <- lapply(split(object$inst, object$inst$LibPath),
                    function(x) tapply(x$Package, x$Status,
                                       function(x) sort(as.character(x))))

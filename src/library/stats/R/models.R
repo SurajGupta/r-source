@@ -173,7 +173,29 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
 				  if (keep.response) termobj[[2L]] else NULL,
                                   attr(termobj, "intercept"))
         environment(newformula) <- environment(termobj)
-	terms(newformula, specials=names(attr(termobj, "specials")))
+	result <- terms(newformula, specials=names(attr(termobj, "specials")))
+	
+	# Edit the optional attributes
+	
+	response <- attr(termobj, "response")
+	if (response && !keep.response) 
+	    # we have a response in termobj, but not in the result
+	    dropOpt <- c(response, dropx + length(response))
+	else 
+	    dropOpt <- dropx + max(response)
+	 
+	if (!is.null(predvars <- attr(termobj, "predvars"))) {
+	    # predvars is a language expression giving a list of 
+	    # values corresponding to terms in the model
+            # so add 1 for the name "list"
+	    attr(result, "predvars") <- predvars[-(dropOpt+1)]
+	}
+	if (!is.null(dataClasses <- attr(termobj, "dataClasses"))) {
+	    # dataClasses is a character vector of 
+	    # values corresponding to terms in the model
+	    attr(result, "dataClasses") <- dataClasses[-dropOpt]
+	}	
+	result
     }
 }
 
@@ -185,7 +207,33 @@ drop.terms <- function(termobj, dropx = NULL, keep.response = FALSE)
     if (length(newformula) == 0L) newformula <- "1"
     newformula <- reformulate(newformula, resp, attr(termobj, "intercept"))
     environment(newformula) <- environment(termobj)
-    terms(newformula, specials = names(attr(termobj, "specials")))
+    result <- terms(newformula, specials = names(attr(termobj, "specials")))
+    
+    # Edit the optional attributes
+
+    addindex <- function(index, offset) 
+        # add a non-negative offset to a possibly negative index
+    	ifelse(index < 0, index - offset, 
+    	       ifelse(index == 0, 0, index + offset))
+    	       
+    if (is.logical(i))
+    	i <- which(rep_len(i, length.out = length(attr(termobj, "term.labels"))))
+    	
+    response <- attr(termobj, "response")
+    if (response) 
+	iOpt <- c(if (max(i) > 0) response, # inclusive indexing
+	          addindex(i, max(response)))
+    else 
+	iOpt <- i
+
+    if (!is.null(predvars <- attr(termobj, "predvars"))) 
+	attr(result, "predvars") <- predvars[c(if (max(iOpt) > 0) 1, 
+	                                     addindex(iOpt, 1))]
+    
+    if (!is.null(dataClasses <- attr(termobj, "dataClasses"))) 
+	attr(result, "dataClasses") <- dataClasses[iOpt]
+    
+    result
 }
 
 
@@ -439,6 +487,7 @@ model.frame.default <-
 		    warning(gettextf("variable '%s' is not a factor", nm),
                             domain = NA)
 		else {
+		    ctr <- attr(xi, "contrasts")
 		    xi <- xi[, drop = TRUE] # drop unused levels
                     nxl <- levels(xi)
 		    if(any(m <- is.na(match(nxl, xl))))
@@ -448,14 +497,22 @@ model.frame.default <-
                                      nm, paste(nxl[m], collapse=", ")),
                              domain = NA)
 		    data[[nm]] <- factor(xi, levels=xl, exclude=NULL)
+		    if (!identical(attr(data[[nm]], "contrasts"), ctr))
+		    	warning(gettext(sprintf("contrasts dropped from factor %s", nm), domain = NA),
+		    	        call. = FALSE)
 		}
 	    }
     } else if(drop.unused.levels) {
 	for(nm in names(data)) {
 	    x <- data[[nm]]
 	    if(is.factor(x) &&
-	       length(unique(x[!is.na(x)])) < length(levels(x)))
-		data[[nm]] <- data[[nm]][, drop = TRUE]
+	       length(unique(x[!is.na(x)])) < length(levels(x))) {
+	        ctr <- attr(x, "contrasts")
+		data[[nm]] <- x[, drop = TRUE]
+		if (!identical(attr(data[[nm]], "contrasts"), ctr))
+		    warning(gettext(sprintf("contrasts dropped from factor %s due to missing levels", nm), domain = NA), 
+		            call. = FALSE)
+	    }
 	}
     }
     attr(formula, "dataClasses") <- vapply(data, .MFclass, "")

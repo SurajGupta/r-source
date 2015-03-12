@@ -1,6 +1,7 @@
 #  File src/library/splines/R/splineClasses.R
 #  Part of the R package, http://www.R-project.org
 #  Copyright (C) 1998 Douglas M. Bates and William N. Venables.
+#  Copyright (C) 2000-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -58,7 +59,7 @@ splineDesign <-
     o1 <- ord - 1L
 ### FIXME: the 'outer.ok && need.outer' handling would more efficiently happen
 ###        in the underlying C code - with some programming effort though..
-    if(need.outer <- any(out.x <- x < knots[ord] | knots[nk - o1] < x)) {
+    if(need.outer <- any(x < knots[ord] | knots[nk - o1] < x)) {
         if(outer.ok) { ## x[] is allowed to be 'anywhere'
             ## extend knots set "temporarily"
             in.x <- knots[1L] < x & x < knots[nk]
@@ -141,7 +142,7 @@ interpSpline.default <-
     derivs <- c(2, integer(ndat), 2) # 2nd derivs coerced to 0 in solve() below
     x	   <- c(x[1L], x, x[ndat])
 ## Solving the system of equations for the spline coefficients can be
-## simplified by using banded matrices but the required Linpack routines
+## simplified by using banded matrices but the required LINPACK routines
 ## are not loaded as part of S.
 ##  z <- .C("spline_basis",
 ##	as.double(knots),

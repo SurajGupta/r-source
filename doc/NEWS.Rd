@@ -8,6 +8,212 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R 3.1.3}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item The internal method of \code{download.file()} can now handle
+      files larger than 2GB on 32-bit builds which support such files
+      (tested on 32-bit \R running on 64-bit Windows).
+
+      \item \code{kruskal.test()} warns on more types of suspicious input.
+
+      \item The \code{as.dendrogram()} method for \code{"hclust"}
+      objects gains a \code{check} argument protecting against memory
+      explosion for invalid inputs.
+
+      \item \code{capabilities()} has a new item \code{long.double}
+      which indicates if the build uses a \code{long double} type which
+      is longer than \code{double}.
+
+      \item \code{nlm()} no longer modifies the callback argument in
+      place (a new vector is allocated for each invocation, which mimics
+      the implicit duplication that occurred in R < 3.1.0); note that
+      this is a change from the previously documented
+      behavior. (\PR{15958})
+
+      \item \code{icuSetCollate()} now accepts \code{locale = "ASCII"}
+      which uses the basic C function \code{strcmp} and so collates
+      strings byte-by-byte in numerical order.
+
+      \item \code{sessionInfo()} tries to report the OS version in use
+      (not just that compiled under, and including details of Linux
+      distributions).
+
+      \item \code{model.frame()} (used by \code{lm()} and many other
+      modelling functions) now warns when it drops contrasts
+      from factors.  (Wish of \PR{16119})
+
+      \item \code{install.packages()} and friends now accept the value
+      \code{type = "binary"} as a synonym for the native binary type on
+      the platform (if it has one).
+
+      \item Single source or binary files can be supplied for
+      \code{install.packages(type = "both")} and the appropriate type
+      and \code{repos = NULL} will be inferred.
+
+      \item New function \code{pcre_config()} to report on some of the
+      configuration options of the version of PCRE in use.  In
+      particular, this reports if regular expressions using
+      \samp{\p{xx}} are supported.
+
+      \item (Windows.) \code{download.file(cacheOK = FALSE)} is now
+      supported when \file{internet2.dll} is used.
+
+      \item \code{browseURL()} has been updated to work with Firefox
+      36.0 which has dropped support for the \option{-remote} interface.
+    }
+  }
+
+  \subsection{INSTALLATION and INCLUDED SOFTWARE}{
+    \itemize{
+      \item The included version of PCRE has been updated to 8.36.
+
+      \item \command{configure} accepts \samp{MAKEINFO=texi2any} as
+      another way to ensure \pkg{texinfo} 5.x is used when both 5.x and
+      4.x are installed.
+    }
+  }
+
+  \subsection{UTILITIES}{
+    \itemize{
+      \item \command{R CMD check} now checks the packages used in
+      \code{\\donttest} sections of the examples are specified in the
+      \file{DESCRIPTION} file.
+      (These are needed to run the examples interactively.)
+
+      \item \command{R CMD check} checks for the undeclared use of GNU
+      extensions in Makefiles, and for Makefiles with a missing final
+      linefeed.
+
+      \command{R CMD build} will correct line endings in all Makefiles,
+      not just those in the \file{src} directory.
+
+      \item \command{R CMD check} notes uses of \code{library()} and
+      \code{require()} in package code: see the section
+      \sQuote{Suggested packages} of \sQuote{Writing R Extensions} for
+      good practice.
+    }
+  }
+  \subsection{DEPRECATED AND DEFUNCT}{
+    \itemize{
+      \item The \command{configure} option
+      \option{--with-valgrind-instrumentation=3} is deprecated and will
+      be removed in \R 3.2.0.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item (Windows.) \command{Rscript.exe} was missing a
+      manifest specifying the modern style for common controls (e.g.,
+      the download progress bar).
+
+      \item If a package had extra documentation files but no vignette,
+      the HTML help system produced an empty index page.
+
+      \item The parser now gives an error if a null character is included
+      in a string using Unicode escapes. (\PR{16046})
+
+      \item \code{qr.Q()} failed on complex arguments due to
+      pre-3.0(!) typo. (\PR{16054})
+
+      \item \code{abs()} failed with named arguments when the argument
+      was complex.  (\PR{16047})
+
+      \item \code{"noquote"} objects may now be used as columns in
+      dataframes.  (\PR{15997})
+
+      \item Some values with extremely long names were printed
+      incorrectly.  (\PR{15999})
+
+      \item Extremely large exponents on zero expressed in scientific
+      notation (e.g. \code{0.0e50000}) could give \code{NaN}.  (\PR{15976})
+
+      \item \code{download.file()} reported downloaded sizes as 0KB if
+      less than 1MB, only for \R 3.1.2 and only on big-endian platforms.
+
+      \item \code{prompt()} did not escape percent signs in the
+      automatically generated usage section of help files.
+
+      \item \code{drop.terms()} dropped some of the attributes of the
+      object it was working with.  (\PR{16029})
+
+      \item (Windows.) The command completion in \command{Rgui.exe}
+      messed up the console.  (\PR{15791})
+
+      \item (Windows.) The \code{choose.files()} command returned a
+      blank string when the user asked for a single file but cancelled
+      the request.  (\PR{16074})
+
+      \item \code{Math2} S4 group generics failed to correctly dispatch
+      \code{"structure"}- and \code{"nonStructure"}-derived classes.
+
+      \item \code{loadNamespace()} imposed undocumented restrictions
+      on the \code{versionCheck} parameter.  (Reported by Geoff Lee.)
+
+      \item Rare over-runs detected by AddressSanitizer in
+      \code{substr()} and its replacement version have been avoided.
+
+      \emph{Inter alia} that fix gives the documented behaviour for
+      \code{substr(x, 1, 2) <- ""} (subsequently reported as
+      \PR{16214}).
+
+      \item Loading packages incorrectly defining an S4 generic followed
+      by a function of the same name caused an erroneous cyclic
+      namespace dependency error.
+
+      \item Declared vignette encodings are now always passed to the
+      vignette engine.
+
+      \item Port Tomas Kalibera's fix from R-devel that restores the
+      \code{loadMethod()} fast path, effectively doubling the speed of
+      S4 dispatch.
+
+      \item \code{power.t.test()} and \code{power.prop.test()} now make
+      use of the \code{extendInt} option of \code{uniroot()} and hence
+      work in more extreme cases.  (\PR{15792})
+
+      \item If a package was updated and attached when its namespace was
+      already loaded, it could end up with parts from one version and
+      parts from the other.  (\PR{16120})
+
+      \item \code{tools:::.Rdconv()} didn't accept \code{--encoding=} due
+      to a typo.  (\PR{16121})
+
+      \item Unix-alike builds without a suitable \command{makeinfo} were
+      documented to link the missing HTML manuals to CRAN, but did not.
+
+      \item \code{save(*, ascii=TRUE)} and \code{load()} now correctly
+      deal with \code{NaN}'s.  (\PR{16137})
+
+      \item \code{split.Date()} retains fractional representations while
+      avoiding incomplete class propagation.
+
+      \item \file{R_ext/Lapack.h} had not been updated for changes made
+      by LAPACK to the argument lists of its (largely internal)
+      functions \code{dlaed2} and \code{dlaed3}.  (\PR{16157})
+
+      \item \code{RShowDoc("NEWS", "txt")} had not been updated for the
+      layout changes of \R 3.1.0.
+
+      \item The \code{xtfrm()} method for class \code{"Surv"} has been
+      corrected and its description expanded.
+
+      \item \code{mode(x) <- y} would incorrectly evaluate \code{x} before
+      changing its mode. (\PR{16215})
+
+      \item \code{besselJ(1, 2^64)} and \code{besselY(..)} now signal a
+      warning, returning \code{NaN} instead of typically
+      segfaulting. (Issue 3 of \PR{15554})
+
+      \item HTML conversion of \samp{\href} markup in \file{.Rd} files
+      did not remove the backslash from \samp{\\\%} and so gave an
+      invalid URL.  In a related change, the \samp{\\} escape is now
+      required in such URLs.
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R 3.1.2}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -48,16 +254,21 @@
       collation locale in use (if any).
 
       \item \code{utils::URLencode()} was updated to use unreserved and
-      reserved characters from RFC 3986,
-      \url{http://tools.ietf.org/html/rfc3986}, instead of RFC 1738.
+      reserved characters from RFC 3986
+      (\url{http://tools.ietf.org/html/rfc3986}) instead of RFC 1738.
 
       \item \code{unique(warnings())} and \code{c(warnings())} are now
       supported.
-      
+
       \item The Bioconductor \sQuote{version} used by
       \code{setRepositories()} now defaults to \code{3.0}. (It can be
       set at runtime \emph{via} environment variable
       \env{R_BIOC_VERSION}.)
+
+      \item Omegahat is no longer listed as providing Windows binary
+      packages, e.g. by \code{setRepositories()}.  It has no binary
+      packages available for \R 3.1.x and those for earlier versions
+      were 32-bit only.
     }
   }
 
@@ -67,7 +278,7 @@
       capabilities/options which will not be compiled in.
 
       More types of external BLAS are recognized by name in that report.
-      
+
       \item When building \R as a shared library, the
       \option{-L${R_HOME}/lib${R_ARCH}} flag is placed earlier in the
       link commands used during installation and when packages are
@@ -80,9 +291,9 @@
       \item LaTeX package \pkg{upquote} is no longer required for \R's
       use of \pkg{inconsolata}.
 
-      \item (Windows only) If both 32 and 64 bit versions of \R are
+      \item (Windows only) If both 32- and 64-bit versions of \R are
       installed, the \file{bin/R.exe} and \file{bin/Rscript.exe} executables
-      now run 64 bit \R.  (To run 32 bit \R, overwrite these files
+      now run 64-bit \R.  (To run 32-bit \R, overwrite these files
       with copies of \file{bin/i386/Rfe.exe}.)
      }
   }
@@ -215,10 +426,10 @@
 
       \item \code{bw.SJ(x)} and other bw.*() no longer segfault when
       \code{x} contains non-finite values. (\PR{16024})
-      
+
       \item \command{R CMD Rd2pdf} unintentionally ignored its
       \option{--os} option.
-      
+
       \item The internal method of \code{download.file()} was not
       reporting file sizes and progress correctly on files larger than
       2GB (inherited from \code{libxml2}).  This is corrected for 64-bit
@@ -1039,7 +1250,7 @@
       the control characters.  (Reported by Hadley Wickham.)
 
       \item \code{getGraphicsEvent()} caused 100\% usage of one CPU in
-      Windows. (PR#15500)
+      Windows. (\PR{15500})
 
       \item \code{nls()} with no \code{start} argument may now work
       inside another function (scoping issue).

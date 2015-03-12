@@ -1,7 +1,7 @@
 #  File src/library/tools/R/QC.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -1022,8 +1022,8 @@ function(package, lib.loc = NULL)
             docSlots <-
                 docSlots[is.na(match(docSlots, c("...", "\\dots")))]
         ## was if(!identical(slots_in_code, slots_in_docs)) {
-        if(!all(d.in.c <- docSlots %in% codeSlots) ||
-           !all(c.in.d <- (setdiff(codeSlots, superSlots)) %in% docSlots) ) {
+        if(!all(docSlots %in% codeSlots) ||
+           !all(setdiff(codeSlots, superSlots) %in% docSlots) ) {
             bad_Rd_objects[[db_names[ii]]] <-
                 list(name = cl,
                      code = codeSlots,
@@ -1530,7 +1530,7 @@ function(x, ...)
 checkDocStyle <-
 function(package, dir, lib.loc = NULL)
 {
-    has_namespace <- auto_namespace <- FALSE
+    has_namespace <- FALSE
 
     ## Argument handling.
     if(!missing(package)) {
@@ -1566,10 +1566,6 @@ function(package, dir, lib.loc = NULL)
         ## auto-generated.
         if(packageHasNamespace(package, dirname(dir))) {
             has_namespace <- TRUE
-            ns <- readLines(file.path(dir, "NAMESPACE"), warn = FALSE)
-            auto_namespace <-
-                grepl("# Default NAMESPACE created by R", ns[1L],
-                      useBytes = TRUE)
             ## Determine names of declared S3 methods and associated S3
             ## generics.
             ns_S3_methods_db <- getNamespaceInfo(package, "S3methods")
@@ -1917,8 +1913,6 @@ function(package, dir, file, lib.loc = NULL,
     ## Also, need to handle base::.Call() etc ...
     FF_funs <- c(FF_funs, sprintf("base::%s", FF_fun_names))
 
-    allowed <- character()
-
     check_registration <- function(e, fr) {
     	sym <- e[[2L]]
     	name <- deparse(sym, nlines = 1L)
@@ -2065,7 +2059,7 @@ function(package, dir, file, lib.loc = NULL,
                     wrong_pkg <<- c(wrong_pkg, e)
                     bad_pkg <<- c(bad_pkg, this)
                 }
-                parg <- if(!is.null(parg) && (parg != "")) "OK"
+                parg <- if(!is.null(parg) && (nzchar(parg))) "OK"
                 else if(identical(parg, "")) {
                     empty_exprs <<- c(empty_exprs, e)
                     "EMPTY"
@@ -2363,7 +2357,7 @@ function(package, dir, lib.loc = NULL)
         Filter(function(f) is.function(get(f, envir = code_env)), # get is expensive
                objects_in_code)
 
-    ## This is the virtual groyp generics, not the members
+    ## This is the virtual group generics, not the members
     S3_group_generics <- .get_S3_group_generics()
     ## This includes the primitive group generics as from R 2.6.0
     S3_primitive_generics <- .get_S3_primitive_generics()
@@ -2795,7 +2789,7 @@ function(dir, force_suggests = TRUE, check_incoming = FALSE)
             ## given a package, find its recursive dependencies.
             ## We want the dependencies of the current package,
             ## not of a version on the repository.
-            pkg <- db[["Package"]]
+##            pkg <- db[["Package"]]
             this <- db[dependencies]; names(this) <- dependencies
             known <- setdiff(utils:::.clean_up_dependencies(this), "R")
             info <- available[, dependencies, drop = FALSE]
@@ -3315,7 +3309,7 @@ function(x, ...)
                      ""))
 
     if(any(as.integer(sapply(x, length)) > 0L))
-        writeLines(c(strwrap(gettextf("See the information on DESCRIPTION files in section 'Creating R packages' of the 'Writing R Extensions' manual.")),
+        writeLines(c(strwrap(gettextf("See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual.")),
                      ""))
 
     invisible(x)
@@ -3445,10 +3439,34 @@ function(aar, strict = FALSE)
             out$bad_authors_at_R_field_for_maintainer <-
                 conditionMessage(s)
         } else {
-            if(s == "")
-                out$bad_authors_at_R_field_has_no_maintainer <- TRUE
-            else
-                attr(out, "Maintainer") <- s
+            ## R-exts says
+            ##   The mandatory 'Maintainer' field should give a _single_
+            ##   name followed by a _valid_ (RFC 2822) email address in
+            ##   angle brackets.
+            ## Hence complain when Authors@R
+            ## * has more than one person with a cre role
+            ## * has no person with a cre role, "valid" email address
+            ##   and a non-empty name.
+            bad <- FALSE
+            p <- Filter(function(e) {
+                !is.na(match("cre", e$role))
+            },
+                        aar)
+            if(length(p) > 1L) {
+                bad <- TRUE
+                out$bad_authors_at_R_field_too_many_maintainers <-
+                    format(p)
+            }
+            p <- Filter(function(e) {
+                (!is.null(e$given) || !is.null(e$family)) && !is.null(e$email)
+            },
+                        p)
+            if(!length(p)) {
+                bad <- TRUE
+                out$bad_authors_at_R_field_has_no_valid_maintainer <- TRUE
+            }
+            ## s should now be non-empty iff bad is FALSE.
+            if(!bad) attr(out, "Maintainer") <- s
         }
     }
     out
@@ -3478,8 +3496,13 @@ function(x)
           c(gettext("Cannot extract Maintainer field from Authors@R field:"),
             paste(" ", bad))
       },
-      if(length(x[["bad_authors_at_R_field_has_no_maintainer"]])) {
-          gettext("Authors@R field gives no person with maintainer role and email address.")
+      if(length(bad <-
+                x[["bad_authors_at_R_field_too_many_maintainers"]])) {
+          c(gettext("Authors@R field gives more than one person with maintainer role:"),
+            paste(" ", bad))
+      },
+      if(length(x[["bad_authors_at_R_field_has_no_valid_maintainer"]])) {
+          strwrap(gettext("Authors@R field gives no person with maintainer role, valid email address and non-empty name."))
       }
       )
 }
@@ -3538,7 +3561,7 @@ function(x, ...)
             .pretty_format(x$fields_with_non_ASCII_values))
       },
       if(any(as.integer(sapply(x, length)) > 0L)) {
-          c(strwrap(gettextf("See the information on DESCRIPTION files in section 'Creating R packages' of the 'Writing R Extensions' manual.")),
+          c(strwrap(gettextf("See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual.")),
             "")
       })
 }
@@ -4122,6 +4145,12 @@ function(package, dir, lib.loc = NULL)
     unknown <- unknown[!obsolete]
     if (length(unknown)) {
         repos <- .get_standard_repository_URLs()
+        ## Also allow for additionally specified repositories.
+        aurls <- pkgInfo[["DESCRIPTION"]]["Additional_repositories"]
+        if(!is.na(aurls)) {
+            repos <- c(repos,
+                       unique(unlist(strsplit(aurls, ",[[:space:]]*"))))
+        }
         known <-
             try(suppressWarnings(utils::available.packages(utils::contrib.url(repos, "source"),
                filters = c("R_version", "duplicates"))[, "Package"]))
@@ -4132,13 +4161,13 @@ function(package, dir, lib.loc = NULL)
             message(sprintf(ngettext(sum(miss),
                                      "Package unavailable to check Rd xrefs: %s",
                                      "Packages unavailable to check Rd xrefs: %s"),
-                             paste(sQuote(unknown[miss]), collapse = ", ")),
+                             paste(sQuote(sort(unknown[miss])), collapse = ", ")),
                     domain = NA)
         if(any(!miss))
             message(sprintf(ngettext(sum(!miss),
                                      "Unknown package %s in Rd xrefs",
                                      "Unknown packages %s in Rd xrefs"),
-                             paste(sQuote(unknown[!miss]), collapse = ", ")),
+                             paste(sQuote(sort(unknown[!miss])), collapse = ", ")),
                     domain = NA)
     }
     ## The bad ones:
@@ -4160,7 +4189,7 @@ function(x, ...)
               "")
         }
         c(unlist(lapply(seq_along(xx), .fmt)),
-          strwrap(gettextf("See the information in section 'Cross-references' of the 'Writing R Extensions' manual.")),
+          strwrap(gettextf("See section 'Cross-references' in the 'Writing R Extensions' manual.")),
           "")
     } else {
         character()
@@ -4914,9 +4943,9 @@ function(x, ...)
 
         has_bad_wrong_args <-
             "bad_arg_names" %in% unlist(lapply(y, names))
-        calls <-
-            unique(unlist(lapply(y,
-                                 function(e) e[["bad_calls"]][["names"]])))
+##        calls <-
+##            unique(unlist(lapply(y,
+##                                 function(e) e[["bad_calls"]][["names"]])))
         .fmt_entries_for_file <- function(e, f) {
             c(gettextf("File %s:", sQuote(f)),
               unlist(Map(.fmt_entries_for_function, e, names(e))),
@@ -5205,12 +5234,13 @@ function(package, dir, lib.loc = NULL)
     ## we just have a stop list here.
     common_names <- c("pkg", "pkgName", "package", "pos", "dep_name")
 
-    bad_exprs <- bad_deps <- bad_imps <- character()
+    bad_exprs <- bad_deps <- bad_imps <- bad_prac <- character()
     bad_imports <- all_imports <- imp2 <- imp2f <- imp3 <- imp3f <- character()
     uses_methods <- FALSE
     find_bad_exprs <- function(e) {
         if(is.call(e) || is.expression(e)) {
             Call <- deparse(e[[1L]])[1L]
+            if(Call %in% c("clusterEvalQ", "parallel::clusterEvalQ")) return()
             if((Call %in%
                 c("library", "require", "loadNamespace", "requireNamespace"))
                && (length(e) >= 2L)) {
@@ -5245,6 +5275,9 @@ function(package, dir, lib.loc = NULL)
                                 bad_exprs <<- c(bad_exprs, pkg)
                             if(pkg %in% depends)
                                 bad_deps <<- c(bad_deps, pkg)
+                           ## assume calls to itself are to clusterEvalQ etc
+                           else if (pkg != package)
+                               bad_prac <<- c(bad_prac, pkg)
                         }
                     }
                 }
@@ -5443,6 +5476,7 @@ function(package, dir, lib.loc = NULL)
         }
     } else imp32 <- imp3f <- imp3ff <- unknown <- character()
     res <- list(others = unique(bad_exprs),
+                bad_practice = unique(bad_prac),
                 imports = unique(bad_imports),
                 imps = unique(bad_imps),
                 in_depends = unique(bad_deps),
@@ -5504,6 +5538,18 @@ function(x, ...)
                          sQuote(xx)), msg)
           }
       },
+      if(length(xx <- x$bad_practice)) {
+          msg <-
+              "  Please use :: or requireNamespace() instead.\n  See section 'Suggested packages' in the 'Writing R Extensions' manual."
+          if(length(xx) > 1L) {
+              c(gettext("'library' or 'require' calls in package code:"),
+                .pretty_format(sort(xx)), msg)
+          } else {
+              c(gettextf("'library' or 'require' call to %s in package code.",
+                         sQuote(xx)), msg)
+          }
+      },
+
       if(length(xx <- x$unused_imports)) {
           msg <- "  All declared Imports should be used."
           if(length(xx) > 1L) {
@@ -5732,7 +5778,8 @@ function(package, dir, lib.loc = NULL)
     }
     pkg_name <- db["Package"]
 
-    file <- .createExdotR(pkg_name, dir, silent = TRUE)
+    file <- .createExdotR(pkg_name, dir, silent = TRUE,
+                          commentDonttest = FALSE)
     if (is.null(file)) return(invisible(NULL)) # e.g, no examples
     on.exit(unlink(file))
     enc <- db["Encoding"]
@@ -6267,6 +6314,7 @@ function(package, dir, lib.loc = NULL, WINDOWS = FALSE)
     }
 
 
+    ## FIXME: these are set but not used.
     bad_S4methods <- list()
     bad_refs <- character()
     if(!missing(package)) {
@@ -6747,6 +6795,28 @@ function(dir)
         if(length(dotjava)) out$dotjava <- dotjava
     }
 
+   ## Check Authors@R.
+    if(!is.na(aar <- meta["Authors@R"]) &&
+       ## DESCRIPTION is fully checked later on, so be careful.
+       !inherits(aar <- tryCatch(parse(text = aar), error = identity),
+                 "error")) {
+        bad <- ((length(aar) != 1L) || !is.call(aar <- aar[[1L]]))
+        if(!bad) {
+            cname <- as.character(aar[[1L]])
+            bad <-
+                ((cname != "person") &&
+                 ((cname != "c") ||
+                  !all(vapply(aar[-1L],
+                              function(e) {
+                                  (is.call(e) &&
+                                       (as.character(e[[1L]]) == "person"))
+                              },
+                              FALSE))))
+        }
+        if(bad)
+            out$authors_at_R_calls <- aar
+    }
+
     ## Is this an update for a package already on CRAN?
     db <- db[(packages == package) &
              (db[, "Repository"] == CRAN) &
@@ -6960,6 +7030,9 @@ function(x, ...)
 		"Uses the non-portable packages:" else
 		"Uses the non-portable package:",
                 paste(sQuote(y), collapse = ", "))
+      },
+      if(length(y <- x$authors_at_R_calls)) {
+          c("Authors@R field should be a call to person(), or combine such calls.")
       },
       if(length(y <- x$vignette_sources_only_in_inst_doc)) {
           if(identical(x$have_vignettes_dir, FALSE))
@@ -7312,7 +7385,7 @@ function(x)
 {
     y <- as.character(x)
     if(!is.null(nx <- names(x))) {
-        ind <- which(nx != "")
+        ind <- which(nzchar(nx))
         y[ind] <- nx[ind]
     }
     y

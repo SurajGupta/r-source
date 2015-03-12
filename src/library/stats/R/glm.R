@@ -1,7 +1,7 @@
 #  File src/library/stats/R/glm.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -237,7 +237,6 @@ glm.fit <-
             }
             z <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
             w <- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
-            ngoodobs <- as.integer(nobs - sum(!good))
             ## call Fortran code via C wrapper
             fit <- .Call(C_Cdqrls, x[good, , drop = FALSE] * w, z * w,
                          min(1e-7, control$epsilon/1000), check=FALSE)

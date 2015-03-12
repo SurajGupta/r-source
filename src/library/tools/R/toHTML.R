@@ -1,7 +1,7 @@
 toHTML <- function(x, ...) UseMethod("toHTML")
 
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 
 HTMLheader <-
 function(title="R", logo=TRUE,
@@ -226,7 +226,6 @@ makeHelpTable <- function(help, depth=2) {
                    "library/", pkg, "/html/")
     topic <- help[, "topic"]
     Title <- help[, "title"]
-    name <- help[, "name"]
     links <- paste0('<a href="', root, topic, '.html">',
 		    ifelse(nchar(pkg), paste0(pkg, "::"), ""),
 		    topic, '</a>')

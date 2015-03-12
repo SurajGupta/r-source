@@ -1,7 +1,7 @@
 #  File src/library/base/R/library.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -286,6 +286,17 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## has a namespace, then the namespace loading mechanism
             ## takes over.
             if (packageHasNamespace(package, which.lib.loc)) {
+                if (package %in% loadedNamespaces()) {
+                    # Already loaded.  Does the version match?
+                    newversion <- as.numeric_version(pkgInfo$DESCRIPTION["Version"])
+                    oldversion <- as.numeric_version(getNamespaceVersion(package))
+                    if (newversion != oldversion) {
+                    	# No, so try to unload the previous one
+                    	res <- try(unloadNamespace(package))
+                    	if (inherits(res, "try-error"))
+                    	    stop(dQuote(package), " version ", oldversion, " cannot be unloaded.")
+                    }
+                }
                 tt <- try({
                     ns <- loadNamespace(package, c(which.lib.loc, lib.loc))
                     env <- attachNamespace(ns, pos = pos, deps)
@@ -532,7 +543,7 @@ function(chname, libpath, verbose = getOption("verbose"),
 {
     dll_list <- .dynLibs()
 
-    if(missing(chname) || (nc_chname <- nchar(chname, "c")) == 0L)
+    if(missing(chname) || nchar(chname, "c") == 0L)
         if(.Platform$OS.type == "windows")
             stop("no DLL was specified")
         else

@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2014  The R Core Team.
+ *  Copyright (C) 1995--2015  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -415,7 +415,7 @@ void warningcall_immediate(SEXP call, const char *format, ...)
 
     immediateWarning = 1;
     va_start(ap, format);
-    vwarningcall_dflt(call, format, ap);
+    vsignalWarning(call, format, ap);
     va_end(ap);
     immediateWarning = 0;
 }

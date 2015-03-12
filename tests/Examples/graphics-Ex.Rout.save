@@ -1,6 +1,6 @@
 
-R version 3.1.2 RC (2014-10-29 r66897) -- "Pumpkin Helmet"
-Copyright (C) 2014 The R Foundation for Statistical Computing
+R version 3.1.3 RC (2015-03-01 r67921) -- "Smooth Sidewalk"
+Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -1768,7 +1768,7 @@ armed.forces
 > 
 > ### ** Examples
 > 
-> require(stats)
+> require(stats) # for lowess, rpois, rnorm
 > plot(cars)
 > lines(lowess(cars))
 > 
@@ -2026,7 +2026,7 @@ N
 > points.default # to see how it calls "plot.xy(xy.coords(x, y), ...)"
 function (x, y = NULL, type = "p", ...) 
 plot.xy(xy.coords(x, y), type = type, ...)
-<bytecode: 0x2ac1528>
+<bytecode: 0x236d650>
 <environment: namespace:graphics>
 > 
 > 
@@ -2762,7 +2762,7 @@ $`11.33`
 > 
 > ### ** Examples
 > 
-> require(stats)
+> require(stats) # for rnorm
 > require(grDevices)
 > 
 > ## 'number' is computed automatically:
@@ -2897,7 +2897,7 @@ function (xy = 1, warn.log = TRUE)
     u <- par("usr")
     xy * c(u[2L] - u[1L], u[4L] - u[3L])/par("pin")
 }
-<bytecode: 0x36ce590>
+<bytecode: 0x33c3ce0>
 <environment: namespace:graphics>
 > 
 > ## plot labels offset 0.12 inches to the right
@@ -2977,7 +2977,7 @@ function (xy = 1, warn.log = TRUE)
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  1.975 0.04 2.02 0 0 
+Time elapsed:  2.206 0.031 2.237 0 0 
 > grDevices::dev.off()
 null device 
           1 

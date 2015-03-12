@@ -1,7 +1,7 @@
 #  File src/library/tools/R/Rd2latex.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -211,9 +211,9 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
             url <- as.character(block[[1L]])
             tag <- "\\Rhref"
         }
-    	of0(tag, "{",
-            gsub("\n", "", paste(as.character(url), collapse="")),
-            "}")
+        url <- paste(as.character(url), collapse = "")
+        url <- gsub("%", "\\%",  url, fixed = TRUE, useBytes = TRUE)
+    	of0(tag, "{", gsub("\n", "", url), "}")
         if (tag == "\\Rhref") {
             of1("{")
             writeContent(block[[2L]], tag)
@@ -228,8 +228,6 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
         of0("\\LinkA{", latex_escape_link(parts$topic), "}{",
             latex_link_trans0(parts$dest), "}")
     }
-
-    writeComment <- function(txt) of0(txt, '\n')
 
     writeDR <- function(block, tag) {
         if (length(block) > 1L) {
@@ -297,35 +295,6 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
         x
     }
 
-    latex_code_trans  <- function(x)
-    {
-        BSL = '@BSL@';
-        LATEX_SPECIAL = '$^&~_#'
-        if(grepl(LATEX_SPECIAL, x)) {
-            x <- fsub("\\\\", BSL, x)
-            ## unescape (should not be escaped)
-            x <- psub("\\\\([$^&~_#])", "\\1", x)
-            x <- psub("[$^&~_#]", "\\1&", x) #- escape them
-            x <- fsub("^", "\\textasciicircum{}", x) # ^ is SPECIAL
-            x <- fsub("~", "\\textasciitilde{}", x)
-            x <- fsub(BSL, "\\bsl{}", x)
-            x <- fsub("\\", "\\bsl{}", x)
-        }
-        ## avoid conversion to guillemets
-        x <- fsub("<<", "<{}<", x)
-        x <- fsub(">>", ">{}>", x)
-        x <- fsub(",,", ",{},", x) # ,, is a ligature in the ae font.
-        x <- psub("\\\\bsl{}var\\\\{([^}]+)\\\\}", "\\var{\\1}", x)
-        x
-}
-
-    latex_link_trans <- function(x)
-    {
-        x <- fsub("<-.", "<\\Rdash.", x)
-        x <- psub("<-$", "<\\Rdash", x)
-        x
-    }
-
     latex_code_alias <- function(x)
     {
         x <- fsub("{", "\\{", x)
@@ -336,13 +305,6 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
         x <- fsub("<-", "<\\Rdash", x)
         x <- psub("([!|])", '"\\1', x)
         x
-    }
-
-    latex_code_aliasAA <- function(x)
-    {
-        x <- latex_code_trans(x)
-        x <- latex_link_trans(x)
-        psub("\\\\([!|])", '"\\1', x)
     }
 
     currentAlias <- NA_character_
@@ -400,7 +362,7 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
                "\\option" =,
                "\\samp" = writeWrapped(block, tag),
                ## really verbatim
-                "\\url"=,
+               "\\url"=,
                "\\href"= writeURL(block, tag),
                ## R-like
                "\\code"= {
@@ -634,8 +596,6 @@ Rd2latex <- function(Rd, out="", defines=.Platform$OS.type, stages="render",
     Rd <- prepare_Rd(Rd, defines=defines, stages=stages, fragment=fragment, ...)
     Rdfile <- attr(Rd, "Rdfile")
     sections <- RdTags(Rd)
-
-    enc <- which(sections == "\\encoding")
 
     if (is.character(out)) {
         if(out == "") {

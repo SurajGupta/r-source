@@ -1,6 +1,6 @@
 % File src/library/tools/man/package_dependencies.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 2012-2012 R Core Team
+% Copyright 2012-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{package_dependencies}
@@ -18,7 +18,7 @@ package_dependencies(packages = NULL, db,
   \item{packages}{a character vector of package names.}
   \item{db}{character matrix as from available.packages(), or data frame variants thereof.
     Alternatively, a package database like the one available from
-    \url{http://cran.R-project.org/web/packages/packages.rds}.
+    \url{http://cran.r-project.org/web/packages/packages.rds}.
 }
   \item{which}{a character vector listing the types of
     dependencies, a subset of

@@ -2,7 +2,7 @@
 #  Part of the R package, http://www.R-project.org
 #
 # Copyright (C) 2006  Deepayan Sarkar
-#               2006-2013  The R Core Team
+#               2006-2014  The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ findExactMatches <- function(pattern, values)
 }
 
 ### agrep() version
-## 
+##
 ## findFuzzyMatches <- function(pattern, values)
 ## {
 ##     ## Try exact matches first, and return them if found
@@ -86,7 +86,7 @@ findExactMatches <- function(pattern, values)
 ## }
 
 ### normalizing version (from Rasmus Baath)
-## 
+##
 
 findFuzzyMatches <- function(pattern, values) {
     ## FIXME: option to allow experimentation, remove eventually
@@ -115,7 +115,7 @@ findMatches <- function(pattern, values)
 {
     if (.CompletionEnv$settings[["fuzzy"]])
         findFuzzyMatches(pattern, values)
-    else 
+    else
         findExactMatches(pattern, values)
 }
 
@@ -147,7 +147,7 @@ fuzzyApropos <- function(what)
 .DollarNames.environment <- function(x, pattern = "") {
     if (!.CompletionEnv$settings[["fuzzy"]])
         ls(x, all.names = TRUE, pattern = pattern) # more efficient
-    else 
+    else
         findMatches(pattern, ls(x, all.names = TRUE))
 }
 
@@ -586,7 +586,7 @@ normalCompletions <-
         comps <-
             if (.CompletionEnv$settings[["fuzzy"]])
                 fuzzyApropos(sprintf("^%s", makeRegexpSafe(text)))
-            else 
+            else
                 apropos(sprintf("^%s", makeRegexpSafe(text)), ignore.case = FALSE)
         if (.CompletionEnv$settings[["func"]] && check.mode && !is.null(add.fun))
         {
@@ -825,7 +825,7 @@ functionArgs <-
 isInsideQuotes <-
 fileCompletionPreferred <- function()
 {
-    ((st <- .CompletionEnv[["start"]]) > 0 && {
+    (.CompletionEnv[["start"]] > 0 && {
 
         ## yes if the number of quote signs to the left is odd
         linebuffer <- .CompletionEnv[["linebuffer"]]
@@ -1008,10 +1008,10 @@ fileCompletions <- function(token)
                                            fullToken$start-2L,
                                            fullToken$start-1L)) %in% c("::")))
             ## in anticipation that we will handle this eventually:
-            probablyBacktick <- (fullToken$start >= 1L &&
-                                 ((substr(.CompletionEnv[["linebuffer"]],
-                                          fullToken$start,
-                                          fullToken$start)) %in% c("`")))
+##             probablyBacktick <- (fullToken$start >= 1L &&
+##                                  ((substr(.CompletionEnv[["linebuffer"]],
+##                                           fullToken$start,
+##                                           fullToken$start)) %in% c("`")))
 
             probablySpecial <- probablyHelp || probablyName || probablyNamespace
 

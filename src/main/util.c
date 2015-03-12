@@ -1581,16 +1581,18 @@ double R_strtod5(const char *str, char **endptr, char dec,
 	    default: ;
 	    }
 	    for (n = 0; *p >= '0' && *p <= '9'; p++) n = n * 10 + (*p - '0');
-	    expn += expsign * n;
-	    if(exph > 0) expn -= exph;
-	    if (expn < 0) {
-		for (n = -expn, fac = 1.0; n; n >>= 1, p2 *= p2)
-		    if (n & 1) fac *= p2;
-		ans /= fac;
-	    } else {
-		for (n = expn, fac = 1.0; n; n >>= 1, p2 *= p2)
-		    if (n & 1) fac *= p2;
-		ans *= fac;
+	    if (ans != 0.0) { /* PR#15976:  allow big exponents on 0 */
+		expn += expsign * n;
+		if(exph > 0) expn -= exph;
+		if (expn < 0) {
+		    for (n = -expn, fac = 1.0; n; n >>= 1, p2 *= p2)
+			if (n & 1) fac *= p2;
+		    ans /= fac;
+		} else {
+		    for (n = expn, fac = 1.0; n; n >>= 1, p2 *= p2)
+			if (n & 1) fac *= p2;
+		    ans *= fac;
+		}
 	    }
 	}
 	goto done;
@@ -1631,7 +1633,7 @@ double R_strtod5(const char *str, char **endptr, char dec,
 	for (n = -expn, fac = 1.0; n; n >>= 1, p10 *= p10)
 	    if (n & 1) fac *= p10;
 	ans /= fac;
-    } else {
+    } else if (ans != 0.0) { /* PR#15976:  allow big exponents on 0, e.g. 0E4933 */
 	for (n = expn, fac = 1.0; n; n >>= 1, p10 *= p10)
 	    if (n & 1) fac *= p10;
 	ans *= fac;
@@ -1795,15 +1797,14 @@ const char* ucol_getLocaleByType(const UCollator *coll,
 #endif
 
 static UCollator *collator = NULL;
-
-static Rboolean collationLocaleSet = FALSE;
+static int collationLocaleSet = 0;
 
 /* called from platform.c */
 void attribute_hidden resetICUcollator(void)
 {
     if (collator) ucol_close(collator);
     collator = NULL;
-    collationLocaleSet = FALSE;
+    collationLocaleSet = 0;
 }
 
 static const struct {
@@ -1858,19 +1859,23 @@ SEXP attribute_hidden do_ICUset(SEXP call, SEXP op, SEXP args, SEXP rho)
 		ucol_close(collator);
 		collator = NULL;
 	    }
-	    if(strcmp(s, "none")) {
-		if(streql(s, "default")) 
-		    uloc_setDefault(getLocale(), &status);
-		else uloc_setDefault(s, &status);
-		if(U_FAILURE(status))
-		    error("failed to set ICU locale %s (%d)", s, status);
-		collator = ucol_open(NULL, &status);
-		if (U_FAILURE(status)) {
-		    collator = NULL;
-		    error("failed to open ICU collator (%d)", status);
+	    if(streql(s, "ASCII")) {
+		collationLocaleSet = 2;
+	    } else {
+		if(strcmp(s, "none")) {
+		    if(streql(s, "default")) 
+			uloc_setDefault(getLocale(), &status);
+		    else uloc_setDefault(s, &status);
+		    if(U_FAILURE(status))
+			error("failed to set ICU locale %s (%d)", s, status);
+		    collator = ucol_open(NULL, &status);
+		    if (U_FAILURE(status)) {
+			collator = NULL;
+			error("failed to open ICU collator (%d)", status);
+		    }
 		}
+		collationLocaleSet = 1;
 	    }
-	    collationLocaleSet = TRUE;
 	} else {
 	    int i, at = -1, val = -1;
 	    for (i = 0; ATtable[i].str; i++)
@@ -1921,7 +1926,7 @@ attribute_hidden
 int Scollate(SEXP a, SEXP b)
 {
     if (!collationLocaleSet) {
-	collationLocaleSet = TRUE;
+	collationLocaleSet = 1;
 #ifndef Win32
 	if (strcmp("C", getLocale()) ) {
 #else
@@ -1940,7 +1945,9 @@ int Scollate(SEXP a, SEXP b)
 	}
     }
     if (collator == NULL)
-	return strcoll(translateChar(a), translateChar(b));
+	return collationLocaleSet == 2 ?
+	    strcmp(translateChar(a), translateChar(b)) :
+	    strcoll(translateChar(a), translateChar(b));
 
     UCharIterator aIter, bIter;
     const char *as = translateCharUTF8(a), *bs = translateCharUTF8(b);

@@ -1,7 +1,7 @@
 #  File src/library/tools/R/Rdtools.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ function(ifile, encoding = "unknown", keepSpacing = TRUE,
     ##     mycat("\n")
     ## })$output
 
-    myval <- character()
+##    myval <- character()
     mycon <- textConnection("myval", open = "w", local = TRUE,
                             encoding = "UTF-8")
     on.exit(close(mycon))
@@ -87,9 +87,7 @@ function(ifile, encoding = "unknown", keepSpacing = TRUE,
     show <- function(x) {
 	srcref <- attr(x, "srcref")
 	firstline <- srcref[1L]
-	firstbyte <- srcref[2L]
 	lastline <- srcref[3L]
-	lastbyte <- srcref[4L]
 	firstcol <- srcref[5L]
 	lastcol <- srcref[6L]
 	tag <- attr(x, "Rd_tag")

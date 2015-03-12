@@ -380,7 +380,7 @@ function(x,
          )
 {
     if(!length(x)) return(character())
-    
+
     args <- c("given", "family", "email", "role", "comment")
     include <- sapply(include, match.arg, args)
 
@@ -512,7 +512,7 @@ function(bibtype, textVersion = NULL, header = NULL, footer = NULL, key = NULL,
 
     rval <- lapply(seq_along(args$bibtype),
                    function(i)
-                   do.call("bibentry1",
+                   do.call(bibentry1,
                            c(lapply(args, "[[", i),
                              list(other = lapply(other, "[[", i)))))
 
@@ -611,7 +611,7 @@ function(x, style = "text", .bibstyle = NULL,
          sort = FALSE, ...)
 {
     if(!length(x)) return(character())
-    
+
     style <- .bibentry_match_format_style(style)
 
     if(sort) x <- sort(x, .bibstyle = .bibstyle)
@@ -1048,7 +1048,6 @@ function(file, meta = NULL)
     rval <- list()
     mheader <- NULL
     mfooter <- NULL
-    k <- 0L
     envir <- new.env(hash = TRUE)
     ## Make the package metadata available to the citation entries.
     assign("meta", meta, envir = envir)
@@ -1311,17 +1310,20 @@ function(x)
 {
     if(is.character(x))
         x <- .read_authors_at_R_field(x)
-    ## Maintainers need cre roles and email addresses.
+    ## Maintainers need cre roles, valid email addresses and non-empty
+    ## names.
+    ## <FIXME>
+    ## Check validity of email addresses.
     x <- Filter(function(e)
-                !is.null(e$email) && ("cre" %in% e$role),
+                (!is.null(e$given) || !is.null(e$family)) && !is.null(e$email) && ("cre" %in% e$role),
                 x)
-    ## If this leaves nothing ...
-    if(!length(x)) return("")
-    paste(format(x, include = c("given", "family", "email")),
-          collapse = ",\n  ")
+    ## </FIXME>
+    ## If this leaves nothing or more than one ...
+    if(length(x) != 1L) return("")
+    format(x, include = c("given", "family", "email"))
 }
 
-# Cite using the default style (which is usually citeNatbib)
+## Cite using the default style (which is usually citeNatbib)
 
 cite <-
 function(keys, bib, ...)
@@ -1332,9 +1334,9 @@ function(keys, bib, ...)
     fn(keys, bib, ...)
 }
 
-# Cite using natbib-like options.  A bibstyle would normally
-# choose some of these options and just have a cite(keys, bib, previous)
-# function within it.
+## Cite using natbib-like options.  A bibstyle would normally
+## choose some of these options and just have a cite(keys, bib, previous)
+## function within it.
 
 citeNatbib <-
 local({
@@ -1354,7 +1356,7 @@ local({
 	}
 
 	authorList <- function(paper)
-	    names <- sapply(paper$author, shortName)
+	    sapply(paper$author, shortName)
 
 	if (!missing(previous))
 	    cited <<- previous

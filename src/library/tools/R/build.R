@@ -1,7 +1,7 @@
 #  File src/library/tools/R/build.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -200,7 +200,7 @@ get_exclude_patterns <- function()
     prepare_pkg <- function(pkgdir, desc, Log)
     {
         owd <- setwd(pkgdir); on.exit(setwd(owd))
-        pkgname <- basename(pkgdir)
+##        pkgname <- basename(pkgdir)
         checkingLog(Log, "DESCRIPTION meta-information")
         res <- try(.check_package_description("DESCRIPTION"))
         if (inherits(res, "try-error")) {
@@ -555,10 +555,18 @@ get_exclude_patterns <- function()
     }
     fix_nonLF_in_make_files <- function(pkgname, Log) {
         fix_nonLF_in_files(pkgname,
-                           paste0("^",c("Makefile", "Makefile.in", "Makefile.win",
+                           paste0("^(",
+                                  paste(c("Makefile", "Makefile.in", "Makefile.win",
                                        "Makevars", "Makevars.in", "Makevars.win"),
-                                 "$"), Log)
-    }
+                                        collapse = "|"), ")$"), Log)
+        ## Other Makefiles
+        makes <- dir(pkgname, pattern = "^Makefile$",
+                     full.names = TRUE, recursive = TRUE)
+        for (ff in makes) {
+            lines <- readLines(ff, warn = FALSE)
+            writeLinesNL(lines, ff)
+        }
+   }
 
     find_empty_dirs <- function(d)
     {
@@ -711,7 +719,7 @@ get_exclude_patterns <- function()
     vignettes <- TRUE
     manual <- TRUE  # Install the manual if Rds contain \Sexprs
     with_md5 <- FALSE
-    INSTALL_opts <- character()
+##    INSTALL_opts <- character()
     pkgs <- character()
     options(showErrorCalls = FALSE, warn = 1)
 
@@ -802,8 +810,8 @@ get_exclude_patterns <- function()
     startdir <- getwd()
     if (is.null(startdir))
         stop("current working directory cannot be ascertained")
-    R_platform <- Sys.getenv("R_PLATFORM", "unknown-binary")
-    libdir <- tempfile("Rinst")
+##    R_platform <- Sys.getenv("R_PLATFORM", "unknown-binary")
+##    libdir <- tempfile("Rinst")
 
     if (WINDOWS) {
         ## Some people have *assumed* that R_HOME uses / in Makefiles

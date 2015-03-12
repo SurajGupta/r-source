@@ -1,6 +1,6 @@
 % File src/library/graphics/man/mosaicplot.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -147,11 +147,6 @@ mosaicplot(x, \dots)
   \emph{Report 22}, Department of Statistics and Mathematics,
   \enc{Wirtschaftsuniversität}{Wirtschaftsuniversitaet} Wien, Research Report Series.
   \url{http://epub.wu.ac.at/dyn/openURL?id=oai:epub.wu-wien.ac.at:epub-wu-01_8a1}
-
-  The home page of Michael Friendly
-  (\url{http://www.math.yorku.ca/SCS/friendly.html}) provides
-  information on various aspects of graphical methods for analyzing
-  categorical data, including mosaic plots.
 }
 \seealso{
   \code{\link{assocplot}},

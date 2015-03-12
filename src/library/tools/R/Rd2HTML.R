@@ -1,7 +1,6 @@
-
 #  File src/library/tools/R/Rd2HTML.R
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #  Part of the R package, http://www.R-project.org
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -205,8 +204,6 @@ Rd2HTML <-
         }
     }
 
-    of <- function(...)
-        writeLinesUTF8(paste(...), con, outputEncoding, sep = "")
     of0 <- function(...)
         writeLinesUTF8(paste0(...), con, outputEncoding, sep = "")
     of1 <- function(text)
@@ -257,11 +254,6 @@ Rd2HTML <-
                    "\\sQuote"="&rsquo;",
                    "\\dQuote"="&rdquo;")
 
-    trim <- function(x) {
-        x <- psub1("^\\s*", "", x)
-        psub1("\\s*$", "", x)
-    }
-
     addParaBreaks <- function(x) {
 	if (isBlankLineRd(x) && isTRUE(inPara)) {
 	    inPara <<- FALSE
@@ -299,14 +291,6 @@ Rd2HTML <-
     	    of0("</",  HTMLTags[tag], ">")
     	}
     }
-
-    checkInfixMethod <- function(blocks)
-    	# Is this a method which needs special formatting?
-    	if ( length(blocks) == 1 && RdTags(blocks) == "TEXT" &&
-    	     blocks[[1L]] %in% c("[", "[[", "$") ) {
-    	    pendingOpen <<- blocks[[1L]]
-    	    TRUE
-    	} else FALSE
 
     writeLink <- function(tag, block, doParas) {
 	parts <- get_link(block, tag, Rdfile)
@@ -394,14 +378,6 @@ Rd2HTML <-
         }
     }
 
-    writeComment <- function(txt) {
-       	txt <- psub1("^%", "", txt)
-       	txt <- fsub1("\n", "", txt)
-       	txt <- fsub("--", "- - ", txt)
-       	txt <- fsub(">", "&gt;", txt)
-	of("<!-- ", txt, " -->\n")
-    }
-
     writeLR <- function(block, tag, doParas) {
     	enterPara(doParas)
         of1(HTMLLeft[tag])
@@ -470,6 +446,8 @@ Rd2HTML <-
                	   if(length(block[[1L]])) {
                	   	url <- paste(as.character(block[[1L]]), collapse="")
                	   	url <- gsub("\n", "", url)
+                        ## unescape any escaped % in encoded URLs
+                        ## url <- gsub("[\\]%", "%", url)
 		        enterPara(doParas)
                	   	of0('<a href="', escapeAmpersand(url), '">')
                	   	closing <- "</a>"

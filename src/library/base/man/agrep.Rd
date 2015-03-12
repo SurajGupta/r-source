@@ -1,6 +1,6 @@
 % File src/library/base/man/agrep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{agrep}
@@ -76,7 +76,7 @@ agrepl(pattern, x, max.distance = 0.1, costs = NULL,
   another.
 
   This uses \code{tre} by Ville Laurikari
-  (\url{http://http://laurikari.net/tre/}), which supports MBCS
+  (\url{http://laurikari.net/tre/}), which supports MBCS
   character matching.
 
   The main effect of \code{useBytes} is to avoid errors/warnings about

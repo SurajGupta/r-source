@@ -1,6 +1,6 @@
 % File src/library/utils/man/download.file.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
@@ -126,7 +126,7 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   or call \code{\link{setInternet2}(TRUE)} and then
   the \sQuote{Internet Options} of the system are used to choose proxies
   and so on; these are set in the Control Panel and are those used for
-  Internet Explorer.  That version does not support \code{cacheOK = FALSE}.
+  Internet Explorer.
 #endif
 #ifdef unix
   A progress bar tracks the transfer.  If the file length is known, an
@@ -138,8 +138,8 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 #endif
 }
 \note{
-   Files of more than 2GB are only supported on 64-bit builds of \R; they
-  may be truncated on 32-bit builds.
+   Files of more than 2GB are supported on 64-bit builds of \R; they
+  may be truncated on some 32-bit builds.
   
   Method \code{"wget"} is mainly for historical compatibility, but it
   and \code{"curl"} can be used for URLs (e.g., \samp{https://} URLs or

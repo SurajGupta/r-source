@@ -1,6 +1,6 @@
 % File src/library/methods/man/Methods.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2010 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{Methods}
@@ -620,7 +620,7 @@ removeMethod("Math", "data.frame"); rm(Math.data.frame, MathFun, logIris)
 
  Chambers, John M.(2009)
  \emph{Developments in Class Inheritance and Method Selection}
- \url{http://stat.stanford.edu/~jmc4/classInheritance.pdf}.
+ \url{http://statweb.stanford.edu/~jmc4/classInheritance.pdf}.
 
  Chambers, John M. (1998)
  \emph{Programming with Data}

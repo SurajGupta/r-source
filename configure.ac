@@ -30,7 +30,7 @@ m4_define([R_VERSION],
           m4_bpatsubst(m4_esyscmd([cat VERSION]),
                        [\([0-9.]*\)\(\w\|\W\)*],
                        [\1]))
-AC_INIT([R],[R_VERSION],[http://bugs.r-project.org],[R],[http://www.r-project.org])
+AC_INIT([R],[R_VERSION],[https://bugs.r-project.org],[R],[https://www.r-project.org])
 AC_CONFIG_SRCDIR([src/include/Defn.h])
 AC_CONFIG_AUX_DIR([tools])
 
@@ -434,7 +434,7 @@ AC_ARG_WITH([system-xz],
 
 ## Valgrind instrumentation
 AC_ARG_WITH([valgrind-instrumentation],
-[AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
+[AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2/3) @<:@0@:>@])],
 [valgrind_level=${withval}],
 [valgrind_level=0])
 
@@ -2060,13 +2060,6 @@ if test "x${r_cv_have_tm_gmtoff}" = xyes; then
   AC_DEFINE(HAVE_TM_GMTOFF, 1, [Define to 1 if your 'struct tm' has tm_gmtoff.])
 fi
 
-
-## check for vecLib framework (potentially to be used for BLAS)
-## in theory vecLib is platform-independent, in practice only
-## Apple's OS X is known to provide it
-## However, as from 10.10 it only provides Accelerate.
-R_CHECK_FRAMEWORK(cblas_cdotu_sub, Accelerate)
-
 ## BLAS.
 ## <NOTE>
 ## This has to come *after* checking for Fortran 77 compiler/converter
@@ -2331,7 +2324,8 @@ AC_FUNC_FSEEKO
 if test ${valgrind_level} -eq 0; then
   AC_DEFINE(NVALGRIND, 1, [Define to disable Valgrind instrumentation])
 fi
-AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1 or 2 to specify levels of Valgrind instrumentation])
+
+AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1, 2 or 3 to specify levels of Valgrind instrumentation])
 
 if test x${use_internal_tzcode} = xdefault; then
 case "${host_os}" in
@@ -2826,8 +2820,20 @@ if test "${acx_lapack_ok}" = "yes"; then
   esac
   R_SH_VAR_ADD(r_external_libs, [LAPACK(${r_lapack})], [, ])
 fi
+if test "${have_zlib}" = yes; then
+  R_SH_VAR_ADD(r_external_libs, [zlib], [, ])
+fi
+if test "${have_bzlib}" = yes; then
+  R_SH_VAR_ADD(r_external_libs, [bzlib], [, ])
+fi
 if test "${have_lzma}" = yes; then
   R_SH_VAR_ADD(r_external_libs, [lzma], [, ])
+fi
+if test "${have_pcre}" = yes; then
+  R_SH_VAR_ADD(r_external_libs, [PCRE], [, ])
+fi
+if test "${have_tre}" = yes; then
+  R_SH_VAR_ADD(r_external_libs, [tre], [, ])
 fi
 
 r_capabilities=

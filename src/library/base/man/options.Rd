@@ -1,6 +1,6 @@
 % File src/library/base/man/options.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
@@ -548,6 +548,11 @@ getOption(x, default = NULL)
       printed on URL downloads etc.  Default is 2, for failure causes.
       Set to 1 or 0 to get more information.}
 
+    \item{\code{install.packages.check.source}:}{Used by
+      \code{\link{install.packages}} on platforms which support binary
+      packages.  Possible values \code{"yes"} and \code{"no"}, with
+      unset being equivalent to \code{"yes"}.}
+    
     \item{\code{mailer}:}{default emailing method used by
       \code{\link{create.post}} and hence \code{\link{bug.report}} and
       \code{\link{help.request}}.}
@@ -572,6 +577,10 @@ getOption(x, default = NULL)
       (\code{"mac.binary.leopard"} and \code{"mac.binary.universal"} are
       no longer in use.)
 #endif
+      Value \code{"binary"} is a synonym for the native binary type (if
+      there is one); \code{"both"} is used by
+      \code{\link{install.packages}} to choose between source and binary
+      installs.
     }
 
     \item{\code{repos}:}{URLs of the repositories for use by
@@ -586,10 +595,12 @@ getOption(x, default = NULL)
       Omegahat, R-Forge, Rforge.net \dots)
       using \code{\link{setRepositories}}.
     }
-    \item{\code{SweaveHooks}, \code{SweaveSyntax}:}{see \code{\link{Sweave}}.}
+    \item{\code{SweaveHooks}, \code{SweaveSyntax}:}{
+      see \code{\link{Sweave}}.
+    }
 
-    \item{\code{unzip}:}{a character string, the path of the command
-      used for unzipping help files, or \code{"internal"}.
+    \item{\code{unzip}:}{a character string used by \code{\link{unzip}}:
+      the path of the external program \command{unzip} or \code{"internal"}.
 #ifdef unix
       Defaults to the value of \env{R_UNZIPCMD}, which is set in
       \file{etc/Renviron} if an \code{unzip} command was found during

@@ -1,9 +1,7 @@
 #  File src/library/tools/R/check.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
-#
-# NB: also copyright date in Usage.
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -305,7 +303,7 @@ setRlibs <-
 
         check_data() # 'data' dir and sysdata.rda
 
-        if (!is_base_pkg && dir.exists("src") && !extra_arch) check_src_dir()
+        if (!is_base_pkg && !extra_arch) check_src_dir(desc)
 
         if(do_install &&
            dir.exists("src") &&
@@ -707,6 +705,15 @@ setRlibs <-
             }
         }
 
+        if(!is.na(ncomp <- db["NeedsCompilation"])) {
+            if (!ncomp %in% c("yes", "no")) {
+                if(!any) noteLog(Log)
+                any <- TRUE
+                printLog(Log, "NeedsCompilation field must take value 'yes' or 'no'", "\n")
+            }
+        }
+
+
         out <- format(tools:::.check_package_description2(dfile))
         if (length(out)) {
             if(!any) noteLog(Log)
@@ -915,10 +922,8 @@ setRlibs <-
             }
         }
         if (any)
-            wrapLog("See the information on INDEX files and package",
-                    "subdirectories in the chapter 'Creating R packages'",
-                    "of the 'Writing R Extensions' manual.\n")
-        else  resultLog(Log, "OK")
+            wrapLog("See sections 'The INDEX file' and 'Package subdirectories' in the 'Writing R Extensions' manual.\n")
+        else resultLog(Log, "OK")
     }
 
     check_subdirectories <- function(haveR, subdirs)
@@ -1268,7 +1273,7 @@ setRlibs <-
                     if(any(grepl("(not declared from|Including base/recommended)", out))) warningLog(Log)
                     else noteLog(Log)
                     printLog0(Log, paste(c(out, ""), collapse = "\n"))
-                    wrapLog(msg_DESCRIPTION)
+                    ## wrapLog(msg_DESCRIPTION)
                 } else resultLog(Log, "OK")
             } else {
                 ## this needs to read the package code, and will fail on
@@ -1281,7 +1286,7 @@ setRlibs <-
                     if(any(grepl("not declared from", out))) warningLog(Log)
                     else noteLog(Log)
                     printLog0(Log, paste(c(out, ""), collapse = "\n"))
-                    wrapLog(msg_DESCRIPTION)
+                    ## wrapLog(msg_DESCRIPTION)
                 } else resultLog(Log, "OK")
             }
         }
@@ -1300,7 +1305,7 @@ setRlibs <-
             warningLog(Log)
             printLog0(Log, paste(c(out, ""), collapse = "\n"))
             wrapLog("See section 'Generic functions and methods'",
-                    "of the 'Writing R Extensions' manual.\n")
+                    "in the 'Writing R Extensions' manual.\n")
         } else resultLog(Log, "OK")
 
         ## Check whether replacement functions have their final argument
@@ -1366,7 +1371,7 @@ setRlibs <-
                     wrapLog("DUP = FALSE is deprecated and will be",
                             "disabled in future versions of R.")
                 else
-                    wrapLog("See the chapter 'System and foreign language interfaces' of the 'Writing R Extensions' manual.\n")
+                    wrapLog("See chapter 'System and foreign language interfaces' in the 'Writing R Extensions' manual.\n")
             } else resultLog(Log, "OK")
         }
     }
@@ -1528,8 +1533,7 @@ setRlibs <-
     check_Rd_files <- function(haveR)
     {
         msg_writing_Rd <-
-            c("See the chapter 'Writing R documentation files'",
-              "in the 'Writing R Extensions' manual.\n")
+            c("See chapter 'Writing R documentation files' in the 'Writing R Extensions' manual.\n")
 
         if (dir.exists("man") && !extra_arch) {
             checkingLog(Log, "Rd files")
@@ -2054,8 +2058,10 @@ setRlibs <-
         }
     }
 
-    check_src_dir <- function()
+    check_src_dir <- function(desc)
     {
+        file.size <- function(...) file.info(...)$size
+
         ## Check C/C++/Fortran sources/headers for CRLF line endings.
         ## <FIXME>
         ## Does ISO C really require LF line endings?  (Reference?)
@@ -2063,44 +2069,58 @@ setRlibs <-
         ## will not accept CRLF or CR line endings.
         ## (Sun Studio 12 definitely objects to CR in both C and Fortran).
         ## </FIXME>
-        checkingLog(Log, "line endings in C/C++/Fortran sources/headers")
-        ## pattern is "([cfh]|cc|cpp)"
-        files <- dir("src", pattern = "\\.([cfh]|cc|cpp)$",
-                     full.names = TRUE, recursive = TRUE)
-        ## exclude dirs starting src/win, e.g for tiff
-        files <- grep("^src/[Ww]in", files, invert = TRUE, value = TRUE)
-        bad_files <- character()
-        for(f in files) {
-            contents <- readChar(f, file.info(f)$size, useBytes = TRUE)
-            if (grepl("\r", contents, fixed = TRUE, useBytes = TRUE))
-                bad_files <- c(bad_files, f)
+        if(dir.exists("src")) {
+            checkingLog(Log, "line endings in C/C++/Fortran sources/headers")
+            ## pattern is "([cfh]|cc|cpp)"
+            files <- dir("src", pattern = "\\.([cfh]|cc|cpp)$",
+                         full.names = TRUE, recursive = TRUE)
+            ## exclude dirs starting src/win, e.g for tiff
+            files <- grep("^src/[Ww]in", files, invert = TRUE, value = TRUE)
+            bad_files <- character()
+            for(f in files) {
+                contents <- readChar(f, file.size(f), useBytes = TRUE)
+                if (grepl("\r", contents, fixed = TRUE, useBytes = TRUE))
+                    bad_files <- c(bad_files, f)
+            }
+            if (length(bad_files)) {
+                warningLog(Log, "Found the following sources/headers with CR or CRLF line endings:")
+                printLog0(Log, .format_lines_with_indent(bad_files), "\n")
+                printLog(Log, "Some Unix compilers require LF line endings.\n")
+            } else resultLog(Log, "OK")
         }
-        if (length(bad_files)) {
-            warningLog(Log, "Found the following sources/headers with CR or CRLF line endings:")
-            printLog0(Log, .format_lines_with_indent(bad_files), "\n")
-            printLog(Log, "Some Unix compilers require LF line endings.\n")
-        } else resultLog(Log, "OK")
 
         ## Check src/Make* for LF line endings, as Sun make does not accept CRLF
-        checkingLog(Log, "line endings in Makefiles")
-        bad_files <- character()
         ## .win files are not checked, as CR/CRLF work there
         all_files <-
             dir("src",
                 pattern = "^(Makevars|Makevars.in|Makefile|Makefile.in)$",
                 full.names = TRUE, recursive = TRUE)
-        for(f in all_files) {
-            if (!file.exists(f)) next
-            contents <- readChar(f, file.info(f)$size, useBytes = TRUE)
-            if (grepl("\r", contents, fixed = TRUE, useBytes = TRUE))
-                bad_files <- c(bad_files, f)
+        all_files <- c(all_files,
+                       dir(".", pattern = "^Makefile$",
+                           full.names = TRUE, recursive = TRUE))
+        all_files <- sub("^[.]/", "", all_files)
+        all_files <- unique(sort(all_files))
+        if(length(all_files)) {
+            checkingLog(Log, "line endings in Makefiles")
+            bad_files <- noEOL<- character()
+            for(f in all_files) {
+                if (!file.exists(f)) next
+                contents <- readChar(f, file.size(f), useBytes = TRUE)
+                if (grepl("\r", contents, fixed = TRUE, useBytes = TRUE))
+                    bad_files <- c(bad_files, f)
+                if (!grepl("\n$", contents, useBytes = TRUE))
+                    noEOL <- c(noEOL, f)
+            }
+            if (length(bad_files)) {
+                warningLog(Log, "Found the following Makefile(s) with CR or CRLF line endings:")
+                printLog0(Log, .format_lines_with_indent(bad_files), "\n")
+                printLog(Log, "Some Unix 'make' programs require LF line endings.\n")
+            } else if (length(noEOL)) {
+                noteLog(Log, "Found the following Makefile(s) without a final LF:")
+                printLog0(Log, .format_lines_with_indent(noEOL), "\n")
+                printLog(Log, "Some 'make' programs ignore lines not ending in LF.\n")
+            } else resultLog(Log, "OK")
         }
-        if (length(bad_files)) {
-            warningLog(Log, "Found the following Makefiles with CR or CRLF line endings:")
-            printLog0(Log, .format_lines_with_indent(bad_files), "\n")
-            printLog(Log, "Some Unix 'make' programs require LF line endings.\n")
-        } else resultLog(Log, "OK")
-
         ## Check src/Makevars[.in] compilation flags.
         if (length(makevars)) {
             checkingLog(Log, "compilation flags in Makevars")
@@ -2114,47 +2134,77 @@ setRlibs <-
                 printLog0(Log, paste(c(out, ""), collapse = "\n"))
             } else resultLog(Log, "OK")
         }
+        ## Check GNUisms
+        if (length(all_files)) {
+            checkingLog(Log, "for GNU extensions in Makefiles")
+            bad_files <- character()
+            for(f in all_files) {
+                contents <- readLines(f, warn = FALSE)
+                contents <- grep("^ *#", contents, value = TRUE, invert = TRUE)
+                ## Things like $(SUBDIRS:=.a)
+                contents <- grep("[$][(].+:=.+[)]", contents,
+                                 value = TRUE, invert = TRUE)
+                if (any(grepl("([+]=|:=|[$][(]wildcard|[$][(]shell|[$][(]eval|[$][(]call|[$][(]patsubst|^ifeq|^ifneq|^ifdef|^ifndef|^endif)", contents)))
+                    bad_files <- c(bad_files, f)
+            }
+            SysReq <- desc["SystemRequirements"]
+            if (length(bad_files)) {
+                if(!is.na(SysReq) && grepl("GNU [Mm]ake", SysReq)) {
+                    noteLog(Log, "GNU make is a SystemRequirements.")
+                } else {
+                    warningLog(Log, "Found the following file(s) containing GNU extensions:")
+                    printLog0(Log, .format_lines_with_indent(bad_files), "\n")
+                    wrapLog("Portable Makefiles do not use GNU extensions",
+                            "such as +=, :=, $(shell), $(wildcard),",
+                            "ifeq ... endif.",
+                            "See section 'Writing portable packages'",
+                            "in the 'Writing R Extensions' manual.\n")
+                }
+            } else resultLog(Log, "OK")
+        }
 
         ## check src/Makevar*, src/Makefile* for correct use of BLAS_LIBS
         ## FLIBS is not needed on Windows, at least currently (as it is
         ## statically linked).
-        checkingLog(Log, "for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS)")
         makefiles <- Sys.glob(file.path("src",
                                         c("Makevars", "Makevars.in",
                                           "Makefile", "Makefile.win")))
-        any <- FALSE
-        for (f in makefiles) {
-            lines <- readLines(f, warn = FALSE)
-            ## Combine lines ending in escaped newlines.
-            if(any(ind <- grepl("[\\]$", lines, useBytes = TRUE))) {
-                ## Eliminate escape.
-                lines[ind] <-
-                    sub("[\\]$", "", lines[ind], useBytes = TRUE)
-                ## Determine ids of blocks that need to be joined.
-                ind <- seq_along(ind) - c(0, cumsum(ind)[-length(ind)])
-                ## And join.
-                lines <- unlist(lapply(split(lines, ind), paste,
-                                       collapse = " "))
+        if(length(makefiles)) {
+            checkingLog(Log, "for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS)")
+            any <- FALSE
+            for (f in makefiles) {
+                lines <- readLines(f, warn = FALSE)
+                ## Combine lines ending in escaped newlines.
+                if(any(ind <- grepl("[\\]$", lines, useBytes = TRUE))) {
+                    ## Eliminate escape.
+                    lines[ind] <-
+                        sub("[\\]$", "", lines[ind], useBytes = TRUE)
+                    ## Determine ids of blocks that need to be joined.
+                    ind <- seq_along(ind) - c(0, cumsum(ind)[-length(ind)])
+                    ## And join.
+                    lines <- unlist(lapply(split(lines, ind), paste,
+                                           collapse = " "))
+                }
+                c1 <- grepl("^[[:space:]]*PKG_LIBS", lines, useBytes = TRUE)
+                c2l <- grepl("\\$[{(]{0,1}LAPACK_LIBS", lines, useBytes = TRUE)
+                c2b <- grepl("\\$[{(]{0,1}BLAS_LIBS", lines, useBytes = TRUE)
+                c3 <- grepl("\\$[{(]{0,1}FLIBS", lines, useBytes = TRUE)
+                if (any(c1 & c2l & !c2b)) {
+                    if (!any) warningLog(Log)
+                    any <- TRUE
+                    printLog(Log,
+                             "  apparently using $(LAPACK_LIBS) without $(BLAS_LIBS) in ",
+                             sQuote(f), "\n")
+                }
+                if (any(c1 & (c2b | c2l) & !c3)) {
+                    if (!any) warningLog(Log)
+                    any <- TRUE
+                    printLog(Log, "  apparently PKG_LIBS is missing $(FLIBS) in ",
+                             sQuote(f), "\n")
+                }
             }
-            c1 <- grepl("^[[:space:]]*PKG_LIBS", lines, useBytes = TRUE)
-            c2l <- grepl("\\$[{(]{0,1}LAPACK_LIBS", lines, useBytes = TRUE)
-            c2b <- grepl("\\$[{(]{0,1}BLAS_LIBS", lines, useBytes = TRUE)
-            c3 <- grepl("\\$[{(]{0,1}FLIBS", lines, useBytes = TRUE)
-            if (any(c1 & c2l & !c2b)) {
-                if (!any) warningLog(Log)
-                any <- TRUE
-                printLog(Log,
-                         "  apparently using $(LAPACK_LIBS) without $(BLAS_LIBS) in ",
-                         sQuote(f), "\n")
-            }
-            if (any(c1 & (c2b | c2l) & !c3)) {
-                if (!any) warningLog(Log)
-                any <- TRUE
-                printLog(Log, "  apparently PKG_LIBS is missing $(FLIBS) in ",
-                         sQuote(f), "\n")
-            }
+            if (!any) resultLog(Log, "OK")
         }
-        if (!any) resultLog(Log, "OK")
     }
 
     check_sos <- function() {
@@ -2187,11 +2237,11 @@ setRlibs <-
                 if(haveObjs)
                     c("Compiled code should not call entry points which",
                       "might terminate R nor write to stdout/stderr instead",
-                      "of to the console, nor the C RNG.\n")
+                      "of to the console, nor the system RNG.\n")
                 else
                     c("Compiled code should not call entry points which",
                       "might terminate R nor write to stdout/stderr instead",
-                      "of to the console, nor the C RNG.",
+                      "of to the console, nor the system RNG.",
                       "The detected symbols are linked",
                       "into the code but might come from libraries",
                       "and not actually be called.\n")
@@ -2453,6 +2503,7 @@ setRlibs <-
             ## any arch will do here
             status <- R_runR(cmd, R_opts2, "LC_ALL=C",
                              stdout = Rout, stderr = Rout)
+            exfile <- paste0(pkgname, "-Ex.R")
             if (status) {
                 errorLog(Log,
                          paste("Running massageExamples to create",
@@ -2654,7 +2705,8 @@ setRlibs <-
                                         sQuote(basename(bad_vignettes))),
                                   "", ""), collapse = "\n"))
             }
-            encs <- vapply(vigns$docs, getVignetteEncoding, "")
+	    defaultEncoding <- .get_package_metadata(pkgdir)["Encoding"]
+            encs <- vapply(vigns$docs, getVignetteEncoding, "", default = defaultEncoding)
             bad_vignettes <- vigns$docs[encs == "non-ASCII"]
             if(nb <- length(bad_vignettes)) {
                 if(!any) warningLog(Log)
@@ -2730,8 +2782,9 @@ setRlibs <-
         ## If the vignettes declare an encoding, are they actually in it?
         ## (We don't check the .tex, though)
         bad_vignettes <- character()
-        for (v in vigns$docs) {
-            enc <- getVignetteEncoding(v, TRUE)
+        for (i in seq_along(vigns$docs)) {
+	    v <- vigns$docs[i]
+            enc <- vigns$encodings[i]
             if (enc %in% c("", "non-ASCII", "unknown")) next
             lines <- readLines(v, warn = FALSE) # some miss final NA
             lines2 <- iconv(lines, enc, "UTF-16LE", toRaw = TRUE)
@@ -2761,7 +2814,6 @@ setRlibs <-
 
             checkingLog(Log, "running R code from vignettes")
             vigns <- pkgVignettes(dir = pkgdir)
-            problems <- list()
             res <- character()
             cat("\n")
             def_enc <- desc["Encoding"]
@@ -2770,8 +2822,7 @@ setRlibs <-
             for (i in seq_along(vigns$docs)) {
                 file <- vigns$docs[i]
                 name <- vigns$names[i]
-                enc <- getVignetteEncoding(file, TRUE)
-                if(enc %in% c("non-ASCII", "unknown")) enc <- def_enc
+                enc <- vigns$encodings[i]
                 cat("  ", sQuote(basename(file)),
                     if(nzchar(enc)) paste("using", sQuote(enc)),
                     "...")
@@ -3212,7 +3263,7 @@ setRlibs <-
                     ## record in the log what options were used
                     cat("* install options ", sQuote(INSTALL_opts),
                         "\n\n", sep = "", file = outfile)
-                    env <- ""
+##                    env <- ""
                     ## Normal use of R CMD INSTALL
                     t1 <- proc.time()
                     install_error <- run_Rcmd(args, outfile)
@@ -3251,6 +3302,9 @@ setRlibs <-
                              ": warning: .* is used uninitialized",
                              ": warning: .* set but not used",
                              ": warning: unused",
+                             ": warning: .* makes pointer from integer", # gcc
+                             ": warning: .* pointer.* conversion", # clang
+                             ": warning: improper pointer", # Solaris
                              ## clang warning about invalid returns.
                              "warning: void function",
                              "warning: control reaches end of non-void function",
@@ -3313,6 +3367,10 @@ setRlibs <-
                 lines <- grep(ex_re, lines, invert = TRUE, value = TRUE,
                               useBytes = TRUE)
 
+                ## and GNU extensions in system headers
+                ex_re <- "^ *(/usr/|/opt/).*GNU extension"
+                lines <- grep(ex_re, lines, invert = TRUE, value = TRUE,
+                              useBytes = TRUE)
 
                 ## Ignore install-time readLines() warnings about
                 ## files with incomplete final lines.  Most of these
@@ -3525,7 +3583,7 @@ setRlibs <-
             encoding <- desc["Encoding"]
         } else if (file.exists(f <- file.path(pkgdir, "DESCRIPTION"))) {
             errorLog(Log,
-                     "File DESCRIPTION does not exist but there is a case-insenstiive match.")
+                     "File DESCRIPTION does not exist but there is a case-insensitive match.")
             do_exit(1L)
         } else {
             resultLog(Log, "NO")
@@ -3564,12 +3622,24 @@ setRlibs <-
         res <- .check_package_CRAN_incoming(pkgdir)
         if(length(res)) {
             out <- format(res)
-            if(length(res$bad_package)) {
+            if((length(out) == 1L) &&
+               grepl("^Maintainer: ", out)) {
+                ## Special-case when there is only the maintainer
+                ## address to note (if at all).
+                maintainer <- res$Maintainer
+                if(nzchar(maintainer) &&
+                   identical(maintainer,
+                             Sys.getenv("_R_CHECK_MAINTAINER_ADDRESS_"))) {
+                    resultLog(Log, "OK")
+                    out <- character()
+                }
+                else resultLog(Log, "Note_to_CRAN_maintainers")
+            } else if(length(res$bad_package)) {
                 errorLog(Log)
                 printLog0(Log, paste(c(out, ""), collapse = "\n"))
                 do_exit(1L)
             } else if(length(res$bad_version) ||
-                      identical(res$foss_with_BuildVigettes, TRUE) ||
+                      identical(res$foss_with_BuildVignettes, TRUE) ||
                       res$empty_Maintainer_name ||
                       res$Maintainer_needs_quotes)
                 warningLog(Log)
@@ -3615,7 +3685,7 @@ setRlibs <-
                                    "\n", as.character(e), "\n")
                          msg_NAMESPACE <-
                              c("See section 'Package namespaces'",
-                               " of the 'Writing R Extensions' manual.\n")
+                               " in the 'Writing R Extensions' manual.\n")
                          wrapLog(msg_NAMESPACE)
                          do_exit(1L)
                      })
@@ -4032,6 +4102,7 @@ setRlibs <-
         opts <- c(opts, "--install=no")
         do_install_arg <- FALSE
     }
+    opts0 <- opts # other options are added later.
 
     if (install == "fake") {
         ## If we fake installation, then we cannot *run* any code.
@@ -4093,6 +4164,11 @@ setRlibs <-
         config_val_to_logical(Sys.getenv("_R_CHECK_RD_XREFS_", "TRUE"))
     R_check_use_codetools <-
         config_val_to_logical(Sys.getenv("_R_CHECK_USE_CODETOOLS_", "TRUE"))
+    ## Howver, we cannot use this if we did not install the recommended packages
+    if(R_check_use_codetools) {
+        tmp <- tryCatch(find.package('codetools'), error = identity)
+        if(inherits(tmp, "error")) R_check_use_codetools <- FALSE
+    }
     R_check_executables <-
         config_val_to_logical(Sys.getenv("_R_CHECK_EXECUTABLES_", "TRUE"))
     R_check_executables_exclusions <-
@@ -4230,9 +4306,8 @@ setRlibs <-
     R_opts4 <- "--no-site-file --no-init-file --no-save --no-restore --slave"
     env0 <- if(WINDOWS) "R_ENVIRON_USER='no_such_file'" else "R_ENVIRON_USER=''"
 
-    msg_DESCRIPTION <- c("See the information on DESCRIPTION files",
-                         " in the chapter 'Creating R packages'",
-                         " of the 'Writing R Extensions' manual.\n")
+    msg_DESCRIPTION <-
+        c("See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual.\n")
 
     if (!length(pkgs)) {
         message("Error: no packages were specified")
@@ -4331,6 +4406,7 @@ setRlibs <-
         .unpack.time <- Sys.time()
 
         ## report options used
+        opts <- opts0
         if (!do_codoc) opts <- c(opts, "--no-codoc")
         if (!do_examples && !spec_install) opts <- c(opts, "--no-examples")
         if (!do_tests && !spec_install) opts <- c(opts, "--no-tests")
@@ -4339,6 +4415,7 @@ setRlibs <-
             opts <- c(opts, "--no-build-vignettes")
         if (use_gct) opts <- c(opts, "--use-gct")
         if (use_valgrind) opts <- c(opts, "--use-valgrind")
+        if (as_cran) opts <- c(opts, "--as-cran")
         if (length(opts) > 1L)
             messageLog(Log, "using options ", sQuote(paste(opts, collapse=" ")))
         else if (length(opts) == 1L)

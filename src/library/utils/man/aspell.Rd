@@ -1,6 +1,6 @@
 % File src/library/utils/man/aspell.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2011 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{aspell}
@@ -86,6 +86,12 @@ aspell(files, filter, control = list(), encoding = "unknown",
 \value{
   A data frame inheriting from \code{aspell} (which has a useful print
   method) with the information about possibly mis-spelled words.
+}
+\references{
+  Kurt Hornik and Duncan Murdoch (2011),
+  Watch your spelling!
+  \emph{The R Journal} \bold{3}(2), 22--28.
+  \url{http://journal.r-project.org/archive/2011-2/RJournal_2011-2_Hornik+Murdoch.pdf}.
 }
 \seealso{
   \link{aspell-utils} for utilities for spell checking packages.

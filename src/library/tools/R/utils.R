@@ -1,7 +1,7 @@
 #  File src/library/tools/R/utils.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -870,6 +870,8 @@ function(dir, installed = TRUE, primitive = FALSE)
             env_list <- unique(env_list)
         }
     }
+    ## some BioC packages warn here
+    suppressWarnings(
     unique(c(.get_internal_S3_generics(primitive),
              unlist(lapply(env_list,
                            function(env) {
@@ -880,7 +882,7 @@ function(dir, installed = TRUE, primitive = FALSE)
                                else Filter(function(f)
                                            .is_S3_generic(f, envir = env),
                                            nms)
-                           }))))
+                           })))))
 }
 
 ### ** .get_S3_group_generics
@@ -989,7 +991,8 @@ function()
     unique(c(.get_standard_repository_db_fields(),
              ## Extract from R-exts via
              ## .get_DESCRIPTION_fields_in_R_exts():
-             c("Author",
+             c("Additional_repositories",
+               "Author",
                "Authors@R",
                "Biarch",
                "BugReports",
@@ -1036,8 +1039,6 @@ function()
                "Version",
                "VignetteBuilder",
                "ZipData"),
-             ## Should be documented in R-exts eventually:
-             c("Additional_repositories"),
              ## Others: adjust as needed.
              c("Repository",
                "Path",
@@ -1048,6 +1049,8 @@ function()
                "RcmdrModels",
                "RcppModules",
                "Roxygen",
+               "Acknowledgements",
+               "Acknowledgments", # USA/Canadian usage.
                "biocViews")
              ))
 }

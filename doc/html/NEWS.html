@@ -8,6 +8,285 @@
 
 <h2>R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.1.3</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li><p> The internal method of <code>download.file()</code> can now handle
+files larger than 2GB on 32-bit builds which support such files
+(tested on 32-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font> running on 64-bit Windows).
+</p>
+</li>
+<li> <p><code>kruskal.test()</code> warns on more types of suspicious input.
+</p>
+</li>
+<li><p> The <code>as.dendrogram()</code> method for <code>"hclust"</code>
+objects gains a <code>check</code> argument protecting against memory
+explosion for invalid inputs.
+</p>
+</li>
+<li> <p><code>capabilities()</code> has a new item <code>long.double</code>
+which indicates if the build uses a <code>long double</code> type which
+is longer than <code>double</code>.
+</p>
+</li>
+<li> <p><code>nlm()</code> no longer modifies the callback argument in
+place (a new vector is allocated for each invocation, which mimics
+the implicit duplication that occurred in R &lt; 3.1.0); note that
+this is a change from the previously documented
+behavior. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15958">PR#15958</a>)
+</p>
+</li>
+<li> <p><code>icuSetCollate()</code> now accepts <code>locale = "ASCII"</code>
+which uses the basic C function <code>strcmp</code> and so collates
+strings byte-by-byte in numerical order.
+</p>
+</li>
+<li> <p><code>sessionInfo()</code> tries to report the OS version in use
+(not just that compiled under, and including details of Linux
+distributions).
+</p>
+</li>
+<li> <p><code>model.frame()</code> (used by <code>lm()</code> and many other
+modelling functions) now warns when it drops contrasts
+from factors.  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16119">PR#16119</a>)
+</p>
+</li>
+<li> <p><code>install.packages()</code> and friends now accept the value
+<code>type = "binary"</code> as a synonym for the native binary type on
+the platform (if it has one).
+</p>
+</li>
+<li><p> Single source or binary files can be supplied for
+<code>install.packages(type = "both")</code> and the appropriate type
+and <code>repos = NULL</code> will be inferred.
+</p>
+</li>
+<li><p> New function <code>pcre_config()</code> to report on some of the
+configuration options of the version of PCRE in use.  In
+particular, this reports if regular expressions using
+<span class="samp">\p{xx}</span> are supported.
+</p>
+</li>
+<li><p> (Windows.) <code>download.file(cacheOK = FALSE)</code> is now
+supported when &lsquo;<span class="file">internet2.dll</span>&rsquo; is used.
+</p>
+</li>
+<li> <p><code>browseURL()</code> has been updated to work with Firefox
+36.0 which has dropped support for the <span class="option">-remote</span> interface.
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION and INCLUDED SOFTWARE</h4>
+
+
+<ul>
+<li><p> The included version of PCRE has been updated to 8.36.
+</p>
+</li>
+<li> <p><CODE>configure</CODE> accepts <span class="samp">MAKEINFO=texi2any</span> as
+another way to ensure <span class="pkg">texinfo</span> 5.x is used when both 5.x and
+4.x are installed.
+</p>
+</li></ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+<ul>
+<li> <p><CODE>R CMD check</CODE> now checks the packages used in
+<code>\donttest</code> sections of the examples are specified in the
+&lsquo;<span class="file">DESCRIPTION</span>&rsquo; file.
+(These are needed to run the examples interactively.)
+</p>
+</li>
+<li> <p><CODE>R CMD check</CODE> checks for the undeclared use of GNU
+extensions in Makefiles, and for Makefiles with a missing final
+linefeed.
+</p>
+<p><CODE>R CMD build</CODE> will correct line endings in all Makefiles,
+not just those in the &lsquo;<span class="file">src</span>&rsquo; directory.
+</p>
+</li>
+<li> <p><CODE>R CMD check</CODE> notes uses of <code>library()</code> and
+<code>require()</code> in package code: see the section
+&lsquo;Suggested packages&rsquo; of &lsquo;Writing R Extensions&rsquo; for
+good practice.
+</p>
+</li></ul>
+
+
+
+
+<h4>DEPRECATED AND DEFUNCT</h4>
+
+
+<ul>
+<li><p> The <CODE>configure</CODE> option
+<span class="option">--with-valgrind-instrumentation=3</span> is deprecated and will
+be removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.2.0.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li><p> (Windows.) <CODE>Rscript.exe</CODE> was missing a
+manifest specifying the modern style for common controls (e.g.,
+the download progress bar).
+</p>
+</li>
+<li><p> If a package had extra documentation files but no vignette,
+the HTML help system produced an empty index page.
+</p>
+</li>
+<li><p> The parser now gives an error if a null character is included
+in a string using Unicode escapes. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16046">PR#16046</a>)
+</p>
+</li>
+<li> <p><code>qr.Q()</code> failed on complex arguments due to
+pre-3.0(!) typo. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16054">PR#16054</a>)
+</p>
+</li>
+<li> <p><code>abs()</code> failed with named arguments when the argument
+was complex.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16047">PR#16047</a>)
+</p>
+</li>
+<li> <p><code>"noquote"</code> objects may now be used as columns in
+dataframes.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15997">PR#15997</a>)
+</p>
+</li>
+<li><p> Some values with extremely long names were printed
+incorrectly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15999">PR#15999</a>)
+</p>
+</li>
+<li><p> Extremely large exponents on zero expressed in scientific
+notation (e.g. <code>0.0e50000</code>) could give <code>NaN</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15976">PR#15976</a>)
+</p>
+</li>
+<li> <p><code>download.file()</code> reported downloaded sizes as 0KB if
+less than 1MB, only for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.2 and only on big-endian platforms.
+</p>
+</li>
+<li> <p><code>prompt()</code> did not escape percent signs in the
+automatically generated usage section of help files.
+</p>
+</li>
+<li> <p><code>drop.terms()</code> dropped some of the attributes of the
+object it was working with.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16029">PR#16029</a>)
+</p>
+</li>
+<li><p> (Windows.) The command completion in <CODE>Rgui.exe</CODE>
+messed up the console.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15791">PR#15791</a>)
+</p>
+</li>
+<li><p> (Windows.) The <code>choose.files()</code> command returned a
+blank string when the user asked for a single file but cancelled
+the request.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16074">PR#16074</a>)
+</p>
+</li>
+<li> <p><code>Math2</code> S4 group generics failed to correctly dispatch
+<code>"structure"</code>- and <code>"nonStructure"</code>-derived classes.
+</p>
+</li>
+<li> <p><code>loadNamespace()</code> imposed undocumented restrictions
+on the <code>versionCheck</code> parameter.  (Reported by Geoff Lee.)
+</p>
+</li>
+<li><p> Rare over-runs detected by AddressSanitizer in
+<code>substr()</code> and its replacement version have been avoided.
+</p>
+<p><EM>Inter alia</EM> that fix gives the documented behaviour for
+<code>substr(x, 1, 2) &lt;- ""</code> (subsequently reported as
+<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16214">PR#16214</a>).
+</p>
+</li>
+<li><p> Loading packages incorrectly defining an S4 generic followed
+by a function of the same name caused an erroneous cyclic
+namespace dependency error.
+</p>
+</li>
+<li><p> Declared vignette encodings are now always passed to the
+vignette engine.
+</p>
+</li>
+<li><p> Port Tomas Kalibera's fix from R-devel that restores the
+<code>loadMethod()</code> fast path, effectively doubling the speed of
+S4 dispatch.
+</p>
+</li>
+<li> <p><code>power.t.test()</code> and <code>power.prop.test()</code> now make
+use of the <code>extendInt</code> option of <code>uniroot()</code> and hence
+work in more extreme cases.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15792">PR#15792</a>)
+</p>
+</li>
+<li><p> If a package was updated and attached when its namespace was
+already loaded, it could end up with parts from one version and
+parts from the other.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16120">PR#16120</a>)
+</p>
+</li>
+<li> <p><code>tools:::.Rdconv()</code> didn't accept <code>--encoding=</code> due
+to a typo.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16121">PR#16121</a>)
+</p>
+</li>
+<li><p> Unix-alike builds without a suitable <CODE>makeinfo</CODE> were
+documented to link the missing HTML manuals to CRAN, but did not.
+</p>
+</li>
+<li> <p><code>save(*, ascii=TRUE)</code> and <code>load()</code> now correctly
+deal with <code>NaN</code>'s.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16137">PR#16137</a>)
+</p>
+</li>
+<li> <p><code>split.Date()</code> retains fractional representations while
+avoiding incomplete class propagation.
+</p>
+</li>
+<li> <p>&lsquo;<span class="file">R_ext/Lapack.h</span>&rsquo; had not been updated for changes made
+by LAPACK to the argument lists of its (largely internal)
+functions <code>dlaed2</code> and <code>dlaed3</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16157">PR#16157</a>)
+</p>
+</li>
+<li> <p><code>RShowDoc("NEWS", "txt")</code> had not been updated for the
+layout changes of <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.0.
+</p>
+</li>
+<li><p> The <code>xtfrm()</code> method for class <code>"Surv"</code> has been
+corrected and its description expanded.
+</p>
+</li>
+<li> <p><code>mode(x) &lt;- y</code> would incorrectly evaluate <code>x</code> before
+changing its mode. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16215">PR#16215</a>)
+</p>
+</li>
+<li> <p><code>besselJ(1, 2^64)</code> and <code>besselY(..)</code> now signal a
+warning, returning <code>NaN</code> instead of typically
+segfaulting. (Issue 3 of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15554">PR#15554</a>)
+</p>
+</li>
+<li><p> HTML conversion of <span class="samp">\href</span> markup in &lsquo;<span class="file">.Rd</span>&rsquo; files
+did not remove the backslash from <span class="samp">\%</span> and so gave an
+invalid URL.  In a related change, the <span class="samp">\</span> escape is now
+required in such URLs.
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.1.2</h3>
 
 
@@ -59,8 +338,8 @@ collation locale in use (if any).
 </p>
 </li>
 <li> <p><code>utils::URLencode()</code> was updated to use unreserved and
-reserved characters from RFC 3986,
-<a href="http://tools.ietf.org/html/rfc3986">http://tools.ietf.org/html/rfc3986</a>, instead of RFC 1738.
+reserved characters from RFC 3986
+(<a href="http://tools.ietf.org/html/rfc3986">http://tools.ietf.org/html/rfc3986</a>) instead of RFC 1738.
 </p>
 </li>
 <li> <p><code>unique(warnings())</code> and <code>c(warnings())</code> are now
@@ -71,6 +350,12 @@ supported.
 <code>setRepositories()</code> now defaults to <code>3.0</code>. (It can be
 set at runtime <EM>via</EM> environment variable
 <span class="env">R_BIOC_VERSION</span>.)
+</p>
+</li>
+<li><p> Omegahat is no longer listed as providing Windows binary
+packages, e.g. by <code>setRepositories()</code>.  It has no binary
+packages available for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.x and those for earlier versions
+were 32-bit only.
 </p>
 </li></ul>
 
@@ -101,9 +386,9 @@ as documented). (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.
 use of <span class="pkg">inconsolata</span>.
 </p>
 </li>
-<li><p> (Windows only) If both 32 and 64 bit versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are
+<li><p> (Windows only) If both 32- and 64-bit versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are
 installed, the &lsquo;<span class="file">bin/R.exe</span>&rsquo; and &lsquo;<span class="file">bin/Rscript.exe</span>&rsquo; executables
-now run 64 bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  (To run 32 bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>, overwrite these files
+now run 64-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  (To run 32-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>, overwrite these files
 with copies of &lsquo;<span class="file">bin/i386/Rfe.exe</span>&rsquo;.)
 </p>
 </li></ul>
@@ -1322,7 +1607,7 @@ the control characters.  (Reported by Hadley Wickham.)
 </p>
 </li>
 <li> <p><code>getGraphicsEvent()</code> caused 100% usage of one CPU in
-Windows. (PR#15500)
+Windows. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15500">PR#15500</a>)
 </p>
 </li>
 <li> <p><code>nls()</code> with no <code>start</code> argument may now work

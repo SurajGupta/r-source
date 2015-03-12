@@ -1,7 +1,7 @@
 #  File src/library/utils/R/packages.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -328,6 +328,10 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(is.null(lib.loc))
         lib.loc <- .libPaths()
 
+
+    if(type == "both" && (!missing(contriburl) || !is.null(available))) {
+        stop("specifying 'contriburl' or 'available' requires a single type, not type = \"both\"")
+    }
     if(is.null(available))
         available <- available.packages(contriburl = contriburl,
                                         method = method)
@@ -385,9 +389,14 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         ## do this a library at a time, to handle dependencies correctly.
         libs <- unique(instlib)
         for(l in libs)
-            install.packages(update[instlib == l , "Package"], l,
-                             contriburl = contriburl, method = method,
-                             available = available, ..., type = type)
+            if (type == 'both')
+                install.packages(update[instlib == l , "Package"], l,
+                                 repos = repos, method = method,
+                                 ..., type = type)
+            else
+                install.packages(update[instlib == l , "Package"], l,
+                                 contriburl = contriburl, method = method,
+                                 available = available, ..., type = type)
     }
 }
 
@@ -452,6 +461,9 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
                          ..., type = getOption("pkgType"))
 {
     ask  # just a check that it is valid before we start work
+    if(type == "both" && (!missing(contriburl) || !is.null(available))) {
+        stop("specifying 'contriburl' or 'available' requires a single type, not type = \"both\"")
+    }
     if(is.null(lib.loc)) lib.loc <- .libPaths()
     if(!is.matrix(instPkgs))
         stop(gettextf("no installed packages for (invalid?) 'lib.loc=%s'",
@@ -482,9 +494,13 @@ new.packages <- function(lib.loc = NULL, repos = getOption("repos"),
         else message("no new packages are available")
     }
     if(length(update)) {
-        install.packages(update, lib = lib.loc[1L], contriburl = contriburl,
-                         method = method, available = available,
-                         type = type, ...)
+        if(type == "both")
+            install.packages(update, lib = lib.loc[1L], method = method,
+                             type = type, ...)
+        else
+            install.packages(update, lib = lib.loc[1L], contriburl = contriburl,
+                             method = method, available = available,
+                             type = type, ...)
         # Now check if they were installed and update 'res'
         dirs <- list.files(lib.loc[1L])
         updated <- update[update %in% dirs]
@@ -727,6 +743,7 @@ contrib.url <- function(repos, type = getOption("pkgType"))
 {
     ## Not entirely clear this is optimal
     if(type == "both") type <- "source"
+    if(type == "binary") type <- .Platform$pkgType
     if(is.null(repos)) return(NULL)
     if("@CRAN@" %in% repos && interactive()) {
         cat(gettext("--- Please select a CRAN mirror for use in this session ---"),
@@ -822,7 +839,8 @@ setRepositories <-
         p <- file.path(R.home("etc"), "repositories")
     a <- tools:::.read_repositories(p)
     pkgType <- getOption("pkgType")
-    if (pkgType == "both") pkgType <- .Platform$pkgType
+    if (pkgType == "both") pkgType <- "source" #.Platform$pkgType
+    if (pkgType == "binary") pkgType <- .Platform$pkgType
     if(length(grep("^mac\\.binary", pkgType))) pkgType <- "mac.binary"
     thisType <- a[[pkgType]]
     a <- a[thisType, 1L:3L]
