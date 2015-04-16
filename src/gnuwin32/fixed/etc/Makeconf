@@ -28,6 +28,7 @@ RC_ARCH =
 # Used by packages tcltk and tkrplot
 TCL_HOME = $(R_HOME)/Tcl
 LOCAL_SOFT =
+NM_FILTER =
 
 ifneq ($(strip $(LOCAL_SOFT)),)
 LOCAL_CPPFLAGS = -I"$(LOCAL_SOFT)/include"
@@ -57,7 +58,8 @@ SORT = sort
 ## For use in packages
 GRAPHAPP_LIB = -lRgraphapp
 TCL_VERSION = 85
-ZLIB_LIBS = -lRzlib
+# was a reference to Rzlib.dll in R < 3.2.0
+ZLIB_LIBS = -lz
 
 AR = $(BINPREF)ar
 ## Used by packages 'maps' and 'mapdata'

@@ -57,16 +57,15 @@ double bessel_j(double x, double alpha)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_j(x, -alpha) * cospi(alpha) +
-	       ((alpha == na) ? 0 :
-	       bessel_y(x, -alpha) * sinpi(alpha)));
+	return(((alpha - na == 0.5) ? 0 : bessel_j(x, -alpha) * cospi(alpha)) +
+	       ((alpha      == na ) ? 0 : bessel_y(x, -alpha) * sinpi(alpha)));
     }
     else if (alpha > 1e7) {
 	MATHLIB_WARNING("besselJ(x, nu): nu=%g too large for bessel_j() algorithm", alpha);
 	return ML_NAN;
     }
     nb = 1 + (int)na; /* nb-1 <= alpha < nb */
-    alpha -= (double)(nb-1); // ==> alpha' in [0, 1)
+    alpha -= (double)(nb-1);
 #ifdef MATHLIB_STANDALONE
     bj = (double *) calloc(nb, sizeof(double));
     if (!bj) MATHLIB_ERROR("%s", _("bessel_j allocation error"));
@@ -111,9 +110,8 @@ double bessel_j_ex(double x, double alpha, double *bj)
     if (alpha < 0) {
 	/* Using Abramowitz & Stegun  9.1.2
 	 * this may not be quite optimal (CPU and accuracy wise) */
-	return(bessel_j_ex(x, -alpha, bj) * cospi(alpha) +
-	       ((alpha == na) ? 0 :
-		bessel_y_ex(x, -alpha, bj) * sinpi(alpha)));
+	return(((alpha - na == 0.5) ? 0 : bessel_j_ex(x, -alpha, bj) * cospi(alpha)) +
+	       ((alpha      == na ) ? 0 : bessel_y_ex(x, -alpha, bj) * sinpi(alpha)));
     }
     else if (alpha > 1e7) {
 	MATHLIB_WARNING("besselJ(x, nu): nu=%g too large for bessel_j() algorithm", alpha);

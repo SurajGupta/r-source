@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-13 14:10\n"
+"POT-Creation-Date: 2015-03-24 11:51\n"
 "PO-Revision-Date: 2005-02-16 08:34\n"
 "Last-Translator: Stefano M. Iacus <Stefano.Iacus@R-project.org>\n"
 "Language-Team: Italian\n"
-"Language: \n"
+"Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -45,6 +45,9 @@ msgid "infinite or missing values in 'x'"
 msgstr "valori infiniti o mancanti in 'x'"
 
 msgid "a dimension is zero"
+msgstr ""
+
+msgid "\"hexNumeric\"and \"digits17\" are mutually exclusive"
 msgstr ""
 
 msgid "second argument must be a list"
@@ -331,7 +334,7 @@ msgid "only a single element should be replaced"
 msgstr "si può sostituire un solo elemento alla volta"
 
 #, fuzzy
-msgid "Name partially matched in data frame"
+msgid "Partial match of '%s' to '%s' in data frame"
 msgstr "variabile non numerica nel data frame:"
 
 #, fuzzy
@@ -346,16 +349,14 @@ msgstr ""
 "argomento list non valido: tutte le variabili devono avere la stessa "
 "lunghezza"
 
-msgid "data frame with 0 columns and %d rows"
-msgstr ""
-
 msgid "<0 rows> (or 0-length row.names)"
 msgstr ""
 
 msgid "non-numeric variable in data frame:"
 msgstr "variabile non numerica nel data frame:"
 
-msgid "only defined for equally-sized data frames"
+#, fuzzy
+msgid "%s only defined for equally-sized data frames"
 msgstr "è definita solo per data frame della stessa ampiezza"
 
 msgid "list of length %d not meaningful"
@@ -613,7 +614,8 @@ msgstr "'labels' non valide; lunghezza %d dovrebbe essere 1 o %d"
 msgid "number of levels differs"
 msgstr "il numero dei livelli è differente"
 
-msgid "not meaningful for factors"
+#, fuzzy
+msgid "%s not meaningful for factors"
 msgstr "senza senso per variabili factor"
 
 msgid "level sets of factors are different"
@@ -708,6 +710,9 @@ msgstr "'flag' può contenre solo '0+- #'"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "data frame corrotto: le colonne verranno accorciate o riempite con NA"
+
+msgid "'big.mark' and 'decimal.mark' are both '%s', which could be confusing"
+msgstr ""
 
 msgid "'zero.print' has length > 1"
 msgstr "'zero.print' deve avere lunghezza > 1"
@@ -847,6 +852,10 @@ msgid "%s not found on search path, using pos = 2"
 msgstr "'%s' non trovato nel percorso di ricerca, uso pos = 2"
 
 #, fuzzy
+msgid "Package %s version %s cannot be unloaded"
+msgstr "pacchetto %s non caricato"
+
+#, fuzzy
 msgid "package or namespace load failed for %s"
 msgstr "caricamento pacchetto/namespace fallito per '%s'"
 
@@ -955,17 +964,12 @@ msgstr "Carico il pacchetto richiesto: '%s'"
 msgid "package %s required by %s could not be found"
 msgstr "pacchetto '%s' richiesto da '%s' ma non trovato"
 
-#, fuzzy
-msgid "package %s %s was found, but %s %s is required by %s"
-msgstr "pacchetto '%s' non trovato, ma %s %s è richiesto da '%s'"
+msgid "version %s of %s masked by %s in %s"
+msgstr ""
 
 #, fuzzy
 msgid "package %s could not be loaded"
 msgstr "pacchetto '%s' non caricato"
-
-#, fuzzy
-msgid "package %s %s is loaded, but %s %s is required by %s"
-msgstr "pacchetto '%s' %s caricato, ma %s %s richiesto da '%s'"
 
 msgid "empty (zero-byte) input file"
 msgstr ""
@@ -1080,8 +1084,14 @@ msgstr "'by' deve essere compatibile col numero di colonne"
 msgid "'by' must specify one or more columns as numbers, names or logical"
 msgstr "'by' deve specificare la colonna(e)"
 
+msgid "long vectors are not supported"
+msgstr ""
+
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x' e 'by.y' specificano numeri di colonne differenti"
+
+msgid "'incomparables' is supported only for merging on a single column"
+msgstr ""
 
 msgid "additional arguments ignored in message()"
 msgstr ""
@@ -1595,9 +1605,6 @@ msgstr "Nessun traceback disponibile"
 msgid "invalid version specification %s"
 msgstr "versione specificata non valida"
 
-msgid "wrong argument"
-msgstr "argomento sbagliato"
-
 #, fuzzy
 msgid "invalid 'value'"
 msgstr "valore 'n' non valido"
@@ -1708,11 +1715,22 @@ msgstr[0] "opzione di deparse %s non riconosciuta"
 msgstr[1] "opzioni di deparse %s non riconosciute"
 
 msgid ""
-"The following object is masked %s %s:\n"
+"The following object is masked _by_ %s:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"The following objects are masked %s %s:\n"
+"The following objects are masked _by_ %s:\n"
+"\n"
+"%s\n"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid ""
+"The following object is masked from %s:\n"
+"\n"
+"%s\n"
+msgid_plural ""
+"The following objects are masked from %s:\n"
 "\n"
 "%s\n"
 msgstr[0] ""
@@ -1780,6 +1798,11 @@ msgid "provided %d variable to replace %d variables"
 msgid_plural "provided %d variables to replace %d variables"
 msgstr[0] "specificate %d variabili per sostituire %d variabili"
 msgstr[1] "specificate %d variabili per sostituire %d variabili"
+
+msgid "data frame with 0 columns and %d row"
+msgid_plural "data frame with 0 columns and %d rows"
+msgstr[0] ""
+msgstr[1] ""
 
 msgid "library %s contains no packages"
 msgid_plural "libraries %s contain no packages"
@@ -1857,6 +1880,25 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Messaggio di avvertimento:\n"
 msgstr[1] "Messaggi di avvertimento:\n"
+
+#, fuzzy
+#~ msgid "cannot be unloaded."
+#~ msgstr "namespace '%s' caricato"
+
+#, fuzzy
+#~ msgid "re-exports %s not exported by %s"
+#~ msgstr "l'oggetto %s non è esportato da 'namespace:%s'"
+
+#, fuzzy
+#~ msgid "package %s %s was found, but %s %s is required by %s"
+#~ msgstr "pacchetto '%s' non trovato, ma %s %s è richiesto da '%s'"
+
+#, fuzzy
+#~ msgid "package %s %s is loaded, but %s %s is required by %s"
+#~ msgstr "pacchetto '%s' %s caricato, ma %s %s richiesto da '%s'"
+
+#~ msgid "wrong argument"
+#~ msgstr "argomento sbagliato"
 
 #~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
 #~ msgstr "'nu' deve essere 0, nrow(x) o ncol(x)"

@@ -1,7 +1,7 @@
 #  File src/library/base/R/eigen.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ isSymmetric.matrix <- function(object, tol = 100*.Machine$double.eps, ...)
 
 eigen <- function(x, symmetric, only.values = FALSE, EISPACK = FALSE)
 {
-    x <- as.matrix(x)
+    x <- unname(as.matrix(x))
     n <- nrow(x)
     if (!n) stop("0 x 0 matrix")
     if (n != ncol(x)) stop("non-square matrix in 'eigen'")

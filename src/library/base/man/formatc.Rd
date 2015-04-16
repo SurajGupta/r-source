@@ -16,8 +16,9 @@ formatC(x, digits = NULL, width = NULL,
         format = NULL, flag = "", mode = NULL,
         big.mark = "", big.interval = 3L,
         small.mark = "", small.interval = 5L,
-        decimal.mark = ".", preserve.width = "individual",
-        zero.print = NULL, drop0trailing = FALSE)
+        decimal.mark = getOption("OutDec"),
+        preserve.width = "individual", zero.print = NULL,
+        drop0trailing = FALSE)
 
 prettyNum(x, big.mark = "",   big.interval = 3L,
           small.mark = "", small.interval = 5L,
@@ -97,7 +98,7 @@ prettyNum(x, big.mark = "",   big.interval = 3L,
     (\code{big.mark} or \code{small.mark}) are added.  \code{"common"},
     the default, corresponds to \code{\link{format}}-like behavior
     whereas \code{"individual"} is the default in
-    \code{formatC()}.}
+    \code{formatC()}. Value can be abbreviated.}
   \item{zero.print}{logical, character string or \code{NULL} specifying
     if and how \emph{zeros} should be formatted specially.  Useful for
     pretty printing \sQuote{sparse} objects.}
@@ -113,7 +114,7 @@ prettyNum(x, big.mark = "",   big.interval = 3L,
 \value{
   A character object of same size and attributes as \code{x} (after
   discarding any class), in the current locale's encoding.
-  
+
   Unlike \code{\link{format}}, each number is formatted individually.
   Looping over each element of \code{x}, the C function
   \code{sprintf(\dots)} is called for numeric inputs (inside the C
@@ -149,14 +150,17 @@ prettyNum(x, big.mark = "",   big.interval = 3L,
 
   The C doubles used for \R numerical vectors have signed zeros, which
   \code{formatC} may output as \code{-0}, \code{-0.000} \dots.
+  
+  There is a warning if \code{big.mark} and \code{decimal.mark} are the
+  same: that would be confusing to those reading the output.
 }
 \note{
   Prior to \R 3.0.2 this copied the class of \code{x} to the return
   value and could easily create invalid objects.
   
-  The default for \code{decimal.mark} is not appropriate for use within
-  \code{\link{print}} methods: use \code{decimal.mark =
-    getOption("OutDec")} there.
+  The default for \code{decimal.mark} was changed in \R 3.2.0: for use within
+  \code{\link{print}} methods in packages which might be used with
+  earlier versions: use \code{decimal.mark = getOption("OutDec")} explicitly.
 }
 \author{
   \code{formatC} was originally written by Bill Dunlap for S-PLUS, later
@@ -172,7 +176,7 @@ prettyNum(x, big.mark = "",   big.interval = 3L,
 \seealso{
   \code{\link{format}}.
 
-  \code{\link{sprintf}} for more general C like formatting.
+  \code{\link{sprintf}} for more general C-like formatting.
 }
 \examples{
 xx  <- pi * 10^(-5:4)
@@ -214,6 +218,10 @@ cbind(ff <- format(1.2345 + 10^(0:5), width = 11, big.mark = "'"))
 ## individual formatting to common width:
 fc <- formatC(1.234 + 10^(0:8), format = "fg", width = 11, big.mark = "'")
 cbind(fc)
+## Powers of two, stored exactly, formatted individually:
+pow.2 <- formatC(2^-(1:32), digits = 24, width = 1, format = "fg")
+## nicely printed (the last line showing 5^32 exactly):
+noquote(cbind(pow.2))
 
 ## complex numbers:
 r <- 10.0000001; rv <- (r/10)^(1:10)

@@ -1,5 +1,5 @@
 
-R version 3.1.3 RC (2015-03-01 r67921) -- "Smooth Sidewalk"
+R version 3.2.0 beta (2015-04-05 r68147) -- "Full of Ingredients"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -285,7 +285,6 @@ lm2  6 336.3417
 > 
 > 
 > 
-> graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
 > nameEx("Exponential")
 > ### * Exponential
@@ -402,7 +401,7 @@ lm2  6 336.3417
 > 
 > ## Don't show: 
 > od <- options(digits = 5)
-> ## End Don't show
+> ## End(Don't show)
 > require(graphics)
 > 
 > ## Seasonal Holt-Winters
@@ -475,7 +474,7 @@ s12   0.92099
 > lines(fitted(m2)[,1], col = 3)
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -958,7 +957,7 @@ cond     deg0NA deg4NA deg8NA deg0NP deg4NP deg8NP
 > 
 > ## Don't show: 
 > options(show.nls.convergence=FALSE)
-> ## End Don't show
+> ## End(Don't show)
 > Lob.329 <- Loblolly[ Loblolly$Seed == "329", ]
 > SSasymp( Lob.329$age, 100, -8.5, -3.2 )  # response only
 [1]  3.988924 11.505611 27.822517 41.130854 51.985354 60.838463
@@ -1027,7 +1026,7 @@ Residual standard error: 0.7493 on 3 degrees of freedom
 >   arrows(0.2, 3.5, 0, 3.5, length = 0.08, angle = 25)
 >   arrows(0.8, 3.5, 1, 3.5, length = 0.08, angle = 25)
 >   text(0.5, 3.5, expression(t[0.5]), adj = c(0.5, 0.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -1110,7 +1109,7 @@ Residual standard error: 1.663 on 4 degrees of freedom
 >   arrows(0.7, 2.65, 0.5, 2.65, length = 0.08, angle = 25)
 >   arrows(1.3, 2.65, 1.5, 2.65, length = 0.08, angle = 25)
 >   text(1.0, 2.65, expression(t[0.5]), adj = c(0.5, 0.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -1149,7 +1148,7 @@ Residual standard error: 1.663 on 4 degrees of freedom
 >   arrows(0.2, 3.0, 0, 3.0, length = 0.08, angle = 25)
 >   arrows(0.8, 3.0, 1, 3.0, length = 0.08, angle = 25)
 >   text(0.5, 3.0, expression(t[0.5]), adj = c(0.5, 0.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -1378,7 +1377,7 @@ Residual standard error: 2.351 on 8 degrees of freedom
 >   arrows(2.3, 2.7, 2.0, 2.7, length = 0.08, angle = 25)
 >   arrows(2.7, 2.7, 3.0, 2.7, length = 0.08, angle = 25)
 >   text(2.5, 2.7, expression(phi[4]), adj = c(0.5, 0.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -1484,7 +1483,7 @@ Residual standard error: 0.02684 on 13 degrees of freedom
 >   arrows(2.3, 3.8, 2.0, 3.8, length = 0.08, angle = 25)
 >   arrows(2.7, 3.8, 3.0, 3.8, length = 0.08, angle = 25)
 >   text(2.5, 3.8, expression(phi[3]), adj = c(0.5, 0.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
@@ -1577,7 +1576,7 @@ Residual standard error: 10.93 on 10 degrees of freedom
 >   text(-0.8, 2.5, expression(phi[1]), adj = c(0.5, 0.5))
 >   segments(1, 0, 1, 2.7, lty = 2, lwd = 0.75)
 >   text(1, 2.7, expression(phi[2]), adj = c(0.5, 0))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -1665,7 +1664,7 @@ Residual standard error: 2.061 on 7 degrees of freedom
 +        27, 29, 31, 33, 35, 36, 38, 39, 39, 40)
 > stopifnot(round(dsignrank(0:56, n = 10)* 2^10) == c(p, rev(p), 0),
 +           qsignrank((1:16)/ 16, n = 4) == c(0:2, rep(3:7, each = 2), 8:10))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -2031,7 +2030,7 @@ ar(3) 0.6000000 0.3000 -0.2
 > 
 > ## Don't show: 
 > od <- options(digits = 5)
-> ## End Don't show
+> ## End(Don't show)
 > require(graphics); require(utils)
 > ## following example(swiss)
 > lm1 <- lm(Fertility ~ ., data = swiss)
@@ -2083,7 +2082,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 7         3       1     25
 8         3       2     13
 9         3       3     12
-> ## End Don't show
+> ## End(Don't show)
 > drop1(glm.D93, test = "Chisq")
 Single term deletions
 
@@ -2116,7 +2115,7 @@ counts ~ outcome + treatment
 outcome:treatment  4     0.00 59.6      5.17     0.27
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -2217,7 +2216,7 @@ Aye   Buzz Hum Sum
 
 > ## Don't show: 
 > stopifnot(is.table(addmargins(A)))
-> ## End Don't show
+> ## End(Don't show)
 > ftable(A)
          Sea Black Dead Red White
 Aye Bee                          
@@ -2522,7 +2521,6 @@ Frequency = 1
 > ### ** Examples
 > 
 > 
-> base::options(contrasts = c(unordered = "contr.treatment",ordered = "contr.poly"))
 > cleanEx()
 > nameEx("anova.glm")
 > ### * anova.glm
@@ -2550,7 +2548,7 @@ Frequency = 1
 7         3       1     25
 8         3       2     13
 9         3       3     12
-> ## End Don't show
+> ## End(Don't show)
 > anova(glm.D93)
 Analysis of Deviance Table
 
@@ -3542,6 +3540,8 @@ Coefficients:
 s.e.  0.0555     4.6434
 
 sigma^2 estimated as 85.47:  log likelihood = -416.89,  aic = 839.78
+> nobs(fit1)
+[1] 114
 > tsdiag(fit1)
 > (fit3 <- arima(presidents, c(3, 0, 0)))  # smaller AIC
 
@@ -3555,6 +3555,20 @@ s.e.  0.0936  0.1140   0.0946     4.2845
 
 sigma^2 estimated as 81.12:  log likelihood = -414.08,  aic = 838.16
 > tsdiag(fit3)
+> BIC(fit1, fit3)
+     df      BIC
+fit1  3 847.9931
+fit3  5 851.8449
+> ## compare a whole set of models; BIC() would choose the smallest
+> AIC(fit1, arima(presidents, c(2,0,0)),
++           arima(presidents, c(2,0,1)), # <- chosen (barely) by AIC
++     fit3, arima(presidents, c(3,0,1)))
+                              df      AIC
+fit1                           3 839.7845
+arima(presidents, c(2, 0, 0))  4 840.0458
+arima(presidents, c(2, 0, 1))  5 838.1272
+fit3                           5 838.1639
+arima(presidents, c(3, 0, 1))  6 838.8124
 > 
 > ## An example of ARIMA forecasting:
 > predict(fit3, 3)
@@ -3757,7 +3771,6 @@ sigma^2 estimated as 0.4566:  log likelihood = -101.2,  aic = 212.4
 > 
 > 
 > 
-> graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
 > nameEx("asOneSidedFormula")
 > ### * asOneSidedFormula
@@ -3773,7 +3786,7 @@ sigma^2 estimated as 0.4566:  log likelihood = -101.2,  aic = 212.4
 > 
 > asOneSidedFormula("age")
 ~age
-<environment: 0x22b7ba8>
+<environment: 0x2963ee8>
 > asOneSidedFormula(~ age)
 ~age
 > 
@@ -3881,14 +3894,14 @@ Warning in bw.bcv(x) : minimum occurred at one end of the range
 	Bartlett test of homogeneity of variances
 
 data:  InsectSprays$count and InsectSprays$spray
-Bartlett's K-squared = 25.9598, df = 5, p-value = 9.085e-05
+Bartlett's K-squared = 25.96, df = 5, p-value = 9.085e-05
 
 > bartlett.test(count ~ spray, data = InsectSprays)
 
 	Bartlett test of homogeneity of variances
 
 data:  count by spray
-Bartlett's K-squared = 25.9598, df = 5, p-value = 9.085e-05
+Bartlett's K-squared = 25.96, df = 5, p-value = 9.085e-05
 
 > 
 > 
@@ -4030,14 +4043,14 @@ probability of success
 	Box-Pierce test
 
 data:  x
-X-squared = 0.0013, df = 1, p-value = 0.9709
+X-squared = 0.0013332, df = 1, p-value = 0.9709
 
 > Box.test (x, lag = 1, type = "Ljung")
 
 	Box-Ljung test
 
 data:  x
-X-squared = 0.0014, df = 1, p-value = 0.9704
+X-squared = 0.0013736, df = 1, p-value = 0.9704
 
 > 
 > 
@@ -4140,7 +4153,7 @@ I(x^3) -0.73        0.93 -0.99
 	Pearson's Chi-squared test
 
 data:  M
-X-squared = 30.0701, df = 2, p-value = 2.954e-07
+X-squared = 30.07, df = 2, p-value = 2.954e-07
 
 > Xsq$observed   # observed counts (same as M)
       party
@@ -4462,7 +4475,7 @@ factor> of <- ordered(ff)
 factor> stopifnot(identical(range(of, rev(of)), of[3:2]),
 factor+ 	  identical(max(of), of[2]))
 
-factor> ## End Don't show
+factor> ## End(Don't show)
 factor> 
 factor> ## suppose you want "NA" as a level, and to allow missing values.
 factor> (x <- factor(c(1, 2, NA), exclude = NULL))
@@ -4736,7 +4749,7 @@ function (V)
     r[cbind(1L:p, 1L:p)] <- 1
     r
 }
-<bytecode: 0x450bc70>
+<bytecode: 0x4b2b688>
 <environment: namespace:stats>
 > stopifnot(all.equal(Cl, cov2cor(cov(longley))),
 +           all.equal(cor(longley, method = "kendall"),
@@ -6946,7 +6959,7 @@ Residual Deviance: 135.8 	AIC: NA
 > flush(stderr()); flush(stdout())
 > 
 > ### Name: fft
-> ### Title: Fast Discrete Fourier Transform
+> ### Title: Fast Discrete Fourier Transform (FFT)
 > ### Aliases: fft mvfft
 > ### Keywords: math dplot
 > 
@@ -6958,6 +6971,18 @@ Residual Deviance: 135.8 	AIC: NA
 > fft(fft(x), inverse = TRUE)/length(x)
 [1] 1+0i 2+0i 3+0i 4+0i
 > 
+> ## Slow Discrete Fourier Transform (DFT) - e.g., for checking the formula
+> fft0 <- function(z, inverse=FALSE) {
++   n <- length(z)
++   if(n == 0) return(z)
++   k <- 0:(n-1)
++   ff <- (if(inverse) 1 else -1) * 2*pi * 1i * k/n
++   vapply(1:n, function(h) sum(z * exp(ff*(h-1))), complex(1))
++ }
+> 
+> relD <- function(x,y) 2* abs(x - y) / abs(x + y)
+> n <- 2^8
+> z <- complex(n, rnorm(n), rnorm(n))
 > 
 > 
 > cleanEx()
@@ -7190,14 +7215,14 @@ alternative hypothesis: two.sided
 	Fligner-Killeen test of homogeneity of variances
 
 data:  InsectSprays$count and InsectSprays$spray
-Fligner-Killeen:med chi-squared = 14.4828, df = 5, p-value = 0.01282
+Fligner-Killeen:med chi-squared = 14.483, df = 5, p-value = 0.01282
 
 > fligner.test(count ~ spray, data = InsectSprays)
 
 	Fligner-Killeen test of homogeneity of variances
 
 data:  count by spray
-Fligner-Killeen:med chi-squared = 14.4828, df = 5, p-value = 0.01282
+Fligner-Killeen:med chi-squared = 14.483, df = 5, p-value = 0.01282
 
 > ## Compare this to bartlett.test()
 > 
@@ -7248,7 +7273,7 @@ attr(,".Environment")
 > environment(as.formula("y ~ x"))
 <environment: R_GlobalEnv>
 > environment(as.formula("y ~ x", env = new.env()))
-<environment: 0x417ab80>
+<environment: 0x29eefe8>
 > 
 > 
 > ## Create a formula for a model with a large number of variables:
@@ -7331,7 +7356,7 @@ circumference ~ A/(1 + exp((B - age)/C))
 	Friedman rank sum test
 
 data:  RoundingTimes
-Friedman chi-squared = 11.1429, df = 2, p-value = 0.003805
+Friedman chi-squared = 11.143, df = 2, p-value = 0.003805
 
 > ## => strong evidence against the null that the methods are equivalent
 > ##    with respect to speed
@@ -7353,14 +7378,14 @@ Friedman chi-squared = 11.1429, df = 2, p-value = 0.003805
 	Friedman rank sum test
 
 data:  wb$x, wb$w and wb$t
-Friedman chi-squared = 0.3333, df = 1, p-value = 0.5637
+Friedman chi-squared = 0.33333, df = 1, p-value = 0.5637
 
 > friedman.test(x ~ w | t, data = wb)
 
 	Friedman rank sum test
 
 data:  x and w and t
-Friedman chi-squared = 0.3333, df = 1, p-value = 0.5637
+Friedman chi-squared = 0.33333, df = 1, p-value = 0.5637
 
 > 
 > 
@@ -7474,7 +7499,7 @@ Crew   885
 +   dim(f10) == c(1,4),
 +   dim(f01) == c(4,1),
 +   dim(f00) == c(1,1))
-> ## End Don't show
+> ## End(Don't show)
 > ## Start with a data frame.
 > x <- ftable(mtcars[c("cyl", "vs", "am", "gear")])
 > x
@@ -7667,40 +7692,6 @@ NULL                          8    10.5814
 outcome    2   5.4523         6     5.1291
 treatment  2   0.0000         4     5.1291
 > 
-> if(length(find.package("MASS", quiet = TRUE))) {
-+ ## an example with offsets from Venables & Ripley (2002, p.189)
-+ utils::data(anorexia, package = "MASS")
-+ 
-+ anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),
-+                 family = gaussian, data = anorexia)
-+ summary(anorex.1)
-+ }
-
-Call:
-glm(formula = Postwt ~ Prewt + Treat + offset(Prewt), family = gaussian, 
-    data = anorexia)
-
-Deviance Residuals: 
-     Min        1Q    Median        3Q       Max  
--14.1083   -4.2773   -0.5484    5.4838   15.2922  
-
-Coefficients:
-            Estimate Std. Error t value Pr(>|t|)    
-(Intercept)  49.7711    13.3910   3.717 0.000410 ***
-Prewt        -0.5655     0.1612  -3.509 0.000803 ***
-TreatCont    -4.0971     1.8935  -2.164 0.033999 *  
-TreatFT       4.5631     2.1333   2.139 0.036035 *  
----
-Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-(Dispersion parameter for gaussian family taken to be 48.69504)
-
-    Null deviance: 4525.4  on 71  degrees of freedom
-Residual deviance: 3311.3  on 68  degrees of freedom
-AIC: 489.97
-
-Number of Fisher Scoring iterations: 2
-
 > 
 > # A Gamma example, from McCullagh & Nelder (1989, pp. 300-2)
 > clotting <- data.frame(
@@ -7812,6 +7803,22 @@ Number of Fisher Scoring iterations: 3
 > plot(hc1, labels = FALSE, hang = -1, main = "Re-start from 10 clusters")
 > par(opar)
 > 
+> ### Example 2: Straight-line distances among 10 US cities
+> ##  Compare the results of algorithms "ward.D" and "ward.D2"
+> 
+> data(UScitiesD)
+> 
+> mds2 <- -cmdscale(UScitiesD)
+> plot(mds2, type="n", axes=FALSE, ann=FALSE)
+> text(mds2, labels=rownames(mds2), xpd = NA)
+> 
+> hcity.D  <- hclust(UScitiesD, "ward.D") # "wrong"
+> hcity.D2 <- hclust(UScitiesD, "ward.D2")
+> opar <- par(mfrow = c(1, 2))
+> plot(hcity.D,  hang=-1)
+> plot(hcity.D2, hang=-1)
+> par(opar)
+> 
 > 
 > 
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
@@ -7853,7 +7860,7 @@ List of 4
 > heatmap(x, Rowv = NA, col = cm.colors(256), scale = "column",
 +         ColSideColors = cc, margins = c(5,10),
 +         xlab = "xlab", ylab =  "ylab")  # no main
-> ## End Don't show
+> ## End(Don't show)
 > ## "no nothing"
 > heatmap(x, Rowv = NA, Colv = NA, scale = "column",
 +         main = "heatmap(*, NA, NA) ~= image(t(x))")
@@ -8412,7 +8419,7 @@ Available components:
 	Kruskal-Wallis rank sum test
 
 data:  list(x, y, z)
-Kruskal-Wallis chi-squared = 0.7714, df = 2, p-value = 0.68
+Kruskal-Wallis chi-squared = 0.77143, df = 2, p-value = 0.68
 
 > ## Equivalently,
 > x <- c(x, y, z)
@@ -8425,7 +8432,7 @@ Kruskal-Wallis chi-squared = 0.7714, df = 2, p-value = 0.68
 	Kruskal-Wallis rank sum test
 
 data:  x and g
-Kruskal-Wallis chi-squared = 0.7714, df = 2, p-value = 0.68
+Kruskal-Wallis chi-squared = 0.77143, df = 2, p-value = 0.68
 
 > 
 > ## Formula interface.
@@ -8436,7 +8443,7 @@ Kruskal-Wallis chi-squared = 0.7714, df = 2, p-value = 0.68
 	Kruskal-Wallis rank sum test
 
 data:  Ozone by Month
-Kruskal-Wallis chi-squared = 29.2666, df = 4, p-value = 6.901e-06
+Kruskal-Wallis chi-squared = 29.267, df = 4, p-value = 6.901e-06
 
 > 
 > 
@@ -8473,7 +8480,7 @@ alternative hypothesis: two-sided
 	One-sample Kolmogorov-Smirnov test
 
 data:  x + 2
-D = 0.4096, p-value = 4.227e-08
+D = 0.40962, p-value = 4.227e-08
 alternative hypothesis: two-sided
 
 > ks.test(x+2, "pgamma", 3, 2, exact = FALSE)
@@ -8481,7 +8488,7 @@ alternative hypothesis: two-sided
 	One-sample Kolmogorov-Smirnov test
 
 data:  x + 2
-D = 0.4096, p-value = 1.033e-07
+D = 0.40962, p-value = 1.033e-07
 alternative hypothesis: two-sided
 
 > ks.test(x+2, "pgamma", 3, 2, alternative = "gr")
@@ -8489,7 +8496,7 @@ alternative hypothesis: two-sided
 	One-sample Kolmogorov-Smirnov test
 
 data:  x + 2
-D^+ = 0.04, p-value = 0.8302
+D^+ = 0.039998, p-value = 0.8302
 alternative hypothesis: the CDF of x lies above the null hypothesis
 
 > 
@@ -8665,7 +8672,7 @@ Coefficients:
 > ## model frame :
 > stopifnot(identical(lm(weight ~ group, method = "model.frame"),
 +                     model.frame(lm.D9)))
-> ## End Don't show
+> ## End(Don't show)
 > ### less simple examples in "See Also" above
 > 
 > 
@@ -8750,7 +8757,7 @@ List of 4
 > 
 > ## Don't show: 
 > utils::example("lm", echo = FALSE)
-> ## End Don't show
+> ## End(Don't show)
 > ##-- Continuing the  lm(.) example:
 > coef(lm.D90) # the bare coefficients
 groupCtl groupTrt 
@@ -8831,7 +8838,7 @@ List of 8
 >   id <- function(x, y) all.equal(x, y, tolerance = 1e-15, scale = 1)
 >   stopifnot(id(unname(lm.$coef), lm..$coef),
 + 	    id(unname(lmw$coef), lm.w$coef))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -9042,7 +9049,7 @@ $margin[[3]]
 > 
 > ## Don't show: 
 > utils::example("lm", echo = FALSE)
-> ## End Don't show
+> ## End(Don't show)
 > ##-- Using the same data as the lm(.) example:
 > lsD9 <- lsfit(x = unclass(gl(2, 10)), y = weight)
 > ls.print(lsD9)
@@ -9462,7 +9469,7 @@ Male   <5000                          1   1   2   1
 	Cochran-Mantel-Haenszel test
 
 data:  Satisfaction
-Cochran-Mantel-Haenszel M^2 = 10.2001, df = 9, p-value = 0.3345
+Cochran-Mantel-Haenszel M^2 = 10.2, df = 9, p-value = 0.3345
 
 > ## See Table 7.12 in Agresti (2002), p. 297.
 > 
@@ -9543,7 +9550,7 @@ cond     deg0NA deg4NA deg8NA deg0NP deg4NP deg8NP
 
 
 data:  SSD matrix from lm(formula = reacttime ~ 1)
-W = 0.0311, p-value = 0.04765
+W = 0.031084, p-value = 0.04765
 
 > 
 > ### tests using intra-subject 3x2 design
@@ -9557,7 +9564,7 @@ W = 0.0311, p-value = 0.04765
 
 
 data:  SSD matrix from lm(formula = reacttime ~ 1)
-W = 0.8938, p-value = 0.6381
+W = 0.89378, p-value = 0.6381
 
 > mauchly.test(mlmfit, M = ~ deg + noise, X = ~ noise, idata = idata)
 
@@ -9570,7 +9577,7 @@ W = 0.8938, p-value = 0.6381
 
 
 data:  SSD matrix from lm(formula = reacttime ~ 1)
-W = 0.9601, p-value = 0.8497
+W = 0.96011, p-value = 0.8497
 
 > 
 > 
@@ -9607,7 +9614,7 @@ W = 0.9601, p-value = 0.8497
 	McNemar's Chi-squared test with continuity correction
 
 data:  Performance
-McNemar's chi-squared = 16.8178, df = 1, p-value = 4.115e-05
+McNemar's chi-squared = 16.818, df = 1, p-value = 4.115e-05
 
 > ## => significant change (in fact, drop) in approval ratings
 > 
@@ -10005,7 +10012,6 @@ b4                    3  0  0  0  0  3
 > ### ** Examples
 > 
 > 
-> base::options(contrasts = c(unordered = "contr.treatment",ordered = "contr.poly"))
 > cleanEx()
 > nameEx("monthplot")
 > ### * monthplot
@@ -10353,7 +10359,7 @@ $iterations
 > 
 > ## Don't show: 
 > od <- options(digits=5)
-> ## End Don't show
+> ## End(Don't show)
 > require(graphics)
 > 
 > DNase1 <- subset(DNase, Run == 1)
@@ -10559,7 +10565,7 @@ Consider specifying 'start' or using a selfStart model
 > 
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -10610,7 +10616,7 @@ $warnOnly
 > 
 > ## Don't show: 
 > od <- options(digits = 4)
-> ## End Don't show
+> ## End(Don't show)
 > myenv <- new.env()
 > assign("mean", 0., envir = myenv)
 > assign("sd", 1., envir = myenv)
@@ -10655,7 +10661,7 @@ attr(,"gradient")
 [31,] -0.004432 -0.01330
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -11414,7 +11420,7 @@ Warning in xy.coords(x, y, xlabel, ylabel, log) :
 > for(i in 1:5) assign(paste("long.var.name", i, sep = "."), runif(10))
 > plot(lm(long.var.name.1 ~
 +         long.var.name.2 + long.var.name.3 + long.var.name.4 + long.var.name.5))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -11599,7 +11605,7 @@ event rate
 	Comparison of Poisson rates
 
 data:  c(11, 6 + 8 + 7) time base: c(800, 1083 + 1050 + 878)
-count1 = 11, expected count1 = 6.717, p-value = 0.07967
+count1 = 11, expected count1 = 6.7174, p-value = 0.07967
 alternative hypothesis: true rate ratio is not equal to 1
 95 percent confidence interval:
  0.8584264 4.2772659
@@ -11747,14 +11753,14 @@ attr(,"class")
 $linkfun
 function (mu) 
 mu^lambda
-<bytecode: 0x3946b78>
-<environment: 0x393ec88>
+<bytecode: 0x4c20918>
+<environment: 0x4c126b8>
 
 $linkinv
 function (eta) 
 pmax(eta^(1/lambda), .Machine$double.eps)
-<bytecode: 0x3946c90>
-<environment: 0x393ec88>
+<bytecode: 0x4c20a30>
+<environment: 0x4c126b8>
 
 > 
 > 
@@ -11981,7 +11987,7 @@ NOTE: n is number in *each* group
 	Phillips-Perron Unit Root Test
 
 data:  x
-Dickey-Fuller = -33.0567, Truncation lag parameter = 7, p-value = 0.01
+Dickey-Fuller = -33.057, Truncation lag parameter = 7, p-value = 0.01
 
 > y <- cumsum(x) # has unit root
 > PP.test(y)
@@ -12195,7 +12201,7 @@ Coefficients of ridge terms:
 > 
 > ## Don't show: 
 > old <- Sys.setlocale("LC_COLLATE", "C")
-> ## End Don't show
+> ## End(Don't show)
 > require(utils)
 > 
 > ## All the "predict" methods found
@@ -12255,7 +12261,7 @@ predict.smooth.spline.fit :
 	 function (object, x, deriv = 0, ...)  NULL 
 > ## Don't show: 
 > old <- Sys.setlocale("LC_COLLATE", old)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -12653,7 +12659,7 @@ $df
 > 
 > ## Don't show: 
 > od <- options(digits = 5)
-> ## End Don't show
+> ## End(Don't show)
 > require(graphics)
 > 
 > fm <- nls(demand ~ SSasympOrig(Time, A, lrc), data = BOD)
@@ -12669,7 +12675,7 @@ $df
 > par(opar)
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -12780,7 +12786,7 @@ smooth.spline(x = speed, y = dist, df = 6.4)
 
 attr(,"class")
 [1] "smooth.spline"
-> ## End Don't show
+> ## End(Don't show)
 > 
 > ## "Proof" that the derivatives are okay, by comparing with approximation
 > diff.quot <- function(x, y) {
@@ -12806,7 +12812,7 @@ attr(,"class")
 +   lines(pp <- predict(cars.spl, xx, deriv = d), col = "red")
 + ## Don't show: 
 +   print(pp)
-+ ## End Don't show
++ ## End(Don't show)
 +   points(kn, pp$y[i.kn], pch = 3, col = "dark red")
 +   abline(h = 0, lty = 3, col = "gray")
 + }
@@ -13031,6 +13037,61 @@ Standard deviations:
 > 
 > 
 > cleanEx()
+> nameEx("print.power.htest")
+> ### * print.power.htest
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: print.power.htest
+> ### Title: Print Methods for Hypothesis Tests and Power Calculation Objects
+> ### Aliases: print.htest print.power.htest
+> ### Keywords: htest
+> 
+> ### ** Examples
+> 
+> (ptt <- power.t.test(n = 20, delta = 1))
+
+     Two-sample t test power calculation 
+
+              n = 20
+          delta = 1
+             sd = 1
+      sig.level = 0.05
+          power = 0.8689528
+    alternative = two.sided
+
+NOTE: n is number in *each* group
+
+> print(ptt, digits =  4) # using less digits than default
+
+     Two-sample t test power calculation 
+
+              n = 20
+          delta = 1
+             sd = 1
+      sig.level = 0.05
+          power = 0.869
+    alternative = two.sided
+
+NOTE: n is number in *each* group
+
+> print(ptt, digits = 12) # using more  "       "     "
+
+     Two-sample t test power calculation 
+
+              n = 20
+          delta = 1
+             sd = 1
+      sig.level = 0.05
+          power = 0.868952801692
+    alternative = two.sided
+
+NOTE: n is number in *each* group
+
+> 
+> 
+> 
+> cleanEx()
 > nameEx("print.ts")
 > ### * print.ts
 > 
@@ -13123,7 +13184,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > 
 > ## Don't show: 
 > od <- options(digits = 4)
-> ## End Don't show
+> ## End(Don't show)
 > # obtain the fitted object
 > fm1 <- nls(demand ~ SSasympOrig(Time, A, lrc), data = BOD)
 > # get the profile for the fitted model: default level is too extreme
@@ -13162,7 +13223,7 @@ Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’
 > # see also example(plot.profile.nls)
 > ## Don't show: 
 > options(od)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -13492,7 +13553,7 @@ sample estimates:
 	correction
 
 data:  smokers out of patients
-X-squared = 12.6004, df = 3, p-value = 0.005585
+X-squared = 12.6, df = 3, p-value = 0.005585
 alternative hypothesis: two.sided
 sample estimates:
    prop 1    prop 2    prop 3    prop 4 
@@ -13522,7 +13583,7 @@ sample estimates:
 	correction
 
 data:  smokers out of patients
-X-squared = 12.6004, df = 3, p-value = 0.005585
+X-squared = 12.6, df = 3, p-value = 0.005585
 alternative hypothesis: two.sided
 sample estimates:
    prop 1    prop 2    prop 3    prop 4 
@@ -13542,7 +13603,7 @@ X-squared = 8.2249, df = 1, p-value = 0.004132
 
 data:  smokers out of patients ,
  using scores: 0 0 0 1
-X-squared = 12.1731, df = 1, p-value = 0.0004848
+X-squared = 12.173, df = 1, p-value = 0.0004848
 
 > 
 > 
@@ -13849,7 +13910,7 @@ Female 1st             0     4     1   140
 [1,]           6           5           6       5
 [2,]          33          33          33      33
 >  options(op)
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -14904,7 +14965,7 @@ W = 0.9956, p-value = 0.9876
 	Shapiro-Wilk normality test
 
 data:  runif(100, min = 2, max = 4)
-W = 0.9309, p-value = 5.616e-05
+W = 0.93092, p-value = 5.616e-05
 
 > 
 > 
@@ -15123,7 +15184,7 @@ $coef
 
 attr(,"class")
 [1] "smooth.spline.fit"
-> ## End Don't show
+> ## End(Don't show)
 > lines(cars.spl, col = "blue")
 > lines(smooth.spline(speed, dist, df = 10), lty = 2, col = "red")
 > legend(5,120,c(paste("default [C.V.] => df =",round(cars.spl$df,1)),
@@ -15187,7 +15248,7 @@ Penalized Criterion: 0.4973656
 > ## Don't show: 
 > stopifnot(all.equal(predict(s02, xx),
 + 		    predict(s02., xx), tolerance = 1e-15))
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > cleanEx()
@@ -15497,7 +15558,7 @@ Warning in spline(x, y, n = 201, method = "periodic") :
 7         3       1     25
 8         3       2     13
 9         3       3     12
-> ## End Don't show
+> ## End(Don't show)
 > print(ag <- anova(glm.D93))
 Analysis of Deviance Table
 
@@ -15572,8 +15633,8 @@ Step function with continuity 'f'= 0.2 ,  3 knots at
 > unclass(sfun0)
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x2ffae18>
-<environment: 0x2c35528>
+<bytecode: 0x48c07b8>
+<environment: 0x4b34010>
 attr(,"call")
 stepfun(1:3, y0, f = 0)
 > ls(envir = environment(sfun0))
@@ -15610,7 +15671,7 @@ f.f1c  1.0 1.00    1 2.00  2.0 2.00    2 4.00  4.0  4.00     4  3.00   3.0
 > require(graphics)
 > 
 > plot(stl(nottem, "per"))
-> plot(stl(nottem, s.window = 4, t.window = 50, t.jump = 1))
+> plot(stl(nottem, s.window = 7, t.window = 50, t.jump = 1))
 > 
 > plot(stllc <- stl(log(co2), s.window = 21))
 > summary(stllc)
@@ -15790,7 +15851,7 @@ N:P          4  399.3    99.8
 > 
 > ## Don't show: 
 > utils::example("lm", echo = FALSE)
-> ## End Don't show
+> ## End(Don't show)
 > ##-- Continuing the  lm(.) example:
 > coef(lm.D90)  # the bare coefficients
 groupCtl groupTrt 
@@ -16330,23 +16391,10 @@ Loading required package: splines
 > termplot(model, partial.resid = TRUE, smooth = panel.smooth, span.smth = 1/4)
 > if(!had.splines && rs) detach("package:splines")
 > 
-> if (require(MASS)) {
-+     hills.lm <- lm(log(time) ~ log(climb)+log(dist), data=hills)
-+     termplot(hills.lm, partial.resid = TRUE, smooth = panel.smooth,
-+              terms = "log(dist)", main = "Original")
-+     termplot(hills.lm, transform.x = TRUE, partial.resid = TRUE,
-+ 	     terms = "log(dist)", main = "Transformed",
-+ 	     smooth=panel.smooth)
-+ }
-Loading required package: MASS
-> 
 > 
 > 
 > graphics::par(get("par.postscript", pos = 'CheckExEnv'))
 > cleanEx()
-
-detaching ‘package:MASS’
-
 > nameEx("terms.object")
 > ### * terms.object
 > 
@@ -16988,22 +17036,22 @@ assertCondition: caught “error”
 > curve(sinc, -6,18); abline(h=0,v=0, lty=3, col=adjustcolor("gray", 0.8))
 > ## Don't show: 
 > tools::assertWarning(
-+ ## End Don't show
++ ## End(Don't show)
 + uniroot(sinc, c(0,5), extendInt="yes", maxiter=4) #-> "just" a warning
 + ## Don't show: 
 +  , verbose=TRUE)
 Asserted warning: _NOT_ converged in 4 iterations
-> ## End Don't show
+> ## End(Don't show)
 > 
 > ## now with  check.conv=TRUE, must signal a convergence error :
 > ## Don't show: 
 > tools::assertError(
-+ ## End Don't show
++ ## End(Don't show)
 + uniroot(sinc, c(0,5), extendInt="yes", maxiter=4, check.conv=TRUE)
 + ## Don't show: 
 +  , verbose=TRUE)
 Asserted error: _NOT_ converged in 4 iterations
-> ## End Don't show
+> ## End(Don't show)
 > 
 > ### Weibull cumulative hazard (example origin, Ravi Varadhan):
 > cumhaz <- function(t, a, b) b * (t/b)^a
@@ -17029,12 +17077,12 @@ Asserted error: _NOT_ converged in 4 iterations
 > ## An error if 'extendInt' assumes "wrong zero-crossing direction":
 > ## Don't show: 
 > tools::assertError(
-+ ## End Don't show
++ ## End(Don't show)
 + uniroot(froot, u= 0.99, a=a, b=b, interval= c(0.1, 10), extendInt="down")
 + ## Don't show: 
 +  , verbose=TRUE)
 Asserted error: no sign change found in 1000 iterations
-> ## End Don't show
+> ## End(Don't show)
 > 
 > 
 > 
@@ -17123,6 +17171,8 @@ lm(formula = weight ~ group - 1)
 y ~ x + x2
 > update(y ~ x, log(.) ~ . ) #> log(y) ~ x
 log(y) ~ x
+> update(. ~ u+v, res  ~ . ) #> res ~ u + v
+res ~ u + v
 > 
 > 
 > 
@@ -17268,7 +17318,7 @@ $rotmat
 > ## following on from example(lm)
 > ## Don't show: 
 > utils::example("lm", echo = FALSE)
-> ## End Don't show
+> ## End(Don't show)
 > all.equal(weighted.residuals(lm.D9),
 +           residuals(lm.D9))
 [1] TRUE
@@ -17861,7 +17911,7 @@ Number of Fisher Scoring iterations: 6
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  5.553 0.132 5.689 0 0 
+Time elapsed:  4.366 0.124 4.49 0 0 
 > grDevices::dev.off()
 null device 
           1 

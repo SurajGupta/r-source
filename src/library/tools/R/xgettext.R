@@ -1,7 +1,7 @@
 #  File src/library/tools/R/xgettext.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ function(dir, verbose = FALSE, asCall = TRUE)
     R_files <- list_files_with_exts(dir, exts)
     for(d in c("unix", "windows")) {
         OSdir <- file.path(dir, d)
-        if(file_test("-d", OSdir))
+        if(dir.exists(OSdir))
             R_files <- c(R_files, list_files_with_exts(OSdir, exts))
     }
     if(bn == "base") {
@@ -119,7 +119,7 @@ function(dir, verbose = FALSE)
     R_files <- list_files_with_exts(dir, exts)
     for(d in c("unix", "windows", "aqua")) {
         OSdir <- file.path(dir, d)
-        if(file_test("-d", OSdir))
+        if(dir.exists(OSdir))
             R_files <- c(R_files, list_files_with_exts(OSdir, exts))
     }
     out <- vector("list", length = length(R_files))
@@ -267,7 +267,7 @@ checkPoFile <- function(f, strictPlural = FALSE)
 		    }
 		}
 
-		if (s2 != "" &&
+		if (nzchar(s2) &&
 		     !(identical(f1, f2) || identical(f1_plural, f2))) {
 		    location <- paste0(f, ":", j)
 		    if (inherits(f2, "error"))
@@ -283,7 +283,7 @@ checkPoFile <- function(f, strictPlural = FALSE)
 			    diff <- ""
 			diffs <- which(f1 != f2)
 			if (length(diffs)) {
-			    if (diff != "")
+			    if (nzchar(diff))
 			    	diff <- paste0(diff, ", ")
 			    if (length(diffs) > 1)
 				diff <- paste(paste0(diff, "differences in entries"),

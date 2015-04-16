@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nn\n"
-"Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-03-27 07:47+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-02 10:09-0800\n"
 "PO-Revision-Date: 2011-02-18 09:09+0100\n"
 "Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "X-Generator: Lokalize 1.1\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 
-#: base.c:45
+#: base.c:43
 msgid "no base graphics system is registered"
 msgstr ""
 
-#: base.c:335 base.c:342 base.c:350
+#: base.c:333 base.c:340 base.c:348
 #, fuzzy
 msgid "the base graphics system is not registered"
 msgstr "for mange grafikksystem registrerte"

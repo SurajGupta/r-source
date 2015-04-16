@@ -1,5 +1,5 @@
 
-R version 3.1.3 RC (2015-03-01 r67921) -- "Smooth Sidewalk"
+R version 3.2.0 beta (2015-04-05 r68147) -- "Full of Ingredients"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -115,9 +115,9 @@ List of 2
 +     "\n\t starting with 'is.' :\t  ",
 +     sum(grepl("^is\\.", ls.base[base.is.f])), "\n", sep = "")
 
-Number of base objects:		1283
-Number of functions in base:	1241
-	 starting with 'is.' :	  49
+Number of base objects:		1305
+Number of functions in base:	1263
+	 starting with 'is.' :	  50
 
 > ## 0.14  : 31
 > ## 0.50  : 33
@@ -1510,5 +1510,5 @@ sm     3    3    3    3    4    4    4    4    2     2     2
 > par(op)
 > 
 > cat("Time elapsed: ", proc.time() - .ptime, "\n")
-Time elapsed:  1.141 0.027 1.168 0 0 
+Time elapsed:  1.056 0.021 1.078 0 0 
 > 

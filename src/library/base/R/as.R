@@ -1,7 +1,7 @@
 #  File src/library/base/R/as.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -35,15 +35,15 @@ as.list.default <- function (x, ...)
 
 as.list.function <- function (x, ...) c(formals(x), list(body(x)))
 
-## FIXME:  Really the above  as.vector(x, "list")  should work for data.frames!
+## FIXME: as.vector(., "list")  should work for data.frames!
 as.list.data.frame <- function(x,...) {
     x <- unclass(x)
     attr(x,"row.names") <- NULL
     x
 }
 
-as.list.environment <- function(x, all.names=FALSE, ...)
-    .Internal(env2list(x, all.names))
+as.list.environment <- function(x, all.names=FALSE, sorted=FALSE, ...)
+    .Internal(env2list(x, all.names, sorted))
 
 ## NB: as.vector is used for several other as.xxxx, including
 ## as.expression, as.list, as.pairlist, as.single, as.symbol.

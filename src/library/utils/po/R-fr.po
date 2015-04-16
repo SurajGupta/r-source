@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-27 17:14\n"
+"POT-Creation-Date: 2015-03-24 11:52\n"
 "PO-Revision-Date: 2014-03-17 11:04+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -44,9 +44,6 @@ msgstr "référence à un tronçon inconnu %s"
 msgid "no Sweave file with name %s found"
 msgstr "un fichier Sweave de nom %s est introuvable"
 
-msgid "%d Sweave files for basename %s found"
-msgstr "%d fichiers Sweave trouvés pour le nom de base %s"
-
 msgid "more than one syntax specification found, using the first one"
 msgstr ""
 "plusieurs spécifications de syntaxe possibles ; la première est utilisée"
@@ -69,6 +66,10 @@ msgid ""
 msgstr ""
 "erreur d'interprétation ou option vide dans\n"
 "%s"
+
+#, fuzzy
+msgid "Warning: unknown option '--clean='%s"
+msgstr "Avis : option inconnue %s"
 
 msgid "Warning: unknown option %s"
 msgstr "Avis : option inconnue %s"
@@ -351,9 +352,6 @@ msgstr "fichier d'aide introuvable pour %s"
 msgid "%s has a help file but no examples"
 msgstr "%s a un fichier d'aide associé, mais pas d'exemples"
 
-msgid "test '%s' is not available"
-msgstr "le test '%s' n'est pas disponible"
-
 msgid "Line number missing"
 msgstr "Numéro de ligne manquant"
 
@@ -448,11 +446,19 @@ msgstr "spécification de champ incorrecte"
 msgid "do not know what to search"
 msgstr "je ne sais pas quoi rechercher"
 
-msgid "incorrect type specification"
-msgstr "spécification de type incorrecte"
-
 msgid "argument 'help.db' is deprecated"
 msgstr "l'argument 'help.db' est obsolète"
+
+msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
+msgstr ""
+"pas d'information dans la base de données pour le package %s : faut-il "
+"'rebuild = TRUE' ?"
+
+msgid "incorrect 'agrep' specification"
+msgstr "spécification 'agrep' incorrecte"
+
+msgid "incorrect type specification"
+msgstr "spécification de type incorrecte"
 
 msgid "could not find package %s"
 msgstr "impossible de trouver le packages %s"
@@ -465,14 +471,6 @@ msgstr ""
 "suppression de toutes les entrées ayant des données de type caractère multi-"
 "octets incorrectes"
 
-msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
-msgstr ""
-"pas d'information dans la base de données pour le package %s : faut-il "
-"'rebuild = TRUE' ?"
-
-msgid "incorrect 'agrep' specification"
-msgstr "spécification 'agrep' incorrecte"
-
 msgid "invalid browser name, check options(\"browser\")."
 msgstr "nom de navigateur incorrect, vérifiez options(\"browser\")."
 
@@ -481,10 +479,10 @@ msgstr "help.start() nécessite que le serveur HTTP soit en cours d'exécution"
 
 msgid ""
 "If nothing happens, you should open\n"
-"'%s' yourself"
+"%s yourself"
 msgstr ""
 "Si rien ne se passe, vous devrez ouvrir\n"
-"'%s' vous-même"
+"%s vous-même"
 
 msgid ""
 "If the browser launched by '%s' is already running, it is *not* restarted, "
@@ -542,11 +540,14 @@ msgstr ""
 msgid "no function '%s' is visible"
 msgstr "aucune fonction '%s' n'est visible"
 
-msgid "function '%s' appears not to be generic"
-msgstr "la fonction '%s' semble ne pas être générique"
-
 msgid "generic function '%s' dispatches methods for generic '%s'"
 msgstr "la fonction générique '%s' distribue les méthodes génériques '%s'"
+
+#, fuzzy
+msgid ""
+"function '%s' appears not to be S3 generic; found functions that look like "
+"S3 methods"
+msgstr "la fonction '%s' semble ne pas être générique"
 
 msgid "must supply 'generic.function' or 'class'"
 msgstr "il faut fournir 'generic.function' ou 'class'"
@@ -599,6 +600,11 @@ msgstr "impossible d'accéder à l'index de l'entrepôt %s"
 
 msgid "invalid 'filters' argument."
 msgstr "argument 'filters' incorrect."
+
+msgid ""
+"specifying 'contriburl' or 'available' requires a single type, not type = "
+"\"both\""
+msgstr ""
 
 msgid "package '%s' in library '%s' will not be updated"
 msgstr "le package '%s' dans la bibliothèque '%s' ne sera pas mis à jour"
@@ -673,6 +679,10 @@ msgstr ""
 "Je ne sais pas dans quel élément de 'lib' installer les dépendances\n"
 "dépendances ignorées"
 
+#, fuzzy
+msgid "type 'binary' is not supported on this platform"
+msgstr "seulement 'html = TRUE' est supporté sur cette plateforme"
+
 msgid "no packages were specified"
 msgstr "aucun package spécifié"
 
@@ -685,20 +695,18 @@ msgstr "impossible d'installer les packages"
 msgid "unable to create %s"
 msgstr "impossible de créer %s"
 
-msgid "inferring 'repos = NULL' from the file name"
+#, fuzzy
+msgid "inferring 'repos = NULL' from 'pkgs'"
 msgstr "supposition de 'repos = NULL' à partir du nom de fichier"
+
+msgid "unable to create temporary directory %s"
+msgstr "impossible de créer le répertoire temporaire %s"
 
 msgid ""
 "type == \"both\" can only be used on Windows or a CRAN build for Mac OS X"
 msgstr ""
 "type == \"both\" peut seulement être utilisé sous Windows ou une compilation "
 "Mac OS X CRAN"
-
-msgid ""
-"type == \"both\" cannot be used if 'available' or 'contriburl' is specified"
-msgstr ""
-"type == \"both\" ne peut être utilisé si 'available' ou 'contriburl' est "
-"fourni"
 
 msgid "type == \"both\" cannot be used with 'repos = NULL'"
 msgstr "type == \"both\" ne peut être utilisé avec 'repos = NULL'"
@@ -732,9 +740,6 @@ msgstr "system (cmd0) : %s"
 
 msgid "installation of package %s had non-zero exit status"
 msgstr "l'installation du package %s a eu un statut de sortie non nul"
-
-msgid "unable to create temporary directory %s"
-msgstr "impossible de créer le répertoire temporaire %s"
 
 msgid "foundpkgs: %s"
 msgstr "foundpkgs : %s"
@@ -786,6 +791,10 @@ msgstr "Création du fichier %s."
 
 msgid "Edit the file and move it to the appropriate directory."
 msgstr "Editez le fichier et déplacez-le dans le répertoire approprié"
+
+#, fuzzy
+msgid "cannot determine import name"
+msgstr "impossible de trouver un nom utilisable"
 
 msgid "no documentation of type %s and topic %s (or error in processing help)"
 msgstr ""
@@ -1095,8 +1104,13 @@ msgstr "'ccaddress' doit être de longueur 1"
 msgid "no download method found"
 msgstr "impossible de trouver une méthode de téléchargement"
 
-msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
-msgstr "la méthode 'lynx' est non testée et dépréciée depuis R 3.1.0"
+#, fuzzy
+msgid "'url' must be a length-one character vector"
+msgstr "'title' doit être NULL ou un vecteur de type caractère de longueur 1"
+
+#, fuzzy
+msgid "'destfile' must be a length-one character vector"
+msgstr "'title' doit être NULL ou un vecteur de type caractère de longueur 1"
 
 msgid "download had nonzero exit status"
 msgstr "le téléchargement a a eu un statut de sortie non nul"
@@ -1147,13 +1161,6 @@ msgstr "'memory.limit()' est spécifique à Windows"
 msgid "method 'mailx' is Unix-only"
 msgstr "la méthode 'mailx' n'est valable que sous Unix"
 
-msgid ""
-"If nothing happens, you should open\n"
-"%s yourself"
-msgstr ""
-"Si rien ne se passe, vous devrez ouvrir\n"
-"%s vous-même"
-
 msgid "zip file %s not found"
 msgstr "fichier zip %s introuvable"
 
@@ -1168,6 +1175,12 @@ msgstr "winDialog() ne peut être utilisé en mode non interactif"
 
 msgid "winDialogString() cannot be used non-interactively"
 msgstr "winDialogString() ne peut être utilisé en mode non interactif"
+
+#, fuzzy
+msgid "%d Sweave file for basename %s found"
+msgid_plural "%d Sweave files for basename %s found"
+msgstr[0] "%d fichiers Sweave trouvés pour le nom de base %s"
+msgstr[1] "%d fichiers Sweave trouvés pour le nom de base %s"
 
 msgid "%d occurrence in %s"
 msgid_plural "%d occurrences in %s"
@@ -1212,8 +1225,9 @@ msgstr[1] ""
 "Elimination des packages de %s\n"
 "(car %s n'est pas spécifié)"
 
-msgid "package %s is not available (for %s)"
-msgid_plural "packages %s are not available (for %s)"
+#, fuzzy
+msgid "package %s is not available (%s)"
+msgid_plural "packages %s are not available (%s)"
 msgstr[0] "le package %s n'est pas disponible (pour %s)"
 msgstr[1] "les packages '%s' ne sont pas disponibles (pour %s)"
 
@@ -1255,7 +1269,9 @@ msgstr[1] ""
 "Des versions binaires sont disponibles mais les versions des sources sont "
 "plus récentes"
 
-msgid "Do you want to install from sources the package which need compilation?"
+#, fuzzy
+msgid ""
+"Do you want to install from sources the package which needs compilation?"
 msgid_plural ""
 "Do you want to install from sources the packages which need compilation?"
 msgstr[0] ""
@@ -1265,8 +1281,9 @@ msgstr[1] ""
 "Voulez-vous installer les packages qui nécessitent une compilation depuis "
 "les sources ?"
 
+#, fuzzy
 msgid ""
-"Package which are only available in source form, and may need compilation of "
+"Package which is only available in source form, and may need compilation of "
 "C/C++/Fortran"
 msgid_plural ""
 "Packages which are only available in source form, and may need compilation "
@@ -1317,6 +1334,29 @@ msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] "le package %s est en cours d'utilisation et ne sera pas installé"
 msgstr[1] ""
 "les packages %s sont en cours d'utilisation et ne seront pas installés"
+
+#~ msgid ","
+#~ msgstr ","
+
+#~ msgid ""
+#~ "type == \"both\" cannot be used if 'available' or 'contriburl' is "
+#~ "specified"
+#~ msgstr ""
+#~ "type == \"both\" ne peut être utilisé si 'available' ou 'contriburl' est "
+#~ "fourni"
+
+#~ msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
+#~ msgstr "la méthode 'lynx' est non testée et dépréciée depuis R 3.1.0"
+
+#~ msgid ""
+#~ "If nothing happens, you should open\n"
+#~ "'%s' yourself"
+#~ msgstr ""
+#~ "Si rien ne se passe, vous devrez ouvrir\n"
+#~ "'%s' vous-même"
+
+#~ msgid "test '%s' is not available"
+#~ msgstr "le test '%s' n'est pas disponible"
 
 #~ msgid "broken installation, no CITATION file in the base package."
 #~ msgstr ""
@@ -1391,9 +1431,6 @@ msgstr[1] ""
 
 #~ msgid "not found"
 #~ msgstr "introuvable"
-
-#~ msgid ","
-#~ msgstr ","
 
 #~ msgid "HTTPUserAgent"
 #~ msgstr "HTTPUserAgent"

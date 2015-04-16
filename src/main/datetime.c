@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2014  The R Core Team.
+ *  Copyright (C) 2000-2015  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,10 +39,18 @@
 
 #include <Rmath.h> // Rexp10
 
-// some other header, e.g. math.h, might define it
-#if defined(__GLIBC__) && !defined(_BSD_SOURCE)
-// to get tm_zone, tm_gmtoff defined
-# define _BSD_SOURCE
+// to get tm_zone, tm_gmtoff defined in glibc.
+// some other header, e.g. math.h, might define the macro.
+#if defined HAVE_FEATURES_H
+# include <features.h>
+# ifdef __GNUC_PREREQ
+#  if __GNUC_PREREQ(2,20) && !defined(_DEFAULT_SOURCE_)
+#   define _DEFAULT_SOURCE 1
+#  endif
+# endif
+#endif
+#if defined(HAVE_GLIBC2) && !defined(_DEFAULT_SOURCE_) && !defined(_BSD_SOURCE)
+# define _BSD_SOURCE 1
 #endif
 #include <time.h>
 
@@ -85,6 +93,8 @@ known OS with 64-bit time_t and complete tables is Linux.
 # define HAVE_TM_GMTOFF 1
 # undef MKTIME_SETS_ERRNO
 # define MKTIME_SETS_ERRNO
+# undef HAVE_WORKING_64BIT_MKTIME
+# define HAVE_WORKING_64BIT_MKTIME 1
 #else
 
 typedef struct tm stm;
@@ -982,11 +992,16 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 			strcat(buf2, p+nused);
 		    }
 		}
+		// The overflow behaviour is not determined by C99.
+		// We assume truncation, and ensure termination.
 #ifdef USE_INTERNAL_MKTIME
 		R_strftime(buff, 256, buf2, &tm);
 #else
 		strftime(buff, 256, buf2, &tm);
 #endif
+		buff[256] = '\0';
+		// Now assume tzone abbreviated name is < 40 bytes,
+		// but they are currently 3 or 4 bytes.
 		if(UseTZ) {
 		    if(LENGTH(x) >= 10) {
 			const char *p = CHAR(STRING_ELT(VECTOR_ELT(x, 9), i));
@@ -1213,7 +1228,8 @@ SEXP attribute_hidden do_D2POSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(klass, 0, mkChar("POSIXlt"));
     SET_STRING_ELT(klass, 1, mkChar("POSIXt"));
     classgets(ans, klass);
-    setAttrib(ans, install("tzone"), mkString("UTC"));
+    SEXP s_tzone = install("tzone");
+    setAttrib(ans, s_tzone, mkString("UTC"));
     SEXP nm = getAttrib(x, R_NamesSymbol);
     if(nm != R_NilValue) setAttrib(VECTOR_ELT(ans, 5), R_NamesSymbol, nm);
     UNPROTECT(4);

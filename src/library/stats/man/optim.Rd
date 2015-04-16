@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{optim}
 \alias{optim}
 \alias{optimHess}
@@ -40,7 +38,7 @@ optimHess(par, fn, gr = NULL, \dots, control = list())
    candidate point.  If it is \code{NULL} a default Gaussian Markov
    kernel is used.}
  \item{\dots}{Further arguments to be passed to \code{fn} and \code{gr}.}
- \item{method}{The method to be used. See \sQuote{Details}.}
+ \item{method}{The method to be used. See \sQuote{Details}.  Can be abbreviated.}
  \item{lower, upper}{Bounds on the variables for the \code{"L-BFGS-B"}
    method, or bounds in which to \emph{search} for method \code{"Brent"}.}
  \item{control}{A list of control parameters. See \sQuote{Details}.}

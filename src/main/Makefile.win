@@ -6,9 +6,9 @@ include ../gnuwin32/MkRules
 all: makeMakedeps libmain.a
 
 ## there are headers and include files in this directory
-CPPFLAGS=-I. -I../include -DHAVE_CONFIG_H -DR_DLL_BUILD $(arch_DEFS)
+CPPFLAGS = -I. -I../include -DHAVE_CONFIG_H -DR_DLL_BUILD $(arch_DEFS)
 
-CSOURCES=\
+CSOURCES = \
 	CommandLineArgs.c \
 	Rdynload.c Renviron.c RNG.c \
 	agrep.c apply.c arithmetic.c array.c attrib.c \
@@ -31,10 +31,12 @@ CSOURCES=\
 	sprintf.c startup.c subassign.c subscript.c subset.c summary.c sysutils.c \
 	times.c \
 	unique.c util.c \
-	version.c vfonts.c
+	version.c \
+	g_alab_her.c g_cntrlify.c g_fontdb.c g_her_glyph.c
 
-FSOURCES=xxxpr.f
-OBJS=$(CSOURCES:.c=.o) $(FSOURCES:.f=.o)
+
+FSOURCES = xxxpr.f
+OBJS = $(CSOURCES:.c=.o) $(FSOURCES:.f=.o)
 
 ifdef RUN_BISON
 gram.c: gram.y
@@ -43,32 +45,44 @@ gram.c: gram.y
 	$(RM) gram.tab.c
 endif
 
-platform-CPPFLAGS=-I../gnuwin32 -I../extra -DPLATFORM_PKGTYPE='"win.binary"'
+platform-CPPFLAGS = -I../gnuwin32 -I../extra -DPLATFORM_PKGTYPE='"win.binary"'
 
-agrep-CPPFLAGS=-I../extra
+RNG-CPPFLAGS = -I../nmath
+agrep-CPPFLAGS = -I../extra
 # array-CPPFLAGS=$(OPENMP) # too slow to be useful.
-builtin-CPPFLAGS=-I../gnuwin32
-connections-CPPFLAGS=-I../extra/zlib -I../extra/bzip2
-connections-CPPFLAGS+=-DLZMA_API_STATIC -I../extra/xz/api
-dcf-CPPFLAGS=-I../extra
-dounzip-CPPFLAGS=-I../extra/zlib -I../extra/bzip2
-edit-CPPFLAGS=-I../gnuwin32
-grep-CPPFLAGS=-I../extra -I../extra/pcre -I../gnuwin32 -DPCRE_STATIC
-memory-CPPFLAGS=$(malloc-DEFS)
-printutils-CPPFLAGS=-I../gnuwin32
-saveload-CPPFLAGS=-I../extra/xdr
-serialize-CPPFLAGS=-I../extra/xdr
-sysutils-CPPFLAGS=-I../gnuwin32
-util-CPPFLAGS=-DLZMA_API_STATIC -I../extra/xz/api
+builtin-CPPFLAGS = -I../gnuwin32
+
+dcf-CPPFLAGS = -I../extra
+## gcc warns incorrectly about %a
+deparse-CFLAGS = -Wno-format
+edit-CPPFLAGS = -I../gnuwin32
+memory-CPPFLAGS = $(malloc-DEFS)
+printutils-CPPFLAGS = -I../gnuwin32
+saveload-CPPFLAGS = -I../extra/xdr
+serialize-CPPFLAGS = -I../extra/xdr
+sysutils-CPPFLAGS = -I../gnuwin32
+
+connections-CPPFLAGS = -DLZMA_API_STATIC -I"$(EXT_LIBS)"/include
+dounzip-CPPFLAGS = -I$(EXT_LIBS)/include
+grep-CPPFLAGS = -DPCRE_STATIC -I../extra -I../gnuwin32 -I"$(EXT_LIBS)"/include
+platform-CPPFLAGS += -DPCRE_STATIC -DLZMA_API_STATIC -I"$(EXT_LIBS)"/include
+util-CPPFLAGS = -DLZMA_API_STATIC -I"$(EXT_LIBS)"/include
 
 ifdef USE_ICU
-util-CPPFLAGS+=-DUSE_ICU -I"$(ICU_PATH)"/include
+platform-CPPFLAGS += -DUSE_ICU -I"$(ICU_PATH)"/include
+util-CPPFLAGS += -DUSE_ICU -I"$(ICU_PATH)"/include
 endif
+
+ifdef USE_LIBCURL
+connections-CPPFLAGS += -DHAVE_CURL_CURL_H
+platform-CPPFLAGS += -DHAVE_CURL_CURL_H
+endif
+
 
 libmain.a: $(OBJS)
 
 # Dependencies
-DEPS=$(CSOURCES:.c=.d)
+DEPS = $(CSOURCES:.c=.d)
 
 makeMakedeps: $(DEPS)
 	@$(RM) Makedeps

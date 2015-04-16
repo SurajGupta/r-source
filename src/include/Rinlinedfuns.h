@@ -424,6 +424,7 @@ INLINE_FUN Rboolean isPairList(SEXP s)
     case NILSXP:
     case LISTSXP:
     case LANGSXP:
+    case DOTSXP:
 	return TRUE;
     default:
 	return FALSE;
@@ -682,6 +683,24 @@ INLINE_FUN SEXP mkString(const char *s)
     SET_STRING_ELT(t, (R_xlen_t)0, mkChar(s));
     UNPROTECT(1);
     return t;
+}
+
+/* index of a given C string in (translated) R string vector  */
+INLINE_FUN int
+stringPositionTr(SEXP string, const char *translatedElement) {
+
+    int slen = LENGTH(string);
+    int i;
+
+    const void *vmax = vmaxget();
+    for (i = 0 ; i < slen; i++) {
+	Rboolean found = ! strcmp(translateChar(STRING_ELT(string, i)),
+				  translatedElement);
+	vmaxset(vmax);
+        if (found)
+            return i;
+    }
+    return -1; /* not found */
 }
 
 /* duplicate RHS value of complex assignment if necessary to prevent cycles */

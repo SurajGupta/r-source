@@ -3,8 +3,6 @@
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{options}
 \alias{options}
 \alias{.Options}
@@ -187,12 +185,15 @@ getOption(x, default = NULL)
       to something in the order of (and typically slightly less than)
       \code{max.print} \emph{entries}.}
 
-    \item{\code{OutDec}:}{character string containing a single-byte
+    \item{\code{OutDec}:}{character string containing a single
       character.  The preferred character to be used as the decimal
       point in output conversions, that is in printing, plotting,
       \code{\link{format}} and \code{\link{as.character}} but not when
       deparsing nor by \code{\link{sprintf}} nor \code{\link{formatC}}
-      (which are sometimes used prior to printing.}
+      (which are sometimes used prior to printing.
+
+      Only single-byte characters were supported prior to \R 3.2.0.
+    }
 
     \item{\code{pager}:}{the command used for displaying text files by
       \code{\link{file.show}}.
@@ -307,6 +308,10 @@ getOption(x, default = NULL)
 
     \item{\code{topLevelEnvironment}:}{see \code{\link{topenv}} and
       \code{\link{sys.source}}.}
+
+    \item{\code{url.method}:}{character string: the default method for
+      \code{\link{url}}.  Normally unset, which is equivalent to
+      \code{"default"}, which is \code{"internal"} except on Windows.}
 
     \item{\code{useFancyQuotes}:}{controls the use of
       directional quotes in \code{\link{sQuote}}, \code{dQuote} and in
@@ -486,15 +491,16 @@ getOption(x, default = NULL)
   \describe{
     \item{\code{BioC_mirror}:}{The URL of a Bioconductor mirror
       for use by \code{\link{setRepositories}},
-      e.g.\sspace{}the default \samp{"http://www.bioconductor.org"}
+      e.g.\sspace{}the default \samp{"http://bioconductor.org"}
       or the European mirror
       \samp{"http://bioconductor.statistik.tu-dortmund.de"}.  Can be set
       by \code{\link{chooseBioCmirror}}.}
 
-    \item{\code{browser}:}{default HTML browser used by
-      \code{\link{help.start}()} and \code{\link{browseURL}} on UNIX, or
-      a non-default browser on Windows.  Alternatively, an \R function that
-      is called with a URL as its argument.}
+    \item{\code{browser}:}{The HTML browser to be used by
+      \code{\link{browseURL}}.  This sets the default browser on UNIX or
+      a non-default browser on Windows.  Alternatively, an \R function
+      that is called with a URL as its argument.  See
+      \code{\link{browseURL}} for further details.}
 
     \item{\code{ccaddress}:}{default Cc: address used by
       \code{\link{create.post}} (and hence\code{\link{bug.report}} and
@@ -545,13 +551,31 @@ getOption(x, default = NULL)
       the character string \code{"pkgloack"}.}
 
     \item{\code{internet.info}:}{The minimum level of information to be
-      printed on URL downloads etc.  Default is 2, for failure causes.
-      Set to 1 or 0 to get more information.}
+      printed on URL downloads etc, using the \code{"internal"} method.
+      Default is 2, for failure causes.  Set to 1 or 0 to get more
+      detailed information.
+  
+      For methods based on \code{libcurl} a value less than 2 (the
+      default) selects verbose output.
+    }
 
     \item{\code{install.packages.check.source}:}{Used by
-      \code{\link{install.packages}} on platforms which support binary
+      \code{\link{install.packages}} (and indirectly
+      \code{\link{update.packages}}) on platforms which support binary
       packages.  Possible values \code{"yes"} and \code{"no"}, with
       unset being equivalent to \code{"yes"}.}
+
+    \item{\code{install.packages.compile.from.source}:}{Used by
+      \code{\link{install.packages}(type = "both")} (and indirectly
+      \code{\link{update.packages}}) on platforms which
+      support binary packages.  Possible values are \code{"never"},
+      \code{"interactive"} (which means ask in interactive use and
+      \code{"never"} in batch use) and \code{"always"}.  The default is
+      taken from environment variable
+      \env{R_COMPILE_AND_INSTALL_PACKAGES}, with default
+      \code{"interactive"} if unset.  However, \code{install.packages}
+      uses \code{"never"} unless a \command{make} program is found,
+      consulting the environment variable \env{MAKE}.}
     
     \item{\code{mailer}:}{default emailing method used by
       \code{\link{create.post}} and hence \code{\link{bug.report}} and
@@ -566,16 +590,17 @@ getOption(x, default = NULL)
     \item{\code{pkgType}:}{The default type of packages to be downloaded
       and installed -- see \code{\link{install.packages}}.
 #ifdef windows
-      Possible values are \code{"win.binary"} (the default) and
-      \code{"source"}.  Some OS X builds use \code{"mac.binary"} and
-      \code{"mac.binary.mavericks"}
+      Possible values are \code{"win.binary"}, \code{"source"} and
+      \code{"both"} (the default).  Some OS X builds use
+      \code{"mac.binary"} and \code{"mac.binary.mavericks"}.
 #endif
 #ifdef unix
-      Possible values are \code{"source"} (the default except under the
-      CRAN OS X build), \code{"mac.binary."} and
-      \code{"mac.binary.mavericks"}.  Windows uses  \code{"win.binary"}.
-      (\code{"mac.binary.leopard"} and \code{"mac.binary.universal"} are
-      no longer in use.)
+      Possible values are \code{"source"} (the default except under a
+      CRAN OS X build), \code{"mac.binary."},
+      \code{"mac.binary.mavericks"} and \code{"both"} (the default for
+      CRAN OS X builds).  Windows uses
+      \code{"win.binary"}. (\code{"mac.binary.leopard"} and
+      \code{"mac.binary.universal"} are no longer in use.)
 #endif
       Value \code{"binary"} is a synonym for the native binary type (if
       there is one); \code{"both"} is used by

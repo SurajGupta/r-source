@@ -153,6 +153,9 @@
 /* Define to 1 if you have the `ctanh' function. */
 #undef HAVE_CTANH
 
+/* Define to 1 if you have the <curl/curl.h> header file. */
+#undef HAVE_CURL_CURL_H
+
 /* define if the compiler supports basic C++11 syntax */
 #undef HAVE_CXX11
 
@@ -268,6 +271,9 @@
 
 /* Define to 1 if you have the `fdopen' function. */
 #undef HAVE_FDOPEN
+
+/* Define to 1 if you have the <features.h> header file. */
+#undef HAVE_FEATURES_H
 
 /* Define to 1 if you have the <floatingpoint.h> header file. */
 #undef HAVE_FLOATINGPOINT_H
@@ -665,6 +671,9 @@
 /* Define to 1 if you have the `stat' function. */
 #undef HAVE_STAT
 
+/* Define to 1 if you have the <stdalign.h> header file. */
+#undef HAVE_STDALIGN_H
+
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
@@ -829,6 +838,9 @@
 
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
+
+/* Define to 1 if you have the <valgrind/memcheck.h> header file. */
+#undef HAVE_VALGRIND_MEMCHECK_H
 
 /* Define to 1 if you have the `vasprintf' function. */
 #undef HAVE_VASPRINTF
@@ -1116,7 +1128,7 @@
 /* Define according to your operating system type. */
 #undef Unix
 
-/* Define as 1, 2 or 3 to specify levels of Valgrind instrumentation */
+/* Define as 1 or 2 to specify levels of Valgrind instrumentation */
 #undef VALGRIND_LEVEL
 
 /* Version number of package */

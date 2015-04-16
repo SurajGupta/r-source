@@ -1,12 +1,784 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html><head><title>R: R News</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<link rel="stylesheet" type="text/css" href="R.css">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><title>R: R News</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="R.css" />
 </head><body>
 
-<table width="100%" summary="page for NEWS"><tr><td>NEWS</td><td align="right">R Documentation</td></tr></table>
+<table width="100%" summary="page for NEWS"><tr><td>NEWS</td><td style="text-align: right;">R Documentation</td></tr></table>
 
 <h2>R News</h2>
+
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN 3.2.0</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li> <p><code>anyNA()</code> gains a <code>recursive</code> argument.
+</p>
+</li>
+<li><p> When <code>x</code> is missing and <code>names</code> is not false
+(including the default value), <code>Sys.getenv(x, names)</code> returns
+an object of class <code>"Dlist"</code> and hence prints tidily.
+</p>
+</li>
+<li><p> (Windows.)  <code>shell()</code> no longer consults the
+environment variable <span class="env">SHELL</span>: too many systems have been
+encountered where it was set incorrectly (usually to a path where
+software was compiled, not where it was installed).
+<span class="env">R_SHELL</span>, the preferred way to select a non-default shell,
+can be used instead.
+</p>
+</li>
+<li><p> Some unusual arguments to <code>embedFonts()</code> can now be
+specified as character vectors, and the defaults have been changed
+accordingly.
+</p>
+</li>
+<li><p> Functions in the <code>Summary</code> group duplicate less.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15798">PR#15798</a>)
+</p>
+</li>
+<li><p> (Unix-alikes.) <code>system(cmd, input = )</code> now uses
+&lsquo;shell-execution-environment&rsquo; redirection, which will be
+more natural if <code>cmd</code> is not a single command (but requires a
+POSIX-compliant shell). (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15508">PR#15508</a>)
+</p>
+</li>
+<li> <p><code>read.fwf()</code> and <code>read.DIF()</code> gain a
+<code>fileEncoding</code> argument, for convenience.
+</p>
+</li>
+<li><p> Graphics devices can add attributes to their description in
+<code>.Device</code> and <code>.Devices</code>.  Several of those included with
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> use a <code>"filepath"</code> attribute.
+</p>
+</li>
+<li> <p><code>pmatch()</code> uses hashing in more cases and so is faster
+at the expense of using more memory. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15697">PR#15697</a>)
+</p>
+</li>
+<li> <p><code>pairs()</code> gains new arguments to select sets of
+variables to be plotted against each other.
+</p>
+</li>
+<li> <p><code>file.info(, extra_cols = FALSE)</code> allows a minimal set
+of columns to be computed on Unix-alikes: on some systems without
+properly-configured caching this can be significantly faster with
+large file lists.
+</p>
+</li>
+<li><p> New function <code>dir.exists()</code> in package <span class="pkg">base</span> to
+test efficiently whether one or more paths exist and are
+directories.
+</p>
+</li>
+<li> <p><code>dput()</code> and friends gain new controls
+<span class="samp">hexNumeric</span> and <span class="samp">digits17</span> which output double and
+complex quantities as, respectively, binary fractions (exactly,
+see <code>sprintf("%a")</code>) and as decimals with up to 17
+significant digits.
+</p>
+</li>
+<li> <p><code>save()</code>, <code>saveRDS()</code> and <code>serialize()</code> now
+support <code>ascii = NA</code> which writes ASCII files using
+<code>sprintf("%a")</code> for double/complex quantities.  This is
+read-compatible with <code>ascii = TRUE</code> but avoids
+binary-&gt;decimal-&gt;binary conversions with potential loss of
+precision.  Unfortunately the Windows C runtime's lack of C99
+compliance means that the format cannot be read correctly there in
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> before 3.1.2.
+</p>
+</li>
+<li><p> The default for <code>formatC(decimal.mark =)</code> has been
+changed to be <code>getOption("OutDec")</code>; this makes it more
+consistent with <code>format()</code> and suitable for use in print
+methods, e.g. those for classes <code>"density"</code>, <code>"ecdf"</code>,
+<code>"stepfun"</code> and <code>"summary.lm"</code>.
+</p>
+<p><code>getOption("OutDec")</code> is now consulted by the print method
+for class <code>"kmeans"</code>, by <code>cut()</code>, <code>dendrogram()</code>,
+<code>plot.ts()</code> and <code>quantile()</code> when constructing labels
+and for the report from <code>legend(trace = TRUE)</code>.
+</p>
+<p>(In part, wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15819">PR#15819</a>.)
+</p>
+</li>
+<li> <p><code>printNum()</code> and hence <code>format()</code> and
+<code>formatC()</code> give a warning if <code>big.mark</code> and
+<code>decimal.mark</code> are set to the same value (period and comma
+are not uncommonly used for each, and this is a check that
+conventions have not got mixed).
+</p>
+</li>
+<li> <p><code>merge()</code> can create a result which uses long vectors
+on 64-bit platforms.
+</p>
+</li>
+<li> <p><code>dget()</code> gains a new argument <code>keep.source</code> which
+defaults to <code>FALSE</code> for speed (<code>dput()</code> and
+<code>dget()</code> are most often used for data objects where this can
+make <code>dget()</code> many times faster).
+</p>
+</li>
+<li><p> Packages may now use a file of common macro definitions in
+their help files, and may import definitions from other packages.
+</p>
+</li>
+<li><p> A number of macros have been added in the new
+&lsquo;<span class="file">share/Rd</span>&rsquo; directory for use in package overview help pages,
+and <code>promptPackage()</code> now makes use of them.
+</p>
+</li>
+<li> <p><code>tools::parse_Rd()</code> gains a new <code>permissive</code>
+argument which converts unrecognized macros into text.  This is
+used by <code>utils:::format.bibentry</code> to allow LaTeX markup to be
+ignored.
+</p>
+</li>
+<li> <p><code>options(OutDec =)</code> can now specify a multi-byte
+character, e.g., <code>options(OutDec = "\u00b7")</code> in a UTF-8
+locale.
+</p>
+</li>
+<li> <p><code>is.recursive(x)</code> is no longer true when <code>x</code> is an
+external pointer, a weak reference or byte code; the first enables
+<code>all.equal(x, x)</code> when <code>x &lt;- getClass(.)</code>.
+</p>
+</li>
+<li> <p><code>ls()</code> (aka <code>objects()</code>) and
+<code>as.list.environment()</code> gain a new argument <code>sorted</code>.
+</p>
+</li>
+<li><p> The <code>"source"</code> attribute (which has not been added to
+functions by <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> since before <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version 2.14.0) is no longer
+treated as special.
+</p>
+</li>
+<li><p> Function <code>returnValue()</code> has been added to give
+<code>on.exit()</code> code access to a function's return value for
+debugging purposes.
+</p>
+</li>
+<li> <p><code>crossprod(x, y)</code> allows more matrix coercions when
+<code>x</code> or <code>y</code> are vectors, now equalling
+<code>t(x) %*% y</code> in these cases (also reported by Radford Neal).
+Similarly, <code>tcrossprod(x,y)</code> and <code>%*%</code> work in more
+cases with vector arguments.
+</p>
+</li>
+<li><p> Utility function <code>dynGet()</code> useful for detecting
+cycles, aka infinite recursions.
+</p>
+</li>
+<li><p> The byte-code compiler and interpreter include new
+instructions that allow many scalar subsetting and assignment and
+scalar arithmetic operations to be handled more efficiently. This
+can result in significant performance improvements in scalar
+numerical code.
+</p>
+</li>
+<li> <p><code>apply(m, 2, identity)</code> is now the same as the matrix
+<code>m</code> when it has <em>named</em> row names.
+</p>
+</li>
+<li><p> A new function <code>debuggingState()</code> has been added,
+allowing to temporarily turn off debugging.
+</p>
+</li>
+<li> <p><code>example()</code> gets a new optional argument
+<code>run.donttest</code> and <code>tools::Rd2ex()</code> a corresponding
+<code>commentDonttest</code>, with a default such that
+<code>example(..)</code> in help examples will run <code>\donttest</code>
+code only if used interactively (a change in behaviour).
+</p>
+</li>
+<li> <p><code>rbind.data.frame()</code> gains an optional argument
+<code>make.row.names</code>, for potential speedup.
+</p>
+</li>
+<li><p> New function <code>extSoftVersion()</code> to report on the
+versions of third-party software in use in this session.
+Currently reports versions of <code>zlib</code>, <code>bzlib</code>, the
+<code>liblzma</code> from <code>xz</code>, PCRE, ICU, TRE and the <code>iconv</code>
+implementation.
+</p>
+<p>A similar function <code>grSoftVersion()</code> in package <span class="pkg">grDevices</span>
+reports on third-party graphics software.
+</p>
+<p>Function <code>tcltk::tclVersion()</code> reports the Tcl/Tk version.
+</p>
+</li>
+<li><p> Calling <code>callGeneric()</code> without arguments now works
+with primitive generics to some extent.
+</p>
+</li>
+<li> <p><code>vapply(x, FUN, FUN.VALUE)</code> is more efficient notably
+for large <code>length(FUN.VALUE)</code>; as extension of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16061">PR#16061</a>.
+</p>
+</li>
+<li> <p><code>as.table()</code> now allows tables with one or more
+dimensions of length 0 (such as <code>as.table(integer())</code>).
+</p>
+</li>
+<li> <p><code>names(x) &lt;- NULL</code> now clears the names of call
+and <code>...</code> objects.
+</p>
+</li>
+<li> <p><code>library()</code> will report a warning when an insufficient
+dependency version is masking a sufficient one later on the
+library search path.
+</p>
+</li>
+<li><p> A new <code>plot()</code> method for class <code>"raster"</code> has
+been added.
+</p>
+</li>
+<li><p> New <code>check_packages_in_dir_changes()</code> function in
+package <span class="pkg">tools</span> for conveniently analyzing how changing
+sources impacts the check results of their reverse dependencies.
+</p>
+</li>
+<li><p> Speed-up from Peter Haverty for <code>ls()</code> and
+<code>methods:::.requirePackage()</code> speeding up package loading.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16133">PR#16133</a>)
+</p>
+</li>
+<li><p> New <code>get0()</code> function, combining <code>exists()</code> and
+<code>get()</code> in one call, for efficiency.
+</p>
+</li>
+<li> <p><code>match.call()</code> gains an <code>envir</code> argument for
+specifying the environment from which to retrieve
+the <code>...</code> in the call, if any; this environment was wrong
+(or at least undesirable) when the <code>definition</code> argument was
+a function.
+</p>
+</li>
+<li> <p><code>topenv()</code> has been made <code>.Internal()</code> for
+speedup, based on Peter Haverty's proposal in <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16140">PR#16140</a>.
+</p>
+</li>
+<li> <p><code>getOption()</code> no longer calls <code>options()</code> in the main
+case.
+</p>
+</li>
+<li><p> Optional use of <code>libcurl</code> (version 7.28.0 from Oct 2012
+or later) for Internet access:
+</p>
+
+<ul>
+<li> <p><code>capabilities("libcurl")</code> reports if this is
+available.
+</p>
+</li>
+<li> <p><code>libcurlVersion()</code> reports the version in use, and
+other details of the <code>"libcurl"</code> build including which URL
+schemes it supports.
+</p>
+</li>
+<li> <p><code>curlGetHeaders()</code> retrieves the headers for
+<code>http://</code>, <code>https://</code>, <code>ftp://</code> and
+<code>ftps://</code> URLs: analysis of these headers can provide
+insights into the &lsquo;existence&rsquo; of a URL (it might for example be
+permanently redirected) and is so used in <code>R CMD
+	  check --as-cran</code>.
+</p>
+</li>
+<li> <p><code>download.file()</code> has a new optional method
+<code>"libcurl"</code> which will handle more URL schemes, follow
+redirections, and allows simultaneous downloads of multiple
+URLs.
+</p>
+</li>
+<li> <p><code>url()</code> has a new method <code>"libcurl"</code> which
+handles more URL schemes and follows redirections.  The default
+method is controlled by a new option <code>url.method</code>, which
+applies also to the opening of URLs <em>via</em> <code>file()</code>
+(which happens implicitly in functions such as
+<code>read.table</code>.)
+</p>
+</li>
+<li><p> When <code>file()</code> or <code>url()</code> is invoked with a
+<code>https://</code> or <code>ftps://</code> URL which the current method
+cannot handle, it switches to a suitable method if one is
+available.
+</p>
+</li></ul>
+
+</li>
+<li><p> (Windows.) The DLLs &lsquo;<span class="file">internet.dll</span>&rsquo; and
+&lsquo;<span class="file">internet2.dll</span>&rsquo; have been merged.  In this version it is safe
+to switch (repeatedly) between the internal and Windows internet
+functions within an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> session.
+</p>
+<p>The Windows internet functions are still selected by flag
+<span class="option">--internet2</span> or <code>setInternet2()</code>.  This can be
+overridden for an <code>url()</code> connection <em>via</em> its new
+<code>method</code> argument.
+</p>
+<p><code>download.file()</code> has new method <code>"wininet"</code>, selected
+as the default by <span class="option">--internet2</span> or <code>setInternet2()</code>.
+</p>
+</li>
+<li> <p><code>parent.env&lt;-</code> can no longer modify the parent of a
+locked namespace or namespace imports environment.  Contributed by
+Karl Millar.
+</p>
+</li>
+<li><p> New function <code>isLoadedNamespace()</code> for readability and speed.
+</p>
+</li>
+<li> <p><code>names(env)</code> now returns all the object names of an
+<code>environment</code> <code>env</code>, equivalently to
+<code>ls(env, all.names = TRUE, sorted = FALSE)</code> and also to
+the names of the corresponding list,
+<code>names(as.list(env, all.names = TRUE))</code>.
+Note that although <code>names()</code> returns a character vector, the
+names have no particular ordering.
+</p>
+</li>
+<li><p> The memory manager now grows the heap more aggressively. This
+reduces the number of garbage collections, in particular while
+data or code are loaded, at the expense of slightly increasing the
+memory footprint.
+</p>
+</li>
+<li><p> New function <code>trimws()</code> for removing leading/trailing
+whitespace.
+</p>
+</li>
+<li> <p><code>cbind()</code> and <code>rbind()</code> now consider S4 inheritance
+during S3 dispatch and also obey <code>deparse.level</code>.
+</p>
+</li>
+<li> <p><code>cbind()</code> and <code>rbind()</code> will delegate recursively
+to <code>methods::cbind2</code> (<code>methods::rbind2</code>) when at least
+one argument is an S4 object and S3 dispatch fails (due to
+ambiguity).
+</p>
+</li>
+<li><p> (Windows.)  <code>download.file(quiet = FALSE)</code> now uses
+text rather than Windows progress bars in non-interactive use.
+</p>
+</li>
+<li><p> New function <code>hsearch_db()</code> in package <span class="pkg">utils</span> for
+building and retrieving the help search database used by
+<code>help.search()</code>, along with functions for inspecting the
+concepts and keywords in the help search database.
+</p>
+</li>
+<li><p> New function <code>.getNamespaceInfo()</code>, a no-check version
+of <code>getNamespaceInfo()</code> mostly for internal speedups.
+</p>
+</li>
+<li><p> The help search system now takes <span class="samp">\keyword</span> entries in
+Rd files which are not standard keywords (as given in
+&lsquo;<span class="file">KEYWORDS</span>&rsquo; in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> documentation directory) as concepts.
+For standard keyword entries the corresponding descriptions are
+additionally taken as concepts.
+</p>
+</li>
+<li><p> New <code>lengths()</code> function for getting the lengths of all
+elements in a list.
+</p>
+</li>
+<li><p> New function <code>toTitleCase()</code> in package <span class="pkg">tools</span>,
+tailored to package titles.
+</p>
+</li>
+<li><p> The matrix methods of <code>cbind()</code> and <code>rbind()</code>
+allow matrices as inputs which have <i>2^31</i> or more
+elements.  (For <code>cbind()</code>, wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16198">PR#16198</a>.)
+</p>
+</li>
+<li><p> The default method of <code>image()</code> has an explicit check
+for a numeric or logical matrix (which was always required).
+</p>
+</li>
+<li> <p><code>URLencode()</code> will not by default encode further URLs
+which appear to be already encoded.
+</p>
+</li>
+<li> <p><code>BIC(mod)</code> and <code>BIC(mod, mod2)</code> now give non-NA
+numbers for <code>arima()</code> fitted models, as <code>nobs(mod)</code> now
+gives the number of &ldquo;used&rdquo; observations for such models.
+This fixes <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16198">PR#16198</a>, quite differently than proposed there.
+</p>
+</li>
+<li><p> The <code>print()</code> methods for <code>"htest"</code>,
+<code>"pairwise.htest"</code> and <code>"power.htest"</code> objects now have
+a <code>digits</code> argument defaulting to (a function of)
+<code>getOption("digits")</code>, and influencing all printed numbers
+coherently.  Unavoidably, this changes the display of such test
+results in some cases.
+</p>
+</li>
+<li><p> Code completion for namespaces now recognizes all loaded
+namespaces, rather than only the ones that are also attached.
+</p>
+</li>
+<li><p> The code completion mechanism can now be replaced by a
+user-specified completer function, for (temporary) situations
+where the usual code completion is inappropriate.
+</p>
+</li>
+<li> <p><code>unzip()</code> will now warn if it is able to detect truncation
+when unpacking a file of 4GB or more (related to <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16243">PR#16243</a>).
+</p>
+</li>
+<li> <p><code>methods()</code> reports S4 in addition to S3 methods;
+output is simplified when the <code>class</code> argument is
+used.  <code>.S3methods()</code> and <code>methods::.S4methods()</code> report
+S3 and S4 methods separately.
+</p>
+</li>
+<li><p> Higher order functions such as the <code>apply</code> functions
+and <code>Reduce()</code> now force arguments to the functions they apply
+in order to eliminate undesirable interactions between lazy
+evaluation and variable capture in closures.  This resolves
+<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16093">PR#16093</a>.
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION and INCLUDED SOFTWARE</h4>
+
+
+<ul>
+<li><p> The <code>\donttest</code> sections of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s help files can be
+tested by<br />
+<code>make check TEST_DONTTEST=TRUE</code> .
+</p>
+</li>
+<li><p> It is possible to request the use of system
+<code>valgrind</code> headers <em>via</em> <code>configure</code> option
+<span class="option">--with-system-valgrind-headers</span>: note the possible future
+incompatibility of such headers discussed in the 'R Installation
+and Administration' manual. (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16068">PR#16068</a>.)
+</p>
+</li>
+<li><p> The included version of <code>liblzma</code> has been updated to
+<code>xz-utils</code> 5.0.7 (minor bug fixes from 5.0.5).
+</p>
+</li>
+<li> <p><code>configure</code> options <span class="option">--with-system-zlib</span>,
+<span class="option">--with-system-bzlib</span> and <span class="option">--with-system-pcre</span> are
+now the default.  For the time being there is fallback to the
+versions included in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> sources if no system versions are
+found or (unlikely) if they are too old.
+</p>
+<p>Linux users should check that the <code>-devel</code> or <code>-dev</code>
+versions of packages <span class="pkg">zlib</span>, <span class="pkg">bzip2</span>/<span class="pkg">libbz2</span> and
+<span class="pkg">pcre</span> as well as <span class="pkg">xz-devel</span>/<span class="pkg">liblzma-dev</span> (or
+similar names) are installed.
+</p>
+</li>
+<li> <p><code>configure</code> by default looks for the
+<code>texi2any</code> script from <span class="pkg">texinfo</span> 5.1 or later, rather
+than the <code>makeinfo</code> program.  (<code>makeinfo</code> is a
+link to the Perl script <code>texi2any</code> in <span class="pkg">texinfo</span> 5.x.)
+</p>
+</li>
+<li> <p><code>R CMD INSTALL</code> gains an  option
+<span class="option">--built-timestamp=STAMP</span> allowing 100% reproducible
+package building, thanks to Dirk Eddelbuettel.
+</p>
+</li></ul>
+
+
+
+
+<h4>UTILITIES</h4>
+
+
+<ul>
+<li><p> There is support for testing the <code>\dontrun</code> and
+<code>\donttest</code> parts of examples in packages.
+</p>
+<p><code>tools::testInstalledPackage()</code> accepts new arguments
+<code>commentDontrun = FALSE</code> and <code>commentDonttest = FALSE</code>.
+</p>
+<p><code>R CMD check</code> gains options <span class="option">--run-dontrun</span> and
+<span class="option">--run-donttest</span>.
+</p>
+</li>
+<li><p> The <acronym><span class="acronym">HTML</span></acronym> generated by <code>tools::Rd2HTML()</code> and
+<code>tools::toHTML()</code> methods is now
+&lsquo;<acronym><span class="acronym">XHTML</span></acronym> 1.0 Strict&rsquo;.
+</p>
+</li>
+<li><p> The <span class="pkg">compiler</span> package's utility function
+<code>setCompilerOptions()</code> now returns the old values
+invisibly. The initial optimization level can also be set with the
+environment variable <span class="env">R_COMPILER_OPTIMIZE</span>.
+</p>
+</li>
+<li> <p><code>R CMD build</code> adds a <span class="samp">NeedsCompilation</span> field
+if one is not already present in the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file.
+</p>
+</li>
+<li> <p><code>R CMD check</code> gains option <span class="option">--test-dir</span> to
+specify an alternative set of tests to run.
+</p>
+</li>
+<li> <p><code>R CMD check</code> will now by default continue with
+testing after many types of errors, and will output a summary
+count of errors at the end if any have occurred.
+</p>
+</li>
+<li> <p><code>R CMD check</code> now checks that the <span class="samp">Title</span> and
+<span class="samp">Description</span> fields are correctly terminated.
+</p>
+</li>
+<li> <p><code>R CMD check --as-cran</code> now:
+</p>
+
+<ul>
+<li><p> checks a &lsquo;<span class="file">README.md</span>&rsquo; file can be processed: this
+needs <code>pandoc</code> installed.
+</p>
+</li>
+<li><p> checks the existence and accessibility of URLs in the
+&lsquo;<span class="file">DESCRIPTION</span>&rsquo;, &lsquo;<span class="file">CITATION</span>&rsquo;, &lsquo;<span class="file">NEWS.Rd</span>&rsquo; and
+&lsquo;<span class="file">README.md</span>&rsquo; files and in the help files (provided the build
+has <code>libcurl</code> support).
+</p>
+</li>
+<li><p> reports non-ASCII characters in R source files when there
+is no package encoding declared in the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file.
+</p>
+</li>
+<li><p> reports (apparent) S3 methods exported but not registered.
+</p>
+</li>
+<li><p> reports overwriting registered S3 methods from
+base/recommended packages.  (Such methods are replaced in the
+affected package for the rest of the session, even if the
+replacing namespace is unloaded.)
+</p>
+</li>
+<li><p> reports if the <code>Title</code> field does not appear to be in
+title case (see &lsquo;Writing R Extensions&rsquo;: there may be
+false positives, but note that technical words should be
+single-quoted and will then be accepted).
+</p>
+</li></ul>
+
+<p>Most of these checks can also be selected by environment
+variables: see the &lsquo;R Internals&rsquo; manual.
+</p>
+</li></ul>
+
+
+
+
+<h4>C-LEVEL FACILITIES</h4>
+
+
+<ul>
+<li><p> New C API utility <code>logspace_sum(logx[], n)</code>.
+</p>
+</li>
+<li><p> Entry points <code>rbinom_mu</code>, <code>rnbinom_mu</code> and
+<code>rmultinom</code> are remapped (by default) to <code>Rf_rbinom_mu</code>
+etc.  This requires packages using them to be re-installed.
+</p>
+</li>
+<li> <p><code>.C(DUP = FALSE)</code> and <code>.Fortran(DUP = FALSE)</code> are
+now ignored, so arguments are duplicated if <code>DUP = TRUE</code>
+would do so.  As their help has long said, <code>.Call()</code> is much
+preferred.
+</p>
+</li>
+<li><p> New entry point <code>R_allocLD</code>, like <code>R_alloc</code> but
+guaranteed to have sufficient alignment for <code>long double</code>
+pointers.
+</p>
+</li>
+<li> <p><code>isPairList()</code> now returns <code>TRUE</code> for DOTSXP.
+</p>
+</li></ul>
+
+
+
+
+<h4>WINDOWS BUILD CHANGES</h4>
+
+<p>A number of changes to the Windows build system are in development.
+The following are currently in place.
+</p>
+
+<ul>
+<li><p> Installation using external binary distributions
+of <span class="pkg">zlib</span>, <span class="pkg">bzip2</span>, <span class="pkg">liblzma</span>, <span class="pkg">pcre</span>,
+<span class="pkg">libpng</span>, <span class="pkg">jpeglib</span> and <span class="pkg">libtiff</span> is now required,
+and the build instructions have been revised.
+</p>
+</li>
+<li><p> A new <code>make</code> target <code>rsync-extsoft</code> has been
+added to obtain copies of the external libraries from
+<acronym><span class="acronym">CRAN</span></acronym>.
+</p>
+</li>
+<li><p> Building the manuals now requires <code>texi2any</code> from
+<span class="pkg">texinfo</span> 5.1 or later.  <acronym><span class="acronym">CRAN</span></acronym> binary builds include
+the manuals, but by default builds from source will not, and they
+will be accessed from <acronym><span class="acronym">CRAN</span></acronym>.  See the comments in
+&lsquo;<span class="file">src/gnuwin32/MkRules.dist</span>&rsquo; for how to specify the location
+of <code>texi2any</code>.
+</p>
+</li>
+<li><p> (Windows) Changes have been made to support an experimental
+Windows toolchain based on GCC 4.9.2.  The default toolchain
+continues to be based on GCC 4.6.3, as the new toolchain is not
+yet stable enough.  A change to a new toolchain is expected during
+the R 3.2.x lifetime.
+</p>
+</li></ul>
+
+
+
+
+<h4>PACKAGE INSTALLATION</h4>
+
+
+<ul>
+<li><p>  (Windows) The use of macro <code>ZLIB_LIBS</code> in file
+&lsquo;<span class="file">src/Makevars.win</span>&rsquo; (which has not been documented for a long
+time) now requires an external &lsquo;<span class="file">libz.a</span>&rsquo; to be available (it is
+part of the &lsquo;goodies&rsquo; used to compile Windows binary
+packages).  It would be simpler to use <code>-lz</code> instead.
+</p>
+</li>
+<li><p> The default for option <code>pkgType</code> on platforms using
+binary packages is now <code>"both"</code>, so source packages will be
+tried if binary versions are not available or not up to date.
+</p>
+<p>There are options for what <code>install.packages(type = "both")</code>
+(possibly called <em>via</em> <code>update.packages()</code>) will do if
+compilation of a source package is desirable: see <code>?options</code>
+(under <span class="pkg">utils</span>).
+</p>
+<p>If you intend not to accept updates as source packages, you should
+use <code>update.packages(type = "binary")</code>.
+</p>
+</li></ul>
+
+
+
+
+<h4>DEPRECATED AND DEFUNCT</h4>
+
+
+<ul>
+<li> <p><code>download.file(method = "lynx")</code> is defunct.
+</p>
+</li>
+<li><p> Building <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> using the included versions of <code>zlib</code>,
+<code>bzip2</code>, <code>xz</code> and PCRE is deprecated: these are frozen
+(bar essential bug-fixes) and will be removed for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.3.0.
+</p>
+</li>
+<li><p> The <code>configure</code> option
+<span class="option">--with-valgrind-instrumentation=3</span> has been withdrawn, as
+it did not work with recent <code>valgrind</code> headers: it is now
+treated as level <code>2</code>.
+</p>
+</li>
+<li><p> The <code>MethodsList</code> class in package <span class="pkg">methods</span> had
+been deprecated in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.11.0 and is defunct now.  Functions using
+it are defunct if they had been deprecated in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.11.0, and are
+deprecated now, otherwise.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li><p> Fixed two obscure bugs in pairlist subassignment, reported by
+Radford Neal as part of pqR issue 16.
+</p>
+</li>
+<li><p> Fixes for bugs in handling empty arguments and argument
+matching by name in <code>log()</code>.
+</p>
+</li>
+<li> <p><code>all.equal()</code> gains methods for <code>environment</code>s and
+<code>refClass</code>es.
+</p>
+</li>
+<li> <p><code>[&lt;-</code> and <code>[[&lt;-</code> gain S4 <code>data.frame</code> methods
+to avoid corruption of S4 class information by the S3 methods.
+</p>
+</li>
+<li> <p><code>callNextMethod()</code> should now work within a <code>.local</code>
+call when <code>...</code> is absent from <code>formals(.local)</code>.
+</p>
+</li>
+<li> <p><code>dput(pairlist(x))</code> generates a call to the
+<code>pairlist</code> constructor instead of the <code>list</code>
+constructor.
+</p>
+</li>
+<li><p> Fix <code>missing()</code> when arguments are propagated through
+<code>...</code> . (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15707">PR#15707</a>)
+</p>
+</li>
+<li> <p><code>eigen(m)</code> now defaults to <code>symmetric = TRUE</code> even
+when the dimnames are asymmetric if the matrix is otherwise
+symmetric.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16151">PR#16151</a>)
+</p>
+</li>
+<li><p> Fix issues with forwarding <code>...</code> through
+<code>callGeneric()</code> and <code>callNextMethod()</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16141">PR#16141</a>)
+</p>
+</li>
+<li> <p><code>callGeneric()</code> now works after a <code>callNextMethod()</code>.
+</p>
+</li>
+<li><p> Subclass information is kept consistent when replacing an
+ordinary S4 class with an &ldquo;old class&rdquo; <em>via</em> the
+<code>S4Class</code> argument to <code>setOldClass()</code>. Thus, for
+example, a <code>data.frame</code> is valid for a <code>list</code> argument
+in the signature, and a <code>factor</code> is valid for <code>vector</code>
+arguments.
+</p>
+</li>
+<li><p> In <code>qbeta()</code> the inversion of <code>pbeta()</code> is much
+more sophisticated.  This works better in corner cases some of
+which failed completely previously (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15755">PR#15755</a>), or were using
+too many iterations.
+</p>
+</li>
+<li><p> Auto-printing no longer duplicates objects when printing is
+dispatched to a method.
+</p>
+</li>
+<li> <p><code>kmeans(x, k)</code> would fail when <code>nrow(x) &gt;= 42949673</code>.
+(Comment 6 of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15364">PR#15364</a>)
+</p>
+</li>
+<li> <p>&lsquo;Abbreviated&rsquo; locale-specific day and month names
+could have been truncated in those rare locales where there are
+the same as the full names.
+</p>
+</li>
+<li><p> An irrelevant warning message from updating subclass
+information was silenced (the namespace would not be writable
+in this case).
+</p>
+</li></ul>
+
+
+
 
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.1.3</h3>
 
@@ -18,7 +790,7 @@
 <ul>
 <li><p> The internal method of <code>download.file()</code> can now handle
 files larger than 2GB on 32-bit builds which support such files
-(tested on 32-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font> running on 64-bit Windows).
+(tested on 32-bit <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> running on 64-bit Windows).
 </p>
 </li>
 <li> <p><code>kruskal.test()</code> warns on more types of suspicious input.
@@ -91,7 +863,7 @@ supported when &lsquo;<span class="file">internet2.dll</span>&rsquo; is used.
 <li><p> The included version of PCRE has been updated to 8.36.
 </p>
 </li>
-<li> <p><CODE>configure</CODE> accepts <span class="samp">MAKEINFO=texi2any</span> as
+<li> <p><code>configure</code> accepts <span class="samp">MAKEINFO=texi2any</span> as
 another way to ensure <span class="pkg">texinfo</span> 5.x is used when both 5.x and
 4.x are installed.
 </p>
@@ -104,21 +876,21 @@ another way to ensure <span class="pkg">texinfo</span> 5.x is used when both 5.x
 
 
 <ul>
-<li> <p><CODE>R CMD check</CODE> now checks the packages used in
+<li> <p><code>R CMD check</code> now checks the packages used in
 <code>\donttest</code> sections of the examples are specified in the
 &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file.
 (These are needed to run the examples interactively.)
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> checks for the undeclared use of GNU
+<li> <p><code>R CMD check</code> checks for the undeclared use of GNU
 extensions in Makefiles, and for Makefiles with a missing final
 linefeed.
 </p>
-<p><CODE>R CMD build</CODE> will correct line endings in all Makefiles,
+<p><code>R CMD build</code> will correct line endings in all Makefiles,
 not just those in the &lsquo;<span class="file">src</span>&rsquo; directory.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> notes uses of <code>library()</code> and
+<li> <p><code>R CMD check</code> notes uses of <code>library()</code> and
 <code>require()</code> in package code: see the section
 &lsquo;Suggested packages&rsquo; of &lsquo;Writing R Extensions&rsquo; for
 good practice.
@@ -132,9 +904,9 @@ good practice.
 
 
 <ul>
-<li><p> The <CODE>configure</CODE> option
+<li><p> The <code>configure</code> option
 <span class="option">--with-valgrind-instrumentation=3</span> is deprecated and will
-be removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.2.0.
+be removed in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.0.
 </p>
 </li></ul>
 
@@ -145,7 +917,7 @@ be removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3
 
 
 <ul>
-<li><p> (Windows.) <CODE>Rscript.exe</CODE> was missing a
+<li><p> (Windows.) <code>Rscript.exe</code> was missing a
 manifest specifying the modern style for common controls (e.g.,
 the download progress bar).
 </p>
@@ -179,7 +951,7 @@ notation (e.g. <code>0.0e50000</code>) could give <code>NaN</code>.  (<a href="h
 </p>
 </li>
 <li> <p><code>download.file()</code> reported downloaded sizes as 0KB if
-less than 1MB, only for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.2 and only on big-endian platforms.
+less than 1MB, only for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1.2 and only on big-endian platforms.
 </p>
 </li>
 <li> <p><code>prompt()</code> did not escape percent signs in the
@@ -190,7 +962,7 @@ automatically generated usage section of help files.
 object it was working with.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16029">PR#16029</a>)
 </p>
 </li>
-<li><p> (Windows.) The command completion in <CODE>Rgui.exe</CODE>
+<li><p> (Windows.) The command completion in <code>Rgui.exe</code>
 messed up the console.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15791">PR#15791</a>)
 </p>
 </li>
@@ -210,7 +982,7 @@ on the <code>versionCheck</code> parameter.  (Reported by Geoff Lee.)
 <li><p> Rare over-runs detected by AddressSanitizer in
 <code>substr()</code> and its replacement version have been avoided.
 </p>
-<p><EM>Inter alia</EM> that fix gives the documented behaviour for
+<p><em>Inter alia</em> that fix gives the documented behaviour for
 <code>substr(x, 1, 2) &lt;- ""</code> (subsequently reported as
 <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16214">PR#16214</a>).
 </p>
@@ -243,7 +1015,7 @@ parts from the other.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.c
 to a typo.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16121">PR#16121</a>)
 </p>
 </li>
-<li><p> Unix-alike builds without a suitable <CODE>makeinfo</CODE> were
+<li><p> Unix-alike builds without a suitable <code>makeinfo</code> were
 documented to link the missing HTML manuals to CRAN, but did not.
 </p>
 </li>
@@ -261,7 +1033,7 @@ functions <code>dlaed2</code> and <code>dlaed3</code>.  (<a href="https://bugs.R
 </p>
 </li>
 <li> <p><code>RShowDoc("NEWS", "txt")</code> had not been updated for the
-layout changes of <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.0.
+layout changes of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1.0.
 </p>
 </li>
 <li><p> The <code>xtfrm()</code> method for class <code>"Surv"</code> has been
@@ -320,7 +1092,7 @@ of the missing component or of XQuartz.
 </p>
 <p>The <code>X11()</code> device and X11-based versions of the data editor
 and viewer (invoked by <code>edit()</code> and <code>View()</code> for data
-frames and matrices from command-line <font face="Courier New,Courier" color="#666666"><b>R</b></font>) check that the X11
+frames and matrices from command-line <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>) check that the X11
 libraries are installed and if not advises installing XQuartz.
 </p>
 </li>
@@ -348,13 +1120,13 @@ supported.
 </li>
 <li><p> The Bioconductor &lsquo;version&rsquo; used by
 <code>setRepositories()</code> now defaults to <code>3.0</code>. (It can be
-set at runtime <EM>via</EM> environment variable
+set at runtime <em>via</em> environment variable
 <span class="env">R_BIOC_VERSION</span>.)
 </p>
 </li>
 <li><p> Omegahat is no longer listed as providing Windows binary
 packages, e.g. by <code>setRepositories()</code>.  It has no binary
-packages available for <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.x and those for earlier versions
+packages available for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1.x and those for earlier versions
 were 32-bit only.
 </p>
 </li></ul>
@@ -366,29 +1138,29 @@ were 32-bit only.
 
 
 <ul>
-<li><p> The <CODE>configure</CODE> script reports on the more important
+<li><p> The <code>configure</code> script reports on the more important
 capabilities/options which will not be compiled in.
 </p>
 <p>More types of external BLAS are recognized by name in that report.
 </p>
 </li>
-<li><p> When building <font face="Courier New,Courier" color="#666666"><b>R</b></font> as a shared library, the
+<li><p> When building <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> as a shared library, the
 <span class="option">-L${R_HOME}/lib${R_ARCH}</span> flag is placed earlier in the
 link commands used during installation and when packages are
 installed: this helps ensure that the current build has priority
-if an <font face="Courier New,Courier" color="#666666"><b>R</b></font> shared library has already been installed by
-e.g. <CODE>install-libR</CODE> in a library mentioned in
+if an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> shared library has already been installed by
+e.g. <code>install-libR</code> in a library mentioned in
 <span class="env">LDFLAGS</span> (and not in &lsquo;your system's library directory&rsquo;
 as documented). (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15790">PR#15790</a>.)
 </p>
 </li>
-<li><p> LaTeX package <span class="pkg">upquote</span> is no longer required for <font face="Courier New,Courier" color="#666666"><b>R</b></font>'s
+<li><p> LaTeX package <span class="pkg">upquote</span> is no longer required for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s
 use of <span class="pkg">inconsolata</span>.
 </p>
 </li>
-<li><p> (Windows only) If both 32- and 64-bit versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are
+<li><p> (Windows only) If both 32- and 64-bit versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> are
 installed, the &lsquo;<span class="file">bin/R.exe</span>&rsquo; and &lsquo;<span class="file">bin/Rscript.exe</span>&rsquo; executables
-now run 64-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  (To run 32-bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>, overwrite these files
+now run 64-bit <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.  (To run 32-bit <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, overwrite these files
 with copies of &lsquo;<span class="file">bin/i386/Rfe.exe</span>&rsquo;.)
 </p>
 </li></ul>
@@ -400,20 +1172,20 @@ with copies of &lsquo;<span class="file">bin/i386/Rfe.exe</span>&rsquo;.)
 
 
 <ul>
-<li><p> Running <CODE>R CMD check</CODE> with
+<li><p> Running <code>R CMD check</code> with
 <span class="env">_R_CHECK_DEPENDS_ONLY_</span> true now makes the
 <span class="samp">VignetteBuilder</span> packages available even if they are
 listed in <span class="samp">Suggests</span>, since they are needed to recognise and
 process non-Sweave vignettes.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> now reports empty <code>importFrom</code>
+<li> <p><code>R CMD check</code> now reports empty <code>importFrom</code>
 declarations in a &lsquo;<span class="file">NAMESPACE</span>&rsquo; file, as these are common
-errors (writing <code>importFrom(<VAR>Pkg</VAR>)</code> where
-<code>import(<VAR>Pkg</VAR>)</code> was intended).
+errors (writing <code>importFrom(<var>Pkg</var>)</code> where
+<code>import(<var>Pkg</var>)</code> was intended).
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> now by default checks code usage
+<li> <p><code>R CMD check</code> now by default checks code usage
 directly on the package namespace without loading and attaching
 the package and its suggests and enhances.  For good practice with
 packages in the <span class="samp">Suggests</span> field, see §1.1.3.1 of
@@ -458,7 +1230,7 @@ no variables to drop.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.c
 </li>
 <li> <p><code>edit()</code> (and hence <code>fix()</code>) failed if
 an object had a non-character attribute named <code>"source"</code>
-(an attribute that had been used in <font face="Courier New,Courier" color="#666666"><b>R</b></font> prior to version 2.14.0).
+(an attribute that had been used in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> prior to version 2.14.0).
 </p>
 </li>
 <li> <p><code>callGeneric()</code> could fail if the generic had
@@ -467,13 +1239,13 @@ an object had a non-character attribute named <code>"source"</code>
 </li>
 <li><p> Forking in package <span class="pkg">parallel</span> called C entry point
 <code>exit</code> in the child.  This was unsafe (<code>_exit</code> should
-have been called), and could flush <code>stdin</code> of the main <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+have been called), and could flush <code>stdin</code> of the main <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 process (seen most often on Solaris).
 </p>
 <p>As good practice, <code>stdout</code> is now flushed before forking a child.
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> objects such as <code>list(`a\b` = 1)</code> now print correctly.
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> objects such as <code>list(`a\b` = 1)</code> now print correctly.
 </p>
 </li>
 <li> <p><code>getAnywhere("C_pbinom")</code> now returns correctly a
@@ -517,8 +1289,8 @@ optional argument <code>check</code>; When that is true (the default) it
 checks more carefully for valid input.
 </p>
 </li>
-<li><p> (Windows only) If a user chose to install 64 bit <font face="Courier New,Courier" color="#666666"><b>R</b></font> but not
-32 bit <font face="Courier New,Courier" color="#666666"><b>R</b></font>, the &lsquo;<span class="file">bin/R</span>&rsquo; and &lsquo;<span class="file">bin/Rscript</span>&rsquo; executables
+<li><p> (Windows only) If a user chose to install 64 bit <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> but not
+32 bit <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, the &lsquo;<span class="file">bin/R</span>&rsquo; and &lsquo;<span class="file">bin/Rscript</span>&rsquo; executables
 failed to run.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15981">PR#15981</a>)
 </p>
 </li>
@@ -526,8 +1298,8 @@ failed to run.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=1
 and missed memory protection added. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15990">PR#15990</a>)
 </p>
 </li>
-<li> <p><CODE>Rscript</CODE> no longer passes <code>--args</code> to
-<CODE>R</CODE> when there are no extra (&ldquo;user&rdquo;) arguments.
+<li> <p><code>Rscript</code> no longer passes <code>--args</code> to
+<code>R</code> when there are no extra (&ldquo;user&rdquo;) arguments.
 </p>
 </li>
 <li><p> objects like <code>getClass("refClass")@prototype</code> now
@@ -564,7 +1336,7 @@ the <code>xaxs</code>, <code>yaxs</code> and <code>lab</code> graphics parameter
 <code>x</code> contains non-finite values. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16024">PR#16024</a>)
 </p>
 </li>
-<li> <p><CODE>R CMD Rd2pdf</CODE> unintentionally ignored its
+<li> <p><code>R CMD Rd2pdf</code> unintentionally ignored its
 <span class="option">--os</span> option.
 </p>
 </li>
@@ -572,7 +1344,7 @@ the <code>xaxs</code>, <code>yaxs</code> and <code>lab</code> graphics parameter
 reporting file sizes and progress correctly on files larger than
 2GB (inherited from <code>libxml2</code>).  This is corrected for 64-bit
 builds (32-bit platforms may not support such files, but where
-possible will be supported in future versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font>).
+possible will be supported in future versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>).
 </p>
 </li>
 <li><p> Work around a bug in OS X Yosemite where key environment
@@ -600,8 +1372,8 @@ recognize latest XQuartz.
 compatibly with <code>library()</code> by using <code>message()</code>.
 </p>
 </li>
-<li> <p><CODE>R CMD Sweave</CODE> no longer cleans any files by
-default, compatibly with versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> prior to 3.1.0.  There are
+<li> <p><code>R CMD Sweave</code> no longer cleans any files by
+default, compatibly with versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> prior to 3.1.0.  There are
 new options <span class="option">--clean</span>, <span class="option">--clean=default</span> and
 <span class="option">--clean=keepOuts</span>.
 </p>
@@ -614,10 +1386,10 @@ cleaning customization.
 </li>
 <li><p> The Bioconductor &lsquo;version&rsquo; used by
 <code>setRepositories()</code> can now be set by environment variable
-<span class="env">R_BIOC_VERSION</span> at runtime, not just when <font face="Courier New,Courier" color="#666666"><b>R</b></font> is installed.
+<span class="env">R_BIOC_VERSION</span> at runtime, not just when <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is installed.
 (It has been stated that Bioconductor will switch from
 &lsquo;version&rsquo; 2.14 to &lsquo;version&rsquo; 3.0 during the lifetime
-of the <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1 series.)
+of the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1 series.)
 </p>
 </li>
 <li><p> Error messages from bugs in embedded <span class="samp">Sexpr</span> code
@@ -628,12 +1400,12 @@ in Sweave documents now report the source location.
 <code>read.*()</code> functions get a new <code>numerals</code> argument,
 specifying how numeric input is converted when its conversion to
 double precision loses accuracy.  The default value,
-<code>"allow.loss"</code> allows accuracy loss, as in <font face="Courier New,Courier" color="#666666"><b>R</b></font> versions before
+<code>"allow.loss"</code> allows accuracy loss, as in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> versions before
 3.1.0.
 </p>
 </li>
 <li><p> For some compilers, integer addition could overflow without
-a warning.  <font face="Courier New,Courier" color="#666666"><b>R</b></font>'s internal code for both integer addition and
+a warning.  <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>'s internal code for both integer addition and
 subtraction is more robust now.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15774">PR#15774</a>)
 </p>
 </li>
@@ -651,7 +1423,7 @@ or infinite <i>a</i> and <i>b</i> (where they typically returned
 does not work correctly with their package's use of
 <code>dev.new()</code>.  The new option <code>dev.new(noRStudioGD =
       TRUE)</code> replaces the RStudio override by the default device as
-selected by <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself, still respecting environment variables
+selected by <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> itself, still respecting environment variables
 <span class="env">R_INTERACTIVE_DEVICE</span> and <span class="env">R_DEFAULT_DEVICE</span>.
 </p>
 </li>
@@ -694,24 +1466,24 @@ help page for a function that was imported from another package
 
 
 <ul>
-<li> <p><CODE>configure</CODE> option <span class="option">--with-internal-tzcode</span>
+<li> <p><code>configure</code> option <span class="option">--with-internal-tzcode</span>
 can now be used with variable <code>rsharedir</code>.
 </p>
 </li>
 <li><p> The included version of PCRE has been updated to 8.35.
 </p>
 </li>
-<li><p> There is a new target <CODE>make uninstall-libR</CODE> to
+<li><p> There is a new target <code>make uninstall-libR</code> to
 remove an installed shared/static &lsquo;<span class="file">libR</span>&rsquo;.
 </p>
-<p><CODE>make install-libR</CODE> now works if a sub-architecture is
+<p><code>make install-libR</code> now works if a sub-architecture is
 used, although the user will need to specify <code>libdir</code>
 differently for different sub-architectures.
 </p>
 </li>
 <li><p> There is more extensive advice on which LaTeX packages are
-required to install <font face="Courier New,Courier" color="#666666"><b>R</b></font> or to make package manuals (as done by
-<CODE>R CMD check</CODE>) in the &lsquo;Writing R Extensions&rsquo;
+required to install <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> or to make package manuals (as done by
+<code>R CMD check</code>) in the &lsquo;Writing R Extensions&rsquo;
 manual.
 </p>
 </li>
@@ -744,7 +1516,7 @@ for <code>pchisq(1e-5, df = 100, ncp = 1, log = TRUE)</code>.
 </p>
 </li>
 <li><p> The <code>s</code> (&ldquo;step into&rdquo;) command in the debugger
-would cause <font face="Courier New,Courier" color="#666666"><b>R</b></font> to step into expressions evaluated there,
+would cause <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> to step into expressions evaluated there,
 not just into functions being debugged.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15770">PR#15770</a>)
 </p>
 </li>
@@ -803,7 +1575,7 @@ the &lsquo;short&rsquo; path name (which <code>Sys.which()</code> returns),
 as the behaviour of the Windows API call had changed.
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> will fail with an error if one of the
+<li> <p><code>R CMD build</code> will fail with an error if one of the
 packages specified in the <span class="samp">VignetteBuilder</span> field is not
 installed.  (Without loading those packages it cannot be
 ascertained which files are intended to be vignettes. This means
@@ -834,7 +1606,7 @@ block had only one line.
 </p>
 </li>
 <li><p> Hexadecimal constants such as <code>0x110p-5L</code> which were
-incorrectly qualified by <code>L</code> were parsed incorrectly since <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+incorrectly qualified by <code>L</code> were parsed incorrectly since <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 3.0.0, with a slightly garbled warning. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15753">PR#15753</a>)
 </p>
 </li>
@@ -842,7 +1614,7 @@ incorrectly qualified by <code>L</code> were parsed incorrectly since <font face
 the system was unable to launch a process. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15796">PR#15796</a>)
 </p>
 </li>
-<li><p> (Windows <CODE>Rgui</CODE> console.)  Unbuffered output was
+<li><p> (Windows <code>Rgui</code> console.)  Unbuffered output was
 sometimes not output immediately if the prompt was not on the last
 line of the console.
 </p>
@@ -852,11 +1624,11 @@ the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; or other text files to b
 encoding, so non-ASCII characters could be displayed incorrectly.
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> is now trying harder to not cleanup child processes
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is now trying harder to not cleanup child processes
 that were not spawned by <code>mcparallel()</code> on platforms that
 provide information about the source process of the <code>SIGCHLD</code>
 signal. This allows 3rd party libraries to manage the exit status
-of children that they spawn without <font face="Courier New,Courier" color="#666666"><b>R</b></font> interfering.
+of children that they spawn without <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> interfering.
 </p>
 </li>
 <li> <p><code>mcmapply()</code> was only parallelizing if the number of
@@ -933,8 +1705,8 @@ decimal places that are intended to be read as numeric, specify
 </p>
 </li>
 <li> <p><code>tools::Rdiff(useDiff = FALSE)</code> is closer to the POSIX
-definition of <CODE>diff -b</CODE> (as distinct from the description
-in the <CODE>man</CODE> pages of most systems).
+definition of <code>diff -b</code> (as distinct from the description
+in the <code>man</code> pages of most systems).
 </p>
 </li>
 <li><p> New function <code>anyNA()</code>, a version of
@@ -1024,7 +1796,7 @@ existing names. (Suggestion of <a href="https://bugs.R-project.org/bugzilla3/sho
 </li>
 <li><p> New functions <code>cospi(x)</code>, <code>sinpi(x)</code>, and
 <code>tanpi(x)</code>, for more accurate computation of
-<code>cos(pi*x)</code>, etc, both in <font face="Courier New,Courier" color="#666666"><b>R</b></font> and the C API.  Using these
+<code>cos(pi*x)</code>, etc, both in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> and the C API.  Using these
 gains accuracy in some cases, e.g., inside <code>lgamma()</code> or
 <code>besselI()</code>.  (Suggested by Morten Welinder in <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15529">PR#15529</a>.)
 </p>
@@ -1051,7 +1823,7 @@ errors and so not used on OS X.)
 </p>
 <p>Currently <code>time_t</code> is usually <code>long</code> and hence 64-bit on
 Unix-alike 64-bit platforms: however in several cases the
-time-zone database is 32-bit.  For <font face="Courier New,Courier" color="#666666"><b>R</b></font> for Windows it is 64-bit
+time-zone database is 32-bit.  For <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> for Windows it is 64-bit
 (for both architectures as from this version).
 </p>
 </li>
@@ -1134,7 +1906,7 @@ of the return value.
 </li>
 <li> <p><code>arima()</code> and <code>makeARIMA()</code> get a new optional
 argument <code>SSinit</code>, allowing the choice of a different
-<B>s</B>tate <B>s</B>pace initialization which has been observed
+<b>s</b>tate <b>s</b>pace initialization which has been observed
 to be more reliable close to non-stationarity: see <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14682">PR#14682</a>.
 </p>
 </li>
@@ -1149,7 +1921,7 @@ support reading of UTF-8 characters using <code>scan()</code>,
 </li>
 <li> <p><code>all.equal.list()</code> gets a new argument <code>use.names</code>
 which by default labels differing components by names (if they
-match) rather than by integer index.  Saved <font face="Courier New,Courier" color="#666666"><b>R</b></font> output in packages may
+match) rather than by integer index.  Saved <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> output in packages may
 need to be updated.
 </p>
 </li>
@@ -1258,23 +2030,23 @@ should wrap their calls in <code>suppressWarnings()</code>.
 installation, by setting <span class="env">TEST_MC_CORES</span> to an integer
 greater than one to indicate the maximum number of cores to be
 used in parallel. (It is worth specifying at least 8 cores if
-available.)  Most of these require a <CODE>make</CODE> program (such
-as GNU <CODE>make</CODE> and <CODE>dmake</CODE>) which supports the
-<CODE>$MAKE -j nproc</CODE> syntax.
+available.)  Most of these require a <code>make</code> program (such
+as GNU <code>make</code> and <code>dmake</code>) which supports the
+<code>$MAKE -j nproc</code> syntax.
 </p>
 <p>Except on Windows: the tests of standard package examples in
-<CODE>make check</CODE> are done in parallel.  This also applies to
+<code>make check</code> are done in parallel.  This also applies to
 running <code>tools::testInstalledPackages()</code>.
 </p>
 <p>The more time-consuming regression tests are done in parallel.
 </p>
-<p>The package checks in <CODE>make check-devel</CODE> and <CODE>make
-check-recommended</CODE> are done in parallel.
+<p>The package checks in <code>make check-devel</code> and <code>make
+	check-recommended</code> are done in parallel.
 </p>
 </li>
-<li><p> More of <CODE>make check</CODE> will work if recommended packages
+<li><p> More of <code>make check</code> will work if recommended packages
 are not installed: but recommended packages remain needed for
-thorough checking of an <font face="Courier New,Courier" color="#666666"><b>R</b></font> build.
+thorough checking of an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> build.
 </p>
 </li>
 <li><p> The version of <span class="samp">tzcode</span> included in
@@ -1284,10 +2056,10 @@ Windows.)
 </li>
 <li><p> The included (64-bit) time-zone conversion code and Olson
 time-zone database can be used instead of the system version: use
-<CODE>configure</CODE> option <span class="option">--with-internal-tzcode</span>.  This
+<code>configure</code> option <span class="option">--with-internal-tzcode</span>.  This
 is the default on Windows and OS X.  (Note that this does not
 currently work if a non-default <code>rsharedir</code>
-<CODE>configure</CODE> variable is used.)
+<code>configure</code> variable is used.)
 </p>
 <p>(It might be necessary to set environment variable <span class="env">TZ</span> on
 OSes where this is not already set, although the system timezone is
@@ -1297,14 +2069,14 @@ deduced correctly on at least Linux, OS X and Windows.)
 included in directory &lsquo;<span class="file">src/extra/tzone</span>&rsquo;.
 </p>
 </li>
-<li> <p><CODE>configure</CODE> now tests for a C++11-compliant compiler
+<li> <p><code>configure</code> now tests for a C++11-compliant compiler
 by testing some basic features.  This by default tries flags for
 the compiler specified by <span class="samp">CXX</span>, but an alternative compiler,
 options and standard can be specified by variables <span class="samp">CXX1X</span>,
 <span class="samp">CXX1XFLAGS</span> and <span class="samp">CXX1XSTD</span> (e.g., <span class="samp">-std=gnu++11</span>).
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> can now optionally be compiled to use reference
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> can now optionally be compiled to use reference
 counting instead of the <code>NAMED</code> mechanism by defining
 <code>SWITCH_TO_REFCNT</code> in &lsquo;<span class="file">Rinternals.h</span>&rsquo;. This may become
 the default in the future.
@@ -1312,7 +2084,7 @@ the default in the future.
 </li>
 <li><p> There is a new option <span class="option">--use-system-tre</span> to use a
 suitable system <span class="pkg">tre</span> library: at present this means a version
-from their <CODE>git</CODE> repository, after corrections.
+from their <code>git</code> repository, after corrections.
 (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15660">PR#15660</a>.)
 </p>
 </li></ul>
@@ -1335,9 +2107,10 @@ considered to be vignettes and hence indexed as such.
 </p>
 </li>
 <li><p> In the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file, </p>
-<PRE>    License: X11</PRE>
-is no longer recognized as valid.  Use <span class="samp">MIT</span> or
+<pre>    License: X11</pre>
+<p>is no longer recognized as valid.  Use <span class="samp">MIT</span> or
 <span class="samp">BSD_2_clause</span> instead, both of which need <span class="samp">+ file LICENSE</span>.
+</p>
 </li>
 <li><p> For consistency, entries in &lsquo;<span class="file">.Rinstignore</span>&rsquo; are now matched
 case-insensitively on all platforms.
@@ -1349,7 +2122,7 @@ more than 80 characters per line (some packages had over 120
 characters).
 </p>
 </li>
-<li> <p><CODE>R CMD INSTALL &ndash;build</CODE> (not Windows) now defaults to
+<li> <p><code>R CMD INSTALL --build</code> (not Windows) now defaults to
 the internal <code>tar()</code> unless <span class="env">R_INSTALL_TAR</span> is set.
 </p>
 </li>
@@ -1377,7 +2150,7 @@ consistent, in part following the suggestions in <a href="https://bugs.R-project
 </p>
 </li>
 <li><p> Calls to <code>browser()</code> are now consistent with calls
-to the browser triggered by <code>debug()</code>, in that <KBD>Enter</KBD>
+to the browser triggered by <code>debug()</code>, in that <kbd>Enter</kbd>
 will default to <code>n</code> rather than <code>c</code>.
 </p>
 </li>
@@ -1402,23 +2175,23 @@ display a short list of available commands.
 
 <ul>
 <li><p> Only vignettes sources in directory &lsquo;<span class="file">vignettes</span>&rsquo; are
-considered to be vignettes by <CODE>R CMD check</CODE>.  That has
-been the preferred location since <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0 and is now obligatory.
+considered to be vignettes by <code>R CMD check</code>.  That has
+been the preferred location since <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.14.0 and is now obligatory.
 </p>
 </li>
-<li><p> For consistency, <CODE>R CMD build</CODE> now matches entries
+<li><p> For consistency, <code>R CMD build</code> now matches entries
 in &lsquo;<span class="file">.Rbuildignore</span>&rsquo;  and &lsquo;<span class="file">vignettes/.install_extras</span>&rsquo;
 case-insensitively on all platforms (not just on Windows).
 </p>
 </li>
-<li> <p><code>checkFF()</code> (called by <CODE>R CMD check</CODE> by
+<li> <p><code>checkFF()</code> (called by <code>R CMD check</code> by
 default) can optionally check foreign function calls for
 consistency with the registered type and argument count.  This is
-the default for <CODE>R CMD check &ndash;as-cran</CODE> or can be enabled
+the default for <code>R CMD check --as-cran</code> or can be enabled
 by setting environment variable <span class="env">_R_CHECK_FF_CALLS_</span> to
 <span class="samp">registration</span> (but is in any case suppressed by
 <span class="option">--install=no</span>).   Because this checks calls in which
-<code>.NAME</code> is an <font face="Courier New,Courier" color="#666666"><b>R</b></font> object and not just a literal character
+<code>.NAME</code> is an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> object and not just a literal character
 string, some other problems are detected for such calls.
 </p>
 <p>Functions <code>suppressForeignCheck()</code> and <code>dontCheck()</code>
@@ -1426,53 +2199,53 @@ have been added to allow package authors to suppress false
 positive reports.
 </p>
 </li>
-<li> <p><CODE>R CMD check &ndash;as-cran</CODE> warns about a false value of
+<li> <p><code>R CMD check --as-cran</code> warns about a false value of
 the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; field <span class="samp">BuildVignettes</span> for Open Source
 packages, and ignores it.  (An Open Source package needs to have
 complete sources for its vignettes which should be usable on a
 suitably well-equipped system).
 </p>
 </li>
-<li> <p><CODE>R CMD check &ndash;no-rebuild-vignettes</CODE> is defunct:<br>
-<CODE>R CMD check &ndash;no-build-vignettes</CODE> has been preferred since
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0.
+<li> <p><code>R CMD check --no-rebuild-vignettes</code> is defunct:<br />
+<code>R CMD check --no-build-vignettes</code> has been preferred since
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0.
 </p>
 </li>
-<li> <p><CODE>R CMD build &ndash;no-vignettes</CODE> is defunct:<br>
-<CODE>R CMD build &ndash;no-build-vignettes</CODE> has been preferred since
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0.
+<li> <p><code>R CMD build --no-vignettes</code> is defunct:<br />
+<code>R CMD build --no-build-vignettes</code> has been preferred since
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0.
 </p>
 </li>
-<li> <p><CODE>R CMD Sweave</CODE> and <CODE>R CMD Stangle</CODE> now
+<li> <p><code>R CMD Sweave</code> and <code>R CMD Stangle</code> now
 process both Sweave and non-Sweave vignettes.  The
 <code>tools::buildVignette()</code> function has been added to do the
-same tasks from within <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+same tasks from within <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
 </p>
 </li>
-<li><p> The flags returned by <CODE>R CMD config &ndash;ldflags</CODE> and
-(where installed) <CODE>pkg-config &ndash;libs libR</CODE> are now those
-needed to link a front-end against the (shared or static) <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<li><p> The flags returned by <code>R CMD config --ldflags</code> and
+(where installed) <code>pkg-config --libs libR</code> are now those
+needed to link a front-end against the (shared or static) <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 library.
 </p>
 </li>
 <li> <p>&lsquo;<span class="file">Sweave.sty</span>&rsquo; has a new option <span class="samp">[inconsolata]</span>.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> customizations such as
+<li> <p><code>R CMD check</code> customizations such as
 <span class="env">_R_CHECK_DEPENDS_ONLY_</span> make available packages only in
 <span class="samp">LinkingTo</span> only for installation, and not for
 loading/runtime tests.
 </p>
 </li>
-<li> <p><CODE>tools::checkFF()</CODE> reports on <code>.C</code> and
+<li> <p><code>tools::checkFF()</code> reports on <code>.C</code> and
 <code>.Fortran</code> calls with <code>DUP = FALSE</code> if argument
 <code>check_DUP</code> is true.  This is selected by
-<CODE>R CMD check</CODE> by default.
+<code>R CMD check</code> by default.
 </p>
 </li>
-<li> <p><CODE>R CMD check &ndash;use-gct</CODE> can be tuned to
+<li> <p><code>R CMD check --use-gct</code> can be tuned to
 garbage-collect less frequently using <code>gctorture2()</code>
-<EM>via</EM> the setting of environment variable
+<em>via</em> the setting of environment variable
 <span class="env">_R_CHECK_GCT_N_</span>.
 </p>
 </li>
@@ -1490,7 +2263,7 @@ of passes tried to 20.
 <ul>
 <li><p> (Windows only) A function <code>R_WaitEvent()</code> has been
 added (with declaration in header&lsquo;<span class="file">R.h</span>&rsquo;) to block execution
-until the next event is received by <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+until the next event is received by <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
 </p>
 </li>
 <li><p> Remapping in the &lsquo;<span class="file">Rmath.h</span>&rsquo; header can be suppressed by
@@ -1516,7 +2289,7 @@ in C code: <code>ftrunc()</code> is still needed for portable C++ code.
 </li>
 <li><p> The function <code>LENGTH()</code> now checks that it is only
 applied to vector arguments.  However, in packages <code>length()</code>
-should be used. (In <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself <code>LENGTH()</code> is a macro without
+should be used. (In <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> itself <code>LENGTH()</code> is a macro without
 the function overhead of <code>length()</code>.)
 </p>
 </li>
@@ -1546,11 +2319,11 @@ are ignored: LAPACK is always used.
 </li>
 <li> <p><code>.find.package()</code> and <code>.path.package()</code> are
 defunct: only the versions without the initial dot introduced in
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.13.0 have ever been in the API.
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.13.0 have ever been in the API.
 </p>
 </li>
-<li><p> Partial matching when using the <code>$</code> operator <EM>on
-data frames</EM> now throws a warning and may become defunct in the
+<li><p> Partial matching when using the <code>$</code> operator <em>on
+data frames</em> now throws a warning and may become defunct in the
 future. If partial matching is intended, replace <code>foo$bar</code>
 by <code>foo[["bar", exact = FALSE]]</code>.
 </p>
@@ -1577,10 +2350,10 @@ package <span class="pkg">tools</span> are defunct.
 </p>
 </li>
 <li> <p><code>.C(DUP = FALSE)</code> and <code>.Fortran(DUP = FALSE)</code> are
-now deprecated, and may be disabled in future versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  As
+now deprecated, and may be disabled in future versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.  As
 their help has long said, <code>.Call()</code> is much preferred.
 </p>
-<p><CODE>R CMD check</CODE> notes such usages (by default).
+<p><code>R CMD check</code> notes such usages (by default).
 </p>
 </li>
 <li><p> The workaround of setting <span class="env">R_OSX_VALGRIND</span> has been
@@ -1645,7 +2418,7 @@ location or dimension may now become zero).
 </p>
 </li>
 <li><p> Some bugs in TRE have been corrected by updating from the
-<CODE>git</CODE> repository.  This allows <font face="Courier New,Courier" color="#666666"><b>R</b></font> to be installed on some
+<code>git</code> repository.  This allows <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> to be installed on some
 platforms for which this was a blocker (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15087">PR#15087</a> suggests Linux
 on ARM and HP-UX).
 </p>
@@ -1674,7 +2447,7 @@ accidentally, (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=157
 too much for a leaf <code>d</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15702">PR#15702</a>)
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> would try to kill processes on exit that have pids ever
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> would try to kill processes on exit that have pids ever
 used by a child process spawned by <code>mcparallel</code> even though
 the current process with that pid was not actually its child.
 </p>
@@ -1711,10 +2484,10 @@ graphics before it was set.
 
 <ul>
 <li><p> On Windows there is support for making &lsquo;<span class="file">.texi</span>&rsquo; manuals
-using <CODE>texinfo</CODE> 5.0 or later: the setting is in file
+using <code>texinfo</code> 5.0 or later: the setting is in file
 &lsquo;<span class="file">src/gnuwin32/MkRules.dist</span>&rsquo;.
 </p>
-<p>A packaging of the Perl script and modules for <CODE>texinfo</CODE>
+<p>A packaging of the Perl script and modules for <code>texinfo</code>
 5.2 has been made available at
 <a href="http://www.stats.ox.ac.uk/pub/Rtools/">http://www.stats.ox.ac.uk/pub/Rtools/</a>.
 </p>
@@ -1923,7 +2696,7 @@ including <code>browseEnv()</code>, <code>format()</code>, <code>gl()</code>,
 <code>relist()</code> and <code>summary.data.frame()</code>.  (E.g., <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15499">PR#15499</a>)
 </p>
 </li>
-<li> <p><code>Sweave()</code> did not restore the <font face="Courier New,Courier" color="#666666"><b>R</b></font> output to the
+<li> <p><code>Sweave()</code> did not restore the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> output to the
 console if it was interrupted by a user in the middle of evaluating
 a code chunk.  (Reported by Michael Sumner.)
 </p>
@@ -1949,7 +2722,7 @@ rather than failing.
 </p>
 </li>
 <li><p> Saved vignette results (in a &lsquo;<span class="file">.Rout.save</span>&rsquo; file) were
-not being compared to the new ones during <CODE>R CMD check</CODE>.
+not being compared to the new ones during <code>R CMD check</code>.
 </p>
 </li>
 <li><p> Double-clicking outside of the list box (e.g., on the scrollbar)
@@ -1973,7 +2746,7 @@ converted raw vectors to invalid logical vectors. (<a href="https://bugs.R-proje
 one of <code>stdin</code>, <code>stdout</code> or <code>stderr</code> to be a file,
 but the command was not found (e.g., it contained its arguments,
 or the program was not on the <span class="env">PATH</span>), it left the file open
-and unusable until <font face="Courier New,Courier" color="#666666"><b>R</b></font> terminated.  (Reported by Mathew McLean.)
+and unusable until <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> terminated.  (Reported by Mathew McLean.)
 </p>
 </li>
 <li><p> The <code>bmp()</code> device was not recording <code>res = NA</code>
@@ -1982,7 +2755,7 @@ correctly: it is now recorded as 72 ppi.
 </li>
 <li><p> Several potential problems with compiler-specific behaviour
 have been identified using the &lsquo;Undefined Behaviour
-Sanitizer&rsquo; in conjunction with the <CODE>clang</CODE> compiler.
+Sanitizer&rsquo; in conjunction with the <code>clang</code> compiler.
 </p>
 </li>
 <li> <p><code>hcl()</code> now honours <code>NA</code> inputs (previously they
@@ -2012,7 +2785,7 @@ and sometimes removed spaces that should not have been removed.
 (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15583">PR#15583</a>)
 </p>
 </li>
-<li><p> Running <font face="Courier New,Courier" color="#666666"><b>R</b></font> code in a <span class="pkg">tcltk</span> callback failed to set the
+<li><p> Running <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> code in a <span class="pkg">tcltk</span> callback failed to set the
 busy flag, which will be needed to tell OS X not to &lsquo;App Nap&rsquo;.
 </p>
 </li>
@@ -2088,9 +2861,9 @@ values with the <code>"constant"</code> method. (<a href="https://bugs.R-project
 <ul>
 <li><p> The &lsquo;<span class="file">NEWS</span>&rsquo; files have been re-organized.
 </p>
-<p>This file contains news for <font face="Courier New,Courier" color="#666666"><b>R</b></font> &gt;= 3.0.0: news for the 0.x.y, 1.x.y
+<p>This file contains news for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> &gt;= 3.0.0: news for the 0.x.y, 1.x.y
 and 2.x.y releases is in files &lsquo;<span class="file">NEWS.0</span>&rsquo;, &lsquo;<span class="file">NEWS.1</span>&rsquo; and
-&lsquo;<span class="file">NEWS.2</span>&rsquo;.  The latter files are now installed when <font face="Courier New,Courier" color="#666666"><b>R</b></font> is
+&lsquo;<span class="file">NEWS.2</span>&rsquo;.  The latter files are now installed when <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is
 installed.  An HTML version of news from 2.10.0 to 2.15.3 is
 available as &lsquo;<span class="file">doc/html/NEWS.2.html</span>&rsquo;.
 </p>
@@ -2150,7 +2923,7 @@ search path or if some package defines a function of that name.
 </li>
 <li><p> If an invalid/corrupt <code>.Random.seed</code> object is
 encountered in the workspace it is ignored with a warning rather
-than giving an error.  (This allows <font face="Courier New,Courier" color="#666666"><b>R</b></font> itself to rely on a working
+than giving an error.  (This allows <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> itself to rely on a working
 RNG, e.g. to choose a random port.)
 </p>
 </li>
@@ -2233,19 +3006,19 @@ a non-existent vignette engine.
 
 
 <ul>
-<li> <p><CODE>R CMD check &ndash;as-cran</CODE> checks the line widths in
+<li> <p><code>R CMD check --as-cran</code> checks the line widths in
 usage and examples sections of the package Rd files.
 </p>
 </li>
-<li> <p><CODE>R CMD check &ndash;as-cran</CODE> now implies <span class="option">--timings</span>.
+<li> <p><code>R CMD check --as-cran</code> now implies <span class="option">--timings</span>.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> looks for command <CODE>gfile</CODE> if a
-suitable <CODE>file</CODE> is not found.  (Although <CODE>file</CODE> is
-not from GNU, OpenCSW on Solaris installs it as <CODE>gfile</CODE>.)
+<li> <p><code>R CMD check</code> looks for command <code>gfile</code> if a
+suitable <code>file</code> is not found.  (Although <code>file</code> is
+not from GNU, OpenCSW on Solaris installs it as <code>gfile</code>.)
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> (with the internal <code>tar</code>) checks
+<li> <p><code>R CMD build</code> (with the internal <code>tar</code>) checks
 the permissions of &lsquo;<span class="file">configure</span>&rsquo; and &lsquo;<span class="file">cleanup</span>&rsquo; files and
 adds execute permission to the recorded permissions for these
 files if needed, with a warning.  This is useful on OSes and file
@@ -2253,40 +3026,41 @@ systems which do not support execute permissions (notably, on
 Windows).
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> now weaves and tangles all vignettes,
+<li> <p><code>R CMD build</code> now weaves and tangles all vignettes,
 so suggested packages are not required during package installation
 if the source tarball was prepared with current
-<CODE>R CMD build</CODE>.
+<code>R CMD build</code>.
 </p>
 </li>
-<li> <p><code>checkFF()</code> (used by <CODE>R CMD check</CODE>) does a
+<li> <p><code>checkFF()</code> (used by <code>R CMD check</code>) does a
 better job of detecting calls from other packages, including not
 reporting those where a function has been copied from another
 namespace (e.g., as a default method).  It now reports calls where
 <code>.NAME</code> is a symbol registered in another package.
 </p>
 </li>
-<li><p> On Unix-alike systems, <CODE>R CMD INSTALL</CODE> now installs packages
+<li><p> On Unix-alike systems, <code>R CMD INSTALL</code> now installs packages
 group writably whenever the library (<code>lib.loc</code>) is group
 writable.  Hence, <code>update.packages()</code> works for other group
 members (suggested originally and from a patch by Dirk Eddelbuettel).
 </p>
 </li>
-<li> <p><CODE>R CMD javareconf</CODE> now supports the use of symbolic
+<li> <p><code>R CMD javareconf</code> now supports the use of symbolic
 links for <span class="env">JAVA_HOME</span> on platforms which have
-<CODE>realpath</CODE>.  So it is now possible to
+<code>realpath</code>.  So it is now possible to
 use </p>
-<PRE>R CMD javareconf JAVA_HOME=/usr/lib/jvm/java-1.7.0</PRE>
-on a Linux system and record that value rather than the
+<pre>R CMD javareconf JAVA_HOME=/usr/lib/jvm/java-1.7.0</pre>
+<p>on a Linux system and record that value rather than the
 frequently-changing full path such as
 &lsquo;<span class="file">/usr/lib/jvm/java-1.7.0-openjdk-1.7.0.25.x86_64</span>&rsquo;.
-</li>
-<li><p> (Windows only.) <CODE>Rscript -e</CODE> requires a non-empty
-argument for consistency with Unix versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  (Also
-<CODE>Rterm -e</CODE> and <CODE>R -e</CODE>.)
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> does more thorough checking of
+<li><p> (Windows only.) <code>Rscript -e</code> requires a non-empty
+argument for consistency with Unix versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.  (Also
+<code>Rterm -e</code> and <code>R -e</code>.)
+</p>
+</li>
+<li> <p><code>R CMD check</code> does more thorough checking of
 declared packages and namespaces.  It reports
 </p>
 
@@ -2302,18 +3076,18 @@ the <code>::</code> nor <code>:::</code> operators.
 </p>
 </li>
 <li><p> packages which are used in <code>library()</code> or
-<code>requires()</code> calls in the <font face="Courier New,Courier" color="#666666"><b>R</b></font> code but were already put on
-the search path <EM>via</EM> <span class="samp">Depends</span>.
+<code>requires()</code> calls in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> code but were already put on
+the search path <em>via</em> <span class="samp">Depends</span>.
 </p>
 </li>
 <li><p> packages declared in <span class="samp">Depends</span> not imported
-<EM>via</EM> the &lsquo;<span class="file">NAMESPACE</span>&rsquo; file (except the standard
+<em>via</em> the &lsquo;<span class="file">NAMESPACE</span>&rsquo; file (except the standard
 packages).  Objects used from <span class="samp">Depends</span> packages should be
 imported to avoid conflicts and to allow correct operation when
 the namespace is loaded but not attached.
 </p>
 </li>
-<li><p> objects imported <EM>via</EM> <code>:::</code> calls where
+<li><p> objects imported <em>via</em> <code>:::</code> calls where
 <code>::</code> would do.
 </p>
 </li>
@@ -2327,24 +3101,24 @@ the namespace is loaded but not attached.
 <p>See &lsquo;Writing R Extensions&rsquo; for good practice.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> optionally checks for non-standard
+<li> <p><code>R CMD check</code> optionally checks for non-standard
 top-level files and directories (which are often mistakes): this
 is enabled for <span class="option">--as-cran</span>.
 </p>
 </li>
 <li><p> LaTeX style file <code>upquote.sty</code> is no longer included
-(the version was several years old): it is no longer used in <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+(the version was several years old): it is no longer used in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
 A much later version is commonly included in LaTeX distributions
 but does not play well with the <code>ae</code> fonts which are the
 default for Sweave vignettes.
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> makes more use of the &lsquo;<span class="file">build</span>&rsquo;
+<li> <p><code>R CMD build</code> makes more use of the &lsquo;<span class="file">build</span>&rsquo;
 sub-directory of package sources, for example to record
 information about the vignettes.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> analyses <code>:::</code> calls.
+<li> <p><code>R CMD check</code> analyses <code>:::</code> calls.
 </p>
 </li></ul>
 
@@ -2356,8 +3130,8 @@ information about the vignettes.
 
 <ul>
 <li><p> The macros used for the texinfo manuals have been changed to
-work better with the incompatible changes made in <CODE>texinfo
-5.x</CODE>.
+work better with the incompatible changes made in <code>texinfo
+      5.x</code>.
 </p>
 </li>
 <li><p> The minimum version for a system <code>xz</code> library is now
@@ -2376,7 +3150,7 @@ compress in ways other versions cannot decompress.
 updated to 5.0.5.
 </p>
 </li>
-<li><p> Since <CODE>javareconf</CODE> (see above) is used when <font face="Courier New,Courier" color="#666666"><b>R</b></font> is
+<li><p> Since <code>javareconf</code> (see above) is used when <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is
 installed, a stable link for <span class="env">JAVA_HOME</span> can be supplied then.
 </p>
 </li>
@@ -2388,7 +3162,7 @@ which typically require byte-compilation.
 <li><p> More of the installation and checking process will work even
 when <span class="env">TMPDIR</span> is set to a path containing spaces, but this is
 not recommended and external software (such as
-<CODE>texi2dvi</CODE>) may fail.
+<code>texi2dvi</code>) may fail.
 </p>
 </li></ul>
 
@@ -2403,7 +3177,7 @@ not recommended and external software (such as
 package is not installed.
 </p>
 </li>
-<li> <p><CODE>R CMD INSTALL</CODE> has a new option
+<li> <p><code>R CMD INSTALL</code> has a new option
 <code>--no-byte-compile</code> which will override a <span class="samp">ByteCompile</span>
 field in the package's &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file.
 </p>
@@ -2427,7 +3201,7 @@ version requirements were previously silently ignored.)
 <li><p> The default &lsquo;version&rsquo; of Bioconductor for its
 packages has been changed to the upcoming <span class="samp">2.13</span>, but this
 can be set by the environment variable <span class="env">R_BIOC_VERSION</span> when
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> is installed.
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is installed.
 </p>
 </li></ul>
 
@@ -2460,7 +3234,7 @@ against package code supplying an invalid <code>rho</code>.
 <ul>
 <li><p> The unused <code>namespace</code> argument to
 <code>package.skeleton()</code> is now formally deprecated and will be
-removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.1.0.
+removed in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1.0.
 </p>
 </li>
 <li> <p><code>plclust()</code> is deprecated: use the <code>plot()</code> method
@@ -2480,7 +3254,7 @@ current &lsquo;<span class="file">NEWS</span>&rsquo; files for a long time).
 
 
 <ul>
-<li> <p>&lsquo;An Introduction to R&rsquo; has a new chapter on using <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<li> <p>&lsquo;An Introduction to R&rsquo; has a new chapter on using <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 as a scripting language including interacting with the OS.
 </p>
 </li></ul>
@@ -2493,7 +3267,7 @@ as a scripting language including interacting with the OS.
 
 <ul>
 <li> <p><code>help.request()</code> could not determine the current version
-of <font face="Courier New,Courier" color="#666666"><b>R</b></font> on CRAN.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15241">PR#15241</a>)
+of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> on CRAN.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15241">PR#15241</a>)
 </p>
 </li>
 <li><p> On Windows, <code>file.info()</code> failed on root directories unless
@@ -2509,7 +3283,7 @@ results coming from <code>regexpr()</code>.  (<a href="https://bugs.R-project.or
 <code>representation=</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15312">PR#15312</a>)
 </p>
 </li>
-<li> <p><CODE>R CMD config</CODE> failed in an installed build of <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<li> <p><code>R CMD config</code> failed in an installed build of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 3.0.1 (only) when a sub-architecture was used.  (Reported by
 Berwin Turlach.)
 </p>
@@ -2524,9 +3298,9 @@ chosen, so the MD5 sums did not refer to the installed versions.
 (and possibly others similarly).  (Reported by Peter Langfelder.)
 </p>
 </li>
-<li><p> If multiple packages were checked by <CODE>R CMD check</CODE>,
+<li><p> If multiple packages were checked by <code>R CMD check</code>,
 and one was written for a different OS, it would set
-<CODE>&ndash;no-install</CODE> for all following packages as well as
+<code>--no-install</code> for all following packages as well as
 itself.
 </p>
 </li>
@@ -2639,7 +3413,7 @@ tolerance and reported error estimates that were exceeded.
 0. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15915">PR#15915</a>)
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> is now better protected against people trying to interact
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> is now better protected against people trying to interact
 with the console in startup code.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15325">PR#15325</a>)
 </p>
 </li>
@@ -2655,7 +3429,7 @@ to a zero-row data frame.  (<a href="https://bugs.R-project.org/bugzilla3/show_b
 </p>
 </li>
 <li><p> All the (where necessary cut-down) vignettes are installed
-if <font face="Courier New,Courier" color="#666666"><b>R</b></font> was configured with <span class="option">--without-recommended-packages</span>.
+if <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> was configured with <span class="option">--without-recommended-packages</span>.
 </p>
 </li>
 <li> <p><code>source()</code> did not display filenames when reporting
@@ -2666,13 +3440,13 @@ syntax errors.
 token.
 </p>
 </li>
-<li><p> (Windows only) Starting <font face="Courier New,Courier" color="#666666"><b>R</b></font> with <CODE>R</CODE> (instead of
-<CODE>Rterm</CODE> or <CODE>Rgui</CODE>) would lose any
+<li><p> (Windows only) Starting <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> with <code>R</code> (instead of
+<code>Rterm</code> or <code>Rgui</code>) would lose any
 zero-length strings from the command line arguments. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15406">PR#15406</a>)
 </p>
 </li>
 <li><p> Errors in the encoding specified on the command line via
-<CODE>&ndash;encoding=foo</CODE> were not handled properly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15405">PR#15405</a>)
+<code>--encoding=foo</code> were not handled properly.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15405">PR#15405</a>)
 </p>
 </li>
 <li><p> If <code>x</code> is a symbol, <code>is.vector(x, "name")</code> now
@@ -2680,15 +3454,15 @@ returns <code>TRUE</code>, since <code>"name"</code> and <code>"symbol"</code>
 should be synonyms.  (Reported by Hervé Pagès.)
 </p>
 </li>
-<li> <p><CODE>R CMD rtags</CODE> works on platforms (such as OS X)
-with a XSI-conformant shell command <CODE>echo</CODE>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15231">PR#15231</a>)
+<li> <p><code>R CMD rtags</code> works on platforms (such as OS X)
+with a XSI-conformant shell command <code>echo</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15231">PR#15231</a>)
 </p>
 </li>
 <li> <p><code>is.unsorted(NA)</code> returns false as documented (rather than
 <code>NA</code>).
 </p>
 </li>
-<li> <p><CODE>R CMD LINK</CODE> did not know about sub-architectures.
+<li> <p><code>R CMD LINK</code> did not know about sub-architectures.
 </p>
 </li>
 <li> <p><code>system()</code> and <code>system2()</code> are better protected
@@ -2698,13 +3472,13 @@ directory path.
 </li>
 <li> <p><code>file.show()</code> and <code>edit()</code> are now more likely to
 work on file paths containing spaces.  (Where external utilities
-are used, not the norm on Windows nor in <CODE>R.app</CODE> which
+are used, not the norm on Windows nor in <code>R.app</code> which
 should previously have worked.)
 </p>
 </li>
 <li><p> Packages using the <span class="pkg">methods</span> package are more likely to
 work when they import it but it is not attached.  (Several parts
-of its C code were looking for its <font face="Courier New,Courier" color="#666666"><b>R</b></font> functions on the search path
+of its C code were looking for its <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> functions on the search path
 rather than in its namespace.)
 </p>
 </li>
@@ -2713,11 +3487,11 @@ rather than in its namespace.)
 </li>
 <li><p> (Windows) <code>system2()</code> now respects specifying
 <code>stdout</code> and <code>stderr</code> as files if called from
-<CODE>Rgui</CODE>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15393">PR#15393</a>)
+<code>Rgui</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15393">PR#15393</a>)
 </p>
 </li>
 <li><p> Closing an <code>x11()</code> device whilst <code>locator()</code> or
-<code>identify()</code> is in progress no longer hangs <font face="Courier New,Courier" color="#666666"><b>R</b></font>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15253">PR#15253</a>)
+<code>identify()</code> is in progress no longer hangs <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15253">PR#15253</a>)
 </p>
 </li>
 <li> <p><code>list.dirs(full.names = FALSE)</code> was not implemented.
@@ -2812,11 +3586,11 @@ platform, and in most cases serialization to a vector of more than
 
 
 <ul>
-<li> <p><CODE>R CMD config</CODE> now make use of personal
+<li> <p><code>R CMD config</code> now make use of personal
 &lsquo;<span class="file">Makevars</span>&rsquo; files under &lsquo;<span class="file">~/.R</span>&rsquo; and a site file
-&lsquo;<span class="file">Makevars.site</span>&rsquo;, in the same way as <CODE>R CMD SHLIB</CODE> and
-<CODE>R CMD INSTALL</CODE>.  This makes the utility more useful in
-package <CODE>configure</CODE> scripts.
+&lsquo;<span class="file">Makevars.site</span>&rsquo;, in the same way as <code>R CMD SHLIB</code> and
+<code>R CMD INSTALL</code>.  This makes the utility more useful in
+package <code>configure</code> scripts.
 </p>
 <p>On Windows finding the personal files may require the environment
 variable <span class="env">HOME</span> set.
@@ -2835,7 +3609,7 @@ variable <span class="env">HOME</span> set.
 <ul>
 <li><p> Alternatives to the site and user customization files
 &lsquo;<span class="file">Makevars.site</span>&rsquo; and &lsquo;<span class="file">~/.R/Makevars</span>&rsquo; can be specified
-<EM>via</EM> the environment variables <span class="env">R_MAKEVARS_SITE</span> and
+<em>via</em> the environment variables <span class="env">R_MAKEVARS_SITE</span> and
 <span class="env">R_MAKEVARS_USER</span> respectively.  These can be used to suppress
 the use of the default files by setting an empty value (where
 possible) or a non-existent path.
@@ -2886,7 +3660,7 @@ greater than one and more than one argument was using separators
 inconsistently (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15261">PR#15261</a>).
 </p>
 </li>
-<li><p> On Windows in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, <code>savePlot()</code> failed because of
+<li><p> On Windows in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0, <code>savePlot()</code> failed because of
 an incorrect check on the argument count.
 </p>
 </li>
@@ -2900,14 +3674,14 @@ conformance of its <code>x</code>, <code>y</code> and <code>z</code> arguments (
 was used incorrectly in package <a href="http://CRAN.R-project.org/package=R2G2"><span class="pkg">R2G2</span></a>).
 </p>
 </li>
-<li><p> Saved graphics display lists are <font face="Courier New,Courier" color="#666666"><b>R</b></font> version-specific.
+<li><p> Saved graphics display lists are <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version-specific.
 Attempting to load workspaces containing them (or some other
-version-specific objects) aborted the load in <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0 and
+version-specific objects) aborted the load in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0 and
 earlier; now it does a partial load and generates a warning
 instead.
 </p>
 </li>
-<li><p> In <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, <code>identify()</code> and <code>locator()</code> did
+<li><p> In <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0, <code>identify()</code> and <code>locator()</code> did
 not record information correctly, so replaying a graph (e.g., by
 copying it to another device) would fail. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15271">PR#15271</a>)
 </p>
@@ -2935,7 +3709,7 @@ strings and not of error objects.  (Spotted by Karl Forner and
 Bernd Bischl.)
 </p>
 </li>
-<li><p> In <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, when <code>help()</code> found multiple pages with
+<li><p> In <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0, when <code>help()</code> found multiple pages with
 the same alias, the HTML display of all the selections was not
 produced.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15282">PR#15282</a>)
 </p>
@@ -2989,7 +3763,7 @@ instead of failing.
 
 <ul>
 <li><p> Packages need to be (re-)installed under this version
-(3.0.0) of <font face="Courier New,Courier" color="#666666"><b>R</b></font>.
+(3.0.0) of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>.
 </p>
 </li>
 <li><p> There is a subtle change in behaviour for numeric index
@@ -3002,13 +3776,13 @@ vector on a 64-bit platform and give an error on a 32-bit one.
 </li>
 <li><p> It is now possible for 64-bit builds to allocate amounts of
 memory limited only by the OS.  It may be wise to use OS
-facilities (e.g., <CODE>ulimit</CODE> in a <CODE>bash</CODE> shell,
-<CODE>limit</CODE> in <CODE>csh</CODE>), to set limits on overall memory
-consumption of an <font face="Courier New,Courier" color="#666666"><b>R</b></font> process, particularly in a multi-user
+facilities (e.g., <code>ulimit</code> in a <code>bash</code> shell,
+<code>limit</code> in <code>csh</code>), to set limits on overall memory
+consumption of an <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> process, particularly in a multi-user
 environment.  A number of packages need a limit of at least 4GB of
 virtual memory to load.
 </p>
-<p>64-bit Windows builds of <font face="Courier New,Courier" color="#666666"><b>R</b></font> are by default limited in memory usage
+<p>64-bit Windows builds of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> are by default limited in memory usage
 to the amount of RAM installed: this limit can be changed by
 command-line option <span class="option">--max-mem-size</span> or setting environment
 variable <span class="env">R_MAX_MEM_SIZE</span>.
@@ -3240,11 +4014,11 @@ the source file(s) of each chunk.
 long-existing internal call.
 </p>
 </li>
-<li> <p><code>aspell()</code> gains filters for <font face="Courier New,Courier" color="#666666"><b>R</b></font> code, Debian Control
-Format and message catalog files, and support for <font face="Courier New,Courier" color="#666666"><b>R</b></font> level
+<li> <p><code>aspell()</code> gains filters for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> code, Debian Control
+Format and message catalog files, and support for <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> level
 dictionaries.  In addition, package <span class="pkg">utils</span> now provides
 functions <code>aspell_package_R_files()</code> and
-<code>aspell_package_C_files()</code> for spell checking <font face="Courier New,Courier" color="#666666"><b>R</b></font> and C level
+<code>aspell_package_C_files()</code> for spell checking <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> and C level
 message strings in packages.
 </p>
 </li>
@@ -3275,7 +4049,7 @@ use as part of other plots, but does not plot them.
 </p>
 </li>
 <li> <p><code>quartz.save()</code>, formerly an undocumented part of
-<CODE>R.app</CODE>, is now available to copy a device to a
+<code>R.app</code>, is now available to copy a device to a
 <code>quartz()</code> device.  <code>dev.copy2pdf()</code> optionally does
 this for PDF output: <code>quartz.save()</code> defaults to PNG.
 </p>
@@ -3323,7 +4097,7 @@ consequently, <code>head()</code>, e.g., is more useful.
 </li>
 <li> <p><code>encodeString()</code> preserves UTF-8 marked encodings.
 Thus if factor levels are marked as UTF-8 an attempt is made to
-print them in UTF-8 in <CODE>RGui</CODE> on Windows.
+print them in UTF-8 in <code>RGui</code> on Windows.
 </p>
 </li>
 <li> <p><code>readLines()</code> and <code>scan()</code> (and hence
@@ -3401,7 +4175,7 @@ the <span class="samp">ustar</span> limit of 8GB.
 </li>
 <li><p> Local reference classes have been added to package
 <span class="pkg">methods</span>.  These are a technique for avoiding unneeded
-copying of large components of objects while retaining standard <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+copying of large components of objects while retaining standard <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 functional behavior.  See <code>?LocalReferenceClasses</code>.
 </p>
 </li>
@@ -3413,9 +4187,9 @@ past even though the standard required them to be in UTC).
 </p>
 </li>
 <li> <p><code>replayplot()</code> cannot (and will not attempt to) replay
-plots recorded under <font face="Courier New,Courier" color="#666666"><b>R</b></font> &lt; 3.0.0.  It may crash the <font face="Courier New,Courier" color="#666666"><b>R</b></font> session if
+plots recorded under <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> &lt; 3.0.0.  It may crash the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> session if
 an attempt is made to replay plots created in a different build of
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> &gt;= 3.0.0.
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> &gt;= 3.0.0.
 </p>
 </li>
 <li><p> Palette changes get recorded on the display list, so
@@ -3603,7 +4377,7 @@ the future).  Regrettably several packages had copied the non-API
 </li>
 <li> <p><code>.C()</code> and <code>.Fortran()</code> do not accept long vector
 inputs.  This is a precaution as it is very unlikely that existing
-code will have been written to handle long vectors (and the <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+code will have been written to handle long vectors (and the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 wrappers often assume that <code>length(x)</code> is an integer).
 </p>
 </li>
@@ -3624,7 +4398,7 @@ long vectors (slowly except for radix sorting).
 
 
 <ul>
-<li><p> More use has been made of <font face="Courier New,Courier" color="#666666"><b>R</b></font> objects representing registered
+<li><p> More use has been made of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> objects representing registered
 entry points, which is more efficient as the address is provided
 by the loader once only when the package is loaded.
 </p>
@@ -3632,11 +4406,11 @@ by the loader once only when the package is loaded.
 <code>splines</code> and <code>tcltk</code>: it was already in place for the
 other standard packages.
 </p>
-<p>Since these entry points are always accessed by the <font face="Courier New,Courier" color="#666666"><b>R</b></font> entry
+<p>Since these entry points are always accessed by the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> entry
 points they do not need to be in the load table which can be
 substantially smaller and hence searched faster.  This does mean
 that <code>.C</code> / <code>.Fortran</code> / <code>.Call</code> calls copied from
-earlier versions of <font face="Courier New,Courier" color="#666666"><b>R</b></font> may no longer work &ndash; but they were never
+earlier versions of <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> may no longer work &ndash; but they were never
 part of the API.
 </p>
 </li>
@@ -3677,11 +4451,11 @@ to import it explicitly from package <span class="pkg">methods</span>.
 
 <ul>
 <li><p> The transitional support for installing packages without
-namespaces (required since <font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0) has been removed.
-<CODE>R CMD build</CODE> will still add a namespace, but a
+namespaces (required since <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.14.0) has been removed.
+<code>R CMD build</code> will still add a namespace, but a
 <code>.First.lib()</code> function will need to be converted.
 </p>
-<p><CODE>R CMD INSTALL</CODE> no longer adds a namespace (so
+<p><code>R CMD INSTALL</code> no longer adds a namespace (so
 installation will fail), and a <code>.First.lib()</code> function in a
 package will be ignored (with an installation warning for now).
 </p>
@@ -3691,9 +4465,10 @@ package will be ignored (with an installation warning for now).
 </li>
 <li><p> Packages can specify in their &lsquo;<span class="file">DESCRIPTION file</span>&rsquo; a line
 like </p>
-<PRE>     Biarch: yes
-</PRE>
-to be installed on Windows with <span class="option">--force-biarch</span>.
+<pre>     Biarch: yes
+</pre>
+<p>to be installed on Windows with <span class="option">--force-biarch</span>.
+</p>
 </li>
 <li><p> Package vignettes can now be processed by other engines
 besides <code>Sweave</code>; see &lsquo;Writing R Extensions&rsquo; and the
@@ -3701,8 +4476,8 @@ besides <code>Sweave</code>; see &lsquo;Writing R Extensions&rsquo; and the
 </p>
 </li>
 <li><p> The &lsquo;<span class="file">*.R</span>&rsquo; tangled source code for vignettes is now
-included in tarballs when <CODE>R CMD build</CODE> is used to produce
-them.  In <font face="Courier New,Courier" color="#666666"><b>R</b></font> 3.0.0, &lsquo;<span class="file">*.R</span>&rsquo; files not in the sources will be
+included in tarballs when <code>R CMD build</code> is used to produce
+them.  In <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.0.0, &lsquo;<span class="file">*.R</span>&rsquo; files not in the sources will be
 produced at install time, but eventually this will be dropped.
 </p>
 </li>
@@ -3711,7 +4486,7 @@ the repository without any Mac subtype (which used to be
 <span class="samp">universal</span> or <span class="samp">leopard</span>): it looks in
 &lsquo;<span class="file">bin/macosx/contrib/3.0</span>&rsquo; rather than
 &lsquo;<span class="file">bin/macosx/leopard/contrib/2.15</span>&rsquo;).  This is the type used
-for the <acronym><span class="acronym">CRAN</span></acronym> binary distribution for OS X as from <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+for the <acronym><span class="acronym">CRAN</span></acronym> binary distribution for OS X as from <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 3.0.0.
 </p>
 </li>
@@ -3722,7 +4497,7 @@ necessary the corresponding flags and <code>FLIBS</code>) in file
 &lsquo;<span class="file">~/.R/Makevars</span>&rsquo;.
 </p>
 <p>This is convenient for those working with binary distributions of
-<font face="Courier New,Courier" color="#666666"><b>R</b></font>, e.g. on OS X.
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>, e.g. on OS X.
 </p>
 </li></ul>
 
@@ -3733,12 +4508,12 @@ necessary the corresponding flags and <code>FLIBS</code>) in file
 
 
 <ul>
-<li> <p><CODE>R CMD check</CODE> now gives a warning rather than a
+<li> <p><code>R CMD check</code> now gives a warning rather than a
 note if it finds calls to <code>abort</code>, <code>assert</code> or
 <code>exit</code> in compiled code, and has been able to find the
 &lsquo;<span class="file">.o</span>&rsquo; file in which the calls occur.
 </p>
-<p>Such calls can terminate the <font face="Courier New,Courier" color="#666666"><b>R</b></font> process which loads the package.
+<p>Such calls can terminate the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> process which loads the package.
 </p>
 </li>
 <li><p> The location of the build and check environment files can
@@ -3746,55 +4521,55 @@ now be specified by the environment variables
 <span class="env">R_BUILD_ENVIRON</span> and <span class="env">R_CHECK_ENVIRON</span>, respectively.
 </p>
 </li>
-<li> <p><CODE>R CMD Sweave</CODE> gains a <span class="option">--compact</span> option
+<li> <p><code>R CMD Sweave</code> gains a <span class="option">--compact</span> option
 to control possibly reducing the size of the PDF file it creates
 when <span class="option">--pdf</span> is given.
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> now omits Eclipse's &lsquo;<span class="file">.metadata</span>&rsquo;
-directories, and <CODE>R CMD check</CODE> warns if it finds them.
+<li> <p><code>R CMD build</code> now omits Eclipse's &lsquo;<span class="file">.metadata</span>&rsquo;
+directories, and <code>R CMD check</code> warns if it finds them.
 </p>
 </li>
-<li> <p><CODE>R CMD check</CODE> now does some checks on functions
+<li> <p><code>R CMD check</code> now does some checks on functions
 defined within reference classes, including of <code>.Call()</code> etc
 calls.
 </p>
 </li>
-<li> <p><CODE>R CMD check &ndash;as-cran</CODE> notes assignments to the
+<li> <p><code>R CMD check --as-cran</code> notes assignments to the
 global environment, calls to <code>data()</code> which load into the
 global environment, and calls to <code>attach()</code>.
 </p>
 </li>
-<li> <p><CODE>R CMD build</CODE> by default uses the internal method of
+<li> <p><code>R CMD build</code> by default uses the internal method of
 <code>tar()</code> to prepare the tarball.  This is more likely to
-produce a tarball compatible with <CODE>R CMD INSTALL</CODE> and
-<CODE>R CMD check</CODE>: an external <CODE>tar</CODE> program,
-including options, can be specified <EM>via</EM> the environment
+produce a tarball compatible with <code>R CMD INSTALL</code> and
+<code>R CMD check</code>: an external <code>tar</code> program,
+including options, can be specified <em>via</em> the environment
 variable <span class="env">R_BUILD_TAR</span>.
 </p>
 </li>
 <li> <p><code>tools::massageExamples()</code> is better protected against
 packages which re-define base functions such as <code>cat()</code> and
-<code>get()</code> and so can cause <CODE>R CMD check</CODE> to fail when
+<code>get()</code> and so can cause <code>R CMD check</code> to fail when
 checking examples.
 </p>
 </li>
-<li> <p><CODE>R CMD javareconf</CODE> has been enhanced to be more
-similar to the code used by <CODE>configure</CODE>.
+<li> <p><code>R CMD javareconf</code> has been enhanced to be more
+similar to the code used by <code>configure</code>.
 </p>
 <p>There is now a test that a JNI program can be compiled (like
-<CODE>configure</CODE> did) and only working settings are used.
+<code>configure</code> did) and only working settings are used.
 </p>
 <p>It makes use of custom settings from configuration recorded in
 &lsquo;<span class="file">etc/javaconf</span>&rsquo;.
 </p>
 </li>
-<li><p> The <span class="option">--no-vignettes</span> argument of <CODE>R CMD
-build</CODE> has been renamed to the more accurate
+<li><p> The <span class="option">--no-vignettes</span> argument of <code>R CMD
+	build</code> has been renamed to the more accurate
 <span class="option">--no-build-vignettes</span>: its action has always been to
 (re)build vignettes and never omitted them.
 </p>
-<p><CODE>R CMD check</CODE> accepts <span class="option">--no-build-vignettes</span> as a
+<p><code>R CMD check</code> accepts <span class="option">--no-build-vignettes</span> as a
 preferred synonym for <span class="option">--no-rebuild-vignettes</span>.
 </p>
 </li></ul>
@@ -3842,7 +4617,7 @@ been removed: use <code>pdf(file = NULL)</code> instead.
 </p>
 </li>
 <li><p> The <code>.Fortran()</code> entry point <code>"dqrls"</code> which has
-not been used by <font face="Courier New,Courier" color="#666666"><b>R</b></font> since version 2.15.1 is no longer available.
+not been used by <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> since version 2.15.1 is no longer available.
 </p>
 </li>
 <li><p> Functions <code>traceOn()</code> and <code>traceOff()</code> in package
@@ -3902,21 +4677,21 @@ functions removed.
 </p>
 </li>
 <li><p> The <code>maxRasters</code> argument of <code>pdf()</code> (unused since
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> 2.14.0) has been removed.
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 2.14.0) has been removed.
 </p>
 </li>
 <li><p> The unused <code>fontsmooth</code> argument has been removed from
 the <code>quartz()</code> device.
 </p>
 </li>
-<li><p> All the (non-API) EISPACK entry points in <font face="Courier New,Courier" color="#666666"><b>R</b></font> have been removed.
+<li><p> All the (non-API) EISPACK entry points in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> have been removed.
 </p>
 </li>
 <li> <p><code>chol(pivot = TRUE, LINPACK = TRUE)</code> is deprecated.
 </p>
 </li>
 <li><p> The long-deprecated use of <code>\synopsis</code> in the
-<span class="samp">Usage</span> section of &lsquo;<span class="file">.Rd</span>&rsquo; files will be removed in <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<span class="samp">Usage</span> section of &lsquo;<span class="file">.Rd</span>&rsquo; files will be removed in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 3.1.0.
 </p>
 </li>
@@ -3926,11 +4701,12 @@ been in the API.
 </p>
 </li>
 <li><p> In a package's &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file, </p>
-<PRE>    License: X11</PRE>
-is deprecated, since it includes
+<pre>    License: X11</pre>
+<p>is deprecated, since it includes
 &lsquo;Copyright (C) 1996 X Consortium&rsquo; which cannot be
-appropriate for a current <font face="Courier New,Courier" color="#666666"><b>R</b></font> package.  Use &lsquo;MIT&rsquo; or
+appropriate for a current <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> package.  Use &lsquo;MIT&rsquo; or
 &lsquo;BSD_2_clause&rsquo; instead.
+</p>
 </li></ul>
 
 
@@ -3955,7 +4731,7 @@ been used by packages no longer exist, including
 </p>
 </li>
 <li><p> Some <code>.External()</code> calls to the <code>base</code> package
-(really to the <font face="Courier New,Courier" color="#666666"><b>R</b></font> executable or shared library) have been moved to
+(really to the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> executable or shared library) have been moved to
 more appropriate packages.  Packages should not have been using
 such calls, but some did (mainly those used by <code>integrate()</code>).
 </p>
@@ -3969,14 +4745,14 @@ such calls, but some did (mainly those used by <code>integrate()</code>).
 
 <ul>
 <li><p> There is a new function <code>mcaffinity()</code> which allows
-getting or setting the CPU affinity mask for the current <font face="Courier New,Courier" color="#666666"><b>R</b></font> process on
+getting or setting the CPU affinity mask for the current <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> process on
 systems that supports this (currently only Linux has been tested
 successfully).  It has no effect on systems which do not support
 process affinity.  Users are not expected to use this function
 directly (with the exception of fixing libraries that break
 affinity settings like OpenBLAS) &ndash; the function is rather
 intended to support affinity control in high-level parallel
-functions.  In the future, <font face="Courier New,Courier" color="#666666"><b>R</b></font> may supplement lack of affinity
+functions.  In the future, <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> may supplement lack of affinity
 control in the OS by its own bookkeeping via <code>mcaffinity()</code>
 related to processes and threads it spawns.
 </p>
@@ -4026,7 +4802,7 @@ remapping to <code>Rf_</code>, notably <code>[dpq]nbinom_mu</code>.
 </p>
 </li>
 <li><p> Some of the interface pointers formerly available only to
-<CODE>R.app</CODE> are now available to front-ends on all
+<code>R.app</code> are now available to front-ends on all
 Unix-alikes: one has been added for the interface to
 <code>View()</code>.
 </p>
@@ -4049,7 +4825,7 @@ migrated to package <span class="pkg">grDevices</span> and so are no longer avai
 </p>
 </li>
 <li> <p><code>R_GE_version</code> has been increased to <code>10</code> and
-<code>name2col</code> removed (use <code>R_GE_str2col</code> instead).  <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<code>name2col</code> removed (use <code>R_GE_str2col</code> instead).  <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 internal colour codes are now defined using the typedef
 <code>rcolor</code>.
 </p>
@@ -4058,7 +4834,7 @@ internal colour codes are now defined using the typedef
 is valid.
 </p>
 </li>
-<li><p> Several non-API entry points no longer used by <font face="Courier New,Courier" color="#666666"><b>R</b></font> have been
+<li><p> Several non-API entry points no longer used by <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> have been
 removed, including the Fortran entry points <code>chol</code>,
 <code>chol2inv</code>, <code>cg</code>, <code>ch</code> and <code>rg</code>, and the C
 entry points <code>Brent_fmin</code>, <code>fft_factor</code> and <code>fft_work</code>.
@@ -4084,21 +4860,21 @@ file for details).
 
 
 <ul>
-<li><p> The management of translations has been converted to <font face="Courier New,Courier" color="#666666"><b>R</b></font>
+<li><p> The management of translations has been converted to <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span>
 code: see <code>?tools::update_pkg_po</code>.
 </p>
 </li>
-<li><p> The translations for the <font face="Courier New,Courier" color="#666666"><b>R</b></font> interpreter and
-<CODE>RGui.exe</CODE> are now part of the <span class="pkg">base</span> package (rather than
+<li><p> The translations for the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> interpreter and
+<code>RGui.exe</code> are now part of the <span class="pkg">base</span> package (rather than
 having sources in directory &lsquo;<span class="file">po</span>&rsquo; and being installed to
 &lsquo;<span class="file">share/locale</span>&rsquo;).  Thus the <span class="pkg">base</span> package supports three
 translation domains, <code>R-base</code>, <code>R</code> and <code>RGui</code>.
 </p>
 </li>
-<li><p> The compiled translations which ship with <font face="Courier New,Courier" color="#666666"><b>R</b></font> are all
+<li><p> The compiled translations which ship with <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> are all
 installed to the new package <span class="pkg">translations</span> for easier
 updating.  The first package of that name found on
-<code>.libPaths()</code> at the start of the <font face="Courier New,Courier" color="#666666"><b>R</b></font> session will be used.
+<code>.libPaths()</code> at the start of the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> session will be used.
 (It is possible messages will be used before <code>.libPaths()</code> is
 set up in which case the default translations will be used: set
 environment variable <span class="env">R_TRANSLATIONS</span> to point to the location
@@ -4124,11 +4900,11 @@ easier to translate, incorporating suggestions from Łukasz Daniel.
 <ul>
 <li><p> There is again support for building without using the C
 &lsquo;long double&rsquo; type.  This is required by C99, but system
-implementations can be slow or flawed.  Use <CODE>configure</CODE>
+implementations can be slow or flawed.  Use <code>configure</code>
 option <span class="option">--disable-long-double</span>.
 </p>
 </li>
-<li> <p><CODE>make pdf</CODE> and <CODE>make install-pdf</CODE> now make
+<li> <p><code>make pdf</code> and <code>make install-pdf</code> now make
 and install the full reference index (including all base and
 recommended packages).
 </p>
@@ -4138,7 +4914,7 @@ in the installer is now the full reference index, including all
 base and recommended packages.
 </p>
 </li>
-<li> <p><font face="Courier New,Courier" color="#666666"><b>R</b></font> help pages and manuals have no ISBNs because ISBN
+<li> <p><span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> help pages and manuals have no ISBNs because ISBN
 rules no longer allow constantly changing content to be assigned
 an ISBN.
 </p>
@@ -4149,11 +4925,11 @@ dynamically, this led to a lot of broken links.
 </p>
 </li>
 <li><p> Any custom settings for Java configuration are recorded in
-file &lsquo;<span class="file">etc/javaconf</span>&rsquo; for subsequent use by <CODE>R CMD
-javareconf</CODE>.
+file &lsquo;<span class="file">etc/javaconf</span>&rsquo; for subsequent use by <code>R CMD
+	javareconf</code>.
 </p>
 </li>
-<li><p> There is now support for <CODE>makeinfo</CODE> version 5.0
+<li><p> There is now support for <code>makeinfo</code> version 5.0
 (which requires a slightly different &lsquo;<span class="file">.texi</span>&rsquo; syntax).
 </p>
 </li>
@@ -4167,7 +4943,7 @@ systems: misguided users were launching many threads without
 controlling the stack size.
 </p>
 </li>
-<li> <p><CODE>configure</CODE> no longer looks for file
+<li> <p><code>configure</code> no longer looks for file
 &lsquo;<span class="file">~/.Rconfig</span>&rsquo;: &lsquo;<span class="file">~/.R/config</span>&rsquo; has long been preferred.
 </p>
 </li></ul>
@@ -4179,13 +4955,13 @@ controlling the stack size.
 
 
 <ul>
-<li><p> When <CODE>R CMD build</CODE> is run in an encoding other than
+<li><p> When <code>R CMD build</code> is run in an encoding other than
 the one specified in the package's &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file it
 tries harder to expand the <code>authors@R</code> field in the specified
 encoding.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=14958">PR#14958</a>)
 </p>
 </li>
-<li><p> If <CODE>R CMD INSTALL</CODE> is required to expand the
+<li><p> If <code>R CMD INSTALL</code> is required to expand the
 <code>authors@R</code> field of the &lsquo;<span class="file">DESCRIPTION</span>&rsquo; file, it tries
 harder to do so in the encoding specified for the package (rather
 than using ASCII escapes).
@@ -4257,7 +5033,7 @@ is no longer <code>-Inf</code>; ditto for corresponding <code>pt()</code> and
 	log.p=TRUE)</code>. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15162">PR#15162</a>)
 </p>
 </li>
-<li><p> The Windows graphics device would crash <font face="Courier New,Courier" color="#666666"><b>R</b></font> if a user
+<li><p> The Windows graphics device would crash <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> if a user
 attempted to load the graphics history from a variable that was
 not a saved history. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15230">PR#15230</a>)
 </p>
@@ -4292,7 +5068,7 @@ class definitions containing <code>"array"</code> or <code>"matrix"</code>.
 <a href="../NEWS.0">NEWS.0</a>, <a href="../NEWS.1">NEWS.1</a>
 and <a href="../NEWS.2">NEWS.2</a>
 in the &lsquo;<span class="file">doc</span>&rsquo; directory.  News in HTML format for
-<font face="Courier New,Courier" color="#666666"><b>R</b></font> versions from 2.10.0 to 2.15.3 is in
+<span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> versions from 2.10.0 to 2.15.3 is in
 <a href="NEWS.2.html">NEWS.2.html</a>.
 </p>
 </li></ul>

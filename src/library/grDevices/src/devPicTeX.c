@@ -740,7 +740,7 @@ SEXP PicTeX(SEXP args)
 	    error(_("unable to start %s() device"), "pictex");
 	}
 	dd = GEcreateDevDesc(dev);
-	GEaddDevice2(dd, "pictex");
+	GEaddDevice2f(dd, "pictex", file);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

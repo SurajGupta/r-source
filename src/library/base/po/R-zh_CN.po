@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-13 14:10\n"
+"POT-Creation-Date: 2015-03-24 11:51\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -46,6 +46,9 @@ msgstr "'x'里有无穷值或遗漏值"
 
 msgid "a dimension is zero"
 msgstr "维度为零"
+
+msgid "\"hexNumeric\"and \"digits17\" are mutually exclusive"
+msgstr ""
 
 msgid "second argument must be a list"
 msgstr "第二个参数必需为串列"
@@ -301,7 +304,7 @@ msgid "only a single element should be replaced"
 msgstr "只能替换一个单元"
 
 #, fuzzy
-msgid "Name partially matched in data frame"
+msgid "Partial match of '%s' to '%s' in data frame"
 msgstr "数据框里有非数值的参数"
 
 msgid "names do not match previous names"
@@ -313,16 +316,14 @@ msgstr "变量的列数不对"
 msgid "invalid list argument: all variables should have the same length"
 msgstr "串列参数有错：所有变数的长度都应该是一样的"
 
-msgid "data frame with 0 columns and %d rows"
-msgstr "数据框没有列但有%d行"
-
 msgid "<0 rows> (or 0-length row.names)"
 msgstr "<0 行> (或0-长度的row.names)"
 
 msgid "non-numeric variable in data frame:"
 msgstr "数据框里有非数值的参数"
 
-msgid "only defined for equally-sized data frames"
+#, fuzzy
+msgid "%s only defined for equally-sized data frames"
 msgstr "只适用于大小相同的数据框"
 
 msgid "list of length %d not meaningful"
@@ -548,7 +549,8 @@ msgstr "'labels'不对；长度%d应该是一或%d"
 msgid "number of levels differs"
 msgstr "层次数目不同"
 
-msgid "not meaningful for factors"
+#, fuzzy
+msgid "%s not meaningful for factors"
 msgstr "对因子没有意义"
 
 msgid "level sets of factors are different"
@@ -635,6 +637,9 @@ msgstr "'flag'只能含'0+- #'"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "破损的数据框：縮短列的长度或用NA来填充空白"
+
+msgid "'big.mark' and 'decimal.mark' are both '%s', which could be confusing"
+msgstr ""
 
 msgid "'zero.print' has length > 1"
 msgstr "'zero.print'的长度一定得大于一"
@@ -753,6 +758,10 @@ msgstr "%s不是有效的已经安装了的程序包"
 msgid "%s not found on search path, using pos = 2"
 msgstr "在搜索路径上找不到%s，用pos=2"
 
+#, fuzzy
+msgid "Package %s version %s cannot be unloaded"
+msgstr "没有载入程辑包%s"
+
 msgid "package or namespace load failed for %s"
 msgstr "%s程辑包或名字空间载入失败，"
 
@@ -842,14 +851,11 @@ msgstr "关于这个程辑包%s的说明书"
 msgid "package %s required by %s could not be found"
 msgstr "找不到%2$s所需要的程辑包%1$s"
 
-msgid "package %s %s was found, but %s %s is required by %s"
-msgstr "找到了程辑包%1$s %2$s，但%5$s需要%3$s %4$s"
+msgid "version %s of %s masked by %s in %s"
+msgstr ""
 
 msgid "package %s could not be loaded"
 msgstr "无法载入程辑包%s"
-
-msgid "package %s %s is loaded, but %s %s is required by %s"
-msgstr "载入了程辑包%1$s %2$s，但%5$s需要%3$s %4$s "
 
 msgid "empty (zero-byte) input file"
 msgstr "空的(零字节)输入文件"
@@ -953,8 +959,14 @@ msgstr "'by'的长度一定得和列的长度相同"
 msgid "'by' must specify one or more columns as numbers, names or logical"
 msgstr "'by'一定得用数字，名字或逻辑值来指定一个或多个列"
 
+msgid "long vectors are not supported"
+msgstr ""
+
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "'by.x'和'by.y'设定了不同数目的列"
+
+msgid "'incomparables' is supported only for merging on a single column"
+msgstr ""
 
 msgid "additional arguments ignored in message()"
 msgstr "message()里附加参数略过不用"
@@ -1427,9 +1439,6 @@ msgstr "无traceback"
 msgid "invalid version specification %s"
 msgstr "版本设定不对%s"
 
-msgid "wrong argument"
-msgstr "参数不对"
-
 msgid "invalid 'value'"
 msgstr "'value'无效"
 
@@ -1527,12 +1536,27 @@ msgid "deparse option %s is not recognized"
 msgid_plural "deparse options %s are not recognized"
 msgstr[0] "没有%s反向分析这个选项"
 
+#, fuzzy
 msgid ""
-"The following object is masked %s %s:\n"
+"The following object is masked _by_ %s:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"The following objects are masked %s %s:\n"
+"The following objects are masked _by_ %s:\n"
+"\n"
+"%s\n"
+msgstr[0] ""
+"下列对象被屏蔽了%s %s:\n"
+"\n"
+"%s\n"
+
+#, fuzzy
+msgid ""
+"The following object is masked from %s:\n"
+"\n"
+"%s\n"
+msgid_plural ""
+"The following objects are masked from %s:\n"
 "\n"
 "%s\n"
 msgstr[0] ""
@@ -1580,6 +1604,11 @@ msgstr[0] "替换数据里有%d行来替换%d行"
 msgid "provided %d variable to replace %d variables"
 msgid_plural "provided %d variables to replace %d variables"
 msgstr[0] "提供了%d变数用来替换%d变数"
+
+#, fuzzy
+msgid "data frame with 0 columns and %d row"
+msgid_plural "data frame with 0 columns and %d rows"
+msgstr[0] "数据框没有列但有%d行"
 
 msgid "library %s contains no packages"
 msgid_plural "libraries %s contain no packages"
@@ -1636,6 +1665,36 @@ msgstr[0] "不是所有的%s都是TRUE"
 msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "警告信息：\n"
+
+#, fuzzy
+#~ msgid "cannot be unloaded."
+#~ msgstr "无法卸下%s这个名字空间："
+
+#, fuzzy
+#~ msgid "re-exports %s not exported by %s"
+#~ msgstr "'namespace:%2$s'没有出口%1$s这个对象"
+
+#~ msgid "package %s %s was found, but %s %s is required by %s"
+#~ msgstr "找到了程辑包%1$s %2$s，但%5$s需要%3$s %4$s"
+
+#~ msgid "package %s %s is loaded, but %s %s is required by %s"
+#~ msgstr "载入了程辑包%1$s %2$s，但%5$s需要%3$s %4$s "
+
+#~ msgid "wrong argument"
+#~ msgstr "参数不对"
+
+#~ msgid ""
+#~ "The following object is masked %s %s:\n"
+#~ "\n"
+#~ "%s\n"
+#~ msgid_plural ""
+#~ "The following objects are masked %s %s:\n"
+#~ "\n"
+#~ "%s\n"
+#~ msgstr[0] ""
+#~ "下列对象被屏蔽了%s %s:\n"
+#~ "\n"
+#~ "%s\n"
 
 #~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
 #~ msgstr "'nu'的值必需是零，nrow(x) 或ncol(x)"

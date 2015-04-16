@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  (C) Copyright 2008-11 Simon Urbanek
- *      Copyright 2011-2014 R Core Team.
+ *      Copyright 2011-2015 R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,8 +25,10 @@
 */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h> /* for affinity function checks and sigaction */
+# include <config.h> /* for affinity function checks and sigaction */
 #endif
+#define NO_NLS
+#include <Defn.h> // for R_isForkedChild
 
 #include "parallel.h"
 
@@ -40,8 +42,6 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#include <R.h>
-#include <Rinternals.h>
 #include <Rinterface.h> /* for R_Interactive */
 
 #ifndef FILE_LOG
@@ -239,9 +239,6 @@ static void parent_sig_handler(int sig) {
 	clean_zombies();
 }
 #endif
-
-/* from Defn.h */
-extern Rboolean R_isForkedChild;
 
 SEXP mc_fork(SEXP sEstranged)
 {
@@ -553,8 +550,10 @@ static SEXP read_child_ci(child_info_t *ci)
 	PROTECT(rv);
 	{
 	    SEXP pa = allocVector(INTSXP, 1);
+	    PROTECT(pa);
 	    INTEGER(pa)[0] = ci->pid;
 	    setAttrib(rv, install("pid"), pa);
+	    UNPROTECT(1);
 	}
 	UNPROTECT(1);
 	return rv;
@@ -701,7 +700,7 @@ SEXP mc_kill(SEXP sPid, SEXP sSig)
     return ScalarLogical(1);
 }
 
-SEXP mc_exit(SEXP sRes) 
+SEXP NORET mc_exit(SEXP sRes)
 {
     int res = asInteger(sRes);
 #ifdef MC_DEBUG
@@ -729,7 +728,6 @@ SEXP mc_exit(SEXP sRes)
 #endif
     _exit(res);
     error(_("'mcexit' failed"));
-    return R_NilValue;
 }
 
 /* NA = query, TRUE/FALSE = set R_Interactive accordingly */

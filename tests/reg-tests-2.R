@@ -1006,7 +1006,7 @@ try(x[1, c("a", "c")])
 
 ## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
 meth2gen <- function(cl)
-    noquote(sub(paste("\\.",cl,"$",sep=""),"", c(methods(class = cl))))
+    noquote(sub(paste("\\.",cl,"$",sep=""),"", c(.S3methods(class = cl))))
 meth2gen("data.frame")
 meth2gen("dendrogram")
 ## --> the output may need somewhat frequent updating..
@@ -1894,7 +1894,7 @@ for(z in c("response", "working", "deviance", "pearson"))
 ## apply on arrays with zero extents
 ## Robin Hankin, R-help, 2006-02-13
 A <- array(0, c(3, 0, 4))
-dimnames(A) <- list(a = letters[1:3], b = NULL, c = LETTERS[1:4])
+dimnames(A) <- list(D1 = letters[1:3], D2 = NULL, D3 = LETTERS[1:4])
 f <- function(x) 5
 apply(A, 1:2, f)
 apply(A, 1, f)
@@ -2889,3 +2889,52 @@ function( a   # parameter 1
 p <- parse(text = raw)
 getParseData(p)
 ## Got some parents wrong
+
+
+## wish of PR#15819
+set.seed(123); x <- runif(10); y <- rnorm(10)
+op <- options(OutDec = ",")
+fit <- lm(y ~ x)
+summary(fit)
+options(op)
+## those parts using formatC still used a decimal point.
+
+
+## Printing a list with "bad" component names
+L <- list(`a\\b` = 1, `a\\c` = 2, `a\bc` = "backspace")
+setClass("foo", representation(`\\C` = "numeric"))
+## the next three all print correctly:
+names(L)
+unlist(L)
+as.pairlist(L)
+cat(names(L), "\n")# yes, backspace is backspace here
+L
+new("foo")
+## the last two lines printed wrongly in R <= 3.1.1
+
+
+## Printing of arrays where last dim(.) == 0 :
+r <- matrix(,0,4, dimnames=list(Row=NULL, Col=paste0("c",1:4)))
+r
+t(r) # did not print "Row", "Col"
+A <- array(dim=3:0, dimnames=list(D1=c("a","b","c"), D2=c("X","Y"), D3="I", D4=NULL))
+A ## did not print *anything*
+A[,,"I",] # ditto
+A[,,0,]   # ditto
+aperm(A, c(3:1,4))   # ditto
+aperm(A, c(1:2, 4:3))# ditto
+unname(A)            # ditto
+format(A[,,1,])	     # ditto
+aperm(A, 4:1) # was ok, is unchanged
+## sometimes not printing anything in R <= 3.1.1
+
+
+## Printing objects with very long names cut off literal values (PR#15999)
+make_long_name <- function(n)
+{
+  paste0(rep("a", n), collapse = "")
+}
+setNames(TRUE, make_long_name(1000))  # value printed as TRU
+setNames(TRUE, make_long_name(1002))  # value printed as T
+setNames(TRUE, make_long_name(1003))  # value not printed
+##

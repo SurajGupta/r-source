@@ -1,7 +1,7 @@
 #  File src/library/methods/R/zzz.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,10 @@
     .makeBasicFuns(where)
     rm(.makeGeneric, .newClassRepresentation, .possibleExtends,
        ..mergeClassDefSlots, .classGeneratorFunction, ..classEnv,
-       ..addToMetaTable, ..extendsForS3, envir = where)
+       ..addToMetaTable, ..extendsForS3,
+       .InitClassDefinition, .InitBasicClasses, .initClassSupport,
+       .InitMethodsListClass, .setCoerceGeneric, .makeBasicFuns,
+       envir = where)
     .InitMethodDefinitions(where)
     .InitShowMethods(where)
     assign(".isPrototype", ..isPrototype, envir = where)
@@ -72,22 +75,25 @@
     assign(".checkRequiredGenerics", ..checkRequiredGenerics, envir = where)
     assign(".methodPackageSlots", ..methodPackageSlots, envir = where)
     rm(..isPrototype, .isSealedMethod, ..requirePackage, .implicitGeneric,
-       ..checkRequiredGenerics, ..methodPackageSlots, envir = where)
+       ..checkRequiredGenerics, ..methodPackageSlots, .envRefMethods,
+       .InitBasicClassMethods, .InitExtensions, .InitStructureMethods,
+       .InitMethodDefinitions, .InitShowMethods, .InitClassUnion,
+       .InitS3Classes, .InitSpecialTypesAndClasses, .InitTraceFunctions,
+       .InitRefClasses, .initImplicitGenerics,
+       envir = where)
     ## unlock some bindings that must be modifiable
     unlockBinding(".BasicFunsList", where)
     assign(".saveImage", TRUE, envir = where)
     cat(" done\n")
 
     assign("envRefMethodNames",
-	   ls(getClassDef("envRefClass")@refMethods, all.names = TRUE),
-	   envir = where)
+	   names(getClassDef("envRefClass")@refMethods), envir = where)
     assign(".onLoad", ..onLoad, envir = where)
     rm(...onLoad, ..onLoad, envir = where)
     dbbase <- file.path(libname, pkgname, "R", pkgname)
     ns <- asNamespace(pkgname)
-    vars <- ls(envir = ns, all.names = TRUE)
     ## we need to exclude the registration vars
-    vars <- grep("^C_", vars, invert = TRUE, value = TRUE)
+    vars <- grep("^C_", names(ns), invert = TRUE, value = TRUE)
     tools:::makeLazyLoadDB(ns, dbbase, variables = vars)
 }
 

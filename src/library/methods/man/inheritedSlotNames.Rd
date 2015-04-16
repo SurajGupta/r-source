@@ -34,8 +34,6 @@ inheritedSlotNames(Class, where = topenv(parent.frame()))
 library(stats4)
 inheritedSlotNames("mle")
 
-%% this is not run currently, as it makes later examples fail:
-\dontrun{
 if(require("Matrix")) {
   print( inheritedSlotNames("Matrix") ) # NULL
   ## whereas
@@ -46,6 +44,7 @@ if(require("Matrix")) {
 
   print( inheritedSlotNames(cl) ) # *all* six slots are inherited
 }
+\dontrun{
 % currently, don't do this when running all examples: classes remain
 % cached anyway :
 ## detach package we've attached above:

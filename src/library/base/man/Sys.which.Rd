@@ -3,8 +3,6 @@
 % Copyright 2007-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{Sys.which}
 \alias{Sys.which}
 \title{Find Full Paths to Executables}

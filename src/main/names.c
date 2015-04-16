@@ -2,7 +2,7 @@
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  *  Copyright (C) 1997--2015  The R Core Team
- *  Copyright (C) 2003, 2004  The R Foundation
+ *  Copyright (C) 2003--2015  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -123,6 +123,7 @@ FUNTAB R_FunTab[] =
 {"missing",	do_missing,	1,	0,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"nargs",	do_nargs,	1,	1,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"on.exit",	do_onexit,	0,	100,	1,	{PP_FUNCALL, PREC_FN,	  0}},
+{"forceAndCall",do_forceAndCall,	0,	0,	-1,	{PP_FUNCALL, PREC_FN,	  0}},
 
 /* .Internals */
 
@@ -201,7 +202,7 @@ FUNTAB R_FunTab[] =
 {"oldClass",	do_class,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"oldClass<-",	do_classgets,	0,	1,	2,	{PP_FUNCALL, PREC_LEFT, 1}},
 {"class",	R_do_data_class,0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{".cache_class",	R_do_data_class,	1,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{".cache_class",R_do_data_class,1,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"class<-",	R_do_set_class,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"unclass",	do_unclass,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"names",	do_names,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -236,6 +237,7 @@ FUNTAB R_FunTab[] =
 {"comment",	do_comment,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"comment<-",	do_commentgets,	0,	11,	2,	{PP_FUNCALL, PREC_LEFT,	1}},
 {"get",		do_get,		1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"get0",	do_get,		2,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"mget",	do_mget,	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"exists",	do_get,		0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"assign",	do_assign,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
@@ -244,7 +246,7 @@ FUNTAB R_FunTab[] =
 {"duplicated",	do_duplicated,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"unique",	do_duplicated,	1,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"anyDuplicated",do_duplicated,	2,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"anyNA",	do_anyNA,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"anyNA",	do_anyNA,	0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"which",	do_which,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"which.min",	do_first_min,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"pmin",	do_pmin,	0,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -253,9 +255,10 @@ FUNTAB R_FunTab[] =
 {"match",	do_match,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"pmatch",	do_pmatch,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"charmatch",	do_charmatch,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"match.call",	do_matchcall,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
-{"crossprod",	do_matprod,	1,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
-{"tcrossprod",	do_matprod,	2,	11,	2,	{PP_FUNCALL, PREC_FN,	  0}},
+{"match.call",	do_matchcall,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
+{"crossprod",	do_matprod,	1,	11,	2,	{PP_FUNCALL, PREC_FN,   0}},
+{"tcrossprod",	do_matprod,	2,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"lengths",	do_lengths,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"attach",	do_attach,	0,	111,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"detach",	do_detach,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -496,12 +499,12 @@ FUNTAB R_FunTab[] =
 
 /* Type coercion */
 
-{"as.character",do_ascharacter,	0,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"as.integer",	do_ascharacter,	1,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"as.double",	do_ascharacter,	2,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"as.complex",	do_ascharacter,	3,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"as.logical",	do_ascharacter,	4,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
-{"as.raw",	do_ascharacter,	5,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.character",do_asatomic,	0,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.integer",	do_asatomic,	1,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.double",	do_asatomic,	2,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.complex",	do_asatomic,	3,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.logical",	do_asatomic,	4,	1,	-1,	{PP_FUNCALL, PREC_FN,	0}},
+{"as.raw",	do_asatomic,	5,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.call",	do_ascall,	0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"as.environment",do_as_environment,0,	1,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"storage.mode<-",do_storage_mode,0,	1,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -682,9 +685,10 @@ FUNTAB R_FunTab[] =
 {"recordGraphics", do_recordGraphics, 0, 211,     3,      {PP_FOREIGN, PREC_FN,	0}},
 {"dyn.load",	do_dynload,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"dyn.unload",	do_dynunload,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"ls",		do_ls,		1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"ls",		do_ls,		1,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"typeof",	do_typeof,	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"eval",	do_eval,	0,	211,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"returnValue",   do_returnValue,0,     11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"sys.parent",	do_sys,		1,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sys.call",	do_sys,		2,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sys.frame",	do_sys,		3,	11,	-1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -716,9 +720,10 @@ FUNTAB R_FunTab[] =
 {"bodyCode",	do_bodyCode,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"environment",	do_envir,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"environmentName",do_envirName,0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"env2list",	do_env2list,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"env2list",	do_env2list,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"reg.finalizer",do_regFinaliz,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"options",	do_options,	0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"getOption",	do_getOption,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"sink",	do_sink,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"sink.number",	do_sinknumber,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"rapply",	do_rapply,	0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
@@ -731,6 +736,8 @@ FUNTAB R_FunTab[] =
 {"retracemem",  do_retracemem,  0,      201,     -1,      {PP_FUNCALL, PREC_FN,	0}},
 {"untracemem",  do_untracemem,  0,      101,	1,      {PP_FUNCALL, PREC_FN,	0}},
 {"inspect",	do_inspect,	0,	111,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"address",     do_address,     0,       11,     1,     {PP_FUNCALL, PREC_FN, 0}},
+{"refcnt",      do_refcnt,      0,       11,     1,     {PP_FUNCALL, PREC_FN, 0}},
 {"mem.limits",	do_memlimits,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"merge",	do_merge,	0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"capabilities",do_capabilities,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -738,6 +745,7 @@ FUNTAB R_FunTab[] =
 {"new.env",	do_newenv,	0,	11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"parent.env",  do_parentenv,   0,	11,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"parent.env<-",do_parentenvgets, 0,	11,     2,      {PP_FUNCALL, PREC_LEFT,	1}},
+{"topenv",	do_topenv,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"l10n_info",	do_l10n_info,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 {"Cstack_info", do_Cstack_info,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
 
@@ -755,8 +763,9 @@ FUNTAB R_FunTab[] =
 {"list.dirs",	do_listdirs,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.exists", do_fileexists,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.choose", do_filechoose,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
-{"file.info",	do_fileinfo,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"file.info",	do_fileinfo,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
 {"file.access",	do_fileaccess,	0,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
+{"dir.exists",	do_direxists,	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"dir.create",	do_dircreate,	0,	111,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempfile",	do_tempfile,	0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"tempdir",	do_tempdir,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
@@ -836,7 +845,7 @@ FUNTAB R_FunTab[] =
 {"close",	do_close,	0,      111,     2,      {PP_FUNCALL, PREC_FN,	0}},
 {"flush",	do_flush,	0,      111,     1,      {PP_FUNCALL, PREC_FN,	0}},
 {"file",	do_url,		1,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
-{"url",		do_url,		0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
+{"url",		do_url,		0,      11,     5,      {PP_FUNCALL, PREC_FN,	0}},
 {"pipe",	do_pipe,	0,      11,     3,      {PP_FUNCALL, PREC_FN,	0}},
 {"fifo",	do_fifo,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
 {"gzfile",	do_gzfile,	0,      11,     4,      {PP_FUNCALL, PREC_FN,	0}},
@@ -878,6 +887,7 @@ FUNTAB R_FunTab[] =
 {"registerNamespace",do_regNS,		0, 11,	2,      {PP_FUNCALL, PREC_FN,	0}},
 {"unregisterNamespace",do_unregNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getRegisteredNamespace",do_getRegNS,	0, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
+{"isRegisteredNamespace", do_getRegNS,	1, 11,  1,      {PP_FUNCALL, PREC_FN,	0}},
 {"getNamespaceRegistry",do_getNSRegistry, 0, 11, 0,     {PP_FUNCALL, PREC_FN,	0}},
 {"importIntoEnv",do_importIntoEnv, 0,	11,	4,	{PP_FUNCALL, PREC_FN,	0}},
 {"env.profile",  do_envprofile,    0,	211,	1,	{PP_FUNCALL, PREC_FN,	0}},
@@ -918,6 +928,7 @@ FUNTAB R_FunTab[] =
 {"rowsum_df",	do_rowsum, 	1,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"setS4Object",	do_setS4Object, 0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
 {"traceOnOff",	do_traceOnOff, 	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
+{"debugOnOff",	do_traceOnOff, 	1,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 
 {"La_qr_cmplx",	do_lapack,     	0,	11,	1,	{PP_FUNCALL, PREC_FN,	0}},
 {"La_rs",	do_lapack,     	1,	11,	2,	{PP_FUNCALL, PREC_FN,	0}},
@@ -946,6 +957,15 @@ FUNTAB R_FunTab[] =
 {"La_svd",	do_lapack,     	400,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"La_svd_cmplx",do_lapack,     	401,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 {"La_version",	do_lapack,     	1000,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+
+{"bcprofcounts",do_bcprofcounts,0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"bcprofstart",	do_bcprofstart,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"bcprofstop",	do_bcprofstop,	0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+
+{"eSoftVersion",do_eSoftVersion, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"curlVersion", do_curlVersion, 0,	11,	0,	{PP_FUNCALL, PREC_FN,	0}},
+{"curlGetHeaders",do_curlGetHeaders,0,	11,	3,	{PP_FUNCALL, PREC_FN,	0}},
+{"curlDownload",do_curlDownload, 0,	11,	5,	{PP_FUNCALL, PREC_FN,	0}},
 
 {NULL,		NULL,		0,	0,	0,	{PP_INVALID, PREC_FN,	0}},
 };
@@ -1014,13 +1034,12 @@ int StrToInternal(const char *s)
 static void installFunTab(int i)
 {
     SEXP prim;
-    /* prim needs to be protected since install can (and does here) allocate */
-    PROTECT(prim = mkPRIMSXP(i, R_FunTab[i].eval % 10));
+    /* mkPRIMSXP caches its results, thus prim does not need protection */
+    prim = mkPRIMSXP(i, R_FunTab[i].eval % 10);
     if ((R_FunTab[i].eval % 100 )/10)
 	SET_INTERNAL(install(R_FunTab[i].name), prim);
     else
 	SET_SYMVALUE(install(R_FunTab[i].name), prim);
-    UNPROTECT(1);
 }
 
 static void SymbolShortcuts(void)
@@ -1052,10 +1071,12 @@ static void SymbolShortcuts(void)
     R_NamesSymbol = install("names");
     R_NaRmSymbol = install("na.rm");
     R_PackageSymbol = install("package");
+    R_PreviousSymbol = install("previous");
     R_QuoteSymbol = install("quote");
     R_RowNamesSymbol = install("row.names");
     R_SeedsSymbol = install(".Random.seed");
-    R_SourceSymbol = install("source");   /* Still present for back compatibility, but not used */
+    R_SortListSymbol = install("sort.list");
+    R_SourceSymbol = install("source");   /* Still present for use in methods package, not used elsewhere */
     R_TspSymbol = install("tsp");
     /* ../include/Defn.h , i.e. non-public : */
     R_CommentSymbol = install("comment");
@@ -1067,10 +1088,15 @@ static void SymbolShortcuts(void)
     R_WholeSrcrefSymbol = install("wholeSrcref");
     R_TmpvalSymbol = install("*tmp*");
     R_UseNamesSymbol = install("use.names");
+    R_ColonSymbol = install(":");
     R_DoubleColonSymbol = install("::");
     R_TripleColonSymbol = install(":::");
     R_ConnIdSymbol = install("conn_id");
     R_DevicesSymbol = install(".Devices");
+    R_baseSymbol = // <- back compatible, "deprecated"
+    R_BaseSymbol = install("base");
+    R_SpecSymbol = install("spec");
+    R_NamespaceEnvSymbol = install(".__NAMESPACE__.");
 
     R_dot_Generic = install(".Generic");
     R_dot_Method = install(".Method");
@@ -1081,7 +1107,33 @@ static void SymbolShortcuts(void)
     R_dot_Class = install(".Class");
     R_dot_GenericCallEnv = install(".GenericCallEnv");
     R_dot_GenericDefEnv = install(".GenericDefEnv");
+    R_dot_packageName = install(".packageName");
 }
+
+
+#define N_DDVAL_SYMBOLS 65
+
+static SEXP DDVALSymbols[N_DDVAL_SYMBOLS];
+
+static SEXP createDDVALSymbol(int n) {
+    char buf[10];
+    snprintf(buf, 10, "..%d", n);
+    return install(buf);
+}
+
+static void initializeDDVALSymbols() {
+    for(int i = 0; i < N_DDVAL_SYMBOLS; i++) {
+        DDVALSymbols[i] = createDDVALSymbol(i);
+    }
+}
+
+SEXP attribute_hidden installDDVAL(int n) {
+    if (n < N_DDVAL_SYMBOLS)
+        return DDVALSymbols[n];
+
+    return createDDVALSymbol(n);
+}
+
 
 /* initialize the symbol table */
 void attribute_hidden InitNames()
@@ -1115,6 +1167,8 @@ void attribute_hidden InitNames()
     R_print.na_string = NA_STRING;
     /* R_BlankString */
     R_BlankString = mkChar("");
+    R_BlankScalarString = ScalarString(R_BlankString);
+    MARK_NOT_MUTABLE(R_BlankScalarString);
 
     /* Initialize the symbol Table */
     for (int i = 0; i < HSIZE; i++) R_SymbolTable[i] = R_NilValue;
@@ -1131,6 +1185,7 @@ void attribute_hidden InitNames()
         SET_SPECIAL_SYMBOL(install(Spec_name[i]));
 
     R_initAsignSymbols();
+    initializeDDVALSymbols();
     R_initialize_bcode();
 }
 
@@ -1144,22 +1199,93 @@ SEXP install(const char *name)
     SEXP sym;
     int i, hashcode;
 
-    if (*name == '\0')
-	error(_("attempt to use zero-length variable name"));
-    if (strlen(name) > MAXIDSIZE)
-	error(_("variable names are limited to %d bytes"), MAXIDSIZE);
     hashcode = R_Newhashpjw(name);
     i = hashcode % HSIZE;
     /* Check to see if the symbol is already present;  if it is, return it. */
     for (sym = R_SymbolTable[i]; sym != R_NilValue; sym = CDR(sym))
 	if (strcmp(name, CHAR(PRINTNAME(CAR(sym)))) == 0) return (CAR(sym));
     /* Create a new symbol node and link it into the table. */
+    if (*name == '\0')
+	error(_("attempt to use zero-length variable name"));
+    if (strlen(name) > MAXIDSIZE)
+	error(_("variable names are limited to %d bytes"), MAXIDSIZE);
     sym = mkSYMSXP(mkChar(name), R_UnboundValue);
     SET_HASHVALUE(PRINTNAME(sym), hashcode);
     SET_HASHASH(PRINTNAME(sym), 1);
 
     R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);
     return (sym);
+}
+
+SEXP installChar(SEXP charSXP)
+{
+    SEXP sym;
+    int i, hashcode;
+
+    if( !HASHASH(charSXP) ) {
+        hashcode = R_Newhashpjw(CHAR(charSXP));
+        SET_HASHVALUE(charSXP, hashcode);
+        SET_HASHASH(charSXP, 1);
+    } else {
+        hashcode = HASHVALUE(charSXP);
+    }
+    i = hashcode % HSIZE;
+    /* Check to see if the symbol is already present;  if it is, return it. */
+    for (sym = R_SymbolTable[i]; sym != R_NilValue; sym = CDR(sym))
+        if (strcmp(CHAR(charSXP), CHAR(PRINTNAME(CAR(sym)))) == 0) return (CAR(sym));
+    /* Create a new symbol node and link it into the table. */
+    int len = LENGTH(charSXP);
+    if (len == 0)
+        error(_("attempt to use zero-length variable name"));
+    if (len > MAXIDSIZE)
+        error(_("variable names are limited to %d bytes"), MAXIDSIZE);
+    if (IS_ASCII(charSXP) || (IS_UTF8(charSXP) && utf8locale) ||
+                                        (IS_LATIN1(charSXP) && latin1locale) )
+        sym = mkSYMSXP(charSXP, R_UnboundValue);
+    else {
+        /* This branch is to match behaviour of install (which is older):
+           symbol C-string names are always interpreted as if
+           in the native locale, even when they are not in the native locale */
+        PROTECT(charSXP);
+        sym = mkSYMSXP(mkChar(CHAR(charSXP)), R_UnboundValue);
+        SET_HASHVALUE(PRINTNAME(sym), hashcode);
+        SET_HASHASH(PRINTNAME(sym), 1);
+        UNPROTECT(1);
+    }
+
+    R_SymbolTable[i] = CONS(sym, R_SymbolTable[i]);
+    return (sym);
+}
+
+#define maxLength 512
+attribute_hidden
+SEXP installS3Signature(const char *className, const char *methodName) {
+
+    const char *src;
+    char signature[maxLength];
+
+    int i = 0;
+    for(src = className; *src; src++) {
+        if (i == maxLength)
+            error(_("class name too long in '%s'"), className);
+        signature[i++] = *src;
+    }
+
+    if (i == maxLength)
+        error(_("class name too long in '%s'"), className);
+    signature[i++] = '.';
+
+    for(src = methodName; *src; src++) {
+        if (i == maxLength)
+            error(_("class name too long in '%s'"), className);
+        signature[i++] = *src;
+    }
+
+    if (i == maxLength)
+        error(_("class name too long in '%s'"), className);
+    signature[i] = 0;
+
+    return install(signature);
 }
 
 

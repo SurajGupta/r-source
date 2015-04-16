@@ -7,15 +7,25 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-01-26 09:09\n"
+"POT-Creation-Date: 2015-03-01 13:20\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+
+#, fuzzy
+msgid "Reading %s failed with message: %s"
+msgstr ""
+"编译TeX文件%s失败，消息为:\n"
+"%s"
+
+#, fuzzy
+msgid "Checking %s"
+msgstr "%s…"
 
 msgid "argument 'package' must be of length 1"
 msgstr "参数'package'的长度必需为一"
@@ -227,9 +237,16 @@ msgid ""
 "already be known to R."
 msgstr "R必需知道带'base'，'recommended'或'defunct-base'优先权的程辑包."
 
+msgid "Malformed Title field: should not end in a period."
+msgstr ""
+
 msgid ""
-"See the information on DESCRIPTION files in section 'Creating R packages' of "
-"the 'Writing R Extensions' manual."
+"Malformed Description field: should contain one or more complete sentences."
+msgstr ""
+
+#, fuzzy
+msgid ""
+"See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual."
 msgstr ""
 "请参考'如何写R附加软件'说明书'写R程辑包'这一段中关于DESCRIPTION文件的信息."
 
@@ -248,7 +265,14 @@ msgstr "Authors@R领域里没有有效作用的人"
 msgid "Cannot extract Maintainer field from Authors@R field:"
 msgstr "无法从Authors@R 抽取维修人域"
 
-msgid "Authors@R field gives no person with maintainer role and email address."
+#, fuzzy
+msgid "Authors@R field gives more than one person with maintainer role:"
+msgstr "Authors@R域没有提供有作者作用的人"
+
+#, fuzzy
+msgid ""
+"Authors@R field gives no person with maintainer role, valid email address "
+"and non-empty name."
 msgstr "Authors@R域没有提供有维修作用的人和他的email"
 
 msgid "Encoding '%s' is not portable"
@@ -294,9 +318,8 @@ msgstr "%s程序包存在但没有在R >= 2.10.0下安装，因此无法对xrefs
 msgid "Missing link or links in documentation object '%s':"
 msgstr "使用手冊对象'%s'缺少联结:"
 
-msgid ""
-"See the information in section 'Cross-references' of the 'Writing R "
-"Extensions' manual."
+#, fuzzy
+msgid "See section 'Cross-references' in the 'Writing R Extensions' manual."
 msgstr "请参考'如何写R附加软件'说明书中'交叉引用'这一段。"
 
 msgid "File %s:"
@@ -325,9 +348,9 @@ msgstr "程序包启动函数不应该调用%s 。"
 msgid "See section %s in '%s'."
 msgstr "参见'%2$s'里的%1$s章节"
 
+#, fuzzy
 msgid ""
-"Package detach functions should have one arguments with names starting with "
-"%s."
+"Package detach functions should have one argument with name starting with %s."
 msgstr "程序包脱离函数需要有个名字开头为%s的参数。"
 
 msgid "Package detach functions should not call %s."
@@ -355,6 +378,14 @@ msgid "'library' or 'require' call not declared from: %s"
 msgstr "'library'或'require'调用没有被声明: %s"
 
 #, fuzzy
+msgid "'loadNamespace' or 'requireNamespace' calls not declared from:"
+msgstr "'library'或'require'调用没有被声明:"
+
+#, fuzzy
+msgid "'loadNamespace' or 'requireNamespace' call not declared from: %s"
+msgstr "'library'或'require'调用没有被声明: %s"
+
+#, fuzzy
 msgid "'library' or 'require' calls to packages already attached by Depends:"
 msgstr "'library'或'require'调用没有被声明:"
 
@@ -362,6 +393,14 @@ msgstr "'library'或'require'调用没有被声明:"
 msgid ""
 "'library' or 'require' call to %s which was already attached by Depends."
 msgstr "'library'或'require'调用没有被声明: %s"
+
+#, fuzzy
+msgid "'library' or 'require' calls in package code:"
+msgstr "'library'或'require'调用没有被声明:"
+
+#, fuzzy
+msgid "'library' or 'require' call to %s in package code."
+msgstr "'library'或'require'调用没有被声明:"
 
 msgid "Namespaces in Imports field not imported from:"
 msgstr ""
@@ -448,8 +487,8 @@ msgstr ""
 "%s\n"
 "在名字空间。"
 
-msgid "argument 'file' must be a character string or connection"
-msgstr "参数'document'必需是字符串或联结"
+msgid "Rd object required"
+msgstr ""
 
 msgid "missing/empty %s field in '%s'"
 msgstr "'%2$s'里缺少或有空白的%s域"
@@ -477,6 +516,16 @@ msgstr "无法使用缺少或有空白名字的Rd对象"
 
 msgid "No help on %s found in RdDB %s"
 msgstr "RdDB %2$s里找不到关于%1$s的帮助"
+
+msgid "'macros' must be TRUE or must specify existing macros"
+msgstr ""
+
+msgid "Macro file %s should only contain Rd macro definitions and comments"
+msgstr ""
+
+#, fuzzy
+msgid "No Rd macros in package '%s'."
+msgstr "程序包%s里没有任何文件"
 
 msgid "more than one \\examples section, using the first"
 msgstr "多个\\example段，取用第一段"
@@ -518,6 +567,10 @@ msgid "Only one Rd section per %s is supported."
 msgstr "每%s只支持一个Rd章节"
 
 #, fuzzy
+msgid "DESCRIPTION file is for package '%s', not '%s'"
+msgstr "程序包'%s'缺少'DESCRIPTION.in'"
+
+#, fuzzy
 msgid "Vignette product %s does not have a known filename extension (%s)"
 msgstr "没有一个已知的文件扩展名"
 
@@ -533,6 +586,9 @@ msgstr ""
 
 msgid "unable to create temp directory %s"
 msgstr "无法建立临时目录%s"
+
+msgid "Vignette '%s' is non-ASCII but has no declared encoding"
+msgstr ""
 
 #, fuzzy
 msgid "Running"
@@ -568,13 +624,6 @@ msgid "file '%s' not found"
 msgstr "找不到'%s'这个文件"
 
 msgid "vignette filename '%s' does not match any of the '%s' filename patterns"
-msgstr ""
-
-#, fuzzy
-msgid "Inconsistent encoding specifications:"
-msgstr "非标准执照规格"
-
-msgid "with %\\SweaveUTF8"
 msgstr ""
 
 msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
@@ -801,15 +850,15 @@ msgstr "程序包%s里的链结%s不存在"
 msgid "No docs found for package %s"
 msgstr "程序包%s里没有任何文件"
 
+msgid "URL %s was not found"
+msgstr "找不到%s这个URL"
+
 msgid ""
 "Only help files, %s, %s and files under %s and %s in a package can be viewed"
 msgstr "能够查看的文件限制于帮助文件，%s, %s 和%s下的文件和程序包%s里的文件"
 
 msgid "unsupported URL %s"
 msgstr "不支持URL %s"
-
-msgid "URL %s was not found"
-msgstr "找不到%s这个URL"
 
 msgid "httpd server disabled by R_DISABLE_HTTPD"
 msgstr "R_DISABLE_HTTPD的设定关闭了httpd服务器"
@@ -1078,9 +1127,6 @@ msgstr "找到了%s,可能是从%s来的"
 msgid "testing '%s' failed"
 msgstr "试用'%s'失败了"
 
-msgid "%d of the package tests failed"
-msgstr ""
-
 msgid "Testing examples for package %s"
 msgstr "试验程序包%s的范例"
 
@@ -1129,6 +1175,18 @@ msgstr "'x'必需是单字符串"
 msgid "test '%s' is not available"
 msgstr "不存在'%s'这个测试"
 
+msgid ":"
+msgstr "："
+
+msgid "latin1"
+msgstr ""
+
+msgid "ASCII"
+msgstr ""
+
+msgid "byte"
+msgstr ""
+
 msgid "argument 'x' must be a character vector"
 msgstr "参数'x'必需是字符矢量"
 
@@ -1150,11 +1208,9 @@ msgstr "无法在'%2$s'上调用'%1$s'"
 msgid "unable to run %s on '%s'"
 msgstr "无法在'%2$s'上调用%1$s"
 
-msgid "cannot coerce"
+#, fuzzy
+msgid "cannot coerce %s to logical"
 msgstr "无法强迫改变"
-
-msgid "to logical"
-msgstr "为逻辑值"
 
 msgid "File 'DESCRIPTION' is missing."
 msgstr "缺少'DESCRIPTION'这个文件"
@@ -1179,6 +1235,10 @@ msgstr "无法读取程辑包源编码"
 
 msgid "Call sequence:"
 msgstr "调用序列:"
+
+#, fuzzy
+msgid "'text' must be a character vector"
+msgstr "参数'x'必需是字符矢量"
 
 msgid "parsing '%s'"
 msgstr "文名分析'%s'"
@@ -1301,6 +1361,25 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "不能用多个数据调用来产生对象%s"
 
+msgid "%d of the package tests failed"
+msgid_plural "%d of the package tests failed"
+msgstr[0] ""
+
+#, fuzzy
+#~ msgid "Undeclared package used in Rd xrefs:"
+#~ msgid_plural "Undeclared packages used in Rd xrefs:"
+#~ msgstr[0] "Rd xrefs里包含了不知来源的程序包%s"
+
+#, fuzzy
+#~ msgid "Inconsistent encoding specifications: %s with %%\\SweaveUTF8"
+#~ msgstr "非标准执照规格"
+
+#~ msgid "argument 'file' must be a character string or connection"
+#~ msgstr "参数'document'必需是字符串或联结"
+
+#~ msgid "to logical"
+#~ msgstr "为逻辑值"
+
 #~ msgid "Vignette product"
 #~ msgstr "产品简介："
 
@@ -1321,9 +1400,6 @@ msgstr[0] "不能用多个数据调用来产生对象%s"
 
 #~ msgid ". The following files exists in directory"
 #~ msgstr "。目录里有这些文件"
-
-#~ msgid ":"
-#~ msgstr "："
 
 #~ msgid "Located more than one"
 #~ msgstr "找到一个以上的"
@@ -1789,9 +1865,6 @@ msgstr[0] "不能用多个数据调用来产生对象%s"
 #~ "'可能不对'的链结一般具有\\link[pkg]{a}这样的格式，这里 'a'指的是别名但不是"
 #~ "真的文件名字--这种链结不能在小于2.10.0版本的R里用, 而且也只能在这个版本R的"
 #~ "HTML帮助里用(PDF不行)。"
-
-#~ msgid "missing 'DESCRIPTION.in' for package '%s'"
-#~ msgstr "程序包'%s'缺少'DESCRIPTION.in'"
 
 #~ msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 #~ msgstr "错误：R的版本是%s，捆程序捆包'%s'要求版本为%s %s的R"

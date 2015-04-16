@@ -238,7 +238,7 @@ install.packages <-
     }
 
     ## check for writability by user
-    ok <- file.info(lib)$isdir & (file.access(lib, 2) == 0L)
+    ok <- dir.exists(lib) & (file.access(lib, 2) == 0L)
     if(length(lib) > 1 && any(!ok))
         stop(sprintf(ngettext(sum(!ok),
                               "'lib' element %s is not a writable directory",
@@ -247,7 +247,7 @@ install.packages <-
     if(length(lib) == 1L && .Platform$OS.type == "windows") {
         ## file.access is unreliable on Windows, especially >= Vista.
         ## the only known reliable way is to try it
-        ok <- file.info(lib)$isdir %in% TRUE # dir might not exist, PR#14311
+        ok <- dir.exists(lib) # dir might not exist, PR#14311
         if(ok) {
             fn <- file.path(lib, paste("_test_dir", Sys.getpid(), sep = "_"))
             unlink(fn, recursive = TRUE) # precaution
@@ -344,7 +344,6 @@ install.packages <-
     }
 
 
-# for testing .Platform$pkgType <- "mac.binary"
     ## Look at type == "both"
     ## NB it is only safe to use binary packages with a Mac OS X
     ## build that uses the same R foundation layout as CRAN since
@@ -379,6 +378,10 @@ install.packages <-
 
         srcvers <- available[bins, "Version"]
         later <- as.numeric_version(binvers) < srcvers
+
+        action <- getOption("install.packages.compile.from.source",
+                            "interactive")
+        if(!nzchar(Sys.which(Sys.getenv("MAKE", "make")))) action <- "never"
         if(any(later)) {
             msg <- ngettext(sum(later),
                             "There is a binary version available but the source version is later",
@@ -392,21 +395,25 @@ install.packages <-
                               check.names = FALSE)[later, ]
             print(out)
             cat("\n")
-            if(interactive() && any(later & hasSrc)) {
-                msg <-
-                    ngettext(sum(later & hasSrc),
-                             "Do you want to install from sources the package which needs compilation?",
-                             "Do you want to install from sources the packages which need compilation?")
-                message(msg, domain = NA)
-                res <- readline("y/n: ")
-                if(res != "y") later <- later & !hasSrc
+            if(any(later & hasSrc)) {
+                if(action == "interactive" && interactive()) {
+                    msg <-
+                        ngettext(sum(later & hasSrc),
+                                 "Do you want to install from sources the package which needs compilation?",
+                                 "Do you want to install from sources the packages which need compilation?")
+                    message(msg, domain = NA)
+                    res <- readline("y/n: ")
+                    if(res != "y") later <- later & !hasSrc
+                } else if (action == "never") {
+                    cat("  Binaries will be installed\n")
+                    later <- later & !hasSrc
+                }
             }
         }
         bins <- bins[!later]
 
-        if(interactive() && length(srcOnly)) {
-            nc <- !( available[srcOnly, "NeedsCompilation"] %in% "no" )
-            s2 <- srcOnly[nc]
+        if(length(srcOnly)) {
+            s2 <- srcOnly[!( available[srcOnly, "NeedsCompilation"] %in% "no" )]
             if(length(s2)) {
                 msg <-
                     ngettext(length(s2),
@@ -415,9 +422,14 @@ install.packages <-
                 msg <- c(paste0(msg, ": "), sQuote(s2))
                 msg <- strwrap(paste(msg, collapse = " "), exdent = 2)
                 message(paste(msg, collapse = "\n"), domain = NA)
-                message("Do you want to attempt to install these from sources?")
-                res <- readline("y/n: ")
-                if(res != "y") pkgs <- setdiff(pkgs, s2)
+                if(action == "interactive" && interactive()) {
+                    message("Do you want to attempt to install these from sources?")
+                    res <- readline("y/n: ")
+                    if(res != "y") pkgs <- setdiff(pkgs, s2)
+                } else if(action == "never") {
+                    cat("  These will not be installed\n")
+                    pkgs <- setdiff(pkgs, s2)
+                }
             }
         }
 
@@ -561,7 +573,7 @@ install.packages <-
             keep_outputs <- FALSE
     } else if(is.character(keep_outputs) &&
               (length(keep_outputs) == 1L)) {
-        if(!file_test("-d", keep_outputs) &&
+        if(!dir.exists(keep_outputs) &&
            !dir.create(keep_outputs, recursive = TRUE))
             stop(gettextf("unable to create %s", sQuote(keep_outputs)),
                  domain = NA)

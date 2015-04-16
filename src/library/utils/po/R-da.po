@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 3.0.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-27 17:14\n"
+"POT-Creation-Date: 2015-03-24 11:52\n"
 "PO-Revision-Date: 2012-01-09 20:51+0200\n"
 "Last-Translator: Joe <joedalton2@yahoo.dk>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -40,10 +40,6 @@ msgstr "reference til ukendt klump %s"
 msgid "no Sweave file with name %s found"
 msgstr "ingen Sweavefil med navnet %s blev fundet"
 
-#, fuzzy
-msgid "%d Sweave files for basename %s found"
-msgstr "%d Sweavefiler for basisnavn %s blev fundet:"
-
 msgid "more than one syntax specification found, using the first one"
 msgstr "mere end en syntaksspecifikation fundet, bruger den første"
 
@@ -66,6 +62,10 @@ msgid ""
 msgstr ""
 "fortolkningsfejl eller tom indstilling i\n"
 "%s"
+
+#, fuzzy
+msgid "Warning: unknown option '--clean='%s"
+msgstr "Advarsel: Ukendt indstilling"
 
 #, fuzzy
 msgid "Warning: unknown option %s"
@@ -338,9 +338,6 @@ msgstr ""
 msgid "%s has a help file but no examples"
 msgstr ""
 
-msgid "test '%s' is not available"
-msgstr ""
-
 msgid "Line number missing"
 msgstr ""
 
@@ -427,10 +424,16 @@ msgstr ""
 msgid "do not know what to search"
 msgstr ""
 
-msgid "incorrect type specification"
+msgid "argument 'help.db' is deprecated"
 msgstr ""
 
-msgid "argument 'help.db' is deprecated"
+msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
+msgstr ""
+
+msgid "incorrect 'agrep' specification"
+msgstr ""
+
+msgid "incorrect type specification"
 msgstr ""
 
 msgid "could not find package %s"
@@ -442,12 +445,6 @@ msgstr ""
 msgid "removing all entries with invalid multi-byte character data"
 msgstr ""
 
-msgid "no information in the database for package %s: need 'rebuild = TRUE'?"
-msgstr ""
-
-msgid "incorrect 'agrep' specification"
-msgstr ""
-
 msgid "invalid browser name, check options(\"browser\")."
 msgstr ""
 
@@ -456,7 +453,7 @@ msgstr ""
 
 msgid ""
 "If nothing happens, you should open\n"
-"'%s' yourself"
+"%s yourself"
 msgstr ""
 
 msgid ""
@@ -510,10 +507,12 @@ msgstr ""
 msgid "no function '%s' is visible"
 msgstr ""
 
-msgid "function '%s' appears not to be generic"
+msgid "generic function '%s' dispatches methods for generic '%s'"
 msgstr ""
 
-msgid "generic function '%s' dispatches methods for generic '%s'"
+msgid ""
+"function '%s' appears not to be S3 generic; found functions that look like "
+"S3 methods"
 msgstr ""
 
 msgid "must supply 'generic.function' or 'class'"
@@ -566,6 +565,11 @@ msgstr ""
 #, fuzzy
 msgid "invalid 'filters' argument."
 msgstr "Ugyldigt argument for »filter«."
+
+msgid ""
+"specifying 'contriburl' or 'available' requires a single type, not type = "
+"\"both\""
+msgstr ""
 
 msgid "package '%s' in library '%s' will not be updated"
 msgstr ""
@@ -636,6 +640,9 @@ msgid ""
 "skipping dependencies"
 msgstr ""
 
+msgid "type 'binary' is not supported on this platform"
+msgstr ""
+
 msgid "no packages were specified"
 msgstr ""
 
@@ -648,15 +655,14 @@ msgstr ""
 msgid "unable to create %s"
 msgstr ""
 
-msgid "inferring 'repos = NULL' from the file name"
+msgid "inferring 'repos = NULL' from 'pkgs'"
+msgstr ""
+
+msgid "unable to create temporary directory %s"
 msgstr ""
 
 msgid ""
 "type == \"both\" can only be used on Windows or a CRAN build for Mac OS X"
-msgstr ""
-
-msgid ""
-"type == \"both\" cannot be used if 'available' or 'contriburl' is specified"
 msgstr ""
 
 msgid "type == \"both\" cannot be used with 'repos = NULL'"
@@ -686,9 +692,6 @@ msgid "system (cmd0): %s"
 msgstr ""
 
 msgid "installation of package %s had non-zero exit status"
-msgstr ""
-
-msgid "unable to create temporary directory %s"
 msgstr ""
 
 msgid "foundpkgs: %s"
@@ -734,6 +737,9 @@ msgid "Created file named %s."
 msgstr ""
 
 msgid "Edit the file and move it to the appropriate directory."
+msgstr ""
+
+msgid "cannot determine import name"
 msgstr ""
 
 msgid "no documentation of type %s and topic %s (or error in processing help)"
@@ -1022,8 +1028,13 @@ msgstr ""
 msgid "no download method found"
 msgstr ""
 
-msgid "method 'lynx' is untested and deprecated as from R 3.1.0"
-msgstr ""
+#, fuzzy
+msgid "'url' must be a length-one character vector"
+msgstr "»package« skal være en tegnstreng eller NULL"
+
+#, fuzzy
+msgid "'destfile' must be a length-one character vector"
+msgstr "»package« skal være en tegnstreng eller NULL"
 
 msgid "download had nonzero exit status"
 msgstr ""
@@ -1068,11 +1079,6 @@ msgstr ""
 msgid "method 'mailx' is Unix-only"
 msgstr ""
 
-msgid ""
-"If nothing happens, you should open\n"
-"%s yourself"
-msgstr ""
-
 #, fuzzy
 msgid "zip file %s not found"
 msgstr "pakke %s blev ikke fundet"
@@ -1088,6 +1094,12 @@ msgstr ""
 
 msgid "winDialogString() cannot be used non-interactively"
 msgstr ""
+
+#, fuzzy
+msgid "%d Sweave file for basename %s found"
+msgid_plural "%d Sweave files for basename %s found"
+msgstr[0] "%d Sweavefiler for basisnavn %s blev fundet:"
+msgstr[1] "%d Sweavefiler for basisnavn %s blev fundet:"
 
 #, fuzzy
 msgid "%d occurrence in %s"
@@ -1130,10 +1142,11 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "package %s is not available (for %s)"
-msgid_plural "packages %s are not available (for %s)"
-msgstr[0] ""
-msgstr[1] ""
+#, fuzzy
+msgid "package %s is not available (%s)"
+msgid_plural "packages %s are not available (%s)"
+msgstr[0] "Filter »%s« er ikke tilgængelig."
+msgstr[1] "Filter »%s« er ikke tilgængelig."
 
 msgid "dependency %s is not available"
 msgid_plural "dependencies %s are not available"
@@ -1165,14 +1178,15 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-msgid "Do you want to install from sources the package which need compilation?"
+msgid ""
+"Do you want to install from sources the package which needs compilation?"
 msgid_plural ""
 "Do you want to install from sources the packages which need compilation?"
 msgstr[0] ""
 msgstr[1] ""
 
 msgid ""
-"Package which are only available in source form, and may need compilation of "
+"Package which is only available in source form, and may need compilation of "
 "C/C++/Fortran"
 msgid_plural ""
 "Packages which are only available in source form, and may need compilation "
@@ -1215,6 +1229,10 @@ msgid_plural "packages %s are in use and will not be installed"
 msgstr[0] ""
 msgstr[1] ""
 
+#, fuzzy
+#~ msgid ","
+#~ msgstr ","
+
 #~ msgid "broken installation, no CITATION file in the base package."
 #~ msgstr "ødelagt installation, ingen CITATION-fil i basispakken."
 
@@ -1235,7 +1253,3 @@ msgstr[1] ""
 
 #~ msgid "call"
 #~ msgstr "kald"
-
-#, fuzzy
-#~ msgid ","
-#~ msgstr ","

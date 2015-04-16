@@ -97,8 +97,8 @@ merge(x, y, \dots)
   some aspects work with data frames containing matrices, but not all.
   
   Currently long vectors are not accepted for inputs, which are thus
-  restricted to less than 2^31 rows, and that restriction
-  also applies to the result.
+  restricted to less than 2^31 rows.  Prior to \R 3.2.0 that restriction
+  also applied to the result (and still does for 32-bit platforms).
 }
 
 \value{

@@ -1,6 +1,6 @@
 % File src/library/base/man/grep.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{grep}
@@ -13,10 +13,10 @@
 \alias{gregexpr}
 \alias{regexec}
 \description{
-  \code{grep}, \code{grepl}, \code{regexpr} and \code{gregexpr} search
-  for matches to argument \code{pattern} within each element of a
-  character vector: they differ in the format of and amount of detail in
-  the results.
+  \code{grep}, \code{grepl}, \code{regexpr}, \code{gregexpr} and
+  \code{regexec} search for matches to argument \code{pattern} within
+  each element of a character vector: they differ in the format of and
+  amount of detail in the results.
 
   \code{sub} and \code{gsub} perform replacement of the first and all
   matches respectively.
@@ -56,7 +56,7 @@ regexec(pattern, text, ignore.case = FALSE,
     vector.  \link{Long vectors} are supported.}
   \item{ignore.case}{if \code{FALSE}, the pattern matching is \emph{case
       sensitive} and if \code{TRUE}, case is ignored during matching.}
-  \item{perl}{logical.  Should perl-compatible regexps be used?}
+  \item{perl}{logical.  Should Perl-compatible regexps be used?}
   \item{value}{if \code{FALSE}, a vector containing the (\code{integer})
     indices of the matches determined by \code{grep} is returned, and if
     \code{TRUE}, a vector containing the matching elements themselves is
@@ -287,8 +287,10 @@ findArgs("package:base", "warn")
 ## trim trailing white space
 str <- "Now is the time      "
 sub(" +$", "", str)  ## spaces only
+## what is considered 'white space' depends on the locale.
 sub("[[:space:]]+$", "", str) ## white space, POSIX-style
-sub("\\\\s+$", "", str, perl = TRUE) ## Perl-style white space
+## what PCRE considered white space changed in version 8.34: see ?regex
+sub("\\\\s+$", "", str, perl = TRUE) ## PCRE-style white space
 
 ## capitalizing
 txt <- "a test of capitalizing"
@@ -334,6 +336,13 @@ URL_parts <- function(x) {
     parts
 }
 URL_parts(x)
+
+## There is no gregexec() yet, but one can emulate it by running
+## regexec() on the regmatches obtained via gregexpr().  E.g.:
+pattern <- "([[:alpha:]]+)([[:digit:]]+)"
+s <- "Test: A1 BC23 DEF456"
+lapply(regmatches(s, gregexpr(pattern, s)), 
+       function(e) regmatches(e, regexec(pattern, e)))
 }
 \keyword{character}
 \keyword{utilities}

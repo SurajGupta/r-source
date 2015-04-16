@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.4.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-07-20 09:37\n"
+"POT-Creation-Date: 2015-03-01 13:19\n"
 "PO-Revision-Date: 2005-02-04 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -230,6 +230,10 @@ msgstr "'x'和'y'的值不能是无限的，而且不能有缺少"
 msgid "'z' must be a matrix"
 msgstr "'z'必需是矩阵"
 
+#, fuzzy
+msgid "'z' must be numeric or logical"
+msgstr "'x'必需为数值"
+
 msgid "invalid z limits"
 msgstr "z的限制不对"
 
@@ -309,6 +313,14 @@ msgstr "非数值参数不能适用于'pairs'"
 
 msgid "only one column in the argument to 'pairs'"
 msgstr "参数里只有一个列用在'pairs'上"
+
+#, fuzzy
+msgid "invalid argument 'horInd'"
+msgstr "第一个参数不对"
+
+#, fuzzy
+msgid "invalid argument 'verInd'"
+msgstr "第一个参数不对"
 
 msgid "the 'panel' function made a new plot"
 msgstr "'panel'函数画了一个新的图"

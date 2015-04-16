@@ -86,9 +86,7 @@
 #undef ERROR			/* for compilation on Windows */
 
 #ifdef Win32
-int trio_vsnprintf(char *buffer, size_t bufferSize, const char *format,
-		   va_list args);
-# define vsnprintf trio_vsnprintf
+#include <trioremap.h>
 #endif
 
 int attribute_hidden R_OutputCon; /* used in printutils.c */
@@ -119,8 +117,7 @@ typedef long long int _lli_t;
 /* Win32 does have popen, but it does not work in GUI applications,
    so test that later */
 #ifdef Win32
-# include <R_ext/RStartup.h>
-  extern UImode  CharacterMode;
+# include <Startup.h>
 #endif
 
 #define NCONNECTIONS 128 /* snow needs one per slave node */
@@ -226,7 +223,7 @@ Rconnection getConnection_no_err(int n)
 
 }
 
-static void set_iconv_error(Rconnection con, char* from, char* to)
+static void NORET set_iconv_error(Rconnection con, char* from, char* to)
 {
     char buf[100];
     snprintf(buf, 100, _("unsupported conversion from '%s' to '%s'"), from, to);
@@ -283,10 +280,9 @@ void set_iconv(Rconnection con)
 
 /* ------------------- null connection functions --------------------- */
 
-static Rboolean null_open(Rconnection con)
+static Rboolean NORET null_open(Rconnection con)
 {
     error(_("%s not enabled for this connection"), "open");
-    return FALSE;		/* -Wall */
 }
 
 static void null_close(Rconnection con)
@@ -299,10 +295,9 @@ static void null_destroy(Rconnection con)
     if(con->private) free(con->private);
 }
 
-static int null_vfprintf(Rconnection con, const char *format, va_list ap)
+static int NORET null_vfprintf(Rconnection con, const char *format, va_list ap)
 {
     error(_("%s not enabled for this connection"), "printing");
-    return 0;			/* -Wall */
 }
 
 /* va_copy is C99, but a draft standard had __va_copy.  Glibc has
@@ -451,19 +446,17 @@ int dummy_fgetc(Rconnection con)
 	return con->fgetc_internal(con);
 }
 
-static int null_fgetc(Rconnection con)
+static int NORET null_fgetc(Rconnection con)
 {
     error(_("%s not enabled for this connection"), "'getc'");
-    return 0;			/* -Wall */
 }
 
-static double null_seek(Rconnection con, double where, int origin, int rw)
+static double NORET null_seek(Rconnection con, double where, int origin, int rw)
 {
     error(_("%s not enabled for this connection"), "'seek'");
-    return 0.;			/* -Wall */
 }
 
-static void null_truncate(Rconnection con)
+static void NORET null_truncate(Rconnection con)
 {
     error(_("%s not enabled for this connection"), "truncation");
 }
@@ -473,18 +466,16 @@ static int null_fflush(Rconnection con)
     return 0;
 }
 
-static size_t null_read(void *ptr, size_t size, size_t nitems,
+static size_t NORET null_read(void *ptr, size_t size, size_t nitems,
 			Rconnection con)
 {
     error(_("%s not enabled for this connection"), "'read'");
-    return 0;			/* -Wall */
 }
 
-static size_t null_write(const void *ptr, size_t size, size_t nitems,
+static size_t NORET null_write(const void *ptr, size_t size, size_t nitems,
 			 Rconnection con)
 {
     error(_("%s not enabled for this connection"), "'write'");
-    return 0;			/* -Wall */
 }
 
 void init_con(Rconnection new, const char *description, int enc,
@@ -4846,8 +4837,6 @@ SEXP attribute_hidden do_sinknumber(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 #ifdef Win32
-#include <R_ext/RStartup.h>
-extern UImode CharacterMode;
 void WinCheckUTF8(void)
 {
     if(CharacterMode == RGui) WinUTF8out = (SinkCons[R_SinkNumber] == 1);
@@ -4958,12 +4947,20 @@ SEXP attribute_hidden do_sumconnection(SEXP call, SEXP op, SEXP args, SEXP env)
 /* op = 0: url(description, open, blocking, encoding)
    op = 1: file(description, open, blocking, encoding)
 */
+
+// in internet module: 'type' is unused
+extern Rconnection 
+R_newCurlUrl(const char *description, const char * const mode, int type);
+
 SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP scmd, sopen, ans, class, enc;
     char *class2 = "url";
     const char *url, *open;
-    int ncon, block, raw = 0;
+    int ncon, block, raw = 0, meth = 0;
+#ifdef Win32
+    int urlmeth = UseInternet2;
+#endif
     cetype_t ienc = CE_NATIVE;
     Rconnection con = NULL;
 #ifdef HAVE_INTERNET
@@ -4978,7 +4975,7 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	warning(_("only first element of 'description' argument used"));
     url = CHAR(STRING_ELT(scmd, 0)); /* ASCII */
 #ifdef Win32
-    if(PRIMVAL(op) && !IS_ASCII(STRING_ELT(scmd, 0)) ) {
+    if(PRIMVAL(op) == 1 && !IS_ASCII(STRING_ELT(scmd, 0)) ) {
 	ienc = CE_UTF8;
 	url = translateCharUTF8(STRING_ELT(scmd, 0));
     } else {
@@ -4991,10 +4988,13 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 #else
 	url = translateChar(STRING_ELT(scmd, 0));
 #endif
+
 #ifdef HAVE_INTERNET
     if (strncmp(url, "http://", 7) == 0) type = HTTPsh;
     else if (strncmp(url, "ftp://", 6) == 0) type = FTPsh;
     else if (strncmp(url, "https://", 8) == 0) type = HTTPSsh;
+    // ftps:// is available via most libcurl.
+    else if (strncmp(url, "ftps://", 7) == 0) type = FTPSsh;
 #endif
 
     sopen = CADR(args);
@@ -5008,23 +5008,71 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!isString(enc) || length(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
-    if(PRIMVAL(op)) {
+    if(PRIMVAL(op) == 1) {
 	raw = asLogical(CAD4R(args));
 	if(raw == NA_LOGICAL)
 	    error(_("invalid '%s' argument"), "raw");
     }
 
-    if (strncmp(url, "ftps://", 7) == 0)
-	error("ftps:// URLs are not supported");
+    if(PRIMVAL(op) == 0) {
+	const char *cmeth = CHAR(asChar(CAD4R(args)));
+	meth = streql(cmeth, "libcurl");
+	if (streql(cmeth, "wininet")) {
 #ifdef Win32
-# ifndef USE_WININET
-    if (strncmp(url, "https://", 8) == 0)
-	error("for https:// URLs use setInternet2(TRUE)");
-# endif
+	    urlmeth = 1;
 #else
-    if (strncmp(url, "https://", 8) == 0)
-	error("https:// URLs are not supported");
+	    error(_("method = \"wininet\" is only supported on Windows"));
+#endif    
+	} 
+#ifdef Win32
+	else if (streql(cmeth, "internal")) urlmeth = 0;
 #endif
+    } else { // file(), look at option.
+	SEXP opt = GetOption1(install("url.method"));
+	if (isString(opt) && LENGTH(opt) >= 1) {
+	    const char *val = CHAR(STRING_ELT(opt, 0));
+	    if (streql(val, "libcurl")) meth = 1;
+#ifdef Win32
+	    if (streql(val, "wininet")) urlmeth = 1;
+#endif
+	}
+    }
+
+    if(!meth) {
+	if (strncmp(url, "ftps://", 7) == 0)
+#ifdef HAVE_CURL_CURL_H
+	{
+	    // this is slightly optimistic: we did not check the libcurl build
+	    REprintf("ftps:// URLs are not supported by the default method: trying \"libcurl\"\n");
+	    R_FlushConsole();
+	    meth = 1;
+	}
+//	error("ftps:// URLs are not supported by the default method:\n   consider url(method = \"libcurl\")");
+#else
+	error("ftps:// URLs are not supported");
+#endif
+#ifdef Win32
+	if (!urlmeth && strncmp(url, "https://", 8) == 0) {
+	    REprintf("https:// URLs are not supported by the default method: using \"wininet\"\n");
+	    R_FlushConsole();
+	    urlmeth = 1;
+	}
+	//   error("for https:// URLs use setInternet2(TRUE)");
+#else
+	if (strncmp(url, "https://", 8) == 0)
+# ifdef HAVE_CURL_CURL_H
+	{
+	    // this is slightly optimistic: we did not check the libcurl build
+	    REprintf("https:// URLs are not supported by the default method: trying \"libcurl\"\n");
+	    R_FlushConsole();
+	    meth = 1;
+	}
+//	    error("https:// URLs are not supported by the default method:\n  consider url(method = \"libcurl\")");
+# else
+	error("https:// URLs are not supported");
+# endif
+#endif
+    }
 
     ncon = NextConnection();
     if(strncmp(url, "file://", 7) == 0) {
@@ -5037,14 +5085,28 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	con = newfile(url + nh, ienc, strlen(open) ? open : "r", raw);
 	class2 = "file";
 #ifdef HAVE_INTERNET
+	// we could pass others to libcurl.
     } else if (strncmp(url, "http://", 7) == 0 ||
 	       strncmp(url, "https://", 8) == 0 ||
-	       strncmp(url, "ftp://", 6) == 0) {
-       con = R_newurl(url, strlen(open) ? open : "r");
-       ((Rurlconn)con->private)->type = type;
+	       strncmp(url, "ftp://", 6) == 0 ||
+	       strncmp(url, "ftps://", 7) == 0) {
+	if(meth) {
+#ifdef HAVE_CURL_CURL_H
+	    con = R_newCurlUrl(url, strlen(open) ? open : "r", 0);
+#else
+	    error("url(method = \"libcurl\") is not supported on this platform");
+#endif
+	} else {
+#ifdef Win32
+	    con = R_newurl(url, strlen(open) ? open : "r", urlmeth);
+#else
+	    con = R_newurl(url, strlen(open) ? open : "r", 0);
+#endif
+	    ((Rurlconn)con->private)->type = type;
+	}
 #endif
     } else {
-	if(PRIMVAL(op)) { /* call to file() */
+	if(PRIMVAL(op) == 1) { /* call to file() */
 	    if(strlen(url) == 0) {
 		if(!strlen(open)) open ="w+";
 		if(strcmp(open, "w+") != 0 && strcmp(open, "w+b") != 0) {
@@ -5103,7 +5165,7 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	    class2 = "file";
 	} else {
-	    error(_("unsupported URL scheme"));
+	    error(_("URL scheme unsupported by this method"));
 	}
     }
 

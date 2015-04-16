@@ -1,7 +1,7 @@
 #  File src/library/tools/R/index.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ function(dataDir, contents)
     ##                                     "docs")).
     ## </NOTE>
 
-    if(!file_test("-d", dataDir))
+    if(!dir.exists(dataDir))
         stop(gettextf("directory '%s' does not exist", dataDir),
              domain = NA)
     ## dataFiles <- list_files_with_type(dataDir, "data")
@@ -91,7 +91,7 @@ function(demoDir)
     ## docs are in sync.
     ## </NOTE>
 
-    if(!file_test("-d", demoDir))
+    if(!dir.exists(demoDir))
         stop(gettextf("directory '%s' does not exist", demoDir),
              domain = NA)
     demoFiles <- list_files_with_type(demoDir, "demo")
@@ -118,7 +118,7 @@ function(demoDir)
 .check_demo_index <-
 function(demoDir)
 {
-    if(!file_test("-d", demoDir))
+    if(!dir.exists(demoDir))
         stop(gettextf("directory '%s' does not exist", demoDir),
              domain = NA)
     info_from_build <- .build_demo_index(demoDir)
@@ -228,18 +228,20 @@ function(contents, packageName, defaultEncoding = NULL)
     else
         dbBase <- matrix(character(), ncol = 7L)
 
-    colnames(dbBase) <-
-        c("Package", "LibPath", "ID", "name", "title", "topic",
-          "Encoding")
-    colnames(dbAliases) <-
-        c("Aliases", "ID", "Package")
-    colnames(dbKeywords) <-
-        c("Keywords", "ID", "Package")
-    colnames(dbConcepts) <-
-        c("Concepts", "ID", "Package")
+    colnames(dbBase) <- hsearch_index_colnames$Base
+    colnames(dbAliases) <- hsearch_index_colnames$Aliases
+    colnames(dbKeywords) <- hsearch_index_colnames$Keywords
+    colnames(dbConcepts) <- hsearch_index_colnames$Concepts
 
     list(dbBase, dbAliases, dbKeywords, dbConcepts)
 }
+
+hsearch_index_colnames <-
+    list(Base = c("Package", "LibPath", "ID", "Name", "Title", "Topic",
+         "Encoding"),
+         Aliases = c("Alias", "ID", "Package"),
+         Keywords = c("Keyword", "ID", "Package"),
+         Concepts = c("Concept", "ID", "Package"))
 
 ### * .build_links_index
 

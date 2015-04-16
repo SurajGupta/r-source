@@ -30,7 +30,7 @@
  *  INDENTATION:
  *
  *  Indentation is carried out in the routine printtab2buff at the
- *  botton of this file.  It seems like this should be settable via
+ *  bottom of this file.  It seems like this should be settable via
  *  options.
  *
  *
@@ -95,6 +95,9 @@
 #include <float.h> /* for DBL_DIG */
 #include <Print.h>
 #include <Fileio.h>
+#ifdef Win32
+#include <trioremap.h>
+#endif
 
 #define BUFSIZE 512
 
@@ -238,8 +241,11 @@ static SEXP deparse1WithCutoff(SEXP call, Rboolean abbrev, int cutoff,
     } else if(need_ellipses) {
 	SET_STRING_ELT(svec, R_BrowseLines, mkChar("  ..."));
     }
-    if(nlines > 0 && localData.linenumber < nlines)
+    if(nlines > 0 && localData.linenumber < nlines) {
+	UNPROTECT(1); /* old svec value */
+	PROTECT(svec);
 	svec = lengthgets(svec, localData.linenumber);
+    }
     UNPROTECT(1);
     PROTECT(svec); /* protect from warning() allocating, PR#14356 */
     R_print.digits = savedigits;
@@ -348,7 +354,7 @@ SEXP attribute_hidden do_dput(SEXP call, SEXP op, SEXP args, SEXP rho)
 	con = getConnection(ifile);
 	wasopen = con->isopen;
 	if(!wasopen) {
-	    char mode[5];	
+	    char mode[5];
 	    strcpy(mode, con->mode);
 	    strcpy(con->mode, "w");
 	    if(!con->open(con)) error(_("cannot open the connection"));
@@ -401,7 +407,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("invalid '%s' argument"), "envir");
     opts = asInteger(CADDDR(args));
     /* <NOTE>: change this if extra options are added */
-    if(opts == NA_INTEGER || opts < 0 || opts > 256)
+    if(opts == NA_INTEGER || opts < 0 || opts > 1024)
 	errorcall(call, _("'opts' should be small non-negative integer"));
     evaluate = asLogical(CAD4R(args));
     if (!evaluate) opts |= DELAYPROMISES;
@@ -436,7 +442,7 @@ SEXP attribute_hidden do_dump(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    con = getConnection(INTEGER(file)[0]);
 	    wasopen = con->isopen;
 	    if(!wasopen) {
-		char mode[5];	
+		char mode[5];
 		strcpy(mode, con->mode);
 		strcpy(con->mode, "w");
 		if(!con->open(con)) error(_("cannot open the connection"));
@@ -582,8 +588,7 @@ static Rboolean hasAttributes(SEXP s)
     SEXP a = ATTRIB(s);
     if (length(a) > 2) return(TRUE);
     while(!isNull(a)) {
-	if(TAG(a) != R_SrcrefSymbol
-	   && (TYPEOF(s) != CLOSXP || TAG(a) != R_SourceSymbol))
+	if(TAG(a) != R_SrcrefSymbol)
 	    return(TRUE);
 	a = CDR(a);
     }
@@ -603,7 +608,7 @@ static void attr2(SEXP s, LocalParseData *d)
     if(hasAttributes(s)) {
 	SEXP a = ATTRIB(s);
 	while(!isNull(a)) {
-	    if(TAG(a) != R_SourceSymbol && TAG(a) != R_SrcrefSymbol) {
+	    if(TAG(a) != R_SrcrefSymbol) {
 		print2buff(", ", d);
 		if(TAG(a) == R_DimSymbol) {
 		    print2buff(".Dim", d);
@@ -827,7 +832,7 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	break;
     case LISTSXP:
 	if (localOpts & SHOWATTRIBUTES) attr1(s, d);
-	print2buff("list(", d);
+	print2buff("pairlist(", d);
 	d->inlist++;
 	for (t=s ; CDR(t) != R_NilValue ; t=CDR(t) ) {
 	    if( TAG(t) != R_NilValue ) {
@@ -1205,13 +1210,28 @@ static void deparse2buff(SEXP s, LocalParseData *d)
 	d->sourceable = FALSE;
 	print2buff("<weak reference>", d);
 	break;
-    case S4SXP:
-	d->sourceable = FALSE;
+    case S4SXP: {
+	SEXP class = getAttrib(s, R_ClassSymbol);
 	d->isS4 = TRUE;
+
+#ifndef _TRY_S4_DEPARSE_
+	d->sourceable = FALSE;
 	print2buff("<S4 object of class ", d);
-	deparse2buff(getAttrib(s, R_ClassSymbol), d);
+	deparse2buff(class, d);
 	print2buff(">", d);
+#else
+	/* somewhat like the  VECSXP [ "list()" ] case : */
+/* 	if (localOpts & SHOWATTRIBUTES) attr1(s, d); */
+	print2buff("new(\"", d);
+	print2buff(translateChar(STRING_ELT(class, 0)), d);
+	print2buff("\",\n", d);
+//>>>> call vec2buf on the  Attributes >>>>>>>>>  vec2buff(s, d);
+	print2buff(")", d);
+/* 	if (localOpts & SHOWATTRIBUTES) attr2(s, d); */
+
+#endif
       break;
+    }
     default:
 	d->sourceable = FALSE;
 	UNIMPLEMENTED_TYPE("deparse2buff", s);
@@ -1268,8 +1288,8 @@ static const char *EncodeNonFiniteComplexElement(Rcomplex x, char* buff)
     char Re[NB];
     char Im[NB];
 
-    strcpy(Re, EncodeReal(x.r, w, d, e, '.'));
-    strcpy(Im, EncodeReal(x.i, wi, di, ei, '.'));
+    strcpy(Re, EncodeReal0(x.r, w, d, e, "."));
+    strcpy(Im, EncodeReal0(x.i, wi, di, ei, "."));
     
     snprintf(buff, NB, "complex(real=%s, imaginary=%s)", Re, Im);
     buff[NB-1] = '\0';
@@ -1280,7 +1300,7 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 {
     int tlen, i, quote;
     const char *strp;
-    char *buff = 0;
+    char *buff = 0, hex[64]; // 64 is more than enough
     Rboolean surround = FALSE, allNA, addL = TRUE;
 
     tlen = length(vector);
@@ -1419,6 +1439,36 @@ static void vector2buff(SEXP vector, LocalParseData *d)
 		vmaxset(vmax);
 	    } else if (TYPEOF(vector) == RAWSXP) {
 		strp = EncodeRaw(RAW(vector)[i], "0x");
+	    } else if (TYPEOF(vector) == REALSXP && (d->opts & HEXNUMERIC)) {
+		double x = REAL(vector)[i];
+		// Windows warns here, but incorrectly as this is C99
+		// and the snprintf used from trio is compliant.
+		if (R_FINITE(x)) {
+		    snprintf(hex, 32, "%a", x);
+		    strp = hex;
+		} else
+		    strp = EncodeElement(vector, i, quote, '.');
+	    } else if (TYPEOF(vector) == REALSXP && (d->opts & DIGITS16)) {
+		double x = REAL(vector)[i];
+		if (R_FINITE(x)) {
+		    snprintf(hex, 32, "%.17g", x);
+		    strp = hex;
+		} else
+		    strp = EncodeElement(vector, i, quote, '.');
+	    } else if (TYPEOF(vector) == CPLXSXP && (d->opts & HEXNUMERIC)) {
+		Rcomplex z =  COMPLEX(vector)[i];
+		if (R_FINITE(z.r) && R_FINITE(z.i)) {
+		    snprintf(hex, 64, "%a + %ai", z.r, z.i);
+		    strp = hex;
+		} else
+		    strp = EncodeElement(vector, i, quote, '.');
+	    } else if (TYPEOF(vector) == CPLXSXP && (d->opts & DIGITS16)) {
+		Rcomplex z =  COMPLEX(vector)[i];
+		if (R_FINITE(z.r) && R_FINITE(z.i)) {
+		    snprintf(hex, 64, "%.17g + %17gi", z.r, z.i);
+		    strp = hex;
+		} else
+		    strp = EncodeElement(vector, i, quote, '.');
 	    } else
 		strp = EncodeElement(vector, i, quote, '.');
 	    print2buff(strp, d);
@@ -1463,10 +1513,8 @@ static Rboolean src2buff(SEXP sv, int k, LocalParseData *d)
     else return FALSE;
 }
 
-/* vec2buff : New Code */
-/* Deparse vectors of S-expressions. */
-/* In particular, this deparses objects of mode expression. */
-
+/* Deparse vectors of S-expressions, i.e., list() and expression() objects.
+   In particular, this deparses objects of mode expression. */
 static void vec2buff(SEXP v, LocalParseData *d)
 {
     SEXP nv, sv;

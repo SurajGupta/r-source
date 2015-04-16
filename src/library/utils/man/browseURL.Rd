@@ -5,9 +5,9 @@
 
 \name{browseURL}
 \alias{browseURL}
-\title{Load URL into a WWW Browser}
+\title{Load URL into an HTML Browser}
 \description{
-  Load a given URL into a WWW browser.
+  Load a given URL into an HTML browser.
 }
 \usage{
 browseURL(url, browser = getOption("browser"),
@@ -16,7 +16,7 @@ browseURL(url, browser = getOption("browser"),
 \arguments{
   \item{url}{a non-empty character string giving the URL to be loaded.}
   \item{browser}{a non-empty character string giving the name of the
-    program to be used as hypertext browser.  It should be in the PATH,
+    program to be used as the HTML browser.  It should be in the PATH,
     or a full path specified.  Alternatively, an \R function to be
     called to invoke the browser.
 
@@ -49,7 +49,7 @@ browseURL(url, browser = getOption("browser"),
   necessary.  This mechanism currently is available for browsers which
   support the \code{"-remote openURL(...)"} interface (which includes
   Mozilla and Opera), Galeon, KDE konqueror (\emph{via} kfmclient) and
-  the GNOME interface to Mozilla. (Firefox has droppped support, but
+  the GNOME interface to Mozilla. (Firefox has dropped support, but
   defaults to using an already-running browser.)  Note that the type of
   browser is determined from its name, so this mechanism will only be
   used if the browser is installed under its canonical name.

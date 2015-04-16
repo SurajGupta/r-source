@@ -87,7 +87,7 @@ static void cbm_Size(double *left, double *right,
 #include "cairoFns.c"
 
 #ifdef Win32
-# include "rbitmap.h"
+# include "winbitmap.h"
 #else
 # include "bitmap.h"
 #endif
@@ -98,12 +98,6 @@ BM_Open(pDevDesc dd, pX11Desc xd, int width, int height)
     cairo_status_t res;
     if (xd->type == PNG || xd->type == JPEG ||
 	xd->type == TIFF || xd->type == BMP) {
-#ifdef Win32
-	if (!Load_Rbitmap_Dll()) {
-	    warning("Unable to load Rbitmap.dll");
-	    return FALSE;
-	}
-#endif
 	xd->cs = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
 					    xd->windowWidth,
 					    xd->windowHeight);
@@ -528,9 +522,17 @@ SEXP in_Cairo(SEXP args)
 	    error(_("unable to start device '%s'"), devtable[type].name);
 	}
 	gdd = GEcreateDevDesc(dev);
-	GEaddDevice2(gdd, devtable[type].name);
+	GEaddDevice2f(gdd, devtable[type].name, filename);
     } END_SUSPEND_INTERRUPTS;
 
     vmaxset(vmax);
     return R_NilValue;
+}
+
+SEXP in_CairoVersion(void)
+{
+    SEXP ans = PROTECT(allocVector(STRSXP, 1));
+    SET_STRING_ELT(ans, 0, mkChar(cairo_version_string()));
+    UNPROTECT(1);
+    return ans;
 }

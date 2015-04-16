@@ -177,11 +177,12 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
 	return ans;
     }
 
+    SEXP s_nchar = install("nchar");
     if(useBytes)
-	PROTECT(call = lang3(install("nchar"), pat,
+	PROTECT(call = lang3(s_nchar, pat,
 			     ScalarString(mkChar("bytes"))));
     else
-	PROTECT(call = lang3(install("nchar"), pat,
+	PROTECT(call = lang3(s_nchar, pat,
 			     ScalarString(mkChar("chars"))));
     patlen = asInteger(eval(call, env));
     UNPROTECT(1);
@@ -442,14 +443,14 @@ adist_full(SEXP x, SEXP y, double *costs, Rboolean opt_counts)
 	}
     }
 
-    x = getAttrib(x, R_NamesSymbol);
-    y = getAttrib(y, R_NamesSymbol);
+    PROTECT(x = getAttrib(x, R_NamesSymbol));
+    PROTECT(y = getAttrib(y, R_NamesSymbol));
     if(!isNull(x) || !isNull(y)) {
 	PROTECT(dimnames = allocVector(VECSXP, 2));	    
 	SET_VECTOR_ELT(dimnames, 0, x);
 	SET_VECTOR_ELT(dimnames, 1, y);
 	setAttrib(ans, R_DimNamesSymbol, dimnames);
-	UNPROTECT(1);
+	UNPROTECT(1); /* dimnames */
     }
 
     if(opt_counts) {
@@ -464,19 +465,19 @@ adist_full(SEXP x, SEXP y, double *costs, Rboolean opt_counts)
 	SET_VECTOR_ELT(dimnames, 2, names);
 	setAttrib(counts, R_DimNamesSymbol, dimnames);
 	setAttrib(ans, install("counts"), counts);
-	UNPROTECT(2);
+	UNPROTECT(2); /* names, dimnames */
 	if(!isNull(x) || !isNull(y)) {
 	    PROTECT(dimnames = allocVector(VECSXP, 2));	    
 	    SET_VECTOR_ELT(dimnames, 0, x);
 	    SET_VECTOR_ELT(dimnames, 1, y);
 	    setAttrib(trafos, R_DimNamesSymbol, dimnames);
-	    UNPROTECT(1);
+	    UNPROTECT(1); /* dimnames */
 	}
 	setAttrib(ans, install("trafos"), trafos);
-	UNPROTECT(2);
+	UNPROTECT(2); /* trafos, counts */
     }
 		
-    UNPROTECT(1);
+    UNPROTECT(3); /* y, x, ans */
     return ans;
 }
 
@@ -692,14 +693,14 @@ SEXP attribute_hidden do_adist(SEXP call, SEXP op, SEXP args, SEXP env)
 	}
     }
 
-    x = getAttrib(x, R_NamesSymbol);
-    y = getAttrib(y, R_NamesSymbol);
+    PROTECT(x = getAttrib(x, R_NamesSymbol));
+    PROTECT(y = getAttrib(y, R_NamesSymbol));
     if(!isNull(x) || !isNull(y)) {
 	PROTECT(dimnames = allocVector(VECSXP, 2));	    
 	SET_VECTOR_ELT(dimnames, 0, x);
 	SET_VECTOR_ELT(dimnames, 1, y);
 	setAttrib(ans, R_DimNamesSymbol, dimnames);
-	UNPROTECT(1);
+	UNPROTECT(1); /* dimnames */
     }
     if(opt_counts) {
 	PROTECT(dimnames = allocVector(VECSXP, 3));
@@ -712,7 +713,7 @@ SEXP attribute_hidden do_adist(SEXP call, SEXP op, SEXP args, SEXP env)
 	SET_VECTOR_ELT(dimnames, 2, names);
 	setAttrib(counts, R_DimNamesSymbol, dimnames);
 	setAttrib(ans, install("counts"), counts);
-	UNPROTECT(2);
+	UNPROTECT(2); /* names, dimnames */
 	PROTECT(dimnames = allocVector(VECSXP, 3));
 	PROTECT(names = allocVector(STRSXP, 2));
 	SET_STRING_ELT(names, 0, mkChar("first"));
@@ -722,10 +723,10 @@ SEXP attribute_hidden do_adist(SEXP call, SEXP op, SEXP args, SEXP env)
 	SET_VECTOR_ELT(dimnames, 2, names);
 	setAttrib(offsets, R_DimNamesSymbol, dimnames);
 	setAttrib(ans, install("offsets"), offsets);
-	UNPROTECT(4);
+	UNPROTECT(4); /* names, dimnames, counts, offsets */
     }
 
-    UNPROTECT(1);
+    UNPROTECT(3); /* y, x, counts */
     return ans;
 }
 
@@ -806,11 +807,12 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
         }
     }
     
+    SEXP s_nchar = install("nchar");
     if(useBytes)
-	PROTECT(call = lang3(install("nchar"), pat,
+	PROTECT(call = lang3(s_nchar, pat,
 			     ScalarString(mkChar("bytes"))));
     else
-	PROTECT(call = lang3(install("nchar"), pat,
+	PROTECT(call = lang3(s_nchar, pat,
 			     ScalarString(mkChar("chars"))));
     patlen = asInteger(eval(call, env));
     UNPROTECT(1);
@@ -847,7 +849,8 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
 //	if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
 	if(STRING_ELT(vec, i) == NA_STRING) {
 	    PROTECT(matchpos = ScalarInteger(NA_INTEGER));
-	    setAttrib(matchpos, install("match.length"),
+	    SEXP s_match_length = install("match.length");
+	    setAttrib(matchpos, s_match_length,
 		      ScalarInteger(NA_INTEGER));
 	    SET_VECTOR_ELT(ans, i, matchpos);
 	    UNPROTECT(1);

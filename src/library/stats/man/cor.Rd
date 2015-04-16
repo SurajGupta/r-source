@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-
 \name{cor}
 \title{Correlation, Variance and Covariance (Matrices)}
 \usage{
@@ -45,7 +43,7 @@ cov2cor(V)
     \code{"na.or.complete"}, or \code{"pairwise.complete.obs"}.}
   \item{method}{a character string indicating which correlation
     coefficient (or covariance) is to be computed.  One of
-    \code{"pearson"} (default), \code{"kendall"}, or \code{"spearman"},
+    \code{"pearson"} (default), \code{"kendall"}, or \code{"spearman"}:
     can be abbreviated.}
   \item{V}{symmetric numeric matrix, usually positive definite such as a
     covariance matrix.}

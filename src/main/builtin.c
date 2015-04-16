@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995-1998  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2012  The R Core Team.
+ *  Copyright (C) 1999-2015  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ SEXP attribute_hidden do_makelazy(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (!isEnvironment(aenv)) error(_("invalid '%s' argument"), "assign.env");
 
     for(i = 0; i < XLENGTH(names); i++) {
-	SEXP name = install(CHAR(STRING_ELT(names, i)));
+	SEXP name = installChar(STRING_ELT(names, i));
 	PROTECT(val = eval(VECTOR_ELT(values, i), eenv));
 	PROTECT(expr0 = duplicate(expr));
 	SETCAR(CDR(expr0), val);
@@ -132,13 +132,14 @@ SEXP attribute_hidden do_makelazy(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *ctxt;
-    SEXP code, oldcode, tmp, ap, argList;
+    SEXP code, oldcode, tmp, argList;
     int addit = 0;
+    static SEXP do_onexit_formals = NULL;
 
-    PROTECT(ap = list2(R_NilValue, R_NilValue));
-    SET_TAG(ap,  install("expr"));
-    SET_TAG(CDR(ap), install("add"));
-    PROTECT(argList =  matchArgs(ap, args, call));
+    if (do_onexit_formals == NULL)
+        do_onexit_formals = allocFormalsList2(install("expr"), install("add"));
+
+    PROTECT(argList =  matchArgs(do_onexit_formals, args, call));
     if (CAR(argList) == R_MissingArg) code = R_NilValue;
     else code = CAR(argList);
     if (CADR(argList) != R_MissingArg) {
@@ -179,7 +180,7 @@ SEXP attribute_hidden do_onexit(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else
 	    ctxt->conexit = code;
     }
-    UNPROTECT(2);
+    UNPROTECT(1);
     return R_NilValue;
 }
 
@@ -355,6 +356,24 @@ SEXP attribute_hidden do_parentenv(SEXP call, SEXP op, SEXP args, SEXP rho)
     return( ENCLOS(arg) );
 }
 
+static Rboolean R_IsImportsEnv(SEXP env)
+{
+    if (isNull(env) || !isEnvironment(env))
+        return FALSE;
+    if (ENCLOS(env) != R_BaseNamespace)
+        return FALSE;
+    SEXP name = getAttrib(env, R_NameSymbol);
+    if (!isString(name) || length(name) != 1)
+        return FALSE;
+
+    const char *imports_prefix = "imports:";
+    const char *name_string = CHAR(STRING_ELT(name, 0));
+    if (!strncmp(name_string, imports_prefix, strlen(imports_prefix)))
+        return TRUE;
+    else
+        return FALSE;
+}
+
 SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP env, parent;
@@ -370,6 +389,10 @@ SEXP attribute_hidden do_parentenvgets(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("argument is not an environment"));
     if( env == R_EmptyEnv )
 	error(_("can not set parent of the empty environment"));
+    if (R_EnvironmentIsLocked(env) && R_IsNamespaceEnv(env))
+	error(_("can not set the parent environment of a namespace"));
+    if (R_EnvironmentIsLocked(env) && R_IsImportsEnv(env))
+	error(_("can not set the parent environment of package imports"));
     parent = CADR(args);
     if (isNull(parent)) {
 	error(_("use of NULL environment is defunct"));
@@ -389,6 +412,7 @@ SEXP attribute_hidden do_envirName(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP env = CAR(args), ans=mkString(""), res;
 
     checkArity(op, args);
+    PROTECT(ans);
     if (TYPEOF(env) == ENVSXP ||
 	TYPEOF((env = simple_as_environment(env))) == ENVSXP) {
 	if (env == R_GlobalEnv) ans = mkString("R_GlobalEnv");
@@ -400,6 +424,7 @@ SEXP attribute_hidden do_envirName(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ans = ScalarString(STRING_ELT(R_NamespaceEnvSpec(env), 0));
 	else if (!isNull(res = getAttrib(env, R_NameSymbol))) ans = res;
     }
+    UNPROTECT(1); /* ans */
     return ans;
 }
 
@@ -600,7 +625,7 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 		   The copy is needed as cat_newline might reuse the buffer.
 		   Use strncpy is in case these assumptions change.
 		*/
-		p = EncodeElement(s, 0, 0, OutDec);
+		p = EncodeElement0(s, 0, 0, OutDec);
 		strncpy(buf, p, 512); buf[511] = '\0';
 		p = buf;
 	    }
@@ -632,7 +657,7 @@ SEXP attribute_hidden do_cat(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    if (isString(s))
 			p = trChar(STRING_ELT(s, i+1));
 		    else {
-			p = EncodeElement(s, i+1, 0, OutDec);
+			p = EncodeElement0(s, i+1, 0, OutDec);
 			strncpy(buf, p, 512); buf[511] = '\0';
 			p = buf;
 		    }

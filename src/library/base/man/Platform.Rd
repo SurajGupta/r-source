@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{.Platform}
 \title{Platform Specific Variables}
 \usage{
@@ -93,9 +91,7 @@
 }
 
 \examples{
-## Note: this can be done in a system-independent way
-##   by file.info()$isdir: see utils::file_test,
-##   and there is a built-in dir.exists() as from R 3.2.0.
+## Note: this can be done in a system-independent way by dir.exists()
 if(.Platform$OS.type == "unix") {
    system.test <- function(...) system(paste("test", ...)) == 0L
    dir.exists2 <- function(dir)

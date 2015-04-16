@@ -3,9 +3,6 @@
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{glm}
 \title{Fitting Generalized Linear Models}
 \alias{glm}
@@ -115,7 +112,7 @@ glm.fit(x, y, weights = rep(1, nobs),
 
   \item{object}{an object inheriting from class \code{"glm"}.}
   \item{type}{character, partial matching allowed.  Type of weights to
-    extract from the fitted model object.}
+    extract from the fitted model object.  Can be abbreviated.}
 
   \item{\dots}{
     For \code{glm}: arguments to be used to form the default
@@ -340,8 +337,7 @@ glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
 anova(glm.D93)
 \donttest{summary(glm.D93)}
 
-if(length(find.package("MASS", quiet = TRUE))) {
-## an example with offsets from Venables & Ripley (2002, p.189)
+\donttest{## an example with offsets from Venables & Ripley (2002, p.189)
 utils::data(anorexia, package = "MASS")
 
 anorex.1 <- glm(Postwt ~ Prewt + Treat + offset(Prewt),

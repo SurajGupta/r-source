@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-01-26 09:09\n"
+"POT-Creation-Date: 2015-03-01 13:20\n"
 "PO-Revision-Date: 2005-04-17 16:57+0200\n"
 "Last-Translator: stefano iacus <>\n"
 "Language-Team: Italian <it@li.org>\n"
@@ -11,6 +11,13 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Reading %s failed with message: %s"
+msgstr ""
+
+#, fuzzy
+msgid "Checking %s"
+msgstr "analizzo '%s'"
 
 msgid "argument 'package' must be of length 1"
 msgstr "argomento 'package' deve avere lunghezza 1"
@@ -232,9 +239,15 @@ msgid ""
 "already be known to R."
 msgstr ""
 
+msgid "Malformed Title field: should not end in a period."
+msgstr ""
+
 msgid ""
-"See the information on DESCRIPTION files in section 'Creating R packages' of "
-"the 'Writing R Extensions' manual."
+"Malformed Description field: should contain one or more complete sentences."
+msgstr ""
+
+msgid ""
+"See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual."
 msgstr ""
 
 msgid "Malformed Authors@R field:"
@@ -252,7 +265,12 @@ msgstr ""
 msgid "Cannot extract Maintainer field from Authors@R field:"
 msgstr ""
 
-msgid "Authors@R field gives no person with maintainer role and email address."
+msgid "Authors@R field gives more than one person with maintainer role:"
+msgstr ""
+
+msgid ""
+"Authors@R field gives no person with maintainer role, valid email address "
+"and non-empty name."
 msgstr ""
 
 #, fuzzy
@@ -298,9 +316,7 @@ msgstr ""
 msgid "Missing link or links in documentation object '%s':"
 msgstr "Errore di sintassi nella documentazione dell'oggetto '%s':"
 
-msgid ""
-"See the information in section 'Cross-references' of the 'Writing R "
-"Extensions' manual."
+msgid "See section 'Cross-references' in the 'Writing R Extensions' manual."
 msgstr ""
 
 msgid "File %s:"
@@ -331,8 +347,7 @@ msgid "See section %s in '%s'."
 msgstr "impossibile eseguire bibtext su '%s'"
 
 msgid ""
-"Package detach functions should have one arguments with names starting with "
-"%s."
+"Package detach functions should have one argument with name starting with %s."
 msgstr ""
 
 msgid "Package detach functions should not call %s."
@@ -359,11 +374,23 @@ msgstr ""
 msgid "'library' or 'require' call not declared from: %s"
 msgstr ""
 
+msgid "'loadNamespace' or 'requireNamespace' calls not declared from:"
+msgstr ""
+
+msgid "'loadNamespace' or 'requireNamespace' call not declared from: %s"
+msgstr ""
+
 msgid "'library' or 'require' calls to packages already attached by Depends:"
 msgstr ""
 
 msgid ""
 "'library' or 'require' call to %s which was already attached by Depends."
+msgstr ""
+
+msgid "'library' or 'require' calls in package code:"
+msgstr ""
+
+msgid "'library' or 'require' call to %s in package code."
 msgstr ""
 
 msgid "Namespaces in Imports field not imported from:"
@@ -446,9 +473,8 @@ msgid ""
 "in NAMESPACE."
 msgstr ""
 
-msgid "argument 'file' must be a character string or connection"
+msgid "Rd object required"
 msgstr ""
-"argomento 'file' deve essere una stringa di caratteri o una connessione"
 
 #, fuzzy
 msgid "missing/empty %s field in '%s'"
@@ -483,6 +509,15 @@ msgstr "non posso lavorare con oggetti Rd con nomi mancanti/vuoti"
 #, fuzzy
 msgid "No help on %s found in RdDB %s"
 msgstr "non può essere usato per il pacchetto 'base'"
+
+msgid "'macros' must be TRUE or must specify existing macros"
+msgstr ""
+
+msgid "Macro file %s should only contain Rd macro definitions and comments"
+msgstr ""
+
+msgid "No Rd macros in package '%s'."
+msgstr ""
 
 msgid "more than one \\examples section, using the first"
 msgstr ""
@@ -523,6 +558,9 @@ msgstr ""
 msgid "Only one Rd section per %s is supported."
 msgstr ""
 
+msgid "DESCRIPTION file is for package '%s', not '%s'"
+msgstr ""
+
 msgid "Vignette product %s does not have a known filename extension (%s)"
 msgstr ""
 
@@ -539,6 +577,9 @@ msgstr ""
 #, fuzzy
 msgid "unable to create temp directory %s"
 msgstr "impossibile creare directory temporanea"
+
+msgid "Vignette '%s' is non-ASCII but has no declared encoding"
+msgstr ""
 
 #, fuzzy
 msgid "Running"
@@ -570,12 +611,6 @@ msgid "file '%s' not found"
 msgstr "file '%s' non trovato"
 
 msgid "vignette filename '%s' does not match any of the '%s' filename patterns"
-msgstr ""
-
-msgid "Inconsistent encoding specifications:"
-msgstr ""
-
-msgid "with %\\SweaveUTF8"
 msgstr ""
 
 msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
@@ -808,16 +843,16 @@ msgstr "il name space non deve essere caricato."
 msgid "No docs found for package %s"
 msgstr ""
 
+#, fuzzy
+msgid "URL %s was not found"
+msgstr "pacchetto '%s' non trovato"
+
 msgid ""
 "Only help files, %s, %s and files under %s and %s in a package can be viewed"
 msgstr ""
 
 msgid "unsupported URL %s"
 msgstr ""
-
-#, fuzzy
-msgid "URL %s was not found"
-msgstr "pacchetto '%s' non trovato"
 
 msgid "httpd server disabled by R_DISABLE_HTTPD"
 msgstr ""
@@ -1091,9 +1126,6 @@ msgstr ""
 msgid "testing '%s' failed"
 msgstr "esecuzione di make fallita"
 
-msgid "%d of the package tests failed"
-msgstr ""
-
 #, fuzzy
 msgid "Testing examples for package %s"
 msgstr "non può essere usato per il pacchetto 'base'"
@@ -1147,6 +1179,18 @@ msgstr "l'argomento 'txt' deve essere una stringa carattere"
 msgid "test '%s' is not available"
 msgstr "il test '%s' non è disponibile"
 
+msgid ":"
+msgstr ""
+
+msgid "latin1"
+msgstr ""
+
+msgid "ASCII"
+msgstr ""
+
+msgid "byte"
+msgstr ""
+
 msgid "argument 'x' must be a character vector"
 msgstr "l'argomento 'x' deve essere un vettore carattere"
 
@@ -1172,11 +1216,9 @@ msgstr "impossibile eseguire bibtext su '%s'"
 msgid "unable to run %s on '%s'"
 msgstr "impossibile eseguire bibtext su '%s'"
 
-msgid "cannot coerce"
-msgstr ""
-
-msgid "to logical"
-msgstr ""
+#, fuzzy
+msgid "cannot coerce %s to logical"
+msgstr "impossibile copiare '%s' su '%s'"
 
 msgid "File 'DESCRIPTION' is missing."
 msgstr ""
@@ -1201,6 +1243,10 @@ msgstr "impossibile leggere codice sorgente del pacchetto"
 
 msgid "Call sequence:"
 msgstr "Successione delle chiamate:"
+
+#, fuzzy
+msgid "'text' must be a character vector"
+msgstr "l'argomento 'x' deve essere un vettore carattere"
 
 msgid "parsing '%s'"
 msgstr "analizzo '%s'"
@@ -1345,6 +1391,15 @@ msgid "object %s is created by more than one data call"
 msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "creati da più di una chiamata data"
 msgstr[1] "creati da più di una chiamata data"
+
+msgid "%d of the package tests failed"
+msgid_plural "%d of the package tests failed"
+msgstr[0] ""
+msgstr[1] ""
+
+#~ msgid "argument 'file' must be a character string or connection"
+#~ msgstr ""
+#~ "argomento 'file' deve essere una stringa di caratteri o una connessione"
 
 #, fuzzy
 #~ msgid "Failed to locate the"

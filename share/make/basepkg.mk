@@ -85,15 +85,25 @@ mkRbase:
 
 mkdesc:
 	@if test -f DESCRIPTION; then \
+	  if test "$(PKG_BUILT_STAMP)" != ""; then \
+	    $(ECHO) "tools:::.install_package_description('.', '$(top_builddir)/library/${pkg}', '$(PKG_BUILT_STAMP)')" | \
+	    R_DEFAULT_PACKAGES=NULL $(R_EXE) > /dev/null ; \
+	  else \
 	  $(ECHO) "tools:::.install_package_description('.', '$(top_builddir)/library/${pkg}')" | \
 	  R_DEFAULT_PACKAGES=NULL $(R_EXE) > /dev/null ; \
+	  fi; \
 	fi
 
 ## for base and tools
 mkdesc2:
 	@$(INSTALL_DATA) DESCRIPTION $(top_builddir)/library/$(pkg)
-	@$(ECHO) "Built: R $(VERSION); ; `TZ=UTC date`; $(R_OSTYPE)" \
-	   >> $(top_builddir)/library/$(pkg)/DESCRIPTION
+	@if test "$(PKG_BUILT_STAMP)" != ""; then \
+	  $(ECHO) "Built: R $(VERSION); ; $(PKG_BUILT_STAMP); $(R_OSTYPE)" \
+	     >> $(top_builddir)/library/$(pkg)/DESCRIPTION ; \
+	else \
+	  $(ECHO) "Built: R $(VERSION); ; `TZ=UTC date`; $(R_OSTYPE)" \
+	     >> $(top_builddir)/library/$(pkg)/DESCRIPTION ; \
+	fi
 
 mkdemos:
 	@$(ECHO) "tools:::.install_package_demos('$(srcdir)', '$(top_builddir)/library/$(pkg)')" | \
@@ -133,8 +143,14 @@ mksrc:
 
 mksrc-win2:
 	@if test -d src; then \
-	  (cd src && $(MAKE) -f Makefile.win) || exit 1; \
+	  (cd src && $(MAKE) -f Makefile.win EXT_LIBS="$(EXT_LIBS)") || exit 1; \
 	fi
+
+sysdata: $(srcdir)/R/sysdata.rda
+	@$(ECHO) "installing 'sysdata.rda'"
+	@$(ECHO) "tools:::sysdata2LazyLoadDB(\"$(srcdir)/R/sysdata.rda\",\"$(top_builddir)/library/$(pkg)/R\")" | \
+	  R_DEFAULT_PACKAGES=NULL LC_ALL=C $(R_EXE)
+
 
 ## install man/figures: currently only used for graphics
 mkfigs:

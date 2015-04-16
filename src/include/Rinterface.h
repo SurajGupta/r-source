@@ -36,6 +36,12 @@ extern "C" {
 #include <stdio.h>
 #endif
 
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define NORET __attribute__((noreturn))
+#else
+#define NORET
+#endif
+
 #include <R_ext/Boolean.h>
 #include <R_ext/RStartup.h>
 
@@ -64,7 +70,7 @@ extern char *R_Home;		    /* Root of the R tree */
 # define jump_to_toplevel	Rf_jump_to_toplevel
 # define mainloop		Rf_mainloop
 # define onintr			Rf_onintr
-void jump_to_toplevel(void);
+void NORET jump_to_toplevel(void);
 void mainloop(void);
 void onintr(void);
 #ifndef DEFN_H_
@@ -79,9 +85,12 @@ extern FILE * R_Consolefile;
 extern FILE * R_Outputfile;
 
 
-/* in sys-unix.c */
+/* in unix/sys-unix.c */
 void R_setStartTime(void);
 void fpu_setup(Rboolean);
+
+/* in unix/system.c */
+int R_running_as_main_program; 
 
 #ifdef CSTACK_DEFNS
 /* duplicating Defn.h */

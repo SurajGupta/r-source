@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-03-27 07:47\n"
+"POT-Creation-Date: 2014-11-20 11:48\n"
 "PO-Revision-Date: 2011-03-26 08:57-0300\n"
 "Last-Translator: Fernando Henrique <pessoal@fernandohrosa.com.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -107,6 +107,9 @@ msgstr "x$lag deve ter ao menos 1 coluna"
 
 msgid "can use ci.type=\"ma\" only if first lag is 0"
 msgstr "ci.type=\"ma\" somente pode ser usado se o primeiro atraso for 0"
+
+msgid "Page [%d,%d]: i =%s; j =%s"
+msgstr ""
 
 msgid "univariate time series only"
 msgstr "Somente séries temporais uinivariadas"
@@ -639,8 +642,10 @@ msgstr ""
 msgid "elements of 'k' must be between 1 and %d"
 msgstr "elementos de 'k' deve estar entre 1 e %d"
 
-msgid "'merge' and 'height' do not fit!"
-msgstr "'merge' e 'height' não se encaixam!"
+msgid ""
+"dendrogram entries must be 1,2,..,%d (in any order), to be coercible to "
+"\"hclust\""
+msgstr ""
 
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "nó do dendrograma com #{ramos} não-positivos"
@@ -698,8 +703,9 @@ msgstr ""
 
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr ""
-"'RowSideColors'  deve ser um vetor de caracteres de comprimento nrow"
-"(x)'RowSideColors'  deve ser um vetor de caracteres de comprimento nrow(x)"
+"'RowSideColors'  deve ser um vetor de caracteres de comprimento "
+"nrow(x)'RowSideColors'  deve ser um vetor de caracteres de comprimento "
+"nrow(x)"
 
 msgid "non-matched further arguments are disregarded"
 msgstr "outros argumentos não-pareados são ignorados"
@@ -780,8 +786,8 @@ msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[] e prob[] devem ser vetores de comprimento igual."
 
 #, fuzzy
-msgid "probabilities cannot be negative nor all 0"
-msgstr "probabilidades não podem ser negativas, nem todas 0."
+msgid "probabilities must be finite, non-negative and not all 0"
+msgstr "probabilidades devem ser não-negativas."
 
 msgid "'x' must be non-negative"
 msgstr "'x' deve ser não-negativo"
@@ -956,14 +962,6 @@ msgstr ""
 
 msgid "length of 'init' must equal length of 'filter'"
 msgstr "comprimento de 'init' deve igualar o comprimento de 'filter'"
-
-#, fuzzy
-msgid "'init' must have 1 column"
-msgstr "'init'; deve ter 1 ou %d cols"
-
-#, fuzzy
-msgid "'init' must have 1 or %d columns"
-msgstr "'init'; deve ter 1 ou %d cols"
 
 msgid "'x' must have at least 2 rows and columns"
 msgstr "'x' deve ter pelo menos 2 linhas e colunas"
@@ -1193,12 +1191,6 @@ msgstr "deve ter n >= 2 objetos para agrupar"
 msgid "invalid length of members"
 msgstr "comprimento inválido dos membros"
 
-msgid "invalid dendrogram"
-msgstr "dendrograma inválida"
-
-msgid "'merge' component in dendrogram must be integer"
-msgstr "componente 'merge' em dendrograma deve ser inteiro"
-
 #, fuzzy
 msgid "argument 'x' cannot be coerced to class %s"
 msgstr "argumento 'x' não pode ser forçado para classe \"hclust\""
@@ -1307,6 +1299,12 @@ msgstr "'iter.max' deve ser positivo"
 
 msgid "must have same number of columns in 'x' and 'centers'"
 msgstr "deve ter o mesmo número de colunas em 'x' e 'centers'"
+
+msgid "'x' is a list, so ignoring argument 'g'"
+msgstr ""
+
+msgid "some elements of 'x' are not numeric and will be coerced to numeric"
+msgstr ""
 
 msgid "not enough 'x' data"
 msgstr "insuficientes dados 'x'"
@@ -2078,6 +2076,9 @@ msgstr ""
 msgid "invalid 'endrule' argument"
 msgstr "argumento 'method' inválido"
 
+msgid ".nknots.smspl() is now exported; use it instead of n.knots()"
+msgstr ""
+
 msgid "invalid 'control.spar'"
 msgstr ""
 
@@ -2223,8 +2224,9 @@ msgstr ""
 msgid "'plot.stepfun' called with wrong type of argument 'x'"
 msgstr ""
 
-msgid "must be 0 or 1"
-msgstr ""
+#, fuzzy
+msgid "%s must be 0 or 1"
+msgstr "'degree' deve ser 0, 1 ou 2"
 
 msgid "only univariate series are allowed"
 msgstr ""
@@ -2519,6 +2521,12 @@ msgstr[0] "incapaz de otimizar a partir deste(s) valor(es) inicial(s)"
 msgstr[1] "incapaz de otimizar a partir deste(s) valor(es) inicial(s)"
 
 #, fuzzy
+msgid "'init' must have %d column"
+msgid_plural "'init' must have 1 or %d columns"
+msgstr[0] "'init'; deve ter 1 ou %d cols"
+msgstr[1] "'init'; deve ter 1 ou %d cols"
+
+#, fuzzy
 msgid "X matrix has rank %d, but only %d observation"
 msgid_plural "X matrix has rank %d, but only %d observations"
 msgstr[0] "matriz X tem posto %d, mas somente %d observações"
@@ -2624,6 +2632,23 @@ msgid "'start.innov' is too short: need %d point"
 msgid_plural "'start.innov' is too short: need %d points"
 msgstr[0] ""
 msgstr[1] ""
+
+#~ msgid "'merge' and 'height' do not fit!"
+#~ msgstr "'merge' e 'height' não se encaixam!"
+
+#~ msgid "invalid dendrogram"
+#~ msgstr "dendrograma inválida"
+
+#~ msgid "'merge' component in dendrogram must be integer"
+#~ msgstr "componente 'merge' em dendrograma deve ser inteiro"
+
+#, fuzzy
+#~ msgid "probabilities cannot be negative nor all 0"
+#~ msgstr "probabilidades não podem ser negativas, nem todas 0."
+
+#, fuzzy
+#~ msgid "'init' must have 1 or %d columns"
+#~ msgstr "'init'; deve ter 1 ou %d cols"
 
 #~ msgid "'deriv' must be between 0 and 2"
 #~ msgstr "'deriv' deve estar entre 0 e 2"

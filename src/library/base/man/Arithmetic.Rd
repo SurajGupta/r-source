@@ -1,9 +1,7 @@
 % File src/library/base/man/Arithmetic.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
-
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
 
 \name{Arithmetic}
 \title{Arithmetic Operators}
@@ -45,9 +43,10 @@ x \%/\% y
   All attributes (including class) are preserved if there is no
   coercion: logical \code{x} is coerced to integer and names, dims and
   dimnames are preserved.
-  
+
   The binary operators return vectors containing the result of the element
-  by element operations.  The elements of shorter vectors are recycled
+  by element operations.  If involving a zero-length vector the result
+  has length zero.  Otherwise, the elements of shorter vectors are recycled
   as necessary (with a \code{\link{warning}} when they are recycled only
   \emph{fractionally}).  The operators are \code{+} for addition,
   \code{-} for subtraction, \code{*} for multiplication, \code{/} for
@@ -58,7 +57,7 @@ x \%/\% y
   x \%/\% y )} (up to rounding error) unless \code{y == 0} where the
   result of \code{\%\%} is \code{\link{NA_integer_}} or
   \code{\link{NaN}} (depending on the \code{\link{typeof}} of the
-  arguments).
+  arguments), and for non-\link{finite} arguments.
 
   If either argument is complex the result will be complex, otherwise if
   one or both arguments are numeric, the result will be numeric.  If
@@ -80,7 +79,7 @@ x \%/\% y
   if both are) are used.  For arrays (and an array result) the
   dimensions and dimnames are taken from first argument if it is an
   array, otherwise the second.
-  
+
 }
 \details{
   The unary and binary arithmetic operators are generic functions:
@@ -96,7 +95,8 @@ x \%/\% y
 
   \code{1 ^ y} and \code{y ^ 0} are \code{1}, \emph{always}.
   \code{x ^ y} should also give the proper limit result when
-  either argument is infinite (i.e., \code{+- \link{Inf}}).
+  either (numeric) argument is \link{infinite} (one of \code{Inf} or
+  \code{-Inf}). 
 
   Objects such as arrays or time-series can be operated on this
   way provided they are conformable.
@@ -149,6 +149,9 @@ x \%/\% y
   zero \code{x}.
 }
 \note{
+  All logical operations involving a zero-length vector have a
+  zero-length result.
+
   The binary operators are sometimes called as functions as e.g.
   \code{`&`(x, y)}: see the description of how argument-matching is done
   in \code{\link[base]{Ops}}.

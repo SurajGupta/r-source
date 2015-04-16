@@ -46,7 +46,7 @@ ETC_FILES = Rprofile.site Rconsole Rdevga rgb.txt repositories Rcmd_environ
 
 
 # we don't want share/{Makefile.in,java,sh} installed
-SHARE_DIRS = R dictionaries encodings licenses make texmf zoneinfo
+SHARE_DIRS = R dictionaries encodings licenses make Rd texmf zoneinfo
 
 all: $(RPREFIX)-win.exe
 msi: $(RPREFIX)-$(SUFF).msi
@@ -62,6 +62,9 @@ imagedir:
 	$(RM) $(RPREFIX)/*/Makefile.in
 	$(MKDIR) -p $(RPREFIX)/etc$(R_ARCH)
 	$(CP) -p $(foreach i,$(ETC_FILES),$(R_HOME)/etc/$i) $(RPREFIX)/etc
+	if test -f "$(R_HOME)/etc/curl-ca-bundle.crt"; then \
+	  $(CP) -p "$(R_HOME)/etc/curl-ca-bundle.crt" $(RPREFIX)/etc; \
+	fi
 	$(CP) -p $(R_HOME)/etc$(R_ARCH)/Makeconf $(RPREFIX)/etc$(R_ARCH)
 # copy info and documentation files
 	$(MKDIR) -p $(RPREFIX)/doc

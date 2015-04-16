@@ -1,6 +1,6 @@
 % File src/library/base/man/trace.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright (C) 1995-2010 R Core Team
+% Copyright (C) 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{trace}
@@ -9,6 +9,7 @@
 \alias{untrace}
 \alias{tracingState}
 \alias{.doTrace}
+\alias{returnValue}
 \description{
   A call to \code{trace} allows you to insert debugging code (e.g., a
   call to \code{\link{browser}} or \code{\link{recover}}) at chosen
@@ -24,18 +25,19 @@ untrace(what, signature = NULL, where = topenv(parent.frame()))
 
 tracingState(on = NULL)
 .doTrace(expr, msg)
+returnValue(default = NULL)
 }
 \arguments{
   \item{what}{The name (quoted or not) of a function to be traced or
     untraced.  For \code{untrace} or for \code{trace} with more than one
     argument, more than one name can be given in the quoted form, and
     the same action will be applied to each one.}
-  \item{tracer}{Either a function or an unevaluated expression.  The
+  \item{tracer}{either a \link{function} or an unevaluated expression.  The
     function will be called or the expression will be evaluated either
     at the beginning of the call, or before those steps in the call
     specified by the argument \code{at}.
     See the details section.}
-  \item{exit}{ Either a function or an unevaluated expression.  The
+  \item{exit}{either a \code{\link{function}} or an unevaluated expression.  The
     function will be called or the expression will be evaluated on
     exiting the function.
     See the details section.}
@@ -85,6 +87,10 @@ tracingState(on = NULL)
     \code{browser()}, and \code{msg} is a string identifying the
     place where the trace action occurs.
   }
+  \item{default}{If \code{returnValue} finds no return value (e.g.
+    a function exited because of an error, not a normal exit), it
+    will return \code{default} instead.
+  }
 }
 \details{
   The \code{trace} function operates by constructing a revised version
@@ -133,9 +139,16 @@ tracingState(on = NULL)
   Using \code{\link{setBreakpoint}} (from package \pkg{utils}) may be an
   alternative, calling \code{trace(...., at, ...)}.
 
+  The \code{exit} argument is called during \code{\link{on.exit}}
+  processing.  In an \code{on.exit} expression, the experimental \code{returnValue()}
+  function may be called to obtain the value about to be returned by
+  the function. Calling this function in other circumstances will give
+  undefined results.
+
   An intrinsic limitation in the \code{exit} argument is that it won't
-  work if the function itself uses \code{on.exit}, since the existing
-  calls will override the one supplied by \code{trace}.
+  work if the function itself uses \code{on.exit} with \code{add=
+  FALSE} (the default), since the existing calls will override the one
+  supplied by \code{trace}.
 
   Tracing does not nest.  Any call to \code{trace} replaces previously
   traced versions of that function or method (except for edited
@@ -187,19 +200,35 @@ tracingState(on = NULL)
   include a \sQuote{destructive} browser for \R.)
 }
 \note{
+  Using \code{trace()} is conceptually a generalization of
+  \code{\link{debug}}, implemented differently, by calling
+  \code{\link{browser}} via its \code{tracer} or \code{exit} argument.
+  %% On the other hand, it sometimes triggers less consistently
+  %% ?? lacks features of debug()- (which ??)
+
   The version of function tracing that includes any of the arguments
   except for the function name requires the \pkg{methods} package
   (because it uses special classes of objects to store and restore
   versions of the traced functions).
 
   If methods dispatch is not currently on, \code{trace} will load the
-  methods namespace, but will not put the methods package on the search
-  list.
+  methods namespace, but will not put the methods package on the
+  \code{\link{search}} list.
 }
 \value{
-  In the simple version (just the first argument), invisible \code{NULL}.
+  In the simple version (just the first argument), \code{trace} returns
+  an invisible \code{NULL}.
   Otherwise, the traced function(s) name(s).  The relevant consequence is the
   assignment that takes place.
+
+  \code{untrace} returns the function name invisibly.
+
+  \code{tracingState} returns the current global tracing state, and possibly
+  changes it.
+
+  When called during \code{on.exit} processing, \code{returnValue} returns
+  the value about to be returned by the exiting function.  Behaviour in
+  other circumstances is undefined.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
@@ -213,15 +242,23 @@ tracingState(on = NULL)
   constructing general expressions.
 }
 \examples{
-require(graphics)
+require(stats)
 
 ##  Very simple use
 trace(sum)
-hist(stats::rnorm(100)) # shows about 3-4 calls to sum()
+hist(rnorm(100)) # shows about 3-4 calls to sum()
 untrace(sum)
 
-if(.isMethodsDispatchOn()) { # non-simple use needs 'methods' package
+## Show how pt() is called from inside power.t.test():
+if(FALSE)
+  trace(pt) ## would show ~20 calls, but we want to see more:
+trace(pt, tracer = quote(cat(sprintf("tracing pt(*, ncp = \%.15g)\n", ncp))),
+      print = FALSE) # <- not showing typical extra
+power.t.test(20, 1, power=0.8, sd=NULL)  ##--> showing the ncp root finding:
+untrace(pt)
 
+%% methods is loaded when needed
+%% if(.isMethodsDispatchOn()) { # non-simple use needs 'methods' package
 f <- function(x, y) {
     y <- pmax(y, 0.001)
     if (x > 0) x ^ y else stop("x must be positive")
@@ -254,6 +291,7 @@ trace("f", quote(browser(skipCalls = 4)), at = list(c(3,4)))
 
 trace("as.matrix", recover)
 
+
 ## turn off the tracing
 
 untrace(c("f", "as.matrix"))
@@ -267,7 +305,7 @@ untrace(c("f", "as.matrix"))
 
 trace(lm, exit = recover, where = nlme)
 }
-}
+%%}% only if 'methods'
 }
 \keyword{programming}
 \keyword{debugging}

@@ -56,7 +56,7 @@ apply <- function(X, MARGIN, FUN, ...)
         ## to use proper mode and dimension:
         ## The following is still a bit `hackish': use non-empty X
         newX <- array(vector(typeof(X), 1L), dim = c(prod(d.call), 1L))
-        ans <- FUN(if(length(d.call) < 2L) newX[,1] else
+        ans <- forceAndCall(1, FUN, if(length(d.call) < 2L) newX[,1] else
                    array(newX[, 1L], d.call, dn.call), ...)
         return(if(is.null(ans)) ans else if(length(d.ans) < 2L) ans[1L][-1L]
                else array(ans, d.ans, dn.ans))
@@ -68,12 +68,12 @@ apply <- function(X, MARGIN, FUN, ...)
     if(length(d.call) < 2L) {# vector
         if (length(dn.call)) dimnames(newX) <- c(dn.call, list(NULL))
         for(i in 1L:d2) {
-            tmp <- FUN(newX[,i], ...)
+            tmp <- forceAndCall(1, FUN, newX[,i], ...)
             if(!is.null(tmp)) ans[[i]] <- tmp
         }
     } else
        for(i in 1L:d2) {
-           tmp <- FUN(array(newX[,i], d.call, dn.call), ...)
+           tmp <- forceAndCall(1, FUN, array(newX[,i], d.call, dn.call), ...)
            if(!is.null(tmp)) ans[[i]] <- tmp
         }
 
@@ -98,9 +98,13 @@ apply <- function(X, MARGIN, FUN, ...)
 	return(array(ans, d.ans, dn.ans))
     if(len.a && len.a %% d2 == 0L) {
         if(is.null(dn.ans)) dn.ans <- vector(mode="list", length(d.ans))
-        dn.ans <- c(list(ans.names), dn.ans)
+	dn1 <- if(length(dn.call) &&
+		  length(ans.names) == length(dn.call[[1L]])) dn.call[1L]
+	       else list(ans.names)
+	dn.ans <- c(dn1, dn.ans)
 	return(array(ans, c(len.a %/% d2, d.ans),
-		     if(!all(vapply(dn.ans, is.null, NA))) dn.ans))
+		     if(!is.null(names(dn.ans)) || !all(vapply(dn.ans, is.null, NA)))
+			 dn.ans))
     }
     return(ans)
 }

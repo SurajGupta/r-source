@@ -1,10 +1,7 @@
 % File src/library/base/man/connections.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
-
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
 
 \name{connections}
 \alias{connections}
@@ -45,7 +42,7 @@ file(description = "", open = "", blocking = TRUE,
      encoding = getOption("encoding"), raw = FALSE)
 
 url(description, open = "", blocking = TRUE,
-    encoding = getOption("encoding"))
+    encoding = getOption("encoding"), method)
 
 gzfile(description, open = "", encoding = getOption("encoding"),
        compression = 6)
@@ -56,8 +53,7 @@ bzfile(description, open = "", encoding = getOption("encoding"),
 xzfile(description, open = "", encoding = getOption("encoding"),
        compression = 6)
 
-unz(description, filename, open = "",
-    encoding = getOption("encoding"))
+unz(description, filename, open = "", encoding = getOption("encoding"))
 
 pipe(description, open = "", encoding = getOption("encoding"))
 
@@ -94,6 +90,9 @@ isIncomplete(con)
     e.g.\sspace{}character devices.  This suppresses the check for a compressed
     file when opening for text-mode reading, and asserts that the
     \sQuote{file} may not be seekable.}
+  \item{method}{character string, partially matched to
+    \code{c("default", "internal", "wininet", "libcurl")}:
+    see \sQuote{Details}.}
   \item{compression}{integer in 0--9.  The amount of compression to be
     applied when writing, from none to maximal available.  For
     \code{xzfile} can also be negative: see the \sQuote{Compression}
@@ -126,10 +125,20 @@ isIncomplete(con)
   not in \code{RGui} on Windows).  See also \code{\link{stdin}()} for
   the subtly different R-level concept of \code{stdin}.
 
-  For \code{url} the description is a complete URL, including scheme
+  For \code{url} the description is a complete URL including scheme
   (such as \samp{http://}, \samp{ftp://} or \samp{file://}).  Proxies
   can be specified for HTTP and FTP \code{url} connections: see
-  \code{\link{download.file}}.
+  \code{\link{download.file}}.  \code{method = "internal"} is the
+  \sQuote{out of the box} default (and that available since connections
+  were introduced): \code{method = "libcurl"} is optionally supported as
+  from \R 3.2.0.  The default can be changed \emph{via}
+  \code{\link{options}(url.method = )} (including for when URLs are
+  passed to \code{file}).  \code{method = "wininet"} is only available on
+  Windows.
+#ifdef windows
+  (See \code{\link{setInternet2}}, which chooses whether \code{"default"}
+  means \code{"internal"} or \code{"wininet"}.)
+#endif
 
   For \code{gzfile} the description is the path to a file compressed by
   \command{gzip}: it can also open for reading uncompressed files and
@@ -159,8 +168,8 @@ isIncomplete(con)
   on Windows.)
 
   The intention is that \code{file} and \code{gzfile} can be used
-  generally for text input (from files and URLs) and binary input
-  respectively.
+  generally for text input (from files and \samp{http://} URLs) and
+  binary input respectively.
 
   \code{open}, \code{close} and \code{seek} are generic functions: the
   following applies to the methods relevant to connections.
@@ -191,7 +200,8 @@ isIncomplete(con)
 
 \section{URLs}{
   \code{url} and \code{file} support URL schemes \samp{http://},
-  \samp{ftp://} and \samp{file://}.
+  \samp{ftp://} and \samp{file://}: the first two require OS support
+  (which all known \R platforms have).
 
   A note on \samp{file://} URLs.  The most general form (from RFC1738) is
   \samp{file://host/path/to/file}, but \R only accepts the form with an
@@ -213,18 +223,28 @@ isIncomplete(con)
   No attempt is made to decode an encoded URL: call
   \code{\link{URLdecode}} if necessary.
 
-  Note that the \samp{https://} URL scheme is not supported except on
-  Windows.  There it is only supported if \option{--internet2} or
+  Note that the \samp{https://} URL scheme is not supported by the
+  internal method except on Windows.  There it is only supported if
+  \option{--internet2} or
 #ifdef unix
   \code{setInternet2(TRUE)}
 #endif
 #ifdef windows
   \code{\link{setInternet2}(TRUE)}
 #endif
-  was used (to make use of Internet Explorer internals), and then only
+  was used (to make use of Windows internal functions), and then only
   if the certificate is considered to be valid.  With that option only,
   the \samp{http://user:pass@site} notation for sites requiring
   authentication is also accepted.
+
+  Where supported, \code{url(method = "libcurl")} allows more schemes:
+  exactly which schemes is platform-dependent (see
+  \code{\link{libcurlVersion}}, but most platforms will support
+  \samp{https://} and \samp{ftps://}.
+
+  The default internal method does not follow re-directed HTTP URLs:
+  both \code{url(method = "libcurl")} and the use of Windows internal
+  functions do.
   
   Function \code{\link{download.file}} and contributed package
   \CRANpkg{RCurl} provide more comprehensive facilities to download

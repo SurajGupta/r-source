@@ -186,7 +186,8 @@ SEXP attribute_hidden matchArgExact(SEXP tag, SEXP * list)
 
 SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 {
-    int i, seendots, arg_i = 0;
+    Rboolean seendots;
+    int i, arg_i = 0;
     SEXP f, a, b, dots, actuals;
 
     actuals = R_NilValue;
@@ -221,9 +222,8 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
     arg_i = 0;
     while (f != R_NilValue) {
 	if (TAG(f) != R_DotsSymbol) {
-	    i = 1;
-	    for (b = supplied; b != R_NilValue; b = CDR(b)) {
-		if (TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), 1)) {
+	    for (b = supplied, i = 1; b != R_NilValue; b = CDR(b), i++) {
+		if (TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), /*exact*/ TRUE)) {
 		    if (fargused[arg_i] == 2)
 			error(_("formal argument \"%s\" matched by multiple actual arguments"),
 			      CHAR(PRINTNAME(TAG(f))));
@@ -234,7 +234,6 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 		    SET_ARGUSED(b, 2);
 		    fargused[arg_i] = 2;
 		}
-		i++;
 	    }
 	}
 	f = CDR(f);
@@ -247,7 +246,7 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
     /* The location of the first ... is saved in "dots" */
 
     dots = R_NilValue;
-    seendots = 0;
+    seendots = FALSE;
     f = formals;
     a = actuals;
     arg_i = 0;
@@ -256,10 +255,9 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 	    if (TAG(f) == R_DotsSymbol && !seendots) {
 		/* Record where ... value goes */
 		dots = a;
-		seendots = 1;
+		seendots = TRUE;
 	    } else {
-		i = 1;
-		for (b = supplied; b != R_NilValue; b = CDR(b)) {
+		for (b = supplied, i = 1; b != R_NilValue; b = CDR(b), i++) {
 		    if (ARGUSED(b) != 2 && TAG(b) != R_NilValue &&
 			pmatch(TAG(f), TAG(b), seendots)) {
 			if (ARGUSED(b))
@@ -278,7 +276,6 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 			SET_ARGUSED(b, 1);
 			fargused[arg_i] = 1;
 		    }
-		    i++;
 		}
 	    }
 	}
@@ -297,12 +294,12 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
     f = formals;
     a = actuals;
     b = supplied;
-    seendots = 0;
+    seendots = FALSE;
 
     while (f != R_NilValue && b != R_NilValue && !seendots) {
 	if (TAG(f) == R_DotsSymbol) {
 	    /* Skip ... matching until all tags done */
-	    seendots = 1;
+	    seendots = TRUE;
 	    f = CDR(f);
 	    a = CDR(a);
 	} else if (CAR(a) != R_MissingArg) {
@@ -383,10 +380,165 @@ SEXP attribute_hidden matchArgs(SEXP formals, SEXP supplied, SEXP call)
 		      ngettext("unused argument %s",
 			       "unused arguments %s",
 			       (unsigned long) length(unusedForError)),
-		      CHAR(STRING_ELT(deparse1line(unusedForError, 0), 0)) + 4);
-                      /* '+ 4' is to remove 'list' from 'list(badTag1,...)' */
+		      strchr(CHAR(asChar(deparse1line(unusedForError, 0))), '('));
 	}
     }
     UNPROTECT(1);
     return(actuals);
+}
+
+
+/* patchArgsByActuals - patch promargs (given as 'supplied') to be promises
+   for the respective actuals in the given environment 'cloenv'.  This is
+   used by NextMethod to allow patching of arguments to the current closure
+   before dispatching to the next method.  The implementation is based on
+   matchArgs, but there is no error/warning checking, assuming that it has
+   already been done by a call to matchArgs when the current closure was
+   invoked.
+*/
+
+typedef enum {
+    FS_UNMATCHED       = 0, /* the formal was not matched by any supplied arg */
+    FS_MATCHED_PRESENT = 1, /* the formal was matched by a non-missing arg */
+    FS_MATCHED_MISSING = 2, /* the formal was matched, but by a missing arg */
+    FS_MATCHED_LOCAL   = 3, /* the formal was matched by a missing arg, but
+                               a local variable of the same name as the formal
+                               has been used */
+} fstype_t;
+
+static R_INLINE
+void patchArgument(SEXP suppliedSlot, SEXP name, fstype_t *farg, SEXP cloenv) {
+    SEXP value = CAR(suppliedSlot);
+    if (value == R_MissingArg) {
+        value = findVarInFrame3(cloenv, name, TRUE);
+        if (value == R_MissingArg) {
+            if (farg) *farg = FS_MATCHED_MISSING;
+            return;
+        }
+        if (farg) *farg = FS_MATCHED_LOCAL;
+    } else
+        if (farg) *farg = FS_MATCHED_PRESENT;
+
+    SETCAR(suppliedSlot, mkPROMISE(name, cloenv));
+}
+
+SEXP attribute_hidden
+patchArgsByActuals(SEXP formals, SEXP supplied, SEXP cloenv)
+{
+    int i, seendots, farg_i;
+    SEXP f, a, b, prsupplied;
+
+    int nfarg = length(formals);
+    if (!nfarg) nfarg = 1; // avoid undefined behaviour
+    fstype_t farg[nfarg];
+    for(i = 0; i < nfarg; i++) farg[i] = FS_UNMATCHED;
+
+    /* Shallow-duplicate supplied arguments */
+
+    PROTECT(prsupplied = allocList(length(supplied)));
+    for(b = supplied, a = prsupplied; b != R_NilValue; b = CDR(b), a = CDR(a)) {
+        SETCAR(a, CAR(b));
+        SET_ARGUSED(a, 0);
+        SET_TAG(a, TAG(b));
+    }
+
+    /* First pass: exact matches by tag */
+
+    f = formals;
+    farg_i = 0;
+    while (f != R_NilValue) {
+	if (TAG(f) != R_DotsSymbol) {
+	    for (b = prsupplied; b != R_NilValue; b = CDR(b)) {
+		if (TAG(b) != R_NilValue && pmatch(TAG(f), TAG(b), 1)) {
+		    patchArgument(b, TAG(f), &farg[farg_i], cloenv);
+		    SET_ARGUSED(b, 2);
+		    break; /* Previous invocation of matchArgs */
+		           /* ensured unique matches */
+		}
+	    }
+	}
+	f = CDR(f);
+	farg_i++;
+    }
+
+    /* Second pass: partial matches based on tags */
+    /* An exact match is required after first ... */
+    /* The location of the first ... is saved in "dots" */
+
+    seendots = 0;
+    f = formals;
+    farg_i = 0;
+    while (f != R_NilValue) {
+	if (farg[farg_i] == FS_UNMATCHED) {
+	    if (TAG(f) == R_DotsSymbol && !seendots) {
+		seendots = 1;
+	    } else {
+		for (b = prsupplied; b != R_NilValue; b = CDR(b)) {
+		    if (!ARGUSED(b) && TAG(b) != R_NilValue &&
+			pmatch(TAG(f), TAG(b), seendots)) {
+
+			patchArgument(b, TAG(f), &farg[farg_i], cloenv);
+			SET_ARGUSED(b, 1);
+			break; /* Previous invocation of matchArgs */
+			       /* ensured unique matches */
+		    }
+		}
+	    }
+	}
+	f = CDR(f);
+	farg_i++;
+    }
+
+    /* Third pass: matches based on order */
+    /* All args specified in tag=value form */
+    /* have now been matched.  If we find ... */
+    /* we gobble up all the remaining args. */
+    /* Otherwise we bind untagged values in */
+    /* order to any unmatched formals. */
+
+    f = formals;
+    b = prsupplied;
+    farg_i = 0;
+    while (f != R_NilValue && b != R_NilValue) {
+	if (TAG(f) == R_DotsSymbol) {
+	    /* Done, ... and following args cannot be patched */
+	    break;
+	} else if (farg[farg_i] == FS_MATCHED_PRESENT) {
+	    /* Note that this check corresponds to CAR(b) == R_MissingArg */
+	    /* in matchArgs */
+
+	    /* Already matched by tag */
+	    /* skip to next formal */
+	    f = CDR(f);
+	    farg_i++;
+	} else if (ARGUSED(b) || TAG(b) != R_NilValue) {
+	    /* This value is used or tagged, skip to next value */
+	    /* The second test above is needed because we */
+	    /* shouldn't consider tagged values for positional */
+	    /* matches. */
+	    /* The formal being considered remains the same */
+	    b = CDR(b);
+	} else {
+	    /* We have a positional match */
+	    if (farg[farg_i] == FS_MATCHED_LOCAL)
+	        /* Another supplied argument, a missing with a tag, has */
+	        /* been patched to a promise reading this formal, because */
+	        /* there was a local variable of that name. Hence, we have */
+	        /* to turn this supplied argument into a missing. */
+	        /* Otherwise, we would supply a value twice, confusing */
+	        /* argument matching in subsequently called functions. */
+	        SETCAR(b, R_MissingArg);
+	    else
+	        patchArgument(b, TAG(f), NULL, cloenv);
+
+	    SET_ARGUSED(b, 1);
+	    b = CDR(b);
+	    f = CDR(f);
+	    farg_i++;
+	}
+    }
+
+    /* Previous invocation of matchArgs ensured all args are used */
+    UNPROTECT(1);
+    return(prsupplied);
 }

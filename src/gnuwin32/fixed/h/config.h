@@ -153,6 +153,11 @@
 /* Define to 1 if you have the `ctan' function. */
 #define HAVE_CTAN 1
 
+/* Define to 1 if you have the <curl/curl.h> header file.
+   Set on the command line where supported.
+*/
+/* #undef HAVE_CURL_CURL_H */
+
 /* Define to 1 if you have the `ctanh' function. */
 #define HAVE_CTANH 1
 
@@ -271,6 +276,9 @@
 
 /* Define to 1 if you have the `fdopen' function. */
 #define HAVE_FDOPEN 1
+
+/* Define to 1 if you have the <features.h> header file. */
+/* #undef HAVE_FEATURES_H */
 
 /* Define to 1 if you have the <floatingpoint.h> header file. */
 /* #undef HAVE_FLOATINGPOINT_H */
@@ -673,6 +681,9 @@
 /* Define to 1 if you have the `stat' function. */
 #define HAVE_STAT 1
 
+/* Define to 1 if you have the <stdalign.h> header file. */
+/* #undef HAVE_STDALIGN_H */
+
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
 
@@ -840,6 +851,9 @@
 /* Define to 1 if you have the <utime.h> header file. */
 /* #undef HAVE_UTIME_H */
 
+/* Define to 1 if you have the <valgrind/memcheck.h> header file. */
+/* #undef HAVE_VALGRIND_MEMCHECK_H */
+
 /* Define to 1 if you have the `vasprintf' function. */
 #define HAVE_VASPRINTF 1
 
@@ -973,7 +987,7 @@
 #define PACKAGE_TARNAME "R"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL "http://www.r-project.org"
+#define PACKAGE_URL "https://www.r-project.org"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "@VERSION@"

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.1\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-13 14:10\n"
+"POT-Creation-Date: 2015-03-24 11:51\n"
 "PO-Revision-Date: 2012-11-27 01:11+0330\n"
 "Last-Translator: Seyed Mahmood Taghavi Shahri <taghavi_m@razi.tums.ac.ir>\n"
 "Language-Team: Persian\n"
@@ -44,6 +44,9 @@ msgid "infinite or missing values in 'x'"
 msgstr ""
 
 msgid "a dimension is zero"
+msgstr ""
+
+msgid "\"hexNumeric\"and \"digits17\" are mutually exclusive"
 msgstr ""
 
 msgid "second argument must be a list"
@@ -293,7 +296,7 @@ msgstr ""
 msgid "only a single element should be replaced"
 msgstr ""
 
-msgid "Name partially matched in data frame"
+msgid "Partial match of '%s' to '%s' in data frame"
 msgstr ""
 
 msgid "names do not match previous names"
@@ -305,16 +308,13 @@ msgstr ""
 msgid "invalid list argument: all variables should have the same length"
 msgstr ""
 
-msgid "data frame with 0 columns and %d rows"
-msgstr ""
-
 msgid "<0 rows> (or 0-length row.names)"
 msgstr ""
 
 msgid "non-numeric variable in data frame:"
 msgstr ""
 
-msgid "only defined for equally-sized data frames"
+msgid "%s only defined for equally-sized data frames"
 msgstr ""
 
 msgid "list of length %d not meaningful"
@@ -531,7 +531,7 @@ msgstr ""
 msgid "number of levels differs"
 msgstr ""
 
-msgid "not meaningful for factors"
+msgid "%s not meaningful for factors"
 msgstr ""
 
 msgid "level sets of factors are different"
@@ -615,6 +615,9 @@ msgid "'flag' can contain only '0+- #'"
 msgstr ""
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
+msgstr ""
+
+msgid "'big.mark' and 'decimal.mark' are both '%s', which could be confusing"
 msgstr ""
 
 msgid "'zero.print' has length > 1"
@@ -731,6 +734,9 @@ msgstr ""
 msgid "%s not found on search path, using pos = 2"
 msgstr ""
 
+msgid "Package %s version %s cannot be unloaded"
+msgstr ""
+
 msgid "package or namespace load failed for %s"
 msgstr ""
 
@@ -818,13 +824,10 @@ msgstr ""
 msgid "package %s required by %s could not be found"
 msgstr ""
 
-msgid "package %s %s was found, but %s %s is required by %s"
+msgid "version %s of %s masked by %s in %s"
 msgstr ""
 
 msgid "package %s could not be loaded"
-msgstr ""
-
-msgid "package %s %s is loaded, but %s %s is required by %s"
 msgstr ""
 
 msgid "empty (zero-byte) input file"
@@ -929,7 +932,13 @@ msgstr ""
 msgid "'by' must specify one or more columns as numbers, names or logical"
 msgstr ""
 
+msgid "long vectors are not supported"
+msgstr ""
+
 msgid "'by.x' and 'by.y' specify different numbers of columns"
+msgstr ""
+
+msgid "'incomparables' is supported only for merging on a single column"
 msgstr ""
 
 msgid "additional arguments ignored in message()"
@@ -1394,9 +1403,6 @@ msgstr ""
 msgid "invalid version specification %s"
 msgstr ""
 
-msgid "wrong argument"
-msgstr ""
-
 msgid "invalid 'value'"
 msgstr ""
 
@@ -1495,11 +1501,22 @@ msgstr[0] ""
 msgstr[1] ""
 
 msgid ""
-"The following object is masked %s %s:\n"
+"The following object is masked _by_ %s:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"The following objects are masked %s %s:\n"
+"The following objects are masked _by_ %s:\n"
+"\n"
+"%s\n"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid ""
+"The following object is masked from %s:\n"
+"\n"
+"%s\n"
+msgid_plural ""
+"The following objects are masked from %s:\n"
 "\n"
 "%s\n"
 msgstr[0] ""
@@ -1553,6 +1570,11 @@ msgstr[1] ""
 
 msgid "provided %d variable to replace %d variables"
 msgid_plural "provided %d variables to replace %d variables"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "data frame with 0 columns and %d row"
+msgid_plural "data frame with 0 columns and %d rows"
 msgstr[0] ""
 msgstr[1] ""
 

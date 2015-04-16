@@ -1,7 +1,7 @@
 #  File src/library/methods/R/Methods.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -223,26 +223,23 @@ setGeneric <-
 
 ## Mimic the search for a function in the standard search() list for packages
 ## with namespace, to be consistent with the evaluator's search for objects
+### Deprecate? Seems like we should search the imports, not the search path
 .standardPackageNamespaces <- new.env()
 .standardPackages <- c("stats", "graphics", "grDevices", "utils", "datasets", "methods")
 .getFromStandardPackages <- function(name) {
-    where <- objects(.standardPackageNamespaces)
-    if(!length(where)) { # initialize the table of namespaces
-        for(pkg in .standardPackages) {
-            ## the tryCatch nonsense is needed because this code gets called
-            ## while installing methods (why?) and throws an error on that namespace
-            ns <- tryCatch(loadNamespace(pkg), error = function(e) new.env())
-            assign(pkg, ns, envir = .standardPackageNamespaces)
-        }
-        where <- .standardPackages
-    }
-    ## search
-    for(pkg in where) {
-        ns <- get(pkg, envir = .standardPackageNamespaces)
-        if(exists(name, envir = ns, inherits = FALSE)) {
-            obj <- get(name, envir = ns)
+    namespaces <- as.list(.standardPackageNamespaces, all.names=TRUE)
+    if(length(namespaces) == 0L) { # initialize the table of namespaces
+        namespaces <- lapply(.standardPackages, function(pkg) {
+            tryCatch(loadNamespace(pkg),
+                     error = function(e) new.env())
+        })
+        names(namespaces) <- .standardPackages
+        list2env(namespaces, .standardPackageNamespaces)
+    } else {
+        for(ns in namespaces) {
+            obj <- ns[[name]]
             if(is.function(obj))
-                return(obj)
+              return(obj)
         }
     }
     return(NULL)
@@ -276,7 +273,7 @@ isGeneric <-
         ## the definition of isGeneric() for a primitive is that methods are defined
         ## (other than the default primitive)
         gen <- genericForPrimitive(f, mustFind = FALSE)
-        return(is.function(gen) && length(objects(.getMethodsTable(gen), all.names=TRUE)) > 1L)
+        return(is.function(gen) && length(names(.getMethodsTable(gen))) > 1L)
     }
     if(!is(fdef, "genericFunction"))
         return(FALSE)
@@ -301,14 +298,12 @@ removeGeneric <-
   ##
     function(f, where = topenv(parent.frame()))
 {
-    ev <- fdef <- NULL
+    fdef <- NULL
     allEv <- findFunction(f, where = where)
     for(maybeEv in allEv) {
         fdef <- get(f, maybeEv)
-        if(is(fdef, "genericFunction")) {
-            ev <- maybeEv
+        if(is(fdef, "genericFunction"))
             break
-        }
     }
     found <- is(fdef, "genericFunction")
     if(found) {
@@ -350,30 +345,14 @@ getMethods <-
     function(f, where = topenv(parent.frame()), table = FALSE)
 {
     if(!table)
-      .MlistDeprecated("getMethods", "findMethods")
+      .MlistDefunct("getMethods", "findMethods")
     nowhere <- missing(where)
     fdef <- getGeneric(f, where = where)
     f <- fdef@generic
     if(!is.null(fdef)) {
         if(table)
           return(getMethodsForDispatch(fdef, TRUE))
-        value <-
-            (if(nowhere) {
-                if(is(fdef, "genericFunction"))
-                    .makeMlistFromTable(fdef) # else NULL
-            }
-            else if(.noMlists())
-		.makeMlistFromTable(fdef, where)
-            else getMethodsMetaData(f, where = where)
-             )
-
-        if(is.null(value)) ## return empty methods list
-            new("MethodsList", argument = fdef@default@argument) # but deprecated from 2.11.0
-        else
-            value
-    }
-    else
-      NULL
+    } ## else NULL
 }
 
 getMethodsForDispatch <- function(fdef, inherited = FALSE)
@@ -398,8 +377,7 @@ getMethodsForDispatch <- function(fdef, inherited = FALSE)
     }
 }
 
-##NB used internally in MethodsListSelect.  Must NOT use the standard version
-## to prevent recursion
+## Must NOT use the standard version to prevent recursion  {still true ?}
 .getMethodsForDispatch <- function(fdef) {
     ev <- base::environment(fdef)
     if(base::exists(".Methods", envir = ev))
@@ -634,7 +612,7 @@ removeMethod <- function(f, signature = character(), where = topenv(parent.frame
       if(is(f, "genericFunction"))
          { fdef <- f; f <- f@generic}
       else if(is.primitive(f))
-        { f <- .primname(f); fdef <- genericForPrimitive(f)}
+        { f <- .primname(f); fdef <- genericForPrimitive(f, mustFind=FALSE)}
       else
         stop("function supplied as argument 'f' must be a generic")
     }
@@ -694,7 +672,7 @@ findMethod <- function(f, signature, where = topenv(parent.frame())) {
     value <- where[found]
     ## to conform to the API, try to return a numeric or character vector
     ## if possible
-    what <- sapply(value, class)
+    what <- vapply(value, class, "", USE.NAMES=FALSE)
     if(identical(what, "numeric") || identical(what, "character"))
         unlist(value)
     else
@@ -716,9 +694,9 @@ getMethod <-
     }
     if(missing(fdef)) {
         if(missing(where))
-          fdef <-  getGeneric(f, FALSE)
+          fdef <- getGeneric(f, FALSE)
         else {
-            fdef <-  getGeneric(f, FALSE, where = where)
+            fdef <- getGeneric(f, FALSE, where = where)
             if(is.null(fdef))
               fdef <- getGeneric(f, FALSE)
         }
@@ -749,51 +727,8 @@ getMethod <-
     else if(is.null(mlist)) return(mlist)
 
     ## the rest of the code will be executed only if a methods list object is supplied
-    ## as an argument.  Should be deleted from 2.8.0
-    message("Warning: using defunct methods list search", domain = NA)
-    i <- 1
-    argNames <- fdef@signature
-    signature <- matchSignature(signature, fdef)
-    Classes <- signature # a copy just for possible error message
-    while(length(signature) && is(mlist, "MethodsList")) {
-        if(!identical(argNames[[i]], as.character(mlist@argument)))
-            stop(sprintf("apparent inconsistency in the methods for function %s; argument %s in the signature corresponds to %s in the methods list object",
-                          sQuote(.genericName(f)),
-                          sQuote(argNames[[i]]),
-                          sQuote(as.character(mlist@argument))),
-                 domain = NA)
-        Class <- signature[[1L]]
-        signature <- signature[-1L]
-        methods <- slot(mlist, "methods")
-        mlist <- elNamed(methods, Class)# may be function, MethodsList or NULL
-        i <- i + 1
-    }
-    if(length(signature) == 0L) {
-        ## process the implicit remaining "ANY" elements
-        if(is(mlist, "MethodsList"))
-            mlist <- finalDefaultMethod(mlist)
-        if(is(mlist, "function"))
-            return(mlist) # the only successful outcome
-    }
-    if(optional)
-        mlist                           ## may be NULL or a MethodsList object
-    else {
-        ## for friendliness, look for (but don't return!) an S3 method
-        if(length(Classes) == 1L && exists(paste(.genericName(f), Classes, sep="."), where))
-            stop(sprintf("no S4 method for function %s and signature %s; consider getS3method() if you wanted the S3 method",
-                         sQuote(.genericName(f)), Classes),
-                 domain = NA)
-        if(length(Classes)) {
-            length(argNames) <- length(Classes)
-            Classes <- paste(argNames," = \"", unlist(Classes),
-                             "\"", sep = "", collapse = ", ")
-        }
-        else
-            Classes <- "\"ANY\""
-        stop(sprintf("no method defined in methods list object for function %s and signature %s",
-                     sQuote(.genericName(f)), Classes),
-             domain = NA)
-    }
+    ## as an argument.  Should be deleted from 2.8.0 --> Error from 3.2.0
+    stop("defunct methods list search", domain = NA)
 }
 
 dumpMethod <-
@@ -1037,7 +972,144 @@ showMethods <-
         invisible(printTo)
 }
 
+.methods_info <-
+    ## (not exported) simplify construction of standard data.frame
+    ## return value from .S4methodsFor*
+    function(generic=character(), signature=character(),
+             visible=rep(TRUE, length(signature)), from=character())
+{
+    if (length(signature))
+        signature <- paste0(generic, ",", signature, "-method")
+    keep <- !duplicated(signature)
+    data.frame(visible=visible[keep], from=from[keep],
+               generic=generic[keep], isS4=rep(TRUE, sum(keep)),
+               row.names=signature[keep], stringsAsFactors=FALSE)
+}
 
+.S4methodsForClass <-
+    ## (not exported) discover methods for specific class;
+    ## generic.function ignored
+    function(generic.function, class)
+{
+    def <- tryCatch(getClass(class), error=function(...) NULL)
+    if (is.null(def))
+        return(.methods_info())
+
+    mtable <- ".MTable"
+    classes <- c(class, names(getClass(class)@contains))
+    generics <- getGenerics(where=search())
+    nms <- setNames(as.vector(generics), as.vector(generics))
+
+    packages <- lapply(nms, function(generic) {
+        table <- get(mtable, environment(getGeneric(generic)))
+        lapply(names(table), function(nm, table) {
+            environmentName(environment(table[[nm]]))
+        }, table)
+    })
+    methods <- lapply(nms, function(generic, classes) {
+        table <- get(mtable, environment(getGeneric(generic)))
+        methods <- names(table)
+        lapply(methods, function(method, classes) {
+            m <- table[[method]]
+            if (is(m, "MethodDefinition") && any(m@defined %in% classes))
+                setNames(as.vector(m@defined), names(m@defined))
+            else
+                NULL
+        }, classes)
+    }, classes)
+
+    geom <- lapply(methods, function(method) {
+        !vapply(method, is.null, logical(1))
+    })
+    filter <- function(elt, geom) elt[geom]
+    packages <- Map(filter, packages, geom)
+    methods <- Map(filter, methods, geom)
+    packages <- packages[lengths(methods) != 0L]
+    methods <- methods[lengths(methods) != 0L]
+
+    ## only derived methods
+    geom <- lapply(methods, function(method, classes) {
+        sig <- simplify2array(method)
+        if (!is.matrix(sig))
+            sig <- matrix(sig, ncol=length(method))
+        idx <- apply(sig, 2, match, classes, 0)
+        if (!is.matrix(idx))
+            idx <- matrix(idx, ncol=ncol(sig))
+        keep <- colSums(idx != 0) != 0
+        sidx <- idx[,keep, drop=FALSE]
+
+        ## 'nearest' method
+        shift <- c(0, cumprod(pmax(1, apply(sidx, 1, max)))[-nrow(sidx)])
+        score <- colSums(sidx + shift)
+        sig0 <- sig <- sig[,keep, drop=FALSE]
+        sig0[sidx != 0] <- "*"
+        sig0 <- apply(sig0, 2, paste, collapse="#")
+        split(score, sig0) <-
+            lapply(split(score, sig0), function(elt) elt == min(elt))
+        score == 1
+    }, classes)
+    filter <- function(elt, geom) elt[geom]
+    packages <- Map(filter, packages, geom)
+    methods <- Map(filter, methods, geom)
+
+    generic <- rep(names(methods), lengths(methods))
+    signature <- unlist(lapply(methods, function(method) {
+        vapply(method, paste0, character(1L), collapse=",")
+    }), use.names=FALSE)
+    package <- unlist(packages, use.names=FALSE)
+
+    .methods_info(generic=generic, signature=signature, from=package)
+}
+
+.S4methodsForGeneric <-
+    ## (not exported) discover methods for specific generic; class
+    ## ignored.
+    function(generic.function, class)
+{
+    if (is.null(getGeneric(generic.function)))
+        return(.methods_info())
+
+    mtable <- ".MTable"
+    generic <- generic.function
+    table <- get(mtable, environment(getGeneric(generic)))
+    packages <- sapply(names(table), function(nm, table) {
+        environmentName(environment(table[[nm]]))
+    }, table)
+
+    methods <- names(table)
+    signatures <- lapply(methods, function(method, classes) {
+        m <- table[[method]]
+        if (is(m, "MethodDefinition"))
+            setNames(as.vector(m@defined), names(m@defined))
+        else
+            NULL
+    })
+
+    geom <- vapply(signatures, Negate(is.null), logical(1))
+    packages <- packages[geom]
+    methods <- methods[geom]
+    signatures <- sapply(signatures[geom], function(elt) {
+        paste0(as.vector(elt), collapse=",")
+    })
+
+    .methods_info(generic=rep(generic.function, length(packages)), from=packages,
+                  signature=signatures)
+}
+
+.S4methods <-
+    ## discover methods by generic or class, primarily for interactive
+    ## display via utils::methods()
+    function(generic.function, class)
+{
+    info <- if (!missing(generic.function))
+        .S4methodsForGeneric(generic.function, class)
+    else if (!missing(class))
+        .S4methodsForClass(generic.function, class)
+    else
+        stop("must supply 'generic.function' or 'class'")
+    structure(rownames(info), info=info, byclass=missing(generic.function),
+              class="MethodsFunction")
+}
 
 removeMethods <-
   ## removes all the methods defined for this generic function.  Returns `TRUE' if
@@ -1183,64 +1255,51 @@ isGroup <-
     is(fdef, "groupGenericFunction")
   }
 
-callGeneric <- function(...)
-{
-    frame <- sys.parent()
-    envir <- parent.frame()
-    call <- sys.call(frame)
+getGenericFromCall <- function(call, methodEnv) {
+    generic <- methodEnv$.Generic
+    if(is.null(generic)) {
+        fdef <- if (is.name(call[[1L]]))
+            get(as.character(call[[1L]]), envir = methodEnv)
+        else call[[1L]]
+        if (is.primitive(fdef)) {
+            fdef <- getGeneric(fdef, mustFind=TRUE)
+        }
+        generic <- environment(fdef)$.Generic
+    }
+    generic
+}
 
-    ## localArgs == is the evaluation in a method that adds special arguments
-    ## to the generic.  If so, look back for the call to generic.  Also expand  "..."
-    localArgs <- FALSE
-    ## the  lines below this comment do what the previous version
-    ## did in the expression fdef <- sys.function(frame)
-    if(exists(".Generic", envir = envir, inherits = FALSE))
-	fdef <- get(get(".Generic", envir = envir), envir = envir)
-    else { # in a local method (special arguments), or	an error
-        localArgs <- identical(as.character(call[[1L]]), ".local")
-	if(localArgs)
-	    call <- sys.call(sys.parent(2))
-	if (is.name(call[[1L]]))
-	    fdef <- get(as.character(call[[1L]]), envir = envir)
-	else fdef <- call[[1L]]
-    }
+fromNextMethod <- function(call) {
+  identical(call[[1L]], quote(.nextMethod))
+}
 
-    if(is.primitive(fdef)) {
-        if(nargs() == 0)
-            stop("'callGeneric' with a primitive needs explicit arguments (no formal args defined)")
-        else {
-            call <- substitute(fdef(...))
-        }
+callGeneric <- function(...) {
+    call <- sys.call(sys.parent(1L))
+    .local <- identical(call[[1L]], quote(.local))
+    methodCtxInd <- 1L + if (.local) 1L else 0L
+    callerCtxInd <- methodCtxInd + 1L
+    methodCall <- sys.call(sys.parent(methodCtxInd))
+    if (fromNextMethod(methodCall)) {
+        methodCtxInd <- methodCtxInd + 1L
     }
-    else {
-        env <- environment(fdef)
-        if(!exists(".Generic", env, inherits = FALSE))
-            stop("'callGeneric' must be called from a generic function or method")
-        f <- get(".Generic", env, inherits = FALSE)
-        fname <- as.name(f)
-        if(nargs() == 0) {
-            call[[1L]] <- as.name(fname) # in case called from .local
-            ## if ... appears as an arg name, must be a nested callGeneric()
-            ##  or callNextMethod?  If so, leave alone so "..." will be evaluated
-            if("..." %in% names(call)) {  }
-            else {
-                ## expand the ... if this is  a locally modified argument list.
-                ## This is a somewhat ambiguous case and may not do what the
-                ## user expects.  Not clear there is a single solution.  Should we warn?
-                call <- match.call(fdef, call, expand.dots = localArgs)
-                anames <- names(call)
-                matched <- !is.na(match(anames, names(formals(fdef))))
-                for(i in seq_along(anames))
-                  if(matched[[i]])
-                    call[[i]] <- as.name(anames[[i]])
-            }
-        }
-        else {
-            call <- sys.call() # just use the arguments to callGeneric()
-            call[[1]] <- fname
-        }
+    methodFrame <- parent.frame(methodCtxInd)
+    genericName <- getGenericFromCall(methodCall, methodFrame)
+    if (is.null(genericName)) {
+        stop("callGeneric() must be called from within a method body")
     }
-    eval(call, sys.frame(sys.parent()))
+    if (nargs() == 0L) {
+        callerFrame <- sys.frame(sys.parent(callerCtxInd))
+        methodDef <- sys.function(sys.parent(1L))
+        call <- match.call(methodDef,
+                           methodCall,
+                           expand.dots=FALSE,
+                           envir=callerFrame)
+        call[-1L] <- lapply(names(call[-1L]), as.name)
+    } else {
+        call <- sys.call()
+    }
+    call[[1L]] <- as.name(genericName)
+    eval(call, parent.frame())
 }
 
 ## This uses 'where' to record the methods namespace: default may not be that
@@ -1391,9 +1450,8 @@ registerImplicitGenerics <- function(what = .ImplicitGenericsTable(where),
     if(!is.environment(what))
         stop(gettextf("must provide an environment table; got class %s",
                       dQuote(class(what))), domain = NA)
-    objs <- objects(what, all.names = TRUE)
-    for(f in objs)
-        .cacheImplicitGeneric(f, get(f, envir = what))
+    objs <- as.list(what, all.names = TRUE)
+    mapply(.cacheImplicitGeneric, names(objs), objs)
     NULL
 }
 
@@ -1415,9 +1473,9 @@ registerImplicitGenerics <- function(what = .ImplicitGenericsTable(where),
 .getImplicitGeneric <- function(name, where, pkg = "")
 {
     value <- .getImplicitGenericFromCache(name, where, pkg)
-    if(is.null(value) && exists(.ImplicitGenericsMetaName, where, inherits = FALSE)) {
-        tbl <-  get(.ImplicitGenericsMetaName, where)
-        value <- .getGenericFromCacheTable(name, where, pkg, tbl)
+    if(is.null(value) && !is.null(tbl <-
+		where[[.ImplicitGenericsMetaName]])) {
+       value <- .getGenericFromCacheTable(name, where, pkg, tbl)
     }
     value
 }
@@ -1495,10 +1553,9 @@ registerImplicitGenerics <- function(what = .ImplicitGenericsTable(where),
 }
 
 .getImplicitGroup <- function(name, where) {
-    if(exists(.ImplicitGroupMetaName, where, inherits = FALSE)) {
-        tbl <- get(.ImplicitGroupMetaName, where)
-        if(exists(name, envir = tbl, inherits = FALSE))
-            return(get(name, envir = tbl))
+    if(!is.null(tbl <- where[[.ImplicitGroupMetaName]])) {
+	if(!is.null(r <- tbl[[name]]))
+	    return(r)
     }
     list()
 }
@@ -1537,21 +1594,19 @@ findMethods <- function(f, where, classes = character(), inherited = FALSE, pack
       table <- get(if(inherited) ".AllMTable" else ".MTable", envir = environment(fdef))
     else {
         if(!identical(inherited, FALSE))
-          stop("only FALSE is meaningful for 'inherited', when 'where' is supplied (got ", inherited, "\"")
+          stop(gettextf("only FALSE is meaningful for 'inherited', when 'where' is supplied (got %s)", inherited), domain = NA)
         where <- as.environment(where)
         what <- .TableMetaName(f, fdef@package)
-        if(exists(what, envir = where, inherits = FALSE))
-          table <- get(what, envir = where)
-        else
+        if(is.null(table <- where[[what]]))
           return(object)
     }
-    objNames <- objects(table, all.names = TRUE)
+    objNames <- sort(names(table))
     if(length(classes)) {
         classesPattern <- paste0("#", classes, "#", collapse = "|")
         which <- grep(classesPattern, paste0("#",objNames,"#"))
         objNames <- objNames[which]
     }
-    object@.Data <- lapply(objNames, function(x)get(x, envir = table))
+    object@.Data <- mget(objNames, table)
     object@names <- objNames
     object@signatures <- strsplit(objNames, "#", fixed = TRUE)
     object
@@ -1574,7 +1629,7 @@ findMethodSignatures <- function(..., target = TRUE, methods = findMethods(...))
         sigs <- lapply(methods, function(x)
                        if(is.primitive(x)) anySig else as.character(x@defined))
     }
-    lens <- unique(sapply(sigs, length))
+    lens <- unique(vapply(sigs, length, 1, USE.NAMES=FALSE))
     if(length(lens) == 0)
         return(matrix(character(), 0, length(methods@arguments)))
     if(length(lens) > 1L) {
@@ -1625,7 +1680,7 @@ hasMethods <- function(f, where, package = "")
     what <- .TableMetaName(f, package)
     testEv <- function(ev)
       exists(what, envir = ev, inherits = FALSE) &&
-    length(objects(get(what, envir = ev), all.names = TRUE))
+        length(names(get(what, envir = ev))) > 0L
     if(nowhere) {
         for(i in seq_along(search())) {
             if(testEv(as.environment(i)))

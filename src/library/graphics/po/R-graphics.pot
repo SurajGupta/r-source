@@ -1,8 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.1.0\n"
-"Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-07-20 09:37\n"
+"Project-Id-Version: graphics 3.2.0\n"
+"POT-Creation-Date: 2015-03-02 10:09\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -224,6 +223,9 @@ msgstr ""
 msgid "'z' must be a matrix"
 msgstr ""
 
+msgid "'z' must be numeric or logical"
+msgstr ""
+
 msgid "invalid z limits"
 msgstr ""
 
@@ -300,6 +302,12 @@ msgid "non-numeric argument to 'pairs'"
 msgstr ""
 
 msgid "only one column in the argument to 'pairs'"
+msgstr ""
+
+msgid "invalid argument 'horInd'"
+msgstr ""
+
+msgid "invalid argument 'verInd'"
 msgstr ""
 
 msgid "the 'panel' function made a new plot"

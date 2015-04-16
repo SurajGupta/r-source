@@ -1,7 +1,7 @@
 #  File src/library/methods/R/MethodsListClass.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,9 +18,11 @@
 
 .InitMethodsListClass <- function(envir)
 {
-    if(exists(classMetaName("MethodsList"), envir))
+    if(exists(classMetaName("EmptyMethodsList"), envir))
         return(FALSE)
     clList <- character()
+    ## Even though it is defunct from R 3.2.0, other functions using it are
+    ## only deprecated: So we define it and give .MlistDeprecated() messages there:
     setClass("MethodsList",
              representation(methods = "list", argument = "name", allMethods = "list"),
              where = envir); clList <- c(clList, "MethodsList")
@@ -37,7 +39,8 @@
     setIs("PossibleMethod", "optionalMethod", where = envir)
     setIs("NULL", "optionalMethod", where = envir)
     ## prior to 2.11.0, the default slot in generic function objects was a MethodsList or NULL
-    setIs("MethodsList", "optionalMethod", where = envir) #only until MethodsList class is defunct
+    ## from 3.2.0, no longer:
+    ## setIs("MethodsList", "optionalMethod", where = envir) #only until MethodsList class is defunct
 
     ## signatures -- multiple class names w. package slot in ||
     setClass("signature", representation("character", names = "character", package = "character"), where = envir); clList <- c(clList, "signature")
@@ -193,11 +196,10 @@
                       assign(what, elNamed(args, what), envir = value)
                   value
               }, where = envir)
-    ## from 2.11.0, the MethodsList classs is deprecated
-    setMethod("initialize", "MethodsList", function(.Object, ...) {
-        .MlistDeprecated()
-        callNextMethod()
-    }, where = envir)
+    ## from 2.11.0, the MethodsList class is deprecated
+    ## from 3.2.0, it is defunct
+    setMethod("initialize", "MethodsList", function(.Object, ...) .MlistDefunct(),
+              where = envir)
 
     ## make sure body(m) <- .... leaves a method as a method
     setGeneric("body<-", where = envir)
@@ -261,26 +263,26 @@
 	       where = envir)
     ## and its default methods:
     setMethod("cbind2", signature(x = "ANY", y = "ANY"),
-	      function(x,y) .__H__.cbind(deparse.level = 0, x, y) )
+	      function(x,y, ...) .Internal(cbind(-1L, x, y)))
     setMethod("cbind2", signature(x = "ANY", y = "missing"),
-	      function(x,y) .__H__.cbind(deparse.level = 0, x) )
+	      function(x,y, ...) .Internal(cbind(-1L, x)))
 
     setGeneric("rbind2", function(x, y, ...) standardGeneric("rbind2"),
 	       where = envir)
     ## and its default methods:
     setMethod("rbind2", signature(x = "ANY", y = "ANY"),
-	      function(x,y) .__H__.rbind(deparse.level = 0, x, y) )
+	      function(x,y, ...) .Internal(rbind(-1L, x, y)))
     setMethod("rbind2", signature(x = "ANY", y = "missing"),
-	      function(x,y) .__H__.rbind(deparse.level = 0, x) )
+	      function(x,y, ...) .Internal(rbind(-1L, x)))
 
-    setGeneric("kronecker", where = envir)
+    setGeneric("kronecker", where = envir)# <- unneeded?
 
     setMethod("kronecker", signature(X = "ANY", Y = "ANY"),
 	      function(X, Y, FUN = "*", make.dimnames = FALSE, ...)
               .kronecker(X, Y, FUN = FUN, make.dimnames = make.dimnames, ...))
 
     .InitStructureMethods(envir)
-### Uncomment next line if we want special initialize methods for basic classes
+    ## we want special initialize methods for basic classes:
     .InitBasicClassMethods(envir)
 }
 
@@ -353,7 +355,7 @@
               function(x, digits) {
                   value <- x
                   x <- x@.Data
-                  value@.Data  <- callGeneric(x=x, digits=digits)
+                  value@.Data  <- callGeneric()
                   value
               })
     ## some methods for nonStructure, ensuring that the class and slots
@@ -377,7 +379,7 @@
     setMethod("Math2", "nonStructure", where = where,
               function(x, digits) {
                   x <- x@.Data
-                  callGeneric(x=x, digits=digits)
+                  callGeneric()
               })
     setMethod("[", "nonStructure", where = where,
                         function (x, i, j, ..., drop = TRUE)
@@ -415,9 +417,15 @@
             if(is.null(sigArgs))
               names(signature) <- formalNames[seq_along(classes)]
             else if(length(sigArgs) && any(is.na(match(sigArgs, formalNames))))
-              stop(gettextf("the names in signature for method (%s) do not match %s's arguments (%s)",
+                if(is(fdef, "genericFunction"))
+                      stop(sprintf(gettext("the names in signature for method (%s) do not match %s's arguments (%s)", domain = "R-methods"),
                             paste(sigArgs, collapse = ", "),
-                            if(is(fdef, "genericFunction")) fdef@generic else "function",
+                            fdef@generic,
+                            paste(formalNames, collapse = ", ")),
+                   domain = NA)
+                else
+                      stop(sprintf(gettext("the names in signature for method (%s) do not match function's arguments (%s)", domain = "R-methods"),
+                            paste(sigArgs, collapse = ", "),
                             paste(formalNames, collapse = ", ")),
                    domain = NA)
         }

@@ -1,7 +1,7 @@
 #  File src/library/methods/R/SClasses.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -395,7 +395,7 @@ removeClass <-  function(Class, where = topenv(parent.frame())) {
     classDef <- getClassDef(Class, where=classWhere)
     if(length(classDef@subclasses)) {
       subclasses <- names(classDef@subclasses)
-      found <- sapply(subclasses, isClass, where = where)
+      found <- vapply(subclasses, isClass, NA, where = where, USE.NAMES=TRUE)
       for(what in subclasses[found])
           .removeSuperClass(what, Class)
     }
@@ -605,7 +605,7 @@ resetClass <- function(Class, classDef, where) {
                 stop(gettextf("argument 'classDef' must be a string or a class representation; got an object of class %s",
                               dQuote(class(classDef))),
                      domain = NA)
-            package <- getPackageName(where)
+#            package <- getPackageName(where)
         }
         if(classDef@sealed)
             warning(gettextf("class %s is sealed; 'resetClass' will have no effect",
@@ -696,7 +696,7 @@ initialize <- function(.Object, ...) {
             for(i in seq_along(snames)) {
                 slotName <- el(snames, i)
                 slotClass <- elNamed(slotDefs, slotName)
-                slotClassDef <- getClassDef(slotClass, package=ClassDef@package)
+                slotClassDef <- getClassDef(slotClass, package = ClassDef@package)
                 slotVal <- el(elements, i)
                 ## perform non-strict coercion, but leave the error messages for
                 ## values not conforming to the slot definitions to validObject(),
@@ -733,13 +733,10 @@ findClass <- function(Class, where = topenv(parent.frame()), unique = "") {
     else {
         pkg <- packageSlot(Class)
         if(is.null(pkg))
-          pkg <- ""
+	    pkg <- ""
         classDef <- getClassDef(Class, where, pkg)
     }
-    if(missing(where) && nzchar(pkg))
-            where <- .requirePackage(pkg)
-    else
-        where <- as.environment(where)
+    where <- if(missing(where) && nzchar(pkg)) .requirePackage(pkg) else as.environment(where)
     what <- classMetaName(Class)
     where <- .findAll(what, where)
     if(length(where) > 1L && nzchar(pkg)) {
@@ -851,19 +848,17 @@ names(.indirectAbnormalClasses) <- .AbnormalTypes
   supers <- names(classDef@contains)
   allNeeded <- get(".NeedPrimitiveMethods", envir = .methodsNamespace)
   specials <- names(allNeeded)
-  needed <- match(specials, supers, 0) > 0
+  needed <- match(specials, supers, 0L) > 0L
   if(any(needed)) {
     generics <- unique(allNeeded[needed])
-    packages <- character()
-    for(g in generics) {
-      def <- getGeneric(g)
-      packages <- c(packages, def@package) # must be "methods" ?
-      cacheGenericsMetaData(g, def, TRUE, where, def@package)
-    }
-    if(exists(".requireCachedGenerics",  where, inherits = FALSE))
-      previous <- get(".requireCachedGenerics",  where)
-    else
-      previous <- character()
+    packages <- vapply(generics, function(g) {
+        def <- getGeneric(g)
+        pkg <- def@package # must be "methods" ?
+        cacheGenericsMetaData(g, def, TRUE, where, pkg)
+        pkg
+    }, character(1))
+    previous <- if(exists(".requireCachedGenerics", where, inherits = FALSE))
+		      get(".requireCachedGenerics", where) else character()
     packages <- c(attr(previous, "package"), packages)
     gg <- c(previous, generics)
     attr(gg, "package") <- packages
@@ -889,16 +884,9 @@ names(.indirectAbnormalClasses) <- .AbnormalTypes
   }
 
 multipleClasses <- function(details = FALSE) {
-    ctable <- .classTable
-    cnames <- objects(ctable, all.names = TRUE)
-    dups <- sapply(cnames, function(x) is.list(get(x, envir = ctable)))
-    if(details) {
-        value <- lapply(cnames[dups], function(x) get(x, envir = ctable))
-        names(value) <- cnames[dups]
-        value
-    }
-    else
-        cnames[dups]
+    classes <- as.list(.classTable, all.names=TRUE)
+    dups <- Filter(is.list, classes)
+    if(details) dups else names(dups)
 }
 
 className <- function(class, package) {

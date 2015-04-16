@@ -1,7 +1,7 @@
 #  File src/library/tools/R/Sweavetools.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -23,17 +23,29 @@ function(ifile, encoding = "unknown")
     if(inherits(ifile, "srcfile"))
         ifile <- ifile$filename
 
-    lines <- readLines(ifile, encoding = encoding, warn = FALSE)
-
     syntax <- utils:::SweaveGetSyntax(ifile)
+
+    ## Read in an re-encode as needed.
+    ## Alternatively, could use utils:::SweaveReadFile() ...
+    lines <- readLines(ifile, warn = FALSE)
+    if(encoding != "unknown") {
+        if(encoding == "UTF-8")
+            Encoding(lines) <- "UTF-8"
+        else
+            lines <- iconv(lines, encoding, "", sub = "byte")
+    }
 
     TEXT <- 1L
     CODE <- 0L
 
-    recs <- rbind( data.frame(line = grep(syntax$doc, lines),
-                              type = TEXT),
-                   data.frame(line = grep(syntax$code, lines),
-                              type = CODE))
+    dpos <- grep(syntax$doc, lines)
+    cpos <- grep(syntax$code, lines)
+
+    recs <- rbind(data.frame(line = dpos,
+                             type = rep.int(TEXT, length(dpos))),
+                  data.frame(line = cpos,
+                             type = rep.int(CODE, length(cpos)))
+                  )
     recs <- recs[order(recs$line),]
     last <- 0L
     state <- TEXT

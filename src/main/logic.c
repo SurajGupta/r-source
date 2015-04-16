@@ -406,8 +406,6 @@ static int checkValues(int op, int na_rm, int *x, R_xlen_t n)
     return NA_LOGICAL; /* -Wall */
 }
 
-extern SEXP fixup_NaRm(SEXP args); /* summary.c */
-
 /* all, any */
 SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
 {
@@ -420,7 +418,7 @@ SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
     Rboolean val = PRIMVAL(op) == _OP_ALL ? TRUE : FALSE;
 
     PROTECT(args = fixup_NaRm(args));
-    PROTECT(call2 = duplicate(call));
+    PROTECT(call2 = shallow_duplicate(call));
     SETCDR(call2, args);
 
     if (DispatchGroup("Summary", call2, op, args, env, &ans)) {

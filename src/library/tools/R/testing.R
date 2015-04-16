@@ -1,7 +1,7 @@
 #  File src/library/tools/R/testing.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 # NB: also copyright date in Usage.
 #
@@ -22,9 +22,9 @@
 
 massageExamples <-
     function(pkg, files, outFile = stdout(), use_gct = FALSE,
-             addTiming = FALSE, commentDonttest = TRUE)
+             addTiming = FALSE, ..., commentDonttest = TRUE)
 {
-    if(file_test("-d", files[1L])) {
+    if(dir.exists(files[1L])) {
         old <- Sys.setlocale("LC_COLLATE", "C")
         files <- sort(Sys.glob(file.path(files, "*.R")))
         Sys.setlocale("LC_COLLATE", old)
@@ -33,7 +33,13 @@ massageExamples <-
     if(is.character(outFile)) {
         out <- file(outFile, "wt")
         on.exit(close(out))
-    } else out <- outFile
+        cntFile <- paste0(outFile, "-cnt")
+    } else {
+        out <- outFile
+        cntFile <- NULL
+    }
+
+    count <- 0L # of files using \donttest
 
     lines <- c(paste0('pkgname <- "', pkg, '"'),
                'source(file.path(R.home("share"), "R", "examples-header.R"))',
@@ -104,8 +110,10 @@ massageExamples <-
             dont_test <- FALSE
             for (line in lines) {
                 if(any(grepl("^[[:space:]]*## No test:", line,
-                             perl = TRUE, useBytes = TRUE)))
+                             perl = TRUE, useBytes = TRUE))) {
                     dont_test <- TRUE
+                    count <- count + 1L
+                }
                 if(!dont_test) cat(line, "\n", sep = "", file = out)
                 if(any(grepl("^[[:space:]]*## End\\(No test\\)", line,
                              perl = TRUE, useBytes = TRUE)))
@@ -127,11 +135,13 @@ massageExamples <-
 
     cat(readLines(file.path(R.home("share"), "R", "examples-footer.R")),
         sep = "\n", file = out)
+
+    if(count && !is.null(cntFile)) writeLines(as.character(count), cntFile)
 }
 
 ## compares 2 files
 Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE,
-                  nullPointers=TRUE, Log = FALSE)
+                  nullPointers = TRUE, Log = FALSE)
 {
     clean <- function(txt)
     {
@@ -153,10 +163,7 @@ Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE,
         ## remove pointer addresses from listings
             txt <- gsub("<(environment|bytecode|pointer|promise): [x[:xdigit:]]+>", "<\\1: 0>", txt)
         ## regularize fancy quotes.  First UTF-8 ones:
-        txt <- gsub("(\xe2\x80\x98|\xe2\x80\x99)", "'", txt,
-                      perl = TRUE, useBytes = TRUE)
-        txt <- gsub("(\xe2\x80\x9c|\xe2\x80\x9d)", '"', txt,
-                      perl = TRUE, useBytes = TRUE)
+        txt <- .canonicalize_quotes(txt)
         if(.Platform$OS.type == "windows") {
             ## not entirely safe ...
             txt <- gsub("(\x91|\x92)", "'", txt, perl = TRUE, useBytes = TRUE)
@@ -164,7 +171,7 @@ Rdiff <- function(from, to, useDiff = FALSE, forEx = FALSE,
             txt <- txt[!grepl('options(pager = "console")', txt,
                               fixed = TRUE, useBytes = TRUE)]
         }
-        pat <- '(^Time |^Loading required package|^Package [A-Za-z][A-Za-z0-9]+ loaded|^<(environment|promise|pointer|bytecode):|^/CreationDate |^/ModDate |^/Producer )'
+        pat <- '(^Time |^Loading required package|^Package [A-Za-z][A-Za-z0-9]+ loaded|^<(environment|promise|pointer|bytecode):|^/CreationDate |^/ModDate |^/Producer |^End.Don\'t show)'
         txt[!grepl(pat, txt, perl = TRUE, useBytes = TRUE)]
     }
     clean2 <- function(txt)
@@ -227,7 +234,7 @@ testInstalledPackages <-
     function(outDir = ".", errorsAreFatal = TRUE,
              scope = c("both", "base", "recommended"),
              types = c("examples", "tests", "vignettes"),
-             srcdir = NULL, Ropts = "")
+             srcdir = NULL, Ropts = "", ...)
 {
     ow <- options(warn = 1)
     on.exit(ow)
@@ -245,7 +252,7 @@ testInstalledPackages <-
         do_one <- function(pkg) {
             if(is.null(srcdir) && pkg %in% known_packages$base)
                 srcdir <- R.home("tests/Examples")
-            testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts)
+            testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts, ...)
         }
         res <- parallel::mclapply(pkgs, do_one, mc.cores = mc.cores,
                                   mc.preschedule = FALSE)
@@ -255,14 +262,16 @@ testInstalledPackages <-
                 warning(gettextf("testing '%s' failed", pkgs[i]),
                         domain = NA, call. = FALSE, immediate. = TRUE)
             if (errorsAreFatal)
-                stop(gettextf("%d of the package tests failed", sum(res)),
+                stop(sprintf(ngettext(sum(res), "%d of the package tests failed",
+                                      "%d of the package tests failed",
+                                       domain = "R-tools"), sum(res)),
                      domain = NA, call. = FALSE)
         }
     } else {
         for (pkg in pkgs) {
             if(is.null(srcdir) && pkg %in% known_packages$base)
                 srcdir <- R.home("tests/Examples")
-            res <- testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts)
+            res <- testInstalledPackage(pkg, .Library, outDir, types, srcdir, Ropts, ...)
             if (res) {
                 status <- 1L
                 msg <- gettextf("testing '%s' failed", pkg)
@@ -277,18 +286,18 @@ testInstalledPackages <-
 testInstalledPackage <-
     function(pkg, lib.loc = NULL, outDir = ".",
              types = c("examples", "tests", "vignettes"),
-             srcdir = NULL, Ropts = "")
+             srcdir = NULL, Ropts = "", ...)
 {
-    types <- pmatch(types, c("examples", "tests", "vignettes"))
+    types <- match.arg(types, c("examples", "tests", "vignettes"), several.ok=TRUE)
     pkgdir <- find.package(pkg, lib.loc)
     owd <- setwd(outDir)
     on.exit(setwd(owd))
-    strict <- as.logical(Sys.getenv("R_STRICT_PACKAGE_CHECK", "FALSE"))
+    strict <- as.logical(Sys.getenv("R_STRICT_PACKAGE_CHECK", FALSE))
 
-    if (1 %in% types) {
+    if ("examples" %in% types) {
         message(gettextf("Testing examples for package %s", sQuote(pkg)),
                 domain = NA)
-        Rfile <- .createExdotR(pkg, pkgdir, silent = TRUE)
+        Rfile <- .createExdotR(pkg, pkgdir, silent = TRUE, ...)
         if (length(Rfile)) {
             outfile <- paste0(pkg, "-Ex.Rout")
             failfile <- paste(outfile, "fail", sep = "." )
@@ -337,7 +346,7 @@ testInstalledPackage <-
     }
 
     ## FIXME merge with code in .runPackageTests
-    if (2 %in% types && file_test("-d", d <- file.path(pkgdir, "tests"))) {
+    if ("tests" %in% types && dir.exists(d <- file.path(pkgdir, "tests"))) {
         this <- paste(pkg, "tests", sep = "-")
         unlink(this, recursive = TRUE)
         dir.create(this)
@@ -372,7 +381,7 @@ testInstalledPackage <-
         setwd(owd)
     }
 
-    if (3 %in% types && file_test("-d", d <- file.path(pkgdir, "doc"))) {
+    if ("vignettes" %in% types && dir.exists(file.path(pkgdir, "doc"))) {
         message(gettextf("Running vignettes for package %s", sQuote(pkg)),
                 domain = NA)
         checkVignettes(pkg, lib.loc, latex = FALSE, weave =TRUE)
@@ -392,7 +401,8 @@ testInstalledPackage <-
     q("no", status = status)
 }
 
-.runPackageTests <- function(use_gct = FALSE, use_valgrind = FALSE, Log = NULL)
+.runPackageTests <-
+    function(use_gct = FALSE, use_valgrind = FALSE, Log = NULL, ...)
 {
     if (!is.null(Log)) Log <- file(Log, "wt")
     WINDOWS <- .Platform$OS.type == "windows"
@@ -490,9 +500,10 @@ testInstalledPackage <-
     return(nfail)
 }
 
+## Defaults for commenting are the same as per-3.2.0 version.
 .createExdotR <-
     function(pkg, pkgdir, silent = FALSE, use_gct = FALSE, addTiming = FALSE,
-             commentDonttest = TRUE)
+             ..., commentDontrun = TRUE, commentDonttest = TRUE)
 {
     Rfile <- paste0(pkg, "-Ex.R")
 
@@ -514,7 +525,8 @@ testInstalledPackage <-
         nm <- sub("\\.[Rr]d$", "", basename(f))
         Rd2ex(db[[f]],
               file.path(filedir, paste(nm, "R", sep = ".")),
-              defines = NULL)
+              defines = NULL, commentDontrun = commentDontrun,
+              commentDonttest = commentDonttest)
         cnt <- cnt + 1L
         if(!silent && cnt %% 10L == 0L)
             message(".", appendLF = FALSE, domain = NA)
@@ -524,11 +536,11 @@ testInstalledPackage <-
     if(!nof) return(invisible(NULL))
 
     massageExamples(pkg, filedir, Rfile, use_gct, addTiming,
-                    commentDonttest = commentDonttest)
+                    commentDonttest = commentDonttest, ...)
     invisible(Rfile)
 }
 
-testInstalledBasic <- function(scope = c("basic", "devel", "both"))
+testInstalledBasic <- function(scope = c("basic", "devel", "both", "internet"))
 {
     scope <- match.arg(scope)
 
@@ -537,10 +549,12 @@ testInstalledBasic <- function(scope = c("basic", "devel", "both"))
     tests1 <- c("eval-etc", "simple-true", "arith-true", "lm-tests",
                 "ok-errors", "method-dispatch", "array-subset",
                 "any-all", "d-p-q-r-tests")
-    tests2 <- c("complex", "print-tests", "lapack", "datasets", "iec60559")
+    tests2 <- c("complex", "print-tests", "lapack", "datasets", "datetime",
+                "iec60559")
     tests3 <- c("reg-tests-1a", "reg-tests-1b", "reg-tests-1c", "reg-tests-2",
                 "reg-examples1", "reg-examples2", "reg-packages",
-                "reg-IO", "reg-IO2", "reg-S4", "reg-plot", "reg-BLAS")
+                "p-qbeta-strict-tst",
+                "reg-IO", "reg-IO2", "reg-plot", "reg-S4", "reg-BLAS")
 
     runone <- function(f, diffOK = FALSE, inC = TRUE)
     {
@@ -549,12 +563,12 @@ testInstalledBasic <- function(scope = c("basic", "devel", "both"))
             if (!file.exists(fin <- paste0(f, "in")))
                 stop("file ", sQuote(f), " not found", domain = NA)
             message("creating ", sQuote(f), domain = NA)
-            ## FIXME: this creates an extra trailing space compared to
-            ## the .Rin.R rule
             cmd <- paste(shQuote(file.path(R.home("bin"), "R")),
                          "--vanilla --slave -f", fin)
             if (system(cmd))
                 stop("creation of ", sQuote(f), " failed", domain = NA)
+            ## This needs an extra trailing space to match the .Rin.R rule
+            cat("\n", file = f, append = TRUE)
             on.exit(unlink(f))
         }
         message("  running code in ", sQuote(f), domain = NA)
@@ -608,6 +622,7 @@ testInstalledBasic <- function(scope = c("basic", "devel", "both"))
             }
         }
         runone("reg-tests-3", TRUE)
+        runone("reg-examples3", TRUE)
         message("running tests of plotting Latin-1", domain = NA)
         message("  expect failure or some differences if not in a Latin or UTF-8 locale", domain = NA)
 
@@ -619,16 +634,28 @@ testInstalledBasic <- function(scope = c("basic", "devel", "both"))
     }
 
     if (scope %in% c("devel", "both")) {
+        message("running tests of date-time printing\n expect platform-specific differences", domain = NA)
+        runone("datetime2")
         message("running tests of consistency of as/is.*", domain = NA)
         runone("isas-tests")
         message("running tests of random deviate generation -- fails occasionally")
         runone("p-r-random-tests", TRUE)
+        message("running tests demos from base and stats", domain = NA)
+        if (runone("demos")) return(invisible(1L))
+        if (runone("demos2")) return(invisible(1L))
         message("running tests of primitives", domain = NA)
         if (runone("primitives")) return(invisible(1L))
         message("running regexp regression tests", domain = NA)
         if (runone("utf8-regex", inC = FALSE)) return(invisible(1L))
         message("running tests to possibly trigger segfaults", domain = NA)
         if (runone("no-segfault")) return(invisible(1L))
+    }
+    if (scope %in% "internet") {
+        message("running tests of Internet functions - expect some differences", domain = NA)
+        runone("internet")
+        message("running more Internet and socket tests", domain = NA)
+        runone("internet2")
+        runone("libcurl")
     }
 
     invisible(0L)
@@ -716,7 +743,7 @@ detachPackages <- function(pkgs, verbose = TRUE)
                 R.version[["major"]], ".",  R.version[["minor"]],
                 " (r", R.version[["svn rev"]], ")\n", sep = "")
             cat("",
-                "Copyright (C) 2000-2013 The R Core Team.",
+                "Copyright (C) 2000-2015 The R Core Team.",
                 "This is free software; see the GNU General Public License version 2",
                 "or later for copying conditions.  There is NO warranty.",
                 sep = "\n")
@@ -738,4 +765,5 @@ detachPackages <- function(pkgs, verbose = TRUE)
     status <- Rdiff(left, args[2L], useDiff = TRUE)
     if(status) status <- exitstatus
     do_exit(status)
-}
+} ## .Rdiff()
+

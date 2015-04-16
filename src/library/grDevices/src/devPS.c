@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2013  The R Core Team
+ *  Copyright (C) 1998--2015  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -704,7 +704,7 @@ pserror:
 }
 
 
-extern int Ri18n_wcwidth(wchar_t c);
+#include <rlocale.h> /* for Ri18n_wcwidth */
 
 
 static double
@@ -2553,6 +2553,7 @@ static void PSFileHeader(FILE *fp,
     if(prolog == R_UnboundValue) {
 	/* if no object is visible, look in the graphics namespace */
 	SEXP graphicsNS = R_FindNamespace(ScalarString(mkChar("grDevices")));
+	PROTECT(graphicsNS);
 	prolog = findVar(install(".ps.prolog"), graphicsNS);
 	/* under lazy loading this will be a promise on first use */
 	if(TYPEOF(prolog) == PROMSXP) {
@@ -2560,6 +2561,7 @@ static void PSFileHeader(FILE *fp,
 	    prolog = eval(prolog, graphicsNS);
 	    UNPROTECT(1);
 	}
+	UNPROTECT(1);
     }
     if(!isString(prolog))
 	error(_("object '.ps.prolog' is not a character vector"));
@@ -2569,6 +2571,7 @@ static void PSFileHeader(FILE *fp,
     fprintf(fp, "%% end   .ps.prolog\n");
     if (streql(pd->colormodel, "srgb+gray") || streql(pd->colormodel, "srgb")) {
 	SEXP graphicsNS = R_FindNamespace(ScalarString(mkChar("grDevices")));
+	PROTECT(graphicsNS);
 	prolog = findVar(install(".ps.prolog.srgb"), graphicsNS);
 	/* under lazy loading this will be a promise on first use */
 	if(TYPEOF(prolog) == PROMSXP) {
@@ -2576,6 +2579,7 @@ static void PSFileHeader(FILE *fp,
 	    prolog = eval(prolog, graphicsNS);
 	    UNPROTECT(1);
 	}
+	UNPROTECT(1);
 	for (i = 0; i < length(prolog); i++)
 	    fprintf(fp, "%s\n", CHAR(STRING_ELT(prolog, i)));
     }
@@ -8255,7 +8259,7 @@ SEXP PostScript(SEXP args)
 	    error(_("unable to start %s() device"), "postscript");
 	}
 	gdd = GEcreateDevDesc(dev);
-	GEaddDevice2(gdd, "postscript");
+	GEaddDevice2f(gdd, "postscript", file);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -8322,7 +8326,7 @@ SEXP XFig(SEXP args)
 	    error(_("unable to start %s() device"), "xfig");
 	}
 	gdd = GEcreateDevDesc(dev);
-	GEaddDevice2(gdd, "xfig");
+	GEaddDevice2f(gdd, "xfig", file);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;
@@ -8421,7 +8425,7 @@ SEXP PDF(SEXP args)
 	    error(_("unable to start %s() device"), "pdf");
 	}
 	gdd = GEcreateDevDesc(dev);
-	GEaddDevice2(gdd, "pdf");
+	GEaddDevice2f(gdd, "pdf", file);
     } END_SUSPEND_INTERRUPTS;
     vmaxset(vmax);
     return R_NilValue;

@@ -9,6 +9,7 @@ options(width=70, useFancyQuotes = FALSE, prompt="R> ", continue="+  ")
 @
 \subsection*{Introduction}
 
+We generate 3D gaussian data,
 We generate 3D Gaussian data,
 <<ex1-U3>>=
 set.seed(1)

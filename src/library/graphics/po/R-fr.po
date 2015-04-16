@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.12.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-07-20 09:37\n"
+"POT-Creation-Date: 2015-03-01 13:19\n"
 "PO-Revision-Date: 2014-03-17 10:44+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -241,6 +241,10 @@ msgstr "les valeurs de 'x' et 'y' doivent être finies et non manquantes"
 msgid "'z' must be a matrix"
 msgstr "'z' doit être une matrice"
 
+#, fuzzy
+msgid "'z' must be numeric or logical"
+msgstr "'x' doit être numérique"
+
 msgid "invalid z limits"
 msgstr "limites de z incorrectes"
 
@@ -330,6 +334,14 @@ msgstr "argument non numérique pour 'pairs'"
 
 msgid "only one column in the argument to 'pairs'"
 msgstr "seulement une colonne dans l'argument pour 'pairs'"
+
+#, fuzzy
+msgid "invalid argument 'horInd'"
+msgstr "premier argument incorrect"
+
+#, fuzzy
+msgid "invalid argument 'verInd'"
+msgstr "premier argument incorrect"
 
 msgid "the 'panel' function made a new plot"
 msgstr "la fonction 'panel' a créé un nouveau graphe"

@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2013  The R Core Team.
+ *  Copyright (C) 1998--2015  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,7 +56,6 @@
 # define extern0 extern
 #endif
 
-
 #define MAXELTSIZE 8192 /* Used as a default for string buffer sizes,
 			   and occasionally as a limit. */
 
@@ -86,8 +85,9 @@ extern0 SEXP	R_RecursiveSymbol;  /* "recursive" */
 extern0 SEXP	R_WholeSrcrefSymbol;   /* "wholeSrcref" */
 extern0 SEXP	R_TmpvalSymbol;     /* "*tmp*" */
 extern0 SEXP	R_UseNamesSymbol;   /* "use.names" */
-extern0 SEXP	R_DoubleColonSymbol;   /* "::" */
-extern0 SEXP	R_TripleColonSymbol;   /* ":::" */
+extern0 SEXP	R_ColonSymbol;         /* ":" */
+//extern0 SEXP	R_DoubleColonSymbol;   /* "::" */
+//extern0 SEXP	R_TripleColonSymbol;   /* ":::" */
 extern0 SEXP    R_ConnIdSymbol;  /* "conn_id" */
 extern0 SEXP    R_DevicesSymbol;  /* ".Devices" */
 
@@ -465,7 +465,34 @@ Rboolean (NO_SPECIAL_SYMBOLS)(SEXP b);
 
 #endif /* USE_RINTERNALS */
 
+#define TYPED_STACK
+#ifdef TYPED_STACK
+/* The typed stack's entries consist of a tag and a union. An entry
+   can represent a standard SEXP value (tag = 0) or an unboxed scalar
+   value. For now real, integer, and logical values are supported. It
+   would in principle be possible to support complex scalars and short
+   scalar strings, but it isn't clear if this is worth while.
+
+   In addition to unboxed values the typed stack can hold partially
+   evaluated or incomplete allocated values. For now this is only used
+   for holding a short representation of an integer sequence as produce
+   by the colon operator, seq_len, or seq_along, and as consumed by
+   compiled 'for' loops. This could be used more extensively in the
+   future.
+*/
+typedef struct {
+    int tag;
+    union {
+	int ival;
+	double dval;
+	SEXP sxpval;
+    } u;
+} R_bcstack_t;
+# define PARTIALSXP_MASK (~255)
+# define IS_PARTIAL_SXP_TAG(x) ((x) & PARTIALSXP_MASK)
+#else
 typedef SEXP R_bcstack_t;
+#endif
 #ifdef BC_INT_STACK
 typedef union { void *p; int i; } IStackval;
 #endif
@@ -497,12 +524,13 @@ typedef struct RCNTXT {
     SEXP handlerstack;          /* condition handler stack */
     SEXP restartstack;          /* stack of available restarts */
     struct RPRSTACK *prstack;   /* stack of pending promises */
-    SEXP *nodestack;
+    R_bcstack_t *nodestack;
 #ifdef BC_INT_STACK
     IStackval *intstack;
 #endif
     SEXP srcref;	        /* The source line in effect */
     int browserfinish;     /* should browser finish this context without stopping */
+    SEXP returnValue;			/* only set during on.exit calls */
 } RCNTXT, *context;
 
 /* The Various Context Types.
@@ -629,6 +657,7 @@ extern0 RCNTXT R_Toplevel;	      /* Storage for the toplevel context */
 extern0 RCNTXT* R_ToplevelContext;  /* The toplevel context */
 LibExtern RCNTXT* R_GlobalContext;    /* The global context */
 extern0 RCNTXT* R_SessionContext;   /* The session toplevel context */
+extern0 RCNTXT* R_ExitContext;      /* The active context for on.exit processing */
 #endif
 extern Rboolean R_Visible;	    /* Value visibility flag */
 extern0 int	R_EvalDepth	INI_as(0);	/* Evaluation recursion depth */
@@ -707,7 +736,7 @@ extern0   Rboolean WinUTF8out  INI_as(FALSE);  /* Use UTF-8 for output */
 extern0   void WinCheckUTF8(void);
 #endif
 
-extern char OutDec	INI_as('.');  /* decimal point used for output */
+extern char* OutDec	INI_as(".");  /* decimal point used for output */
 extern0 Rboolean R_DisableNLinBrowser	INI_as(FALSE);
 extern0 char R_BrowserLastCommand	INI_as('n');
 
@@ -729,7 +758,7 @@ extern0 double elapsedLimitValue       	INI_as(-1.0);
 void resetTimeLimits(void);
 
 #define R_BCNODESTACKSIZE 100000
-extern0 SEXP *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
+extern0 R_bcstack_t *R_BCNodeStackBase, *R_BCNodeStackTop, *R_BCNodeStackEnd;
 #ifdef BC_INT_STACK
 # define R_BCINTSTACKSIZE 10000
 extern0 IStackval *R_BCIntStackBase, *R_BCIntStackTop, *R_BCIntStackEnd;
@@ -779,6 +808,10 @@ LibExtern SEXP R_TrueValue INI_as(NULL);
 LibExtern SEXP R_FalseValue INI_as(NULL);
 LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 
+#ifdef Win32
+LibExtern Rboolean UseInternet2;
+#endif
+
 #ifdef __MAIN__
 # undef extern
 # undef extern0
@@ -793,6 +826,7 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define allocCharsxp		Rf_allocCharsxp
 # define asVecSize		Rf_asVecSize
 # define begincontext		Rf_begincontext
+# define BindDomain		Rf_BindDomain
 # define check_stack_balance	Rf_check_stack_balance
 # define check1arg		Rf_check1arg
 # define CheckFormals		Rf_CheckFormals
@@ -803,6 +837,8 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define ComplexFromReal	Rf_ComplexFromReal
 # define ComplexFromString	Rf_ComplexFromString
 # define copyMostAttribNoTs	Rf_copyMostAttribNoTs
+# define createS3Vars		Rf_createS3Vars
+# define currentTime		Rf_currentTime
 # define CustomPrintValue	Rf_CustomPrintValue
 # define DataFrameClass		Rf_DataFrameClass
 # define ddfindVar		Rf_ddfindVar
@@ -814,7 +850,9 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define DispatchOrEval		Rf_DispatchOrEval
 # define DispatchAnyOrEval      Rf_DispatchAnyOrEval
 # define dynamicfindVar		Rf_dynamicfindVar
+# define EncodeChar             Rf_EncodeChar
 # define EncodeRaw              Rf_EncodeRaw
+# define EncodeReal2            Rf_EncodeReal2
 # define EncodeString           Rf_EncodeString
 # define EnsureString 		Rf_EnsureString
 # define endcontext		Rf_endcontext
@@ -843,7 +881,9 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define InitNames		Rf_InitNames
 # define InitOptions		Rf_InitOptions
 # define InitStringHash		Rf_InitStringHash
+# define InitS3DefaultTypes	Rf_InitS3DefaultTypes
 # define InitTempDir		Rf_InitTempDir
+# define InitTypeTables		Rf_InitTypeTables
 # define initStack		Rf_initStack
 # define IntegerFromComplex	Rf_IntegerFromComplex
 # define IntegerFromLogical	Rf_IntegerFromLogical
@@ -882,6 +922,7 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define onsigusr1              Rf_onsigusr1
 # define onsigusr2              Rf_onsigusr2
 # define parse			Rf_parse
+# define patchArgsByActuals	Rf_patchArgsByActuals
 # define PrintDefaults		Rf_PrintDefaults
 # define PrintGreeting		Rf_PrintGreeting
 # define PrintValueEnv		Rf_PrintValueEnv
@@ -896,6 +937,7 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define RealFromLogical	Rf_RealFromLogical
 # define RealFromString		Rf_RealFromString
 # define Seql			Rf_Seql
+# define sexptype2char		Rf_sexptype2char
 # define Scollate		Rf_Scollate
 # define sortVector		Rf_sortVector
 # define SrcrefPrompt		Rf_SrcrefPrompt
@@ -908,6 +950,7 @@ LibExtern SEXP R_LogicalNAValue INI_as(NULL);
 # define StrToInternal		Rf_StrToInternal
 # define strmat2intmat		Rf_strmat2intmat
 # define substituteList		Rf_substituteList
+# define TimeToSeed		Rf_TimeToSeed
 # define tsConform		Rf_tsConform
 # define tspgets		Rf_tspgets
 # define type2symbol		Rf_type2symbol
@@ -970,6 +1013,8 @@ void R_SetVarLocValue(R_varloc_t, SEXP);
 #define DELAYPROMISES 		32
 #define KEEPNA			64
 #define S_COMPAT       		128
+#define HEXNUMERIC             	256
+#define DIGITS16             	512
 /* common combinations of the above */
 #define SIMPLEDEPARSE		0
 #define DEFAULTDEPARSE		65 /* KEEPINTEGER | KEEPNA, used for calls */
@@ -998,7 +1043,9 @@ void R_check_locale(void);
 void check_stack_balance(SEXP op, int save);
 void CleanEd(void);
 void copyMostAttribNoTs(SEXP, SEXP);
+SEXP createS3Vars(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 void CustomPrintValue(SEXP, SEXP);
+double currentTime(void);
 void DataFrameClass(SEXP);
 SEXP ddfindVar(SEXP, SEXP);
 SEXP deparse1(SEXP,Rboolean,int);
@@ -1015,7 +1062,7 @@ int envlength(SEXP);
 SEXP evalList(SEXP, SEXP, SEXP, int);
 SEXP evalListKeepMissing(SEXP, SEXP);
 int factorsConform(SEXP, SEXP);
-void findcontext(int, SEXP, SEXP);
+void NORET findcontext(int, SEXP, SEXP);
 SEXP findVar1(SEXP, SEXP, SEXPTYPE, int);
 void FrameClassFix(SEXP);
 SEXP frameSubscript(int, SEXP, SEXP);
@@ -1030,6 +1077,7 @@ void InitFunctionHashing(void);
 void InitBaseEnv(void);
 void InitGlobalEnv(void);
 Rboolean R_current_trace_state(void);
+Rboolean R_current_debug_state(void);
 Rboolean R_has_methods(SEXP);
 void R_InitialData(void);
 SEXP R_possible_dispatch(SEXP, SEXP, SEXP, SEXP, Rboolean);
@@ -1040,11 +1088,13 @@ void InitOptions(void);
 void InitStringHash(void);
 void Init_R_Variables(SEXP);
 void InitTempDir(void);
+void InitTypeTables(void);
 void initStack(void);
+void InitS3DefaultTypes(void);
 void internalTypeCheck(SEXP, SEXP, SEXPTYPE);
 Rboolean isMethodsDispatchOn(void);
 int isValidName(const char *);
-void jump_to_toplevel(void);
+void NORET jump_to_toplevel(void);
 void KillAllDevices(void);
 SEXP levelsgets(SEXP, SEXP);
 void mainloop(void);
@@ -1071,6 +1121,7 @@ RETSIGTYPE onsigusr1(int);
 RETSIGTYPE onsigusr2(int);
 R_xlen_t OneIndex(SEXP, SEXP, R_xlen_t, int, SEXP*, int, SEXP);
 SEXP parse(FILE*, int);
+SEXP patchArgsByActuals(SEXP, SEXP, SEXP);
 void PrintDefaults(void);
 void PrintGreeting(void);
 void PrintValueEnv(SEXP, SEXP);
@@ -1111,6 +1162,7 @@ void ssort(SEXP*,int);
 int StrToInternal(const char *);
 SEXP strmat2intmat(SEXP, SEXP, SEXP);
 SEXP substituteList(SEXP, SEXP);
+unsigned int TimeToSeed(void);
 Rboolean tsConform(SEXP,SEXP);
 SEXP tspgets(SEXP, SEXP);
 SEXP type2symbol(SEXPTYPE);
@@ -1128,7 +1180,7 @@ SEXP dynamicfindVar(SEXP, RCNTXT*);
 void endcontext(RCNTXT*);
 int framedepth(RCNTXT*);
 void R_InsertRestartHandlers(RCNTXT *, Rboolean);
-void R_JumpToContext(RCNTXT *, int, SEXP);
+void NORET R_JumpToContext(RCNTXT *, int, SEXP);
 SEXP R_syscall(int,RCNTXT*);
 int R_sysparent(int,RCNTXT*);
 SEXP R_sysframe(int,RCNTXT*);
@@ -1142,7 +1194,7 @@ void R_restore_globals(RCNTXT *);
 SEXP ItemName(SEXP, R_xlen_t);
 
 /* ../main/errors.c : */
-void ErrorMessage(SEXP, int, ...);
+void NORET ErrorMessage(SEXP, int, ...);
 void WarningMessage(SEXP, R_WARNING, ...);
 SEXP R_GetTraceback(int);
 
@@ -1184,10 +1236,13 @@ SEXP R_subassign3_dflt(SEXP, SEXP, SEXP, SEXP);
 #include <wchar.h>
 
 /* main/util.c */
-void UNIMPLEMENTED_TYPE(const char *s, SEXP x);
-void UNIMPLEMENTED_TYPEt(const char *s, SEXPTYPE t);
+void NORET UNIMPLEMENTED_TYPE(const char *s, SEXP x);
+void NORET UNIMPLEMENTED_TYPEt(const char *s, SEXPTYPE t);
 Rboolean Rf_strIsASCII(const char *str);
 int utf8clen(char c);
+int Rf_AdobeSymbol2ucs2(int n);
+double R_strtod5(const char *str, char **endptr, char dec,
+		 Rboolean NA, int exact);
 
 typedef unsigned short ucs2_t;
 size_t mbcsToUcs2(const char *in, ucs2_t *out, int nout, int enc);
@@ -1211,6 +1266,24 @@ Rboolean mbcsValid(const char *str);
 Rboolean utf8Valid(const char *str);
 char *Rf_strchr(const char *s, int c);
 char *Rf_strrchr(const char *s, int c);
+
+SEXP fixup_NaRm(SEXP args); /* summary.c */
+void invalidate_cached_recodings(void);  /* from sysutils.c */
+void resetICUcollator(void); /* from util.c */
+void dt_invalidate_locale(); /* from Rstrptime.h */
+int R_OutputCon; /* from connections.c */
+int R_InitReadItemDepth, R_ReadItemDepth; /* from serialize.c */
+void get_current_mem(size_t *,size_t *,size_t *); /* from memory.c */
+unsigned long get_duplicate_counter(void);  /* from duplicate.c */
+void reset_duplicate_counter(void);  /* from duplicate.c */
+void BindDomain(char *); /* from main.c */
+Rboolean LoadInitFile;  /* from startup.c */
+
+// Unix and Windows versions
+double R_getClockIncrement(void);
+void R_getProcTime(double *data);
+void InitDynload(void);
+void R_CleanTempDir(void);
 
 #ifdef Win32
 void R_fixslash(char *s);
@@ -1245,22 +1318,23 @@ extern const char *locale2charset(const char *);
 
 /* Localization */
 
-#ifdef ENABLE_NLS
-#include <libintl.h>
-#ifdef Win32
-#define _(String) libintl_gettext (String)
-#undef gettext /* needed for graphapp */
-#else
-#define _(String) gettext (String)
+#ifndef NO_NLS
+# ifdef ENABLE_NLS
+#  include <libintl.h>
+#  ifdef Win32
+#   define _(String) libintl_gettext (String)
+#   undef gettext /* needed for graphapp */
+#  else
+#   define _(String) gettext (String)
+#  endif
+#  define gettext_noop(String) String
+#  define N_(String) gettext_noop (String)
+#  else /* not NLS */
+#  define _(String) (String)
+#  define N_(String) String
+#  define ngettext(String, StringP, N) (N > 1 ? StringP: String)
+# endif
 #endif
-#define gettext_noop(String) String
-#define N_(String) gettext_noop (String)
-#else /* not NLS */
-#define _(String) (String)
-#define N_(String) String
-#define ngettext(String, StringP, N) (N > 1 ? StringP: String)
-#endif
-
 
 /* Macros for suspending interrupts: also in GraphicsDevice.h */
 #define BEGIN_SUSPEND_INTERRUPTS do { \

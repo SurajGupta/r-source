@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2014   The R Core Team.
+ *  Copyright (C) 1998-2015   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -175,6 +175,7 @@ Rboolean Rf_GetOptionDeviceAsk(void)
 static SEXP SetOption(SEXP tag, SEXP value)
 {
     SEXP opt, old, t;
+    PROTECT(value);
     t = opt = SYMVALUE(Options());
     if (!isList(opt))
 	error(_("corrupted options list"));
@@ -186,8 +187,10 @@ static SEXP SetOption(SEXP tag, SEXP value)
 	    if (TAG(CDR(t)) == tag) {
 		old = CAR(CDR(t));
 		SETCDR(t, CDDR(t));
+		UNPROTECT(1); /* value */
 		return old;
 	    }
+	UNPROTECT(1); /* value */
 	return R_NilValue;
     }
     /* If the option is new, a new slot */
@@ -195,14 +198,13 @@ static SEXP SetOption(SEXP tag, SEXP value)
     if (opt == R_NilValue) {
 	while (CDR(t) != R_NilValue)
 	    t = CDR(t);
-	PROTECT(value);
 	SETCDR(t, allocList(1));
-	UNPROTECT(1);
 	opt = CDR(t);
 	SET_TAG(opt, tag);
     }
     old = CAR(opt);
     SETCAR(opt, value);
+    UNPROTECT(1); /* value */
     return old;
 }
 
@@ -325,6 +327,16 @@ void attribute_hidden InitOptions(void)
 
     SET_SYMVALUE(install(".Options"), val);
     UNPROTECT(1);
+}
+
+
+SEXP attribute_hidden do_getOption(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    SEXP x = CAR(args);
+    if (!isString(x) || LENGTH(x) != 1)
+	error(_("'%s' must be a character string"), "x");
+    return duplicate(GetOption1(install(CHAR(STRING_ELT(x, 0)))));
 }
 
 
@@ -546,10 +558,12 @@ SEXP attribute_hidden do_options(SEXP call, SEXP op, SEXP args, SEXP rho)
 		SET_VECTOR_ELT(value, i, SetOption(tag, ScalarLogical(k)));
 	    }
 	    else if (streql(CHAR(namei), "OutDec")) {
-		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 1 ||
-		    strlen(CHAR(STRING_ELT(argi, 0))) !=1)
+		if (TYPEOF(argi) != STRSXP || LENGTH(argi) != 1)
 		    error(_("invalid value for '%s'"), CHAR(namei));
-		OutDec = CHAR(STRING_ELT(argi, 0))[0];
+		static char sdec[11];
+		strncpy(sdec, CHAR(STRING_ELT(argi, 0)), 10);
+		sdec[10] = '\0';
+		OutDec = sdec;
 		SET_VECTOR_ELT(value, i, SetOption(tag, duplicate(argi)));
 	    }
 	    else if (streql(CHAR(namei), "max.contour.segments")) {

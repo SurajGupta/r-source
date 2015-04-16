@@ -1,6 +1,6 @@
 % File src/library/base/man/cbind.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2013 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{cbind}
@@ -13,25 +13,30 @@
 \concept{insert}
 \title{Combine R Objects by Rows or Columns}
 \description{
-  Take a sequence of vector, matrix or data frames arguments and combine
+  Take a sequence of vector, matrix or data-frame arguments and combine
   by \emph{c}olumns or \emph{r}ows, respectively.  These are generic
   functions with methods for other \R classes.
 }
 \usage{
 cbind(\dots, deparse.level = 1)
 rbind(\dots, deparse.level = 1)
+\method{rbind}{data.frame}(\dots, deparse.level = 1, make.row.names = TRUE)
 }
 \arguments{
-  \item{\dots}{vectors or matrices.  These can be given as named
-    arguments.  Other \R objects will be coerced as appropriate: see
-    sections \sQuote{Details} and \sQuote{Value}.  (For the
-    \code{"data.frame"} method of \code{cbind} these can be further
-    arguments to \code{\link{data.frame}} such as \code{stringsAsFactors}.)}
+  \item{\dots}{(generalized) vectors or matrices.  These can be given as named
+    arguments.  Other \R objects may be coerced as appropriate, or S4
+    methods may be used: see sections \sQuote{Details} and
+    \sQuote{Value}.  (For the \code{"data.frame"} method of \code{cbind}
+    these can be further arguments to \code{\link{data.frame}} such as
+    \code{stringsAsFactors}.)}
   \item{deparse.level}{integer controlling the construction of labels in
     the case of non-matrix-like arguments (for the default method):\cr
     \code{deparse.level = 0} constructs no labels; the default,\cr
     \code{deparse.level = 1 or 2} constructs labels from the argument
     names, see the \sQuote{Value} section below.}
+  \item{make.row.names}{(only for data frame method:) logical
+    indicating if unique and valid \code{\link{row.names}} should be
+    constructed from the arguments.}
 }
 \details{
   The functions \code{cbind} and \code{rbind} are S3 generic, with
@@ -39,7 +44,12 @@ rbind(\dots, deparse.level = 1)
   least one argument is a data frame and the rest are vectors or
   matrices.  There can be other methods; in particular, there is one for
   time series objects.  See the section on \sQuote{Dispatch} for how
-  the method to be used is selected.
+  the method to be used is selected.  If some of the arguments are of an
+  S4 class, i.e., \code{\link{isS4}(.)} is true, S4 methods are sought
+  also, and the hidden \code{cbind} / \code{rbind} functions
+  from package \pkg{methods} maybe called, which in turn build on
+  \code{\link{cbind2}} or \code{\link{rbind2}}, respectively.  In that
+  case, \code{deparse.level} is obeyed, similarly to the default method.
 
   In the default method, all the vectors/matrices must be atomic (see
   \code{\link{vector}}) or lists.  Expressions are not allowed.
@@ -66,6 +76,11 @@ rbind(\dots, deparse.level = 1)
   \code{NULL}) are ignored unless the result would have zero rows
   (columns), for S compatibility.
   (Zero-extent matrices do not occur in S3 and are not ignored in \R.)
+
+  Matrices are restricted to less than \eqn{2^{31}}{2^31} rows and
+  columns even on 64-bit systems.  So input vectors have the same length
+  restriction: as from \R 3.2.0 input matrices with more elements (but
+  meeting the row and column restrictions) are allowed.
 }
 \section{Data frame methods}{
   The \code{cbind} data frame method is just a wrapper for
@@ -165,6 +180,26 @@ dd <- 10
 rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 0) # middle 2 rownames
 rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 1) # 3 rownames (default)
 rbind(1:4, c = 2, "a++" = 10, dd, deparse.level = 2) # 4 rownames
+
+## cheap row names:
+b0 <- gl(3,4, labels=letters[1:3])
+bf <- setNames(b0, paste0("o", seq_along(b0)))
+df  <- data.frame(a = 1, B = b0, f = gl(4,3))
+df. <- data.frame(a = 1, B = bf, f = gl(4,3))
+new <- data.frame(a = 8, B ="B", f = "1")
+(df1  <- rbind(df , new))
+(df.1 <- rbind(df., new))
+stopifnot(identical(df1, rbind(df,  new, make.row.names=FALSE)),
+          identical(df1, rbind(df., new, make.row.names=FALSE)))
+\dontshow{
+## Testing a semi-official use:
+d2 <- rbind.data.frame(as.list(df), as.list(new))
+d3 <- rbind.data.frame(as.list(df), as.list(new), make.row.names=FALSE)
+stopifnot(identical(.row_names_info(d3), -13L),
+          attr(d2, "row.names")[c(1,13)] == c("13", "131"))
+row.names(d2) <- attr(d3, "row.names")# = 1:13
+stopifnot(identical(d2, d3))
+}
 }
 \keyword{array}
 \keyword{manip}

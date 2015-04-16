@@ -1343,7 +1343,7 @@ static SEXP NewDataLoad (FILE *fp, InputRoutines *m, SaveLoadData *d)
     }
 
     /* Read the actual object back */
-    obj =  NewReadItem(sym_table, env_table, fp, m, d);
+    PROTECT(obj = NewReadItem(sym_table, env_table, fp, m, d));
 
     /* end the context after anything that could raise an error but before
        calling InTerm so it doesn't get called twice */
@@ -1351,7 +1351,7 @@ static SEXP NewDataLoad (FILE *fp, InputRoutines *m, SaveLoadData *d)
 
     /* Wrap up */
     m->InTerm(fp, d);
-    UNPROTECT(2);
+    UNPROTECT(3); /* obj, env_table, sym_table */
     return obj;
 }
 
@@ -1972,7 +1972,7 @@ SEXP attribute_hidden do_save(SEXP call, SEXP op, SEXP args, SEXP env)
 
     t = s;
     for (j = 0; j < len; j++, t = CDR(t)) {
-	SET_TAG(t, install(CHAR(STRING_ELT(CAR(args), j))));
+	SET_TAG(t, installChar(STRING_ELT(CAR(args), j)));
 	tmp = findVar(TAG(t), source);
 	if (tmp == R_UnboundValue)
 	    error(_("object '%s' not found"), EncodeChar(PRINTNAME(TAG(t))));
@@ -2011,7 +2011,7 @@ static SEXP RestoreToEnv(SEXP ans, SEXP aenv)
 	if (TYPEOF(names) != STRSXP || LENGTH(names) != LENGTH(ans))
 	    error(_("not a valid named list"));
 	for (i = 0; i < LENGTH(ans); i++) {
-	    SEXP sym = install(CHAR(STRING_ELT(names, i)));
+	    SEXP sym = installChar(STRING_ELT(names, i));
 	    obj = VECTOR_ELT(ans, i);
 	    defineVar(sym, obj, aenv);
 	    if(R_seemsOldStyleS4Object(obj))
@@ -2278,7 +2278,8 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if (ascii) {
 	magic = "RDA2\n";
-	type = R_pstream_ascii_format;
+	type = (ascii == NA_LOGICAL) ?
+	    R_pstream_asciihex_format : R_pstream_ascii_format;
     }
     else {
 	if (con->text)
@@ -2302,7 +2303,7 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 
     t = s;
     for (j = 0; j < len; j++, t = CDR(t)) {
-	SET_TAG(t, install(CHAR(STRING_ELT(list, j))));
+	SET_TAG(t, installChar(STRING_ELT(list, j)));
 	SETCAR(t, findVar(TAG(t), source));
 	tmp = findVar(TAG(t), source);
 	if (tmp == R_UnboundValue)
@@ -2322,9 +2323,6 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 }
 
 /* Read and checks the magic number, open the connection if needed */
-
-extern int R_ReadItemDepth;
-extern int R_InitReadItemDepth;
 
 SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
 {

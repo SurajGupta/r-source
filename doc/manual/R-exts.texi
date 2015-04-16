@@ -417,7 +417,7 @@ the principal words: @code{tools::toTitleCase} can help you with this),
 not use any markup, not have any continuation lines, and not end in a
 period (unless part of @dots{}).  Do not repeat the package name: it is
 often used prefixed by the name.  Refer to other packages and external
-libraries in single quotes, and to book titles (and similar) in double
+software in single quotes, and to book titles (and similar) in double
 quotes.
 
 @c DESCRIPTION field Description
@@ -425,9 +425,13 @@ The mandatory @samp{Description} field should give a
 @emph{comprehensive} description of what the package does.  One can use
 several (complete) sentences, but only one paragraph. It should be
 intelligible to all the intended readership (e.g.@: for a @acronym{CRAN}
-package to all @acronym{CRAN} users).  This field should also be used
-for explaining the package name if necessary.
-
+package to all @acronym{CRAN} users).  It is good practice not to start
+with the package name, `This package' or similar.  As with the
+@samp{Title} field, double quotes should be used for quotations
+(including titles of books and articles), and single quotes for
+non-English usage, including names of other packages and external
+software.  This field should also be used for explaining the package
+name if necessary.
 
 @c DESCRIPTION field Author
 @c DESCRIPTION field Authors@R
@@ -477,9 +481,11 @@ holder(s) are not the authors.  If necessary, this can refer to an
 installed file: the convention is to use file @file{inst/COPYRIGHTS}.
 
 @c DESCRIPTION field Date
-The @samp{Date} field gives the release date of the current
-version of the package.  It is strongly recommended to use the yyyy-mm-dd
-format conforming to the ISO 8601 standard.
+The optional @samp{Date} field gives the @emph{release date} of the
+current version of the package.  It is strongly recommended@footnote{and
+required by @acronym{CRAN}, so checked by @command{R CMD check
+--as-cran}.} to use the @samp{yyyy-mm-dd} format conforming to the ISO
+8601 standard.
 
 The @samp{Depends}, @samp{Imports}, @samp{Suggests}, @samp{Enhances},
 @samp{LinkingTo} and @samp{Additional_repositories} fields are discussed
@@ -638,6 +644,17 @@ language subtags which in essence are 2-letter ISO 639-1
 (@uref{http://en.wikipedia.@/org/@/wiki/@/ISO_639-1}) or 3-letter ISO
 639-3 (@uref{http://en.wikipedia.@/org/@/wiki/@/ISO_639-3}) language
 codes.
+
+@c DESCRIPTION field RdMacros
+As of @R{} 3.2.0, an @samp{RdMacros} field can be used to hold a 
+comma-separated list of packages from which the current package will import
+Rd macro definitions.  These will be imported after the system macros,
+in the order listed in the @samp{RdMacros} field, before any macro
+definitions in the current package are loaded.  Macro definitions in
+individual @file{.Rd} files in the @file{man} directory are loaded
+last, and are local to later parts of that file.  In case of any
+duplicates, the last loaded definition will be used@footnote{Duplicate
+definitions may trigger a warning:  see @ref{User-defined macros}.}
 
 @c DESCRIPTION field Built
 @c DESCRIPTION field Packaged
@@ -950,8 +967,8 @@ CRAN package @CRANpkg{BH} and almost all users of
 For another use of @samp{LinkingTo} see @ref{Linking to native routines
 in other packages}.
 
-@c DESCRIPTION field Addiitonal_repositories
-The @samp{Addiitonal_repositories} field is a comma-separated list of
+@c DESCRIPTION field Additional_repositories
+The @samp{Additional_repositories} field is a comma-separated list of
 repository URLs where the packages named in the other fields may be
 found.  It is currently used by @command{R CMD check} to check that the
 packages can be found, at least as source packages (which can be
@@ -1086,8 +1103,9 @@ Having a @file{man} directory containing no documentation files may give
 an installation error.
 
 The @file{man} subdirectory may contain a subdirectory named @file{macros};
-this will contain source for user-defined Rd macros used in @R{} 3.2.0
-and later.
+this will contain source for user-defined Rd macros.  
+(See @ref{User-defined macros}.)  These use the Rd format, but may
+not contain anything but macro definitions, comments and whitespace.
 
 The @file{R} and @file{man} subdirectories may contain OS-specific
 subdirectories named @file{unix} or @file{windows}.
@@ -2663,7 +2681,14 @@ specified in that directory are run.  (Typically they will consist of a
 set of @file{.R} source files and target output files
 @file{.Rout.save}.)  Please note that the comparison will be done in the
 end user's locale, so the target output files should be @acronym{ASCII}
-if at all possible.
+if at all possible.  (The command line option @code{--test-dir=foo} may
+be used to specify tests in a non-standard location.  For example, 
+unusually slow tests could be placed in @file{inst/slowTests} and then
+@code{R CMD check --test-dir=inst/slowTests} would be used to run them.
+Other names that have been suggested are, for example, 
+@file{inst/testWithOracle} for tests that require Oracle to be installed,
+@file{inst/randomTests} for tests which use random values and may
+occasionally fail by chance, etc.)
 
 @item
 The code in package vignettes (@pxref{Writing package vignettes}) is
@@ -2749,7 +2774,9 @@ environment of a function for later use.
 
 Complete checking of a package which contains a file @file{README.md}
 needs @command{pandoc} installed: see
-@uref{http://johnmacfarlane.net/@/pandoc/@/installing.html}.
+@uref{http://johnmacfarlane.net/@/pandoc/@/installing.html}.  This
+should be reasonably current: @acronym{CRAN} used version 1.12.4.1 to
+process these files at the time of writing
 
 You do need to ensure that the package is checked in a suitable locale
 if it contains non-@acronym{ASCII} characters.  Such packages are likely
@@ -4775,8 +4802,8 @@ path: see its help page.
 @section CITATION files
 
 An installed file named @file{CITATION} will be used by the
-@code{citation()} function.  (To be installed, it needed to be in the
-@file{inst} subdirectory of the package sources.)
+@code{citation()} function.  (It should be in the @file{inst}
+subdirectory of the package sources.)
 
 The @file{CITATION} file is parsed as @R{} code (in the package's
 declared encoding, or in @acronym{ASCII} if none is declared).  If no
@@ -4808,9 +4835,13 @@ bibentry(bibtype = "Manual",
 @end example
 
 Note the way that information that may need to be updated is picked up
-from the @file{DESCRIPTION} file -- it is tempting to hardcode such
-information, but it normally then gets outdated.  See @code{?bibentry}
-for further details of the information which can be provided.
+from object @code{meta}, a parsed version of the @file{DESCRIPTION}
+file@footnote{this object is available since @R{} 2.8.0, so the
+@samp{Depends} field in the @file{DESCRIPTION} file should contain
+something at least as restrictive as @samp{R (>= 2.8}.} -- it is
+tempting to hardcode such information, but it normally then gets
+outdated.  See @code{?bibentry} for further details of the information
+which can be provided.
 
 In case a bibentry contains @LaTeX{} markup (e.g., for accented
 characters or mathematical symbols), it may be necessary to provide a
@@ -4830,6 +4861,10 @@ argument to @code{bibentry}.  E.g., earlier versions of
 The @file{CITATION} file should itself produce no output when
 @code{source}-d.
 
+It is desirable (and essential for @acronym{CRAN}) that the
+@file{CITATION} file does not contain calls to functions such as
+@code{packageDescription} which assume the package is installed in a
+library tree on the package search path.
 
 @node Package types, Services, CITATION files, Creating R packages
 @section Package types
@@ -5343,14 +5378,14 @@ line) to mark code that should be run by @code{example()} but not by
 @option{--run-donttest} can be used).  This should be needed only
 occasionally but can be used for code which might fail in circumstances
 that are hard to test for, for example in some locales.  (Use
-e.g. @code{capabilities()} to test for features needed in the examples
-wherever possible, and you can also use @code{try()} or
-@code{tryCatch()}.  Use @code{interactive()} to condition examples which
-need someone to interact with.)  Note that code included in
-@code{\donttest} must be correct @R{} code, and any packages used should
-be declared in the @file{DESCRIPTION} file.  It is good practice to
-include a comment in the @code{\donttest} section explaining why it is
-needed.
+e.g. @code{capabilities()} or @code{nzchar(Sys.which("someprogram"))} to
+test for features needed in the examples wherever possible, and you can
+also use @code{try()} or @code{tryCatch()}.  Use @code{interactive()} to
+condition examples which need someone to interact with.)  Note that code
+included in @code{\donttest} must be correct @R{} code, and any packages
+used should be declared in the @file{DESCRIPTION} file.  It is good
+practice to include a comment in the @code{\donttest} section explaining
+why it is needed.
 
 @findex \keyword
 @item \keyword@{@var{key}@}
@@ -5668,16 +5703,22 @@ a hyperlink in @HTML{} and PDF conversion.  Displayed using
 @item \url@{@var{uniform_resource_locator}@}
 @findex \url
 Indicate a uniform resource locator (@acronym{URL}) for the World Wide
-Web.  The argument is handled as `verbatim' text (with percent and braces
-escaped by backslash), and rendered as a hyperlink in @HTML{} and PDF
-conversion.  Displayed using @code{typewriter} font where possible.
+Web.  The argument is handled as `verbatim' text (with percent and
+braces escaped by backslash), and rendered as a hyperlink in @HTML{} and
+PDF conversion.  Linefeeds are removed, and as from @R{} 3.2.0 leading
+and trailing whitespace@footnote{as defined by the @R{} function
+@code{trimws}.} is removed.
+
+Displayed using @code{typewriter} font where possible.
 
 @item \href@{@var{uniform_resource_locator}@}@{@var{text}@}
 @findex \href
 Indicate a hyperlink to the World Wide Web. The first argument is
 handled as `verbatim' text (with percent and braces escaped by
-backslash) and is used as the @acronym{URL} in the hyperlink, with
-the second argument of @LaTeX{}-like text displayed to the user.
+backslash) and is used as the @acronym{URL} in the hyperlink, with the
+second argument of @LaTeX{}-like text displayed to the user.  Linefeeds
+are removed from the first argument, and as from @R{} 3.2.0 leading and
+trailing whitespace is removed.
 
 Note that RFC3986-encoded URLs (e.g.@: using @samp{\%28VS.85\%29} in
 place of @samp{(VS.85)}) may not work correctly in versions of @R{}
@@ -6202,6 +6243,9 @@ the name of the new macro including the initial backslash, and the second
 is the macro definition.  As in @LaTeX{}, @code{\newcommand} requires that the
 new macro not have been previously defined, whereas @code{\renewcommand}
 allows existing macros (including all built-in ones) to be replaced.
+(As from version 3.2.0, this test is disabled by default, but may
+be enabled by setting the environment variable @env{_WARN_DUPLICATE_RD_MACROS_}
+to a true value.)
 
 Also as in @LaTeX{}, the new macro may be defined to take arguments,
 and numeric placeholders such as @code{#1} are used in the macro
@@ -6216,12 +6260,16 @@ significance.  All arguments to user-defined macros will be parsed as
 verbatim text, and simple text-substitution will be used to replace
 the place-holders, after which the replacement text will be parsed.
 
-For example, the @file{NEWS.Rd} file currently uses the definition
+As of @R{} version 3.2.0, a number of macros are defined in the file 
+@file{share/Rd/macros/system.Rd} of the @R{} source or home
+directory, and these will normally be available in all @file{.Rd} files.  
+For example, that file contains the definition
 @example
 \newcommand@{\PR@}@{\Sexpr[results=rd]@{tools:::Rd_expr_PR(#1)@}@}
 @end example
 @noindent
-which defines @code{\PR} to be a single argument macro; then code like
+which defines @code{\PR} to be a single argument macro; then code 
+(typically used in the @file{NEWS.Rd} file) like
 @example
 \PR@{1234@}
 @end example
@@ -6231,7 +6279,17 @@ will expand to
 \Sexpr[results=rd]@{tools:::Rd_expr_PR(1234)@}
 @end example
 @noindent
-when parsed.
+when parsed.  See the comments in that file for a discussion of what
+macros are available and what they do.
+
+Packages may also define their own common macros; these would be stored
+in an @file{.Rd} file in @file{man/macros} in the package source and
+will be installed into @file{help/macros} when the package is installed.
+A package may also use the macros from a different package by listing
+the other package in the @samp{RdMacros} field in the @file{DESCRIPTION}
+file.
+
+
 
 @node Encoding, Processing documentation files, User-defined macros, Writing R documentation files
 @section Encoding
@@ -9899,7 +9957,7 @@ SEXP getvar(SEXP name, SEXP rho)
 	error("name is not a single string");
     if(!isEnvironment(rho))
 	error("rho should be an environment");
-    ans = findVar(install(CHAR(STRING_ELT(name, 0))), rho);
+    ans = findVar(installChar(STRING_ELT(name, 0)), rho);
     Rprintf("first value is %f\n", REAL(ans)[0]);
     return R_NilValue;
 @}
@@ -10649,7 +10707,7 @@ SEXP numeric_deriv(SEXP args)
 
 @group
     for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
-	par = PROTECT(findVar(install(CHAR(STRING_ELT(theta, i))), rho));
+	par = PROTECT(findVar(installChar(STRING_ELT(theta, i)), rho));
 	tt = REAL(par)[0];
 	xx = fabs(tt);
 	delta = (xx < 1) ? eps : xx*eps;
@@ -10716,7 +10774,7 @@ applicable.)
 @example
 @group
     for(i = 0, start = 0; i < LENGTH(theta); i++, start += LENGTH(ans)) @{
-	par = PROTECT(findVar(install(CHAR(STRING_ELT(theta, i))), rho));
+	par = PROTECT(findVar(installChar(STRING_ELT(theta, i)), rho));
 @end group
 @end example
 
@@ -11260,6 +11318,7 @@ has full control (and responsibility).
 @node Transient storage allocation, User-controlled memory, Memory allocation, Memory allocation
 @subsection Transient storage allocation
 @findex R_alloc
+@findex R_allocLD
 @findex S_alloc
 @findex S_realloc
 @findex vmaxget
@@ -11335,7 +11394,16 @@ just under 16Gb.
 
 The memory returned is only guaranteed to be aligned as required for
 @code{double} pointers: take precautions if casting to a pointer which
-needs more (e.g.@: @code{(long double *)} on some platforms).
+needs more.  As from @R{} 3.2.0 there is also
+
+@example
+long double *R_allocLD(size_t @var{n})
+@end example
+
+@noindent
+which is guaranteed to have the 16-byte alignment needed for @code{long
+double} pointers on some platforms.
+
 
 These functions should only be used in code called by @code{.C} etc,
 never from front-ends.  They are not thread-safe.
@@ -11813,6 +11881,25 @@ similarly for the signed rank functions.
 (If remapping is suppressed, the Normal distribution names are
 @code{Rf_dnorm4}, @code{Rf_pnorm5} and @code{Rf_qnorm5}.)
 
+For the negative binomial distribution (@samp{nbinom}), in addition to the
+@code{(size, prob)} parametrization, the alternative @code{(size, mu)}
+parametrization is provided as well by functions @samp{[dpqr]nbinom_mu()},
+see @kbd{?NegBinomial} in @R{}.
+
+Functions @code{dpois_raw(x, *)} and @code{dbinom_raw(x, *)} are versions of the 
+Poisson and binomial probability mass functions which work continuously in
+@code{x}, whereas @code{dbinom(x,*)} and @code{dpois(x,*)} only return non
+zero values for integer @code{x}.
+@example
+@group
+double dbinom_raw(double x, double n, double p, double q, int give_log)
+double dpois_raw (double x, double lambda, int give_log)
+@end group
+@end example
+Note that @code{dbinom_raw()} gets both @eqn{p, p} and @eqn{q = 1-p, q = 1-p} which
+may be advantageous when one of them is close to @eqn{1, 1}.
+
+
 @node Mathematical functions, Numerical Utilities, Distribution functions, Numerical analysis subroutines
 @subsection Mathematical functions
 
@@ -11947,6 +12034,7 @@ in @file{Rmath.h}, but is in @file{math.h} which @file{Rmath.h} includes.
 
 @deftypefun double logspace_add (double @var{logx}, double @var{logy})
 @deftypefunx double logspace_sub (double @var{logx}, double @var{logy})
+@deftypefunx double logspace_sum (double* @var{logx}, int @var{n})
 Compute the log of a sum or difference from logs of terms, i.e., ``x +
 y'' as @code{log (exp(@var{logx}) + exp(@var{logy}))} and ``x - y'' as
 @code{log (exp(@var{logx}) - exp(@var{logy}))}, 

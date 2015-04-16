@@ -69,7 +69,7 @@ typedef struct yyltype
 # define YYLTYPE yyltype
 # define YYLLOC_DEFAULT(Current, Rhs, N)				\
     do									\
-      if (YYID (N))							\
+	if (N)								\
 	{								\
 	  (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
 	  (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
@@ -87,7 +87,7 @@ typedef struct yyltype
 	  (Current).first_byte   = (Current).last_byte =		\
 	    YYRHSLOC (Rhs, 0).last_byte;				\
 	}								\
-    while (YYID (0))
+    while (0)
 
 /* Useful defines so editors don't get confused ... */
 
@@ -163,8 +163,8 @@ static int      mkVerbEnv();
 
 %%
 
-Init:		Items END_OF_INPUT		{ xxsavevalue($1, &@$); return 0; }
-	|	END_OF_INPUT			{ xxsavevalue(NULL, &@$); return 0; }
+Init:		Items END_OF_INPUT		{ xxsavevalue($1, &@$); YYACCEPT; }
+	|	END_OF_INPUT			{ xxsavevalue(NULL, &@$); YYACCEPT; }
 	|	error				{ PROTECT(parseState.Value = R_NilValue);  YYABORT; }
 	;
 
@@ -242,7 +242,8 @@ static SEXP xxenv(SEXP begin, SEXP body, SEXP end, YYLTYPE *lloc)
     }
     /* FIXME:  check that begin and end match */
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, parseState.SrcFile));
-    setAttrib(ans, install("latex_tag"), mkString("ENVIRONMENT"));
+    SEXP s_latex_tag = install("latex_tag");
+    setAttrib(ans, s_latex_tag, mkString("ENVIRONMENT"));
     if (!isNull(end)) 
     	UNPROTECT_PTR(end);
 #if DEBUGVALS
@@ -260,7 +261,8 @@ static SEXP xxmath(SEXP body, YYLTYPE *lloc)
     PROTECT(ans = PairToVectorList(CDR(body)));
     UNPROTECT_PTR(body);
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, parseState.SrcFile));
-    setAttrib(ans, install("latex_tag"), mkString("MATH"));
+    SEXP s_latex_tag = install("latex_tag");
+    setAttrib(ans, s_latex_tag, mkString("MATH"));
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);    
 #endif
@@ -280,7 +282,8 @@ static SEXP xxblock(SEXP body, YYLTYPE *lloc)
     	UNPROTECT_PTR(body);	
     }
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, parseState.SrcFile));
-    setAttrib(ans, install("latex_tag"), mkString("BLOCK"));
+    SEXP s_latex_tag = install("latex_tag");
+    setAttrib(ans, s_latex_tag, mkString("BLOCK"));
 
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);    
@@ -315,7 +318,8 @@ static void xxsavevalue(SEXP items, YYLTYPE *lloc)
     } else {
     	PROTECT(parseState.Value = allocVector(VECSXP, 1));
     	SET_VECTOR_ELT(parseState.Value, 0, ScalarString(mkChar("")));
-    	setAttrib(VECTOR_ELT(parseState.Value, 0), install("latex_tag"), mkString("TEXT"));
+    	SEXP s_latex_tag = install("latex_tag");
+    	setAttrib(VECTOR_ELT(parseState.Value, 0), s_latex_tag, mkString("TEXT"));
     }	
     if (!isNull(parseState.Value)) {
     	setAttrib(parseState.Value, R_ClassSymbol, mkString("LaTeX"));
@@ -325,7 +329,8 @@ static void xxsavevalue(SEXP items, YYLTYPE *lloc)
 
 static SEXP xxtag(SEXP item, int type, YYLTYPE *lloc)
 {
-    setAttrib(item, install("latex_tag"), mkString(yytname[YYTRANSLATE(type)]));
+    SEXP s_latex_tag = install("latex_tag");
+    setAttrib(item, s_latex_tag, mkString(yytname[YYTRANSLATE(type)]));
     setAttrib(item, R_SrcrefSymbol, makeSrcref(lloc, parseState.SrcFile));
     return item;
 }

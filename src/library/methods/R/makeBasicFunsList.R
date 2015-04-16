@@ -1,7 +1,7 @@
 #  File src/library/methods/R/makeBasicFunsList.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -38,8 +38,8 @@ utils::globalVariables(".addBasicGeneric")
     }
 
     ## Next, add the remaining primitive generics
-    prims <- ls(.GenericArgsEnv, all.names=TRUE)
-    new_prims <- prims[!prims %in% names(funs)]
+    prims <- names(.GenericArgsEnv)
+    new_prims <- setdiff(prims, names(funs))
     for(nm in new_prims) {
         f <- get(nm, envir = .GenericArgsEnv)
         body(f) <- substitute(standardGeneric(ff), list(ff=val))
@@ -47,9 +47,9 @@ utils::globalVariables(".addBasicGeneric")
     }
 
     ## Then add all the primitives that are not already there.
-    ff <- ls("package:base", all.names=TRUE)
-    prims <- ff[sapply(ff, function(x) is.primitive(get(x, "package:base")))]
-    new_prims <- prims[!prims %in% names(funs)]
+    ff <- as.list(baseenv(), all.names=TRUE)
+    prims <- ff[vapply(ff, is.primitive, logical(1L))]
+    new_prims <- setdiff(names(prims), names(funs))
     add <- rep(list(FALSE), length(new_prims))
     names(add) <- new_prims
     funs <- c(funs, add)
@@ -177,6 +177,12 @@ utils::globalVariables(".addBasicGeneric")
 	       signature = "x", where = where)
     setGenericImplicit("chol2inv", where, FALSE)
 
+    setGeneric ("determinant", function(x, logarithm=TRUE, ...) standardGeneric("determinant"),
+		useAsDefault = function(x, logarithm=TRUE, ...)
+		base::determinant(x, logarithm, ...),
+		signature = c("x", "logarithm"), where = where)
+    setGenericImplicit("determinant", where, FALSE)
+
     setGeneric("rcond", function(x, norm, ...) standardGeneric("rcond"),
 	       useAsDefault = function(x, norm, ...) base::rcond(x, norm, ...),
 	       signature = c("x", "norm"), where = where)
@@ -185,6 +191,9 @@ utils::globalVariables(".addBasicGeneric")
     setGeneric("norm", function(x, type, ...) standardGeneric("norm"),
 	       useAsDefault = function(x, type, ...) base::norm(x, type, ...),
 	       signature = c("x", "type"), where = where)
+    ## this method *belong*s to the generic:
+    setMethod("norm", signature(x = "ANY", type = "missing"),
+              function (x, type, ...) norm(x, type = "O", ...))
     setGenericImplicit("norm", where, FALSE)
 
     setGeneric("backsolve", function(r, x, k = ncol(r), upper.tri = TRUE, transpose = FALSE, ...)
@@ -220,6 +229,15 @@ utils::globalVariables(".addBasicGeneric")
     setGenericImplicit("colSums",  where, FALSE)
     setGenericImplicit("rowMeans", where, FALSE)
     setGenericImplicit("rowSums",  where, FALSE)
+
+    setGeneric("crossprod", function(x, y = NULL, ...) standardGeneric("crossprod"),
+	       useAsDefault = function(x, y = NULL, ...) base::crossprod(x, y),
+	       signature = c("x", "y"), where = where)
+    setGeneric("tcrossprod", function(x, y = NULL, ...) standardGeneric("tcrossprod"),
+	       useAsDefault = function(x, y = NULL, ...) base::tcrossprod(x, y),
+	       signature = c("x", "y"), where = where)
+    setGenericImplicit("crossprod",  where, FALSE)
+    setGenericImplicit("tcrossprod",  where, FALSE)
 
     setGeneric("sample", function(x, size, replace = FALSE, prob = NULL, ...)
 			standardGeneric("sample"),

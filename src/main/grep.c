@@ -88,7 +88,7 @@ strsplit grep [g]sub [g]regexpr
 
 /* we allow pat == NULL if the regex cannot be safely expressed
    as a string (e.g., when using grepRaw) */
-static void reg_report(int rc,  regex_t *reg, const char *pat)
+static void NORET reg_report(int rc,  regex_t *reg, const char *pat)
 {
     char errbuf[1001];
     tre_regerror(rc, reg, errbuf, 1001);
@@ -395,6 +395,7 @@ SEXP attribute_hidden do_strsplit(SEXP call, SEXP op, SEXP args, SEXP env)
 		    error(_("'split' string %d is invalid in this locale"), itok+1);
 	    }
 
+	    // PCRE docs say this is not needed, but it is on Windows
 	    if (!tables) tables = pcre_maketables();
 	    re_pcre = pcre_compile(split, options,
 				   &errorptr, &erroffset, tables);
@@ -786,16 +787,16 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
     n = XLENGTH(text);
     if (STRING_ELT(pat, 0) == NA_STRING) {
 	if (value_opt) {
-	    SEXP nmold = getAttrib(text, R_NamesSymbol);
+	    SEXP nmold = PROTECT(getAttrib(text, R_NamesSymbol));
 	    PROTECT(ans = allocVector(STRSXP, n));
 	    for (i = 0; i < n; i++)  SET_STRING_ELT(ans, i, NA_STRING);
 	    if (!isNull(nmold))
 		setAttrib(ans, R_NamesSymbol, duplicate(nmold));
+	    UNPROTECT(2); /* ans, nmold */
 	} else {
-	    PROTECT(ans = allocVector(INTSXP, n));
+	    ans = allocVector(INTSXP, n);
 	    for (i = 0; i < n; i++)  INTEGER(ans)[i] = NA_INTEGER;
 	}
-	UNPROTECT(1);
 	return ans;
     }
 
@@ -858,6 +859,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 	const char *errorptr;
 	if (igcase_opt) cflags |= PCRE_CASELESS;
 	if (!useBytes && use_UTF8) cflags |= PCRE_UTF8;
+	// PCRE docs say this is not needed, but it is on Windows
 	tables = pcre_maketables();
 	re_pcre = pcre_compile(spat, cflags, &errorptr, &erroffset, tables);
 	if (!re_pcre) {
@@ -934,12 +936,12 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 	tre_regfree(&reg);
 
     if (PRIMVAL(op)) {/* grepl case */
-	UNPROTECT(1);
+	UNPROTECT(1); /* ind */
 	return ind;
     }
 
     if (value_opt) {
-	SEXP nmold = getAttrib(text, R_NamesSymbol), nm;
+	SEXP nmold = PROTECT(getAttrib(text, R_NamesSymbol)), nm;
 	PROTECT(ans = allocVector(STRSXP, nmatches));
 	for (i = 0, j = 0; i < n ; i++)
 	    if (invert ^ LOGICAL(ind)[i])
@@ -952,7 +954,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 		    SET_STRING_ELT(nm, j++, STRING_ELT(nmold, i));
 	    setAttrib(ans, R_NamesSymbol, nm);
 	}
-	UNPROTECT(1);
+	UNPROTECT(2); /* ans, nmold */
     } else {
 #ifdef LONG_VECTOR_SUPPORT
 	if (n > INT_MAX) {
@@ -970,7 +972,7 @@ SEXP attribute_hidden do_grep(SEXP call, SEXP op, SEXP args, SEXP env)
 		    INTEGER(ans)[j++] = (int) (i + 1);
 	}
     }
-    UNPROTECT(1);
+    UNPROTECT(1); /* ind */
     return ans;
 }
 
@@ -1611,6 +1613,7 @@ SEXP attribute_hidden do_gsub(SEXP call, SEXP op, SEXP args, SEXP env)
 	const char *errorptr;
 	if (use_UTF8) cflags |= PCRE_UTF8;
 	if (igcase_opt) cflags |= PCRE_CASELESS;
+	// PCRE docs say this is not needed, but it is on Windows
 	tables = pcre_maketables();
 	re_pcre = pcre_compile(spat, cflags, &errorptr, &erroffset, tables);
 	if (!re_pcre) {
@@ -2009,7 +2012,7 @@ gregexpr_Regexc(const regex_t *reg, SEXP sstr, int useBytes, int use_WC)
     }
     setAttrib(ans, install("match.length"), matchlen);
     if(useBytes) {
-	setAttrib(ans, install("useBytes"), ScalarLogical(TRUE));
+	setAttrib(ans, install("useBytes"), R_TrueValue);
     }
     UNPROTECT(4);
     return ans;
@@ -2090,7 +2093,7 @@ gregexpr_fixed(const char *pattern, const char *string,
     }
     setAttrib(ans, install("match.length"), matchlen);
     if(useBytes) {
-	setAttrib(ans, install("useBytes"), ScalarLogical(TRUE));
+	setAttrib(ans, install("useBytes"), R_TrueValue);
     }
     UNPROTECT(4);
     return ans;
@@ -2236,7 +2239,7 @@ gregexpr_perl(const char *pattern, const char *string,
     PROTECT(matchlen = allocVector(INTSXP, matchIndex + 1));
     setAttrib(ans, install("match.length"), matchlen);
     if(useBytes) {
-	setAttrib(ans, install("useBytes"), ScalarLogical(TRUE));
+	setAttrib(ans, install("useBytes"), R_TrueValue);
     }
     UNPROTECT(1);
     if (foundAny) {
@@ -2408,6 +2411,7 @@ SEXP attribute_hidden do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 	const char *errorptr;
 	if (igcase_opt) cflags |= PCRE_CASELESS;
 	if (!useBytes && use_UTF8) cflags |= PCRE_UTF8;
+	// PCRE docs say this is not needed, but it is on Windows
 	tables = pcre_maketables();
 	re_pcre = pcre_compile(spat, cflags, &errorptr, &erroffset, tables);
 	if (!re_pcre) {
@@ -2459,7 +2463,7 @@ SEXP attribute_hidden do_regexpr(SEXP call, SEXP op, SEXP args, SEXP env)
 	PROTECT(matchlen = allocVector(INTSXP, n));
 	setAttrib(ans, install("match.length"), matchlen);
 	if(useBytes) {
-	    setAttrib(ans, install("useBytes"), ScalarLogical(TRUE));
+	    setAttrib(ans, install("useBytes"), R_TrueValue);
 	}
 	UNPROTECT(1);
 	if (perl_opt && capture_count) {
@@ -2702,7 +2706,8 @@ SEXP attribute_hidden do_regexec(SEXP call, SEXP op, SEXP args, SEXP env)
 //	if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
 	if(STRING_ELT(vec, i) == NA_STRING) {
 	    PROTECT(matchpos = ScalarInteger(NA_INTEGER));
-	    setAttrib(matchpos, install("match.length"),
+	    SEXP s_match_length = install("match.length");
+	    setAttrib(matchpos, s_match_length ,
 		      ScalarInteger(NA_INTEGER));
 	    SET_VECTOR_ELT(ans, i, matchpos);
 	    UNPROTECT(1);
@@ -2736,7 +2741,7 @@ SEXP attribute_hidden do_regexec(SEXP call, SEXP op, SEXP args, SEXP env)
 		setAttrib(matchpos, install("match.length"), matchlen);
 		if(useBytes)
 		    setAttrib(matchpos, install("useBytes"),
-			      ScalarLogical(TRUE));
+			      R_TrueValue);
 		SET_VECTOR_ELT(ans, i, matchpos);
 		UNPROTECT(2);
 	    } else {
@@ -2775,7 +2780,15 @@ SEXP attribute_hidden do_pcre_config(SEXP call, SEXP op, SEXP args, SEXP env)
     SET_STRING_ELT(nm, 1, mkChar("Unicode properties"));
     pcre_config(PCRE_CONFIG_UNICODE_PROPERTIES, &res); lans[1] = res;
     SET_STRING_ELT(nm, 2, mkChar("JIT"));
-    pcre_config(PCRE_CONFIG_JIT, &res); lans[2] = res;
+#ifdef PCRE_CONFIG_JIT
+    // Paul Murrell reports 8.12 does not have this
+    // man pcrejit says it was added in 8.20.
+    // 8.10 is the earliest acceptable version and does have the others.
+    pcre_config(PCRE_CONFIG_JIT, &res);
+#else
+    res = NA_LOGICAL;
+#endif
+    lans[2] = res;
     UNPROTECT(1);
     return ans;
 }

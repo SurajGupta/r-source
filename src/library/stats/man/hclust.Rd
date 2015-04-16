@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-
 \name{hclust}
 \title{Hierarchical Clustering}
 \alias{hclust}
@@ -239,6 +237,22 @@ hc1 <- hclust(dist(cent)^2, method = "cen", members = table(memb))
 opar <- par(mfrow = c(1, 2))
 plot(hc,  labels = FALSE, hang = -1, main = "Original Tree")
 plot(hc1, labels = FALSE, hang = -1, main = "Re-start from 10 clusters")
+par(opar)
+
+### Example 2: Straight-line distances among 10 US cities
+##  Compare the results of algorithms "ward.D" and "ward.D2"
+
+data(UScitiesD)
+
+mds2 <- -cmdscale(UScitiesD)
+plot(mds2, type="n", axes=FALSE, ann=FALSE)
+text(mds2, labels=rownames(mds2), xpd = NA)
+
+hcity.D  <- hclust(UScitiesD, "ward.D") # "wrong"
+hcity.D2 <- hclust(UScitiesD, "ward.D2")
+opar <- par(mfrow = c(1, 2))
+plot(hcity.D,  hang=-1)
+plot(hcity.D2, hang=-1)
 par(opar)
 }
 \keyword{multivariate}

@@ -73,8 +73,6 @@ void Rf_callToplevelHandlers(SEXP expr, SEXP value, Rboolean succeeded,
 static int ParseBrowser(SEXP, SEXP);
 
 
-extern void InitDynload(void);
-
 	/* Read-Eval-Print Loop [ =: REPL = repl ] with input from a file */
 
 static void R_ReplFile(FILE *fp, SEXP rho)
@@ -410,6 +408,7 @@ static RETSIGTYPE handleInterrupt(int dummy)
  */
 
 #ifndef Win32
+// controlled by the internal http server in the internet module
 int R_ignore_SIGPIPE = 0;
 
 static RETSIGTYPE handlePipe(int dummy)
@@ -460,7 +459,6 @@ static void win32_segv(int signum)
    2005-12-17 BDR */
 
 static unsigned char ConsoleBuf[CONSOLE_BUFFER_SIZE];
-extern void R_CleanTempDir(void);
 
 static void sigactionSegv(int signum, siginfo_t *ip, void *context)
 {
@@ -671,8 +669,6 @@ static void R_LoadProfile(FILE *fparg, SEXP env)
 
 int R_SignalHandlers = 1;  /* Exposed in R_interface.h */
 
-unsigned int TimeToSeed(void); // times.c
-
 const char* get_workspace_name();  /* from startup.c */
 
 void attribute_hidden BindDomain(char *R_Home)
@@ -798,6 +794,8 @@ void setup_Rmainloop(void)
     InitOptions();
     InitEd();
     InitGraphics();
+    InitTypeTables(); /* must be before InitS3DefaultTypes */
+    InitS3DefaultTypes();
     
     R_Is_Running = 1;
     R_check_locale();
@@ -826,6 +824,7 @@ void setup_Rmainloop(void)
     R_Toplevel.restartstack = R_RestartStack;
     R_Toplevel.srcref = R_NilValue;
     R_GlobalContext = R_ToplevelContext = R_SessionContext = &R_Toplevel;
+    R_ExitContext = NULL;
 
     R_Warnings = R_NilValue;
 
@@ -875,7 +874,7 @@ void setup_Rmainloop(void)
 #endif
     /* At least temporarily unlock some bindings used in graphics */
     R_unLockBinding(R_DeviceSymbol, R_BaseEnv);
-    R_unLockBinding(install(".Devices"), R_BaseEnv);
+    R_unLockBinding(R_DevicesSymbol, R_BaseEnv);
     R_unLockBinding(install(".Library.site"), R_BaseEnv);
 
     /* require(methods) if it is in the default packages */
@@ -1094,13 +1093,14 @@ static int ParseBrowser(SEXP CExpr, SEXP rho)
 }
 
 
-/* browser(text = "", condition = NULL, expr = TRUE, skipCalls = 0L) */
+/* browser(text = "", condition = NULL, expr = TRUE, skipCalls = 0L)
+ * ------- but also called from ./eval.c */
 SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     RCNTXT *saveToplevelContext;
     RCNTXT *saveGlobalContext;
     RCNTXT thiscontext, returncontext, *cptr;
-    int savestack, browselevel, tmp;
+    int savestack, browselevel;
     SEXP ap, topExp, argList;
 
     /* argument matching */
@@ -1108,7 +1108,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_TAG(ap,  install("text"));
     SET_TAG(CDR(ap), install("condition"));
     SET_TAG(CDDR(ap), install("expr"));
-    SET_TAG(CDR(CDDR(ap)), install("skipCalls"));
+    SET_TAG(CDDDR(ap), install("skipCalls"));
     argList = matchArgs(ap, args, call);
     UNPROTECT(1);
     PROTECT(argList);
@@ -1120,7 +1120,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(CADDR(argList) == R_MissingArg) 
 	SETCAR(CDDR(argList), ScalarLogical(1));
     if(CADDDR(argList) == R_MissingArg) 
-	SETCAR(CDR(CDDR(argList)), ScalarInteger(0));
+	SETCAR(CDDDR(argList), ScalarInteger(0));
 
     /* return if 'expr' is not TRUE */
     if( !asLogical(CADDR(argList)) ) {
@@ -1144,7 +1144,7 @@ SEXP attribute_hidden do_browser(SEXP call, SEXP op, SEXP args, SEXP rho)
 		&& cptr->callflag )
 	    cptr = cptr->nextcontext;
 	Rprintf("Called from: ");
-	tmp = asInteger(GetOption(install("deparse.max.lines"), R_BaseEnv));
+	int tmp = asInteger(GetOption(install("deparse.max.lines"), R_BaseEnv));
 	if(tmp != NA_INTEGER && tmp > 0) R_BrowseLines = tmp;
         if( cptr != R_ToplevelContext ) {
 	    PrintValueRec(cptr->call, rho);

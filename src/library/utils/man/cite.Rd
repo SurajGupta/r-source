@@ -3,8 +3,6 @@
 % Copyright 2012-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{cite}
 \alias{cite}
 \alias{citeNatbib}

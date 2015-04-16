@@ -41,7 +41,7 @@ read_symbols_from_object_file <- function(f)
     ## reasonable to assume this on the path
     if(!nzchar(nm <- Sys.which("nm"))) return()
     f <- file_path_as_absolute(f)
-    if(!(file.info(f)$size)) return()
+    if(!(file.size(f))) return()
     s <- strsplit(system(sprintf("%s -Pg %s", shQuote(nm), shQuote(f)),
                          intern = TRUE),
                   " +")
@@ -421,6 +421,7 @@ format.check_so_symbols <-
 function(x, ...)
 {
     if(!length(x)) return(character())
+    ## <FIXME split.matrix>
     entries <- split.data.frame(x, x[, "osname"])
     objects <- vector("list", length(entries))
     names(objects) <- names(entries)

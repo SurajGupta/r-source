@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.1\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-02-13 14:10\n"
+"POT-Creation-Date: 2015-03-24 11:51\n"
 "PO-Revision-Date: 2012-09-28 22:18+0200\n"
 "Last-Translator: Karl Ove Hufthammer <karl@huftis.org>\n"
 "Language-Team: Norwegian Nynorsk <i18n-nn@lister.ping.uio.no>\n"
@@ -42,6 +42,9 @@ msgid "infinite or missing values in 'x'"
 msgstr "uendelege eller manglande verdiar i «x»"
 
 msgid "a dimension is zero"
+msgstr ""
+
+msgid "\"hexNumeric\"and \"digits17\" are mutually exclusive"
 msgstr ""
 
 msgid "second argument must be a list"
@@ -315,7 +318,7 @@ msgid "only a single element should be replaced"
 msgstr "berre eit enkeltelement skal erstattast"
 
 #, fuzzy
-msgid "Name partially matched in data frame"
+msgid "Partial match of '%s' to '%s' in data frame"
 msgstr "ikkje numerisk variabel i dataramme:"
 
 msgid "names do not match previous names"
@@ -327,16 +330,14 @@ msgstr "talet på argumentkolonnar er ikkje like"
 msgid "invalid list argument: all variables should have the same length"
 msgstr "ugyldig listeargument: alle variablar må vera like lange"
 
-msgid "data frame with 0 columns and %d rows"
-msgstr "dataramme med 0 kolonnar og %d rader"
-
 msgid "<0 rows> (or 0-length row.names)"
 msgstr "<0 rader> (eller row.names av lengd null)"
 
 msgid "non-numeric variable in data frame:"
 msgstr "ikkje numerisk variabel i dataramme:"
 
-msgid "only defined for equally-sized data frames"
+#, fuzzy
+msgid "%s only defined for equally-sized data frames"
 msgstr "berre definert for datarammer av lik storleik"
 
 msgid "list of length %d not meaningful"
@@ -585,7 +586,8 @@ msgstr "ugyldige merkelappar – lengd %d må vera 1 eller %d"
 msgid "number of levels differs"
 msgstr "talet på nivå er forskjellig"
 
-msgid "not meaningful for factors"
+#, fuzzy
+msgid "%s not meaningful for factors"
 msgstr "gjev ikkje meining for faktorar"
 
 msgid "level sets of factors are different"
@@ -675,6 +677,9 @@ msgstr "«flag» kan berre innehalda «0+- #»"
 
 msgid "corrupt data frame: columns will be truncated or padded with NAs"
 msgstr "ugyldig dataramme: kolonnar vert trunkerte eller fylde med NA-verdiar"
+
+msgid "'big.mark' and 'decimal.mark' are both '%s', which could be confusing"
+msgstr ""
 
 msgid "'zero.print' has length > 1"
 msgstr "«zero.print» har lengd > 1"
@@ -800,6 +805,10 @@ msgid "%s not found on search path, using pos = 2"
 msgstr "fann ikkje «%s» i søkjestigen – brukar «pos = 2»"
 
 #, fuzzy
+msgid "Package %s version %s cannot be unloaded"
+msgstr "pakken «%s» er ikkje lasta"
+
+#, fuzzy
 msgid "package or namespace load failed for %s"
 msgstr "feil ved lasting av pakke/namnerom for «%s»"
 
@@ -892,14 +901,11 @@ msgstr "Dokumentasjon for pakken «%s»"
 msgid "package %s required by %s could not be found"
 msgstr "fann ikkje pakken «%s» som «%s» treng"
 
-msgid "package %s %s was found, but %s %s is required by %s"
-msgstr "fann pakken «%s %s», men «%s %s» trengst av «%s»"
+msgid "version %s of %s masked by %s in %s"
+msgstr ""
 
 msgid "package %s could not be loaded"
 msgstr "klarte ikkje lasta pakken «%s»"
-
-msgid "package %s %s is loaded, but %s %s is required by %s"
-msgstr "pakken «%s %s» er lasta, men «%s %s» trengst av «%s»"
 
 msgid "empty (zero-byte) input file"
 msgstr "tom innfil (0 byte)"
@@ -1009,8 +1015,14 @@ msgstr "«by» må vera i samsvar med talet på kolonnar"
 msgid "'by' must specify one or more columns as numbers, names or logical"
 msgstr "«by» må definera kolonnar som tal, namn eller boolske verdiar"
 
+msgid "long vectors are not supported"
+msgstr ""
+
 msgid "'by.x' and 'by.y' specify different numbers of columns"
 msgstr "«by.x» og «by.y» må definera forskjellige tal på kolonnar"
+
+msgid "'incomparables' is supported only for merging on a single column"
+msgstr ""
 
 msgid "additional arguments ignored in message()"
 msgstr "ignorerte ekstraargument i message()"
@@ -1516,9 +1528,6 @@ msgstr "Tilbakesporing finst ikkje"
 msgid "invalid version specification %s"
 msgstr "ugyldig versjonsspesifikasjon"
 
-msgid "wrong argument"
-msgstr "feil argument"
-
 #, fuzzy
 msgid "invalid 'value'"
 msgstr "ugyldig verdi"
@@ -1621,11 +1630,22 @@ msgstr[0] "kjenner ikkje deparse-valet «%s»"
 msgstr[1] "kjenner ikkje deparse-vala «%s»"
 
 msgid ""
-"The following object is masked %s %s:\n"
+"The following object is masked _by_ %s:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"The following objects are masked %s %s:\n"
+"The following objects are masked _by_ %s:\n"
+"\n"
+"%s\n"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid ""
+"The following object is masked from %s:\n"
+"\n"
+"%s\n"
+msgid_plural ""
+"The following objects are masked from %s:\n"
 "\n"
 "%s\n"
 msgstr[0] ""
@@ -1693,6 +1713,12 @@ msgid "provided %d variable to replace %d variables"
 msgid_plural "provided %d variables to replace %d variables"
 msgstr[0] "oppgav %d variablar for å erstatta %d variablar"
 msgstr[1] "oppgav %d variablar for å erstatta %d variablar"
+
+#, fuzzy
+msgid "data frame with 0 columns and %d row"
+msgid_plural "data frame with 0 columns and %d rows"
+msgstr[0] "dataramme med 0 kolonnar og %d rader"
+msgstr[1] "dataramme med 0 kolonnar og %d rader"
 
 msgid "library %s contains no packages"
 msgid_plural "libraries %s contain no packages"
@@ -1769,6 +1795,23 @@ msgid "Warning message:\n"
 msgid_plural "Warning messages:\n"
 msgstr[0] "Åtvaring:\n"
 msgstr[1] "Åtvaringar:\n"
+
+#, fuzzy
+#~ msgid "cannot be unloaded."
+#~ msgstr "namnerom kan ikkje lastast ut:"
+
+#, fuzzy
+#~ msgid "re-exports %s not exported by %s"
+#~ msgstr "objektet «%s» er ikkje eksportert av «namespace:%s»"
+
+#~ msgid "package %s %s was found, but %s %s is required by %s"
+#~ msgstr "fann pakken «%s %s», men «%s %s» trengst av «%s»"
+
+#~ msgid "package %s %s is loaded, but %s %s is required by %s"
+#~ msgstr "pakken «%s %s» er lasta, men «%s %s» trengst av «%s»"
+
+#~ msgid "wrong argument"
+#~ msgstr "feil argument"
 
 #~ msgid "'nu' must be 0, nrow(x) or ncol(x)"
 #~ msgstr "«nu» må vera 0, nrow(x) eller ncol(x)"

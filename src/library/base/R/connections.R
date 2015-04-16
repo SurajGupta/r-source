@@ -1,7 +1,7 @@
 #  File src/library/base/R/connections.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -86,8 +86,13 @@ fifo <- function(description, open = "", blocking = FALSE,
     .Internal(fifo(description, open, blocking, encoding))
 
 url <- function(description, open = "", blocking = TRUE,
-                encoding = getOption("encoding"))
-    .Internal(url(description, open, blocking, encoding))
+                encoding = getOption("encoding"), method)
+{
+    if(missing(method))
+        method <- getOption("url.method", "default")
+    method <- match.arg(method, c("default", "internal", "libcurl", "wininet"))
+    .Internal(url(description, open, blocking, encoding, method))
+}
 
 gzfile <- function(description, open = "",
                    encoding = getOption("encoding"), compression = 6)
@@ -152,9 +157,11 @@ truncate.connection <- function(con, ...)
     .Internal(truncate(con))
 }
 
-pushBack <- function(data, connection, newLine = TRUE, encoding = c("", "bytes", "UTF-8")) {
+pushBack <- function(data, connection, newLine = TRUE,
+                     encoding = c("", "bytes", "UTF-8"))
+{
     # match.arg doesn't work on "" default
-    if (length(encoding) > 1) encoding <- encoding[1]
+    if (length(encoding) > 1L) encoding <- encoding[1]
     if (nchar(encoding)) encoding <- match.arg(encoding)
     type <- match(encoding, c("", "bytes", "UTF-8"))
     .Internal(pushBack(data, connection, newLine, type))

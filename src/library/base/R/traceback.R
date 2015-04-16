@@ -1,7 +1,7 @@
 #  File src/library/base/R/traceback.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
 traceback <-
 function(x = NULL, max.lines = getOption("deparse.max.lines"))
 {
-    if(is.null(x) && (exists(".Traceback", envir = baseenv())))
-	x <- get(".Traceback", envir = baseenv())
+    if(is.null(x) && !is.null(x <- get0(".Traceback", envir = baseenv())))
+	{}
     else if (is.numeric(x))
     	x <- .Internal(traceback(x))
     n <- length(x)

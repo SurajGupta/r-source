@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2014 R Core Team
+### Copyright (C) 1998-2015 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -412,17 +412,17 @@ AC_ARG_WITH([libtiff],
 [R_ARG_USE(libtiff)],
 [use_libtiff=yes])
 AC_ARG_WITH([system-zlib],
-[AS_HELP_STRING([--with-system-zlib],[use system zlib library (if available) @<:@no@:>@])],
+[AS_HELP_STRING([--with-system-zlib],[use system zlib library (if available) @<:@yes@:>@])],
 [R_ARG_USE_SYSTEM(zlib)],
-[use_system_zlib=no])
+[use_system_zlib=yes])
 AC_ARG_WITH([system-bzlib],
-[AS_HELP_STRING([--with-system-bzlib],[use system bzlib library (if available) @<:@no@:>@])],
+[AS_HELP_STRING([--with-system-bzlib],[use system bzlib library (if available) @<:@yes@:>@])],
 [R_ARG_USE_SYSTEM(bzlib)],
-[use_system_bzlib=no])
+[use_system_bzlib=yes])
 AC_ARG_WITH([system-pcre],
-[AS_HELP_STRING([--with-system-pcre],[use system PCRE library (if available) @<:@no@:>@])],
+[AS_HELP_STRING([--with-system-pcre],[use system PCRE library (if available) @<:@yes@:>@])],
 [R_ARG_USE_SYSTEM(pcre)],
-[use_system_pcre=no])
+[use_system_pcre=yes])
 AC_ARG_WITH([system-tre],
 [AS_HELP_STRING([--with-system-tre],[use system tre library (if available) @<:@no@:>@])],
 [R_ARG_USE_SYSTEM(tre)],
@@ -434,9 +434,14 @@ AC_ARG_WITH([system-xz],
 
 ## Valgrind instrumentation
 AC_ARG_WITH([valgrind-instrumentation],
-[AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2/3) @<:@0@:>@])],
+[AS_HELP_STRING([--with-valgrind-instrumentation],[Level of additional instrumentation for Valgrind (0/1/2) @<:@0@:>@])],
 [valgrind_level=${withval}],
 [valgrind_level=0])
+
+AC_ARG_WITH([system-valgrind-headers],
+[AS_HELP_STRING([--with-system-valgrind-headers],[use system valgrind headers (if available) @<:@no@:>@])],
+[R_ARG_USE_SYSTEM(valgrind)],
+[use_system_valgrind=no])
 
 AC_ARG_WITH([internal-tzcode],
 [AS_HELP_STRING([--with-internal-tzcode],[use internal time-zone code @<:@no@:>@])],
@@ -808,12 +813,15 @@ AC_HEADER_SYS_WAIT
 ## fpu_control.h is only used on Linux, for the obsolete __setfpucw.
 ## sys/param.h is one way to get PATH_MAX.
 ## sched.h is POSIX, but we use it for Linux-specific features (affinity)
-AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h fcntl.h floatingpoint.h \
-  fpu_control.h glob.h grp.h langinfo.h \
+## stdalign.h is C11.
+AC_CHECK_HEADERS(arpa/inet.h dl.h dlfcn.h elf.h features.h fcntl.h \
+  floatingpoint.h fpu_control.h glob.h grp.h langinfo.h \
   netdb.h netinet/in.h pwd.h sched.h strings.h \
   sys/param.h sys/resource.h sys/select.h sys/socket.h \
   sys/stat.h sys/time.h sys/times.h sys/utsname.h unistd.h utime.h)
 ## </NOTE>
+## stdalign.h is C11.
+AC_CHECK_HEADERS(stdalign.h)
 ## <NOTE>
 ## These are C99 headers but some C code (written to work also
 ## without assuming C99) may need the corresponding conditionals.
@@ -1013,7 +1021,7 @@ case "${host_os}" in
       cc|c89)
 	## Luke Tierney says we also need '-Wp,-H16000' which tells the
 	## pre-processor to increase the size of an internal table.  It
-	## seems that src/modules/vfonts/g_her_glyph.c contains a line
+	## seems that src/main/vfonts/g_her_glyph.c contains a line
 	## that is too long for the pre-processor without this flag.
 	R_SH_VAR_ADD(R_XTRA_CPPFLAGS, [-Wp,-H16000])
 	;;
@@ -2018,8 +2026,18 @@ fi
 R_FUNC_LOG1P
 R_FUNC_FTELL
 R_FUNC_SIGACTION
-R_MKTIME_ERRNO
-R_FUNC_MKTIME
+
+if test x${use_internal_tzcode} = xdefault; then
+case "${host_os}" in
+   darwin*)
+     use_internal_tzcode=yes;
+     ;; 
+esac
+fi
+if test "${use_internal_tzcode}" != yes; then
+  R_MKTIME_ERRNO
+  R_FUNC_MKTIME
+fi
 
 R_C99_COMPLEX
 
@@ -2045,8 +2063,9 @@ fi
 AC_CACHE_CHECK([whether 'struct tm' includes tm_gmtoff],
                 [r_cv_have_tm_gmtoff],
 [AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
-// glibc needs this defined.
+// glibc needs this defined, second for >= 2.20
 #define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <time.h>
 
 int main() {
@@ -2296,6 +2315,57 @@ R_PCRE
 ## tre headers and libraries.
 R_TRE
 
+## libcurl
+## curl-config might not match the installed libcurl,
+## so we allow the user to set CURL_CPPFLAGS, CURL_LIBS
+## and check the version directly rather than by curl-config --checkfor
+AC_PATH_PROG(CURL_CONFIG, curl-config)
+if test -n "${CURL_CONFIG}"; then
+  echo `${CURL_CONFIG} --version`
+  if test -z "${CURL_CPPFLAGS}"; then
+    CURL_CPPFLAGS=`${CURL_CONFIG} --cflags`
+  fi
+  ## This should be correct for a static-only build, user will
+  ## need to override to specify static linking (see config.site)
+  if test -z "${CURL_LIBS}"; then
+    CURL_LIBS=`${CURL_CONFIG} --libs`
+  fi
+fi
+r_save_CPPFLAGS="${CPPLAGS}"
+CPPFLAGS="${CURL_CPPFLAGS} ${CPPFLAGS}"
+r_save_LIBS="${LIBS}"
+LIBS="${CURL_LIBS} ${LIBS}"
+AC_CACHE_CHECK([if libcurl version >= 7.28.0], [r_cv_have_curl728],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <curl/curl.h>
+int main() 
+{
+#ifdef LIBCURL_VERSION_MAJOR
+#if LIBCURL_VERSION_MAJOR > 7
+  exit(1);
+#elif LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR >= 28
+  exit(0);
+#else
+  exit(1);
+#endif
+#else
+  exit(1);
+#endif
+}
+]])], [r_cv_have_curl728=yes], [r_cv_have_curl728=no], [r_cv_have_curl728=no])])
+if test "x${r_cv_have_curl728}" != xyes; then
+  ac_cv_have_curl_curl_h=0
+  CURL_CPPFLAGS=
+  CURL_LIBS=
+else
+  AC_CHECK_HEADERS(curl/curl.h)
+fi
+CPPFLAGS="${r_save_CPPFLAGS}"
+LIBS="${r_save_LIBS}"
+AC_SUBST(CURL_CPPFLAGS)
+AC_SUBST(CURL_LIBS)
+
 ## POSIX times.
 R_SYS_POSIX_LEAPSECONDS
 
@@ -2323,17 +2393,12 @@ AC_FUNC_FSEEKO
 ## Valgrind instrumentation
 if test ${valgrind_level} -eq 0; then
   AC_DEFINE(NVALGRIND, 1, [Define to disable Valgrind instrumentation])
+elif test "${use_system_valgrind}" = yes; then
+  AC_CHECK_HEADERS([valgrind/memcheck.h])
 fi
 
-AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1, 2 or 3 to specify levels of Valgrind instrumentation])
+AC_DEFINE_UNQUOTED(VALGRIND_LEVEL, ${valgrind_level}, [Define as 1 or 2 to specify levels of Valgrind instrumentation])
 
-if test x${use_internal_tzcode} = xdefault; then
-case "${host_os}" in
-   darwin*)
-     use_internal_tzcode=yes;
-     ;; 
-esac
-fi
 
 if test "x${use_internal_tzcode}" = xyes; then
   AC_DEFINE(USE_INTERNAL_MKTIME, 1, [Define to use internal time-zone code])
@@ -2742,7 +2807,6 @@ AC_CONFIG_FILES(
   src/modules/X11/Makefile
   src/modules/internet/Makefile
   src/modules/lapack/Makefile
-  src/modules/vfonts/Makefile
   src/nmath/Makefile
   src/nmath/standalone/Makefile
   src/scripts/Makefile
@@ -2834,6 +2898,9 @@ if test "${have_pcre}" = yes; then
 fi
 if test "${have_tre}" = yes; then
   R_SH_VAR_ADD(r_external_libs, [tre], [, ])
+fi
+if test "x$ac_cv_header_curl_curl_h" = xyes; then
+  R_SH_VAR_ADD(r_external_libs, [curl], [, ])
 fi
 
 r_capabilities=

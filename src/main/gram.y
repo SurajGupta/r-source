@@ -121,7 +121,7 @@ static void setId( SEXP expr, yyltype loc){
 # define YYLTYPE yyltype
 # define YYLLOC_DEFAULT(Current, Rhs, N)				\
     do	{ 								\
-	if (YYID (N)){							\
+	if (N){								\
 	    (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;	\
 	    (Current).first_column = YYRHSLOC (Rhs, 1).first_column;	\
 	    (Current).first_byte   = YYRHSLOC (Rhs, 1).first_byte;	\
@@ -148,7 +148,7 @@ static void setId( SEXP expr, yyltype loc){
 	  (Current).last_byte = (Current).first_byte - 1;		\
 	  (Current).id = NA_INTEGER;                                    \
 	} 								\
-    } while (YYID (0))
+    } while (0)
 
 		
 # define YY_LOCATION_PRINT(Loc)					\
@@ -331,10 +331,10 @@ static int	xxvalue(SEXP, int, YYLTYPE *);
 
 %%
 
-prog	:	END_OF_INPUT			{ return 0; }
-	|	'\n'				{ return xxvalue(NULL,2,NULL); }
-	|	expr_or_assign '\n'			{ return xxvalue($1,3,&@1); }
-	|	expr_or_assign ';'			{ return xxvalue($1,4,&@1); }
+prog	:	END_OF_INPUT			{ YYACCEPT; }
+	|	'\n'				{ yyresult = xxvalue(NULL,2,NULL);	goto yyreturn; }
+	|	expr_or_assign '\n'			{ yyresult = xxvalue($1,3,&@1);	goto yyreturn; }
+	|	expr_or_assign ';'			{ yyresult = xxvalue($1,4,&@1);	goto yyreturn; }
 	|	error	 			{ YYABORT; }
 	;
 
@@ -908,7 +908,7 @@ static SEXP xxfuncall(SEXP expr, SEXP args)
     SEXP ans, sav_expr = expr;
     if(GenerateCode) {
 	if (isString(expr))
-	    expr = install(CHAR(STRING_ELT(expr, 0)));
+	    expr = installChar(STRING_ELT(expr, 0));
 	PROTECT(expr);
 	if (length(CDR(args)) == 1 && CADR(args) == R_MissingArg && TAG(CDR(args)) == R_NilValue )
 	    ans = lang1(expr);
@@ -1393,8 +1393,10 @@ SEXP R_Parse1Buffer(IoBuffer *buffer, int gencode, ParseStatus *status)
    	    	buf[i] = (char) R_IoBufferGetc(buffer);
 
    	    buf[buflen] = 0;
-    	    defineVar(install("filename"), ScalarString(mkChar("")), ParseState.Original);
-    	    defineVar(install("lines"), ScalarString(mkChar(buf)), ParseState.Original);
+	    SEXP s_filename = install("filename");
+	    defineVar(s_filename, ScalarString(mkChar("")), ParseState.Original);
+	    SEXP s_lines = install("lines");
+	    defineVar(s_lines, ScalarString(mkChar(buf)), ParseState.Original);
     	    PROTECT(class = allocVector(STRSXP, 2));
             SET_STRING_ELT(class, 0, mkChar("srcfilecopy"));
             SET_STRING_ELT(class, 1, mkChar("srcfile"));
@@ -1887,16 +1889,6 @@ static void yyerror(const char *s)
     static char const yyunexpected[] = "syntax error, unexpected ";
     static char const yyexpecting[] = ", expecting ";
     char *expecting;
- #if 0
- /* these are just here to trigger the internationalization */
-    _("input");
-    _("end of input");
-    _("string constant");
-    _("numeric constant");
-    _("symbol");
-    _("assignment");
-    _("end of line");
-#endif
 
     R_ParseError     = yylloc.first_line;
     R_ParseErrorCol  = yylloc.first_column;
@@ -1909,9 +1901,37 @@ static void yyerror(const char *s)
 	if (expecting) *expecting = '\0';
 	for (i = 0; yytname_translations[i]; i += 2) {
 	    if (!strcmp(s + sizeof yyunexpected - 1, yytname_translations[i])) {
-		sprintf(R_ParseErrorMsg, _("unexpected %s"),
-		    i/2 < YYENGLISH ? _(yytname_translations[i+1])
-				    : yytname_translations[i+1]);
+                switch(i/2)
+                {
+                case 0:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected input"));
+                                break;
+                case 1:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected end of input"));
+                                break;
+                case 2:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected input"));
+                                break;
+                case 3:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected string constant"));
+                                break;
+                case 4:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected numeric constant"));
+                                break;
+                case 5:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected symbol"));
+                                break;
+                case 6:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected assignment"));
+                                break;
+                case 7:
+                        snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected end of line"));
+                                break;
+                default:
+                  snprintf(R_ParseErrorMsg, PARSE_ERROR_SIZE, _("unexpected %s"),
+                           yytname_translations[i+1]);
+                                break;
+                }
                 
 		return;
 	    }

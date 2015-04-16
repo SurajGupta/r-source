@@ -12,8 +12,8 @@
   embed all fonts in the file.
 }
 \usage{
-embedFonts(file, format, outfile = file, fontpaths = character(),
-           options = "")
+embedFonts(file, format, outfile = file,
+           fontpaths = character(), options = character())
 }
 \arguments{
   \item{file}{a character string giving the name of the original file.}
@@ -23,7 +23,7 @@ embedFonts(file, format, outfile = file, fontpaths = character(),
   \item{outfile}{the name of the new file (with fonts embedded).}
   \item{fontpaths}{a character vector giving directories that
     Ghostscript will search for fonts.}
-  \item{options}{a character string containing further options to
+  \item{options}{a character vector containing further options to
     Ghostscript.}
 }
 \details{

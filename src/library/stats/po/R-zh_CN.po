@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.2.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-03-27 07:47\n"
+"POT-Creation-Date: 2014-11-20 11:48\n"
 "PO-Revision-Date: 2005-04-08 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -100,6 +100,9 @@ msgstr "x$lag至少需要有一列"
 
 msgid "can use ci.type=\"ma\" only if first lag is 0"
 msgstr "只有在第一个滯後为0时才能用ci.type=\"ma\" "
+
+msgid "Page [%d,%d]: i =%s; j =%s"
+msgstr ""
 
 msgid "univariate time series only"
 msgstr "只适用于单变量时间序列"
@@ -608,8 +611,10 @@ msgstr "'tree'里的'height'组件没有排序(由小到大)"
 msgid "elements of 'k' must be between 1 and %d"
 msgstr "'k'的单元必需在一和%d之间"
 
-msgid "'merge' and 'height' do not fit!"
-msgstr "'merge'和'height'不合!"
+msgid ""
+"dendrogram entries must be 1,2,..,%d (in any order), to be coercible to "
+"\"hclust\""
+msgstr ""
 
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "系統樹圖節點有非正#{分支}"
@@ -737,8 +742,9 @@ msgstr "'rate'和'scale'两个中只能设定其中一个"
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[]和prob[]必需是长度相等的矢量。"
 
-msgid "probabilities cannot be negative nor all 0"
-msgstr "機率不能是负数，也不能全都是零。"
+#, fuzzy
+msgid "probabilities must be finite, non-negative and not all 0"
+msgstr "機率必需为非负值。"
 
 msgid "'x' must be non-negative"
 msgstr "'x'必需为非负数"
@@ -889,12 +895,6 @@ msgstr "'circular'必需是逻辑值，不能是NA"
 
 msgid "length of 'init' must equal length of 'filter'"
 msgstr "'init'的长度必需等于'filter'的长度"
-
-msgid "'init' must have 1 column"
-msgstr "'init'必需有一个列"
-
-msgid "'init' must have 1 or %d columns"
-msgstr "'init'必需有一个或%d个列"
 
 msgid "'x' must have at least 2 rows and columns"
 msgstr "'x'至少必需有两行和两列"
@@ -1114,12 +1114,6 @@ msgstr "用群集时必需有n >= 2的对象"
 msgid "invalid length of members"
 msgstr "成员长度不对"
 
-msgid "invalid dendrogram"
-msgstr "系統樹圖不对"
-
-msgid "'merge' component in dendrogram must be integer"
-msgstr "系統樹圖的'merge'组件必需是整数"
-
 msgid "argument 'x' cannot be coerced to class %s"
 msgstr "无法将'x'参数強制转换成%s类别"
 
@@ -1224,6 +1218,12 @@ msgstr "'iter.max'必需是正数"
 
 msgid "must have same number of columns in 'x' and 'centers'"
 msgstr "'x'和'centers'的列数必需相等"
+
+msgid "'x' is a list, so ignoring argument 'g'"
+msgstr ""
+
+msgid "some elements of 'x' are not numeric and will be coerced to numeric"
+msgstr ""
 
 msgid "not enough 'x' data"
 msgstr "'x'数据不够"
@@ -1950,6 +1950,9 @@ msgstr "不能平滑NA值"
 msgid "invalid 'endrule' argument"
 msgstr "'endrule'参数不对"
 
+msgid ".nknots.smspl() is now exported; use it instead of n.knots()"
+msgstr ""
+
 msgid "invalid 'control.spar'"
 msgstr "'control.spar'不对"
 
@@ -2085,7 +2088,8 @@ msgstr "步驟函数不对"
 msgid "'plot.stepfun' called with wrong type of argument 'x'"
 msgstr "調用'plot.stepfun'时参数'x'的种类不对"
 
-msgid "must be 0 or 1"
+#, fuzzy
+msgid "%s must be 0 or 1"
 msgstr "必需是零或一"
 
 msgid "only univariate series are allowed"
@@ -2358,6 +2362,11 @@ msgid "unable to optimize from this starting value"
 msgid_plural "unable to optimize from these starting values"
 msgstr[0] "无法用这些初始值进行最佳化运算"
 
+#, fuzzy
+msgid "'init' must have %d column"
+msgid_plural "'init' must have 1 or %d columns"
+msgstr[0] "'init'必需有一个列"
+
 msgid "X matrix has rank %d, but only %d observation"
 msgid_plural "X matrix has rank %d, but only %d observations"
 msgstr[0] "X矩阵的秩为%d, 但只有%d个观察量"
@@ -2433,6 +2442,21 @@ msgstr[0] "删除了含NA, NaN或Inf的%d个观察量"
 msgid "'start.innov' is too short: need %d point"
 msgid_plural "'start.innov' is too short: need %d points"
 msgstr[0] "'start.innov'太短了，需要%d个点"
+
+#~ msgid "'merge' and 'height' do not fit!"
+#~ msgstr "'merge'和'height'不合!"
+
+#~ msgid "invalid dendrogram"
+#~ msgstr "系統樹圖不对"
+
+#~ msgid "'merge' component in dendrogram must be integer"
+#~ msgstr "系統樹圖的'merge'组件必需是整数"
+
+#~ msgid "probabilities cannot be negative nor all 0"
+#~ msgstr "機率不能是负数，也不能全都是零。"
+
+#~ msgid "'init' must have 1 or %d columns"
+#~ msgstr "'init'必需有一个或%d个列"
 
 #~ msgid "'deriv' must be between 0 and 2"
 #~ msgstr "'deriv'必需在零和二之间"

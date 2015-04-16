@@ -1,11 +1,12 @@
 % File src/library/methods/man/showMethods.Rd
 % Part of the R package, http://www.R-project.org
-% Copyright 1995-2007 R Core Team
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{showMethods}
 \alias{showMethods}
-\title{Show all the methods for the specified function(s)}
+\alias{.S4methods}
+\title{Show all the methods for the specified function(s) or class}
 \description{
   Show a summary of the methods for one or more generic functions,
   possibly restricted to those involving specified classes.
@@ -15,6 +16,7 @@ showMethods(f = character(), where = topenv(parent.frame()),
             classes = NULL, includeDefs = FALSE,
             inherited = !includeDefs,
             showEmpty, printTo = stdout(), fdef)
+.S4methods(generic.function, class)
 }
 \arguments{
   \item{f}{one or more function names.  If omitted, all functions
@@ -52,8 +54,11 @@ showMethods(f = character(), where = topenv(parent.frame()),
   \item{fdef}{Optionally, the generic function definition to use; if
     missing, one is found, looking in \code{where} if that is specified.
     See also comment in \sQuote{Details}.}
+  \item{generic.function, class}{See \code{methods}.}
 }
 \details{
+  See \code{methods} for a description of \code{.S4methods}.
+
   The name and package of the generic are followed by the list of
   signatures for which methods are currently defined, according to the
   criteria determined by the various arguments.  Note that the package
@@ -85,6 +90,9 @@ showMethods(f = character(), where = topenv(parent.frame()),
   for other tools involving methods;
   \code{\link{selectMethod}} will show you the method dispatched for a
   particular function and signature of classes for the arguments.
+
+  \code{\link{methods}} provides method discovery tools for light-weight
+  interactive use.
 }
 \examples{
 require(graphics)
@@ -118,12 +126,11 @@ showMethods(class = "Matrix")# everything
 showMethods(Matrix:::isDiagonal) # a non-exported generic
 }%end{dontrun}
 
-%% FIXME: This should be an example of showing methods from a loaded,
-%% but not attached namespace. Except it doesn't work.
-%% Much simpler situation of attach()ing when needed:
-not.there <- !any("package:stats4" == search())
-if(not.there) library(stats4)
-showMethods(classes = "mle")
-if(not.there) detach("package:stats4")
+%% An example of showing methods from a loaded,
+%% but not attached namespace.
+if(no4 <- is.na(match("stats4", loadedNamespaces())))
+   loadNamespace("stats4")
+showMethods(classes = "mle") # -> a method for show()
+if(no4) unloadNamespace("stats4")
 }
 \keyword{methods}

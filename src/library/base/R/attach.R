@@ -1,7 +1,7 @@
 #  File src/library/base/R/attach.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -97,7 +97,7 @@ attach <- function(what, pos = 2L, name = deparse(substitute(what)),
        !exists(".conflicts.OK", envir = value, inherits = FALSE)) {
         checkConflicts(value)
     }
-    if( length(ls(envir = value, all.names = TRUE)) && .isMethodsDispatchOn() )
+    if (length(names(value)) && .isMethodsDispatchOn() )
         methods:::cacheMetaData(value, TRUE)
     invisible(value)
 }
@@ -175,7 +175,7 @@ detach <- function(name, pos = 2L, unload = FALSE, character.only = FALSE,
     }
     .Internal(detach(pos))
 
-    if(pkgname %in% loadedNamespaces()) {
+    if(isNamespaceLoaded(pkgname)) {
         ## the lazyload DB is flushed when the namespace is unloaded
         if(unload) {
             tryCatch(unloadNamespace(pkgname),
@@ -197,7 +197,7 @@ detach <- function(name, pos = 2L, unload = FALSE, character.only = FALSE,
 
 ls <- objects <-
     function (name, pos = -1L, envir = as.environment(pos), all.names = FALSE,
-              pattern)
+              pattern, sorted = TRUE)
 {
     if (!missing(name)) {
         pos <- tryCatch(name, error = function(e)e)
@@ -210,7 +210,7 @@ ls <- objects <-
             pos <- name
         }
     }
-    all.names <- .Internal(ls(envir, all.names))
+    all.names <- .Internal(ls(envir, all.names, sorted))
     if (!missing(pattern)) {
         if ((ll <- length(grep("[", pattern, fixed = TRUE))) &&
             ll != length(grep("]", pattern, fixed = TRUE))) {

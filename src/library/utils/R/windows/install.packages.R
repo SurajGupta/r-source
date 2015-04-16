@@ -1,7 +1,7 @@
 #  File src/library/utils/R/windows/install.packages.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -101,7 +101,6 @@ unpackPkgZip <- function(pkg, pkgname, lib, libs_only = FALSE,
         instPath <- file.path(lib, pkgname)
         if(identical(lock, "pkglock") || isTRUE(lock)) {
             ## This is code adapted from tools:::.install_packages
-            dir.exists <- function(x) !is.na(isdir <- file.info(x)$isdir) & isdir
 	    lockdir <- if(identical(lock, "pkglock"))
                 file.path(lib, paste("00LOCK", pkgname, sep = "-"))
             else file.path(lib, "00LOCK")
@@ -283,7 +282,7 @@ menuInstallPkgs <- function(type = getOption("pkgType"))
 menuInstallLocal <- function()
 {
     install.packages(choose.files('',filters=Filters[c('zip','All'),]),
-                     .libPaths()[1L], repos = NULL)
+                     .libPaths()[1L], repos = NULL, type = 'binary')
 }
 
 ### Deprecated in 2.13.0, defunct in 2.14.0

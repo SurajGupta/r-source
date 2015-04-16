@@ -3,8 +3,6 @@
 % Copyright 2009-2014 Duncan Murdoch and the R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{findLineNum}
 \alias{findLineNum}
 \alias{setBreakpoint}
@@ -73,12 +71,13 @@ setBreakpoint(srcfile, line, nameonly = TRUE,
   complicated scheme that may include more than one copy of a function
   in a package.  The user will typically see the public one on the
   search path, while code in the package will see a private one in the
-  package NAMESPACE.  If you set \code{envir} to the environment of a
+  package namespace.  If you set \code{envir} to the environment of a
   function in the package, by default \code{findLineNum} will find both
   versions, and \code{setBreakpoint} will set the breakpoint in both.
-  (This can be controlled using \code{lastenv}; e.g., \code{envir =
-  environment(foo)}, \code{lastenv = globalenv()} will find only the
-  private copy, as the search is stopped before seeing the public copy.)
+  (This can be controlled using \code{lastenv}; e.g.,
+  \code{envir = environment(foo)}, \code{lastenv = globalenv()}
+  will find only the private copy, as the search is stopped before
+  seeing the public copy.)
 
   S version 4 methods are also somewhat tricky to find.  They are stored
   with the generic function, which may be in the \pkg{base} or other
@@ -89,7 +88,7 @@ setBreakpoint(srcfile, line, nameonly = TRUE,
   generics, are not yet supported.
 }
 \value{
-  \code{fineLineNum} returns a list of objects containing location
+  \code{findLineNum} returns a list of objects containing location
   information.  A \code{print} method is defined for them.
 
   \code{setBreakpoint} has no useful return value; it is called for the

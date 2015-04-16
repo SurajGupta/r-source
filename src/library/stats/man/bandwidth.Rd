@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-
 \name{bandwidth}
 \alias{bw.nrd0}
 \alias{bw.nrd}
@@ -34,7 +32,7 @@ bw.SJ(x, nb = 1000, lower = 0.1 * hmax, upper = hmax,
     almost always satisfactory.  \code{hmax} is calculated internally
     from a normal reference bandwidth.}
   \item{method}{either \code{"ste"} ("solve-the-equation") or
-    \code{"dpi"} ("direct plug-in").}
+    \code{"dpi"} ("direct plug-in").   Can be abbreviated.}
   \item{tol}{for method \code{"ste"}, the convergence tolerance for
     \code{\link{uniroot}}.  The default leads to bandwidth estimates
     with only slightly more than one digit accuracy, which is sufficient

@@ -1764,36 +1764,26 @@ regarded as a variable created by the user.
 chosen to be loaded `on demand' rather than linked as dynamic libraries
 or incorporated into the main executable/dynamic library.
 
-For a few of these (e.g.@: @code{vfonts}) the issue is size: the
-database for the Hershey fonts is included in the C code of the module
-and was at one time an appreciable part of the codebase for a rarely
-used feature.  However, for most of the modules the motivation has been
-the amount of (often optional) code they will bring in via libraries to
-which they are linked.
+For the remaining modules the motivation has been the amount of (often
+optional) code they will bring in @emph{via} libraries to which they are
+linked.
 
 @table @asis
 
 @item @code{internet}
 The internal HTTP and FTP clients and socket support, which link to
-system-specific support libraries.
+system-specific support libraries.  This may load @code{libcurl} and on
+Windows will load @file{wininet.dll} and @file{ws2_32.dll}.
 
 @item @code{lapack}
 The code which makes use of the LAPACK library, and is linked to
 @file{libRlapack} or an external LAPACK library.
-
-@item @code{vfonts}
-The Hershey font databases and the code to draw with them.
 
 @item @code{X11}
 (Unix-alikes only.)  The @code{X11()}, @code{jpeg()}, @code{png()} and
 @code{tiff()} devices. These are optional, and links to some or all of
 the @code{X11}, @code{pango}, @code{cairo}, @code{jpeg}, @code{libpng}
 and @code{libtiff} libraries.
-
-@item @file{internet2.dll}
-(Windows only.)  An alternative version of the internet access routines,
-compiled against Internet Explorer internals (and so loads
-@file{wininet.dll} and @file{wsock32.dll}).
 @end table
 
 @node Visibility, Lazy loading, Modules, R Internal Structures
@@ -4079,6 +4069,21 @@ If set, check code usage (via @CRANpkg{codetools}) directly on the
 package namespace without loading and attaching the package and its
 suggests and enhances.
 Default: true (and true for CRAN submission checks).
+
+@item _R_CHECK_EXIT_ON_FIRST_ERROR_
+If set to a true value, the check will exit on the first error.
+Default: false.
+
+@item _R_CHECK_S3_METHODS_NOT_REGISTERED_
+If set to a true value, report (apparent) S3 methods exported but not
+registered.
+Default: false (but true for CRAN submission checks).
+
+@item _R_CHECK_OVERWRITE_REGISTERED_S3_METHODS_
+If set to a true value, report already registered S3 methods in
+base/recommended packages which are overwritten when this package's
+namespace is loaded. 
+Default: false (but true for CRAN submission checks).
 @end vtable
 
 CRAN's submission checks use something like
@@ -4101,6 +4106,8 @@ _R_CHECK_DEPRECATED_DEFUNCT_=TRUE
 _R_CHECK_REPLACING_IMPORTS_=TRUE
 _R_CHECK_SCREEN_DEVICE_=stop
 _R_CHECK_TOPLEVEL_FILES_=TRUE
+_R_CHECK_S3_METHODS_NOT_REGISTERED_=TRUE
+_R_CHECK_OVERWRITE_REGISTERED_S3_METHODS_=TRUE
 @end example
 
 @noindent

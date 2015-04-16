@@ -1,7 +1,7 @@
 #  File src/library/base/R/files.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ file.show <-
     ## avoid re-encoding files to the current encoding.
     if(l10n_info()[["UTF-8"]] && encoding == "UTF-8") encoding <- ""
     if(l10n_info()[["Latin-1"]] && encoding == "latin1") encoding <- ""
-    if(!is.na(encoding) && encoding != "") {
+    if(!is.na(encoding) && nzchar(encoding)) {
         for(i in seq_along(files)) {
             f <- files[i]
             tf <- tempfile()
@@ -106,7 +106,7 @@ file.copy <- function(from, to,
     if (!(nf <- length(from))) return(logical())
     if (!(nt <- length(to)))   stop("no files to copy to")
     ## we don't use file_test as that is in utils.
-    if (nt == 1 && isTRUE(file.info(to)$isdir)) {
+    if (nt == 1 && dir.exists(to)) {
         if (recursive && to %in% from)
             stop("attempt to copy a directory to itself")
         ## on Windows we need \ for the compiled code (e.g. mkdir).
@@ -129,7 +129,7 @@ file.copy <- function(from, to,
     	if(any(okay)) {
             okay[okay] <- file.append(to[okay], from[okay])
             if(copy.mode || copy.date) { # file.info call can be slow
-                fi <- file.info(from[okay])
+                fi <- file.info(from[okay], extra_cols = FALSE)
                 if(copy.mode) Sys.chmod(to[okay], fi$mode, TRUE)
                 if(copy.date) Sys.setFileTime(to[okay], fi$mtime)
             }
@@ -141,7 +141,7 @@ file.copy <- function(from, to,
 file.symlink <- function(from, to) {
     if (!(length(from))) stop("no files to link from")
     if (!(nt <- length(to)))   stop("no files/directory to link to")
-    if (nt == 1 && file.exists(to) && file.info(to)$isdir)
+    if (nt == 1 && file.exists(to) && file.info(to, extra_cols = FALSE)$isdir)
         to <- file.path(to, basename(from))
     .Internal(file.symlink(from, to))
 }
@@ -152,9 +152,9 @@ file.link <- function(from, to) {
     .Internal(file.link(from, to))
 }
 
-file.info <- function(...)
+file.info <- function(..., extra_cols = TRUE)
 {
-    res <- .Internal(file.info(fn <- c(...)))
+    res <- .Internal(file.info(fn <- c(...), extra_cols))
     res$mtime <- .POSIXct(res$mtime)
     res$ctime <- .POSIXct(res$ctime)
     res$atime <- .POSIXct(res$atime)
@@ -162,6 +162,11 @@ file.info <- function(...)
     attr(res, "row.names") <- fn # not row.names<- as that does a length check
     res
 }
+## wrappers introduced in R 3.2.0
+file.mode <- function(...) file.info(..., extra_cols = FALSE)$mode
+file.mtime <- function(...) file.info(..., extra_cols = FALSE)$mtime
+file.size <- function(...) file.info(..., extra_cols = FALSE)$size
+
 
 file.access <- function(names, mode = 0)
 {
@@ -169,6 +174,8 @@ file.access <- function(names, mode = 0)
     names(res) <- names
     res
 }
+
+dir.exists <- function(paths) .Internal(dir.exists(paths))
 
 dir.create <- function(path, showWarnings = TRUE, recursive = FALSE,
                        mode = "0777")

@@ -1,5 +1,541 @@
 R News
 
+CHANGES IN 3.2.0:
+
+  NEW FEATURES:
+
+    * anyNA() gains a recursive argument.
+
+    * When x is missing and names is not false (including the default
+      value), Sys.getenv(x, names) returns an object of class "Dlist"
+      and hence prints tidily.
+
+    * (Windows.)  shell() no longer consults the environment variable
+      SHELL: too many systems have been encountered where it was set
+      incorrectly (usually to a path where software was compiled, not
+      where it was installed).  R_SHELL, the preferred way to select a
+      non-default shell, can be used instead.
+
+    * Some unusual arguments to embedFonts() can now be specified as
+      character vectors, and the defaults have been changed
+      accordingly.
+
+    * Functions in the Summary group duplicate less.  (PR#15798)
+
+    * (Unix-alikes.) system(cmd, input = ) now uses
+      'shell-execution-environment' redirection, which will be more
+      natural if cmd is not a single command (but requires a
+      POSIX-compliant shell). (Wish of PR#15508)
+
+    * read.fwf() and read.DIF() gain a fileEncoding argument, for
+      convenience.
+
+    * Graphics devices can add attributes to their description in
+      .Device and .Devices.  Several of those included with R use a
+      "filepath" attribute.
+
+    * pmatch() uses hashing in more cases and so is faster at the
+      expense of using more memory. (PR#15697)
+
+    * pairs() gains new arguments to select sets of variables to be
+      plotted against each other.
+
+    * file.info(, extra_cols = FALSE) allows a minimal set of columns
+      to be computed on Unix-alikes: on some systems without
+      properly-configured caching this can be significantly faster with
+      large file lists.
+
+    * New function dir.exists() in package base to test efficiently
+      whether one or more paths exist and are directories.
+
+    * dput() and friends gain new controls hexNumeric and digits17
+      which output double and complex quantities as, respectively,
+      binary fractions (exactly, see sprintf("%a")) and as decimals
+      with up to 17 significant digits.
+
+    * save(), saveRDS() and serialize() now support ascii = NA which
+      writes ASCII files using sprintf("%a") for double/complex
+      quantities.  This is read-compatible with ascii = TRUE but avoids
+      binary->decimal->binary conversions with potential loss of
+      precision.  Unfortunately the Windows C runtime's lack of C99
+      compliance means that the format cannot be read correctly there
+      in R before 3.1.2.
+
+    * The default for formatC(decimal.mark =) has been changed to be
+      getOption("OutDec"); this makes it more consistent with format()
+      and suitable for use in print methods, e.g. those for classes
+      "density", "ecdf", "stepfun" and "summary.lm".
+
+      getOption("OutDec") is now consulted by the print method for
+      class "kmeans", by cut(), dendrogram(), plot.ts() and quantile()
+      when constructing labels and for the report from legend(trace =
+      TRUE).
+
+      (In part, wish of PR#15819.)
+
+    * printNum() and hence format() and formatC() give a warning if
+      big.mark and decimal.mark are set to the same value (period and
+      comma are not uncommonly used for each, and this is a check that
+      conventions have not got mixed).
+
+    * merge() can create a result which uses long vectors on 64-bit
+      platforms.
+
+    * dget() gains a new argument keep.source which defaults to FALSE
+      for speed (dput() and dget() are most often used for data objects
+      where this can make dget() many times faster).
+
+    * Packages may now use a file of common macro definitions in their
+      help files, and may import definitions from other packages.
+
+    * A number of macros have been added in the new share/Rd directory
+      for use in package overview help pages, and promptPackage() now
+      makes use of them.
+
+    * tools::parse_Rd() gains a new permissive argument which converts
+      unrecognized macros into text.  This is used by
+      utils:::format.bibentry to allow LaTeX markup to be ignored.
+
+    * options(OutDec =) can now specify a multi-byte character, e.g.,
+      options(OutDec = "\u00b7") in a UTF-8 locale.
+
+    * is.recursive(x) is no longer true when x is an external pointer,
+      a weak reference or byte code; the first enables all.equal(x, x)
+      when x <- getClass(.).
+
+    * ls() (aka objects()) and as.list.environment() gain a new
+      argument sorted.
+
+    * The "source" attribute (which has not been added to functions by
+      R since before R version 2.14.0) is no longer treated as special.
+
+    * Function returnValue() has been added to give on.exit() code
+      access to a function's return value for debugging purposes.
+
+    * crossprod(x, y) allows more matrix coercions when x or y are
+      vectors, now equalling t(x) %*% y in these cases (also reported
+      by Radford Neal).  Similarly, tcrossprod(x,y) and %*% work in
+      more cases with vector arguments.
+
+    * Utility function dynGet() useful for detecting cycles, aka
+      infinite recursions.
+
+    * The byte-code compiler and interpreter include new instructions
+      that allow many scalar subsetting and assignment and scalar
+      arithmetic operations to be handled more efficiently. This can
+      result in significant performance improvements in scalar
+      numerical code.
+
+    * apply(m, 2, identity) is now the same as the matrix m when it has
+      _named_ row names.
+
+    * A new function debuggingState() has been added, allowing to
+      temporarily turn off debugging.
+
+    * example() gets a new optional argument run.donttest and
+      tools::Rd2ex() a corresponding commentDonttest, with a default
+      such that example(..) in help examples will run \donttest code
+      only if used interactively (a change in behaviour).
+
+    * rbind.data.frame() gains an optional argument make.row.names, for
+      potential speedup.
+
+    * New function extSoftVersion() to report on the versions of
+      third-party software in use in this session.  Currently reports
+      versions of zlib, bzlib, the liblzma from xz, PCRE, ICU, TRE and
+      the iconv implementation.
+
+      A similar function grSoftVersion() in package grDevices reports
+      on third-party graphics software.
+
+      Function tcltk::tclVersion() reports the Tcl/Tk version.
+
+    * Calling callGeneric() without arguments now works with primitive
+      generics to some extent.
+
+    * vapply(x, FUN, FUN.VALUE) is more efficient notably for large
+      length(FUN.VALUE); as extension of PR#16061.
+
+    * as.table() now allows tables with one or more dimensions of
+      length 0 (such as as.table(integer())).
+
+    * names(x) <- NULL now clears the names of call and ... objects.
+
+    * library() will report a warning when an insufficient dependency
+      version is masking a sufficient one later on the library search
+      path.
+
+    * A new plot() method for class "raster" has been added.
+
+    * New check_packages_in_dir_changes() function in package tools for
+      conveniently analyzing how changing sources impacts the check
+      results of their reverse dependencies.
+
+    * Speed-up from Peter Haverty for ls() and
+      methods:::.requirePackage() speeding up package loading.
+      (PR#16133)
+
+    * New get0() function, combining exists() and get() in one call,
+      for efficiency.
+
+    * match.call() gains an envir argument for specifying the
+      environment from which to retrieve the ... in the call, if any;
+      this environment was wrong (or at least undesirable) when the
+      definition argument was a function.
+
+    * topenv() has been made .Internal() for speedup, based on Peter
+      Haverty's proposal in PR#16140.
+
+    * getOption() no longer calls options() in the main case.
+
+    * Optional use of libcurl (version 7.28.0 from Oct 2012 or later)
+      for Internet access:
+
+        * capabilities("libcurl") reports if this is available.
+
+        * libcurlVersion() reports the version in use, and other
+          details of the "libcurl" build including which URL schemes it
+          supports.
+
+        * curlGetHeaders() retrieves the headers for http://, https://,
+          ftp:// and ftps:// URLs: analysis of these headers can
+          provide insights into the `existence' of a URL (it might for
+          example be permanently redirected) and is so used in R CMD
+          check --as-cran.
+
+        * download.file() has a new optional method "libcurl" which
+          will handle more URL schemes, follow redirections, and allows
+          simultaneous downloads of multiple URLs.
+
+        * url() has a new method "libcurl" which handles more URL
+          schemes and follows redirections.  The default method is
+          controlled by a new option url.method, which applies also to
+          the opening of URLs _via_ file() (which happens implicitly in
+          functions such as read.table.)
+
+        * When file() or url() is invoked with a https:// or ftps://
+          URL which the current method cannot handle, it switches to a
+          suitable method if one is available.
+
+    * (Windows.) The DLLs internet.dll and internet2.dll have been
+      merged.  In this version it is safe to switch (repeatedly)
+      between the internal and Windows internet functions within an R
+      session.
+
+      The Windows internet functions are still selected by flag
+      --internet2 or setInternet2().  This can be overridden for an
+      url() connection _via_ its new method argument.
+
+      download.file() has new method "wininet", selected as the default
+      by --internet2 or setInternet2().
+
+    * parent.env<- can no longer modify the parent of a locked
+      namespace or namespace imports environment.  Contributed by Karl
+      Millar.
+
+    * New function isLoadedNamespace() for readability and speed.
+
+    * names(env) now returns all the object names of an environment
+      env, equivalently to ls(env, all.names = TRUE, sorted = FALSE)
+      and also to the names of the corresponding list,
+      names(as.list(env, all.names = TRUE)).  Note that although
+      names() returns a character vector, the names have no particular
+      ordering.
+
+    * The memory manager now grows the heap more aggressively. This
+      reduces the number of garbage collections, in particular while
+      data or code are loaded, at the expense of slightly increasing
+      the memory footprint.
+
+    * New function trimws() for removing leading/trailing whitespace.
+
+    * cbind() and rbind() now consider S4 inheritance during S3
+      dispatch and also obey deparse.level.
+
+    * cbind() and rbind() will delegate recursively to methods::cbind2
+      (methods::rbind2) when at least one argument is an S4 object and
+      S3 dispatch fails (due to ambiguity).
+
+    * (Windows.)  download.file(quiet = FALSE) now uses text rather
+      than Windows progress bars in non-interactive use.
+
+    * New function hsearch_db() in package utils for building and
+      retrieving the help search database used by help.search(), along
+      with functions for inspecting the concepts and keywords in the
+      help search database.
+
+    * New function .getNamespaceInfo(), a no-check version of
+      getNamespaceInfo() mostly for internal speedups.
+
+    * The help search system now takes \keyword entries in Rd files
+      which are not standard keywords (as given in KEYWORDS in the R
+      documentation directory) as concepts.  For standard keyword
+      entries the corresponding descriptions are additionally taken as
+      concepts.
+
+    * New lengths() function for getting the lengths of all elements in
+      a list.
+
+    * New function toTitleCase() in package tools, tailored to package
+      titles.
+
+    * The matrix methods of cbind() and rbind() allow matrices as
+      inputs which have 2^31 or more elements.  (For cbind(), wish of
+      PR#16198.)
+
+    * The default method of image() has an explicit check for a numeric
+      or logical matrix (which was always required).
+
+    * URLencode() will not by default encode further URLs which appear
+      to be already encoded.
+
+    * BIC(mod) and BIC(mod, mod2) now give non-NA numbers for arima()
+      fitted models, as nobs(mod) now gives the number of "used"
+      observations for such models.  This fixes PR#16198, quite
+      differently than proposed there.
+
+    * The print() methods for "htest", "pairwise.htest" and
+      "power.htest" objects now have a digits argument defaulting to (a
+      function of) getOption("digits"), and influencing all printed
+      numbers coherently.  Unavoidably, this changes the display of
+      such test results in some cases.
+
+    * Code completion for namespaces now recognizes all loaded
+      namespaces, rather than only the ones that are also attached.
+
+    * The code completion mechanism can now be replaced by a
+      user-specified completer function, for (temporary) situations
+      where the usual code completion is inappropriate.
+
+    * unzip() will now warn if it is able to detect truncation when
+      unpacking a file of 4GB or more (related to PR#16243).
+
+    * methods() reports S4 in addition to S3 methods; output is
+      simplified when the class argument is used.  .S3methods() and
+      methods::.S4methods() report S3 and S4 methods separately.
+
+    * Higher order functions such as the apply functions and Reduce()
+      now force arguments to the functions they apply in order to
+      eliminate undesirable interactions between lazy evaluation and
+      variable capture in closures.  This resolves PR#16093.
+
+  INSTALLATION and INCLUDED SOFTWARE:
+
+    * The \donttest sections of R's help files can be tested by
+      make check TEST_DONTTEST=TRUE .
+
+    * It is possible to request the use of system valgrind headers
+      _via_ configure option --with-system-valgrind-headers: note the
+      possible future incompatibility of such headers discussed in the
+      'R Installation and Administration' manual. (Wish of PR#16068.)
+
+    * The included version of liblzma has been updated to xz-utils
+      5.0.7 (minor bug fixes from 5.0.5).
+
+    * configure options --with-system-zlib, --with-system-bzlib and
+      --with-system-pcre are now the default.  For the time being there
+      is fallback to the versions included in the R sources if no
+      system versions are found or (unlikely) if they are too old.
+
+      Linux users should check that the -devel or -dev versions of
+      packages zlib, bzip2/libbz2 and pcre as well as
+      xz-devel/liblzma-dev (or similar names) are installed.
+
+    * configure by default looks for the texi2any script from texinfo
+      5.1 or later, rather than the makeinfo program.  (makeinfo is a
+      link to the Perl script texi2any in texinfo 5.x.)
+
+    * R CMD INSTALL gains an option --built-timestamp=STAMP allowing
+      100% reproducible package building, thanks to Dirk Eddelbuettel.
+
+  UTILITIES:
+
+    * There is support for testing the \dontrun and \donttest parts of
+      examples in packages.
+
+      tools::testInstalledPackage() accepts new arguments
+      commentDontrun = FALSE and commentDonttest = FALSE.
+
+      R CMD check gains options --run-dontrun and --run-donttest.
+
+    * The HTML generated by tools::Rd2HTML() and tools::toHTML()
+      methods is now 'XHTML 1.0 Strict'.
+
+    * The compiler package's utility function setCompilerOptions() now
+      returns the old values invisibly. The initial optimization level
+      can also be set with the environment variable
+      R_COMPILER_OPTIMIZE.
+
+    * R CMD build adds a NeedsCompilation field if one is not already
+      present in the DESCRIPTION file.
+
+    * R CMD check gains option --test-dir to specify an alternative set
+      of tests to run.
+
+    * R CMD check will now by default continue with testing after many
+      types of errors, and will output a summary count of errors at the
+      end if any have occurred.
+
+    * R CMD check now checks that the Title and Description fields are
+      correctly terminated.
+
+    * R CMD check --as-cran now:
+
+        * checks a README.md file can be processed: this needs pandoc
+          installed.
+
+        * checks the existence and accessibility of URLs in the
+          DESCRIPTION, CITATION, NEWS.Rd and README.md files and in the
+          help files (provided the build has libcurl support).
+
+        * reports non-ASCII characters in R source files when there is
+          no package encoding declared in the DESCRIPTION file.
+
+        * reports (apparent) S3 methods exported but not registered.
+
+        * reports overwriting registered S3 methods from
+          base/recommended packages.  (Such methods are replaced in the
+          affected package for the rest of the session, even if the
+          replacing namespace is unloaded.)
+
+        * reports if the Title field does not appear to be in title
+          case (see 'Writing R Extensions': there may be false
+          positives, but note that technical words should be
+          single-quoted and will then be accepted).
+
+      Most of these checks can also be selected by environment
+      variables: see the 'R Internals' manual.
+
+  C-LEVEL FACILITIES:
+
+    * New C API utility logspace_sum(logx[], n).
+
+    * Entry points rbinom_mu, rnbinom_mu and rmultinom are remapped (by
+      default) to Rf_rbinom_mu etc.  This requires packages using them
+      to be re-installed.
+
+    * .C(DUP = FALSE) and .Fortran(DUP = FALSE) are now ignored, so
+      arguments are duplicated if DUP = TRUE would do so.  As their
+      help has long said, .Call() is much preferred.
+
+    * New entry point R_allocLD, like R_alloc but guaranteed to have
+      sufficient alignment for long double pointers.
+
+    * isPairList() now returns TRUE for DOTSXP.
+
+  WINDOWS BUILD CHANGES:
+
+  A number of changes to the Windows build system are in development.
+  The following are currently in place.
+
+    * Installation using external binary distributions of zlib, bzip2,
+      liblzma, pcre, libpng, jpeglib and libtiff is now required, and
+      the build instructions have been revised.
+
+    * A new make target rsync-extsoft has been added to obtain copies
+      of the external libraries from CRAN.
+
+    * Building the manuals now requires texi2any from texinfo 5.1 or
+      later.  CRAN binary builds include the manuals, but by default
+      builds from source will not, and they will be accessed from CRAN.
+      See the comments in src/gnuwin32/MkRules.dist for how to specify
+      the location of texi2any.
+
+    * (Windows) Changes have been made to support an experimental
+      Windows toolchain based on GCC 4.9.2.  The default toolchain
+      continues to be based on GCC 4.6.3, as the new toolchain is not
+      yet stable enough.  A change to a new toolchain is expected
+      during the R 3.2.x lifetime.
+
+  PACKAGE INSTALLATION:
+
+    * (Windows) The use of macro ZLIB_LIBS in file src/Makevars.win
+      (which has not been documented for a long time) now requires an
+      external libz.a to be available (it is part of the 'goodies' used
+      to compile Windows binary packages).  It would be simpler to use
+      -lz instead.
+
+    * The default for option pkgType on platforms using binary packages
+      is now "both", so source packages will be tried if binary
+      versions are not available or not up to date.
+
+      There are options for what install.packages(type = "both")
+      (possibly called _via_ update.packages()) will do if compilation
+      of a source package is desirable: see ?options (under utils).
+
+      If you intend not to accept updates as source packages, you
+      should use update.packages(type = "binary").
+
+  DEPRECATED AND DEFUNCT:
+
+    * download.file(method = "lynx") is defunct.
+
+    * Building R using the included versions of zlib, bzip2, xz and
+      PCRE is deprecated: these are frozen (bar essential bug-fixes)
+      and will be removed for R 3.3.0.
+
+    * The configure option --with-valgrind-instrumentation=3 has been
+      withdrawn, as it did not work with recent valgrind headers: it is
+      now treated as level 2.
+
+    * The MethodsList class in package methods had been deprecated in R
+      2.11.0 and is defunct now.  Functions using it are defunct if
+      they had been deprecated in R 2.11.0, and are deprecated now,
+      otherwise.
+
+  BUG FIXES:
+
+    * Fixed two obscure bugs in pairlist subassignment, reported by
+      Radford Neal as part of pqR issue 16.
+
+    * Fixes for bugs in handling empty arguments and argument matching
+      by name in log().
+
+    * all.equal() gains methods for environments and refClasses.
+
+    * [<- and [[<- gain S4 data.frame methods to avoid corruption of S4
+      class information by the S3 methods.
+
+    * callNextMethod() should now work within a .local call when ... is
+      absent from formals(.local).
+
+    * dput(pairlist(x)) generates a call to the pairlist constructor
+      instead of the list constructor.
+
+    * Fix missing() when arguments are propagated through ... .
+      (PR#15707)
+
+    * eigen(m) now defaults to symmetric = TRUE even when the dimnames
+      are asymmetric if the matrix is otherwise symmetric.  (PR#16151)
+
+    * Fix issues with forwarding ... through callGeneric() and
+      callNextMethod().  (PR#16141)
+
+    * callGeneric() now works after a callNextMethod().
+
+    * Subclass information is kept consistent when replacing an
+      ordinary S4 class with an "old class" _via_ the S4Class argument
+      to setOldClass(). Thus, for example, a data.frame is valid for a
+      list argument in the signature, and a factor is valid for vector
+      arguments.
+
+    * In qbeta() the inversion of pbeta() is much more sophisticated.
+      This works better in corner cases some of which failed completely
+      previously (PR#15755), or were using too many iterations.
+
+    * Auto-printing no longer duplicates objects when printing is
+      dispatched to a method.
+
+    * kmeans(x, k) would fail when nrow(x) >= 42949673.  (Comment 6 of
+      PR#15364)
+
+    * 'Abbreviated' locale-specific day and month names could have been
+      truncated in those rare locales where there are the same as the
+      full names.
+
+    * An irrelevant warning message from updating subclass information
+      was silenced (the namespace would not be writable in this case).
+
 CHANGES IN R 3.1.3:
 
   NEW FEATURES:

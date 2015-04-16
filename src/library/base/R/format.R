@@ -1,7 +1,7 @@
 #  File src/library/base/R/format.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2013 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ format.default <-
 		      small.mark = small.mark, small.interval = small.interval,
 		      decimal.mark = decimal.mark, zero.print = zero.print,
 		      drop0trailing = drop0trailing, ...)
-	sapply(res, paste, collapse = ", ")
+	vapply(res, paste, "", collapse = ", ")
     } else {
 	switch(mode(x),
 	       NULL = "NULL",
@@ -106,8 +106,9 @@ formatC <- function (x, digits = NULL, width = NULL,
 		     format = NULL, flag = "", mode = NULL,
 		     big.mark = "", big.interval = 3L,
 		     small.mark = "", small.interval = 5L,
-		     decimal.mark = ".", preserve.width = "individual",
-                     zero.print = NULL, drop0trailing = FALSE)
+                     decimal.mark = getOption("OutDec"),
+                     preserve.width = "individual", zero.print = NULL,
+                     drop0trailing = FALSE)
 {
     if(is.object(x)) {
         x <- unclass(x)
@@ -129,7 +130,8 @@ formatC <- function (x, digits = NULL, width = NULL,
 	if(mode=="real") mode <- "double"
 	storage.mode(x) <- mode
     }
-    else if (mode != "character") stop("'mode' must be \"double\" (\"real\"), \"integer\" or \"character\"")
+    else if (mode != "character")
+        stop("'mode' must be \"double\" (\"real\"), \"integer\" or \"character\"")
     if (mode == "character" || (!is.null(format) && format == "s")) {
 	if (mode != "character") {
 	    warning('coercing argument to "character" for format="s"')
@@ -179,7 +181,7 @@ formatC <- function (x, digits = NULL, width = NULL,
 			 2L + pmax(xEx, 0L)
 		     } else {# format == "fg"
 			 pmax(xEx, digits, digits + (-xEx) + 1L) +
-			     ifelse(flag != "", nchar(flag, "b"), 0L) + 1L
+			     ifelse(nzchar(flag), nchar(flag, "b"), 0L) + 1L
 		     }
 	     } else # format == "g" or "e":
 	     rep.int(digits + 8L, n)
@@ -198,7 +200,7 @@ formatC <- function (x, digits = NULL, width = NULL,
                            i.strlen))
     if (some.special) r[!Ok] <- format.char(rQ, width = width, flag = flag)
 
-    if(big.mark != "" || small.mark != "" || decimal.mark != "." ||
+    if(nzchar(big.mark) || nzchar(small.mark) || nzchar(decimal.mark) ||
        !is.null(zero.print) || drop0trailing)
 	r <- prettyNum(r, big.mark = big.mark, big.interval = big.interval,
 		       small.mark = small.mark, small.interval = small.interval,
@@ -223,7 +225,7 @@ format.data.frame <- function(x, ..., justify = "none")
     rval <- vector("list", nc)
     for(i in seq_len(nc))
 	rval[[i]] <- format(x[[i]], ..., justify = justify)
-    lens <- sapply(rval, NROW)
+    lens <- vapply(rval, NROW, 1)
     if(any(lens != nr)) { # corrupt data frame, must have at least one column
 	warning("corrupt data frame: columns will be truncated or padded with NAs")
 	for(i in seq_len(nc)) {
@@ -288,10 +290,15 @@ prettyNum <-
 {
     if(!is.character(x)) {
         is.cmplx <- is.complex(x)
-	x <- sapply(X = x, FUN = format, ...)
+	x <- vapply(x, format, "", ...)
     }
     ## be fast in trivial case (when all options have their default):
     nMark <- big.mark== "" && small.mark== "" && decimal.mark== "."
+
+    if (identical(big.mark, decimal.mark))
+        warning(gettextf("'big.mark' and 'decimal.mark' are both '%s', which could be confusing",
+                         big.mark), domain = NA)
+
     nZero <- is.null(zero.print) && !drop0trailing
     if(nMark && nZero)
 	return(x)
@@ -331,11 +338,11 @@ prettyNum <-
 	i3 <- vapply(z.sp, length, 0L) == 3L # those are re + im *i
 	if(any(i3)) {
 	    z.sp <- z.sp[i3]
-	    z.im <- sapply(z.sp, `[[`, 3L)
+	    z.im <- vapply(z.sp, `[[`, "", 3L)
 	    ## drop ending 'i' (and later re-add it)
 	    has.i <- grep("i$", z.im)
 	    z.im[has.i] <- sub("i$", '', z.im[has.i])
-	    r <- lapply(list(sapply(z.sp, `[[`, 1L), z.im),
+	    r <- lapply(list(vapply(z.sp, `[[`, "", 1L), z.im),
 			function(.)
 			prettyNum(.,
 				  big.mark=big.mark, big.interval=big.interval,
@@ -344,16 +351,16 @@ prettyNum <-
 				  zero.print=zero.print, drop0trailing=drop0trailing,
 				  is.cmplx=FALSE, ...))
 	    r[[2]][has.i] <- paste0(r[[2]][has.i], "i")
-	    x[i3] <- paste0(r[[1]], sapply(z.sp, `[[`, 2L), r[[2]])
+	    x[i3] <- paste0(r[[1]], vapply(z.sp, `[[`, "", 2L), r[[2]])
 	}
 	return(x)
     }
     preserve.width <- match.arg(preserve.width)
     x.sp <- strsplit(x, ".", fixed=TRUE)
     revStr <- function(cc)
-	sapply(lapply(strsplit(cc,NULL), rev), paste, collapse="")
-    B. <- sapply(x.sp, `[`, 1L)	    # Before "."
-    A. <- sapply(x.sp, `[`, 2)	    # After  "." ; empty == NA
+	vapply(lapply(strsplit(cc,NULL), rev), paste, "", collapse="")
+    B. <- vapply(x.sp, `[`, "", 1L)	# Before "."
+    A. <- vapply(x.sp, `[`, "", 2L)	# After  "." ; empty == NA
     if(any(iN <- is.na(A.))) A.[iN] <- ""
 
     if(nzchar(big.mark) &&
@@ -389,9 +396,9 @@ prettyNum <-
 		   "individual" = {
 		       ## drop initial blanks preserving original width
 		       ## where possible:
-		       A.[ii] <- sapply(which(ii), function(i)
+		       A.[ii] <- vapply(which(ii), function(i)
 					sub(sprintf("^ {1,%d}", d.len[i]), "",
-					    A.[i]))
+					    A.[i]), "")
 		   },
 		   "common" = {
 		       A. <- format(A., justify = "right")

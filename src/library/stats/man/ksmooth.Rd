@@ -3,8 +3,6 @@
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-
 \name{ksmooth}
 \alias{ksmooth}
 \title{Kernel Regression Smoother}
@@ -19,7 +17,7 @@ ksmooth(x, y, kernel = c("box", "normal"), bandwidth = 0.5,
 \arguments{
  \item{x}{input x values.  Long vectors are supported.}
  \item{y}{input y values.  Long vectors are supported.}
- \item{kernel}{the kernel to be used.}
+ \item{kernel}{the kernel to be used.  Can be abbreviated.}
  \item{bandwidth}{the bandwidth. The kernels are scaled so that their
    quartiles (viewed as probability densities) are at
    \eqn{\pm}{+/-} \code{0.25*bandwidth}.}

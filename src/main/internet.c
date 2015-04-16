@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2001-12   The R Core Team.
+ *  Copyright (C) 2001-2015   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ static R_InternetRoutines routines, *ptr = &routines;
 
 
 /*
-SEXP Rdownload(SEXP call, SEXP op, SEXP args, SEXP env);
+SEXP Rdownload(SEXP args);
 Rconnection R_newurl(char *description, char *mode);
 Rconnection R_newsock(char *host, int port, int server, char *mode, int timeout);
 
@@ -73,19 +73,10 @@ R_setInternetRoutines(R_InternetRoutines *routines)
     return(tmp);
 }
 
-#ifdef Win32
-extern Rboolean UseInternet2;
-#endif
-
 static void internet_Init(void)
 {
     int res;
-#ifdef Win32
-    res = UseInternet2 ? R_moduleCdynload("internet2", 1, 1) :
-	R_moduleCdynload("internet", 1, 1);
-#else
     res = R_moduleCdynload("internet", 1, 1);
-#endif
     initialized = -1;
     if(!res) return;
     if(!ptr->download)
@@ -120,23 +111,19 @@ SEXP attribute_hidden do_setInternet2(SEXP call, SEXP op, SEXP args, SEXP env)
     
     if (newUseInternet2 != NA_LOGICAL) {
     	R_Visible = FALSE;
-    	if (newUseInternet2 != UseInternet2) {
-    	    if (initialized) warning(_("internet routines were already initialized"));
-    	    UseInternet2 = newUseInternet2;
-    	    initialized = 0;
-    	}
+	UseInternet2 = newUseInternet2;
     }
     UNPROTECT(1);
     return retval;
 }
 #endif
 
-Rconnection attribute_hidden R_newurl(const char *description,
-				      const char * const mode)
+Rconnection attribute_hidden 
+R_newurl(const char *description, const char * const mode, int type)
 {
     if(!initialized) internet_Init();
     if(initialized > 0)
-	return (*ptr->newurl)(description, mode);
+	return (*ptr->newurl)(description, mode, type);
     else {
 	error(_("internet routines cannot be loaded"));
 	return (Rconnection)0;
@@ -341,3 +328,50 @@ int Rsockselect(int nsock, int *insockfd, int *ready, int *write,
 	return 0;
     }
 }
+
+SEXP attribute_hidden do_curlVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	return (*ptr->curlVersion)(call, op, args, rho);
+    else {
+	error(_("internet routines cannot be loaded"));
+	return R_NilValue;
+    }
+}
+
+SEXP attribute_hidden do_curlGetHeaders(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	return (*ptr->curlGetHeaders)(call, op, args, rho);
+    else {
+	error(_("internet routines cannot be loaded"));
+	return R_NilValue;
+    }
+}
+
+SEXP attribute_hidden do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	return (*ptr->curlDownload)(call, op, args, rho);
+    else {
+	error(_("internet routines cannot be loaded"));
+	return R_NilValue;
+    }
+}
+
+Rconnection attribute_hidden
+R_newCurlUrl(const char *description, const char * const mode, int type)
+{
+    if(!initialized) internet_Init();
+    if(initialized > 0)
+	return (*ptr->newcurlurl)(description, mode, type);
+    else {
+	error(_("internet routines cannot be loaded"));
+	return (Rconnection)0;
+    }
+    return (Rconnection)0; /* -Wall */
+}
+

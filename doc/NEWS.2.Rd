@@ -1,8 +1,5 @@
 % -*- coding: utf-8 -*-
-\newcommand{\PR}{\Sexpr[results=rd]{tools:::Rd_expr_PR(#1)}}
 \newcommand{\Rlogo}{\if{html}{\figure{../../html/logo.jpg}}\if{latex}{\figure{logo.jpg}{options: width=0.5in}}}
-\newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
 
 \name{NEWS}
 \title{ R News}
@@ -2039,7 +2036,7 @@
       \code{readRDS()}) in earlier versions of \R will no longer show
       the original sources (including comments).
 
-      \item New items \href{UserManuals.html}{User Manuals} and
+      \item New items \samp{User Manuals} and
       \href{http://developer.r-project.org/TechDocs}{Technical Papers}
       have been added to the HTML help main page.  These link to
       vignettes in the base and recommended packages and to a

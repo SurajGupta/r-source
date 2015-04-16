@@ -66,7 +66,7 @@ assign(".External.graphics", function(.NAME, ..., PACKAGE) NULL,
        envir = .ArgsEnv)
 assign(".Internal", function(call) NULL, envir = .ArgsEnv)
 assign(".Primitive", function(name) NULL, envir = .ArgsEnv)
-assign(".isMethodsDispatchOn", function(x, onOff = NULL) NULL, envir = .ArgsEnv)
+assign(".isMethodsDispatchOn", function(onOff = NULL) NULL, envir = .ArgsEnv)
 assign(".primTrace", function(obj) NULL, envir = .ArgsEnv)
 assign(".primUntrace", function(obj) NULL, envir = .ArgsEnv)
 assign(".subset", function(x, ...) NULL, envir = .ArgsEnv)
@@ -90,6 +90,7 @@ assign("enc2native", function(x) NULL, envir = .ArgsEnv)
 assign("enc2utf8", function(x) NULL, envir = .ArgsEnv)
 assign("environment<-", function(fun, value) NULL, envir = .ArgsEnv)
 assign("expression", function(...) NULL, envir = .ArgsEnv)
+assign("forceAndCall", function(n, FUN, ...) NULL, envir = .ArgsEnv)
 assign("gc.time", function(on = TRUE) NULL, envir = .ArgsEnv)
 assign("globalenv", function() NULL, envir = .ArgsEnv)
 assign("interactive", function() NULL, envir = .ArgsEnv)
@@ -194,6 +195,9 @@ assign("untracemem", function(x) NULL, envir = .ArgsEnv)
         environment(fx) <- .BaseNamespaceEnv
         assign(f, fx, envir = env)
     }
+    fx <- function(x, recursive = FALSE) UseMethod("anyNA")
+    environment(fx) <- .BaseNamespaceEnv
+    assign("anyNA", fx, envir = env)
     env
 })
 ### do these outside to get the base namespace as the environment.

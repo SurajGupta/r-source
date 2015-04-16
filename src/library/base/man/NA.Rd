@@ -34,7 +34,7 @@
 \usage{
 NA
 is.na(x)
-anyNA(x)
+anyNA(x, recursive = FALSE)
 
 \method{is.na}{data.frame}(x)
 
@@ -44,6 +44,8 @@ is.na(x) <- value
   \item{x}{an \R object to be tested: the default method for
     \code{is.na} handles atomic vectors, lists and pairlists: that for
     \code{anyNA} also handles \code{NULL}.}
+  \item{recursive}{logical: should \code{anyNA} be applied recursively
+    to lists and pairlists?}
   \item{value}{a suitable index vector for use with \code{x}.}
 }
 
@@ -68,7 +70,7 @@ is.na(x) <- value
   
   The default method for \code{anyNA} handles atomic vectors without a
   class and \code{NULL}.  It calls \code{any(is.na(x)} on objects with
-  classes and on lists and pairlists.
+  classes and for \code{recursive = FALSE}, on lists and pairlists.
 }
 \value{
   The default method for \code{is.na} applied to an atomic vector
@@ -85,7 +87,9 @@ is.na(x) <- value
   is a length-one atomic vector and the single element of that vector is
   regarded as \code{NA} or \code{NaN} (note that any \code{is.na}
   method for the class of the element is ignored).\cr
-  For these types \code{anyNA} calls \code{is.na}.
+  \code{anyNA(recursive = FALSE)} works the same way as \code{is.na};
+  \code{anyNA(recursive = TRUE)} applies \code{anyNA} (with method
+  dispatch) to each element.
 
   The data frame method for \code{is.na} returns a logical matrix
   with the same dimensions as the data frame, and with dimnames taken
@@ -135,6 +139,12 @@ if(require("microbenchmark")) { # does not work reliably on all platforms
               anyNA = system.time(replicate(nSim, anyNA(x)))))
 }
 }
+
+## anyNA() can work recursively with list()s:
+LL <- list(1:5, c(NA, 5:8), c("A","NA"), c("a", NA_character_))
+L2 <- LL[c(1,3)]
+sapply(LL, anyNA); c(anyNA(LL), anyNA(LL, TRUE))
+sapply(L2, anyNA); c(anyNA(L2), anyNA(L2, TRUE))
 
 ## ... lists, and hence data frames, too:
 dN <- dd <- USJudgeRatings; dN[3,6] <- NA

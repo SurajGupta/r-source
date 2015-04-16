@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998--2013 The R Core Team
+ *  Copyright (C) 1998--2015 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -777,10 +777,11 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     SEXP fn, ans, ansnames, fsize, mtime, ctime, atime, isdir,
 	mode, xxclass;
 #ifdef UNIX_EXTRAS
-    SEXP uid, gid, uname, grname;
+    SEXP uid = R_NilValue, gid = R_NilValue, 
+	uname = R_NilValue, grname = R_NilValue; // silence -Wall
 #endif
 #ifdef Win32
-    SEXP exe;
+    SEXP exe = R_NilValue;
     struct _stati64 sb;
 #else
     struct stat sb;
@@ -790,17 +791,19 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     fn = CAR(args);
     if (!isString(fn))
 	error(_("invalid filename argument"));
-    int n = length(fn);
+    int extras = asInteger(CADR(args));
+    if(extras == NA_INTEGER)
+	error(_("invalid '%s' argument"), "extra_cols");
+    int n = length(fn), ncols = 6;
+    if(extras) {
 #ifdef UNIX_EXTRAS
-    PROTECT(ans = allocVector(VECSXP, 10));
-    PROTECT(ansnames = allocVector(STRSXP, 10));
+	ncols = 10;
 #elif defined(Win32)
-    PROTECT(ans = allocVector(VECSXP, 7));
-    PROTECT(ansnames = allocVector(STRSXP, 7));
-#else
-    PROTECT(ans = allocVector(VECSXP, 6));
-    PROTECT(ansnames = allocVector(STRSXP, 6));
+	ncols = 7;
 #endif
+    }
+    PROTECT(ans = allocVector(VECSXP, ncols));
+    PROTECT(ansnames = allocVector(STRSXP, ncols));
     fsize = SET_VECTOR_ELT(ans, 0, allocVector(REALSXP, n));
     SET_STRING_ELT(ansnames, 0, mkChar("size"));
     isdir = SET_VECTOR_ELT(ans, 1, allocVector(LGLSXP, n));
@@ -813,20 +816,22 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
     SET_STRING_ELT(ansnames, 4, mkChar("ctime"));
     atime = SET_VECTOR_ELT(ans, 5, allocVector(REALSXP, n));
     SET_STRING_ELT(ansnames, 5, mkChar("atime"));
+    if (extras) {
 #ifdef UNIX_EXTRAS
-    uid = SET_VECTOR_ELT(ans, 6, allocVector(INTSXP, n));
-    SET_STRING_ELT(ansnames, 6, mkChar("uid"));
-    gid = SET_VECTOR_ELT(ans, 7, allocVector(INTSXP, n));
-    SET_STRING_ELT(ansnames, 7, mkChar("gid"));
-    uname = SET_VECTOR_ELT(ans, 8, allocVector(STRSXP, n));
-    SET_STRING_ELT(ansnames, 8, mkChar("uname"));
-    grname = SET_VECTOR_ELT(ans, 9, allocVector(STRSXP, n));
-    SET_STRING_ELT(ansnames, 9, mkChar("grname"));
+	uid = SET_VECTOR_ELT(ans, 6, allocVector(INTSXP, n));
+	SET_STRING_ELT(ansnames, 6, mkChar("uid"));
+	gid = SET_VECTOR_ELT(ans, 7, allocVector(INTSXP, n));
+	SET_STRING_ELT(ansnames, 7, mkChar("gid"));
+	uname = SET_VECTOR_ELT(ans, 8, allocVector(STRSXP, n));
+	SET_STRING_ELT(ansnames, 8, mkChar("uname"));
+	grname = SET_VECTOR_ELT(ans, 9, allocVector(STRSXP, n));
+	SET_STRING_ELT(ansnames, 9, mkChar("grname"));
 #endif
 #ifdef Win32
-    exe = SET_VECTOR_ELT(ans, 6, allocVector(STRSXP, n));
-    SET_STRING_ELT(ansnames, 6, mkChar("exe"));
+	exe = SET_VECTOR_ELT(ans, 6, allocVector(STRSXP, n));
+	SET_STRING_ELT(ansnames, 6, mkChar("exe"));
 #endif
+    }
     for (int i = 0; i < n; i++) {
 #ifdef Win32
 	wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
@@ -875,56 +880,58 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(atime)[i] += STAT_TIMESPEC_NS (sb, st_atim);
 # endif
 #endif
+	    if (extras) {
 #ifdef UNIX_EXTRAS
-	    INTEGER(uid)[i] = (int) sb.st_uid;
-	    INTEGER(gid)[i] = (int) sb.st_gid;
+		INTEGER(uid)[i] = (int) sb.st_uid;
+		INTEGER(gid)[i] = (int) sb.st_gid;
 
-            /* Usually all of the uid and gid values in a list of
-             * files are the same so we can avoid most of the calls
-             * to getpwuid() and getgrgid(), which can be quite slow
-             * on some systems.  (PR#15804)
-             */
-            if (i && INTEGER(uid)[i - 1] == (int) sb.st_uid)
-		SET_STRING_ELT(uname, i, STRING_ELT(uname, i - 1));
-            else {
-		struct passwd *stpwd = getpwuid(sb.st_uid);
-		SET_STRING_ELT(uname, i,
-			       stpwd ? mkChar(stpwd->pw_name): NA_STRING);
-            }
+		/* Usually all of the uid and gid values in a list of
+		 * files are the same so we can avoid most of the calls
+		 * to getpwuid() and getgrgid(), which can be quite slow
+		 * on some systems.  (PR#15804)
+		 */
+		if (i && INTEGER(uid)[i - 1] == (int) sb.st_uid)
+		    SET_STRING_ELT(uname, i, STRING_ELT(uname, i - 1));
+		else {
+		    struct passwd *stpwd = getpwuid(sb.st_uid);
+		    SET_STRING_ELT(uname, i,
+				   stpwd ? mkChar(stpwd->pw_name): NA_STRING);
+		}
 
-            if (i && INTEGER(gid)[i - 1] == (int) sb.st_gid)
-		SET_STRING_ELT(grname, i, STRING_ELT(grname, i - 1));
-            else {
-		struct group *stgrp = getgrgid(sb.st_gid);
-		SET_STRING_ELT(grname, i, 
-			       stgrp ? mkChar(stgrp->gr_name): NA_STRING);
-            }
+		if (i && INTEGER(gid)[i - 1] == (int) sb.st_gid)
+		    SET_STRING_ELT(grname, i, STRING_ELT(grname, i - 1));
+		else {
+		    struct group *stgrp = getgrgid(sb.st_gid);
+		    SET_STRING_ELT(grname, i, 
+				   stgrp ? mkChar(stgrp->gr_name): NA_STRING);
+		}
 #endif
 #ifdef Win32
-	    {
-		char *s="no";
-		DWORD type;
-		if (GetBinaryTypeW(wfn, &type))
-		    switch(type) {
-		    case SCS_64BIT_BINARY:
-			s = "win64";
-			break;
-		    case SCS_32BIT_BINARY:
-			s = "win32";
-			break;
-		    case SCS_DOS_BINARY:
-		    case SCS_PIF_BINARY:
-			s = "msdos";
-			break;
-		    case SCS_WOW_BINARY:
-			s = "win16";
-			break;
-		    default:
-			s = "unknown";
-		    }
-		SET_STRING_ELT(exe, i, mkChar(s));
-	    }
+		{
+		    char *s="no";
+		    DWORD type;
+		    if (GetBinaryTypeW(wfn, &type))
+			switch(type) {
+			case SCS_64BIT_BINARY:
+			    s = "win64";
+			    break;
+			case SCS_32BIT_BINARY:
+			    s = "win32";
+			    break;
+			case SCS_DOS_BINARY:
+			case SCS_PIF_BINARY:
+			    s = "msdos";
+			    break;
+			case SCS_WOW_BINARY:
+			    s = "win16";
+			    break;
+			default:
+			    s = "unknown";
+			}
+		    SET_STRING_ELT(exe, i, mkChar(s));
+		}
 #endif
+	    }
 	} else {
 	    REAL(fsize)[i] = NA_REAL;
 	    LOGICAL(isdir)[i] = NA_INTEGER;
@@ -932,21 +939,72 @@ SEXP attribute_hidden do_fileinfo(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    REAL(mtime)[i] = NA_REAL;
 	    REAL(ctime)[i] = NA_REAL;
 	    REAL(atime)[i] = NA_REAL;
+	    if (extras) {
 #ifdef UNIX_EXTRAS
-	    INTEGER(uid)[i] = NA_INTEGER;
-	    INTEGER(gid)[i] = NA_INTEGER;
-	    SET_STRING_ELT(uname, i, NA_STRING);
-	    SET_STRING_ELT(grname, i, NA_STRING);
+		INTEGER(uid)[i] = NA_INTEGER;
+		INTEGER(gid)[i] = NA_INTEGER;
+		SET_STRING_ELT(uname, i, NA_STRING);
+		SET_STRING_ELT(grname, i, NA_STRING);
 #endif
 #ifdef Win32
-	    SET_STRING_ELT(exe, i, NA_STRING);
+		SET_STRING_ELT(exe, i, NA_STRING);
 #endif
+	    }
 	}
     }
     setAttrib(ans, R_NamesSymbol, ansnames);
     PROTECT(xxclass = mkString("octmode"));
     classgets(mode, xxclass);
     UNPROTECT(3);
+    return ans;
+}
+
+SEXP attribute_hidden do_direxists(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    SEXP fn, ans;
+
+#ifdef Win32
+    struct _stati64 sb;
+#else
+    struct stat sb;
+#endif
+
+    checkArity(op, args);
+    fn = CAR(args);
+    if (!isString(fn))
+	error(_("invalid filename argument"));
+    int n = length(fn);
+    PROTECT(ans = allocVector(LGLSXP, n));
+    for (int i = 0; i < n; i++) {
+#ifdef Win32
+	wchar_t *wfn = filenameToWchar(STRING_ELT(fn, i), TRUE);
+	/* trailing \ is not valid on Windows except for the
+	   root directory on a drive, specified as "\", or "D:\",
+	   or "\\?\D:\", etc.  We remove it in other cases,
+	   to help those who think they're on Unix. */
+	size_t len = wcslen(wfn);
+	if (len) {
+	    wchar_t *p = wfn + (len - 1);
+            if (len > 1 && (*p == L'/' || *p == L'\\') &&
+            	*(p-1) != L':') *p = 0;
+        }
+#else
+	const char *efn = R_ExpandFileName(translateChar(STRING_ELT(fn, i)));
+#endif
+	if (STRING_ELT(fn, i) != NA_STRING &&
+#ifdef Win32
+	    _wstati64(wfn, &sb)
+#else
+	    /* Target not link */
+	    stat(efn, &sb)
+#endif
+	    == 0) {
+	    LOGICAL(ans)[i] = (sb.st_mode & S_IFDIR) > 0;
+
+	} else LOGICAL(ans)[i] = 0;
+    }
+    // copy names?
+    UNPROTECT(1);
     return ans;
 }
 
@@ -1677,12 +1735,6 @@ SEXP attribute_hidden do_getlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
     return mkString(p ? p : "");
 }
 
-extern void invalidate_cached_recodings(void);  /* from sysutils.c */
-
-extern void resetICUcollator(void); /* from util.c */
-
-extern void dt_invalidate_locale(); /* from Rstrptime.h */
-
 /* Locale specs are always ASCII */
 SEXP attribute_hidden do_setlocale(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -1912,8 +1964,8 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
 
-    PROTECT(ans = allocVector(LGLSXP, 17));
-    PROTECT(ansnames = allocVector(STRSXP, 17));
+    PROTECT(ans = allocVector(LGLSXP, 18));
+    PROTECT(ansnames = allocVector(STRSXP, 18));
 
     SET_STRING_ELT(ansnames, i, mkChar("jpeg"));
 #ifdef HAVE_JPEG
@@ -2064,6 +2116,14 @@ SEXP attribute_hidden do_capabilities(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     SET_STRING_ELT(ansnames, i, mkChar("long.double"));
     LOGICAL(ans)[i++] = sizeof(LDOUBLE) > sizeof(double);
+
+    SET_STRING_ELT(ansnames, i, mkChar("libcurl"));
+#ifdef HAVE_CURL_CURL_H
+    LOGICAL(ans)[i++] = TRUE;
+#else
+    LOGICAL(ans)[i++] = FALSE;
+#endif
+
 
     setAttrib(ans, R_NamesSymbol, ansnames);
     UNPROTECT(2);
@@ -2932,6 +2992,98 @@ SEXP attribute_hidden do_mkjunction(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ScalarLogical(bOK != 0);
 }
 #endif
+
+#include <zlib.h>
+#include <bzlib.h>
+#include <lzma.h>
+#ifdef HAVE_PCRE_PCRE_H
+# include <pcre/pcre.h>
+#else
+# include <pcre.h>
+#endif
+
+#ifdef USE_ICU
+# ifndef USE_ICU_APPLE
+#  include <unicode/uversion.h>
+# else
+#  define U_MAX_VERSION_LENGTH 4
+#  define U_MAX_VERSION_STRING_LENGTH 20
+typedef uint8_t UVersionInfo[U_MAX_VERSION_LENGTH];
+void u_versionToString(const UVersionInfo versionArray, char *versionString);
+void u_getVersion(UVersionInfo versionArray);
+# endif
+#endif
+
+#include <iconv.h>
+#if defined(__GLIBC__)
+# include <gnu/libc-version.h>
+#endif
+
+SEXP attribute_hidden
+do_eSoftVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    SEXP ans = PROTECT(allocVector(STRSXP, 7));
+    SEXP nms = PROTECT(allocVector(STRSXP, 7));
+    setAttrib(ans, R_NamesSymbol, nms);
+    unsigned int i = 0;
+    char p[256];
+    snprintf(p, 256, "%s", zlibVersion());
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("zlib"));
+    snprintf(p, 256, "%s", BZ2_bzlibVersion());
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("bzlib"));
+    snprintf(p, 256, "%s", lzma_version_string());
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("xz"));
+    snprintf(p, 256, "%s", pcre_version());
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("PCRE"));
+#ifdef USE_ICU
+    UVersionInfo icu;
+    char pu[U_MAX_VERSION_STRING_LENGTH];
+    u_getVersion(icu);
+    u_versionToString(icu, pu);
+    SET_STRING_ELT(ans, i, mkChar(pu));
+#else
+    SET_STRING_ELT(ans, i, mkChar(""));
+#endif
+    SET_STRING_ELT(nms, i++, mkChar("ICU"));
+    snprintf(p, 256, "%s", tre_version());
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("TRE"));
+#ifdef _LIBICONV_VERSION
+    {
+	int ver = _libiconv_version;
+	snprintf(p, 256, "GNU libiconv %d.%d", ver/0x0100, ver%0x0100);
+    }
+#elif defined(_WIN32)
+    snprintf(p, 256, "%s", "win_iconv");
+#elif defined(__GLIBC__)
+    snprintf(p, 256, "glibc %s", gnu_get_libc_version());
+#else
+    snprintf(p, 256, "%s", "unknown");
+#endif
+    SET_STRING_ELT(ans, i, mkChar(p));
+    SET_STRING_ELT(nms, i++, mkChar("iconv"));
+    UNPROTECT(2);
+    return ans;
+}
+
+/* platform-specific */
+extern void Rsleep(double timeint);
+
+SEXP attribute_hidden do_syssleep(SEXP call, SEXP op, SEXP args, SEXP rho)
+{
+    checkArity(op, args);
+    double time = asReal(CAR(args));
+    if (ISNAN(time) || time < 0.)
+	errorcall(call, _("invalid '%s' value"), "time");
+    Rsleep(time);
+    return R_NilValue;
+}
+
 
 /* Formerly src/appl/machar.c:
  * void machar()  -- computes ALL `machine constants' at once.

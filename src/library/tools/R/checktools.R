@@ -1,7 +1,7 @@
 #  File src/library/tools/R/checktools.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 2013-2013 The R Core Team
+#  Copyright (C) 2013-2014 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 #
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
+
+### ** check_packages_in_dir
 
 check_packages_in_dir <-
 function(dir,
@@ -31,11 +33,24 @@ function(dir,
     setwd(dir)
     on.exit(setwd(owd))
 
+    .check_packages_in_dir_retval <-
+    function(dir,
+             pfiles,
+             pnames = character(),
+             rnames = character()) {
+        structure(pfiles,
+                  dir = dir,
+                  pnames = pnames,
+                  rnames = rnames,
+                  class = "check_packages_in_dir")
+    }
+
     pfiles <- Sys.glob("*.tar.gz")
     if(!length(pfiles)) {
         message("no packages to check")
-        return(invisible())
+        return(.check_packages_in_dir_retval(dir, pfiles))
     }
+
     pnames <- sub("_.*", "", pfiles)
 
     os_type <- .Platform$OS.type
@@ -95,11 +110,20 @@ function(dir,
     ## Build a package db from the source packages in the working
     ## directory.
     write_PACKAGES(dir, type = "source")
-    
-    curls <- c(curl,
-               utils::contrib.url(getOption("repos"), type = "source"))
+
+    ## Determine packages available locally (for checking) and in the
+    ## repositories, and merge the information giving preference to the
+    ## former.
+    curls <- utils::contrib.url(getOption("repos"), type = "source")
+    localones <- utils::available.packages(contriburl = curl,
+                                           type = "source")
     available <- utils::available.packages(contriburl = curls,
                                            type = "source")
+    pos <- match(localones[, "Package"], available[, "Package"])
+    if(length(pos <- pos[!is.na(pos)]))
+        available <- available[-pos, , drop = FALSE]
+    available <- rbind(localones, available)
+    curls <- c(curl, curls)
 
     ## As of c52164, packages with OS_type different from the current
     ## one are *always* checked with '--install=no'.
@@ -210,7 +234,7 @@ function(dir,
                                       paste(sQuote(depends),
                                             collapse = ", ")),
                               exdent = 2L),
-                      collapse = "\n"))
+                      collapse = "\n"), domain = NA)
         ## <NOTE>
         ## Ideally we would capture stdout and stderr in e.g.
         ##   outdir/install_stdout.txt
@@ -228,7 +252,7 @@ function(dir,
         utils::install.packages(depends, lib = libdir,
                                 contriburl = curls,
                                 available = available,
-                                dependencies = TRUE,
+                                dependencies = NA,
                                 INSTALL_opts = iflags,
                                 keep_outputs = tmpdir,
                                 Ncpus = Ncpus, 
@@ -287,7 +311,6 @@ function(dir,
                             env = env))
     }
 
-
     if(xvfb) {
         pid <- start_virtual_X11_fb(xvfb_options)
         on.exit(close_virtual_X11_db(pid), add = TRUE)
@@ -329,9 +352,54 @@ function(dir,
         file.rename(rfiles, sprintf("rdepends_%s", rfiles))
     }
 
-    invisible(pfiles)
-
+    .check_packages_in_dir_retval(dir,
+                                  pfiles,
+                                  setdiff(pnames, rnames),
+                                  rnames)
 }
+
+### ** print.check_packages_in_dir
+
+print.check_packages_in_dir <-
+function(x, ...)
+{
+    if(!length(x)) {
+        writeLines("No packages checked.")
+        return(invisible(x))
+    }
+    
+    dir <- attr(x, "dir")
+    writeLines(c(strwrap(sprintf("Check results for packages in dir '%s':",
+                                 dir)),
+                 sprintf("Package sources: %d, Reverse depends: %d",
+                         length(attr(x, "pnames")),
+                         length(attr(x, "rnames"))),
+                 "Use summary() for more information."))
+    invisible(x)
+}
+
+### ** summary.check_packages_in_dir
+
+summary.check_packages_in_dir <-
+function(object, all = TRUE, full = FALSE, ...)
+{
+    if(!length(object)) {
+        writeLines("No packages checked.")
+        return(invisible(object))
+    }
+
+    dir <- attr(object, "dir")
+    writeLines(c(strwrap(sprintf("Check results for packages in dir '%s':",
+                                 dir)),
+                 ""))
+    details <- summarize_check_packages_in_dir_results(dir)
+    if(!full && details) {
+        writeLines("\nUse summary(full = TRUE) for details.")
+    }
+    invisible(object)
+}
+
+### ** start_virtual_X11_fb
 
 start_virtual_X11_fb <-
 function(options)
@@ -380,6 +448,8 @@ function(options)
     pid
 }
 
+### ** close_virtual_X11_db
+
 close_virtual_X11_db <-
 function(pid)
 {
@@ -390,56 +460,75 @@ function(pid)
         Sys.setenv("DISPLAY" = dis)
 }
 
+### ** R_check_outdirs
+
 R_check_outdirs <-
-function(dir, all = FALSE)
+function(dir, all = FALSE, invert = FALSE)
 {
     dir <- normalizePath(dir)
     outdirs <- dir(dir, pattern = "\\.Rcheck")
-    if(!all) outdirs <- outdirs[!grepl("^rdepends_", outdirs)]
+    ind <- grepl("^rdepends_", basename(outdirs))
+    ## Re-arrange to have reverse dependencies last if at all.
+    outdirs <- if(invert)
+        c(if(all) outdirs[!ind], outdirs[ind])
+    else
+        c(outdirs[!ind], if(all) outdirs[ind])
     file.path(dir, outdirs)
 }
 
+### ** summarize_check_packages_in_dir_depends
+
 summarize_check_packages_in_dir_depends <-
-function(dir, all = FALSE)
+function(dir, all = FALSE, which = c("Depends", "Imports", "LinkingTo"))
 {
+    ## See tools::package_dependencies(): should perhaps separate out.
+    if(identical(which, "all")) 
+        which <- c("Depends", "Imports", "LinkingTo", "Suggests",
+                   "Enhances")
+    else if(identical(which, "most")) 
+        which <- c("Depends", "Imports", "LinkingTo", "Suggests")
+    
     for(d in R_check_outdirs(dir, all = all)) {
         dfile <- Sys.glob(file.path(d, "00_pkg_src", "*",
                                     "DESCRIPTION"))[1L]
         if(file_test("-f", dfile)) {
             meta <- .read_description(dfile)
-            has_depends <- !is.na(meta["Depends"])
-            has_imports <- !is.na(meta["Imports"])
-            if(has_depends || has_imports) {
-                writeLines(c(sprintf("Package: %s",
-                                     meta["Package"]),
-                             if(has_depends)
-                             strwrap(sprintf("Depends: %s",
-                                             meta["Depends"]),
-                                     indent = 2L,
-                                     exdent = 4L),
-                             if(has_imports)
-                             strwrap(sprintf("Imports: %s",
-                                             meta["Imports"]),
-                                     indent = 2L,
-                                     exdent = 4L)))
+            package <- meta["Package"]
+            meta <- meta[match(which, names(meta), nomatch = 0L)]
+            if(length(meta)) {
+                writeLines(c(sprintf("Package: %s", package),
+                             unlist(Map(function(tag, val) {
+                                 strwrap(sprintf("%s: %s", tag, val),
+                                         indent = 2L, exdent = 4L)
+                             },
+                                        names(meta),
+                                        meta))))
             }
         }
     }
+
+    invisible()
 }
+
+### ** summarize_check_packages_in_dir_results
 
 summarize_check_packages_in_dir_results <-
 function(dir, all = TRUE, full = FALSE)
 {
     dir <- normalizePath(dir)
     outdirs <- R_check_outdirs(dir, all = all)
-    ## Re-arrange to have reverse dependencies last.
-    ind <- grepl("^rdepends_", basename(outdirs))
-    outdirs <- c(outdirs[!ind], outdirs[ind])
     logs <- file.path(outdirs, "00check.log")
     logs <- logs[file_test("-f", logs)]
     
     results <- check_packages_in_dir_results(logs = logs)
 
+    writeLines("Check status summary:")
+    tab <- check_packages_in_dir_results_summary(results)
+    rownames(tab) <- paste0("  ", rownames(tab))
+    print(tab)
+    writeLines("")
+
+    writeLines("Check results summary:")
     Map(function(p, r) {
         writeLines(c(sprintf("%s ... %s", p, r$status), r$lines))
     },
@@ -449,7 +538,7 @@ function(dir, all = TRUE, full = FALSE)
     if(full &&
        !all(as.character(unlist(lapply(results, `[[`, "status"))) ==
             "OK")) {
-        writeLines("")
+        writeLines(c("", "Check results details:"))
         details <- check_packages_in_dir_details(logs = logs)
         flags <- details$Flags
         out <- cbind(sprintf("Package: %s %s",
@@ -462,10 +551,13 @@ function(dir, all = TRUE, full = FALSE)
                      c(gsub("\n", "\n  ", details$Output,
                             perl = TRUE, useBytes = TRUE)))
         cat(t(out), sep = c("\n", "", "\n  ", "\n\n"))
+        invisible(TRUE)
+    } else {
+        invisible(FALSE)
     }
-
-    invisible()
 }
+
+### ** summarize_check_packages_in_dir_timings
 
 summarize_check_packages_in_dir_timings <-
 function(dir, all = FALSE, full = FALSE)
@@ -508,7 +600,66 @@ function(dir, all = FALSE, full = FALSE)
         },
                       names(timings), timings))
     }
+
+    invisible()
 }
+
+### ** check_packages_in_dir_results
+
+check_packages_in_dir_results <-
+function(dir, logs = NULL)
+{
+    if(is.null(logs))
+        logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
+
+    ## <NOTE>
+    ## Perhaps make the individual non-OK check values more readily
+    ## available?
+    ## </NOTE>
+    
+    results <- lapply(logs, function(log) {
+        lines <- read_check_log(log)
+        ## Should this be anchored with $ as well?
+        re <- "^\\*.*\\.\\.\\. *(\\[.*\\])? *(NOTE|WARNING|ERROR)"
+        ## Note that we use WARN instead of WARNING for the summary.
+        m <- regexpr(re, lines, perl = TRUE, useBytes = TRUE)
+        ind <- (m > 0L)
+        status <- if(any(ind)) {
+            category <- sub(re, "\\2", lines[ind],
+                            perl = TRUE, useBytes = TRUE)
+            if(any(category == "ERROR")) "ERROR"
+            else if(any(category == "WARNING")) "WARN"
+            else "NOTE"
+        } else {
+            "OK"
+        }
+        list(status = status, lines = lines[ind])
+    })
+    names(results) <- sub("\\.Rcheck$", "", basename(dirname(logs)))
+
+    results
+}
+
+### ** check_packages_in_dir_results_summary
+
+check_packages_in_dir_results_summary <-
+function(results)
+{
+    if(!length(results)) return()
+    status <- vapply(results, `[[`, "", "status")
+    ind <- grepl("^rdepends_", names(results))
+    tab <- table(ifelse(ind, "Reverse depends", "Source packages"),
+                 status, deparse.level = 0L)
+    tab <- tab[match(c("Source packages", "Reverse depends"),
+                     rownames(tab), nomatch = 0L),
+               match(c("ERROR", "WARN", "NOTE", "OK"),
+                     colnames(tab), nomatch = 0L),
+               drop = FALSE]
+    names(dimnames(tab)) <- NULL
+    tab
+}
+
+### ** read_check_log
 
 read_check_log <-
 function(log)
@@ -528,33 +679,7 @@ function(log)
     lines
 }
 
-
-check_packages_in_dir_results <-
-function(dir, logs = NULL)
-{
-    if(is.null(logs))
-        logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
-
-    results <- lapply(logs, function(log) {
-        lines <- read_check_log(log)
-        m <- regexpr("^\\*.*\\.\\.\\. *(\\[.*\\])? *(NOTE|WARN|ERROR)", 
-                     lines, perl = TRUE, useBytes = TRUE)
-        ind <- (m > 0L)
-        status <- if(any(ind)) {
-            if(all(grepl("NOTE$", regmatches(lines, m), useBytes = TRUE))) {
-                "NOTE"
-            } else {
-                "PROBLEM"
-            }
-        } else {
-            "OK"
-        }
-        list(status = status, lines = lines[ind])
-    })
-    names(results) <- sub("\\.Rcheck$", "", basename(dirname(logs)))
-
-    results
-}
+### ** analyze_check_log
 
 analyze_check_log <-
 function(log, drop_ok = TRUE)
@@ -606,22 +731,37 @@ function(log, drop_ok = TRUE)
     } else return()
 
     ## Get footer.
+    len <- length(lines)
     ## Some check systems explicitly record the elapsed time in the
     ## last line:
-    len <- length(lines)
     if(grepl("^\\* elapsed time ", lines[len],
              perl = TRUE, useBytes = TRUE)) {
         lines <- lines[-len]
         len <- len - 1L
     }
-    num <- length(grep("^(NOTE|WARNING): There",
-                       lines[c(len - 1L, len)]))
-    if(num > 0L) {
-        pos <- seq.int(len - num + 1L, len)
-        lines <- lines[-pos]
+    ## Summary footers.
+    if(grepl("^Status: ", lines[len],
+             perl = TRUE, useBytes = TRUE)) {
+        ## New-style status summary.
+        lines <- lines[-len]
+    } else {
+        ## Old-style status summary.
+        num <- length(grep("^(NOTE|WARNING): There",
+                           lines[c(len - 1L, len)]))
+        if(num > 0L) {
+            pos <- seq.int(len - num + 1L, len)
+            lines <- lines[-pos]
+        }
     }
 
     analyze_lines <- function(lines) {
+        ## Windows has
+        ##   * loading checks for arch
+        ##   * checking examples ...
+        ##   * checking tests ...
+        ## headers: drop these.
+        re <- "^\\* (loading checks for arch|checking (examples|tests) \\.\\.\\.$)"
+        lines <- lines[!grepl(re, lines, perl = TRUE, useBytes = TRUE)]
         ## We might still have
         ##   * package encoding:
         ## entries for packages declaring a package encoding.
@@ -667,6 +807,8 @@ function(log, drop_ok = TRUE)
     make_results(package, version, flags, chunks)
 }
 
+### ** check_packages_in_dir_details
+
 check_packages_in_dir_details <-
 function(dir, logs = NULL, drop_ok = TRUE)
 {
@@ -691,8 +833,11 @@ function(dir, logs = NULL, drop_ok = TRUE)
                       lens))
     }
 
-    if(is.null(logs))
+    if(is.null(logs)) {
+        if(inherits(dir, "check_packages_in_dir"))
+            dir <- attr(dir, "dir")
         logs <- Sys.glob(file.path(dir, "*.Rcheck", "00check.log"))
+    }
 
     db <- db_from_logs(logs, drop_ok)
     colnames(db) <- c("Package", "Version", "Check", "Status",
@@ -732,3 +877,136 @@ function(dir, logs = NULL, drop_ok = TRUE)
 
     db
 }
+
+### ** check_packages_in_dir_changes
+
+check_packages_in_dir_changes <-
+function(dir, old, outputs = FALSE, sources = FALSE)
+{
+    check_packages_in_dir_changes_classes <-
+        c("check_packages_in_dir_changes", "data.frame")
+
+    dir <- if(inherits(dir, "check_packages_in_dir"))
+        dir <- attr(dir, "dir")
+    else
+        normalizePath(dir)
+
+    outdirs <- tools:::R_check_outdirs(dir, all = sources, invert = TRUE)
+    logs <- file.path(outdirs, "00check.log")
+    logs <- logs[file_test("-f", logs)]
+    new <- tools:::check_packages_in_dir_details(logs = logs, drop_ok = FALSE)
+
+    ## Use
+    ##   old = tools:::CRAN_check_details(FLAVOR)
+    ## to compare against the results/details of a CRAN check flavor.
+
+    if(!inherits(old, "check_details"))
+        old <- tools:::check_packages_in_dir_details(old, drop_ok = FALSE)
+
+    ## Simplify matters by considering only "changes" in *available*
+    ## results/details.
+
+    packages <- intersect(old$Package, new$Package)
+
+    if(!length(packages)) {
+        db <- data.frame(Package = character(),
+                         Check = character(),
+                         Old = character(),
+                         New = character(),
+                         stringsAsFactors = FALSE)
+        class(db) <- check_packages_in_dir_changes_classes
+        return(db)
+    }
+
+    db <- merge(old[!is.na(match(old$Package, packages)), ],
+                new[!is.na(match(new$Package, packages)), ],
+                by = c("Package", "Check"), all = TRUE)
+
+    ## Drop checks that are OK in both versions
+    x.issue <- !is.na(match(db$Status.x, c("NOTE","ERROR","WARNING")))
+    y.issue <- !is.na(match(db$Status.y, c("NOTE","ERROR","WARNING")))
+    db <- db[x.issue | y.issue,]
+    
+    ## Even with the above simplification, missing entries do not
+    ## necessarily indicate "OK" (checks could have been skipped).
+    ## Hence leave as missing and show as empty in the diff.
+    ## An exception to this rule is made if we find an "ERROR" result
+    ## as this may explain skipped checks.
+
+    ## Complete possibly missing version information.
+    chunks <-
+        lapply(split(db, db$Package),
+               function(e) {
+                   len <- nrow(e)
+                   if(length(pos <- which(!is.na(e$Version.x))))
+                       e$Version.x <-
+                           rep.int(e[pos[1L], "Version.x"], len)
+                    if(length(pos <- which(!is.na(e$Version.y))))
+                       e$Version.y <-
+                           rep.int(e[pos[1L], "Version.y"], len)
+                   e
+               })
+
+    db <- do.call(rbind, chunks)
+
+    sx <- as.character(db$Status.x)
+    sy <- as.character(db$Status.y)
+    if(outputs) {
+        sx <- sprintf("%s\n  %s", sx,
+                      gsub("\n", "\n  ", db$Output.x, fixed = TRUE))
+        sy <- sprintf("%s\n  %s", sy,
+                      gsub("\n", "\n  ", db$Output.y, fixed = TRUE))
+    }
+    sx[is.na(db$Status.x)] <- ""
+    sy[is.na(db$Status.y)] <- ""
+    ind <- if(outputs)
+        (.canonicalize_quotes(sx) != .canonicalize_quotes(sy))
+    else
+        (sx != sy)
+
+    db <- cbind(db[ind, ], Old = sx[ind], New = sy[ind],
+                stringsAsFactors = FALSE)
+
+    ## Add information about possible version changes.
+    ind <- (db$Version.x != db$Version.y)
+    if(any(ind))
+        db$Package[ind] <-
+            sprintf("%s [Old version: %s, New version: %s]",
+                    db$Package[ind],
+                    db$Version.x[ind],
+                    db$Version.y[ind])
+
+    db <- db[c("Package", "Check", "Old", "New")]
+
+    class(db) <- check_packages_in_dir_changes_classes
+
+    db
+}
+
+format.check_packages_in_dir_changes <-
+function(x, ...)
+{
+    if(!nrow(x)) return(character())
+    sprintf("Package: %s\nCheck: %s%s%s",
+            x$Package,
+            x$Check,
+            ifelse(nzchar(old <- x$Old),
+                   sprintf("\nOld result: %s", old),
+                   ""),
+            ifelse(nzchar(new <- x$New),
+                   sprintf("\nNew result: %s", new),
+                   ""))
+}
+
+print.check_packages_in_dir_changes <-
+function(x, ...)
+{
+    if(length(y <- format(x)))
+        writeLines(paste(y, collapse = "\n\n"))
+    invisible(x)
+}
+
+### Local variables: ***
+### mode: outline-minor ***
+### outline-regexp: "### [*]+" ***
+### End: ***

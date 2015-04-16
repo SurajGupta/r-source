@@ -1,5 +1,5 @@
 
-R version 3.1.3 RC (2015-03-01 r67921) -- "Smooth Sidewalk"
+R version 3.2.0 beta (2015-04-05 r68147) -- "Full of Ingredients"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -290,6 +290,14 @@ Classes 'nfnGroupedData', 'nfGroupedData', 'groupedData' and 'data.frame':	132 o
  - attr(*, "dimnames")=List of 2
   ..$ : chr [1:5] "Food and Tobacco" "Household Operation" "Medical and Health" "Personal Care" ...
   ..$ : chr [1:5] "1940" "1945" "1950" "1955" ...
+
+** structure of dataset UScitiesD
+Class 'dist'  atomic [1:45] 587 1212 701 1936 604 748 2139 2182 543 920 ...
+  ..- attr(*, "Labels")= chr [1:10] "Atlanta" "Chicago" "Denver" "Houston" ...
+  ..- attr(*, "Size")= int 10
+  ..- attr(*, "call")= language as.dist.default(m = t(cities.mat))
+  ..- attr(*, "Diag")= logi FALSE
+  ..- attr(*, "Upper")= logi FALSE
 
 ** structure of dataset VADeaths
  num [1:5, 1:4] 11.7 18.1 26.9 41 66 8.7 11.7 20.3 30.9 54.3 ...

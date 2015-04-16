@@ -3,8 +3,6 @@
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
-\newcommand{\sspace}{\ifelse{latex}{\out{~}}{ }}
-
 \name{plot}
 \title{Generic X-Y Plotting}
 \alias{plot}

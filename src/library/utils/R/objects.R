@@ -1,7 +1,7 @@
 #  File src/library/utils/R/objects.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@
 
 ## findGeneric(fname) :  is 'fname' the name of an S3 generic ?
 ##			[unexported function used only in this file]
-findGeneric <-
-function(fname, envir)
+findGeneric <- function(fname, envir, warnS4only = TRUE)
 {
     if(!exists(fname, mode = "function", envir = envir)) return("")
     f <- get(fname, mode = "function", envir = envir)
@@ -31,11 +30,11 @@ function(fname, envir)
 	## maybe an S3 generic was turned into the S4 default
 	## Try to find it, otherwise warn :
 	fMethsEnv <- methods::getMethodsForDispatch(f)
-	r <- lapply(grep("^ANY\\b", ls(envir = fMethsEnv), value=TRUE),
-		    get, envir = fMethsEnv)
-	if(any(ddm <- unlist(lapply(r, class)) == "derivedDefaultMethod"))
+        meths <- as.list(fMethsEnv, all.names=TRUE)
+        r <- meths[grep("^ANY\\b", names(meths))]
+	if(any(ddm <- vapply(r, is, logical(1L), "derivedDefaultMethod")))
 	    f <- r[ddm][[1]]@.Data
-	else
+	else if(warnS4only)
 	    warning(gettextf(
 	"'%s' is a formal generic function; S3 methods will not likely be found",
 			     fname), domain = NA)
@@ -69,8 +68,8 @@ getKnownS3generics <-
 function()
     c(names(.knownS3Generics), tools:::.get_internal_S3_generics())
 
-methods <-
-function(generic.function, class)
+.S3methods <-
+function(generic.function, class, envir=parent.frame())
 {
     rbindSome <- function(df, nms, msg) {
         ## rbind.data.frame() -- dropping rows with duplicated names
@@ -90,28 +89,28 @@ function(generic.function, class)
     S3MethodsStopList <- tools:::.make_S3_methods_stop_list(NULL)
     knownGenerics <- getKnownS3generics()
     sp <- search()
+    methods.called <- identical(sys.call(-1)[[1]], as.symbol("methods"))
     an <- lapply(seq_along(sp), ls)
     names(an) <- sp
     an <- unlist(an)
     an <- an[!duplicated(an)] # removed masked objects, *keep* names
     names(an) <- sub("[0-9]*$", "", names(an))
     info <- data.frame(visible = rep.int(TRUE, length(an)),
-                       from = names(an),
+                       from = sub("package:", "", names(an)),
                        row.names = an)
     if (!missing(generic.function)) {
 	if (!is.character(generic.function))
 	    generic.function <- deparse(substitute(generic.function))
         ## else
-        if(!exists(generic.function, mode = "function",
-                   envir = parent.frame()) &&
+        if(!exists(generic.function, mode = "function", envir = envir) &&
            !any(generic.function == c("Math", "Ops", "Complex", "Summary")))
             stop(gettextf("no function '%s' is visible", generic.function),
                  domain = NA)
+        warn.not.generic <- FALSE
         if(!any(generic.function == knownGenerics)) {
-            truegf <- findGeneric(generic.function, parent.frame())
+	    truegf <- findGeneric(generic.function, envir, warnS4only = !methods.called)
             if(truegf == "")
-                warning(gettextf("function '%s' appears not to be generic",
-                                 generic.function), domain = NA)
+                warn.not.generic <- TRUE
             else if(truegf != generic.function) {
                 warning(gettextf("generic function '%s' dispatches methods for generic '%s'",
                         generic.function, truegf), domain = NA)
@@ -124,19 +123,21 @@ function(generic.function, class)
         info <- info[! row.names(info) %in% S3MethodsStopList, ]
         ## check that these are all functions
         ## might be none at this point
-        if(nrow(info)) {
-            keep <- sapply(row.names(info),
-                           function(nm) exists(nm, mode="function"))
-            info <- info[keep, ]
-        }
+	if(nrow(info)) {
+	    keep <- vapply(row.names(info), exists, logical(1), mode="function")
+	    info <- info[keep, ]
+	}
+	if(warn.not.generic && nrow(info))
+	    warning(gettextf(
+	"function '%s' appears not to be S3 generic; found functions that look like S3 methods",
+			     generic.function), domain = NA)
 
         ## also look for registered methods from namespaces
         ## we assume that only functions get registered.
         defenv <- if(!is.na(w <- .knownS3Generics[generic.function]))
             asNamespace(w)
         else {
-            genfun <- get(generic.function, mode = "function",
-                          envir = parent.frame())
+            genfun <- get(generic.function, mode = "function", envir = envir)
             if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction"))
                 genfun <- methods::finalDefaultMethod(genfun@default)
             if (typeof(genfun) == "closure") environment(genfun)
@@ -163,13 +164,15 @@ function(generic.function, class)
         if(nrow(info)) {
             ## check if we can find a generic matching the name
             possible.generics <- gsub(name, "", row.names(info))
-            keep <- sapply(possible.generics, function(nm) {
+            keep <- vapply(possible.generics, function(nm) {
                 if(nm %in% knownGenerics) return(TRUE)
                 where <- find(nm, mode = "function")
-                if(!length(where)) return(FALSE)
-                any(sapply(where, function(w)
-                           nzchar(findGeneric(nm, envir=as.environment(w)))))
-            })
+		if(length(where))
+		    any(vapply(where, function(w)
+			nzchar(findGeneric(nm, envir=as.environment(w))),
+			       logical(1)))
+		else FALSE
+	    }, logical(1))
             info <- info[keep, ]
         }
 
@@ -178,36 +181,78 @@ function(generic.function, class)
         ## the corresponding generic, so we don't check again.
         ## Note that the generic will not necessarily be visible,
         ## as the package may not be loaded.
-        S3reg <- unlist(lapply(loadedNamespaces(), function(i) ls(get(".__S3MethodsTable__.", envir = asNamespace(i)), pattern = name)))
+        S3reg <- unlist(lapply(loadedNamespaces(), function(i)
+	    ls(get(".__S3MethodsTable__.", envir = asNamespace(i)), pattern = name)))
         ## now methods like print.summary.aov will be picked up,
         ## so we do look for such mismatches.
         if(length(S3reg))
-            S3reg <- S3reg[sapply(gsub(name, "", S3reg), exists)]
+            S3reg <- S3reg[vapply(gsub(name, "", S3reg), exists, NA)]
         if(length(S3reg))
             info <- rbindSome(info, S3reg, msg = "registered S3method")
     }
     else stop("must supply 'generic.function' or 'class'")
 
-    info <- info[sort.list(row.names(info)), ]
+    info$generic <- if (!missing(generic.function))
+        rep(generic.function, nrow(info))
+    else sub(paste0("\\.", class, "$"), "", row.names(info))
+    info$isS4 <- rep(FALSE, nrow(info))
+
+    info <- info[sort.list(row.names(info)), , drop=FALSE]
     res <- row.names(info)
     class(res) <- "MethodsFunction"
     attr(res, "info") <- info
+    attr(res, "byclass") <- missing(generic.function)
     res
+}
+
+methods <-
+function(generic.function, class)
+{
+    if (!missing(generic.function) && !is.character(generic.function))
+        generic.function <- deparse(substitute(generic.function))
+    if (!missing(class) && !is.character(class))
+        class <- paste(deparse(substitute(class)))
+
+    s3 <- .S3methods(generic.function, class, parent.frame())
+    s4 <- if (.isMethodsDispatchOn()) {
+        methods::.S4methods(generic.function, class)
+    } else NULL
+
+    .MethodsFunction(s3, s4, missing(generic.function))
+}
+
+.MethodsFunction <-
+function(s3, s4, byclass)
+{
+    info3 <- attr(s3, "info")
+    info4 <- attr(s4, "info")
+    info <- rbind(info3, info4)
+    dups <- duplicated(c(rownames(info3), rownames(info4)))
+    info <- info[!dups, , drop=FALSE]
+    info <- info[order(rownames(info)), , drop=FALSE]
+    structure(rownames(info), info=info, byclass=byclass,
+              class="MethodsFunction")
 }
 
 print.MethodsFunction <-
 function(x, ...)
 {
-    visible <- attr(x, "info")[["visible"]]
-    if(length(x)) {
-	print(paste0(x, ifelse(visible, "", "*")), quote=FALSE, ...)
-        if(any(!visible))
-            cat("\n", "   ",
-                "Non-visible functions are asterisked", "\n", sep = "")
-    } else cat("no methods were found\n")
+    info <- attr(x, "info")
+    if (attr(x, "byclass")) {
+        values <- unique(info$generic)
+    } else {
+        visible <- ifelse(info$visible, "", "*")
+        values <- paste0(rownames(info), visible)
+    }
+
+    if (length(values)) {
+        print(noquote(values))
+        cat("see '?methods' for accessing help and source code\n")
+    } else
+        cat("no methods found\n")
+
     invisible(x)
 }
-
 
 getS3method <-
 function(f, class, optional = FALSE)
@@ -302,15 +347,15 @@ function(x, value, ns, pos = -1, envir = as.environment(pos))
             stop("environment specified is not a package")
         ns <- asNamespace(substring(nm, 9L))
     } else ns <- asNamespace(ns)
+    ns_name <- getNamespaceName(ns)
     if (nf > 1L) {
-        if(getNamespaceName(ns) %in% tools:::.get_standard_package_names()$base)
+        if(ns_name %in% tools:::.get_standard_package_names()$base)
             stop("locked binding of ", sQuote(x), " cannot be changed",
                  domain = NA)
     }
     if(bindingIsLocked(x, ns)) {
         in_load <- Sys.getenv("_R_NS_LOAD_")
         if (nzchar(in_load)) {
-            ns_name <- getNamespaceName(ns)
             if(in_load != ns_name) {
                 msg <-
                     gettextf("changing locked binding for %s in %s whilst loading %s",
@@ -319,7 +364,6 @@ function(x, value, ns, pos = -1, envir = as.environment(pos))
                     warning(msg, call. = FALSE, domain = NA, immediate. = TRUE)
             }
         } else if (nzchar(Sys.getenv("_R_WARN_ON_LOCKED_BINDINGS_"))) {
-            ns_name <- getNamespaceName(ns)
             warning(gettextf("changing locked binding for %s in %s",
                              sQuote(x), sQuote(ns_name)),
                     call. = FALSE, domain = NA, immediate. = TRUE)
@@ -335,7 +379,7 @@ function(x, value, ns, pos = -1, envir = as.environment(pos))
     }
     if(!isBaseNamespace(ns)) {
         ## now look for possible copy as a registered S3 method
-        S3 <- getNamespaceInfo(ns, "S3methods")
+	S3 <- .getNamespaceInfo(ns, "S3methods")
         if(!length(S3)) return(invisible(NULL))
         S3names <- S3[, 3L]
         if(x %in% S3names) {
@@ -344,7 +388,7 @@ function(x, value, ns, pos = -1, envir = as.environment(pos))
             if(.isMethodsDispatchOn() && methods::is(genfun, "genericFunction"))
                 genfun <- methods::slot(genfun, "default")@methods$ANY
             defenv <- if (typeof(genfun) == "closure") environment(genfun)
-            else .BaseNamespaceEnv
+		      else .BaseNamespaceEnv
             S3Table <- get(".__S3MethodsTable__.", envir = defenv)
             remappedName <- paste(S3[i, 1L], S3[i, 2L], sep = ".")
             if(exists(remappedName, envir = S3Table, inherits = FALSE))

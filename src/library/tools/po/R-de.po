@@ -4,17 +4,24 @@
 # Detlef Steuer <steuer@hsu-hh.de>, 2008-2014.
 msgid ""
 msgstr ""
-"Project-Id-Version: R-3.1.0\n"
+"Project-Id-Version: R-3.2.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-01-26 09:09\n"
-"PO-Revision-Date: 2014-03-16 16:00+0100\n"
+"POT-Creation-Date: 2015-03-01 13:20\n"
+"PO-Revision-Date: 2015-03-20 23:10+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
-"Language: \n"
+"Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"\n"
 "Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
+
+msgid "Reading %s failed with message: %s"
+msgstr "Einlesen von %s fehlgeschlagen mit Nachricht: %s"
+
+msgid "Checking %s"
+msgstr "Überprüfe %s"
 
 msgid "argument 'package' must be of length 1"
 msgstr "Argument 'package' muss Länge 1 haben"
@@ -225,7 +232,8 @@ msgstr "Unzulässiges Feld für VignetteBuilder"
 msgid ""
 "This field must contain one or more packages (and no version requirement)."
 msgstr ""
-"Dieses Feld muss ein oder mehrer Pakete enthalten (und keine Versionsanforderungen)."
+"Dieses Feld muss ein oder mehrer Pakete enthalten (und keine "
+"Versionsanforderungen)."
 
 msgid "Invalid Priority field."
 msgstr "Unzulässiges Feld für 'Priority'"
@@ -237,12 +245,20 @@ msgstr ""
 "Pakete mit Prioritäten 'base', 'recommended' oder 'defunct-base' müssen R "
 "bereits bekannt sein"
 
+msgid "Malformed Title field: should not end in a period."
+msgstr "Schlecht formatiertes Title Feld: Sollte nicht mit einem Punkt enden"
+
 msgid ""
-"See the information on DESCRIPTION files in section 'Creating R packages' of "
-"the 'Writing R Extensions' manual."
+"Malformed Description field: should contain one or more complete sentences."
 msgstr ""
-"Information über DESCRIPTION Dateien finden sie im Abschnitt 'Creating R "
-"packages' im 'Writing R Extension' Handbuch"
+"Schlecht formatiertes Description Feld: sollte einen oder mehrere\n"
+"vollständige Sätze enthalten."
+
+msgid ""
+"See section 'The DESCRIPTION file' in the 'Writing R Extensions' manual."
+msgstr ""
+"Bitte im Abschnitt 'The DESCRIPTION file' im 'Writing R Extension'\n"
+"Handbuch nachlesen"
 
 msgid "Malformed Authors@R field:"
 msgstr "Falsch formatiertes Authors@R Feld:"
@@ -259,9 +275,15 @@ msgstr "Das Authors@R Feld enthält Personen ohne gültige Rolle."
 msgid "Cannot extract Maintainer field from Authors@R field:"
 msgstr "Kann kein Maintainer Feld aus dem Authors@R Feld extrahieren:"
 
-msgid "Authors@R field gives no person with maintainer role and email address."
+msgid "Authors@R field gives more than one person with maintainer role:"
+msgstr "Das Authors@R Feld enthält mehr als eine Person"
+
+msgid ""
+"Authors@R field gives no person with maintainer role, valid email address "
+"and non-empty name."
 msgstr ""
-"Das Authors@R Feld enthält keine Person als Maintainer mit email Adresse."
+"Das Authors@R Feld enthält keine Person als Maintainer mit zulässiger\n"
+"Mailadresse und nicht-leerem Namen"
 
 msgid "Encoding '%s' is not portable"
 msgstr "Kodierung '%s' ist nicht portabel"
@@ -306,11 +328,9 @@ msgstr ""
 msgid "Missing link or links in documentation object '%s':"
 msgstr "Fehlende(r) Link(s) im Dokuobjekt '%s':"
 
-msgid ""
-"See the information in section 'Cross-references' of the 'Writing R "
-"Extensions' manual."
+msgid "See section 'Cross-references' in the 'Writing R Extensions' manual."
 msgstr ""
-"Bitte im 'Writing R Extensions' Handbuch im Abschnitt über Kreuzreferenzen "
+"Bitte im Abschnitt \"Cross-references\" im 'Writing R Extensions' Handbuch "
 "nachsehen!"
 
 msgid "File %s:"
@@ -343,11 +363,10 @@ msgid "See section %s in '%s'."
 msgstr "Siehe Abschnitt %s in '%s'."
 
 msgid ""
-"Package detach functions should have one arguments with names starting with "
-"%s."
+"Package detach functions should have one argument with name starting with %s."
 msgstr ""
-"Detachfuktion für Pakete sollte ein Argumente haben, deren Namen\n"
-"mit %s beginnen."
+"Detachfuktion für Pakete sollte ein Argument haben, dessen Name\n"
+"mit %s beginnt."
 
 msgid "Package detach functions should not call %s."
 msgstr "Detachfunktion für Pakete sollten nicht %s aufrufen."
@@ -373,12 +392,29 @@ msgstr "Aufrufe von 'library' oder 'require' nicht angemeldet von:"
 msgid "'library' or 'require' call not declared from: %s"
 msgstr "Aufrufe von 'library' oder 'require' nicht angemeldet von: %s"
 
+msgid "'loadNamespace' or 'requireNamespace' calls not declared from:"
+msgstr ""
+"Aufrufe von 'loadNamespace' oder 'requireNamespace' nicht angemeldet von:"
+
+msgid "'loadNamespace' or 'requireNamespace' call not declared from: %s"
+msgstr ""
+"Aufrufe von 'loadNamespace' oder 'requireNamespace' nicht angemeldet von: %s"
+
 msgid "'library' or 'require' calls to packages already attached by Depends:"
-msgstr "Aufrufe von 'library' oder 'require' für Pakete bereits mit Depends geladen:"
+msgstr ""
+"Aufrufe von 'library' oder 'require' für Pakete bereits mit Depends geladen:"
 
 msgid ""
 "'library' or 'require' call to %s which was already attached by Depends."
-msgstr "Aufruf von 'library' oder 'require'  für %s, ist aber bereits mit Depends geladen."
+msgstr ""
+"Aufruf von 'library' oder 'require'  für %s, ist aber bereits mit Depends "
+"geladen."
+
+msgid "'library' or 'require' calls in package code:"
+msgstr "Aufrufe von 'library' oder 'require' im Paket-Code:"
+
+msgid "'library' or 'require' call to %s in package code."
+msgstr "Aufrufe von 'library' oder 'require' für %s in Paket-Code"
 
 msgid "Namespaces in Imports field not imported from:"
 msgstr "Namensräume im Imports Feld nicht importiert aus:"
@@ -463,8 +499,8 @@ msgstr ""
 "%s\n"
 "in NAMESPACE."
 
-msgid "argument 'file' must be a character string or connection"
-msgstr "Argument 'file' muss eine Zeichenkette oder eine Verbindung sein"
+msgid "Rd object required"
+msgstr "Rd Objekt nötig"
 
 msgid "missing/empty %s field in '%s'"
 msgstr "fehlendes oder leeres %s Feld in '%s'"
@@ -493,6 +529,16 @@ msgstr "kann mit Rd Objekten mit fehlendem bzw. leerem Namen nicht umgehen"
 
 msgid "No help on %s found in RdDB %s"
 msgstr "Keine Hilfe zu %s in RdDB %s gefunden"
+
+msgid "'macros' must be TRUE or must specify existing macros"
+msgstr ""
+"'macros' muss entwerder TRUE sein oder ein exisitierendes Makro spezifizieren"
+
+msgid "Macro file %s should only contain Rd macro definitions and comments"
+msgstr "Makrodatei %s sollte nur Rd Makrodefinitionen und Kommentare enthalten"
+
+msgid "No Rd macros in package '%s'."
+msgstr "Keine Rd Makros in Paket '%s'"
 
 msgid "more than one \\examples section, using the first"
 msgstr "mehr als eine \\examples section, benutze die erste"
@@ -533,6 +579,9 @@ msgstr "Ungültiger Wert für '%s' : %s"
 msgid "Only one Rd section per %s is supported."
 msgstr "Nur ein Rd Abschnitt pro %s wird unterstützt"
 
+msgid "DESCRIPTION file is for package '%s', not '%s'"
+msgstr "DESCRIPTION Datei ist für Paket '%s', nicht für '%s'"
+
 msgid "Vignette product %s does not have a known filename extension (%s)"
 msgstr "Vignettenprodukt %s hat keine bekannte Dateinamenserweiterung (%s)"
 
@@ -540,18 +589,21 @@ msgid ""
 "Failed to locate the %s output file (by engine %s) for vignette with name "
 "%s. The following files exist in directory %s: %s"
 msgstr ""
-"Konnte %s Ausgabedadatei (von Treiber %s) für Vignette namens"
-"%s nicht finden. Folgende Dateien exisitieren im Verzeichnis %s: %s"
+"Konnte %s Ausgabedadatei (von Treiber %s) für Vignette namens%s nicht "
+"finden. Folgende Dateien exisitieren im Verzeichnis %s: %s"
 
 msgid ""
 "Located more than one %s output file (by engine %s) for vignette with name "
 "%s: %s"
 msgstr ""
-"Mehr als eine %s Ausgabedatei (von Treiber %s) für Vignette namens"
-"%s gefunden: %s"
+"Mehr als eine %s Ausgabedatei (von Treiber %s) für Vignette namens%s "
+"gefunden: %s"
 
 msgid "unable to create temp directory %s"
 msgstr "kann temporäres Verzeichnis %s nicht erzeugen"
+
+msgid "Vignette '%s' is non-ASCII but has no declared encoding"
+msgstr "Vignette '%s' ist nicht-ASCII aber deklariert kein Enkoding"
 
 msgid "Running"
 msgstr "Ausführen"
@@ -563,8 +615,8 @@ msgid ""
 "Detected vignette source files (%s) with shared names (%s) and therefore "
 "risking overwriting each others output files"
 msgstr ""
-"Vignettenquelldateien (%s) mit gemeinsamen Namen (%s) entdeckt, weshalb die"
-"Gefahr gegenseitigen Überschreibens besteht" 
+"Vignettenquelldateien (%s) mit gemeinsamen Namen (%s) entdeckt, weshalb "
+"dieGefahr gegenseitigen Überschreibens besteht"
 
 msgid ""
 "processing vignette '%s' failed with diagnostics:\n"
@@ -589,12 +641,6 @@ msgstr "Datei '%s' nicht gefunden"
 msgid "vignette filename '%s' does not match any of the '%s' filename patterns"
 msgstr "Vignettendateiname '%s' passt zu keinem der %s' Dateinamenmuster"
 
-msgid "Inconsistent encoding specifications:"
-msgstr "Inkonsistente Kodierungsspezifikationen:"
-
-msgid "with %\\SweaveUTF8"
-msgstr "with %\\SweaveUTF8"
-
 msgid "In '%s' vignettes '%s' and '%s' have the same vignette name"
 msgstr "In '%s' Vignetten '%s' und '%s' haben denselben Vignettennamen"
 
@@ -614,7 +660,8 @@ msgid "Vignette engine %s is not registered"
 msgstr "Vignettentreiber %s ist nicht registiert"
 
 msgid "Vignette engine %s is not registered by any of the packages %s"
-msgstr "Vignettentreiber %s ist nicht von irgendeinem der Pakete %s registriert"
+msgstr ""
+"Vignettentreiber %s ist nicht von irgendeinem der Pakete %s registriert"
 
 msgid "Engine name %s and package %s do not match"
 msgstr "Treibername %s und Paket %s passen nicht "
@@ -626,7 +673,8 @@ msgid "Argument %s must be a character vector or NULL and not %s"
 msgstr "Argument %s muss eine Zeichenkette oder NULL sein, aber nicht %s"
 
 msgid "Cannot change the %s engine or use an engine of that name"
-msgstr "Kann den %s Treiber nicht wechseln oder einen Treiber dieses Namens nutzen"
+msgstr ""
+"Kann den %s Treiber nicht wechseln oder einen Treiber dieses Namens nutzen"
 
 msgid "vignette builder '%s' not found"
 msgstr "Vignetten-Erzeuger '%s' nicht gefunden"
@@ -813,6 +861,9 @@ msgstr "Link %s konnte im Paket %s nicht gefunden werden"
 msgid "No docs found for package %s"
 msgstr "Keine Dokumente zu Paket %s gefunden"
 
+msgid "URL %s was not found"
+msgstr "URL '%s' nicht gefunden"
+
 msgid ""
 "Only help files, %s, %s and files under %s and %s in a package can be viewed"
 msgstr ""
@@ -821,9 +872,6 @@ msgstr ""
 
 msgid "unsupported URL %s"
 msgstr "nicht unterstützte URL %s"
-
-msgid "URL %s was not found"
-msgstr "URL '%s' nicht gefunden"
 
 msgid "httpd server disabled by R_DISABLE_HTTPD"
 msgstr "httpd_server durch R_DISABLE_HTTPD verhindert"
@@ -1101,9 +1149,6 @@ msgstr "%s gefunden, vielleicht aus %s"
 msgid "testing '%s' failed"
 msgstr "Test von '%s' fehlgeschlagen"
 
-msgid "%d of the package tests failed"
-msgstr "%d der Pakettests fehlgeschlagen"
-
 msgid "Testing examples for package %s"
 msgstr "Teste die Beispiele für Paket %s"
 
@@ -1153,6 +1198,18 @@ msgstr "'x' muss eine Zeichenkette sein"
 msgid "test '%s' is not available"
 msgstr "Test '%s' nicht verfügbar"
 
+msgid ":"
+msgstr ":"
+
+msgid "latin1"
+msgstr "latin1"
+
+msgid "ASCII"
+msgstr "ASCII"
+
+msgid "byte"
+msgstr "byte"
+
 msgid "argument 'x' must be a character vector"
 msgstr "Argument 'x' muss ein Charaktervektor sein"
 
@@ -1174,11 +1231,8 @@ msgstr "kann %s nicht auf '%s' ausführen"
 msgid "unable to run %s on '%s'"
 msgstr "kann %s nicht für '%s' ausführen"
 
-msgid "cannot coerce"
-msgstr "kann nicht umwandeln"
-
-msgid "to logical"
-msgstr "in logische Werte"
+msgid "cannot coerce %s to logical"
+msgstr "kann %s nicht in logischen Wert umwandeln"
 
 msgid "File 'DESCRIPTION' is missing."
 msgstr "Datei 'DESCRIPTION' fehlt."
@@ -1203,6 +1257,9 @@ msgstr "kann Paketquelltext nicht einlesen"
 
 msgid "Call sequence:"
 msgstr "Aufrufsequenz:"
+
+msgid "'text' must be a character vector"
+msgstr "'text' muss ein Zeichenkettenvektor sein"
 
 msgid "parsing '%s'"
 msgstr "parse '%s'"
@@ -1274,8 +1331,10 @@ msgstr[1] ".Internal Aufrufe in Methoden folgende Referenzklassen gefunden:"
 msgid "Found an obsolete/platform-specific call in the following function:"
 msgid_plural ""
 "Found an obsolete/platform-specific call in the following functions:"
-msgstr[0] "Veralteten/plattformspezifischen Aufruf in folgender Funktion gefunden:"
-msgstr[1] "Veraltete/plattformpezifische Aufrufe in folgenden Funktionen gefunden:"
+msgstr[0] ""
+"Veralteten/plattformspezifischen Aufruf in folgender Funktion gefunden:"
+msgstr[1] ""
+"Veraltete/plattformpezifische Aufrufe in folgenden Funktionen gefunden:"
 
 msgid ""
 "Found an obsolete/platform-specific call in methods for the following S4 "
@@ -1284,9 +1343,11 @@ msgid_plural ""
 "Found an obsolete/platform-specific call in methods for the following S4 "
 "generics:"
 msgstr[0] ""
-"Veralteten/plattformspezifischen Aufruf in Methoden für die folgende S4 Generische gefunden:"
+"Veralteten/plattformspezifischen Aufruf in Methoden für die folgende S4 "
+"Generische gefunden:"
 msgstr[1] ""
-"Veralteten/plattformspezifischen Aufruf in Methoden für die folgenden S4 Generischen gefunden:"
+"Veralteten/plattformspezifischen Aufruf in Methoden für die folgenden S4 "
+"Generischen gefunden:"
 
 msgid ""
 "Found an obsolete/platform-specific call in methods for the following "
@@ -1295,9 +1356,11 @@ msgid_plural ""
 "Found an obsolete/platform-specific call in methods for the following "
 "reference classes:"
 msgstr[0] ""
-"Veralteten/plattformspezifischen Aufruf in Methoden für die folgende Referenzklasse gefunden:"
+"Veralteten/plattformspezifischen Aufruf in Methoden für die folgende "
+"Referenzklasse gefunden:"
 msgstr[1] ""
-"Veralteten/platformspezifischen Aufruf in Methoden für die folgenden Referenzklassen gefunden:"
+"Veralteten/platformspezifischen Aufruf in Methoden für die folgenden "
+"Referenzklassen gefunden:"
 
 msgid "Found the deprecated function:"
 msgid_plural "Found the deprecated functions:"
@@ -1352,6 +1415,30 @@ msgid_plural "objects %s are created by more than one data call"
 msgstr[0] "Objekt %s wird durch mehr als einen Datenaufruf erzeugt"
 msgstr[1] "Objekt(e) %s werden durch mehr als einen Datenaufruf erzeugt"
 
+msgid "%d of the package tests failed"
+msgid_plural "%d of the package tests failed"
+msgstr[0] "%d der Pakettests fehlgeschlagen"
+msgstr[1] "%d der Pakettests fehlgeschlagen"
+
+#, fuzzy
+#~ msgid "Undeclared package used in Rd xrefs:"
+#~ msgid_plural "Undeclared packages used in Rd xrefs:"
+#~ msgstr[0] "Unbekanntes Paket %s in Rd Kreuzreferenzen"
+#~ msgstr[1] "Unbekannte Pakete %s in Rd Kreuzreferenzen"
+
+#, fuzzy
+#~ msgid "Inconsistent encoding specifications: %s with %%\\SweaveUTF8"
+#~ msgstr "Inkonsistente Kodierungsspezifikationen:"
+
+#~ msgid "argument 'file' must be a character string or connection"
+#~ msgstr "Argument 'file' muss eine Zeichenkette oder eine Verbindung sein"
+
+#~ msgid "with %\\SweaveUTF8"
+#~ msgstr "with %\\SweaveUTF8"
+
+#~ msgid "to logical"
+#~ msgstr "in logische Werte"
+
 #~ msgid "Vignette product"
 #~ msgstr "Vignette Produkt"
 
@@ -1372,9 +1459,6 @@ msgstr[1] "Objekt(e) %s werden durch mehr als einen Datenaufruf erzeugt"
 
 #~ msgid ". The following files exists in directory"
 #~ msgstr ". Die folgende Datei exisitiert im Verzeichnis"
-
-#~ msgid ":"
-#~ msgstr ":"
 
 #~ msgid "Located more than one"
 #~ msgstr "mehr als eine gefunden"
@@ -1875,9 +1959,6 @@ msgstr[1] "Objekt(e) %s werden durch mehr als einen Datenaufruf erzeugt"
 #~ "'Suspect' Links sind von der Form \\\\link[pkg]{a}, wobei 'a' zwar als "
 #~ "Link, nicht aber als Datei exisitert. Solche Links funktionieren nicht in "
 #~ "R < 2.10.0 und nur in HTML (nicht PDF) Hilfe in der aktuellen Version)"
-
-#~ msgid "missing 'DESCRIPTION.in' for package '%s'"
-#~ msgstr "'DESCRIPTION.in' fehlt für Paket '%s'"
 
 #~ msgid "ERROR: this R is version %s, bundle '%s' requires R %s %s"
 #~ msgstr "Fehler: dies ist R Version %s, Bündel '%s' benötigt R %s %s"

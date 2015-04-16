@@ -7,11 +7,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2013-11-25 05:14\n"
+"POT-Creation-Date: 2015-03-24 10:19\n"
 "PO-Revision-Date: 2005-03-15 08:37+0000\n"
 "Last-Translator: 陈斐 <feic@normipaiva.com>\n"
 "Language-Team: Chinese\n"
-"Language: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -88,8 +88,8 @@ msgid ""
 "the computation: 'as(object,\"%s\") <- value' is valid when object has class "
 "%s only if 'is(value, \"%s\")' is TRUE ('class(value)' was %s)"
 msgstr ""
-"运算出错：当object的类别是%2$s时，'as(object,\"%1$s\") <- value'只能在'is"
-"(value, \"%3$s\")'值为TRUE的时候才能用('class(value) '的值不能是%4$s)"
+"运算出错：当object的类别是%2$s时，'as(object,\"%1$s\") <- value'只能"
+"在'is(value, \"%3$s\")'值为TRUE的时候才能用('class(value) '的值不能是%4$s)"
 
 msgid ""
 "there is no automatic definition for 'as(object, \"%s\") <- value' when "
@@ -245,6 +245,10 @@ msgid ""
 "object of class %s)"
 msgstr "第一个参数应当为泛型函数的名称(现在却是类别为%s的对象)"
 
+#, fuzzy
+msgid "must supply 'generic.function' or 'class'"
+msgstr "必需为%s提供一个作默认用的泛型函数或函数"
+
 msgid "%s is not an S4 generic function in %s; methods not removed"
 msgstr "%s不是在%s里的S4泛型函数；因此方法没有被删除掉"
 
@@ -265,12 +269,8 @@ msgstr "函数%s已经是群体泛型函数了；没有变动"
 msgid "Function %s is a group generic; do not call it directly"
 msgstr "函数%s是群体泛型函数；不能直接調用"
 
-msgid ""
-"'callGeneric' with a primitive needs explicit arguments (no formal args "
-"defined)"
-msgstr "带基元的'callGeneric'需要明确的参数(没有设定正式参数)"
-
-msgid "'callGeneric' must be called from a generic function or method"
+#, fuzzy
+msgid "callGeneric() must be called from within a method body"
 msgstr "'callGeneric'只能由泛型函数或方法来調用"
 
 msgid "expected a non-empty character string for argument name"
@@ -329,11 +329,10 @@ msgstr ""
 msgid "non-generic function '%s' given to findMethods()"
 msgstr "findMethods()不适用于非泛型函数'%s'"
 
-msgid "only FALSE is meaningful for 'inherited', when 'where' is supplied (got"
+#, fuzzy
+msgid ""
+"only FALSE is meaningful for 'inherited', when 'where' is supplied (got %s)"
 msgstr "用'where'时，FALSE只对于'inherited'有意义，(得到了"
-
-msgid "\""
-msgstr "\""
 
 msgid "argument 'f' must be a generic function or %s"
 msgstr "参数'f'必需是泛型函数，或为%s"
@@ -457,6 +456,11 @@ msgstr "程辑包\"%2$s\"里用于\"%1$s\"这一类的类生成函数"
 msgid "the names in signature for method (%s) do not match %s's arguments (%s)"
 msgstr "方法(%s)标记里的名字同函数%s参数(%s)不相对应"
 
+#, fuzzy
+msgid ""
+"the names in signature for method (%s) do not match function's arguments (%s)"
+msgstr "方法(%s)标记里的名字同函数%s参数(%s)不相对应"
+
 msgid ""
 "a call to callNextMethod() appears in a call to %s, but the call does not "
 "seem to come from either a generic function or another 'callNextMethod'"
@@ -471,6 +475,9 @@ msgstr "調用'callNextMethod'既不在'method'也不在'callNextMethod'的文�
 
 msgid "bad object found as method (class %s)"
 msgstr "作为方法的对象(类别%s)出了错"
+
+msgid "No next method available"
+msgstr ""
 
 msgid ""
 "in constructing the prototype for class %s: prototype has class %s, but the "
@@ -494,6 +501,9 @@ msgstr "类别继承里有可能有循环: %s在父类别和子类别(%s)里有�
 
 msgid "undefined slot classes in definition of %s: %s"
 msgstr "在%s的定义中不存在这种槽类别: %s"
+
+msgid "(class %s)"
+msgstr "(类别%s)"
 
 msgid ""
 "in definition of class %s, information for superclass %s is of class %s "
@@ -686,12 +696,6 @@ msgstr "%s的参数要么是NULL，要么是泛型函数对象；现在却是类
 
 msgid "no suitable arguments to dispatch methods in this function"
 msgstr "此函数里没有合适的参数可用来分配方法"
-
-msgid "special function %s is not permitted to have methods"
-msgstr "特殊函数%s不可以有方法"
-
-msgid "special function %s has no known argument list; will assume '(x, ...)'"
-msgstr "特殊函数%s没有已知的参数串列；假设用'(x, ...)'"
 
 msgid "making a generic for special function %s"
 msgstr "为特殊函数 %s制造泛型函数"
@@ -1112,7 +1116,8 @@ msgid ""
 "class %s"
 msgstr "方法表(%s)里的对象定义不对：应该是方法，现在却是个类别为%s的对象"
 
-msgid "invalid or unset methods table in generic function \""
+#, fuzzy
+msgid "invalid or unset methods table in generic function %s"
 msgstr "泛型函数的方法表不对，或还没有设制\""
 
 msgid "trying to find a methods table in a non-generic function"
@@ -1634,6 +1639,21 @@ msgid_plural ""
 "no definition of class %s in the specified position, %s, definitions on : %s"
 msgstr[0] "在指定的%2$s这个位置不存在类别%1$s的定义, 定义在: %3$s"
 
+#~ msgid "special function %s is not permitted to have methods"
+#~ msgstr "特殊函数%s不可以有方法"
+
+#~ msgid ""
+#~ "special function %s has no known argument list; will assume '(x, ...)'"
+#~ msgstr "特殊函数%s没有已知的参数串列；假设用'(x, ...)'"
+
+#~ msgid ""
+#~ "'callGeneric' with a primitive needs explicit arguments (no formal args "
+#~ "defined)"
+#~ msgstr "带基元的'callGeneric'需要明确的参数(没有设定正式参数)"
+
+#~ msgid "\""
+#~ msgstr "\""
+
 #~ msgid ""
 #~ "could not find superclass %s to clean up when removing subclass "
 #~ "references to class %s"
@@ -1795,9 +1815,6 @@ msgstr[0] "在指定的%2$s这个位置不存在类别%1$s的定义, 定义在: 
 #~ "installed.  Possible corruption of the methods in the class."
 #~ msgstr ""
 #~ "在安装之前类别%s里的%s方法无法被处理成类别方法。在类别里有能出现方法损坏"
-
-#~ msgid "(class %s)"
-#~ msgstr "(类别%s)"
 
 #~ msgid "for method %s()"
 #~ msgstr "为方法%s()"

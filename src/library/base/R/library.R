@@ -1,7 +1,7 @@
 #  File src/library/base/R/library.R
 #  Part of the R package, http://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -225,7 +225,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
     if(!missing(package)) {
         if (is.null(lib.loc)) lib.loc <- .libPaths()
         ## remove any non-existent directories
-        lib.loc <- lib.loc[file.info(lib.loc)$isdir %in% TRUE]
+        lib.loc <- lib.loc[dir.exists(lib.loc)]
 
 	if(!character.only)
 	    package <- as.character(substitute(package))
@@ -286,7 +286,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
             ## has a namespace, then the namespace loading mechanism
             ## takes over.
             if (packageHasNamespace(package, which.lib.loc)) {
-                if (package %in% loadedNamespaces()) {
+		if (isNamespaceLoaded(package)) {
                     # Already loaded.  Does the version match?
                     newversion <- as.numeric_version(pkgInfo$DESCRIPTION["Version"])
                     oldversion <- as.numeric_version(getNamespaceVersion(package))
@@ -294,7 +294,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                     	# No, so try to unload the previous one
                     	res <- try(unloadNamespace(package))
                     	if (inherits(res, "try-error"))
-                    	    stop(dQuote(package), " version ", oldversion, " cannot be unloaded.")
+                    	    stop(gettextf("Package %s version %s cannot be unloaded", sQuote(package), oldversion, domain = "R-base"))
                     }
                 }
                 tt <- try({
@@ -369,7 +369,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                                         txt$File)),
                           paste(txt$Title,
                                 paste0(rep.int("(source", NROW(txt)),
-                                       ifelse(txt$PDF != "",
+                                       ifelse(nzchar(txt$PDF),
                                               ", pdf",
                                               ""),
                                        ")")))
@@ -397,7 +397,7 @@ function(package, help, pos = 2, lib.loc = NULL, character.only = FALSE,
                 ## 'package.rds' but we have not checked.
                 file <- system.file("Meta", "package.rds", package = i,
                                     lib.loc = lib)
-                title <- if(file != "") {
+                title <- if(nzchar(file)) {
                     txt <- readRDS(file)
                     if(is.list(txt)) txt <- txt$DESCRIPTION
                     ## we may need to re-encode here.
@@ -688,21 +688,11 @@ function(package = NULL, lib.loc = NULL, quiet = FALSE,
     out <- character()
 
     for(pkg in package) {
-        paths <- character()
-        for(lib in lib.loc) {
-            dirs <- list.files(lib,
-                               pattern = paste0("^", pkg, "$"),
-                               full.names = TRUE)
-            ## Note that we cannot use tools::file_test() here, as
-            ## cyclic namespace dependencies are not supported.  Argh.
-            paths <- c(paths,
-                       dirs[file.info(dirs)$isdir &
-                            file.exists(file.path(dirs,
-                                                  "DESCRIPTION"))])
-        }
-        if(use_loaded && pkg %in% loadedNamespaces()) {
-            dir <- if (pkg == "base") system.file()
-            else getNamespaceInfo(pkg, "path")
+	paths <- file.path(lib.loc, pkg)
+	paths <- paths[ file.exists(file.path(paths, "DESCRIPTION")) ]
+	if(use_loaded && isNamespaceLoaded(pkg)) {
+	    dir <- if (pkg == "base") system.file()
+		   else .getNamespaceInfo(asNamespace(pkg), "path")
             paths <- c(dir, paths)
         }
         ## trapdoor for tools:::setRlibs
@@ -823,61 +813,67 @@ function(file="DESCRIPTION", lib.loc = NULL, quietly = FALSE, useImports = FALSE
 .getRequiredPackages2 <-
 function(pkgInfo, quietly = FALSE, lib.loc = NULL, useImports = FALSE)
 {
+### FIXME: utils::packageVersion() should be pushed up here instead
+    .findVersion <- function(pkg, lib.loc = NULL) {
+        pfile <- system.file("Meta", "package.rds",
+                             package = pkg, lib.loc = lib.loc)
+        if (nzchar(pfile))
+            as.numeric_version(readRDS(pfile)$DESCRIPTION["Version"])
+        else
+            NULL
+    }
+    .findAllVersions <- function(pkg, lib.loc = NULL) {
+        if (is.null(lib.loc))
+            lib.loc <- .libPaths()
+        do.call(c, Filter(Negate(is.null),
+                          lapply(lib.loc, .findVersion, pkg=pkg)))
+    }
     pkgs <- unique(names(pkgInfo$Depends))
-    if (length(pkgs)) {
-        pkgname <- pkgInfo$DESCRIPTION["Package"]
-        for(pkg in pkgs) {
-            ## several packages 'Depends' on base!
-            if (pkg == "base") next
-            ## allow for multiple occurrences
-            zs <- pkgInfo$Depends[names(pkgInfo$Depends) == pkg]
-            have_vers <- any(vapply(zs, length, 1L) > 1L)
-            if ( !paste("package", pkg, sep = ":") %in% search() ) {
-                if (have_vers) {
-                    pfile <- system.file("Meta", "package.rds",
-                                         package = pkg, lib.loc = lib.loc)
-                    if(!nzchar(pfile))
-                        stop(gettextf("package %s required by %s could not be found",
-                                      sQuote(pkg), sQuote(pkgname)),
-                             call. = FALSE, domain = NA)
-                    current <- readRDS(pfile)$DESCRIPTION["Version"]
-                    for(z in zs)
-                        if(length(z) > 1L) {
-                            target <- as.numeric_version(z$version)
-                            if (!do.call(z$op, list(as.numeric_version(current), target)))
-##                            if (!eval(parse(text=paste("current", z$op, "target"))))
-                                stop(gettextf("package %s %s was found, but %s %s is required by %s",
-                                              sQuote(pkg), current, z$op,
-                                              target, sQuote(pkgname)),
-                                     call. = FALSE, domain = NA)
-                        }
+    pkgname <- pkgInfo$DESCRIPTION["Package"]
+    for(pkg in setdiff(pkgs, "base")) {
+        ## allow for multiple occurrences
+        depends <- pkgInfo$Depends[names(pkgInfo$Depends) == pkg]
+        attached <- paste("package", pkg, sep = ":") %in% search()
+        current <- .findVersion(pkg, lib.loc)
+        if(is.null(current))
+            stop(gettextf("package %s required by %s could not be found",
+                          sQuote(pkg), sQuote(pkgname)),
+                 call. = FALSE, domain = NA)
+        have_vers <- vapply(depends, length, 1L) > 1L
+        for(dep in depends[have_vers]) {
+            target <- as.numeric_version(dep$version)
+            sufficient <- do.call(dep$op, list(current, target))
+            if (!sufficient) {
+                if (is.null(lib.loc))
+                    lib.loc <- .libPaths()
+                versions <- .findAllVersions(pkg, lib.loc)
+                sufficient <- vapply(versions, dep$op, logical(1L), target)
+                if (any(sufficient)) {
+                    warning(gettextf("version %s of %s masked by %s in %s",
+                                     versions[which(sufficient)[1L]],
+                                     sQuote(pkg),
+                                     current,
+                                     lib.loc[which(sufficient)[1L]-1L]),
+                            call. = FALSE, domain = NA)
                 }
+                if (attached)
+                    msg <- "package %s %s is loaded, but %s %s is required by %s"
+                else
+                    msg <- "package %s %s was found, but %s %s is required by %s"
+                stop(gettextf(msg, sQuote(pkg), current, dep$op,
+                              target, sQuote(pkgname)),
+                     call. = FALSE, domain = NA)
+            }
+        }
 
-                if (!quietly)
-                    packageStartupMessage(gettextf("Loading required package: %s",
-                                     pkg), domain = NA)
-                library(pkg, character.only = TRUE, logical.return = TRUE,
-                        lib.loc = lib.loc) ||
+        if (!attached) {
+            if (!quietly)
+                packageStartupMessage(gettextf("Loading required package: %s",
+                                               pkg), domain = NA)
+            library(pkg, character.only = TRUE, logical.return = TRUE,
+                    lib.loc = lib.loc) ||
                 stop(gettextf("package %s could not be loaded", sQuote(pkg)),
                      call. = FALSE, domain = NA)
-            } else {
-                ## check the required version number, if any
-                if (have_vers) {
-                    pfile <- system.file("Meta", "package.rds",
-                                         package = pkg, lib.loc = lib.loc)
-                    current <- readRDS(pfile)$DESCRIPTION["Version"]
-                    for(z in zs)
-                        if (length(z) > 1L) {
-                            target <- as.numeric_version(z$version)
-                            if (!do.call(z$op, list(as.numeric_version(current), target)))
-##                            if (!eval(parse(text=paste("current", z$op, "target"))))
-                                stop(gettextf("package %s %s is loaded, but %s %s is required by %s",
-                                              sQuote(pkg), current, z$op,
-                                              target, sQuote(pkgname)),
-                                     call. = FALSE, domain = NA)
-                        }
-                }
-            }
         }
     }
     if(useImports) {

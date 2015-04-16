@@ -1,5 +1,5 @@
 
-R version 3.1.3 RC (2015-03-01 r67921) -- "Smooth Sidewalk"
+R version 3.2.0 beta (2015-04-05 r68147) -- "Full of Ingredients"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -3260,7 +3260,7 @@ Error in `[.data.frame`(x, 1, c("a", "c")) : undefined columns selected
 > 
 > ## methods(class = ) with namespaces, .Primitives etc (many missing in 1.7.x):
 > meth2gen <- function(cl)
-+     noquote(sub(paste("\\.",cl,"$",sep=""),"", c(methods(class = cl))))
++     noquote(sub(paste("\\.",cl,"$",sep=""),"", c(.S3methods(class = cl))))
 > meth2gen("data.frame")
  [1] $             $<-           Math          Ops           Summary      
  [6] [             [<-           [[            [[<-          aggregate    
@@ -5477,11 +5477,11 @@ character(0)
 > ## apply on arrays with zero extents
 > ## Robin Hankin, R-help, 2006-02-13
 > A <- array(0, c(3, 0, 4))
-> dimnames(A) <- list(a = letters[1:3], b = NULL, c = LETTERS[1:4])
+> dimnames(A) <- list(D1 = letters[1:3], D2 = NULL, D3 = LETTERS[1:4])
 > f <- function(x) 5
 > apply(A, 1:2, f)
-   b
-a  
+   D2
+D1 
   a
   b
   c
@@ -6404,15 +6404,15 @@ function ()
 > print.function
 function (x, ...)  
  - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 19 1 63 19 63 1 1
-  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x45db8a0> 
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3232020> 
 > f
 function ()  
  - attr(*, "srcref")=Class 'srcref'  atomic [1:8] 1 17 1 28 17 28 1 1
-  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x45e7a48> 
+  .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3228980> 
  - attr(*, "note")= chr "just a note"
  - attr(*, "yada")=function ()  
   ..- attr(*, "srcref")=Class 'srcref'  atomic [1:8] 2 24 2 48 24 48 2 2
-  .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x45e7a48> 
+  .. .. ..- attr(*, "srcfile")=Classes 'srcfilecopy', 'srcfile' <environment: 0x3228980> 
 > rm(print.function)
 > ## auto-printing and printing differed up to R 2.9.x
 > 
@@ -6702,7 +6702,7 @@ common odds ratio
 	Mantel-Haenszel chi-squared test with continuity correction
 
 data:  Nitrous
-Mantel-Haenszel X-squared = 0.7143, df = 1, p-value = 0.199
+Mantel-Haenszel X-squared = 0.71432, df = 1, p-value = 0.199
 alternative hypothesis: true common odds ratio is less than 1
 95 percent confidence interval:
  0.000000 1.260053
@@ -7491,4 +7491,186 @@ $foo
 24    FALSE              
 23     TRUE             }
 > ## Got some parents wrong
+> 
+> 
+> ## wish of PR#15819
+> set.seed(123); x <- runif(10); y <- rnorm(10)
+> op <- options(OutDec = ",")
+> fit <- lm(y ~ x)
+> summary(fit)
+
+Call:
+lm(formula = y ~ x)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-1,62155 -0,33471  0,05238  0,55227  1,19742 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)
+(Intercept)   0,8994     0,6282   1,432    0,190
+x            -1,3275     0,9780  -1,357    0,212
+
+Residual standard error: 0,8648 on 8 degrees of freedom
+Multiple R-squared:  0,1872,	Adjusted R-squared:  0,08557 
+F-statistic: 1,842 on 1 and 8 DF,  p-value: 0,2117
+
+> options(op)
+> ## those parts using formatC still used a decimal point.
+> 
+> 
+> ## Printing a list with "bad" component names
+> L <- list(`a\\b` = 1, `a\\c` = 2, `a\bc` = "backspace")
+> setClass("foo", representation(`\\C` = "numeric"))
+> ## the next three all print correctly:
+> names(L)
+[1] "a\\b" "a\\c" "a\bc"
+> unlist(L)
+       a\\b        a\\c        a\bc 
+        "1"         "2" "backspace" 
+> as.pairlist(L)
+$`a\\b`
+[1] 1
+
+$`a\\c`
+[1] 2
+
+$`a\bc`
+[1] "backspace"
+
+> cat(names(L), "\n")# yes, backspace is backspace here
+a\b a\c ac 
+> L
+$`a\\b`
+[1] 1
+
+$`a\\c`
+[1] 2
+
+$`a\bc`
+[1] "backspace"
+
+> new("foo")
+An object of class "foo"
+Slot "\\C":
+numeric(0)
+
+> ## the last two lines printed wrongly in R <= 3.1.1
+> 
+> 
+> ## Printing of arrays where last dim(.) == 0 :
+> r <- matrix(,0,4, dimnames=list(Row=NULL, Col=paste0("c",1:4)))
+> r
+      Col
+Row    c1 c2 c3 c4
+> t(r) # did not print "Row", "Col"
+    Row
+Col 
+  c1
+  c2
+  c3
+  c4
+> A <- array(dim=3:0, dimnames=list(D1=c("a","b","c"), D2=c("X","Y"), D3="I", D4=NULL))
+> A ## did not print *anything*
+<3 x 2 x 1 x 0 array of logical>
+   D2
+D1  X Y
+  a
+  b
+  c
+
+> A[,,"I",] # ditto
+<3 x 2 x 0 array of logical>
+   D2
+D1  X Y
+  a
+  b
+  c
+
+> A[,,0,]   # ditto
+<3 x 2 x 0 x 0 array of logical>
+   D2
+D1  X Y
+  a
+  b
+  c
+
+> aperm(A, c(3:1,4))   # ditto
+<1 x 2 x 3 x 0 array of logical>
+   D2
+D3  X Y
+  I
+
+> aperm(A, c(1:2, 4:3))# ditto
+<3 x 2 x 0 x 1 array of logical>
+   D2
+D1  X Y
+  a
+  b
+  c
+
+> unname(A)            # ditto
+<3 x 2 x 1 x 0 array of logical>
+     [,1] [,2]
+[1,]
+[2,]
+[3,]
+
+> format(A[,,1,])	     # ditto
+<3 x 2 x 0 array of character>
+   D2
+D1  X Y
+  a
+  b
+  c
+
+> aperm(A, 4:1) # was ok, is unchanged
+, , D2 = X, D1 = a
+
+      D3
+D4     I
+
+, , D2 = Y, D1 = a
+
+      D3
+D4     I
+
+, , D2 = X, D1 = b
+
+      D3
+D4     I
+
+, , D2 = Y, D1 = b
+
+      D3
+D4     I
+
+, , D2 = X, D1 = c
+
+      D3
+D4     I
+
+, , D2 = Y, D1 = c
+
+      D3
+D4     I
+
+> ## sometimes not printing anything in R <= 3.1.1
+> 
+> 
+> ## Printing objects with very long names cut off literal values (PR#15999)
+> make_long_name <- function(n)
++ {
++   paste0(rep("a", n), collapse = "")
++ }
+> setNames(TRUE, make_long_name(1000))  # value printed as TRU
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   TRUE 
+> setNames(TRUE, make_long_name(1002))  # value printed as T
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   TRUE 
+> setNames(TRUE, make_long_name(1003))  # value not printed
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   TRUE 
+> ##
 > 

@@ -1,24 +1,28 @@
 # Korean translation for R stats package
 # src/library/stats/po/R-ko.po
-# Copyright (C) 1995-2014 The R Core Team
+# 
+# Copyright (C) 1995-2015 The R Core Team
+# 
 # This file is distributed under the same license as the R stats package.
-# Chel Hee Lee <chl948@mail.usask.ca>, 2008-2014.
+# Maintained by Chel Hee Lee <chl948@mail.usask.ca>, 2008-2015.
+#
+# Notes:
+# Freezed on 30-MAR-2015 for R-3.2.0 - QC: PASS
+# Freezed on 06-FEB-2015 for R-3.1.3 - QC: PASS 
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.1.0\n"
+"Project-Id-Version: R 3.2.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-03-27 07:47\n"
-"PO-Revision-Date: 2014-03-27 13:33-0600\n"
+"POT-Creation-Date: 2014-11-20 11:48\n"
+"PO-Revision-Date: 2015-03-30 14:01-0600\n"
 "Last-Translator: Chel Hee Lee <chl948@mail.usask.ca>\n"
-"Language-Team:  <chl948@mail.usask.ca>\n"
+"Language-Team: Chel Hee Lee  <chl948@mail.usask.ca>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Poedit-SourceCharset: UTF-8\n"
-"X-Generator: Poedit 1.5.4\n"
 
 msgid "models are not all fitted to the same number of observations"
 msgstr ""
@@ -109,6 +113,9 @@ msgstr "x$lag은 적어도 1개의 열을 반드시 가지고 있어야 합니�
 
 msgid "can use ci.type=\"ma\" only if first lag is 0"
 msgstr "만약 첫번째 lag이 0인 경우만 ci.type=\"ma\"를 사용할 수 있습니다"
+
+msgid "Page [%d,%d]: i =%s; j =%s"
+msgstr ""
 
 msgid "univariate time series only"
 msgstr "일변량 시계열만 가능합니다"
@@ -631,8 +638,10 @@ msgstr "'tree'의 구성요소 'height'는 오름차순으로 정렬되어 있�
 msgid "elements of 'k' must be between 1 and %d"
 msgstr "'which'의 모든 구성요소들은 반드시 1과 %d 사이에 있어야 합니다"
 
-msgid "'merge' and 'height' do not fit!"
-msgstr "'merge'와 'height'가 서로 맞아떨어지지 않습니다!"
+msgid ""
+"dendrogram entries must be 1,2,..,%d (in any order), to be coercible to "
+"\"hclust\""
+msgstr ""
 
 msgid "dendrogram node with non-positive #{branches}"
 msgstr "양수가 아닌 #{branches}가 사용된 덴드로그램 노드입니다"
@@ -761,8 +770,8 @@ msgstr "'rate' 또는 'scale' 중 하나만 지정해야 합니다"
 msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[]와 prob[]는 반드시 같은 길이를 가지는 벡터이어야 합니다"
 
-msgid "probabilities cannot be negative nor all 0"
-msgstr "확률값은 음의 값을 가질 수 없고 모두 0일 수도 없습니다"
+msgid "probabilities must be finite, non-negative and not all 0"
+msgstr "확률값들은 반드시 유한(finite)하고, 음의 값을 가지지 않아야 하며 모두가 0이어야서는 안됩니다."
 
 msgid "'x' must be non-negative"
 msgstr "'x'는 반드시 음수가 아니어야 합니다"
@@ -928,12 +937,6 @@ msgstr "'circular'는 반드시 논리값이고 NA가 아니어야 합니다"
 
 msgid "length of 'init' must equal length of 'filter'"
 msgstr "'init'의 길이는 반드시 'filter'의 길이와 같아야 합니다"
-
-msgid "'init' must have 1 column"
-msgstr "'init'는 반드시 1개의 열을 가지고 있어야 합니다"
-
-msgid "'init' must have 1 or %d columns"
-msgstr "'init'는 반드시 1개 또는 %d개의 열을 가지고 있어야 합니다"
 
 msgid "'x' must have at least 2 rows and columns"
 msgstr "'x'는 반드시 적어도 2개의 행과 열을 가져야 합니다"
@@ -1161,12 +1164,6 @@ msgstr ""
 msgid "invalid length of members"
 msgstr ""
 
-msgid "invalid dendrogram"
-msgstr "유효하지 않은 덴드로그램입니다"
-
-msgid "'merge' component in dendrogram must be integer"
-msgstr "덴드로그램에서 'merge'요소는 반드시 정수이어야 합니다"
-
 msgid "argument 'x' cannot be coerced to class %s"
 msgstr "인수 'x'를 클래스  %s로 강제형변환을 할 수 없습니다"
 
@@ -1272,6 +1269,12 @@ msgstr "'iter.max'는 반드시 양수이어야 합니다"
 
 msgid "must have same number of columns in 'x' and 'centers'"
 msgstr "'x'와 'centers'는 반드시 같은수의 열을 가져야 합니다"
+
+msgid "'x' is a list, so ignoring argument 'g'"
+msgstr ""
+
+msgid "some elements of 'x' are not numeric and will be coerced to numeric"
+msgstr ""
 
 msgid "not enough 'x' data"
 msgstr "충분하지 않은 'x' 데이터입니다"
@@ -2009,6 +2012,9 @@ msgstr ""
 msgid "invalid 'endrule' argument"
 msgstr "유효하지 않은 'endrule'인자입니다"
 
+msgid ".nknots.smspl() is now exported; use it instead of n.knots()"
+msgstr ""
+
 msgid "invalid 'control.spar'"
 msgstr "유효하지 않은 'control.spar'입니다"
 
@@ -2131,10 +2137,10 @@ msgid "stepfun: 'x' must be ordered increasingly"
 msgstr ""
 
 msgid "'x' must have length >= 1"
-msgstr "'x'는 반드시 길이가 1보다 크거나 같아야 합니다"
+msgstr "'x'는 반드시 길이가 1보다 크거나 같아야 합니다."
 
 msgid "'y' must be one longer than 'x'"
-msgstr "'y'는 반드시 'x'보다 길어야 합니다"
+msgstr "'y'는 반드시 'x'보다 길어야 합니다."
 
 msgid "no 'as.stepfun' method available for 'x'"
 msgstr "'x'에 사용가능한 'as.stepfun' 메소드가 없습니다"
@@ -2145,8 +2151,8 @@ msgstr "유효한 step function이 아닙니다"
 msgid "'plot.stepfun' called with wrong type of argument 'x'"
 msgstr ""
 
-msgid "must be 0 or 1"
-msgstr "반드시 0 또는 1 이어야 합니다"
+msgid "%s must be 0 or 1"
+msgstr "%s는 반드시 0 또는 1 이어야 합니다."
 
 msgid "only univariate series are allowed"
 msgstr "오로지 단변량 시리즈만이 허용됩니다"
@@ -2201,13 +2207,13 @@ msgid "singularities in regression"
 msgstr ""
 
 msgid "'ts' object must have one or more observations"
-msgstr "'ts' 객체는 반드시 하나 또는 그 이상의 관찰값들을 가집니다"
+msgstr "'ts' 객체는 반드시 하나 또는 그 이상의 관찰값들을 가지고 있습니다."
 
 msgid "'start' cannot be after 'end'"
-msgstr "'start'는 'end' 뒤에 놓일 수 없습니다"
+msgstr "'start'는 'end' 뒤에 올 수 없습니다."
 
 msgid "no time series supplied"
-msgstr "제공된 시계열이 없습니다"
+msgstr "주어진 시계열(time series)이 없습니다"
 
 msgid "not all series have the same frequency"
 msgstr ""
@@ -2234,28 +2240,28 @@ msgid "scatter plots only for univariate time series"
 msgstr ""
 
 msgid "'xy.labels' must be logical or character"
-msgstr "'xy.labels'는 반드시 논리값 또는 문자이어야 합니다"
+msgstr "'xy.labels'는 반드시 논리형(logical) 또는 문자형(character)이어야 합니다."
 
 msgid "'frequency' and 'deltat' are both supplied and are inconsistent"
-msgstr ""
+msgstr "'frequency'와 'deltat' 모두 제공되었으나 서로 일치하지 않습니다."
 
 msgid "'frequency' not changed"
-msgstr "변경되지 않은 'frequency'입니다"
+msgstr "변경되지 않은 'frequency'입니다."
 
 msgid "bad value for 'start'"
-msgstr "잘못된 'start' 값입니다"
+msgstr "잘못된 'start' 값입니다."
 
 msgid "'start' value not changed"
-msgstr "변경되지 않은 'start'값입니다"
+msgstr "변경되지 않은 'start'값입니다."
 
 msgid "bad value for 'end'"
-msgstr "잘못된 'end' 값입니다"
+msgstr "잘못된 'end' 값입니다."
 
 msgid "'end' value not changed"
-msgstr "변경되지 않은 'end' 값입니다"
+msgstr "변경되지 않은 'end' 값입니다."
 
 msgid "'start' > 'end'"
-msgstr "'start'는 'end'보다 큽니다"
+msgstr "'start'는 'end'보다 큽니다."
 
 msgid "extending time series when replacing values"
 msgstr ""
@@ -2267,7 +2273,7 @@ msgid "no replacement values supplied"
 msgstr "제공된 치환값들이 없습니다"
 
 msgid "too many replacement values supplied"
-msgstr "제공된 치환값들이 너무 많습니다"
+msgstr "제공된 치환값(replacement values)들이 너무 많습니다."
 
 msgid ""
 "number of values supplied is not a sub-multiple of the number of values to "
@@ -2278,10 +2284,10 @@ msgid "only replacement of elements is allowed"
 msgstr ""
 
 msgid "'model' must be list"
-msgstr "'model'은 반드시 리스트이어야 합니다"
+msgstr "'model'은 반드시 리스트(list)이어야 합니다."
 
 msgid "'n' must be strictly positive"
-msgstr "'n'은 반드시 양수이어야 합니다"
+msgstr "'n'은 반드시 양수이어야 합니다."
 
 msgid "'ar' part of model is not stationary"
 msgstr "모델의 'ar' 파트가 stationary 하지 않습니다"
@@ -2290,31 +2296,31 @@ msgid "burn-in 'n.start' must be as long as 'ar + ma'"
 msgstr ""
 
 msgid "'model$order' must be of length 3"
-msgstr "'model$order'는 길이가 반드시 3이어야 합니다"
+msgstr "'model$order'의 길이는 반드시 3이어야 합니다."
 
 msgid "inconsistent specification of 'ar' order"
-msgstr "'ar'의 순서에 부합하지 않는 지정입니다"
+msgstr "'ar'의 순서에 일치하지 않는 지정입니다."
 
 msgid "inconsistent specification of 'ma' order"
-msgstr "'ma'의 순서에 부합하지 않는 지정입니다"
+msgstr "'ma'의 순서에 일치하지 않는 지정입니다."
 
 msgid "number of differences must be a positive integer"
-msgstr ""
+msgstr "차이의 개수(number of differences)는 반드시 양의 정수이어야 합니다."
 
 msgid "need an object with call component"
-msgstr "호출요소를 가진 객체가 필요합니다"
+msgstr "호출요소(call component)를 가진 객체가 필요합니다"
 
 msgid "'ratio' must be a single positive number"
-msgstr "'ratio'는 반드시 양의 값을 가지는 하나의 숫자이어야 합니다"
+msgstr "'ratio'는 반드시 양의 값을 가지는 하나의 숫자이어야 합니다."
 
 msgid "'x' and 'w' must have the same length"
-msgstr "'x'와 'w'는 반드시 같은 길이를 가져야 합니다"
+msgstr "'x'와 'w'는 반드시 같은 길이를 가져야 합니다."
 
 msgid "not enough (finite) 'x' observations"
 msgstr ""
 
 msgid "requested conf.level not achievable"
-msgstr "성취 될 수 없는 conf.level이 요청되었습니다"
+msgstr "수행할 수 없는 conf.level의 값이 주어졌습니다."
 
 msgid "cannot compute confidence interval when all observations are tied"
 msgstr "모든 관측치들의 값이 같다면 신뢰구간을 계산 할 수 없습니다"
@@ -2329,66 +2335,57 @@ msgid "cannot compute exact confidence interval with zeroes"
 msgstr ""
 
 msgid "Requested conf.level not achievable"
-msgstr "성취될 수 없는 conf.level이 요청되었습니다"
+msgstr "수행할 수 없는 conf.level의 값이 주어졌습니다."
 
 msgid "must supply either 'formula' or 'data'"
 msgstr "'formula' 또는 'data' 둘 중 하나는 반드시 제공되어야 합니다"
 
 msgid "%s applies only to two-way tables"
-msgstr "%s는 2차원 테이블에만 적용합니다"
+msgstr "%s는 2차원 테이블에만 적용됩니다."
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr ""
-"asymptotic regression model을 적합하기 하기에는 너무 적은 수의 고유한 값을 가"
-"지는 입력입니다"
+"점근회귀모형(asymptotic regression model)을 적합하기 하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "cannot fit an asymptotic regression model to these data"
-msgstr "asymptotic regression model을 이러한 데이터에 적합할 수 없습니다"
+msgstr "점근회귀모형(asymptotic regression model)은 주어진 데이터에 적합할 수 없습니다."
 
 msgid "too few observations to fit an asymptotic regression model"
-msgstr "asymptotic regression model을 적합하는데 너무 적은 관측치입니다"
+msgstr "점근회귀모형(asymptotic regression model)을 적합하기에는 관측치의 수가 너무 적습니다."
 
 msgid "too few distinct input values to fit the 'asympOff' model"
-msgstr ""
-"'asympOff' model을 적합하기에는 너무 적은 숫자의 고유한 값을 가지는 입력입니"
-"다"
+msgstr "'asympOff' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the 'asympOrig' model"
-msgstr ""
-"'asympOrig' model을 적합하기에는 너무 적은 숫자의 고유한 값을 가지는 입력입니"
-"다"
+msgstr "'asympOrig' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a biexponential"
-msgstr ""
+msgstr "biexponent 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "must have length of response = length of second argument to 'SSfol'"
-msgstr ""
+msgstr "응답변수(response)의 길이는 반드시 'SSfol'에 전달되는 두번째 인자의 길이와 같아야 합니다."
 
 msgid "must have at least 4 observations to fit an 'SSfol' model"
-msgstr ""
-"'SSfol' model을 적합하기 위해서는 적어도 4개의 관측치들이 있어야 합니다"
+msgstr "'SSfol' 모형을 적합하기 위해서는 적어도 4개의 관측치들을 가지고 있어야 합니다. "
 
 msgid "too few distinct input values to fit a four-parameter logistic"
-msgstr ""
-"4개의 파라미터를 가지는 로지스틱을 적합하기에는 너무 적은 수의 고유값을 가진 "
-"입력입니다"
+msgstr "4개의 파라미터를 가지는 로지스틱(logistic)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a logistic model"
-msgstr "로지스틱 모델을 적합하기에는 너무 적은 수의 고유값을 가진 입력입니다"
+msgstr "로지스틱 모형(logistic model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a Michaelis-Menten model"
-msgstr ""
-"Michaelis-Menten model을 적합하기에는 너무 적은 수의 고유값을 가진 입력입니다"
+msgstr "Michaelis-Menten model을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the Gompertz model"
-msgstr "Gompertz model을 적합하기에는 너무 적은 수의 고유값을 가진 입력입니다"
+msgstr "곰페르츠 모형(Gompertz model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the Weibull growth model"
 msgstr ""
-"Weibull growth model을 적합하기에는 너무 적은 수의 고유값을 가진 입력입니다"
+"와이블 성장모형(Weibull growth model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "all 'x' values must be non-negative to fit the Weibull growth model"
-msgstr ""
+msgstr "와이블 성장모형(Weibuill growth model)을 적합하기 위해서는 모든 'x'의 값들이 반드시 음이 아닌 수이어야 합니다."
 
 msgid "using the %d/%d row from a combined fit"
 msgid_plural "using the %d/%d rows from a combined fit"
@@ -2416,7 +2413,7 @@ msgstr[0] "추가 인자 %1$s는 클래스 \"%2$s\"가 아닙니다"
 
 msgid "extra argument %s will be disregarded"
 msgid_plural "extra arguments %s will be disregarded"
-msgstr[0] "추가 인자 %s는 사용되지 않을 것입니다"
+msgstr[0] "추가 인자 %s는 사용되지 않을 것입니다."
 
 msgid "%d factor is too many for %d variables"
 msgid_plural "%d factors are too many for %d variables"
@@ -2424,16 +2421,20 @@ msgstr[0] ""
 
 msgid "'start' must have %d row"
 msgid_plural "'start' must have %d rows"
-msgstr[0] "'start'은 반드시  %d 행을 가지고 있습니다"
+msgstr[0] "'start'은 반드시  %d 개의 행을 가지고 있어야 합니다."
 
 msgid "unable to optimize from this starting value"
 msgid_plural "unable to optimize from these starting values"
 msgstr[0] "이 초기값으로부터는 최적화된 솔루션을 찾을 수 없습니다"
 
+msgid "'init' must have %d column"
+msgid_plural "'init' must have 1 or %d columns"
+msgstr[0] "'init'는 반드시 %d개의 열을 가지고 있어야 합니다."
+
 msgid "X matrix has rank %d, but only %d observation"
 msgid_plural "X matrix has rank %d, but only %d observations"
 msgstr[0] ""
-"X 행렬은 rank %1$d를 가지고 있으나  %2$d개의 관측치 만을 가지고 있습니다"
+"X 행렬은 rank %1$d를 가지고 있으나  %2$d개의 관측치 만을 가지고 있습니다."
 
 msgid "did not converge in %d iteration"
 msgid_plural "did not converge in %d iterations"
@@ -2445,11 +2446,11 @@ msgstr[0] ""
 
 msgid "'X' matrix has %d case (row)"
 msgid_plural "'X' matrix has %d cases (rows)"
-msgstr[0] "'X' 행렬은 %d 개의 케이스들을 가집니다 (행방향)"
+msgstr[0] "'X' 행렬은 %d 개의 케이스(행의 개수)들을 가지고 있습니다."
 
 msgid "'Y' has %d case (row)"
 msgid_plural "'Y' has %d cases (rows)"
-msgstr[0] ""
+msgstr[0] "'Y'는 %d개의 케이스(행의 개수)들을 가지고 있습니다."
 
 msgid "only %d case"
 msgid_plural "only %d cases"
@@ -2461,23 +2462,23 @@ msgstr[0] ""
 
 msgid "medpolish() did not converge in %d iteration"
 msgid_plural "medpolish() did not converge in %d iterations"
-msgstr[0] ""
+msgstr[0] "medpolish()는 %d 번째 반복에서 수렴하지 않았습니다."
 
 msgid "'newdata' had %d row"
 msgid_plural "'newdata' had %d rows"
-msgstr[0] "'newdata'는 %d 행을 가지고 있었습니다"
+msgstr[0] "'newdata'는 %d 개의 행을 가지고 있었습니다."
 
 msgid "but variable found had %d row"
 msgid_plural "but variables found have %d rows"
-msgstr[0] ""
+msgstr[0] "그러나 찾아진 변수는 %d개의 행을 가지고 있었습니다."
 
 msgid "factor %s has new level %s"
 msgid_plural "factor %s has new levels %s"
-msgstr[0] ""
+msgstr[0] "요인(factor) %s는 %s개의 새로운 수준(levels)들을 가지고 있습니다."
 
 msgid "%d observation deleted due to missingness"
 msgid_plural "%d observations deleted due to missingness"
-msgstr[0] ""
+msgstr[0] "결측(missingness)으로 인하여 %d개의 관측치가 삭제되었습니다."
 
 msgid "_NOT_ converged in %d iteration"
 msgid_plural "_NOT_ converged in %d iterations"
@@ -2493,15 +2494,30 @@ msgstr[0] ""
 
 msgid "parameter %s does not occur in the model formula"
 msgid_plural "parameters %s do not occur in the model formula"
-msgstr[0] ""
+msgstr[0] "모수 %s(들)를 모델식(model formula)로부터 찾을 수 없습니다."
 
 msgid "%d observation with NA, NaN or Inf deleted"
 msgid_plural "%d observations with NAs, NaNs and/or Infs deleted"
-msgstr[0] "NA, NaNs 그리고/또는 Infs를 가지는 %d개의 관측치들은 삭제되었습니다"
+msgstr[0] "NA, NaNs 그리고/또는 Infs를 가지는 %d 개의 관측치들이 삭제되었습니다."
 
 msgid "'start.innov' is too short: need %d point"
 msgid_plural "'start.innov' is too short: need %d points"
 msgstr[0] ""
+
+#~ msgid "'merge' and 'height' do not fit!"
+#~ msgstr "'merge'와 'height'가 서로 맞아떨어지지 않습니다!"
+
+#~ msgid "invalid dendrogram"
+#~ msgstr "유효하지 않은 덴드로그램입니다"
+
+#~ msgid "'merge' component in dendrogram must be integer"
+#~ msgstr "덴드로그램에서 'merge'요소는 반드시 정수이어야 합니다"
+
+#~ msgid "probabilities cannot be negative nor all 0"
+#~ msgstr "확률값은 음의 값을 가질 수 없고 모두 0일 수도 없습니다"
+
+#~ msgid "'init' must have 1 or %d columns"
+#~ msgstr "'init'는 반드시 1개 또는 %d개의 열을 가지고 있어야 합니다"
 
 #~ msgid "'deriv' must be between 0 and 2"
 #~ msgstr "'deriv'는 반드시 0과 2사이에 있어야 합니다"

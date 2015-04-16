@@ -243,7 +243,7 @@ static void printRealMatrix(SEXP sx, int offset, int r_pr, int r, int c,
     _COMPUTE_W_( formatReal(&x[j * r], (R_xlen_t) r, &w[j], &d[j], &e[j], 0) );
 
     _PRINT_MATRIX_( , STD_ColumnLabels,
-		   Rprintf("%s", EncodeReal(x[i + j * r], w[j], d[j], e[j], OutDec)) );
+		   Rprintf("%s", EncodeReal0(x[i + j * r], w[j], d[j], e[j], OutDec)) );
 }
 
 static void printComplexMatrix(SEXP sx, int offset, int r_pr, int r, int c,
@@ -267,7 +267,7 @@ static void printComplexMatrix(SEXP sx, int offset, int r_pr, int r, int c,
 
     _PRINT_MATRIX_( , STD_ColumnLabels,
 		   if (ISNA(x[i + j * r].r) || ISNA(x[i + j * r].i))
-		       Rprintf("%s", EncodeReal(NA_REAL, w[j], 0, 0, OutDec));
+		       Rprintf("%s", EncodeReal0(NA_REAL, w[j], 0, 0, OutDec));
 		   else
 		       Rprintf("%s",
 			       EncodeComplex(x[i + j * r],
@@ -452,7 +452,7 @@ void printArray(SEXP x, SEXP dim, int quote, int right, SEXP dimnames)
 	    } else { // nb == 0 -- e.g. <2 x 3 x 0 array of logical>
 		for (i = 0; i < ndim; i++)
 		    Rprintf("%s%d", (i == 0) ? "<" : " x ", dims[i]);
-		Rprintf(" array of %s>\n", CHAR(type2str(TYPEOF(x))));
+		Rprintf(" array of %s>\n", CHAR(type2str_nowarn(TYPEOF(x))));
 	    }
 	    switch (TYPEOF(x)) {
 	    case LGLSXP:
