@@ -1638,7 +1638,10 @@ double R_strtod5(const char *str, char **endptr, char dec,
 	    case '+': p++;
 	    default: ;
 	    }
-	    for (n = 0; *p >= '0' && *p <= '9'; p++) n = n * 10 + (*p - '0');
+	    /* The test for n is in response to PR#16358; it's not right if the exponent is 
+	       very large, but the overflow or underflow below will handle it. */
+#define MAX_EXPONENT_PREFIX 9999
+	    for (n = 0; *p >= '0' && *p <= '9'; p++) n = (n < MAX_EXPONENT_PREFIX) ? n * 10 + (*p - '0') : n;
 	    if (ans != 0.0) { /* PR#15976:  allow big exponents on 0 */
 		expn += expsign * n;
 		if(exph > 0) expn -= exph;
@@ -1674,7 +1677,7 @@ double R_strtod5(const char *str, char **endptr, char dec,
 	case '+': p++;
 	default: ;
 	}
-	for (n = 0; *p >= '0' && *p <= '9'; p++) n = n * 10 + (*p - '0');
+	for (n = 0; *p >= '0' && *p <= '9'; p++) n = (n < MAX_EXPONENT_PREFIX) ? n * 10 + (*p - '0') : n;
 	expn += expsign * n;
     }
 
@@ -2010,6 +2013,7 @@ attribute_hidden
 int Scollate(SEXP a, SEXP b)
 {
     if (!collationLocaleSet) {
+    	int errsv = errno;      /* OSX may set errno in the operations below. */
 	collationLocaleSet = 1;
 #ifndef Win32
 	if (strcmp("C", getLocale()) ) {
@@ -2027,6 +2031,7 @@ int Scollate(SEXP a, SEXP b)
 		error("failed to open ICU collator (%d)", status);
 	    }
 	}
+	errno = errsv;
     }
     if (collator == NULL)
 	return collationLocaleSet == 2 ?

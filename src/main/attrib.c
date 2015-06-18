@@ -42,12 +42,13 @@ static SEXP row_names_gets(SEXP vec , SEXP val)
     if(isReal(val) && length(val) == 2 && ISNAN(REAL(val)[0]) ) {
 	/* This should not happen, but if a careless user dput()s a
 	   data frame and sources the result, it will */
+	PROTECT(vec);
 	PROTECT(val);
 	val = coerceVector(val, INTSXP);
-	UNPROTECT(1);
+	UNPROTECT(1); /* val */
 	PROTECT(val);
 	ans =  installAttrib(vec, R_RowNamesSymbol, val);
-	UNPROTECT(1);
+	UNPROTECT(2); /* vec, val */
 	return ans;
     }
     if(isInteger(val)) {
@@ -64,19 +65,21 @@ static SEXP row_names_gets(SEXP vec , SEXP val)
 	} else OK_compact = FALSE;
 	if(OK_compact) {
 	    /* we hide the length in an impossible integer vector */
+	    PROTECT(vec);
 	    PROTECT(val = allocVector(INTSXP, 2));
 	    INTEGER(val)[0] = NA_INTEGER;
 	    INTEGER(val)[1] = n;
 	    ans =  installAttrib(vec, R_RowNamesSymbol, val);
-	    UNPROTECT(1);
+	    UNPROTECT(2); /* vec, val */
 	    return ans;
 	}
     } else if(!isString(val))
 	error(_("row names must be 'character' or 'integer', not '%s'"),
 	      type2char(TYPEOF(val)));
+    PROTECT(vec);
     PROTECT(val);
     ans =  installAttrib(vec, R_RowNamesSymbol, val);
-    UNPROTECT(1);
+    UNPROTECT(2); /* vec, val */
     return ans;
 }
 
@@ -135,22 +138,10 @@ SEXP attribute_hidden getAttrib0(SEXP vec, SEXP name)
 	    return R_NilValue;
 	}
     }
-    /* This is where the old/new list adjustment happens. */
     for (s = ATTRIB(vec); s != R_NilValue; s = CDR(s))
 	if (TAG(s) == name) {
-	    if (name == R_DimNamesSymbol && TYPEOF(CAR(s)) == LISTSXP) {
-		SEXP _new, old;
-		int i;
-		_new = allocVector(VECSXP, length(CAR(s)));
-		old = CAR(s);
-		i = 0;
-		while (old != R_NilValue) {
-		    SET_VECTOR_ELT(_new, i++, CAR(old));
-		    old = CDR(old);
-		}
-		SET_NAMED(_new, 2);
-		return _new;
-	    }
+	    if (name == R_DimNamesSymbol && TYPEOF(CAR(s)) == LISTSXP)
+		error("old list is no longer allowed for dimnames attribute");
 	    SET_NAMED(CAR(s), 2);
 	    return CAR(s);
 	}
@@ -226,7 +217,9 @@ SEXP setAttrib(SEXP vec, SEXP name, SEXP val)
     PROTECT(name);
 
     if (isString(name)) {
+	PROTECT(val);
 	name = installTrChar(STRING_ELT(name, 0));
+	UNPROTECT(1);
     }
     if (val == R_NilValue) {
 	UNPROTECT(2);
@@ -1443,11 +1436,11 @@ SEXP attribute_hidden do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
 	    /* no match on other attributes and a possible
 	       partial match on "names" */
 	    tag = R_NamesSymbol;
-	    t = getAttrib(s, tag);
+	    PROTECT(t = getAttrib(s, tag));
 	    if(t != R_NilValue && R_warn_partial_match_attr)
 		warningcall(call, _("partial match of '%s' to '%s'"), str,
 			    CHAR(PRINTNAME(tag)));
-	    UNPROTECT(1);
+	    UNPROTECT(2);
 	    return t;
 	}
 	else if (match == PARTIAL && strcmp(CHAR(PRINTNAME(tag)), "names")) {

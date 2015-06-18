@@ -210,11 +210,12 @@ static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
 		(attrib = GetRowNames(attrib)) != R_NilValue
 		)
 	    ) {
+	    PROTECT(attrib);
 	    nattrib = allocVector(TYPEOF(attrib), n);
 	    PROTECT(nattrib); /* seems unneeded */
 	    nattrib = ExtractSubset(attrib, nattrib, indx, call);
 	    setAttrib(result, R_NamesSymbol, nattrib);
-	    UNPROTECT(1);
+	    UNPROTECT(2); /* attrib, nattrib */
 	}
 	if ((attrib = getAttrib(x, R_SrcrefSymbol)) != R_NilValue &&
 	    TYPEOF(attrib) == VECSXP) {
@@ -930,7 +931,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* but in fact S does not do this.	Will anyone notice? */
 
     if (x == R_NilValue) {
-	UNPROTECT(1);
+	UNPROTECT(1); /* args */
 	return x;
     }
 
@@ -951,6 +952,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(x == R_NilValue)
 	  errorcall(call, _("this S4 class is not subsettable"));
     }
+    PROTECT(x);
 
     /* split out ENVSXP for now */
     if( TYPEOF(x) == ENVSXP ) {
@@ -960,10 +962,10 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if( TYPEOF(ans) == PROMSXP ) {
 	    PROTECT(ans);
 	    ans = eval(ans, R_GlobalEnv);
-	    UNPROTECT(1);
+	    UNPROTECT(1); /* ans */
 	} else SET_NAMED(ans, 2);
 
-	UNPROTECT(1);
+	UNPROTECT(2); /* args, x */
 	if(ans == R_UnboundValue)
 	    return(R_NilValue);
 	if (NAMED(ans))
@@ -998,6 +1000,8 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    x = vectorIndex(x, thesub, 0, len-1, pok, call, FALSE);
 #endif
 	    named_x = NAMED(x);
+	    UNPROTECT(1); /* x */
+	    PROTECT(x);
 	}
 
 	SEXP xnames = PROTECT(getAttrib(x, R_NamesSymbol));
@@ -1010,7 +1014,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 			       isExpression(x) ||
 			       isList(x) ||
 			       isLanguage(x))) {
-		UNPROTECT(1);
+		UNPROTECT(2); /* args, x */
 		return R_NilValue;
 	    }
 	    else errorcall(call, R_MSG_subs_o_b);
@@ -1040,7 +1044,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	for (i = (nsubs - 1); i > 0; i--)
 	    offset = (offset + INTEGER(indx)[i]) * INTEGER(dims)[i - 1];
 	offset += INTEGER(indx)[0];
-	UNPROTECT(1);
+	UNPROTECT(1); /* indx */
     }
 
     if(isPairList(x)) {
@@ -1079,7 +1083,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    UNIMPLEMENTED_TYPE("do_subset2", x);
 	}
     }
-    UNPROTECT(1);
+    UNPROTECT(2); /* args, x */
     return ans;
 }
 
@@ -1176,8 +1180,8 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
     SEXP y, nlist;
     size_t slen;
 
-    PROTECT(x);
     PROTECT(input);
+    PROTECT(x);
 
     /* Optimisation to prevent repeated recalculation */
     slen = strlen(translateChar(input));
@@ -1187,13 +1191,15 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	if(x == R_NilValue)
 	    errorcall(call, "$ operator not defined for this S4 class");
     }
+    UNPROTECT(1); /* x */
+    PROTECT(x);
 
     /* If this is not a list object we return NULL. */
 
     if (isPairList(x)) {
 	SEXP xmatch = R_NilValue;
 	int havematch;
-	UNPROTECT(2);
+	UNPROTECT(2); /* input, x */
 	havematch = 0;
 	for (y = x ; y != R_NilValue ; y = CDR(y)) {
 	    switch(pstrmatch(TAG(y), input, slen)) {
@@ -1234,7 +1240,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	R_xlen_t i, n, imatch = -1;
 	int havematch;
 	nlist = getAttrib(x, R_NamesSymbol);
-	UNPROTECT(2);
+	UNPROTECT(2); /* input, x */
 	n = xlength(nlist);
 	havematch = 0;
 	for (i = 0 ; i < n ; i = i + 1) {
@@ -1286,9 +1292,9 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	if( TYPEOF(y) == PROMSXP ) {
 	    PROTECT(y);
 	    y = eval(y, R_GlobalEnv);
-	    UNPROTECT(1);
+	    UNPROTECT(1); /* y */
 	}
-	UNPROTECT(2);
+	UNPROTECT(2); /* input, x */
 	if( y != R_UnboundValue ) {
 	    if (NAMED(y))
 		SET_NAMED(y, 2);
@@ -1303,6 +1309,6 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
     }
     else /* e.g. a function */
 	errorcall(call, R_MSG_ob_nonsub, type2char(TYPEOF(x)));
-    UNPROTECT(2);
+    UNPROTECT(2); /* input, x */
     return R_NilValue;
 }

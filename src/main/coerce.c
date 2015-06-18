@@ -1,8 +1,8 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995,1996  Robert Gentleman, Ross Ihaka
- *  Copyright (C) 1997-2014  The R Core Team
- *  Copyright (C) 2003-2009 The R Foundation
+ *  Copyright (C) 1997-2015  The R Core Team
+ *  Copyright (C) 2003-2015  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@
 
 /* Coercion warnings will be OR'ed : */
 #define WARN_NA	   1
-#define WARN_INACC 2
+#define WARN_INT_NA 2
 #define WARN_IMAG  4
 #define WARN_RAW  8
 
@@ -75,8 +75,8 @@ void attribute_hidden CoercionWarning(int warn)
 */
     if (warn & WARN_NA)
 	warning(_("NAs introduced by coercion"));
-    if (warn & WARN_INACC)
-	warning(_("inaccurate integer conversion in coercion"));
+    if (warn & WARN_INT_NA)
+	warning(_("NAs introduced by coercion to integer range"));
     if (warn & WARN_IMAG)
 	warning(_("imaginary parts discarded in coercion"));
     if (warn & WARN_RAW)
@@ -126,8 +126,8 @@ IntegerFromReal(double x, int *warn)
 {
     if (ISNAN(x))
 	return NA_INTEGER;
-    else if (x > INT_MAX || x <= INT_MIN ) {
-	*warn |= WARN_NA;
+    else if (x >= INT_MAX+1. || x <= INT_MIN ) {
+	*warn |= WARN_INT_NA;
 	return NA_INTEGER;
     }
     return (int) x;
@@ -138,8 +138,8 @@ IntegerFromComplex(Rcomplex x, int *warn)
 {
     if (ISNAN(x.r) || ISNAN(x.i))
 	return NA_INTEGER;
-    else if (x.r > INT_MAX || x.r <= INT_MIN ) {
-	*warn |= WARN_NA;
+    else if (x.r > INT_MAX+1. || x.r <= INT_MIN ) {
+	*warn |= WARN_INT_NA;
 	return NA_INTEGER;;
     }
     if (x.i != 0)
@@ -156,14 +156,22 @@ IntegerFromString(SEXP x, int *warn)
     if (x != R_NaString && !isBlankString(CHAR(x))) { /* ASCII */
 	xdouble = R_strtod(CHAR(x), &endp); /* ASCII */
 	if (isBlankString(endp)) {
+#ifdef _R_pre_Version_3_3_0
 	    if (xdouble > INT_MAX) {
-		*warn |= WARN_INACC;
+		*warn |= WARN_INT_NA;
 		return INT_MAX;
 	    }
 	    else if(xdouble < INT_MIN+1) {
-		*warn |= WARN_INACC;
-		return INT_MIN;
+		*warn |= WARN_INT_NA;
+		return INT_MIN;// <- "wrong" as INT_MIN == NA_INTEGER currently; should have used INT_MIN+1
 	    }
+#else
+	    // behave the same as IntegerFromReal() etc:
+	    if (xdouble >= INT_MAX+1. || xdouble <= INT_MIN ) {
+		*warn |= WARN_INT_NA;
+		return NA_INTEGER;
+	    }
+#endif
 	    else
 		return (int) xdouble;
 	}
@@ -2280,9 +2288,9 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isVector(x)) {
 	dims = getAttrib(x, R_DimSymbol);
 	if (isArray(x))
-	    names = getAttrib(x, R_DimNamesSymbol);
+	    PROTECT(names = getAttrib(x, R_DimNamesSymbol));
 	else
-	    names = getAttrib(x, R_NamesSymbol);
+	    PROTECT(names = getAttrib(x, R_NamesSymbol));
     }
     else dims = names = R_NilValue;
     switch (TYPEOF(x)) {
@@ -2316,6 +2324,8 @@ SEXP attribute_hidden do_isfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else
 	    setAttrib(ans, R_NamesSymbol, names);
     }
+    if (isVector(x))
+	UNPROTECT(1); /* names */
     UNPROTECT(1); /* ans */
     return ans;
 }
@@ -2341,9 +2351,9 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
     if (isVector(x)) {
 	dims = getAttrib(x, R_DimSymbol);
 	if (isArray(x))
-	    names = getAttrib(x, R_DimNamesSymbol);
+	    PROTECT(names = getAttrib(x, R_DimNamesSymbol));
 	else
-	    names = getAttrib(x, R_NamesSymbol);
+	    PROTECT(names = getAttrib(x, R_NamesSymbol));
     }
     else	dims = names = R_NilValue;
     switch (TYPEOF(x)) {
@@ -2385,6 +2395,8 @@ SEXP attribute_hidden do_isinfinite(SEXP call, SEXP op, SEXP args, SEXP rho)
 	else
 	    setAttrib(ans, R_NamesSymbol, names);
     }
+    if (isVector(x))
+	UNPROTECT(1); /* names */
     UNPROTECT(1); /* ans */
     return ans;
 }
@@ -2441,7 +2453,7 @@ SEXP attribute_hidden do_docall(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("'args' must be a list or expression"));
 #else
     if (!isNull(args) && !isNewList(args))
-	error(_("'args' must be a list"));
+        error(_("'%s' must be a list"), "args");
 #endif
 
     if (!isEnvironment(envir))
@@ -2549,9 +2561,11 @@ SEXP attribute_hidden substituteList(SEXP el, SEXP rho)
 		h = LCONS(R_DotsSymbol, R_NilValue);
 	    else if (h == R_NilValue  || h == R_MissingArg)
 		h = R_NilValue;
-	    else if (TYPEOF(h) == DOTSXP)
+	    else if (TYPEOF(h) == DOTSXP) {
+		PROTECT(h);
 		h = substituteList(h, R_NilValue);
-	    else
+		UNPROTECT(1);
+	    } else
 		error(_("'...' used in an incorrect context"));
 	} else {
 	    h = substitute(CAR(el), rho);

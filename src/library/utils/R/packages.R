@@ -156,7 +156,7 @@ function(db)
     x <- lapply(strsplit(sub("^[[:space:]]*", "", depends),
                              "[[:space:]]*,[[:space:]]*"),
                 function(s) s[grepl("^R[[:space:]]*\\(", s)])
-    lens <- sapply(x, length)
+    lens <- lengths(x)
     pos <- which(lens > 0L)
     if(!length(pos)) return(db)
     lens <- lens[pos]
@@ -332,10 +332,11 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
     if(type == "both" && (!missing(contriburl) || !is.null(available))) {
         stop("specifying 'contriburl' or 'available' requires a single type, not type = \"both\"")
     }
-    if(is.null(available))
+    if(is.null(available)) {
         available <- available.packages(contriburl = contriburl,
                                         method = method)
-
+        if (missing(repos)) repos <- getOption("repos") # May have changed
+    } 
     if(!is.matrix(oldPkgs) && is.character(oldPkgs)) {
     	subset <- oldPkgs
     	oldPkgs <- NULL
@@ -347,6 +348,7 @@ update.packages <- function(lib.loc = NULL, repos = getOption("repos"),
 	oldPkgs <- old.packages(lib.loc = lib.loc,
 				contriburl = contriburl, method = method,
 				available = available, checkBuilt = checkBuilt)
+	if (missing(repos)) repos <- getOption("repos") # May have changed
 	## prune package versions which are invisible to require()
 	if(!is.null(oldPkgs)) {
 	    pkg <- 0L
@@ -834,10 +836,7 @@ setRepositories <-
 {
     if(is.null(ind) && !interactive())
         stop("cannot set repositories non-interactively")
-    p <- file.path(Sys.getenv("HOME"), ".R", "repositories")
-    if(!file.exists(p))
-        p <- file.path(R.home("etc"), "repositories")
-    a <- tools:::.read_repositories(p)
+    a <- tools:::.get_repositories()
     pkgType <- getOption("pkgType")
     if (pkgType == "both") pkgType <- "source" #.Platform$pkgType
     if (pkgType == "binary") pkgType <- .Platform$pkgType
@@ -1020,7 +1019,7 @@ compareVersion <- function(a, b)
     ## some of the packages may be already installed, but the
     ## dependencies apply to those being got from CRAN.
     DL <- lapply(DL, function(x) x[x %in% pkgs])
-    lens <- sapply(DL, length)
+    lens <- lengths(DL)
     if(all(lens > 0L)) {
         warning("every package depends on at least one other")
         return(pkgs)

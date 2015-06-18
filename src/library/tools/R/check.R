@@ -740,6 +740,7 @@ setRlibs <-
 
     check_build <- function()
     {
+        ## currently only checks vignettes
         fv <- file.path("build", "vignette.rds")
         if(!file.exists(fv)) return()
         checkingLog(Log, "'build' directory")
@@ -865,7 +866,7 @@ setRlibs <-
                        "ChangeLog", "Changelog", "CHANGELOG", "CHANGES", "Changes",
                        "INSTALL", "README", "THANKS", "TODO", "ToDo",
                        "INSTALL.windows",
-                       "README.md",   # seems popular
+                       "README.md", "NEWS.md",
                        "configure", "configure.win", "cleanup", "cleanup.win",
                        "configure.ac", "configure.in",
                        "datafiles",
@@ -2061,6 +2062,21 @@ setRlibs <-
                                     indent = 2, exdent = 2), collapse = "\n"),
                       "\nPlease remove them from your package.\n")
         }
+
+        ## Probable leftovers from knitr
+        dirs <- file.path(pkgdir, "vignettes", c("cache", "figure"))
+        dirs <- basename(dirs[dir.exists(dirs)])
+        if(length(dirs)) {
+            if(!any) noteLog(Log)
+            any <- TRUE
+            printLog0(Log,
+                      if(length(dirs)> 1L) "The following directories look like leftovers from 'knitr':\n"
+                      else "The following directory looks like a leftover from 'knitr':\n",
+                      paste(strwrap(paste(sQuote(dirs), collapse = ", "),
+                                    indent = 2, exdent = 2), collapse = "\n"),
+                      "\nPlease remove from your package.\n")
+        }
+
         if (!any) resultLog(Log, "OK")
     }
 
@@ -3618,7 +3634,8 @@ setRlibs <-
         dirs <- sub("^\\d*\\s*", "", res)
         res2 <- data.frame(size = sizes, dir = I(dirs))
         total <- res2[nrow(res2), 1L]
-        if(!is.na(total) && total > 1024*5) { # report at 5Mb
+        if(!is.na(total) && total > 1024*5 && # report at 5Mb
+           pkgname != "Matrix") { # <- large recommended package
             noteLog(Log)
             printLog(Log, sprintf("  installed size is %4.1fMb\n", total/1024))
             rest <- res2[-nrow(res2), ]
@@ -3791,7 +3808,7 @@ setRlibs <-
             OK <- TRUE
             ## Look for empty importFrom
             imp <- ns$imports
-            lens <- sapply(imp, length)
+            lens <- lengths(imp)
             imp <- imp[lens == 2L]
             nm <- sapply(imp, "[[", 1)
             lens <- sapply(imp, function(x) length(x[[2]]))
@@ -3847,7 +3864,7 @@ setRlibs <-
         ## Namespace imports must really be in Depends.
         res <- .check_package_depends(pkgdir, R_check_force_suggests,
                                       check_incoming)
-        if(any(sapply(res, length) > 0L)) {
+        if(any(lengths(res) > 0L)) {
             out <- format(res)
             allowed <- c("suggests_but_not_installed",
                          "enhances_but_not_installed",
@@ -4019,7 +4036,7 @@ setRlibs <-
             "control files are performed.  The package is installed into the log",
             "directory and production of the package PDF manual is tested.",
             "All examples and tests provided by the package are tested to see if",
-            "they run successfully.  Code in the vignettes is tested,",
+            "they run successfully.  By default code in the vignettes is tested,",
             "as is re-building the vignette PDFs.",
             "",
             "Options:",
@@ -4037,7 +4054,7 @@ setRlibs <-
             "      --no-install      skip installation and associated tests",
             "      --no-tests        do not run code in 'tests' subdirectory",
             "      --no-manual       do not produce the PDF manual",
-            "      --no-vignettes    do not run R code in vignettes",
+            "      --no-vignettes    do not run R code in vignettes nor build outputs",
             "      --no-build-vignettes    do not build vignette outputs",
             "      --run-dontrun     do run \\dontrun sections in the Rd files",
             "      --run-donttest    do run \\donttest sections in the Rd files",
@@ -4171,7 +4188,7 @@ setRlibs <-
         } else if (a == "--no-rebuild-vignettes") { # pre-3.0.0 version
             stop("'--no-rebuild-vignettes' is defunct: use '--no-build-vignettes' instead",
                  call. = FALSE, domain = NA)
-      } else if (a == "--no-vignettes") {
+        } else if (a == "--no-vignettes") {
             do_vignettes  <- FALSE
         } else if (a == "--no-manual") {
             do_manual  <- FALSE
@@ -4732,8 +4749,6 @@ setRlibs <-
                 }
             }
         }
-        messageLog(Log, "DONE")
-        message("")
         summaryLog(Log)
         if (Log$errors > 0L)
             do_exit(1L)

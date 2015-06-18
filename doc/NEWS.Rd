@@ -5,7 +5,127 @@
 \title{R News}
 \encoding{UTF-8}
 
-\section{\Rlogo CHANGES IN 3.2.0}{
+\section{\Rlogo CHANGES IN R 3.2.1}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{utf8ToInt()} now checks that its input is valid UTF-8
+      and returns \code{NA} if it is not.
+
+      \item \code{install.packages()} now allows \code{type = "both"}
+      with \code{repos = NULL} if it can infer the type of file.
+
+      \item \code{nchar(x, *)} and \code{nzchar(x)} gain a new argument
+      \code{keepNA} which governs how the result for \code{NA}s in
+      \code{x} is determined.  For the \R 3.2.x series, the default
+      remains \code{FALSE} which is fully back compatible.
+      From \R 3.3.0, the default will change to \code{keepNA = NA} and
+      you are advised to consider this for code portability.
+
+      \item \code{news()} more flexibly extracts dates from package
+      \file{NEWS.Rd} files.
+
+      \item \code{lengths(x)} now also works (trivially) for atomic
+      \code{x} and hence can be used more generally as an efficient
+      replacement of \code{sapply(x, length)} and similar.
+
+      \item The included version of PCRE has been updated to 8.37, a
+      bug-fix release.
+
+      \item \code{diag()} no longer duplicates a matrix when extracting
+      its diagonal.
+
+      \item \code{as.character.srcref()} gains an argument to allow
+      characters corresponding to a range of source references to be
+      extracted.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{acf()} and \code{ccf()} now guarantee values strictly
+      in \eqn{[-1,1]} (instead of sometimes very slightly outside). \PR{15832}.
+
+      \item \code{as.integer("111111111111")} now gives NA (with a warning) as
+      it does for the corresponding numeric or negative number
+      coercions.  Further, \code{as.integer(M + 0.1)} now gives \code{M}
+      (instead of NA) when M is the maximal representable integer.
+
+      \item On some platforms \code{nchar(x, "c")} and \code{nchar(x, "w")}
+      would return values (possibly \code{NA}) for inputs which were
+      declared to be UTF-8 but were not, or for invalid strings without a
+      marked encoding in a multi-byte locale, rather than give an
+      error.  Additional checks have been added to mitigate this.
+
+      \item \code{apply(a, M, function(u) c(X = ., Y = .))} again
+      has dimnames containing "X" and "Y" (as in R < 3.2.0).
+
+      \item (Windows only) In some cases, the \command{--clean} option
+      to \command{R CMD INSTALL} could fail.  (\PR{16178})
+
+      \item (Windows only) \code{choose.files()} would occasionally
+      include characters from the result of an earlier call in
+      the result of a later one.  (\PR{16270})
+
+      \item A change in \code{RSiteSearch()} in \R 3.2.0 caused it to
+      submit invalid URLs.  (\PR{16329})
+
+      \item \command{Rscript} and command line \command{R} silently
+      ignored incomplete statements at the end of a script; now they
+      are reported as parse errors.  (\PR{16350})
+
+      \item Parse data for very long strings was not stored.  (\PR{16354})
+
+      \item \code{plotNode()}, the workhorse of the \code{plot} method
+      for \code{"dendrogram"}s is no longer recursive, thanks to Suharto
+      Anggono, and hence also works for deeply nested dendrograms.  (\PR{15215})
+
+      \item The parser could overflow internally when given numbers
+      in scientific format with extremely large exponents.  (\PR{16358})
+
+      \item If the CRAN mirror was not set, \code{install.packages(type = "both")}
+      and related functions could repeatedly query the user for it.
+      (Part of \PR{16362})
+
+      \item The low-level functions \code{.rowSums()} etc. did not
+      check the length of their argument, so could segfault. (\PR{16367})
+
+      \item The \code{quietly} argument of \code{library()} is now
+      correctly propagated from \code{.getRequiredPackages2()}.
+
+      \item Under some circumstances using the internal PCRE when
+      building \R fron source would cause external libs such as
+      \code{-llzma} to be omitted from the main link.
+
+      \item The .Primitive default methods of the logic operators, i.e.,
+      \code{!}, \code{&} and \code{|}, now give correct error messages
+      when appropriate, e.g., for \code{`&`(TRUE)} or \code{`!`()}.
+      (\PR{16385})
+
+      \item \code{cummax(x)} now correctly propagates \code{NA}s also
+      when \code{x} is of type \code{integer} and begins with an \code{NA}.
+
+      \item \code{summaryRprof()} could fail when the profile contained
+      only two records.  (\PR{16395})
+
+      \item HTML vignettes opened using \code{vignette()} did not support
+      links into the rest of the HTML help system.  (Links worked properly
+      when the vignette was opened using \code{browseVignettes()} or from
+      within the help system.)
+
+      \item \code{arima(*, xreg = .)} (for \eqn{d \ge 1}{d >= 1})
+      computes estimated variances based on a the number of effective
+      observations as in \R version 3.0.1 and earlier.  (\PR{16278})
+
+      \item \code{slotNames(.)} is now correct for \code{"signature"}
+      objects (mostly used internally in \pkg{methods}).
+      
+      \item On some systems, the first string comparison after
+      a locale change would result in \code{NA}.
+    }
+  }
+}
+
+\section{\Rlogo CHANGES IN R 3.2.0}{
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{anyNA()} gains a \code{recursive} argument.
@@ -263,7 +383,7 @@
       locked namespace or namespace imports environment.  Contributed by
       Karl Millar.
 
-      \item New function \code{isLoadedNamespace()} for readability and speed.
+      \item New function \code{isNamespaceLoaded()} for readability and speed.
 
       \item \code{names(env)} now returns all the object names of an
       \code{environment} \code{env}, equivalently to
@@ -991,7 +1111,7 @@
       dendrogram.
 
       \item The \code{plot} method for \code{"hclust"} objects gets an
-      optional argument \code{check}; When that is true (the default) it
+      optional argument \code{check}; when that is true (the default) it
       checks more carefully for valid input.
 
       \item (Windows only) If a user chose to install 64 bit \R but not

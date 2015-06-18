@@ -1614,16 +1614,23 @@ X'. Click on that, then download the file
 @file{R-@value{VERSIONno}-mavericks.pkg} and install it. This runs on OS
 X 10.9 and later (Mavericks and Yosemite).
 
-There may be a separate installer package,
-@file{R-@value{VERSIONno}-snowleopard.pkg} which runs on OS X 10.6 and
-later (Snow Leopard, Lion, Mountain Lion, Mavericks, Yosemite, @dots{});
-it is a 64-bit (@cputype{x86_64}) build which should run on all Macs
-from mid-2008 on.  For older Intel Macs and some older versions of the
-OS you can in principle (it is little tested) install @R{} from the
-sources.
+@c There may be a separate installer package,
+@c @file{R-@value{VERSIONno}-snowleopard.pkg} which runs on OS X 10.6 and
+@c later (Snow Leopard, Lion, Mountain Lion, Mavericks, Yosemite, @dots{});
+@c it is a 64-bit (@cputype{x86_64}) build which should run on all Macs
+@c from mid-2008 on.
+
+Installers for R-patched and R-devel are usually available from
+@uref{http://r.research.att.com}, including a
+@file{R-3-2-branch-snowleopard-signed.pkg} version for R-patched for OS
+X 10.6 and later (Snow Leopard, Lion, Mountain Lion, Mavericks,
+Yosemite, @dots{}) which should run on all Macs from mid-2008 on.
+
+For some older versions of the OS you can in principle (it is little
+tested) install @R{} from the sources.
 
 It is important that if you use a binary installer package that your OS
-is fully updated: run `Software Update' from the Apple menu to be sure.
+is fully updated: look at `Updates' from the `App Store' to be sure.
 (If using XQuartz, check that is current.)
 
 To install, just double-click on the icon of the file you downloaded.
@@ -1705,9 +1712,10 @@ defaults write org.R-project.R NSAppSleepDisabled -bool YES
 @end itemize
 
 Using the @code{X11} device or the X11-based versions of @code{View()}
-and @code{edit} for data frames and matrices (the latter are the default
-for command-line @R{} but not @Rapp{}) requires an X sub-system to be
-installed: see @ref{OS X}.  (So do some third-party packages.)
+and @code{edit()} for data frames and matrices (the latter are the
+default for command-line @R{} but not @Rapp{}) requires an X sub-system
+to be installed: see @ref{OS X}.  (As do the @pkg{tcltk} package and
+some third-party packages.)
 
 @node Uninstalling under OS X, Multiple versions, Running R under OS X, Installing R under OS X
 @section Uninstalling under OS X
@@ -1731,11 +1739,10 @@ The installation consisted of three Apple packages:
 @code{org.r-project.R.x86_64.fw.pkg},
 @code{org.r-project.R.x86_64.GUI.pkg} and
 @code{org.r-project.x86_64.tcltk.x11} (not all of which need be
-installed). You can use @code{pkgutil --unlink} (not supported by Lion
-or later) to remove their files or @code{pkgutil --forget} if you want
-the Apple Installer to forget about the package without deleting its
-files (useful for the @R{} framework when installing multiple R versions
-in parallel), or after you have deleted the files.
+installed). You can use @code{pkgutil --forget} if you want the Apple
+Installer to forget about the package without deleting its files (useful
+for the @R{} framework when installing multiple R versions in parallel),
+or after you have deleted the files.
 
 Uninstalling the Tcl/Tk component (which is installed under
 @file{/usr/local}) is not simple.  You can list the files it installed
@@ -1768,11 +1775,11 @@ A version of @R{} can be run directly from the command-line as e.g.@:
 However, @Rapp{} will always run the `current' version, that is the last
 installed version.  A small utility, @command{Rswitch.app} (available at
 @url{http://r.research.att.com/#other}), can be used to change the
-`current' version.  However, this is of limited use as @Rapp{} is
-compiled against a particular version of @R{} and will likely crash if
-switched to an earlier version.  This may allow you to install a
-development version of @R{} (de-selecting @Rapp{}) and then switch back
-to the release version.
+`current' version.  This is of limited use as @Rapp{} is compiled
+against a particular version of @R{} and will likely crash if switched
+to an earlier version.  This may allow you to install a development
+version of @R{} (de-selecting @Rapp{}) and then switch back to the
+release version.
 
 
 @node Running R, Add-on packages, Installing R under OS X, Top
@@ -2037,10 +2044,10 @@ containing either or both architectures (32- and 64-bit).
 
 A few of the binary packages need other software to be installed on your
 system: see for example
-@uref{http://CRAN.R-project.org/@/bin/@/windows/@/contrib/@/3.1/@/@@ReadMe}.
+@uref{http://CRAN.R-project.org/@/bin/@/windows/@/contrib/@/3.2/@/@@ReadMe}.
 Packages using Gtk+ (@CRANpkg{Cairo}, @CRANpkg{RGtk2},
 @CRANpkg{cairoDevice} and those that depend on them) need the @file{bin}
-directory of a bundled distribution from
+directory of a bundled distribution of Gtk2 from
 @uref{http://www.gtk.org/@/download/@/win32.php} or
 @uref{http://www.gtk.org/@/download/@/win64.php} in the path: it should
 work to have both 32- and 64-bit Gtk+ @file{bin} directories in the path
@@ -2051,9 +2058,9 @@ additional tools are needed if the package does not contain compiled
 code, and @code{install.packages(type="source")} will work for such
 packages (and for those with compiled code if the tools (see @ref{The
 Windows toolset}) are in the path).  We have seen occasional permission
-problems after unpacking source packages on some Windows 7 and Server
-2008 systems: these have been circumvented by setting the environment
-variable @env{R_INSTALL_TAR} to @samp{tar.exe}.
+problems after unpacking source packages on some systems: these have
+been circumvented by setting the environment variable
+@env{R_INSTALL_TAR} to @samp{tar.exe}.
 @enindex R_INSTALL_TAR
 
 If you have only a source package that is known to work with current
@@ -2094,7 +2101,7 @@ Unix-alike.  This can be set in @file{src/gnuwin/MkRules.local} when
 a file such as @file{etc/i386/Makevars.site}, which does not exist by
 default.}  @file{etc/i386/Makeconf} or @file{etc/x64/Makeconf} for an
 installed version of @R{}.  The version used by @acronym{CRAN} can be
-installed as described in @xref{Building from source}.
+installed as described in @ref{Building from source}.
 
 
 @node OS X packages, Customizing package compilation, Windows packages, Installing packages
@@ -2127,10 +2134,8 @@ likely to lead to crashes or failures to load.
 
 Installing source packages which do not contain compiled code should
 work with no additional tools. For others you will need the
-`Command-line Tools' for @command{Xcode} and compilers which match those
-used to build @R{}: see @ref{OS X}.  (Note that the Fortran compilers
-differ for the `Snow Leopard' and `Mavericks' binary installations of
-@R{}.)
+`Command Line Tools' for @command{Xcode} and compilers which match those
+used to build @R{}: see @ref{OS X}.
 
 Package @CRANpkg{rJava} and those which depend on it need a Java runtime
 installed and several packages need X11 installed, including those using
@@ -2150,7 +2155,7 @@ appropriate version at the time of writing was
 The default compilers specified in
 @file{/Library/Frameworks/R.framework/Resources/etc/Makeconf} depend on
 the version of OS X under which @R{} was installed, and are appropriate
-to the latest version of the Xcode command-line tools for that version
+to the latest version of the command-line tools for that version
 of OS X.  The settings can be changed, either by editing that file or in
 a file such as @file{~/.R/Makevars} (see the next section).  Entries
 which may need to be changed include @samp{CC}, @samp{CXX}, @samp{FC},
@@ -2357,20 +2362,19 @@ wise to have a @file{src/contrib} area with a possibly empty
 @R{} versions @var{x.y.z} and containing @file{.zip} files for Windows.
 
 @item 
-@code{"mac.binary"}: located at @file{bin/macosx/contrib/@var{3.y}} for
-the CRAN build for `Snow Leopard' (and later) for @R{} versions @var{3.y.z},
-containing @file{.tgz} files.
-
-@item 
 @code{"mac.binary.mavericks"}: located at
 @file{bin/macosx/mavericks/contrib/@var{3.y}} for the CRAN build for
-`Mavericks' (and later) for @R{} versions @var{3.y.z}, containing @file{.tgz} files.
+`Mavericks' (and later) for @R{} versions @var{3.y.z}, containing
+@file{.tgz} files.
 
 @item 
 @code{"mac.binary.leopard"}: located at
 @file{bin/macosx/leopard/contrib/@var{2.y}} for @R{} versions
 @var{2.y.z} and containing @file{.tgz} files.
 @end itemize
+
+(Areas @code{"mac.binary.leopard"} and @code{"mac.binary"} are no longer
+in use.)
 
 Each terminal directory must also contain a @file{PACKAGES} file.  This
 can be a concatenation of the @file{DESCRIPTION} files of the packages
@@ -2681,7 +2685,7 @@ If no suitable translation catalogue is found or a particular message is
 not translated in any suitable catalogue, `English'@footnote{with
 Americanisms.} is used.
 
-See @uref{http://developer.r-project.org/@/Translations.html} for how to
+See @uref{http://developer.r-project.org/@/Translations30.html} for how to
 prepare and install translation catalogues.
 
 @node Choosing between 32- and 64-bit builds, The standalone Rmath library, Internationalization, Top
@@ -3008,7 +3012,7 @@ the C compilers it knows about, but you may have to set @code{CC} or
 @option{-std=gnu99}@footnote{@option{-std=c99} excludes POSIX
 functionality, but @file{config.h} will turn on all @acronym{GNU}
 extensions to include the POSIX functionality. The default mode for GCC
-5 will be @option{-std=gnu11}.}.  If the compiler is detected as
+5 is @option{-std=gnu11}.}.  If the compiler is detected as
 @command{gcc}, @option{-std=gnu99} will be appended to @code{CC} unless
 it conflicts with a setting of @code{CFLAGS}.  (Note that options
 essential to run the compiler even for linking, such as those to set the
@@ -3033,9 +3037,11 @@ usage requires @code{iconv} to be able to translate between
 @code{"latin1"} and @code{"UTF-8"}, to recognize @code{""} (as the
 current encoding) and @code{"ASCII"}, and to translate to and from the
 Unicode wide-character formats @code{"UCS-[24][BL]E"} --- this is true
-for @code{glibc} but not of most commercial Unixes.  However, you can
-make use of @acronym{GNU} @code{libiconv} (possibly as a plug-in
-replacement: see @uref{http://www.gnu.org/@/software/@/libiconv/}).
+by default for @code{glibc}@footnote{However, it is possible to break
+the default behaviour of @code{glibc} by re-specifying the @code{gconv}
+modules to be loaded.} but not of most commercial Unixes.  However, you
+can make use of @acronym{GNU} @code{libiconv} (as used on OS X: see
+@uref{http://www.gnu.org/@/software/@/libiconv/}).
 
 The OS needs to have enough support@footnote{specifically, the C99
 functionality of headers @file{wchar.h} and @file{wctype.h}, types
@@ -3053,13 +3059,13 @@ A @command{tar} program is needed to unpack the sources and packages
 (including the recommended packages).  A version@footnote{Such as
 @acronym{GNU} @command{tar} 1.15 or later, @command{bsdtar} (from
 @uref{http://code.google.com/@/p/libarchive/}, as used by FreeBSD and OS
-10.6 and later) or @command{tar} from the Heirloom Toolchest
+X 10.6 and later) or @command{tar} from the Heirloom Toolchest
 (@uref{http://heirloom.sourceforge.net/@/tools.html}).} that can
 automagically detect compressed archives is preferred for use with
 @code{untar()}: the configure script looks for @command{gtar} and
 @command{gnutar} before
 @enindex TAR
-@command{tar}: use environment variable @env{TAR} to override this.
+@command{tar} -- use environment variable @env{TAR} to override this.
 
 There need to be suitable versions of the tools @command{grep} and
 @command{sed}: the problems are usually with old AT&T and BSD variants.
@@ -3076,10 +3082,9 @@ make PDF versions of the manuals you will also need file
 in re-distributions) as well as
 @command{texi2dvi}.@footnote{@command{texi2dvi} is normally a shell
 script.  Some versions (e.g.@: those from @pkg{texinfo} 4.13a and 5.2)
-need to be run under @command{bash} rather than a Bourne shell as on,
-say, Solaris.}  Further, the versions of @command{texi2dvi} and
-@file{texinfo.tex} need to be compatible: we have seen problems with
-older @TeX{} distributions.
+need to be run under @command{bash} rather than a Bourne shell.}
+Further, the versions of @command{texi2dvi} and @file{texinfo.tex} need
+to be compatible: we have seen problems with older @TeX{} distributions.
 
 @cindex Vignettes
 The PDF documentation (including @file{doc/NEWS.pdf}) and building
@@ -3130,16 +3135,18 @@ earliest version we have tested.  (For Fedora users we believe the
 @samp{pangocairo} package is installed (and if not, @samp{cairo}) and if
 additional flags are needed for the @samp{cairo-xlib} package, then if
 suitable code can be compiled.  These tests will fail if
-@command{pkg-config} is not installed, and are likely to fail if
-@code{cairo} was built statically (unusual).  Most systems with
-@code{Gtk+} 2.8 or later installed will have suitable libraries.  OS X
-comes with none of these libraries (but XQuartz, as used for 10.8 and
-later, ships @code{cairo}), but @code{cairo} support (without
-@code{Pango}) has been added to the binary distribution (see
-@uref{http://r.research.att.com/libs/} you need @code{fontconfig},
-@code{freetype} and @code{pixman} too): @code{pkg-config} is still
-needed when building @R{} from source and can be installed from its
-sources.
+@command{pkg-config} is not installed@footnote{If necessary the path to
+@command{pkg-config} can be specified by setting @env{PKGCONF} in
+@file{config.site}, on the @command{configure} command line or in the
+environment.}, and are likely to fail if @code{cairo} was built
+statically (unusual).  Most systems with @code{Gtk+} 2.8 or later
+installed will have suitable libraries.  OS X comes with none of these
+libraries (but XQuartz, as used for 10.8 and later, ships @code{cairo}),
+but @code{cairo} support (without @code{Pango}) has been added to the
+binary distribution (see @uref{http://r.research.att.com/libs/} you need
+@code{fontconfig}, @code{freetype} and @code{pixman} too):
+@code{pkg-config} is still needed when building @R{} from source and can
+be installed from its sources.
 
 For the best font experience with these devices you need suitable fonts
 installed: Linux users will want the @code{urw-fonts} package.  On
@@ -4612,10 +4619,10 @@ the configure flag @option{--disable-largefile} was needed (since
 @section OS X
 @cindex OS X
 
-You can build @R{} using Apple's `Command-line Tools for Xcode' and and
-suitable compilers.  You will also need @code{readline} (or to configure
-with @option{--without-readline}), and a Fortran compiler.  Those and
-other binary components are available from
+You can build @R{} using Apple's `Command Line Tools' and suitable
+compilers.  You will also need @code{readline} (or to configure with
+@option{--without-readline}), and a Fortran compiler.  Those and other
+binary components are available from
 @uref{http://r.research.att.com/libs}.
 
 You may also need to install an X sub-system (or you will need to
@@ -4633,10 +4640,11 @@ recently.
 To use the @code{quartz()} graphics device you need to configure with
 @option{--with-aqua} (which is the default): @code{quartz()} then
 becomes the default device when running @R{} at the console and X11
-would only be used for the command-line-@R{} data editor/viewer.  (This
-needs an Objective-C compiler@footnote{These days that is defined by
-Apple's implementation of @code{clang}, so it is strongly recommended to
-use that.} which can compile the source code of @code{quartz()}.)
+would only be used for the command-line-@R{} data editor/viewer and one
+version of Tcl/Tk.  (This needs an Objective-C compiler@footnote{These
+days that is defined by Apple's implementation of @code{clang}, so it is
+strongly recommended to use that.} which can compile the source code of
+@code{quartz()}.)
 
 Use @option{--without-aqua} if you want a standard Unix-alike build:
 apart from disabling @code{quartz()} and the ability to use the build
@@ -4746,18 +4754,18 @@ will show the compilers and configuration options used for the
 @noindent
 was used for `Mavericks'.
 
-Configure option @option{--with-internal-tzcode} is the default, as a
-64-bit @code{time_t} is available but the system implementation of time
-zones does not work correctly for times before 1902 or after 2037.
+Configure option @option{--with-internal-tzcode} is the default on OS X,
+as a 64-bit @code{time_t} is available but the system implementation of
+time zones does not work correctly for times before 1902 or after 2037.
 
 The @TeX{} implementation used by the developers is MacTeX
 (@uref{http://www.tug.org/mactex/}): the full installation is about 4GB,
 but a smaller version is available at
 @uref{http://www.tug.org/mactex/morepackages.html}: you will need to add
-some packages, e.g.@: for the 2014 version we needed to add
-@pkg{cm-super}, @pkg{ec}, @pkg{helvetic}, @pkg{inconsolata} and
-@pkg{texinfo} which brought this to about 380MB (or package
-@pkg{texinfo} and the collections @pkg{collection-fontsrecommended},
+some packages, e.g.@: for the 2015 version we needed to add
+@pkg{cm-super}, @pkg{helvetic}, @pkg{inconsolata} and @pkg{texinfo}
+which brought this to about 410MB (or package @pkg{texinfo} and the
+collections @pkg{collection-fontsrecommended},
 @pkg{collection-fontsextra} and @pkg{collection-latexextra} which will
 take this up to about 1GB).  @samp{TeX Live Utility} (available
 @emph{via} the MacTeX front page) provides a graphical means to manage
@@ -4782,21 +4790,19 @@ versions.
 @node Mavericks and Yosemite, Lion and Mountain Lion, OS X, OS X
 @subsection Mavericks and Yosemite
 
-Xcode for Mavericks provides different compilers, headers and libraries from
-earlier versions.  In particular the compilers (even those called
-@command{gcc} and @command{g++}) are based on @command{clang}, and the 
-C++ headers and runtime are from LLVM's @samp{libc++} project).
+For these versions Apple makes available compilers based on
+@command{clang}, and C++ headers and runtime are from LLVM's
+@samp{libc++} project, as part of the `Command Line Tools' (sometimes
+called `Command Line Developer Tools').
 
-The command-line tools can be (re-)installed by @command{xcode-select
---install}.  (If you have a fresh installation of Mavericks, running
-e.g.@: @command{make} in a terminal will offer the installation of the
+These tools can be (re-)installed by @command{xcode-select --install}.
+(If you have a fresh installation of Mavericks/Yosemite, running e.g.@:
+@command{make} in a terminal will offer the installation of the
 command-line tools, or perhaps use the versions from Xcode.  However,
-after an update to Mavericks, you are advised to re-install them.)  They
-are not available under the @samp{Downloads} preference pane in Xcode.
+after an OS update, you are advised to re-install them.)
 
-To use the compilers from the command-line tools for Xcode 5 or 6 with
-the recommended Fortran compiler, have in @file{config.site} something
-like
+To use the compilers from the command-line tools with the recommended
+Fortran compiler, have in @file{config.site} something like
 
 @example
 CC=clang
@@ -4822,9 +4828,8 @@ when installing on Mavericks.
 See the comments under Mountain Lion about X11 and GTK.
 
 If you upgrade to Yosemite you should re-install any of XQuartz, the
-`Command-line Tools for Xcode' and Java which you have installed.
-(Upgrading may partially remove previous versions which can be
-confusing.)
+`Command Line Tools' and Java which you have installed.  (Upgrading may
+partially remove previous versions which can be confusing.)
 
 There are some problems with the recommended @command{gfortran} builds
 under Yosemite.  They give warnings and @command{gfortran-4.8} is
@@ -4835,11 +4840,12 @@ solution is to use a compiler built under Yosemite.)
 @subsection Lion and Mountain Lion
 
 `Command-line Tools for Xcode' used to be part of the Apple Developer
-Tools (`Xcode') but nowadays need to be installed separately.  They can
-be downloaded from @uref{http://developer.apple.com/devcenter/mac/} (you
-will need to register there: that allows you to download older versions
-available for your OS) or from within some versions of Xcode you can
-install the command-line tools from the @samp{Downloads} pane in the
+Tools (`Xcode') but for these versions needs to be installed separately.
+They can be downloaded from
+@uref{http://developer.apple.com/devcenter/mac/} (you will need to
+register there: that allows you to download older versions available for
+your OS) or from within some versions of Xcode you can install the
+command-line tools from the @samp{Downloads} pane in the
 @samp{Preferences}.
 
 The X11 system used with Mountain Lion is XQuartz (see above): Lion
@@ -4910,9 +4916,9 @@ in the native OS X style: this will not work with @Rapp{} because of
 conflicts over the OS X menu, but for those only using command-line @R{}
 this provides a much more intuitive interface to Tk for experienced Mac
 users.  Most versions of OS X come with Aqua Tcl/Tk libraries, but these
-are not current (nor recent) versions of Tcl/Tk (8.5.9 in Mountain
-Lion and Mavericks).  It is better to install Tcl/Tk 8.6.x or 8.5.x from
-the sources or a binary distribution from
+are not current (nor recent) versions of Tcl/Tk (8.5.9 in Mountain Lion
+and Mavericks).  It is better to install Tcl/Tk 8.6.x from the sources
+or a binary distribution from
 @uref{http://www.activestate.com/activetcl/downloads}.  Configure @R{}
 with
 @example
@@ -4934,8 +4940,7 @@ tclvalue(.Tcl("tk windowingsystem"))  # "x11" or "aqua"
 @subsection Java
 
 The situation with Java support on OS X is messy, with Apple essentially
-no longer supporting Java (and what it does support is Java 6, which has
-reached end-of-life).  Snow Leopard and Lion shipped with a Java 6
+no longer supporting Java.  Snow Leopard and Lion shipped with a Java 6
 runtime (JRE).
 
 Mountain Lion and later do not come with an installed JRE, and an OS X
@@ -4950,8 +4955,10 @@ You may want/need to install the latest Java from Oracle (currently Java
 this is for Lion and later.
 
 You may need to install what Apple calls `legacy Java'@footnote{e.g.@:
-@code{Java For OS X 2014-001}.} to suppress pop-up messages, at least
-under Yosemite, even if you have a current version installed.
+@code{Java For OS X 2014-001} from
+@uref{https://support.apple.com/kb/DL1572}.} to suppress pop-up
+messages, at least under Yosemite, even if you have a current version
+installed.
 
 To see what compatible versions of Java are currently installed, run
 @command{/usr/libexec/java_home -V -a x86_64}.  If needed, set the
@@ -4965,7 +4972,7 @@ compiling JNI programs (used by packages @CRANpkg{rJava} and
 JRE.
 
 The build process tries to fathom out what JRE/JDK to use, but it may
-need some help, e.g.@: by setting @env{JAVA_HOME}.  The Apple JRE can be
+need some help, e.g.@: by setting @env{JAVA_HOME}.  An Apple JRE can be
 specified explicitly by something like
 @example
 JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
@@ -4981,7 +4988,7 @@ JAVA_HOME=/Library/Java/JavaVirtualMachines/1.6.0_43-b01-447.jdk/Contents/Home
 @noindent
 The Oracle JDK can be specified explicitly by something like
 @example
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home
+JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_45.jdk/Contents/Home
 JAVA_CPPFLAGS="-I/$@{JAVA_HOME@}/include -I/$@{JAVA_HOME@}/include/darwin"
 JAVA_LD_LIBRARY_PATH="$@{JAVA_HOME@}/jre/lib/server"
 JAVA_LIBS="-L/$@{JAVA_HOME@}/jre/lib/server -ljvm" 
@@ -5036,10 +5043,10 @@ svn co https://svn.r-project.org/R-packages/trunk/Mac-GUI
 @end example
 @noindent
 This can be built by loading the @code{R.xcodeproj} project (select the
-@code{R} target and the @code{SnowLeopard64} or @code{Lion64}
-configuration), or from the command-line by e.g.@:
+@code{R} target and a suitable configuration), or from the command-line
+by e.g.@:
 @example
-xcodebuild -target R -configuration SnowLeopard64
+xcodebuild -target R -configuration Release
 @end example
 See also the @file{INSTALL} file in the checkout or directly at
 @uref{https://svn.r-project.org/R-packages/trunk/Mac-GUI/INSTALL}.
@@ -5278,7 +5285,7 @@ The notes here are for @command{gcc} set up to use the Solaris linker:
 it can also be set up to use GNU @command{ld}, but that has not been
 tested.
 
-Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.9.0
+Compilation for a 32-bit Sparc target with @command{gcc}@tie{}4.9.2
 needed
 
 @example
@@ -5306,7 +5313,7 @@ be in the
 The compilation can be tuned to a particular cpu: the @acronym{CRAN}
 check system uses @code{-mtune=niagara2}.
 
-Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.9.0
+Compilation for an @cputype{x86} target with @command{gcc}@tie{}4.9.2
 needed
 
 @example
@@ -5323,7 +5330,7 @@ LDFLAGS="-L/opt/csw/gcc4/lib -L/opt/csw/lib -L/usr/local/lib"
 32-bit @code{gcc}, and we need @file{/opt/csw/lib} in
 @code{R_LD_LIBRARY_PATH}.)
 
-For an @cputype{amd64} target with @command{gcc}@tie{}4.9.0
+For an @cputype{amd64} target with @command{gcc}@tie{}4.9.2
 we used 
 
 @example

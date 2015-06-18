@@ -1987,8 +1987,11 @@ SEXP attribute_hidden do_get(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #     define GET_VALUE(rval)				\
 	/* We need to evaluate if it is a promise */	\
-	if (TYPEOF(rval) == PROMSXP)			\
+	if (TYPEOF(rval) == PROMSXP) {			\
+	    PROTECT(rval);				\
 	    rval = eval(rval, genv);			\
+	    UNPROTECT(1);				\
+	}						\
 							\
 	if (!ISNULL(rval) && NAMED(rval) == 0)		\
 	    SET_NAMED(rval, 1)
@@ -2027,7 +2030,11 @@ static SEXP gfind(const char *name, SEXP env, SEXPTYPE mode,
     }
 
     /* We need to evaluate if it is a promise */
-    if (TYPEOF(rval) == PROMSXP) rval = eval(rval, env);
+    if (TYPEOF(rval) == PROMSXP) {
+	PROTECT(rval);
+	rval = eval(rval, env);
+	UNPROTECT(1);
+    }
     if (!ISNULL(rval) && NAMED(rval) == 0) SET_NAMED(rval, 1);
     return rval;
 }
@@ -2184,7 +2191,9 @@ R_isMissing(SEXP symbol, SEXP rho)
 	    else {
 		int val;
 		SET_PRSEEN(CAR(vl), 1);
+		PROTECT(vl);
 		val = R_isMissing(PREXPR(CAR(vl)), PRENV(CAR(vl)));
+		UNPROTECT(1); /* vl */
 		SET_PRSEEN(CAR(vl), 0);
 		return val;
 	    }
@@ -2214,8 +2223,9 @@ SEXP attribute_hidden do_missing(SEXP call, SEXP op, SEXP args, SEXP rho)
 	sym = R_DotsSymbol;
     }
 
-    t = findVarLocInFrame(rho, sym, NULL);
+    PROTECT(t = findVarLocInFrame(rho, sym, NULL));
     rval = allocVector(LGLSXP,1);
+    UNPROTECT(1);
     if (t != R_NilValue) {
 	if (DDVAL(s)) {
 	    if (length(CAR(t)) < ddv  || CAR(t) == R_MissingArg) {
@@ -2379,7 +2389,7 @@ SEXP attribute_hidden do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 	R_ObjectTable *tb = (R_ObjectTable*) R_ExternalPtrAddr(CAR(args));
 	if(tb->onAttach)
 	    tb->onAttach(tb);
-	s = allocSExp(ENVSXP);
+	PROTECT(s = allocSExp(ENVSXP));
 	SET_HASHTAB(s, CAR(args));
 	setAttrib(s, R_ClassSymbol, getAttrib(HASHTAB(s), R_ClassSymbol));
     }
@@ -2403,7 +2413,6 @@ SEXP attribute_hidden do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 	R_FlushGlobalCacheFromTable(HASHTAB(s));
 	MARK_AS_GLOBAL_FRAME(s);
 #endif
-	UNPROTECT(1);
     } else {
 #ifdef USE_GLOBAL_CACHE
 	R_FlushGlobalCacheFromUserTable(HASHTAB(s));
@@ -2411,6 +2420,7 @@ SEXP attribute_hidden do_attach(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
     }
 
+    UNPROTECT(1); /* s */
     return s;
 }
 
@@ -2585,8 +2595,14 @@ static void FrameValues(SEXP frame, int all, SEXP values, int *indx)
 #undef DO_FrameValues
 #undef NONEMPTY_
 
+#define CHECK_HASH_TABLE(table) do {		\
+	if (TYPEOF(table) != VECSXP)		\
+	    error("bad hash table contents");	\
+    } while (0)
+
 static int HashTableSize(SEXP table, int all)
 {
+    CHECK_HASH_TABLE(table);
     int count = 0;
     int n = length(table);
     int i;
@@ -2597,6 +2613,7 @@ static int HashTableSize(SEXP table, int all)
 
 static void HashTableNames(SEXP table, int all, SEXP names, int *indx)
 {
+    CHECK_HASH_TABLE(table);
     int n = length(table);
     int i;
     for (i = 0; i < n; i++)
@@ -2605,6 +2622,7 @@ static void HashTableNames(SEXP table, int all, SEXP names, int *indx)
 
 static void HashTableValues(SEXP table, int all, SEXP values, int *indx)
 {
+    CHECK_HASH_TABLE(table);
     int n = length(table);
     int i;
     for (i = 0; i < n; i++)
@@ -2713,6 +2731,12 @@ SEXP attribute_hidden do_ls(SEXP call, SEXP op, SEXP args, SEXP rho)
    names and a boolean if sorted is desired */
 SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted)
 {
+    if(IS_USER_DATABASE(env)) {
+	R_ObjectTable *tb = (R_ObjectTable*)
+	    R_ExternalPtrAddr(HASHTAB(env));
+	return(tb->objects(tb));
+    }
+
     /* Step 1 : Compute the Vector Size */
     int k = 0;
     if (env == R_BaseEnv || env == R_BaseNamespace)
@@ -2739,8 +2763,8 @@ SEXP R_lsInternal3(SEXP env, Rboolean all, Rboolean sorted)
 	    FrameNames(FRAME(env), all, ans, &k);
     }
 
-    UNPROTECT(1);
     if(sorted) sortVector(ans, FALSE);
+    UNPROTECT(1);
     return ans;
 }
 
@@ -2845,7 +2869,7 @@ SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     checkArity(op, args);
 
-    env = eval(CAR(args), rho);
+    PROTECT(env = eval(CAR(args), rho));
     if (ISNULL(env))
 	error(_("use of NULL environment is defunct"));
     if( !isEnvironment(env) )
@@ -2917,14 +2941,18 @@ SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 	setAttrib(ans, R_NamesSymbol, names);
 	UNPROTECT(1);
     }
-    UNPROTECT(5);
+    UNPROTECT(6);
     return(ans);
 }
 
 int envlength(SEXP rho)
 {
-    if( HASHTAB(rho) != R_NilValue)
-	return HashTableSize(HASHTAB(rho), 1);
+    if(IS_USER_DATABASE(rho)) {
+        R_ObjectTable *tb = (R_ObjectTable*)
+	    R_ExternalPtrAddr(HASHTAB(rho));
+        return(xlength(tb->objects(tb)));
+    } else if( HASHTAB(rho) != R_NilValue)
+        return HashTableSize(HASHTAB(rho), 1);       
     else
 	return FrameSize(FRAME(rho), 1);
 }
@@ -2946,10 +2974,11 @@ SEXP attribute_hidden do_builtins(SEXP call, SEXP op, SEXP args, SEXP rho)
     intern = asLogical(CAR(args));
     if (intern == NA_INTEGER) intern = 0;
     nelts = BuiltinSize(1, intern);
-    ans = allocVector(STRSXP, nelts);
+    PROTECT(ans = allocVector(STRSXP, nelts));
     nelts = 0;
     BuiltinNames(1, intern, ans, &nelts);
     sortVector(ans, TRUE);
+    UNPROTECT(1); /* ans */
     return ans;
 }
 

@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 3.1.2015-03-04
+Version 3.2.2015-06-08
 Kurt Hornik
 
 
@@ -160,7 +160,7 @@ and give the above, _official_ URL:
      @Misc{,
        author        = {Kurt Hornik},
        title         = {{R} {FAQ}},
-       year          = {2014},
+       year          = {2015},
        url           = {http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
      }
 
@@ -255,7 +255,7 @@ mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 3.1.3.  Based on this
+The current released version is 3.2.1.  Based on this
 'major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release ('r-patched')
 and one working towards the next minor or eventually major ('r-devel')
@@ -525,7 +525,7 @@ To cite R in publications, use
        author       = {{R Core Team}},
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
-       year         = 2014,
+       year         = 2015,
        url          = {http://www.R-project.org}
      }
 
