@@ -79,7 +79,7 @@ static void PrintLanguageEtc(SEXP, Rboolean, Rboolean);
 
 #define TAGBUFLEN 256
 #define TAGBUFLEN0 TAGBUFLEN + 6
-static char tagbuf[TAGBUFLEN0];
+static char tagbuf[TAGBUFLEN0 * 2]; /* over-allocate to allow overflow check */
 
 
 /* Used in X11 module for dataentry */
@@ -853,6 +853,9 @@ static void printAttributes(SEXP s, SEXP env, Rboolean useSlots)
 
     a = ATTRIB(s);
     if (a != R_NilValue) {
+	/* guard against cycles through attributes on environments */
+	if (strlen(tagbuf) > TAGBUFLEN0)
+	    error(_("print buffer overflow"));
 	strcpy(save, tagbuf);
 	/* remove the tag if it looks like a list not an attribute */
 	if (strlen(tagbuf) > 0 &&
@@ -974,31 +977,26 @@ void attribute_hidden PrintValueEnv(SEXP s, SEXP env)
 	  print(), so S4 methods for show() have precedence over those for
 	  print() to conform with the "green book", p. 332
 	*/
-	SEXP call, showS, prinfun;
+	SEXP call, prinfun;
 	SEXP xsym = install("x");
 	if(isMethodsDispatchOn() && IS_S4_OBJECT(s)) {
 	    /*
-	      Note that we cannot assume that show() is visible from
-	      'env', but we can assume there is a loaded "methods"
+	      Note that can assume there is a loaded "methods"
 	      namespace.  It is tempting to cache the value of show in
 	      the namespace, but the latter could be unloaded and
 	      reloaded in a session.
 	    */
-	    showS = findVar(install("show"), env);
-	    if(showS == R_UnboundValue) {
-		SEXP methodsNS = R_FindNamespace(mkString("methods"));
-		if(methodsNS == R_UnboundValue)
-		    error("missing methods namespace: this should not happen");
-		PROTECT(methodsNS);
-		showS = findVarInFrame3(methodsNS, install("show"), TRUE);
-		UNPROTECT(1);
-		if(showS == R_UnboundValue)
-		    error("missing show() in methods namespace: this should not happen");
-	    }
-	    prinfun = showS;
+	    SEXP methodsNS = R_FindNamespace(mkString("methods"));
+	    if(methodsNS == R_UnboundValue)
+		error("missing methods namespace: this should not happen");
+	    PROTECT(methodsNS);
+	    prinfun = findVarInFrame3(methodsNS, install("show"), TRUE);
+	    UNPROTECT(1);
+	    if(prinfun == R_UnboundValue)
+		error("missing show() in methods namespace: this should not happen");
 	}
 	else /* S3 */
-	    prinfun = install("print");
+	    prinfun = findVar(install("print"), R_BaseNamespace);
 
 	/* Bind value to a variable in a local environment, similar to
 	   a local({ x <- <value>; print(x) }) call. This avoids

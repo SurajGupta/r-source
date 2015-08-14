@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2014   The R Core Team
+ *  Copyright (C) 1998-2015   The R Core Team
  *  Copyright (C) 2002-2005  The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -799,7 +799,8 @@ void setup_Rmainloop(void)
     InitGraphics();
     InitTypeTables(); /* must be before InitS3DefaultTypes */
     InitS3DefaultTypes();
-    
+    PrintDefaults();
+
     R_Is_Running = 1;
     R_check_locale();
 

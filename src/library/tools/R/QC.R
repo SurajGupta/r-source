@@ -6728,7 +6728,8 @@ function(dir)
                                                           filters =
                                                               c("R_version",
                                                                 "duplicates"))
-                            }))
+                            }),
+                     error = identity)
         if(inherits(adb, "error")) {
             out$additional_repositories_analysis_failed_with <-
                 conditionMessage(adb)
@@ -7772,7 +7773,7 @@ function(env, verbose = getOption("verbose"))
 function(env)
 {
     env <- as.environment(env)
-    g <- methods::getGenerics(env)
+    g <- suppressMessages(methods::getGenerics(env))
     Map(function(f, p) {
             attr(f, "package") <- p
             f

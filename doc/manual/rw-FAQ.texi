@@ -77,7 +77,7 @@ This FAQ is for the Windows port of R: it describes features specific to
 that version.  The main R FAQ can be found at
 
 @display
-@uref{http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}.
+@uref{https://CRAN.R-project.org/doc/FAQ/R-FAQ.html}.
 @end display
 
 The information here applies only to recent versions of R for Windows,
@@ -125,10 +125,10 @@ The information here applies only to recent versions of R for Windows,
 @node Where can I find the latest version?, How do I install R for Windows?, Installation and Usage, Installation and Usage
 @section Where can I find the latest version?
 
-Go to any CRAN site (see @uref{http://cran.r-project.org/@/mirrors.html}
+Go to any CRAN site (see @uref{https://cran.r-project.org/@/mirrors.html}
 for a list), navigate to the @file{bin/windows/base} directory and
 collect the file(s) you need.  The current release is distributed as an
-installer @samp{@RWVER@-win.exe} of about 60MB.
+installer @samp{@RWVER@-win.exe} of about 65MB.
 
 There are also links on that page to the @samp{r-patched} and
 @samp{r-devel} snapshots.  These are frequently updated builds of
@@ -151,8 +151,8 @@ We only test on versions of Windows currently supported by Microsoft,
 mainly 64-bit Windows 7 and Server 2008.
 
 Your file system must allow case-honouring long file names (as is likely
-except perhaps for some network-mounted systems).  A installation takes
-75--110MB of disk space (up to 150MB if ICU was included in the build)
+except perhaps for some network-mounted systems).  An installation takes
+up to 150MB of disk space.
 
 If you want to be able to build packages from sources, we recommend that
 you choose an installation path not containing spaces.  (Using a path
@@ -239,7 +239,7 @@ after having checked the command line.
 
 A successful installation has exit code 0: unsuccessful ones may give 1,
 2, 3, 4 or 5.  See the help for Inno Setup
-(@uref{http://jrsoftware.org/@/ishelp.php}) for details.
+(@uref{http://jrsoftware.org/}) for details.
 
 We have some facilities for building a customized installer, in
 particular to add packages to the installer.  See the `R Installation
@@ -546,33 +546,13 @@ Directly, no.  See packages such as @code{RDCOMClient} from
 for example @code{update.packages()} and the menu items on the Packages menu.
 
 We have had several reports of this, although they do work for us on
-@emph{all} of our machines.  There are two known possible fixes.
+@emph{all} of our machines.  There are two known possible causes.
 
-(a) Use the Windows internet functions by starting R with the flag
-@option{--internet2} (@pxref{How do I install R for Windows?})  or
-calling @code{setInternet2(TRUE)} or setting the environment variable
-@env{R_WIN_INTERNET2} to a non-empty value when starting R.  These cause
-R to use the OS's functions used by Internet Explorer, which may already
-be configured for use with proxies.  Note that this does @emph{not} work
-with proxies that need authentication.
+(a) A proxy needs to be set up: see @code{?download.file}.
 
-(b) A proxy needs to be set up: see @code{?download.file}.  Here are two
-versions of an example (a real one, but from a machine that is only
-available locally) of a command-line in a short cut:
-
-@example
-"path_to_R\bin\x64\Rgui.exe" http_proxy=http://user:pass@@gannet:80/
-
-"path_to_R\bin\x64\Rgui.exe" http_proxy=http://gannet/ http_proxy_user=ask
-@end example
-
-@noindent
-The second version will prompt the user for the proxy username and
-password when HTTP downloads are first used.
-
-Another possibility is that firewall settings are blocking the R
-executables from contacting the Internet, but this should result in
-informative error messages from the firewall program.
+(b) Firewall settings are blocking the R executables from contacting the
+Internet (but this should result in informative error messages from the
+firewall program).
 
 
 @node Entering certain characters crashes Rgui., What does 'DLL attempted to change FPU control word' mean?, The Internet download functions fail., Installation and Usage
@@ -656,14 +636,12 @@ software installation to be done by an account which is in the local
 Administrator group with `admin approval mode' turned on.  (The
 Administrator account by default has it turned off.)  Unlike (say)
 Windows XP, such accounts do not run programs with full administrator
-privileges, and this is where the issues arise.  (For background
-information consult e.g.@:
-@url{http://windowsvistablog.com/@/blogs/@/windowsvista/@/archive/@/2007/01/23/@/security-features-vs-convenience.aspx}.)
-These OSes have the concept of `over-the-shoulder' credentials: if you
-are running without full administrator privileges and do something which
-needs them you may be prompted with one or more security-check dialog
-boxes, and may be required to provide administrator credentials or
-confirm that you really want to take that action.
+privileges, and this is where the issues arise.  These OSes have the
+concept of `over-the-shoulder' credentials: if you are running without
+full administrator privileges and do something which needs them you may
+be prompted with one or more security-check dialog boxes, and may be
+required to provide administrator credentials or confirm that you really
+want to take that action.
 
 Vista and later will report that the R installer has an `unidentified
 publisher' or `unknown publisher' and ask if it should be run.  System
@@ -789,11 +767,9 @@ Where tilde does not appear on the main keyboard, it can normally be
 accessed by pressing AltGr (the right Alt key) plus some other key.
 This is @code{]} in Canadian (multilingual), German and Scandinavian
 layouts, @code{1} in Eastern Europe, @code{[} in Portuguese, @code{4} or
-@code{5} in Spanish, @code{/} in Francophone Belgian, and so on.  For
-some keyboards the uses of AltGr are shown at
-@url{http://office.microsoft.com/@/en-us/@/word/@/HP052590631033.aspx}:
-you can explore those for your keyboard via the `On-Screen Keyboard'
-(under Ease of access on Windows 7).
+@code{5} in Spanish, @code{/} in Francophone Belgian, and so on.  You
+can explore those for your keyboard via the `On-Screen Keyboard' (under
+Ease of access on Windows 7).
 
 On all Windows versions you should be able to get tilde by holding the
 down the left Alt key and typing 0126 on the numeric keypad (if you have
@@ -992,7 +968,8 @@ language characters always being available, which is the case for
 so-called `Unicode' Windows applications.  However, R is primarily
 written for Unix-alikes and is not therefore `Unicode' in the Windows
 sense.)  You can find suitable locale names from
-@uref{http://msdn.microsoft.com/@/library/@/default.asp?url=/@/library/@/en-us/@/vccore98/@/html/@/_crt_language_and_country_strings.asp}:
+@uref{https://msdn.microsoft.com/@/en-us/@/library/@/39cwe7zf%28v=vs.80%29.aspx}
+and @uref{https://msdn.microsoft.com/@/en-us/@/library/cdax410z%28v=vs.80%29.aspx}
 beware that @code{"Chinese"} is Traditional Chinese (code page 950,
 Big5) and @code{"chs"} is needed for Simplified Chinese (code page 936,
 GB2312).
@@ -1110,7 +1087,7 @@ packages for each minor (3.x.?) version will be stored in a separate area,
 so for R 3.1.? the files are in @file{bin/windows/contrib/3.1}.
 
 Note that the binary versions on CRAN are unsupported: see
-@uref{http://cran.r-project.org/@/bin/@/windows/@/contrib/@/3.1/@/ReadMe},
+@uref{https://cran.r-project.org/@/bin/@/windows/@/contrib/@/3.1/@/ReadMe},
 which also gives the locations of a few other binary packages.
 
 If there is no binary package or that is not up-to-date or you prefer
@@ -1208,7 +1185,7 @@ You can tell the version the package was compiled for by looking at the
 For a small number of binary packages you need to install additional
 software and have its DLLs in your @code{PATH}.  Windows will normally
 give an informative message about a certain DLL not being found.  See
-@uref{http://cran.r-project.org/@/bin/@/windows/@/contrib/@/3.1/@/ReadMe} for a
+@uref{https://cran.r-project.org/@/bin/@/windows/@/contrib/@/3.1/@/ReadMe} for a
 listing of some of these packages (notably @code{RGtk2},
 @code{cairoDevice}, @code{rggobi}, @code{rJava}, @code{rjags} and some
 of the packages connecting to databases).
@@ -1232,7 +1209,7 @@ no guarantee that a 64-bit build will work: it depends on the layout it
 uses.)
 
 In the past several package authors have suggested using ActiveTcl
-(@uref{http://www.activestate.com/@/Products/@/activetcl/}) as a way to
+(@uref{https://www.activestate.com/@/Products/@/activetcl/}) as a way to
 get Tcl/Tk extensions (but the support files do contain the most
 commonly used @code{TkTable} and @code{BWidget} extensions).  This could
 be used by setting (for a default install)
@@ -1353,7 +1330,7 @@ been built and propagated to the CRAN mirror you are using.  This
 normally (but not always) happens within 24 hours.  Sometimes mirrors
 do get behind (especially unofficial ones), so you could try another
 mirror.  (Mirror statistics are linked near the top of the CRAN mirror
-page at @uref{http://cran.r-project.org/mirrors.html}.)
+page at @uref{https://cran.r-project.org/mirrors.html}.)
 
 The latest version of the package might require a later version of R
 than the one you are using.  You can check on the package's HTML page on
@@ -1683,7 +1660,7 @@ less successful when tried for the common current chips such as Intel's
 Core 2.
 
 Versions of Dr Kazushige Goto's BLAS (see
-@uref{http://en.wikipedia.org/wiki/Kazushige_Goto}) for 64-bit Windows
+@uref{https://en.wikipedia.org/wiki/Kazushige_Goto}) for 64-bit Windows
 by Ei-Ji Nakama can be found at
 @uref{http://prs.ism.ac.jp/~nakama/SurviveGotoBLAS2/binary/windows/x64/}.
 Just download the file @file{Rblas.dll} appropriate to your CPU and
@@ -1874,7 +1851,7 @@ call @code{R_ProcessEvents()} periodically from your compiled code.
 If you want output to be updated on the console, call
 @code{R_FlushConsole()} and then @code{R_ProcessEvents()}.
 
-@set LASTEDIT 2015-01-27    
+@set LASTEDIT 2015-08-13    
 @ifhtml
 @html
 <hr WIDTH="100%">

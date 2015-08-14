@@ -53,26 +53,30 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   file as described by \code{url} from the internet and store it in
   \code{destfile}.
   The \code{url} must start with a scheme such as
-  \samp{http://}, \samp{ftp://} or \samp{file://}.
+  \samp{http://}, \samp{https://}, \samp{ftp://} or \samp{file://}.
 
 #ifdef unix
-  If \code{method = "auto"} is chosen (the default), the internal method
-  is chosen for \samp{file://} URLs, and for the others provided
-  \code{\link{capabilities}("http/ftp")} is true (which it almost always
-  is).  Otherwise methods \code{"wget"} and \code{"curl"}.
+  If \code{method = "auto"} is chosen (the default), method
+  \code{"libcurl"} is chosen for \samp{https://} and \samp{ftps://} URLs
+  provided \code{\link{capabilities}("libcurl")} is true, and the
+  internal method is chosen for \samp{file://} URLs and for the others
+  provided \code{\link{capabilities}("http/ftp")} is true (which it
+  almost always is).
 #endif
 #ifdef windows
-  If \code{method = "auto"} is chosen (the default), the internal method
-  is used on Windows.
+  If \code{method = "auto"} is chosen (the default), the
+  \code{"wininet"} method is used on Windows (unless
+  \code{setInternet2(FALSE)} was used). 
 #endif
   
   Support for method \code{"libcurl"} is optional: use
   \code{\link{capabilities}("libcurl")} to see if it is supported on
-  your build.  It provides (non-blocking) access to \samp{https://} and
-  \samp{ftps://} URLs.  There is support for simultaneous downloads, so
-  \code{url} and \code{destfile} can be character vectors of the same
-  length greater than one.  For a single URL and \code{quiet = FALSE}
-  there a progress bar is shown in interactive use.
+  your build.  It will usually provide (non-blocking) access to
+  \samp{https://} and \samp{ftps://} URLs.  There is support for
+  simultaneous downloads, so \code{url} and \code{destfile} can be
+  character vectors of the same length greater than one.  For a single
+  URL and \code{quiet = FALSE} a progress bar is shown in interactive
+  use.
   
   For methods \code{"wget"} and \code{"curl"} a system call is made to
   the tool given by \code{method}, and the respective program must be
@@ -80,35 +84,47 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   They will block all other activity on the \R process until they
   complete: this may make a GUI unresponsive.
 
-  \code{cacheOK = FALSE} is useful for \samp{http://} URLs, and will
-  attempt to get a copy directly from the site rather than from an
-  intermediate cache.  It is used by \code{\link{available.packages}}.
+  \code{cacheOK = FALSE} is useful for \samp{http://} and
+  \samp{https://} URLs: it will attempt to get a copy directly from the
+  site rather than from an intermediate cache.  It is used by
+  \code{\link{available.packages}}.
 
-  The remaining details apply to method \code{"internal"} only.
+  The \code{"libcurl"} and \code{"wget"} methods follow \samp{http://}
+  and \samp{https://} redirections: the \code{"internal"} does not.
+  (For method \code{"curl"} use argument \code{extra = "-L"}. To disable
+  redirection in \command{wget}, use \code{extra = "--max-redirect=0"}.)
 
   Note that \samp{https://} URLs are
 #ifdef unix
   not supported by the internal method.
 #endif
 #ifdef windows
-  only supported if \option{--internet2} or environment variable
+  supported by default.  (Prior to \R 3.2.2, this required that
+  option \option{--internet2} or environment variable
   \env{R_WIN_INTERNET2} was set or \code{\link{setInternet2}(TRUE)} was
-  used (to make use of Windows internal functions), and then only if the
-  certificate is considered to be valid.
+  used.  That option and environment variable are now ignored.)  
 #endif
 
   See \code{\link{url}} for how \samp{file://} URLs are interpreted,
-  especially on Windows.  This function does decode encoded URLs.
+  especially on Windows.  The \code{"internal"} and \code{"wininet"}
+  methods do not decode \samp{file://} URLs, but the \code{"libcurl"}
+  and \code{"curl"} methods do: method \code{"wget"} does not support
+  them.
 
+  The remaining details apply to the \code{"internal"}, \code{"wininet"}
+  and \code{"libcurl"} methods only.
+  
   The timeout for many parts of the transfer can be set by the option
   \code{timeout} which defaults to 60 seconds.
 
   The level of detail provided during transfer can be set by the
-  \code{quiet} argument and the \code{internet.info} option.  The
-  details depend on the platform and scheme, but setting
-  \code{internet.info} to 0 gives all available details, including
-  all server responses.  Using 2 (the default) gives only serious
-  messages, and 3 or more suppresses all messages.
+  \code{quiet} argument and the \code{internet.info} option: the details
+  depend on the platform and scheme.  For the \code{"internal"} method
+  setting option \code{internet.info} to 0 gives all available details,
+  including all server responses.  Using 2 (the default) gives only
+  serious messages, and 3 or more suppresses all messages.  For the
+  \code{"libcurl"} method values of the option less than 2 give verbose
+  output.
 
 #ifdef windows
   A progress bar tracks the transfer.  If the file length is known, the
@@ -126,13 +142,11 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   care is needed that other binary file types are transferred with
   \code{mode = "wb"}.
 
-  There is an alternative method \code{"wininet"}. (This selected for
-  \code{method = "internal"} if the command line flag
-  \option{--internet2}, was used or \code{\link{setInternet2}(TRUE)}
+  There is a Windows-only method \code{"wininet"}.  (This selected for
+  \code{method = "internal"} unless \code{\link{setInternet2}(FALSE)} is
   called.)  Then the \sQuote{Internet Options} of the system are used to
   choose proxies and so on; these are set in the Control Panel and are
-  those used for Internet Explorer.  That version does not support
-  \code{cacheOK = FALSE}.
+  those used for Internet Explorer.
 #endif
 #ifdef unix
   A progress bar tracks the transfer.  If the file length is known, an
@@ -149,21 +163,28 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   
   Method \code{"wget"} is mainly for historical compatibility, but it
   and \code{"curl"} can be used for URLs (e.g., \samp{https://} URLs or
-  those that use cookies) which the internal method does not support.
+  those that use cookies or redirection) which the internal method does
+  not support and where the \code{"libcurl"} method is not available.
 
   Method \code{"wget"} can be used with proxy firewalls which require
   user/password authentication if proper values are stored in the
   configuration file for \code{wget}.
 
   \command{wget} (\url{http://www.gnu.org/software/wget/}) is commonly
-  installed on Unix-alikes (but not OS X). Windows binaries are
+  installed on Unix-alikes (but not OS X).  Windows binaries are
   available from Cygwin, gnuwin32 and elsewhere.
 
   \command{curl} (\url{http://curl.haxx.se/}) is installed on OS X and
   commonly on Unix-alikes.  Windows binaries are available at that URL.
 }
 \section{Setting Proxies}{
-  This applies to the internal code only.
+#ifdef windows
+  For the Windows-only method \code{"wininet"}, the \sQuote{Internet
+  Options} of the system are used to choose proxies and so on; these are
+  set in the Control Panel and are those used for Internet Explorer.
+#endif
+  
+  The next two paragraphs apply to the internal code only.
 
   Proxies can be specified via environment variables.
   Setting \env{no_proxy} to \code{*} stops any proxy being tried.
@@ -201,10 +222,11 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   \url{http://curl.haxx.se/libcurl/c/libcurl-tutorial.html} for details.
 }
 \section{Secure URLs}{
-  Methods which access \samp{https://} and \samp{ftps://} URLs usually
-  try to verify their certificates. This is usually done using the CA
+  Methods which access \samp{https://} and \samp{ftps://} URLs should
+  try to verify their certificates.  This is usually done using the CA
   root certificates installed by the OS (although we have seen instances
-  in which these got removed rather than updated).
+  in which these got removed rather than updated). For further information
+  see \url{http://curl.haxx.se/docs/sslcerts.html}.
 
   This is an issue for \code{method = "libcurl"} on Windows, where the
   OS does not provide a suitable CA certificate bundle, so by default on
@@ -212,7 +234,14 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   environment variable \env{CURL_CA_BUNDLE} to the path to a certificate
   bundle file, usually named \file{ca-bundle.crt} or
   \file{curl-ca-bundle.crt}.  (This is normally done for a binary
-  installation of \R, which installs \file{etc/curl-ca-bundle.crt}.)
+  installation of \R, which installs
+  \file{\var{R_HOME}/etc/curl-ca-bundle.crt} and sets
+  \env{CURL_CA_BUNDLE} to point to it if that enironment variable is not
+  already set.)  For an updated certificate bundle, see
+  \url{http://curl.haxx.se/docs/sslcerts.html}.
+  Currently one can download a copy from
+  \url{https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt}
+  and set \env{CURL_CA_BUNDLE} to the full path to the downloaded file.
 }
 \value{
   An (invisible) integer code, \code{0} for success and non-zero for
@@ -222,7 +251,7 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 }
 \seealso{
   \code{\link{options}} to set the \code{HTTPUserAgent}, \code{timeout}
-  and \code{internet.info} options.
+  and \code{internet.info} options used by some of the methods.
 
   \code{\link{url}} for a finer-grained way to read data from URLs.
 

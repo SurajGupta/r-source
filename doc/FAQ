@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 3.2.2015-06-08
+Version 3.2.2015-08-09
 Kurt Hornik
 
 
@@ -99,6 +99,7 @@ R FAQ
   7.40 How do I access the source code for a function?
   7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
   7.42 Why is R apparently not releasing memory?
+  7.43 How can I enable secure https downloads in R?
 8 R Programming
   8.1 How should I write summary methods?
   8.2 How can I debug dynamically loaded code?
@@ -135,18 +136,18 @@ Public License for more details.
 
    Copies of the GNU General Public License versions are available at
 
-     <http://www.R-project.org/Licenses/>
+     <https://www.R-project.org/Licenses/>
 
 1.2 Obtaining this document
 ===========================
 
 The latest version of this document is always available from
 
-     <http://CRAN.R-project.org/doc/FAQ/>
+     <https://CRAN.R-project.org/doc/FAQ/>
 
    From there, you can obtain versions converted to plain ASCII text,
 GNU info, HTML, PDF, as well as the Texinfo source used for creating all
-these formats using the GNU Texinfo system (http://texinfo.org/).
+these formats using the GNU Texinfo system.
 
    You can also obtain the R FAQ from the 'doc/FAQ' subdirectory of a
 CRAN site (*note What is CRAN?::).
@@ -161,7 +162,7 @@ and give the above, _official_ URL:
        author        = {Kurt Hornik},
        title         = {{R} {FAQ}},
        year          = {2015},
-       url           = {http://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
+       url           = {https://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
      }
 
 1.4 Notation
@@ -179,8 +180,8 @@ welcome.
    In particular, note that I do not have access to Windows or Mac
 systems.  Features specific to the Windows and OS X ports of R are
 described in the "R for Windows FAQ"
-(http://CRAN.R-project.org/bin/windows/base/rw-FAQ.html) and the "R for
-Mac OS X FAQ" (http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html).
+(https://CRAN.R-project.org/bin/windows/base/rw-FAQ.html) and the "R for
+Mac OS X FAQ" (https://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html).
 If you have information on Mac or Windows systems that you think should
 be added to this document, please let me know.
 
@@ -231,10 +232,10 @@ Ligges, Thomas Lumley, Martin Maechler, Duncan Murdoch, Paul Murrell,
 Martyn Plummer, Brian Ripley, Deepayan Sarkar, Duncan Temple Lang, Luke
 Tierney, and Simon Urbanek.
 
-   R has a home page at <http://www.R-project.org/>.  It is free
-software (http://www.gnu.org/philosophy/free-sw.html) distributed under
-a GNU-style copyleft (http://www.gnu.org/copyleft/copyleft.html), and an
-official part of the GNU (http://www.gnu.org/) project ("GNU S").
+   R has a home page at <https://www.R-project.org/>.  It is free
+software (https://www.gnu.org/philosophy/free-sw.html) distributed under
+a GNU-style copyleft (https://www.gnu.org/copyleft/copyleft.html), and
+an official part of the GNU (https://www.gnu.org/) project ("GNU S").
 
 2.2 What machines does R run on?
 ================================
@@ -243,10 +244,10 @@ R is being developed for the Unix-like, Windows and Mac families of
 operating systems.  Support for Mac OS Classic ended with R 1.7.1.
 
    The current version of R will configure and build under a number of
-common Unix-like (e.g., <http://en.wikipedia.org/wiki/Unix-like>)
+common Unix-like (e.g., <https://en.wikipedia.org/wiki/Unix-like>)
 platforms including CPU-linux-gnu for the i386, amd64, alpha, arm/armel,
 hppa, ia64, m68k, mips/mipsel, powerpc, s390 and sparc CPUs (e.g.,
-<http://buildd.debian.org/build.php?&pkg=r-base>), i386-hurd-gnu,
+<https://buildd.debian.org/build.php?&pkg=r-base>), i386-hurd-gnu,
 CPU-kfreebsd-gnu for i386 and amd64, powerpc-apple-darwin,
 mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 
@@ -255,7 +256,7 @@ mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 3.2.1.  Based on this
+The current released version is 3.2.2.  Based on this
 'major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release ('r-patched')
 and one working towards the next minor or eventually major ('r-devel')
@@ -273,7 +274,7 @@ Subversion repository, but currently not via anonymous rsync (nor CVS).
 
    Tarballs with daily snapshots of the r-devel and r-patched
 development versions of R can be found at
-<ftp://ftp.stat.math.ethz.ch/Software/R/>.
+<https://stat.ethz.ch/R/daily>.
 
 2.5 How can R be installed?
 ===========================
@@ -361,7 +362,7 @@ Masarotto, and is now being developed and maintained by Duncan Murdoch
 r-devel versions of R.
 
    See the "R for Windows FAQ"
-(http://CRAN.R-project.org/bin/windows/base/rw-FAQ.html) for more
+(https://CRAN.R-project.org/bin/windows/base/rw-FAQ.html) for more
 details.
 
 2.5.3 How can R be installed (Mac)
@@ -373,7 +374,7 @@ downloaded and executed, the installer will install the current release
 of R and an R.app OS X GUI.  This port of R for OS X is maintained by
 Simon Urbanek <Simon.Urbanek@R-project.org> (and previously by Stefano
 Iacus).  The "R for Mac OS X FAQ
-(http://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html) has more
+(https://CRAN.R-project.org/bin/macosx/RMacOSX-FAQ.html) has more
 details.
 
    Snapshots of the r-patched and r-devel versions of R are available as
@@ -400,8 +401,8 @@ install r-base-dev' to obtain the additional tools required for this.
 So-called "backports" of the current R packages for at least the
 "stable" distribution of Debian are provided by Johannes Ranke, and
 available from CRAN.  See
-<http://CRAN.R-project.org/bin/linux/debian/README> for details on R
-Debian packages and installing the backports, which should also be
+<https://CRAN.R-project.org/bin/linux/debian/README.html> for details on
+R Debian packages and installing the backports, which should also be
 suitable for other Debian derivatives.  Native backports for Ubuntu are
 provided by Michael Rutter.
 
@@ -420,11 +421,11 @@ released, there may be a delay of up to 2 weeks until the Fedora RPM
 becomes publicly available, as it must pass through the statutory Fedora
 review process.  RPMs for a selection of R packages are also provided by
 Fedora.  The Extra Packages for Enterprise Linux (EPEL) project
-(<http://fedoraproject.org/wiki/EPEL>) provides ports of the Fedora RPMs
-for RedHat Enterprise Linux and compatible distributions (e.g., Centos,
-Scientific Linux, Oracle Linux).
+(<https://fedoraproject.org/wiki/EPEL>) provides ports of the Fedora
+RPMs for RedHat Enterprise Linux and compatible distributions (e.g.,
+Centos, Scientific Linux, Oracle Linux).
 
-   See <http://CRAN.R-project.org/bin/linux/suse/README.html> for
+   See <https://CRAN.R-project.org/bin/linux/suse/README.html> for
 information about RPMs for openSUSE.
 
    No other binary distributions are currently publically available via
@@ -442,7 +443,7 @@ forms, the name may need to be be quoted.)
    This documentation can also be made available as one reference manual
 for on-line reading in HTML and PDF formats, and as hardcopy via LaTeX,
 see *note How can R be installed?::.  An up-to-date HTML version is
-always available for web browsing at <http://stat.ethz.ch/R-manual/>.
+always available for web browsing at <https://stat.ethz.ch/R-manual/>.
 
    Printed copies of the R reference manual for some version(s) are
 available from Network Theory Ltd, at
@@ -471,21 +472,21 @@ the R Foundation?::).
    An annotated bibliography (BibTeX format) of R-related publications
 can be found at
 
-     <http://www.R-project.org/doc/bib/R.bib>
+     <https://www.R-project.org/doc/bib/R.bib>
 
    Books on R by R Core Team members include
 
      John M. Chambers (2008), "Software for Data Analysis: Programming
      with R". Springer, New York, ISBN 978-0-387-75935-7,
-     <http://statweb.stanford.edu/~jmc4/Rbook/>.
+     <https://statweb.stanford.edu/~jmc4/Rbook/>.
 
      Peter Dalgaard (2008), "Introductory Statistics with R", 2nd
      edition.  Springer, ISBN 978-0-387-79053-4,
-     <http://www.biostat.ku.dk/~pd/ISwR.html>.
+     <http://publicifsv.sund.ku.dk/~pd/ISwR.html>.
 
      Robert Gentleman (2008), "R Programming for Bioinformatics".
      Chapman & Hall/CRC, Boca Raton, FL, ISBN 978-1-420-06367-7,
-     <http://www.bioconductor.org/pub/RBioinf/>.
+     <https://www.bioconductor.org/pub/RBioinf/>.
 
      Stefano M. Iacus (2008), "Simulation and Inference for Stochastic
      Differential Equations: With R Examples".  Springer, New York, ISBN
@@ -500,11 +501,11 @@ can be found at
 
      P. Murrell (2005), "R Graphics", Chapman & Hall/CRC, ISBN:
      1-584-88486-X,
-     <http://www.stat.auckland.ac.nz/~paul/RGraphics/rgraphics.html>.
+     <https://www.stat.auckland.ac.nz/~paul/RGraphics/rgraphics.html>.
 
      William N. Venables and Brian D. Ripley (2002), "Modern Applied
      Statistics with S" (4th edition).  Springer, ISBN 0-387-95457-0,
-     <http://www.stats.ox.ac.uk/pub/MASS4/>.
+     <https://www.stats.ox.ac.uk/pub/MASS4/>.
 
      Jose C. Pinheiro and Douglas M. Bates (2000), "Mixed-Effects Models
      in S and S-Plus".  Springer, ISBN 0-387-98957-0.
@@ -526,7 +527,7 @@ To cite R in publications, use
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
        year         = 2015,
-       url          = {http://www.R-project.org}
+       url          = {https://www.R-project.org}
      }
 
    Citation strings (or BibTeX entries) for R and R packages can also be
@@ -554,7 +555,7 @@ four mailing lists devoted to R.
      R.
 
 Please read the posting guide
-(http://www.R-project.org/posting-guide.html) _before_ sending anything
+(https://www.R-project.org/posting-guide.html) _before_ sending anything
 to any mailing list.
 
    Note in particular that R-help is intended to be comprehensible to
@@ -565,7 +566,7 @@ involving C or C++) should go to R-devel.
 
    Convenient access to information on these lists, subscription, and
 archives is provided by the web interface at
-<http://stat.ethz.ch/mailman/listinfo/>.  One can also subscribe (or
+<https://stat.ethz.ch/mailman/listinfo/>.  One can also subscribe (or
 unsubscribe) via email, e.g. to R-help by sending 'subscribe' (or
 'unsubscribe') in the _body_ of the message (not in the subject!)  to
 <R-help-request@lists.R-project.org>.
@@ -587,7 +588,7 @@ have code which reliably reproduces the problem.  Also, make sure that
 you include information on the system and version of R being used.  See
 *note R Bugs:: for more details.
 
-   See <http://www.R-project.org/mail.html> for more information on the
+   See <https://www.R-project.org/mail.html> for more information on the
 R mailing lists.
 
    The R Core Team can be reached at <R-core@lists.R-project.org> for
@@ -610,7 +611,7 @@ contributed extensions, documentation for R, and binaries.
    The CRAN master site at WU (Wirtschaftsuniversit‰t Wien) in Austria
 can be found at the URL
 
-     <http://CRAN.R-project.org/>
+     <https://CRAN.R-project.org/>
 
 Daily mirrors are available at URLs including
 
@@ -630,7 +631,7 @@ Daily mirrors are available at URLs including
      <http://cran.uk.R-project.org/>  (U of Bristol, United
                                       Kingdom)
 
-See <http://CRAN.R-project.org/mirrors.html> for a complete list of
+See <https://CRAN.R-project.org/mirrors.html> for a complete list of
 mirrors.  Please use the CRAN site closest to you to reduce network
 load.
 
@@ -696,21 +697,21 @@ provide support for the R project and other innovations in statistical
 computing, provide a reference point for individuals, institutions or
 commercial enterprises that want to support or interact with the R
 development community, and to hold and administer the copyright of R
-software and documentation.  See <http://www.R-project.org/foundation/>
+software and documentation.  See <https://www.R-project.org/foundation/>
 for more information.
 
 2.14 What is R-Forge?
 =====================
 
-R-Forge (<http://R-Forge.R-project.org/>) offers a central platform for
+R-Forge (<https://R-Forge.R-project.org/>) offers a central platform for
 the development of R packages, R-related software and further projects.
-It is based on GForge (http://www.gforge.org/) offering easy access to
-the best in SVN, daily built and checked packages, mailing lists, bug
-tracking, message boards/forums, site hosting, permanent file archival,
-full backups, and total web-based administration.  For more information,
-see the R-Forge web page and Stefan Theuﬂl and Achim Zeileis (2009),
-"Collaborative software development using R-Forge", _The R Journal_,
-*1*(1):9-14.
+It is based on GForge (https://en.wikipedia.org/wiki/GForge) offering
+easy access to the best in SVN, daily built and checked packages,
+mailing lists, bug tracking, message boards/forums, site hosting,
+permanent file archival, full backups, and total web-based
+administration.  For more information, see the R-Forge web page and
+Stefan Theuﬂl and Achim Zeileis (2009), "Collaborative software
+development using R-Forge", _The R Journal_, *1*(1):9-14.
 
 3 R and S
 *********
@@ -755,14 +756,14 @@ S.
 
    * John M. Chambers (1998), "Programming with Data," New York:
      Springer, ISBN 0-387-98503-4
-     (<http://cm.bell-labs.com/cm/ms/departments/sia/Sbook/>).
+     (<https://statweb.stanford.edu/~jmc4/Sbook/>).
 
      This "_Green Book_" describes version 4 of S, a major revision of S
      designed by John Chambers to improve its usefulness at every stage
      of the programming process.
 
-   See <http://cm.bell-labs.com/cm/ms/departments/sia/S/history.html>
-for further information on "Stages in the Evolution of S".
+   See <https://statweb.stanford.edu/~jmc4/papers/96.7.ps> for further
+information on the "Evolution of the S Language".
 
    There is a huge amount of user-contributed code for S, available at
 the S Repository (http://lib.stat.cmu.edu/S/) at CMU.
@@ -772,7 +773,7 @@ the S Repository (http://lib.stat.cmu.edu/S/) at CMU.
 
 S-PLUS is a value-added version of S currently sold by TIBCO Software
 Inc (http://www.tibco.com/) as 'TIBCO Spotfire S+'.  See
-<http://en.wikipedia.org/wiki/S-PLUS> for more information.
+<https://en.wikipedia.org/wiki/S-PLUS> for more information.
 
 3.3 What are the differences between R and S?
 =============================================
@@ -1184,7 +1185,7 @@ For a very long time, there was no such thing.
 currently beta testing a commercially supported version of R named R+
 (read R plus).
 
-   REvolution Computing (http://www.revolution-computing.com/) has
+   Revolution Analytics (http://www.revolution-computing.com/) has
 released REvolution R
 (http://www.revolution-computing.com/products/revolution-r.php), an
 enterprise-class statistical analysis system based on R, suitable for
@@ -1225,10 +1226,7 @@ code, allowing the HTML author to do anything from load in data sets to
 enter most of the commands for users without writing CGI scripts.
 Graphical output was possible in PostScript or GIF formats and the
 executed code was presented to the user for revision.  However, it is
-not clear if the project is still active.  Currently, a modified version
-of *Rcgi* by Mai Zhou <mai@ms.uky.edu> (actually, two versions: one with
-(bitmap) graphics and one without) as well as the original code are
-available from <http://www.ms.uky.edu/~statweb/>.
+not clear if the project is still active.
 
    There are many additional examples of web interfaces to R which
 basically allow to submit R code to a remote server, see for example the
@@ -1236,7 +1234,7 @@ collection of links available from
 <http://biostat.mc.vanderbilt.edu/twiki/bin/view/Main/StatCompCourse>.
 
    David Firth (http://www.warwick.ac.uk/go/dfirth) has written
-*CGIwithR* (http://CRAN.R-project.org/package=CGIwithR), an R add-on
+*CGIwithR* (https://CRAN.R-project.org/package=CGIwithR), an R add-on
 package available from CRAN.  It provides some simple extensions to R to
 facilitate running R scripts through the CGI interface to a web server,
 and allows submission of data using both GET and POST methods.  It is
@@ -1254,11 +1252,11 @@ embeds the R interpreter inside Apache 2 (and beyond).  A tutorial and
 presentation are available from the project web page at
 <http://biostat.mc.vanderbilt.edu/twiki/bin/view/Main/RApacheProject>.
 
-   Rserve (http://stats.math.uni-augsburg.de/Rserve/) is a project
-actively developed by Simon Urbanek.  It implements a TCP/IP server
-which allows other programs to use facilities of R. Clients are
-available from the web site for Java and C++ (and could be written for
-other languages that support TCP/IP sockets).
+   Rserve (https://www.rforge.net/Rserve/) is a project actively
+developed by Simon Urbanek.  It implements a TCP/IP server which allows
+other programs to use facilities of R. Clients are available from the
+web site for Java and C++ (and could be written for other languages that
+support TCP/IP sockets).
 
    Two projects use PHP to provide a web interface to R. R_PHP_Online
 (http://steve-chen.net/R_PHP/) by Steve Chen (though it is unclear if
@@ -1268,7 +1266,7 @@ developed by Alfredo Pontillo and Angelo Mineo and provides both a web
 interface to R and a set of pre-specified analyses that need no R code
 input.
 
-   webbioc (http://www.bioconductor.org/) is "an integrated web
+   webbioc (https://www.bioconductor.org/) is "an integrated web
 interface for doing microarray analysis using several of the
 Bioconductor packages" and is designed to be installed at local sites as
 a shared computing resource.
@@ -1278,18 +1276,18 @@ create user-friendly web interfaces for R scripts.  All code for the web
 interface is created automatically.  There is no need for the user to do
 any extra scripting or learn any new scripting techniques.
 
-   The *R.rsp* (http://CRAN.R-project.org/package=R.rsp) package by
+   The *R.rsp* (https://CRAN.R-project.org/package=R.rsp) package by
 Henrik Bengtsson introduces "R Server Pages".  Analogous to Java Server
 Pages, an R server page is typically HTML with embedded R code that gets
 evaluated when the page is requested.  The package includes an internal
 cross-platform HTTP server implemented in Tcl, so provides a good
 framework for including web-based user interfaces in packages.  The
 approach is similar to the use of the *brew*
-(http://CRAN.R-project.org/package=brew) package with Rapache
+(https://CRAN.R-project.org/package=brew) package with Rapache
 (http://rapache.net/) with the advantage of cross-platform support and
 easy installation.
 
-   The *Rook* (http://CRAN.R-project.org/package=Rook) package by
+   The *Rook* (https://CRAN.R-project.org/package=Rook) package by
 Jeffrey Horner provides a web server interface borrowing heavily from
 Ruby's Rack project.
 
@@ -1302,12 +1300,9 @@ with no programming or web designing background to quickly develop
 flexible and powerful online applications, websites, and psychometrics
 tests.  To maximize its reliability, security, and performance, Concerto
 relies on the popular and reliable open-source elements such as MySQL
-server (exchange and storage of the data), Rstudio (http://rstudio.org/)
-(R code designing and testing, file management), CKEditor (HTML Layer
-design), and PHP.
-
-   See <http://rwiki.sciviews.org/doku.php?id=faq-r#web_interfaces> for
-additional information.
+server (exchange and storage of the data), Rstudio
+(https://rstudio.org/) (R code designing and testing, file management),
+CKEditor (HTML Layer design), and PHP.
 
 5 R Add-On Packages
 *******************
@@ -1355,8 +1350,9 @@ The R distribution comes with the following packages:
 former *base* was split into the four packages *base*, *graphics*,
 *stats*, and *utils*.  Packages *ctest*, *eda*, *modreg*, *mva*, *nls*,
 *stepfun* and *ts* were merged into *stats*, package *lqs* returned to
-the recommended package *MASS* (http://CRAN.R-project.org/package=MASS),
-and package *mle* moved to *stats4*.
+the recommended package *MASS*
+(https://CRAN.R-project.org/package=MASS), and package *mle* moved to
+*stats4*.
 
 5.1.2 Add-on packages from CRAN
 -------------------------------
@@ -1411,7 +1407,7 @@ in all binary distributions of R.
    See the CRAN contributed packages page for more information.
 
    Many of these packages are categorized into CRAN Task Views
-(http://CRAN.R-project.org/web/views/), allowing to browse packages by
+(https://CRAN.R-project.org/web/views/), allowing to browse packages by
 topic and providing tools to automatically install all packages for
 special areas of interest.
 
@@ -1419,9 +1415,9 @@ special areas of interest.
 require additional software, or are shipping third party libraries for
 Windows cannot be made available on CRAN in form of a Windows binary
 packages.  Nevertheless, some of these packages are available at the
-"CRAN extras" repository at <http://www.stats.ox.ac.uk/pub/RWin/> kindly
-provided by Brian D. Ripley.  Note that this repository is a default
-repository for recent versions of R for Windows.
+"CRAN extras" repository at <https://www.stats.ox.ac.uk/pub/RWin/>
+kindly provided by Brian D. Ripley.  Note that this repository is a
+default repository for recent versions of R for Windows.
 
 5.1.3 Add-on packages from Omegahat
 -----------------------------------
@@ -1437,16 +1433,16 @@ from the Omega project.
 5.1.4 Add-on packages from Bioconductor
 ---------------------------------------
 
-Bioconductor (http://www.bioconductor.org/) is an open source and open
+Bioconductor (https://www.bioconductor.org/) is an open source and open
 development software project for the analysis and comprehension of
 genomic data.  Most Bioconductor components are distributed as R add-on
 packages.  Initially most of the Bioconductor software packages
-(http://www.bioconductor.org/packages/bioc/) focused primarily on DNA
+(https://www.bioconductor.org/packages/bioc/) focused primarily on DNA
 microarray data analysis.  As the project has matured, the functional
 scope of the software packages broadened to include the analysis of all
 types of genomic data, such as SAGE, sequence, or SNP data.  In
 addition, there are metadata (annotation, CDF and probe) and experiment
-data packages.  See <http://www.bioconductor.org/download/> for
+data packages.  See <https://www.bioconductor.org/download/> for
 available packages and a complete taxonomy via BioC Views.
 
 5.1.5 Other add-on packages
@@ -1455,7 +1451,7 @@ available packages and a complete taxonomy via BioC Views.
 Many more packages are available from places other than the three
 default repositories discussed above (CRAN, Bioconductor and Omegahat).
 In particular, R-Forge provides a CRAN style repository at
-<http://R-Forge.R-project.org/>.
+<https://R-Forge.R-project.org/>.
 
    More code has been posted to the R-help mailing list, and can be
 obtained from the mailing list archive.
@@ -1594,7 +1590,7 @@ in.  Also, the developers do not have access to all possible machines
 capable of running R. So, simply using it and communicating problems is
 certainly of great value.
 
-   The R Developer Page (http://developer.R-project.org/) acts as an
+   The R Developer Page (https://developer.R-project.org/) acts as an
 intermediate repository for more or less finalized ideas and plans for
 the R statistical system.  It contains (pointers to) TODO lists, RFCs,
 various other writeups, ideas lists, and SVN miscellanea.
@@ -1903,7 +1899,7 @@ codes).
 ===========================================
 
 The recommended package *lattice*
-(http://CRAN.R-project.org/package=lattice) (which is based on base
+(https://CRAN.R-project.org/package=lattice) (which is based on base
 package *grid*) provides graphical functionality that is compatible with
 most Trellis commands.
 
@@ -2029,17 +2025,17 @@ the language:
 7.15 Are GAMs implemented in R?
 ===============================
 
-Package *gam* (http://CRAN.R-project.org/package=gam) from CRAN
+Package *gam* (https://CRAN.R-project.org/package=gam) from CRAN
 implements all the Generalized Additive Models (GAM) functionality as
 described in the GAM chapter of the White Book.  In particular, it
 implements backfitting with both local regression and smoothing splines,
 and is extendable.  There is a 'gam()' function for GAMs in package
-*mgcv* (http://CRAN.R-project.org/package=mgcv), but it is not an exact
+*mgcv* (https://CRAN.R-project.org/package=mgcv), but it is not an exact
 clone of what is described in the White Book (no 'lo()' for example).
-Package *gss* (http://CRAN.R-project.org/package=gss) can fit
+Package *gss* (https://CRAN.R-project.org/package=gss) can fit
 spline-based GAMs too.  And if you can accept regression splines you can
 use 'glm()'.  For Gaussian GAMs you can use 'bruto()' from package *mda*
-(http://CRAN.R-project.org/package=mda).
+(https://CRAN.R-project.org/package=mda).
 
 7.16 Why is the output not printed when I source() a file?
 ==========================================================
@@ -2147,7 +2143,7 @@ some installations this produces ugly output, on others it is perfectly
 satisfactory.  Many systems now come with Xvfb from X.Org
 (http://www.x.org/) (possibly as an optional install), which is an X11
 server that does not require a screen; and there is the *GDD*
-(http://CRAN.R-project.org/package=GDD) package from CRAN, which
+(https://CRAN.R-project.org/package=GDD) package from CRAN, which
 produces PNG, JPEG and GIF bitmaps without X11.
 
 7.20 How can I get command line editing to work?
@@ -2207,7 +2203,7 @@ without any of this messing about.
 The most likely reason is that you forgot to tell R to display the
 graph.  Lattice functions such as 'xyplot()' create a graph object, but
 do not display it (the same is true of *ggplot2*
-(http://CRAN.R-project.org/package=ggplot2) graphics, and Trellis
+(https://CRAN.R-project.org/package=ggplot2) graphics, and Trellis
 graphics in S-PLUS).  The 'print()' method for the graph object produces
 the actual display.  When you use these functions interactively at the
 command line, the result is automatically printed, but in 'source()' or
@@ -2513,30 +2509,31 @@ quietly interpreted as just 'p'.  Current versions of R emit a warning.
 
 Some functions will display a particular kind of plot with error bars,
 such as the 'bar.err()' function in the *agricolae*
-(http://CRAN.R-project.org/package=agricolae) package, the 'plotCI()'
-function in the *gplots* (http://CRAN.R-project.org/package=gplots)
+(https://CRAN.R-project.org/package=agricolae) package, the 'plotCI()'
+function in the *gplots* (https://CRAN.R-project.org/package=gplots)
 package, the 'plotCI()' and 'brkdn.plot()' functions in the *plotrix*
-(http://CRAN.R-project.org/package=plotrix) package and the
+(https://CRAN.R-project.org/package=plotrix) package and the
 'error.bars()', 'error.crosses()' and 'error.bars.by()' functions in the
-*psych* (http://CRAN.R-project.org/package=psych) package.  Within these
-types of functions, some will accept the measures of dispersion (e.g.,
-'plotCI'), some will calculate the dispersion measures from the raw
-values ('bar.err', 'brkdn.plot'), and some will do both ('error.bars').
-Still other functions will just display error bars, like the dispersion
-function in the *plotrix* (http://CRAN.R-project.org/package=plotrix)
-package.  Most of the above functions use the 'arrows()' function in the
-base *graphics* package to draw the error bars.
+*psych* (https://CRAN.R-project.org/package=psych) package.  Within
+these types of functions, some will accept the measures of dispersion
+(e.g., 'plotCI'), some will calculate the dispersion measures from the
+raw values ('bar.err', 'brkdn.plot'), and some will do both
+('error.bars').  Still other functions will just display error bars,
+like the dispersion function in the *plotrix*
+(https://CRAN.R-project.org/package=plotrix) package.  Most of the above
+functions use the 'arrows()' function in the base *graphics* package to
+draw the error bars.
 
    The above functions all use the base graphics system.  The grid and
 lattice graphics systems also have specific functions for displaying
 error bars, e.g., the 'grid.arrow()' function in the *grid* package, and
 the 'geom_errorbar()', 'geom_errorbarh()', 'geom_pointrange()',
 'geom_linerange()', 'geom_crossbar()' and 'geom_ribbon()' functions in
-the *ggplot2* (http://CRAN.R-project.org/package=ggplot2) package.  In
+the *ggplot2* (https://CRAN.R-project.org/package=ggplot2) package.  In
 the lattice system, error bars can be displayed with 'Dotplot()' or
-'xYplot()' in the *Hmisc* (http://CRAN.R-project.org/package=Hmisc)
+'xYplot()' in the *Hmisc* (https://CRAN.R-project.org/package=Hmisc)
 package and 'segplot()' in the *latticeExtra*
-(http://CRAN.R-project.org/package=latticeExtra) package.
+(https://CRAN.R-project.org/package=latticeExtra) package.
 
 7.39 How do I create a plot with two y-axes?
 ============================================
@@ -2547,12 +2544,10 @@ the left and right sides of the plot that reflect the original scales of
 the data, is possible in R but is not recommended.  The basic approach
 for constructing such graphs is to use 'par(new=TRUE)' (see '?par');
 functions 'twoord.plot()' (in the *plotrix*
-(http://CRAN.R-project.org/package=plotrix) package) and
+(https://CRAN.R-project.org/package=plotrix) package) and
 'doubleYScale()' (in the *latticeExtra*
-(http://CRAN.R-project.org/package=latticeExtra) package) automate the
-process somewhat.  See
-<http://rwiki.sciviews.org/doku.php?id=tips:graphics-base:2yaxes> for
-more information, including strong arguments against this sort of graph.
+(https://CRAN.R-project.org/package=latticeExtra) package) automate the
+process somewhat.
 
 7.40 How do I access the source code for a function?
 ====================================================
@@ -2561,7 +2556,7 @@ In most cases, typing the name of the function will print its source
 code.  However, code is sometimes hidden in a namespace, or compiled.
 For a complete overview on how to access source code, see Uwe Ligges
 (2006), "Help Desk: Accessing the sources", _R News_, *6/4*, 43-45
-(<http://CRAN.R-project.org/doc/Rnews/Rnews_2006-4.pdf>).
+(<https://CRAN.R-project.org/doc/Rnews/Rnews_2006-4.pdf>).
 
 7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
 ================================================================================================================
@@ -2636,9 +2631,37 @@ as strings or pairlists will be affected by this behavior, whereas large
 objects such as long vectors will be allocated using 'mmap' and thus not
 affected.  On Linux (and possibly other Unix-like systems) it is
 possible to use the 'mallinfo' system call (also see the mallinfo
-(http://rforge.net/mallinfo) package) to query the allocator about the
+(https://rforge.net/mallinfo) package) to query the allocator about the
 layout of the allocations, including the actually used memory as well as
 unused memory that cannot be released.
+
+7.43 How can I enable secure https downloads in R?
+==================================================
+
+When R transfers files over HTTP (e.g., using the 'install.packages()'
+or 'download.file()' function), a download method is chosen based on the
+'download.file.method' option.  There are several methods available and
+the default behavior if no option is explicitly specified is to use R's
+internal HTTP implementation.  In most circumstances this internal
+method will not support HTTPS URLs so you will need to override the
+default: this is done automatically for such URLs as from R 3.2.2.
+
+   R versions 3.2.0 and greater include two download methods
+('"libcurl"' and '"wininet"') that both support HTTPS connections: we
+recommend that you use these methods.  The requisite code to add to
+'.Rprofile' or 'Rprofile.site' is:
+
+     options(download.file.method = "wininet", url.method = "wininet")     (Windows)
+     options(download.file.method = "libcurl", url.method = "libcurl")     (Linux and OS X)
+
+(Method '"wininet"' is the default on Windows as from R 3.2.2.)
+
+   Note that the '"libcurl"' method may or may not have been compiled
+in.  In the case that it was not, i.e..  'capabilities("libcurl") ==
+FALSE', we recommend method '"wget"' on Linux and '"curl"' on OS X. It
+is possible that system versions of '"libcurl"', 'wget' or 'curl' may
+have been compiled without HTTPS support, but this is unlikely.  As from
+R 3.3.0 '"libcurl"' with HTTPS support is required except on Windows.
 
 8 R Programming
 ***************
@@ -2791,7 +2814,7 @@ that might be expected to produce the bug but actually do not.  If you
 want to debug the problem and find exactly what caused it, that is
 wonderful.  You should still report the facts as well as any
 explanations or solutions.  Please include an example that reproduces
-(e.g., <http://en.wikipedia.org/wiki/Reproducibility>) the problem,
+(e.g., <https://en.wikipedia.org/wiki/Reproducibility>) the problem,
 preferably the simplest one you have found.
 
    Invoking R with the '--vanilla' option may help in isolating a bug.
@@ -2799,16 +2822,17 @@ This ensures that the site profile and saved data files are not read.
 
    Before you actually submit a bug report, you should check whether the
 bug has already been reported and/or fixed.  First, try the "Show open
-bugs new-to-old" or the search facility on <http://bugs.R-project.org/>.
-Second, consult <https://svn.R-project.org/R/trunk/doc/NEWS.Rd>, which
-records changes that will appear in the _next_ release of R, including
-bug fixes that do not appear on the Bug Tracker.  Third, if possible try
-the current r-patched or r-devel version of R. If a bug has already been
-reported or fixed, please do not submit further bug reports on it.
-Finally, check carefully whether the bug is with R, or a contributed
-package.  Bug reports on contributed packages should be sent first to
-the package maintainer, and only submitted to the R-bugs repository by
-package maintainers, mentioning the package in the subject line.
+bugs new-to-old" or the search facility on
+<https://bugs.R-project.org/>.  Second, consult
+<https://svn.R-project.org/R/trunk/doc/NEWS.Rd>, which records changes
+that will appear in the _next_ release of R, including bug fixes that do
+not appear on the Bug Tracker.  Third, if possible try the current
+r-patched or r-devel version of R. If a bug has already been reported or
+fixed, please do not submit further bug reports on it.  Finally, check
+carefully whether the bug is with R, or a contributed package.  Bug
+reports on contributed packages should be sent first to the package
+maintainer, and only submitted to the R-bugs repository by package
+maintainers, mentioning the package in the subject line.
 
    A bug report can be generated using the function 'bug.report()'.  For
 reports on R this will open the Web page at
@@ -2828,7 +2852,7 @@ to <R-windows@R-project.org>.
    Corrections to and comments on message translations should be sent to
 the last translator (listed at the top of the appropriate '.po' file) or
 to the translation team as listed at
-<http://developer.R-project.org/TranslationTeams.html>.
+<https://developer.R-project.org/TranslationTeams.html>.
 
 10 Acknowledgments
 ******************

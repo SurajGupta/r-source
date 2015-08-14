@@ -11,23 +11,38 @@
   Interact with the user to choose a Bioconductor mirror.
 }
 \usage{
-chooseBioCmirror(graphics = getOption("menu.graphics"), ind = NULL)
+chooseBioCmirror(graphics = getOption("menu.graphics"), ind = NULL,
+                 useHTTPS = getOption("useHTTPS", TRUE))
 }
 \arguments{
-  \item{graphics}{logical.  If true, use a graphical list: on Windows or
-    the OS X GUI use a list box, and on a Unix-alike if package
-    \pkg{tcltk} and an X server are available, use a Tk
-    widget.  Otherwise use a text \code{\link{menu}}.}
+  \item{graphics}{Logical.  If true, use a graphical list: on Windows or
+    the OS X GUI use a list box, and on a Unix-alike  use a Tk widget if
+    package \pkg{tcltk} and an X server are available.  Otherwise use a
+    text \code{\link{menu}}.}
   
   \item{ind}{Optional numeric value giving which entry to select.}
+  \item{useHTTPS}{Whether to prefer HTTPS mirrors (see
+  \code{\link{chooseCRANmirror}}).}
 }
 \details{
-  This sets the option \code{"BioC_mirror"}: it needs to be used before
-  a call to \code{\link{setRepositories}}.
+  This sets the \link{option} \code{"BioC_mirror"}: it is used
+  before a call to \code{\link{setRepositories}}.  The out-of-the-box
+  default for that option is \code{NULL}, which currently corresponds to
+  the mirror \url{http://bioconductor.org}.
 
-  The \sQuote{Bioconductor (World-wide)} mirror provides reliable
-  world-wide access; other mirrors may provide faster access on a
-  geographically local scale.
+  The \sQuote{Bioconductor (World-wide)} \sQuote{mirror} is a network of
+  mirrors providing reliable world-wide access; other mirrors may
+  provide faster access on a geographically local scale.
+
+  \code{ind} chooses a row in
+  \file{\var{\link{R_HOME}}/doc/BioC_mirrors.csv},
+  by number.
+}
+\note{
+  The online list of mirrors is always accessed using HTTPS.  If your 
+  build of R does not support HTTPS, R uses the local copy
+  in \file{\var{\link{R_HOME}}/doc/BioC_mirrors.csv}.  It can be 
+  updated from \url{https://bioconductor.org/BioC_mirrors.csv}.
 }
 \value{
   None: this function is invoked for its
