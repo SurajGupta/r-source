@@ -1,5 +1,5 @@
 % File src/library/tools/man/getDepList.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2008-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -15,7 +15,7 @@ dependsOnPkgs(pkgs,
               dependencies = c("Depends", "Imports", "LinkingTo"),
               recursive = TRUE, lib.loc = NULL,
               installed =
-              installed.packages(lib.loc, fields = "Enhances"))
+              utils::installed.packages(lib.loc, fields = "Enhances"))
 }
 \arguments{
   \item{pkgs}{a character vector of package names.}

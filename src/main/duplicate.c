@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -54,8 +54,8 @@
       R_xlen_t __this; \
       type *__to = fun(to), *__from = fun(from); \
       do { \
-         __this = (__n__ < 1000000) ? __n__ : 1000000; \
-         memcpy(__to, __from, __this * sizeof(type));  \
+	 __this = (__n__ < 1000000) ? __n__ : 1000000; \
+	 memcpy(__to, __from, __this * sizeof(type));  \
 	 __n__ -= __this;  __to += __this; __from += __this; \
       } while(__n__ > 0); \
   } \
@@ -186,7 +186,7 @@ SEXP lazy_duplicate(SEXP s) {
     case RAWSXP:
     case STRSXP:
     case S4SXP:
-        SET_NAMED(s, 2);
+	SET_NAMED(s, 2);
 	break;
     default:
 	UNIMPLEMENTED_TYPE("lazy_duplicate", s);
@@ -196,9 +196,9 @@ SEXP lazy_duplicate(SEXP s) {
 
 static SEXP duplicate_child(SEXP s, Rboolean deep) {
     if (deep)
-        return duplicate1(s, TRUE);
+	return duplicate1(s, TRUE);
     else
-        return lazy_duplicate(s);
+	return lazy_duplicate(s);
 }
 
 /*****************/
@@ -221,28 +221,28 @@ Rboolean R_cycle_detected(SEXP s, SEXP child) {
 	case BCODESXP:
 	case WEAKREFSXP:
 	    /* it's a cycle but one that is OK */
-	    return FALSE; 
+	    return FALSE;
 	default:
-        return TRUE;
+	return TRUE;
 	}
     }
     if (ATTRIB(child) != R_NilValue) {
-        if (R_cycle_detected(s, ATTRIB(child)))
-            return TRUE;
+	if (R_cycle_detected(s, ATTRIB(child)))
+	    return TRUE;
     }
     if (isPairList(child)) {
-        SEXP el = child;
-        while(el != R_NilValue) {
+	SEXP el = child;
+	while(el != R_NilValue) {
 	    if (s == el || R_cycle_detected(s, CAR(el)))
-                return TRUE;
+		return TRUE;
 	    if (ATTRIB(el) != R_NilValue && R_cycle_detected(s, ATTRIB(el)))
-		return TRUE;		
+		return TRUE;
 	    el = CDR(el);
 	}
     } else if (isVectorList(child)) {
-        for(int i = 0 ; i < length(child); i++)
+	for(int i = 0 ; i < length(child); i++)
 	    if (R_cycle_detected(s, VECTOR_ELT(child, i)))
-                return TRUE;
+		return TRUE;
     }
     return FALSE;
 }

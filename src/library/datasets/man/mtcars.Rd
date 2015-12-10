@@ -1,5 +1,5 @@
 % File src/library/datasets/man/mtcars.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
@@ -22,7 +22,7 @@
     [, 3] \tab disp \tab Displacement (cu.in.) \cr
     [, 4] \tab hp   \tab Gross horsepower \cr
     [, 5] \tab drat \tab Rear axle ratio \cr
-    [, 6] \tab wt   \tab Weight (lb/1000) \cr
+    [, 6] \tab wt   \tab Weight (1000 lbs) \cr
     [, 7] \tab qsec \tab 1/4 mile time \cr
     [, 8] \tab vs   \tab V/S \cr
     [, 9] \tab am   \tab Transmission (0 = automatic, 1 = manual) \cr

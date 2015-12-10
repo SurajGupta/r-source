@@ -1,5 +1,5 @@
 #  File src/library/stats/R/model.tables.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright     1998 B. D. Ripley
 #  Copyright (C) 1998-2015 The R Core Team
@@ -15,7 +15,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 model.tables <- function(x, ...) UseMethod("model.tables")
 
@@ -66,7 +66,7 @@ model.tables.aov <- function(x, type = "effects", se = FALSE, cterms, ...)
 	    message("Design is unbalanced - use se.contrast() for se's")
 	    se <- FALSE
 	} else se.tables <- se.aov(x, n, type = type)
-    if(type == "means") {
+    if(type == "means" && "(Intercept)" %in% colnames(prjs)) {
 	gmtable <- mean(prjs[,"(Intercept)"])
 	class(gmtable) <- "mtable"
 	tables <- c("Grand mean" = gmtable, tables)

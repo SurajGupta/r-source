@@ -1,5 +1,5 @@
 % File src/library/methods/man/canCoerce.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
@@ -20,7 +20,7 @@ canCoerce(object, Class)
 }
 \value{
   a scalar logical, \code{TRUE} if there is a \code{coerce} method
-  (as defined by \code{\link{setAs}}, e.g.) for the signature
+  (as defined by e.g.\sspace{}\code{\link{setAs}}) for the signature
   \code{(from = class(object), to = Class)}.
 }
 \seealso{\code{\link{as}}, \code{\link{setAs}},

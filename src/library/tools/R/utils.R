@@ -1,5 +1,5 @@
 #  File src/library/tools/R/utils.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ### * File utilities.
 
@@ -238,8 +238,13 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 
     ## Run texi2dvi on a latex file, or emulate it.
 
-    if(is.null(texi2dvi) || !nzchar(texi2dvi) || texi2dvi == "texi2dvi")
-        texi2dvi <- Sys.which("texi2dvi")
+    if(identical(texi2dvi, "emulation")) texi2dvi <- ""
+    else {
+        if(is.null(texi2dvi) || !nzchar(texi2dvi) || texi2dvi == "texi2dvi")
+            texi2dvi <- Sys.which("texi2dvi")
+        if(.Platform$OS.type == "windows" && !nzchar(texi2dvi))
+            texi2dvi <- Sys.which("texify")
+    }
 
     envSep <- .Platform$path.sep
     texinputs0 <- texinputs
@@ -258,19 +263,19 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
     bstinputs <- paste(c(texinputs0, Rbstinputs, ""),
                        collapse = envSep)
 
-    otexinputs <- Sys.getenv("TEXINPUTS", unset = NA)
+    otexinputs <- Sys.getenv("TEXINPUTS", unset = NA_character_)
     if(is.na(otexinputs)) {
         on.exit(Sys.unsetenv("TEXINPUTS"))
         otexinputs <- "."
     } else on.exit(Sys.setenv(TEXINPUTS = otexinputs))
     Sys.setenv(TEXINPUTS = paste(otexinputs, texinputs, sep = envSep))
-    obibinputs <- Sys.getenv("BIBINPUTS", unset = NA)
+    obibinputs <- Sys.getenv("BIBINPUTS", unset = NA_character_)
     if(is.na(obibinputs)) {
         on.exit(Sys.unsetenv("BIBINPUTS"), add = TRUE)
         obibinputs <- "."
     } else on.exit(Sys.setenv(BIBINPUTS = obibinputs, add = TRUE))
     Sys.setenv(BIBINPUTS = paste(obibinputs, bibinputs, sep = envSep))
-    obstinputs <- Sys.getenv("BSTINPUTS", unset = NA)
+    obstinputs <- Sys.getenv("BSTINPUTS", unset = NA_character_)
     if(is.na(obstinputs)) {
         on.exit(Sys.unsetenv("BSTINPUTS"), add = TRUE)
         obstinputs <- "."
@@ -285,14 +290,16 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         opt_quiet <- if(quiet) "--quiet" else ""
         opt_extra <- ""
         out <- .system_with_capture(texi2dvi, "--help")
+
         if(length(grep("--no-line-error", out$stdout)))
             opt_extra <- "--no-line-error"
-        ## This is present in texinfo after late 2009, so really 5.x.
-        if(length(grep("--max-iterations=N", out$stdout)))
-            opt_extra <- c(opt_extra, "--max-iterations=20")
         ## (Maybe change eventually: the current heuristics for finding
         ## error messages in log files should work for both regular and
         ## file line error indicators.)
+
+        ## This is present in texinfo after late 2009, so really >= 5.0.
+        if(any(grepl("--max-iterations=N", out$stdout)))
+            opt_extra <- c(opt_extra, "--max-iterations=20")
 
         ## and work around a bug in texi2dvi
         ## https://stat.ethz.ch/pipermail/r-devel/2011-March/060262.html
@@ -374,7 +381,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
             texinputs <- gsub("\\", "/", texinputs, fixed = TRUE)
             paths <- paste ("-I", shQuote(texinputs))
             extra <- "--max-iterations=20"
-           extra <- paste(extra, paste(paths, collapse = " "))
+            extra <- paste(extra, paste(paths, collapse = " "))
         }
         ## 'file' could be a file path
         base <- basename(file_path_sans_ext(file))
@@ -412,11 +419,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         }
     } else {
         ## Do not have texi2dvi or don't want to index
-        ## Needed on Windows except for MiKTeX
-        ## Note that this does not do anything about running quietly,
-        ## nor cleaning, but is probably not used much anymore.
-
-        ## If it is called with MiKTeX then TEXINPUTS etc will be ignored.
+        ## Needed on Windows except for MiKTeX (prior to Sept 2015)
 
         texfile <- shQuote(file)
         ## 'file' could be a file path
@@ -427,27 +430,33 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
         if(!nzchar(Sys.which(latex)))
             stop(if(pdf) "pdflatex" else "latex", " is not available",
                  domain = NA)
+
+        sys2 <- if(quiet)
+            function(...) system2(..., stdout = FALSE, stderr = FALSE)
+        else system2
         bibtex <- Sys.getenv("BIBTEX", "bibtex")
         makeindex <- Sys.getenv("MAKEINDEX", "makeindex")
-        if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
+        ltxargs <- c("-interaction=nonstopmode", texfile)
+        if(sys2(latex, ltxargs))
             stop(gettextf("unable to run '%s' on '%s'", latex, file),
                  domain = NA)
-        nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined",
+        nmiss <- length(grep("Warning:.*Citation.*undefined",
                              readLines(paste0(base, ".log"))))
         for(iter in 1L:10L) { ## safety check
             ## This might fail as the citations have been included in the Rnw
-            if(nmiss) system(paste(shQuote(bibtex), shQuote(base)))
+            if(nmiss) sys2(bibtex, shQuote(base))
             nmiss_prev <- nmiss
             if(index && file.exists(idxfile)) {
-                if(system(paste(shQuote(makeindex), shQuote(idxfile))))
+                if(sys2(makeindex, shQuote(idxfile)))
                     stop(gettextf("unable to run '%s' on '%s'",
                                   makeindex, idxfile),
                          domain = NA)
             }
-            if(system(paste(shQuote(latex), "-interaction=nonstopmode", texfile)))
-                stop(gettextf("unable to run %s on '%s'", latex, file), domain = NA)
+            if(sys2(latex, ltxargs))
+                stop(gettextf("unable to run %s on '%s'", latex, file),
+                     domain = NA)
             Log <- readLines(paste0(base, ".log"))
-            nmiss <- length(grep("^LaTeX Warning:.*Citation.*undefined", Log))
+            nmiss <- length(grep("Warning:.*Citation.*undefined", Log))
             if(nmiss == nmiss_prev &&
                !length(grep("Rerun to get", Log)) ) break
         }
@@ -461,7 +470,7 @@ function(file, pdf = FALSE, clean = FALSE, quiet = TRUE,
 ### ** .BioC_version_associated_with_R_version
 
 .BioC_version_associated_with_R_version <-
-    function() numeric_version(Sys.getenv("R_BIOC_VERSION", "3.1"))
+    function() numeric_version(Sys.getenv("R_BIOC_VERSION", "3.2"))
 ## Things are more complicated from R-2.15.x with still two BioC
 ## releases a year, so we do need to set this manually.
 ## Wierdly, 3.0 is the second version (after 2.14) for the 3.1.x series.
@@ -849,7 +858,7 @@ function(dir, installed = FALSE)
 .get_repositories <-
 function()
 {
-    rfile <- Sys.getenv("R_REPOSITORIES", unset = NA)
+    rfile <- Sys.getenv("R_REPOSITORIES", unset = NA_character_)
     if(is.na(rfile) || !file_test("-f", rfile)) {
         rfile <- file.path(Sys.getenv("HOME"), ".R", "repositories")
         if(!file_test("-f", rfile))
@@ -1212,7 +1221,7 @@ function(fname, envir, mustMatch = TRUE)
     ## 'envir' is (to be considered) an S3 generic function.  Note,
     ## found *in* not found *from*, so envir does not have a default.
     ##
-    ## If it is, does it despatch methods of fname?  We need that to
+    ## If it is, does it dispatch methods of fname?  We need that to
     ## look for possible methods as functions named fname.* ....
     ##
     ## Provided by LT with the following comments:
@@ -1344,7 +1353,7 @@ function(parent = parent.frame(), fixup = FALSE)
     env <- list2env(as.list(base::.GenericArgsEnv, all.names=TRUE),
                     hash=TRUE, parent=parent)
     if(fixup) {
-        ## now fixup the operators
+        ## now fixup the operators from (e1,e2) to (x,y)
         for(f in c('+', '-', '*', '/', '^', '%%', '%/%', '&', '|',
                    '==', '!=', '<', '<=', '>=', '>')) {
             fx <- get(f, envir = env)
@@ -1376,7 +1385,7 @@ function(package)
     ## Using package = NULL returns all known examples
 
     stopList <-
-        list(base = c("all.equal", "all.names", "all.vars",
+        list(base = c("all.equal", "all.names", "all.vars", "expand.grid",
              "format.char", "format.info", "format.pval",
              "max.col",
              ## the next two only exist in *-defunct.Rd.
@@ -1398,6 +1407,7 @@ function(package)
              HyperbolicDist = "log.hist",
              MASS = c("frequency.polygon", "gamma.dispersion", "gamma.shape",
                       "hist.FD", "hist.scott"),
+             LinearizedSVR = "sigma.est",
              ## FIXME: since these are already listed with 'base',
              ##        they should not need to be repeated here:
              Matrix = c("qr.Q", "qr.R", "qr.coef", "qr.fitted",
@@ -1405,7 +1415,10 @@ function(package)
              RCurl = "merge.list",
              RNetCDF = c("close.nc", "dim.def.nc", "dim.inq.nc",
                          "dim.rename.nc", "open.nc", "print.nc"),
+             Rmpfr = c("mpfr.is.0", "mpfr.is.integer"),
              SMPracticals = "exp.gibbs",
+             TANOVA = "sigma.hat",
+             TeachingDemos = "sigma.test",
              XML = "text.SAX",
              ape = "sort.index",
              arm = "sigma.hat", # lme4 has sigma()
@@ -1418,6 +1431,8 @@ function(package)
              crossdes = "all.combn",
              ctv = "update.views",
              deSolve = "plot.1D",
+             effects = "all.effects", # already deprecated
+             elliptic = "sigma.laurent",
              equivalence = "sign.boot",
              fields = c("qr.q2ty", "qr.yq2"),
              gbm = c("pretty.gbm.tree", "quantile.rug"),
@@ -1444,9 +1459,10 @@ function(package)
              sm = "print.graph",
              splusTimeDate = "sort.list",
              splusTimeSeries = "sort.list",
-             stats = c("anova.lmlist", "fitted.values", "lag.plot",
-                       "influence.measures", "t.test",
+	     stats = c("anova.lmlist", "expand.model.frame", "fitted.values",
+		       "influence.measures", "lag.plot", "t.test",
                        "plot.spec.phase", "plot.spec.coherency"),
+             stremo = "sigma.hat",
              supclust = c("sign.change", "sign.flip"),
              tensorA = "chol.tensor",
              utils = c("close.socket", "flush.console", "update.packages")

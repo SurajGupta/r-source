@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* <UTF8> byte-level access is only to compare with chars <= 0x7F */
@@ -112,6 +112,9 @@ typedef struct {
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
+#define SMBUF_SIZE 512
+#define SMBUF_SIZED_STRING "%511s"
+
 typedef struct {
 /* These variables are accessed in the
    InInteger, InComplex, InReal, InString
@@ -124,11 +127,10 @@ mean some of them wouldn't need the extra argument.
 */
 
     R_StringBuffer buffer;
-    char smbuf[512];		/* Small buffer for temp use */
+    char smbuf[SMBUF_SIZE];	/* Small buffer for temp use */
 				/* smbuf is only used by Ascii. */
     XDR xdrs;
 } SaveLoadData;
-
 
 /* ----- I / O -- F u n c t i o n -- P o i n t e r s ----- */
 
@@ -196,7 +198,7 @@ static void DummyTerm(FILE *fp, SaveLoadData *d)
 static int AsciiInInteger(FILE *fp, SaveLoadData *d)
 {
     int x, res;
-    res = fscanf(fp, "%s", d->smbuf);
+    res = fscanf(fp, SMBUF_SIZED_STRING, d->smbuf);
     if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	return NA_INTEGER;
@@ -210,7 +212,7 @@ static int AsciiInInteger(FILE *fp, SaveLoadData *d)
 static double AsciiInReal(FILE *fp, SaveLoadData *d)
 {
     double x;
-    int res = fscanf(fp, "%s", d->smbuf);
+    int res = fscanf(fp, SMBUF_SIZED_STRING, d->smbuf);
     if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x = NA_REAL;
@@ -228,7 +230,7 @@ static Rcomplex AsciiInComplex(FILE *fp, SaveLoadData *d)
 {
     Rcomplex x;
     int res;
-    res = fscanf(fp, "%s", d->smbuf);
+    res = fscanf(fp, SMBUF_SIZED_STRING, d->smbuf);
     if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x.r = NA_REAL;
@@ -241,7 +243,7 @@ static Rcomplex AsciiInComplex(FILE *fp, SaveLoadData *d)
 	if(res != 1) error(_("read error"));
     }
 
-    res = fscanf(fp, "%s", d->smbuf);
+    res = fscanf(fp, SMBUF_SIZED_STRING, d->smbuf);
     if(res != 1) error(_("read error"));
     if (strcmp(d->smbuf, "NA") == 0)
 	x.i = NA_REAL;
@@ -604,7 +606,7 @@ static void RestoreSEXP(SEXP s, FILE *fp, InputRoutines *m, NodeInfo *node, int 
 	R_AllocStringBuffer(MAXELTSIZE - 1, &(d->buffer));
 	int index = StrToInternal(m->InString(fp, d));
 	if (index == NA_INTEGER) {
-	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data); 
+	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data);
 	    index = 0;   /* zero doesn't make sense, but is back compatible with 3.0.0 and earlier */
 	}
 	SET_PRIMOFFSET(s, index);
@@ -1267,7 +1269,7 @@ static SEXP NewReadItem (SEXP sym_table, SEXP env_table, FILE *fp,
 	R_AllocStringBuffer(MAXELTSIZE - 1, &(d->buffer));
 	int index = StrToInternal(m->InString(fp, d));
 	if (index == NA_INTEGER) {
-	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data); 
+	    warning(_("unrecognized internal function name \"%s\""), d->buffer.data);
 	    PROTECT(s = R_NilValue);
 	} else
 	    PROTECT(s = mkPRIMSXP(index, type == BUILTINSXP));
@@ -1377,7 +1379,7 @@ static int InIntegerAscii(FILE *fp, SaveLoadData *unused)
 {
     char buf[128];
     int x, res;
-    res = fscanf(fp, "%s", buf);
+    res = fscanf(fp, SMBUF_SIZED_STRING, buf);
     if(res != 1) error(_("read error"));
     if (strcmp(buf, "NA") == 0)
 	return NA_INTEGER;
@@ -1494,7 +1496,7 @@ static double InDoubleAscii(FILE *fp, SaveLoadData *unused)
     char buf[128];
     double x;
     int res;
-    res = fscanf(fp, "%s", buf);
+    res = fscanf(fp, "%127s", buf);
     if(res != 1) error(_("read error"));
     if (strcmp(buf, "NA") == 0)
 	x = NA_REAL;
@@ -2212,7 +2214,7 @@ static void con_cleanup(void *data)
 	invisible(serialize(val, con, ascii = ascii))
 
    Unfortunately, this will result in too much duplication in the lapply
-   (and any other way of doing this).  Hence we need an internal version. 
+   (and any other way of doing this).  Hence we need an internal version.
 
    In case anyone wants to do this another way, in fact it is a
    pairlist of objects that is serialized, but RestoreToEnv copes
@@ -2261,13 +2263,13 @@ SEXP attribute_hidden do_saveToConn(SEXP call, SEXP op, SEXP args, SEXP env)
 
     wasopen = con->isopen;
     if(!wasopen) {
-	char mode[5];	
+	char mode[5];
 	strcpy(mode, con->mode);
 	strcpy(con->mode, "wb");
 	if(!con->open(con)) error(_("cannot open the connection"));
 	strcpy(con->mode, mode);
 	/* set up a context which will close the connection
- 	   if there is an error */
+	   if there is an error */
 	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		     R_NilValue, R_NilValue);
 	cntxt.cend = &con_cleanup;
@@ -2339,16 +2341,16 @@ SEXP attribute_hidden do_loadFromConn2(SEXP call, SEXP op, SEXP args, SEXP env)
     checkArity(op, args);
 
     con = getConnection(asInteger(CAR(args)));
-    
+
     wasopen = con->isopen;
     if(!wasopen) {
-	char mode[5];	
+	char mode[5];
 	strcpy(mode, con->mode);
 	strcpy(con->mode, "rb");
 	if(!con->open(con)) error(_("cannot open the connection"));
 	strcpy(con->mode, mode);
 	/* set up a context which will close the connection
- 	   if there is an error */
+	   if there is an error */
 	begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
 		     R_NilValue, R_NilValue);
 	cntxt.cend = &con_cleanup;

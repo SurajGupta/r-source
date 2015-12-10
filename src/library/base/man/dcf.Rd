@@ -1,5 +1,5 @@
 % File src/library/base/man/dcf.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -101,7 +101,7 @@ write.dcf(x, file = "", append = FALSE,
 }
 
 \references{
-  \url{http://www.debian.org/doc/debian-policy/ch-controlfields.html}.
+  \url{https://www.debian.org/doc/debian-policy/ch-controlfields.html}.
   
   Note that \R does not require encoding in UTF-8, which is a recent
   Debian requirement.  Nor does it use the Debian-specific sub-format

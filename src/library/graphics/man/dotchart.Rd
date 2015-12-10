@@ -1,5 +1,5 @@
 % File src/library/graphics/man/dotchart.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2011 R Core Team
 % Distributed under GPL 2 or later
 
@@ -48,7 +48,7 @@ dotchart(x, labels = NULL, groups = NULL, gdata = NULL,
     values.}
   \item{lcolor}{the color(s) to be used for the horizontal lines.}
   \item{xlim}{horizontal range for the plot, see
-    \code{\link{plot.window}}, e.g.}
+    \code{\link{plot.window}}, for example.}
   \item{main}{overall title for the plot, see \code{\link{title}}.}
   \item{xlab, ylab}{axis annotations as in \code{title}.}
   \item{\dots}{\link{graphical parameters} can also be specified as arguments.}

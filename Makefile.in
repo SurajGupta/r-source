@@ -40,6 +40,7 @@ ACINCLUDE_DEPENDENCIES = \
 	m4/cxx_11.m4 \
 	m4/gettext.m4 m4/gettext-lib.m4 \
 	m4/libtool.m4 m4/ltoptions.m4 m4/ltversion.m4 m4/ltsugar.m4 m4/lt~obsolete.m4 \
+	m4/openmp.m4 \
 	m4/stat-time.m4
 CONFIGURE_DEPENDENCIES = $(srcdir)/VERSION
 config.status: $(srcdir)/configure
@@ -82,8 +83,8 @@ vignettes: stamp-recommended
 ## This needs packages built, hence 'R' dependence on 'javaconf'
 ## javareconf gets remade often.
 stamp-java : etc/javaconf $(srcdir)/src/scripts/javareconf.in
-	@$(ECHO) "configuring Java ..."
-	@-bin/R CMD javareconf
+@WANT_JAVA_TRUE@	@$(ECHO) "configuring Java ..."
+@WANT_JAVA_TRUE@	@-bin/R CMD javareconf
 	@touch stamp-java
 
 javaconf: R
@@ -123,7 +124,7 @@ svnonly:
 	  fi \
 	fi
 
-@WANT_R_STATIC_FALSE@libR_la = libR$(DYLIB_EXT)
+@WANT_R_STATIC_FALSE@libR_la = libR$(R_DYLIB_EXT)
 @WANT_R_STATIC_TRUE@libR_la = libR.a
 install-libR:
 	@if test -f lib$(R_ARCH)/$(libR_la); then $(MAKE) install-libR-exists; fi
@@ -144,7 +145,7 @@ uninstall:
 	@rm -rf "$(DESTDIR)$(Rexecbindir)" "$(DESTDIR)$(rhome)/lib"
 	@rmdir "$(DESTDIR)$(rhome)" 2>/dev/null \
           || $(ECHO) "  dir $(DESTDIR)$(rhome) not removed"
-	@rm -f "$(DESTDIR)${libdir}/libR$(DYLIB_EXT)"
+	@rm -f "$(DESTDIR)${libdir}/libR$(R_DYLIB_EXT)"
 
 mostlyclean: clean
 clean:

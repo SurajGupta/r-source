@@ -1,5 +1,5 @@
 #  File src/library/base/R/get.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 exists <-
     function (x, where = -1,
@@ -42,5 +42,5 @@ mget <- function(x, envir = as.environment(-1L), mode = "any",
 
 ## DB's proposed name "getSlotOrComponent" is more precise but harder to type
 getElement <- function(object, name) {
-    if(isS4(object)) slot(object, name) else object[[name, exact=TRUE]]
+    if(isS4(object)) methods::slot(object, name) else object[[name, exact=TRUE]]
 }

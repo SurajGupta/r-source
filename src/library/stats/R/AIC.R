@@ -1,5 +1,5 @@
 #  File src/library/stats/R/AIC.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 2001-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 #### Return the value of Akaike's Information Criterion
 ### originally from package nlne.
@@ -28,7 +28,7 @@ AIC.logLik <- function(object, ..., k = 2)
 AIC.default <- function(object, ..., k = 2)
 {
     ## AIC for various fitted objects --- any for which there's a logLik() method:
-    ll <- if(isNamespaceLoaded("stats4")) stats4:::logLik else logLik
+    ll <- if(isNamespaceLoaded("stats4")) stats4::logLik else logLik
     if(!missing(...)) {# several objects: produce data.frame
 	lls <- lapply(list(object, ...), ll)
         vals <- sapply(lls, function(el) {
@@ -59,8 +59,8 @@ BIC.logLik <- function(object, ...)
 
 BIC.default <- function(object, ...)
 {
-    ll   <- if(isNamespaceLoaded("stats4")) stats4:::logLik else logLik
-    Nobs <- if(isNamespaceLoaded("stats4")) stats4:::nobs   else nobs
+    ll   <- if(isNamespaceLoaded("stats4")) stats4::logLik else logLik
+    Nobs <- if(isNamespaceLoaded("stats4")) stats4::nobs   else nobs
     if(!missing(...)) {# several objects: produce data.frame
         lls <- lapply(list(object, ...), ll)
         vals <- sapply(lls, function(el) {

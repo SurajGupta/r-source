@@ -1,5 +1,5 @@
 #  File src/library/base/R/ifelse.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2014 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ifelse <- function (test, yes, no)
 {
@@ -34,7 +34,7 @@ ifelse <- function (test, yes, no)
         }
     }
     else ## typically a "class"; storage.mode<-() typically fails
-	test <- if(isS4(test)) as(test, "logical") else as.logical(test)
+	test <- if(isS4(test)) methods::as(test, "logical") else as.logical(test)
     ans <- test
     ok <- !(nas <- is.na(test))
     if (any(test[ok]))

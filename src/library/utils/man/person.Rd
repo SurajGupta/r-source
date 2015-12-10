@@ -1,5 +1,5 @@
 % File src/library/utils/man/person.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -98,7 +98,7 @@ person(given = NULL, family = NULL, middle = NULL,
   white space).
 
   Personal names are rather tricky, e.g.,
-  \url{http://en.wikipedia.org/wiki/Personal_name}.
+  \url{https://en.wikipedia.org/wiki/Personal_name}.
 
   The current implementation (starting from R 2.12.0) of the
   \code{"person"} class uses the notions of \emph{given} (including
@@ -117,7 +117,7 @@ person(given = NULL, family = NULL, middle = NULL,
 
   The new scheme also adds the possibility of specifying \emph{roles}
   based on a subset of the MARC Code List for Relators 
-  (\url{http://www.loc.gov/marc/relators/relaterm.html}).
+  (\url{https://www.loc.gov/marc/relators/relaterm.html}).
   When giving the roles of persons in the context of authoring \R
   packages, the following usage is suggested.
   \describe{

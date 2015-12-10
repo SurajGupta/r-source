@@ -1,5 +1,5 @@
 #  File src/library/grDevices/R/unix/x11.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2014 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ## An environment not exported from namespace:grDevices used to
 ## pass .X11.Fonts to the X11 device.
@@ -55,13 +55,15 @@ X11.options <- function(..., reset = FALSE)
 
 check_for_XQuartz <- function()
 {
-    DSO <- file.path(R.home("modules"), "R_X11.so")
-    out <- system2("otool", c("-L", shQuote(DSO)), stdout = TRUE)
-    ind <- grep("libX11[.][0-9]+[.]dylib", out)
-    if(length(ind)) {
-        this <- sub(" .*", "", sub("^\t", "", out[ind]))
-        if(!file.exists(this))
-            stop("X11 library is missing: install XQuartz from xquartz.macosforge.org", domain = NA)
+    if (file.exists("/usr/bin/otool") &&
+        file.exists(DSO <- file.path(R.home("modules"), "R_X11.so"))) {
+        out <- system2("otool", c("-L", shQuote(DSO)), stdout = TRUE)
+        ind <- grep("libX11[.][0-9]+[.]dylib", out)
+        if(length(ind)) {
+            this <- sub(" .*", "", sub("^\t", "", out[ind]))
+            if(!file.exists(this))
+                stop("X11 library is missing: install XQuartz from xquartz.macosforge.org", domain = NA)
+        }
     }
 }
 

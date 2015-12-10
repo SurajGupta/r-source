@@ -1,5 +1,5 @@
 % File src/library/base/man/Memory-limits.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -69,9 +69,9 @@ limit vmemoryuse 4096m
 \section{Windows}{
   The address-space limit is 2Gb under 32-bit Windows unless the OS's
   default has been changed to allow more (up to 3Gb).  See
-  \url{http://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}
+  \url{https://www.microsoft.com/whdc/system/platform/server/PAE/PAEmem.mspx}
   and
-  \url{http://msdn.microsoft.com/en-us/library/bb613473(VS.85).aspx}.
+  \url{https://msdn.microsoft.com/en-us/library/bb613473(VS.85).aspx}.
   Under most 64-bit versions of Windows the limit for a 32-bit build
   of \R is 4Gb: for the oldest ones it is 2Gb.  The limit for a 64-bit
   build of \R (imposed by the OS) is 8Tb.

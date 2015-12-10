@@ -1,5 +1,5 @@
 % File src/library/base/man/regex.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -203,10 +203,13 @@
   matching using the same syntax and semantics as Perl 5.x,
   with just a few differences.
 
-  For complete details please consult the man pages for PCRE, especially
-  \command{man pcrepattern} and \command{man pcreapi}), on your system or from
-  the sources at \url{http://www.pcre.org}. If PCRE support was compiled
-  from the sources within \R, the PCRE version is 8.36 as described here.
+  For complete details please consult the man pages for PCRE (and not
+  PCRE2), especially \command{man pcrepattern} and \command{man
+  pcreapi}), on your system or from the sources at
+  \url{http://www.pcre.org}. If PCRE support was compiled from the
+  sources within \R (the default), the PCRE version is 8.37 as described
+  here.  (The version in use can be found by calling
+  \code{\link{extSoftVersion}}.)
 
   Perl regular expressions can be computed byte-by-byte or
   (UTF-8) character-by-character: the latter is used in all multibyte

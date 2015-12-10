@@ -5,6 +5,197 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R 3.2.3}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item Some recently-added Windows time zone names have been added
+      to the conversion table used to convert these to Olson names.
+      (Including those relating to changes for Russia in Oct 2014, as in
+      \PR{16503}.)
+
+      \item (Windows) Compatibility information has been added to the
+      manifests for \file{Rgui.exe}, \file{Rterm.exe} and
+      \file{Rscript.exe}.  This should allow \code{win.version()} and
+      \code{Sys.info()} to report the actual Windows version up to
+      Windows 10.
+
+      \item Windows \code{"wininet"} FTP first tries EPSV / PASV mode
+      rather than only using active mode (reported by Dan Tenenbaum).
+      %% https://stat.ethz.ch/pipermail/r-devel/2015-August/071595.html
+
+      \item \code{which.min(x)} and \code{which.max(x)} may be much
+      faster for logical and integer \code{x} and now also work for long
+      vectors.
+
+      \item The \sQuote{emulation} part of \code{tools::texi2dvi()} has
+      been somewhat enhanced, including supporting \code{quiet = TRUE}.
+      It can be selected by \code{texi2dvi = "emulation"}.
+
+      (Windows) MiKTeX removed its \code{texi2dvi.exe} command in Sept
+      2015: \code{tools::texi2dvi()} tries \code{texify.exe} if it is
+      not found.
+
+      \item (Windows only) Shortcuts for printing and saving have
+      been added to menus in \command{Rgui.exe}.  (Request of \PR{16572}.)
+
+      \item \code{loess(..., iterTrace=TRUE)} now provides diagnostics
+      for robustness iterations, and the \code{print()} method for
+      \code{summary(<loess>)} shows slightly more.
+      
+      \item The included version of PCRE has been updated to 8.38, a
+      bug-fix release.
+      
+      \item \code{View()} now displays nested data frames in a more
+      friendly way.  (Request with patch in \PR{15915}.)
+    }
+  }
+
+  \subsection{INSTALLATION and INCLUDED SOFTWARE}{
+    \itemize{
+      \item The included configuration code for \code{libintl} has been
+      updated to that from \code{gettext} version 0.19.5.1 --- this
+      should only affect how an external library is detected (and the
+      only known instance is under OpenBSD).  (Wish of \PR{16464}.)
+
+      \item \command{configure} has a new argument
+      \option{--disable-java} to disable the checks for Java.
+
+      \item The \command{configure} default for \code{MAIN_LDFLAGS} has
+      been changed for the FreeBSD, NetBSD and Hurd OSes to one more
+      likely to work with compilers other than \command{gcc} (FreeBSD 10
+      defaults to \command{clang}).
+
+      \item \command{configure} now supports the OpenMP flags
+      \option{-fopenmp=libomp} (clang) and \option{-qopenmp} (Intel C).
+
+      \item Various macros can be set to override the default
+      behaviour of \command{configure} when detecting OpenMP: see file
+      \file{config.site}.
+
+      \item Source installation on Windows has been modified to allow
+      for MiKTeX installations without \command{texi2dvi.exe}.  See file
+      \file{MkRules.dist}.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{regexpr(pat, x, perl = TRUE)} with Python-style named
+      capture did not work correctly when \code{x} contained \code{NA}
+      strings.  (\PR{16484})
+
+      \item The description of dataset \code{ToothGrowth} has been
+      improved/corrected.  (\PR{15953})
+
+      \item \code{model.tables(type = "means")} and hence
+      \code{TukeyHSD()} now support \code{"aov"} fits without an
+      intercept term.  (\PR{16437})
+
+      \item \code{close()} now reports the status of a \code{pipe()}
+      connection opened with an explicit \code{open} argument.
+      (\PR{16481})
+
+      \item Coercing a list without names to a data frame is faster if
+      the elements are very long. (\PR{16467})
+
+      \item (Unix-only) Under some rare circumstances piping the output
+      from \command{Rscript} or \command{R -f} could result in
+      attempting to close the input file twice, possibly crashing the
+      process.  (\PR{16500})
+
+      \item (Windows) \code{Sys.info()} was out of step with
+      \code{win.version()} and did not report Windows 8.
+
+      \item \code{topenv(baseenv())} returns \code{baseenv()} again as
+      in \R 3.1.0 and earlier.  This also fixes \code{compilerJIT(3)}
+      when used in \file{.Rprofile}.
+
+      \item \code{detach()}ing the \pkg{methods} package keeps
+      \code{.isMethodsDispatchOn()} true, as long as the methods
+      namespace is not unloaded.% This keeps a sane state, see the reg-S4 test
+
+      \item Removed some spurious warnings from \command{configure} about the
+      preprocessor not finding header files.  (\PR{15989})
+
+      \item \code{rchisq(*, df=0, ncp=0)} now returns \code{0} instead
+      of \code{NaN}, and \code{dchisq(*, df=0, ncp=*)} also no longer
+      returns \code{NaN} in limit cases (where the limit is unique).
+      (\PR{16521})
+
+      \item \code{pchisq(*, df=0, ncp > 0, log.p=TRUE)} no longer
+      underflows (for ncp > ~60).
+
+      \item \code{nchar(x, "w")} returned -1 for characters it did not
+      know about (e.g.\sspace{}zero-width spaces): it now assumes 1.
+      It now knows about most zero-width characters and a few more
+      double-width characters.
+
+      \item Help for \code{which.min()} is now more precise about
+      behavior with logical arguments.  (\PR{16532})
+
+      \item The print width of character strings marked as
+      \code{"latin1"} or \code{"bytes"} was in some cases computed
+      incorrectly.
+
+      \item \code{abbreviate()} did not give names to the return value
+      if \code{minlength} was zero, unlike when it was positive.
+
+      \item (Windows only) \code{dir.create()} did not always warn
+      when it failed to create a directory.  (\PR{16537})
+
+      \item When operating in a non-UTF-8 multibyte locale
+      (e.g.\sspace{}an East Asian locale on Windows), \code{grep()} and
+      related functions did not handle UTF-8 strings properly.
+      (\PR{16264})
+
+      \item \code{read.dcf()} sometimes misread lines longer than 8191
+      characters.  (Reported by Hervé Pagès with a patch.)
+
+      \item \code{within(df, ..)} no longer drops columns whose name
+      start with a \code{"."}.
+
+      \item The built-in \code{HTTP} server converted entire
+      \code{Content-Type} to lowercase including parameters which
+      can cause issues for multi-part form boundaries (\PR{16541}).
+
+      \item Modifying slots of S4 objects could fail when the
+      \pkg{methods} package was not attached. (\PR{16545})
+
+      \item \code{splineDesign(*, outer.ok=TRUE)} (\pkg{splines}) is better now
+      (\PR{16549}), and \code{interpSpline()} now allows \code{sparse=TRUE}
+      for speedup with non-small sizes.
+
+      \item If the expression in the traceback was too long,
+      \code{traceback()} did not report the source line number.  (Patch
+      by Kirill Müller.)
+
+      \item The browser did not truncate the display of the function when
+      exiting with \code{options("deparse.max.lines")} set.
+      (\PR{16581})
+
+      \item When \code{bs(*, Boundary.knots=)} had boundary knots inside
+      the data range, extrapolation was somewhat off.  (Patch by Trevor
+      Hastie.)
+
+      \item \code{var()} and hence \code{sd()} warn about
+      \code{factor} arguments which are deprecated now. (\PR{16564})
+
+      \item \code{loess(*, weights = *)} stored wrong weights and hence
+      gave slightly wrong predictions for \code{newdata}.  (\PR{16587})
+
+      \item \code{aperm(a, *)} now preserves \code{names(dim(a))}.
+
+      \item \code{poly(x, ..)} now works when either \code{raw=TRUE} or
+      \code{coef} is specified.  (\PR{16597})
+
+      \item \code{data(package=*)} is more careful in determining the path.
+
+      \item \code{prettyNum(*, decimal.mark, big.mark)}: fixed bug
+      introduced when fixing \PR{16411}.
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R 3.2.2}{
   \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
     \itemize{
@@ -14,7 +205,7 @@
       packages can be installed from repositories which offer
       \samp{https://} URLs, and those listed by \code{setRepositories()}
       now do so (for some of their mirrors).
-      
+
       Support for \samp{https://} URLs is available on Windows, and on
       other platforms if support for \code{libcurl} was compiled in and
       if that supports the \code{https} protocol (system installations
@@ -27,11 +218,11 @@
       \code{download.file()} and \code{url()} has been changed to be
       \code{"wininet"} using Windows API calls.  This changes the way
       proxies need to be set and security settings made: there have been
-      some reports of sites being inaccessible under the new default
+      some reports of \samp{ftp:} sites being inaccessible under the new default
       method (but the previous methods remain available).
     }
   }
-  
+
   \subsection{NEW FEATURES}{
     \itemize{
       \item \code{cmdscale()} gets new option \code{list.} for increased
@@ -44,7 +235,7 @@
       \item (Non-Windows only) \code{download.file()} with default
       \code{method = "auto"} now chooses \code{"libcurl"} if that is
       available and a \samp{https://} or \samp{ftps://} URL is used.
-      
+
       \item (Windows only) \code{setInternet2(TRUE)} is now the default.
       The command-line option \command{--internet2} and environment
       variable \env{R_WIN_INTERNET2} are now ignored.
@@ -54,13 +245,12 @@
       method: to revert to the previous default use
       \code{setInternet2(FALSE)}.
 
-      This means that \samp{https://} can be read by default by
-      \code{download.file()} (they have been readable by \code{file()} and
-      \code{url()} since \R 3.2.0).
+      This means that \samp{https://} URLs can be read by default by
+      \code{download.file()} (they have been readable by \code{file()}
+      and \code{url()} since \R 3.2.0).
 
       There are implications for how proxies need to be set (see
-      \code{?download.file}): also, \code{cacheOK = FALSE} is not
-      supported.
+      \code{?download.file}).
 
       \item \code{chooseCRANmirror()} and \code{chooseBioCmirror()} now
       offer HTTPS mirrors in preference to HTTP mirrors.  This changes
@@ -185,10 +375,12 @@
 
       \item \code{nchar(x, *)} and \code{nzchar(x)} gain a new argument
       \code{keepNA} which governs how the result for \code{NA}s in
-      \code{x} is determined.  For the \R 3.2.x series, the default
+      \code{x} is determined.  For \code{nzchar()} in general and
+      \code{nchar()} in the \R 3.2.x series, the default
       remains \code{FALSE} which is fully back compatible.
-      From \R 3.3.0, the default will change to \code{keepNA = NA} and
-      you are advised to consider this for code portability.
+      From \R 3.3.0, \code{nchar()}'s default will change to
+      \code{keepNA = NA} and you are advised to consider this for code
+      portability.
 
       \item \code{news()} more flexibly extracts dates from package
       \file{NEWS.Rd} files.
@@ -1013,7 +1205,7 @@
       was complex.  (\PR{16047})
 
       \item \code{"noquote"} objects may now be used as columns in
-      dataframes.  (\PR{15997})
+      data frames.  (\PR{15997})
 
       \item Some values with extremely long names were printed
       incorrectly.  (\PR{15999})
@@ -2439,7 +2631,7 @@
       \code{NA} returned that time.  (The platforms affected include
       Linux and OS X, but not Windows nor Solaris.)
 
-      \item \code{rowsum()} has more support for matrices and dataframes
+      \item \code{rowsum()} has more support for matrices and data frames
       with \eqn{2^{31}}{2^31} or more elements. (\PR{15587})
 
       \item \code{predict(<lm object>, interval = "confidence", scale =
@@ -3246,7 +3438,7 @@
       which is representable as an integer (as often happens for package
       \CRANpkg{Matrix}), this is converted to an integer.
 
-      \item Matrix indexing of dataframes by two-column numeric indices
+      \item Matrix indexing of data frames by two-column numeric indices
       is now supported for replacement as well as extraction.
 
       \item \code{setNames()} now has a default for its \code{object}

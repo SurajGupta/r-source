@@ -1,5 +1,5 @@
 #  File src/library/tools/R/build.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 #### R based engine for R CMD build
 
@@ -61,7 +61,7 @@ get_exclude_patterns <- function()
       "^inst/doc/00Index\\.dcf$",
       ## Autoconf
       "^config\\.(cache|log|status)$",
-      "^autom4te\\.cache$",
+      "(^|/)autom4te\\.cache$", # ncdf4 had this in subdirectory 'tools'
       ## Windows dependency files
       "^src/.*\\.d$", "^src/Makedeps$",
       ## IRIX, of some vintage

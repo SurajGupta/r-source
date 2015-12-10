@@ -1,5 +1,5 @@
 % File src/library/utils/man/chooseBioCmirror.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2009-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -12,17 +12,21 @@
 }
 \usage{
 chooseBioCmirror(graphics = getOption("menu.graphics"), ind = NULL,
-                 useHTTPS = getOption("useHTTPS", TRUE))
+                 useHTTPS = getOption("useHTTPS", TRUE),
+                 local.only = FALSE)
 }
 \arguments{
   \item{graphics}{Logical.  If true, use a graphical list: on Windows or
-    the OS X GUI use a list box, and on a Unix-alike  use a Tk widget if
+    the OS X GUI use a list box, and on a Unix-alike use a Tk widget if
     package \pkg{tcltk} and an X server are available.  Otherwise use a
     text \code{\link{menu}}.}
   
   \item{ind}{Optional numeric value giving which entry to select.}
   \item{useHTTPS}{Whether to prefer HTTPS mirrors (see
-  \code{\link{chooseCRANmirror}}).}
+    \code{\link{chooseCRANmirror}}).}
+  
+  \item{local.only}{Logical, try to get most recent list from the
+    Bioconductor master or use file on local disk only.}
 }
 \details{
   This sets the \link{option} \code{"BioC_mirror"}: it is used

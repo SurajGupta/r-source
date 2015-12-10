@@ -1,5 +1,5 @@
 #  File src/library/utils/R/question.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2014 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 `?` <-
 function(e1, e2)
@@ -33,7 +33,7 @@ function(e1, e2)
 	    is.call(te <- topicExpr[[2L]]) && te[[1L]] == "?") {
 	    cat("Contacting Delphi...")
 	    flush.console()
-	    Sys.sleep(2+rpois(1,2))
+	    Sys.sleep(2 + stats::rpois(1,2))
 	    cat("the oracle is unavailable.\nWe apologize for any inconvenience.\n")
 	    return(invisible())
 	}

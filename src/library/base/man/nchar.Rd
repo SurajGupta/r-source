@@ -1,5 +1,5 @@
 % File src/library/base/man/nchar.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -66,6 +66,10 @@ nzchar(x, keepNA = FALSE)
   \code{nchar()} returns \code{\link{NA_integer_}} if \code{keepNA} is
   true, and \code{2}, the number of printing characters, if false.
 
+  \code{type = "width"} gives (an approximation to) the number of
+  columns used in printing each element in a terminal font, taking into
+  account double-width, zero-width and \sQuote{composing} characters.
+  
   If \code{allowNA = TRUE} and an element is detected as invalid in a
   multi-byte character set such as UTF-8, its number of characters and
   the width will be \code{NA}.  Otherwise the number of characters will
@@ -87,8 +91,7 @@ nzchar(x, keepNA = FALSE)
 \note{
   This does \strong{not} by default give the number of characters that
   will be used to \code{print()} the string.  Use
-  \code{\link{encodeString}} to find the characters used to print the
-  string.
+  \code{\link{encodeString}} to find that.
 #ifdef windows
   This is particularly important on Windows when \samp{\\uxxxx}
   sequences have been used to enter Unicode characters not representable
@@ -102,11 +105,39 @@ nzchar(x, keepNA = FALSE)
   characters and widths will be computed in UTF-8, even though printing
   may use escapes such as \samp{<U+2642>} in a non-UTF-8 locale.
 #endif
+  
+  The concept of \sQuote{width} is a slippery one even in a monospaced
+  font. Some human languages have the concept of \emph{combining}
+  characters, in which two or more characters are rendered together: an
+  example would be \code{"y\u306"}, which is two characters of width
+  one: combining characters are given width zero, and there are other
+  zero-width characters such as the zero-width space \code{"\u200b"}.
+
+  Some East Asian languages have \sQuote{wide} characters, ideographs
+  which are conventionally printed across two columns when mixed with
+  ASCII and other \sQuote{narrow} characters in those languages.  The
+  problem is that whether a computer prints wide characters over two or
+  one columns depends on the font, with it not being uncommon to use two
+  columns in a font intended for East Asian users and a single column in
+  a \sQuote{Western} font.  Unicode has encodings for \sQuote{fullwidth}
+  versions of ASCII characters and \sQuote{halfwidth} versions of
+  Katakana (Japanese) and Hangul (Korean) characters.  Then there is the
+  \sQuote{East Asian Ambiguous class} (Greek, Cyrillic, signs, some
+  accented Latin chars, etc), for which the historical practice was to
+  use two columns in East Asia and one elsewhere.  The width quoted by
+  \code{nchar} for characters in that class (and some others) depends on
+  the locale, being one except in some East Asian locales on some OSes
+  (notably Windows).
+
+  Control characters are given width zero.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)
   \emph{The New S Language}.
   Wadsworth & Brooks/Cole.
+  
+  Unicode Standard Annex #11: \emph{East Asian Width.}
+  \url{http://www.unicode.org/reports/tr11/}
 }
 \seealso{
   \code{\link{strwidth}} giving width of strings for plotting;

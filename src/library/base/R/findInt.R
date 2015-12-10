@@ -1,7 +1,7 @@
 #  File src/library/base/R/findInt.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,19 +14,16 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ### This is a `variant' of  approx( method = "constant" ) :
 findInterval <- function(x, vec, rightmost.closed = FALSE, all.inside = FALSE)
 {
     ## Purpose: returns the indices of  x in vec;  vec[] sorted
     ## ---------------------------------------------------------
-    ## Author: Martin Maechler, Date:  4 Jan 2002, 10:16 (of very different .C version)
-
-    if(anyNA(vec))
-	stop("'vec' contains NAs")
-    if(is.unsorted(vec))
-	stop("'vec' must be sorted non-decreasingly")
+    ## Author: Martin Maechler, Date: 4 Jan 2002 (of very different .C version)
+    if(!identical(FALSE, is.unsorted(vec)))
+	stop("'vec' must be sorted non-decreasingly and not contain NAs")
     .Internal(findInterval(as.double(vec), as.double(x),
                            rightmost.closed, all.inside))
 }

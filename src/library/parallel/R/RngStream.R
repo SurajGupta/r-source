@@ -1,5 +1,5 @@
 #  File src/library/parallel/R/RngStream.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 nextRNGStream <- function(seed)
 {
@@ -62,7 +62,7 @@ RNGenv <- new.env()
 mc.reset.stream <- function() {
     if (RNGkind()[1L] == "L'Ecuyer-CMRG") {
         if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-            runif(1)
+            stats::runif(1)
         assign("LEcuyer.seed",
                get(".Random.seed", envir = .GlobalEnv, inherits = FALSE),
                envir = RNGenv)
@@ -76,7 +76,7 @@ mc.advance.stream <- function(reset = FALSE)
         if (reset ||
             !exists("LEcuyer.seed", envir = RNGenv, inherits = FALSE)) {
             if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE))
-                runif(1)
+                stats::runif(1)
             assign("LEcuyer.seed",
                    get(".Random.seed", envir = .GlobalEnv, inherits = FALSE),
                    envir = RNGenv)

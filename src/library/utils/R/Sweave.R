@@ -1,5 +1,5 @@
 #   File src/library/utils/R/Sweave.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ### The drivers are now in SweaveDrivers.R
 
@@ -528,7 +528,7 @@ SweaveHooks <- function(options, run = FALSE, envir = .GlobalEnv)
 	## .build_packages() ...
 	message("Compacting PDF document")
 	if(compact %in% c("gs", "gs+qpdf", "both")) {
-	    gs_cmd <- tools:::find_gs_cmd(Sys.getenv("R_GSCMD", ""))
+	    gs_cmd <- tools::find_gs_cmd(Sys.getenv("R_GSCMD", ""))
 	    gs_quality <- "ebook"
 	} else {
 	    gs_cmd <- ""

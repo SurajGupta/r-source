@@ -1,5 +1,5 @@
 % File src/library/grDevices/man/unix/png.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -200,7 +200,7 @@ tiff(filename = "Rplot\%03d.tiff",
   The PNG specification, \url{http://www.w3.org/TR/PNG/}.
   
   The TIFF specification, including extensions, at
-  \url{http://partners.adobe.com/public/developer/tiff/}.
+  \url{https://partners.adobe.com/public/developer/tiff/}.
 }
 \seealso{
   \code{\link{Devices}}, \code{\link{dev.print}}

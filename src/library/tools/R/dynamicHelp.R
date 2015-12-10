@@ -1,5 +1,5 @@
 #  File src/library/tools/R/dynamicHelp.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 
 ## This may be asked for
@@ -535,7 +535,7 @@ httpd <- function(path, query, ...)
         if(file.exists(file))
             list(file = file, "content-type" = mime_type(path))
         else {
-            url <- "http://cran.r-project.org/bin/windows/base/rw-FAQ.html"
+            url <- "https://cran.r-project.org/bin/windows/base/rw-FAQ.html"
 	    return(list(payload = paste0('Redirect to <a href="', url, '">"',
                                          url, '"</a>'),
 	    		"content-type" = 'text/html',
@@ -554,10 +554,10 @@ httpd <- function(path, query, ...)
             ## tarball has pre-built version of R-admin.html
             list(file = file, "content-type" = mime_type(path))
         } else {
-            ## url <- "http://cran.r-project.org/manuals.html"
+            ## url <- "https://cran.r-project.org/manuals.html"
             version <-
                 if(grepl("unstable", R.version$status)) "r-devel" else "r-patched"
-            url <- file.path("http://cran.r-project.org/doc/manuals",
+            url <- file.path("https://cran.r-project.org/doc/manuals",
                              version, basename(path))
 	    return(list(payload = paste0('Redirect to <a href="', url, '">"',
                                          url, '"</a>'),

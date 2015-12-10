@@ -1,6 +1,6 @@
 % File src/library/base/man/which.min.Rd
-% Part of the R package, http://www.R-project.org
-% Copyright 1995-2014 R Core Team
+% Part of the R package, https://www.R-project.org
+% Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
 \name{which.min}
@@ -16,28 +16,34 @@
 \description{
   Determines the location, i.e., index of the (first) minimum or maximum
   of a numeric (or logical) vector.
-
-  For a logical vector \code{x}, \code{which.min(x)} and \code{which.max(x)}
-  return the index of the first \code{FALSE} or \code{TRUE}, respectively.
 }
 \usage{
 which.min(x)
 which.max(x)
 }
 \arguments{
-  \item{x}{numeric (integer or double) vector, whose
+  \item{x}{numeric (logical, integer or double) vector or an \R object
+    for which the internal coercion to \code{\link{double}} works whose
     \code{\link{min}} or \code{\link{max}} is searched for.}
+}
+\note{
+  For a \code{\link{logical}} vector \code{x} with both \code{FALSE} and
+  \code{TRUE} values, \code{which.min(x)} and \code{which.max(x)} return
+  the index of the first \code{FALSE} or \code{TRUE}, respectively, as
+  \code{FALSE < TRUE}.
 }
 \value{
   Missing and \code{NaN} values are discarded.
 
-  an \code{\link{integer}} of length 1 or 0 (iff \code{x} has no
+  an \code{\link{integer}} or on 64-bit platforms, if
+  \code{\link{length}(x) =: n}\eqn{\ge 2^{31}}{>= 2^31} an integer
+  valued \code{\link{double}} of length 1 or 0 (iff \code{x} has no
   non-\code{NA}s), giving the index of the \emph{first} minimum or
   maximum respectively of \code{x}.
 
   If this extremum is unique (or empty), the results are the same as
-  (but more efficient than) \code{which(x == min(x))} or
-  \code{which(x == max(x))} respectively.
+  (but more efficient than) \code{which(x == min(x, na.rm = TRUE))} or
+  \code{which(x == max(x, na.rm = TRUE))} respectively.
 }
 \author{Martin Maechler}
 \seealso{
@@ -61,9 +67,13 @@ range(presidents, na.rm = TRUE)
 which.min(presidents) # 28
 which.max(presidents) #  2
 
-## Find the first occurrence, i.e. the first TRUE:
+## Find the first occurrence, i.e. the first TRUE, if there is at least one:
 x <- rpois(10000, lambda = 10); x[sample.int(50, 20)] <- NA
 ## where is the first value >= 20 ?
 which.max(x >= 20)
+
+## Also works for lists (which can be coerced to numeric vectors):
+which.min(list(A = 7, pi = pi)) ##  ->  c(pi = 2L)
+\dontshow{stopifnot(identical(which.min(list(A = 7, pi = pi)), c(pi = 2L)))}
 }
 \keyword{utilities}

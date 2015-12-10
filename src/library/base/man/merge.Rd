@@ -1,5 +1,5 @@
 % File src/library/base/man/merge.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Copyright 2002-2011 The R Foundation
 % Distributed under GPL 2 or later
@@ -83,7 +83,7 @@ merge(x, y, \dots)
   The complexity of the algorithm used is proportional to the length of
   the answer.
 
-  % Terminology follows http://en.wikipedia.org/wiki/Join_(SQL)
+  % Terminology follows https://en.wikipedia.org/wiki/Join_(SQL)
   In SQL database terminology, the default value of \code{all = FALSE}
   gives a \emph{natural join}, a special case of an \emph{inner
   join}. Specifying \code{all.x = TRUE} gives a \emph{left (outer)

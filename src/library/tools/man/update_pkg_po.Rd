@@ -1,5 +1,5 @@
 % File src/library/tools/man/update_pkg_po.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2012-2013 R Core Team
 % Distributed under GPL 2 or later
 
@@ -75,7 +75,7 @@ update_pkg_po(pkgdir, pkg = NULL, version = NULL, copyright, bugs)
   part of most Linux distributions and easily compiled from the sources
   on Unix-alikes (including OS X).  Pre-compiled versions for
   Windows are available in
-  \url{http://www.stats.ox.ac.uk/pub/Rtools/goodies/gettext-tools.zip}.
+  \url{https://www.stats.ox.ac.uk/pub/Rtools/goodies/gettext-tools.zip}.
 
   It will probably not work correctly for \code{en@quot} translations
   except in a UTF-8 locale, so these are skipped elsewhere.

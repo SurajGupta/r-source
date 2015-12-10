@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* See ../unix/system.txt for a description of functions */
@@ -494,8 +494,16 @@ void R_CleanUp(SA_TYPE saveact, int status, int runLast)
 	PrintWarnings();        /* from device close and (if run) .Last */
     app_cleanup();
     RConsole = NULL;
-    if(ifp) fclose(ifp);        /* input file from -f or --file= */
-    if(ifile[0]) unlink(ifile); /* input file from -e */
+    // Add some protection against calling this more than once:
+    // caused by signals on Unix, so maybe cannot happen here.
+    if(ifp) { 
+	fclose(ifp);    /* input file from -f or --file= */
+	ifp = NULL; 
+    }
+    if(ifile[0]) {
+	unlink(ifile); /* input file from -e */
+	ifile[0] = '\0';
+    }
     exit(status);
 }
 

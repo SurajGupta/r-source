@@ -7,6 +7,258 @@
 
 <h2>R News</h2>
 
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.2.3</h3>
+
+
+
+<h4>NEW FEATURES</h4>
+
+
+<ul>
+<li><p> Some recently-added Windows time zone names have been added
+to the conversion table used to convert these to Olson names.
+(Including those relating to changes for Russia in Oct 2014, as in
+<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16503">PR#16503</a>.)
+</p>
+</li>
+<li><p> (Windows) Compatibility information has been added to the
+manifests for &lsquo;<span class="file">Rgui.exe</span>&rsquo;, &lsquo;<span class="file">Rterm.exe</span>&rsquo; and
+&lsquo;<span class="file">Rscript.exe</span>&rsquo;.  This should allow <code>win.version()</code> and
+<code>Sys.info()</code> to report the actual Windows version up to
+Windows 10.
+</p>
+</li>
+<li><p> Windows <code>"wininet"</code> FTP first tries EPSV / PASV mode
+rather than only using active mode (reported by Dan Tenenbaum).
+
+</p>
+</li>
+<li> <p><code>which.min(x)</code> and <code>which.max(x)</code> may be much
+faster for logical and integer <code>x</code> and now also work for long
+vectors.
+</p>
+</li>
+<li><p> The &lsquo;emulation&rsquo; part of <code>tools::texi2dvi()</code> has
+been somewhat enhanced, including supporting <code>quiet = TRUE</code>.
+It can be selected by <code>texi2dvi = "emulation"</code>.
+</p>
+<p>(Windows) MiKTeX removed its <code>texi2dvi.exe</code> command in Sept
+2015: <code>tools::texi2dvi()</code> tries <code>texify.exe</code> if it is
+not found.
+</p>
+</li>
+<li><p> (Windows only) Shortcuts for printing and saving have
+been added to menus in <code>Rgui.exe</code>.  (Request of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16572">PR#16572</a>.)
+</p>
+</li>
+<li> <p><code>loess(..., iterTrace=TRUE)</code> now provides diagnostics
+for robustness iterations, and the <code>print()</code> method for
+<code>summary(&lt;loess&gt;)</code> shows slightly more.
+</p>
+</li>
+<li><p> The included version of PCRE has been updated to 8.38, a
+bug-fix release.
+</p>
+</li>
+<li> <p><code>View()</code> now displays nested data frames in a more
+friendly way.  (Request with patch in <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15915">PR#15915</a>.)
+</p>
+</li></ul>
+
+
+
+
+<h4>INSTALLATION and INCLUDED SOFTWARE</h4>
+
+
+<ul>
+<li><p> The included configuration code for <code>libintl</code> has been
+updated to that from <code>gettext</code> version 0.19.5.1 &mdash; this
+should only affect how an external library is detected (and the
+only known instance is under OpenBSD).  (Wish of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16464">PR#16464</a>.)
+</p>
+</li>
+<li> <p><code>configure</code> has a new argument
+<span class="option">--disable-java</span> to disable the checks for Java.
+</p>
+</li>
+<li><p> The <code>configure</code> default for <code>MAIN_LDFLAGS</code> has
+been changed for the FreeBSD, NetBSD and Hurd OSes to one more
+likely to work with compilers other than <code>gcc</code> (FreeBSD 10
+defaults to <code>clang</code>).
+</p>
+</li>
+<li> <p><code>configure</code> now supports the OpenMP flags
+<span class="option">-fopenmp=libomp</span> (clang) and <span class="option">-qopenmp</span> (Intel C).
+</p>
+</li>
+<li><p> Various macros can be set to override the default
+behaviour of <code>configure</code> when detecting OpenMP: see file
+&lsquo;<span class="file">config.site</span>&rsquo;.
+</p>
+</li>
+<li><p> Source installation on Windows has been modified to allow
+for MiKTeX installations without <code>texi2dvi.exe</code>.  See file
+&lsquo;<span class="file">MkRules.dist</span>&rsquo;.
+</p>
+</li></ul>
+
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>regexpr(pat, x, perl = TRUE)</code> with Python-style named
+capture did not work correctly when <code>x</code> contained <code>NA</code>
+strings.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16484">PR#16484</a>)
+</p>
+</li>
+<li><p> The description of dataset <code>ToothGrowth</code> has been
+improved/corrected.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15953">PR#15953</a>)
+</p>
+</li>
+<li> <p><code>model.tables(type = "means")</code> and hence
+<code>TukeyHSD()</code> now support <code>"aov"</code> fits without an
+intercept term.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16437">PR#16437</a>)
+</p>
+</li>
+<li> <p><code>close()</code> now reports the status of a <code>pipe()</code>
+connection opened with an explicit <code>open</code> argument.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16481">PR#16481</a>)
+</p>
+</li>
+<li><p> Coercing a list without names to a data frame is faster if
+the elements are very long. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16467">PR#16467</a>)
+</p>
+</li>
+<li><p> (Unix-only) Under some rare circumstances piping the output
+from <code>Rscript</code> or <code>R -f</code> could result in
+attempting to close the input file twice, possibly crashing the
+process.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16500">PR#16500</a>)
+</p>
+</li>
+<li><p> (Windows) <code>Sys.info()</code> was out of step with
+<code>win.version()</code> and did not report Windows 8.
+</p>
+</li>
+<li> <p><code>topenv(baseenv())</code> returns <code>baseenv()</code> again as
+in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.1.0 and earlier.  This also fixes <code>compilerJIT(3)</code>
+when used in &lsquo;<span class="file">.Rprofile</span>&rsquo;.
+</p>
+</li>
+<li> <p><code>detach()</code>ing the <span class="pkg">methods</span> package keeps
+<code>.isMethodsDispatchOn()</code> true, as long as the methods
+namespace is not unloaded.
+</p>
+</li>
+<li><p> Removed some spurious warnings from <code>configure</code> about the
+preprocessor not finding header files.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15989">PR#15989</a>)
+</p>
+</li>
+<li> <p><code>rchisq(*, df=0, ncp=0)</code> now returns <code>0</code> instead
+of <code>NaN</code>, and <code>dchisq(*, df=0, ncp=*)</code> also no longer
+returns <code>NaN</code> in limit cases (where the limit is unique).
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16521">PR#16521</a>)
+</p>
+</li>
+<li> <p><code>pchisq(*, df=0, ncp &gt; 0, log.p=TRUE)</code> no longer
+underflows (for ncp &gt; ~60).
+</p>
+</li>
+<li> <p><code>nchar(x, "w")</code> returned -1 for characters it did not
+know about (e.g. zero-width spaces): it now assumes 1.
+It now knows about most zero-width characters and a few more
+double-width characters.
+</p>
+</li>
+<li><p> Help for <code>which.min()</code> is now more precise about
+behavior with logical arguments.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16532">PR#16532</a>)
+</p>
+</li>
+<li><p> The print width of character strings marked as
+<code>"latin1"</code> or <code>"bytes"</code> was in some cases computed
+incorrectly.
+</p>
+</li>
+<li> <p><code>abbreviate()</code> did not give names to the return value
+if <code>minlength</code> was zero, unlike when it was positive.
+</p>
+</li>
+<li><p> (Windows only) <code>dir.create()</code> did not always warn
+when it failed to create a directory.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16537">PR#16537</a>)
+</p>
+</li>
+<li><p> When operating in a non-UTF-8 multibyte locale
+(e.g. an East Asian locale on Windows), <code>grep()</code> and
+related functions did not handle UTF-8 strings properly.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16264">PR#16264</a>)
+</p>
+</li>
+<li> <p><code>read.dcf()</code> sometimes misread lines longer than 8191
+characters.  (Reported by Hervé Pagès with a patch.)
+</p>
+</li>
+<li> <p><code>within(df, ..)</code> no longer drops columns whose name
+start with a <code>"."</code>.
+</p>
+</li>
+<li><p> The built-in <code>HTTP</code> server converted entire
+<code>Content-Type</code> to lowercase including parameters which
+can cause issues for multi-part form boundaries (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16541">PR#16541</a>).
+</p>
+</li>
+<li><p> Modifying slots of S4 objects could fail when the
+<span class="pkg">methods</span> package was not attached. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16545">PR#16545</a>)
+</p>
+</li>
+<li> <p><code>splineDesign(*, outer.ok=TRUE)</code> (<span class="pkg">splines</span>) is better now
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16549">PR#16549</a>), and <code>interpSpline()</code> now allows <code>sparse=TRUE</code>
+for speedup with non-small sizes.
+</p>
+</li>
+<li><p> If the expression in the traceback was too long,
+<code>traceback()</code> did not report the source line number.  (Patch
+by Kirill Müller.)
+</p>
+</li>
+<li><p> The browser did not truncate the display of the function when
+exiting with <code>options("deparse.max.lines")</code> set.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16581">PR#16581</a>)
+</p>
+</li>
+<li><p> When <code>bs(*, Boundary.knots=)</code> had boundary knots inside
+the data range, extrapolation was somewhat off.  (Patch by Trevor
+Hastie.)
+</p>
+</li>
+<li> <p><code>var()</code> and hence <code>sd()</code> warn about
+<code>factor</code> arguments which are deprecated now. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16564">PR#16564</a>)
+</p>
+</li>
+<li> <p><code>loess(*, weights = *)</code> stored wrong weights and hence
+gave slightly wrong predictions for <code>newdata</code>.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16587">PR#16587</a>)
+</p>
+</li>
+<li> <p><code>aperm(a, *)</code> now preserves <code>names(dim(a))</code>.
+</p>
+</li>
+<li> <p><code>poly(x, ..)</code> now works when either <code>raw=TRUE</code> or
+<code>coef</code> is specified.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16597">PR#16597</a>)
+</p>
+</li>
+<li> <p><code>data(package=*)</code> is more careful in determining the path.
+</p>
+</li>
+<li> <p><code>prettyNum(*, decimal.mark, big.mark)</code>: fixed bug
+introduced when fixing <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16411">PR#16411</a>.
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.2.2</h3>
 
 
@@ -34,7 +286,7 @@ expected except on rather old OSes (an example being OS X
 <code>download.file()</code> and <code>url()</code> has been changed to be
 <code>"wininet"</code> using Windows API calls.  This changes the way
 proxies need to be set and security settings made: there have been
-some reports of sites being inaccessible under the new default
+some reports of <span class="samp">ftp:</span> sites being inaccessible under the new default
 method (but the previous methods remain available).
 </p>
 </li></ul>
@@ -69,13 +321,12 @@ variable <span class="env">R_WIN_INTERNET2</span> are now ignored.
 method: to revert to the previous default use
 <code>setInternet2(FALSE)</code>.
 </p>
-<p>This means that <span class="samp">https://</span> can be read by default by
-<code>download.file()</code> (they have been readable by <code>file()</code> and
-<code>url()</code> since <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.0).
+<p>This means that <span class="samp">https://</span> URLs can be read by default by
+<code>download.file()</code> (they have been readable by <code>file()</code>
+and <code>url()</code> since <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.0).
 </p>
 <p>There are implications for how proxies need to be set (see
-<code>?download.file</code>): also, <code>cacheOK = FALSE</code> is not
-supported.
+<code>?download.file</code>).
 </p>
 </li>
 <li> <p><code>chooseCRANmirror()</code> and <code>chooseBioCmirror()</code> now
@@ -243,10 +494,12 @@ with <code>repos = NULL</code> if it can infer the type of file.
 </li>
 <li> <p><code>nchar(x, *)</code> and <code>nzchar(x)</code> gain a new argument
 <code>keepNA</code> which governs how the result for <code>NA</code>s in
-<code>x</code> is determined.  For the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.x series, the default
+<code>x</code> is determined.  For <code>nzchar()</code> in general and
+<code>nchar()</code> in the <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.x series, the default
 remains <code>FALSE</code> which is fully back compatible.
-From <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.3.0, the default will change to <code>keepNA = NA</code> and
-you are advised to consider this for code portability.
+From <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.3.0, <code>nchar()</code>'s default will change to
+<code>keepNA = NA</code> and you are advised to consider this for code
+portability.
 </p>
 </li>
 <li> <p><code>news()</code> more flexibly extracts dates from package
@@ -1317,7 +1570,7 @@ was complex.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=160
 </p>
 </li>
 <li> <p><code>"noquote"</code> objects may now be used as columns in
-dataframes.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15997">PR#15997</a>)
+data frames.  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15997">PR#15997</a>)
 </p>
 </li>
 <li><p> Some values with extremely long names were printed
@@ -3150,7 +3403,7 @@ second before the epoch&rsquo;, most conversions which should have given
 Linux and OS X, but not Windows nor Solaris.)
 </p>
 </li>
-<li> <p><code>rowsum()</code> has more support for matrices and dataframes
+<li> <p><code>rowsum()</code> has more support for matrices and data frames
 with <i>2^31</i> or more elements. (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15587">PR#15587</a>)
 </p>
 </li>
@@ -3337,7 +3590,7 @@ the result, to avoid misuse creating invalid objects as in
 <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=15303">PR#15303</a>.  A warning is given if a class is discarded.
 </p>
 </li>
-<li><p> Dataset <code>npk</code> has been copied from <a href="http://CRAN.R-project.org/package=MASS"><span class="pkg">MASS</span></a> to
+<li><p> Dataset <code>npk</code> has been copied from <a href="https://CRAN.R-project.org/package=MASS"><span class="pkg">MASS</span></a> to
 allow more tests to be run without recommended packages being
 installed.
 </p>
@@ -4049,7 +4302,7 @@ and not a character vector (as documented) for the internal method.
 </li>
 <li> <p><code>contourLines()</code> now checks more comprehensively for
 conformance of its <code>x</code>, <code>y</code> and <code>z</code> arguments (it
-was used incorrectly in package <a href="http://CRAN.R-project.org/package=R2G2"><span class="pkg">R2G2</span></a>).
+was used incorrectly in package <a href="https://CRAN.R-project.org/package=R2G2"><span class="pkg">R2G2</span></a>).
 </p>
 </li>
 <li><p> Saved graphics display lists are <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> version-specific.
@@ -4073,7 +4326,7 @@ it segfaulted).
 </p>
 </li>
 <li> <p><code>supsmu()</code> could read/write outside its input vectors
-for very short inputs (seen in package <a href="http://CRAN.R-project.org/package=rms"><span class="pkg">rms</span></a> for <code>n = 4</code>).
+for very short inputs (seen in package <a href="https://CRAN.R-project.org/package=rms"><span class="pkg">rms</span></a> for <code>n = 4</code>).
 </p>
 </li>
 <li> <p><code>as.dendrogram()</code>'s <code>hclust</code> method uses less
@@ -4206,10 +4459,10 @@ raised (again).
 </li>
 <li><p> Where methods for <code>length()</code> return a double value
 which is representable as an integer (as often happens for package
-<a href="http://CRAN.R-project.org/package=Matrix"><span class="pkg">Matrix</span></a>), this is converted to an integer.
+<a href="https://CRAN.R-project.org/package=Matrix"><span class="pkg">Matrix</span></a>), this is converted to an integer.
 </p>
 </li>
-<li><p> Matrix indexing of dataframes by two-column numeric indices
+<li><p> Matrix indexing of data frames by two-column numeric indices
 is now supported for replacement as well as extraction.
 </p>
 </li>
@@ -4289,7 +4542,7 @@ interactions (and no longer attempts to plot interaction terms).
 </p>
 </li>
 <li><p> The parser now incorporates code from Romain Francois'
-<a href="http://CRAN.R-project.org/package=parser"><span class="pkg">parser</span></a> package, to support more detailed computation on
+<a href="https://CRAN.R-project.org/package=parser"><span class="pkg">parser</span></a> package, to support more detailed computation on
 the code, such as syntax highlighting, comment-based
 documentation, etc.  Functions <code>getParseData()</code> and
 <code>getParseText()</code> access the data.
@@ -4664,10 +4917,10 @@ been restored: they can be overridden by the command-line options
 <li><p> On Windows, the device name for bitmap devices as reported
 by <code>.Device</code> and <code>.Devices</code> no longer includes the file
 name.   This is for consistency with other platforms and was
-requested by the <a href="http://CRAN.R-project.org/package=lattice"><span class="pkg">lattice</span></a> maintainer.
+requested by the <a href="https://CRAN.R-project.org/package=lattice"><span class="pkg">lattice</span></a> maintainer.
 </p>
 <p><code>win.metafile()</code> still uses the file name: the exact form is
-used by package <a href="http://CRAN.R-project.org/package=tkrplot"><span class="pkg">tkrplot</span></a>.
+used by package <a href="https://CRAN.R-project.org/package=tkrplot"><span class="pkg">tkrplot</span></a>.
 </p>
 </li>
 <li> <p><code>set.seed(NULL)</code> re-initializes <code>.Random.seed</code> as

@@ -17,7 +17,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -466,9 +466,9 @@ static pager pagercreate(void)
     MCHECK(newmenu(G_("File")));
     MCHECK(m = newmenuitem(G_("New script"), 'N', menueditornew));
     MCHECK(m = newmenuitem(G_("Open script..."), 'O', menueditoropen));
-    MCHECK(m = newmenuitem(G_("Print..."), 0, pagerprint));
+    MCHECK(m = newmenuitem(G_("Print..."), 'P', pagerprint));
     setdata(m, c);
-    MCHECK(m = newmenuitem(G_("Save to File..."), 0, pagersavefile));
+    MCHECK(m = newmenuitem(G_("Save to File..."), 'S', pagersavefile));
     setdata(m, c);
     MCHECK(m = newmenuitem("-", 0, NULL));
     MCHECK(m = newmenuitem(G_("Close"), 0, pagerclose));

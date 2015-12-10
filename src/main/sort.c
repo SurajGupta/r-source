@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -181,7 +181,7 @@ SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(isObject(x)) {
 	// try dispatch -- fails entirely for S4: need "DispatchOrEval()" ?
 	SEXP call;
-	PROTECT(call = 	// R>  .gtn(x, strictly) :
+	PROTECT(call =	// R>  .gtn(x, strictly) :
 		lang3(install(".gtn"), x, CADR(args)));
 	ans = eval(call, rho);
 	UNPROTECT(2);
@@ -1007,13 +1007,16 @@ orderVector1(int *indx, int n, SEXP key, Rboolean nalast, Rboolean decreasing,
 #define less(a, b) (isna[a] > isna[b] || (isna[a] == isna[b] && a > b))
 		sort2_with_index
 #undef less
-		    if(nalast) hi -= numna; else lo += numna;
+		if (n - numna < 2) {
+		    Free(isna);
+		    return;
+		}
+		if (nalast) hi -= numna; else lo += numna;
 	    }
     }
 
     /* Shell sort isn't stable, so add test on index */
 
-    /* FIXME: check hi-lo + 1 > 1 ? */
     for (t = 0; sincs[t] > hi-lo+1; t++);
 
     if (isObject(key) && !isNull(rho)) {
@@ -1141,13 +1144,16 @@ orderVector1l(R_xlen_t *indx, R_xlen_t n, SEXP key, Rboolean nalast,
 #define less(a, b) (isna[a] > isna[b] || (isna[a] == isna[b] && a > b))
 		sort2_with_index
 #undef less
-		    if(nalast) hi -= numna; else lo += numna;
+		if (n - numna < 2) {
+		    Free(isna);
+		    return;
+		}
+		if (nalast) hi -= numna; else lo += numna;
 	    }
     }
 
     /* Shell sort isn't stable, so add test on index */
 
-    /* FIXME: check hi-lo + 1 > 1 ? */
     for (t = 0; sincs[t] > hi-lo+1; t++);
 
     if (isObject(key) && !isNull(rho)) {

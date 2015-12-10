@@ -1,5 +1,5 @@
 #  File src/library/utils/R/windows/sysutils.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2013 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 memory.size <- function(max = FALSE) round(.Call(C_memsize, max), 2L)
 
@@ -101,7 +101,7 @@ menuShowCRAN <- function()
 {
     CRAN <- getOption("repos")[["CRAN"]] # drop name for identical()
     if(is.na(CRAN) || identical(CRAN, "@CRAN@"))
-        CRAN <- "http://cran.r-project.org"
+        CRAN <- "https://cran.r-project.org"
     shell.exec(CRAN)
 }
 

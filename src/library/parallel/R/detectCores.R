@@ -1,5 +1,5 @@
 #  File src/library/parallel/R/detectCores.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2014 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ## In part based on code in package multicore 0.1-6 by Simon Urbanek
 
@@ -30,9 +30,10 @@ detectCores <-
             ## Commoner OSes first
             systems <-
                 list(linux = "grep processor /proc/cpuinfo 2>/dev/null | wc -l",
-darwin = "/usr/sbin/sysctl -n hw.ncpu 2>/dev/null",
+                     darwin = "/usr/sbin/sysctl -n hw.ncpu 2>/dev/null",
                      solaris = if(logical) "/usr/sbin/psrinfo -v | grep 'Status of.*processor' | wc -l" else "/bin/kstat -p -m cpu_info | grep :core_id | cut -f2 | uniq | wc -l",
                      freebsd = "/sbin/sysctl -n hw.ncpu 2>/dev/null",
+                     openbsd = "/sbin/sysctl -n hw.ncpu 2>/dev/null",
                      irix  = c("hinv | grep Processors | sed 's: .*::'", "hinv | grep '^Processor '| wc -l"))
             for (i in seq(systems))
                 if(all.tests ||

@@ -1,5 +1,5 @@
 % File src/library/base/man/Logic.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -100,9 +100,9 @@ isTRUE(x)
   hence methods need argument names \code{e1, e2}).
 }
 \note{
-  The elementwise operators are sometimes called as functions as e.g.
-  \code{`&`(x, y)}: see the description of how argument-matching is done
-  in \code{\link[base]{Ops}}.
+  The elementwise operators are sometimes called as functions as
+  e.g.\sspace{}\code{`&`(x, y)}: see the description of how
+  argument-matching is done in \code{\link[base]{Ops}}.
 }
 \references{
   Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988)

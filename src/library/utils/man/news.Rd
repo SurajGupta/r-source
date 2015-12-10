@@ -1,5 +1,5 @@
 % File src/library/utils/man/news.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -38,7 +38,7 @@ news(query, package = "R", lib.loc = NULL, format = NULL,
   File \file{inst/NEWS.Rd} should be an Rd file given the entries as Rd
   \verb{\itemize} lists, grouped according to version using
   \verb{section} elements with names starting with a suitable prefix
-  (e.g, \dQuote{Changes in version} followed by a space and the version
+  (e.g.\sspace{}\dQuote{Changes in version} followed by a space and the version
   number, and optionally followed by a space and a parenthesized ISO
   8601 (\%Y-\%m-\%d, see \code{\link{strptime}}) format date, and
   possibly further grouped according to categories using

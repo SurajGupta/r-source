@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 
@@ -1936,6 +1936,7 @@ static cidfontfamily addCIDFont(const char *name, Rboolean isPDF)
 		if (!afmpath) {
 		    freeCIDFontFamily(fontfamily);
 		    fontfamily = NULL;
+		    freeType1Font(font);
 		    break;
 		}
 		fontfamily->symfont = font;
@@ -2014,6 +2015,7 @@ static type1fontfamily addFont(const char *name, Rboolean isPDF,
 		    if (!afmpath) {
 			freeFontFamily(fontfamily);
 			fontfamily = NULL;
+			freeType1Font(font);
 			break;
 		    }
 		    fontfamily->fonts[i] = font;

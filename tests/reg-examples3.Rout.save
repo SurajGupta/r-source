@@ -1,5 +1,5 @@
 
-R version 3.2.2 RC (2015-08-08 r68914) -- "Fire Safety"
+R version 3.2.3 RC (2015-12-02 r69719) -- "Wooden Christmas-Tree"
 Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -529,7 +529,8 @@ pckgDs>
 > library(tools)
 > ## there are few dependencies in a vanilla R installation:
 > ## lattice may not be installed
-> dependsOnPkgs("lattice")
+> ## Avoid possibly large list from R_HOME/site-library, which --vanilla includes.
+> dependsOnPkgs("lattice", lib.loc = .Library)
 [1] "Matrix" "nlme"   "mgcv"  
 > 
 > ## This may not be installed

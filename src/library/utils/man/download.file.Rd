@@ -1,5 +1,5 @@
 % File src/library/utils/man/download.file.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -66,12 +66,15 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 #ifdef windows
   If \code{method = "auto"} is chosen (the default), the
   \code{"wininet"} method is used on Windows (unless
-  \code{setInternet2(FALSE)} was used). 
+  \code{setInternet2(FALSE)} was used).
 #endif
+% https://msdn.microsoft.com/en-us/library/windows/desktop/aa383630%28v=vs.85%29.aspx
   
   Support for method \code{"libcurl"} is optional: use
   \code{\link{capabilities}("libcurl")} to see if it is supported on
-  your build.  It will usually provide (non-blocking) access to
+  your build.  (It uses an external library of that name
+  (\url{http://curl.haxx.se/libcurl/}) against which \R can be compiled.)
+  It will usually provide (non-blocking) access to
   \samp{https://} and \samp{ftps://} URLs.  There is support for
   simultaneous downloads, so \code{url} and \code{destfile} can be
   character vectors of the same length greater than one.  For a single
@@ -107,9 +110,13 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
 
   See \code{\link{url}} for how \samp{file://} URLs are interpreted,
   especially on Windows.  The \code{"internal"} and \code{"wininet"}
-  methods do not decode \samp{file://} URLs, but the \code{"libcurl"}
-  and \code{"curl"} methods do: method \code{"wget"} does not support
-  them.
+  methods do not percent-decode \samp{file://} URLs, but the
+  \code{"libcurl"} and \code{"curl"} methods do: method \code{"wget"}
+  does not support them.
+
+  Most methods do not percent-encode special characters such as spaces
+  in URLs (see \code{\link{URLencode}}), but it seems the
+  \code{"wininet"} method does.
 
   The remaining details apply to the \code{"internal"}, \code{"wininet"}
   and \code{"libcurl"} methods only.
@@ -236,12 +243,26 @@ download.file(url, destfile, method, quiet = FALSE, mode = "w",
   \file{curl-ca-bundle.crt}.  (This is normally done for a binary
   installation of \R, which installs
   \file{\var{R_HOME}/etc/curl-ca-bundle.crt} and sets
-  \env{CURL_CA_BUNDLE} to point to it if that enironment variable is not
+  \env{CURL_CA_BUNDLE} to point to it if that environment variable is not
   already set.)  For an updated certificate bundle, see
   \url{http://curl.haxx.se/docs/sslcerts.html}.
   Currently one can download a copy from
   \url{https://raw.githubusercontent.com/bagder/ca-bundle/master/ca-bundle.crt}
   and set \env{CURL_CA_BUNDLE} to the full path to the downloaded file.
+  
+  Note that the root certificates used by \R may or may not be the same
+  as used in a browser, and indeed different browsers may use different
+  certificate bundles (there is typically a build option to choose
+  either their own or the system ones).
+}
+\section{FTP sites}{
+  \samp{ftp:} URLs are accessed using the FTP protocol which has a
+  number of variants.  One distinction is between \sQuote{active} and
+  \sQuote{(extended) passive} modes: which is used is chosen by the
+  client.  The \code{"internal"} and \code{"libcurl"} method use passive
+  mode, and that is almost universally used by browsers.  Prior to \R
+  3.2.3 the \code{"wininet"} method used active mode: since it first
+  tries passive and then active.
 }
 \value{
   An (invisible) integer code, \code{0} for success and non-zero for

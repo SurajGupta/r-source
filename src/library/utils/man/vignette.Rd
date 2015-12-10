@@ -1,5 +1,5 @@
 % File src/library/utils/man/vignette.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
@@ -56,7 +56,9 @@ vignette(topic, package = NULL, lib.loc = NULL, all = TRUE)
   variants, etc.  
 }
 \seealso{
-  \code{\link{browseVignettes}} for an HTML-based vignette browser.
+  \code{\link{browseVignettes}} for an HTML-based vignette browser;
+  \code{\link{RShowDoc}(<basename>, package = "<pkg>")} displays a
+  \dQuote{rendered} vignette (pdf or html).
 }
 \examples{
 ## List vignettes from all *attached* packages

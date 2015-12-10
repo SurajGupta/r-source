@@ -1,5 +1,5 @@
 % File src/library/stats/man/arima.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -202,7 +202,7 @@ arima(x, order = c(0L, 0L, 0L),
 
   Ripley, B. D. (2002) Time series in \R 1.5.0.
   \emph{R News}, \bold{2/2}, 2--7.
-  \url{http://www.r-project.org/doc/Rnews/Rnews_2002-2.pdf}
+  \url{https://www.r-project.org/doc/Rnews/Rnews_2002-2.pdf}
 }
 
 \note{

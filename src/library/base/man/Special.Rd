@@ -1,5 +1,5 @@
 % File src/library/base/man/Special.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -118,7 +118,7 @@ lfactorial(x)
 
   Abramowitz, M. and Stegun, I. A. (1972)
   \emph{Handbook of Mathematical Functions}. New York: Dover.
-  \url{http://en.wikipedia.org/wiki/Abramowitz_and_Stegun} provides
+  \url{https://en.wikipedia.org/wiki/Abramowitz_and_Stegun} provides
   links to the full text which is in public domain.\cr
   Chapter 6: Gamma and Related Functions.
 }

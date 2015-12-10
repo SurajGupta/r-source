@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* Notes on so-called 'Large File Support':
@@ -3371,6 +3371,8 @@ SEXP attribute_hidden do_close(SEXP call, SEXP op, SEXP args, SEXP env)
     if(i == R_ErrorCon)
 	error(_("cannot close 'message' sink connection"));
     Rconnection con = getConnection(i);
+    // close to get the status set for pipes (PR#16481)
+    if(con->isopen && streql(con->class, "pipe")) con->close(con);
     int status = con->status;
     con_close1(con);
     free(Connections[i]);
@@ -5082,7 +5084,7 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (strncmp(url, "https://", 8) == 0)
 # ifdef HAVE_CURL_CURL_H
 	{
-	    // this is slightly optimistic: 
+	    // this is slightly optimistic:
 	    // we did not check the libcurl build supports https
 	    if(!defmeth) {
 		REprintf("https:// URLs are not supported by method \"internal\": trying \"libcurl\"\n");

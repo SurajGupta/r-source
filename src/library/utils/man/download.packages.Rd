@@ -1,5 +1,5 @@
 % File src/library/utils/man/download.packages.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -33,7 +33,7 @@ download.packages(pkgs, destdir, available = NULL,
   \item{repos}{
     character vector, the base URL(s) of the repositories
     to use, i.e., the URL of the CRAN master such as
-    \code{"http://cran.r-project.org"} or its Statlib mirror,
+    \code{"https://cran.r-project.org"} or its Statlib mirror,
     \code{"http://lib.stat.cmu.edu/R/CRAN"}.
   }
   \item{contriburl}{

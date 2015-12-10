@@ -1,5 +1,5 @@
 #  File src/library/tools/R/RdHelpers.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 2014 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 Rd_expr_PR <- function(x)
 {
@@ -66,7 +66,7 @@ Rd_package_DESCRIPTION <- function(pkg, lib.loc = Sys.getenv("R_BUILD_TEMPLIB"))
 	tabular <- function(col1, col2)
 	    c("\\tabular{ll}{", paste0(col1, " \\tab ", col2, "\\cr"), "}")
 
-	desc <- packageDescription(pkg, lib.loc = lib.loc)
+	desc <- utils::packageDescription(pkg, lib.loc = lib.loc)
 	if (pkg != desc[["Package"]])
 	    stop(gettextf("DESCRIPTION file is for package '%s', not '%s'", desc["Package"], pkg))
 	desc <- desc[names(desc) != "Built"] # Probably a stale value

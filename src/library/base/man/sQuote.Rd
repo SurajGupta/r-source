@@ -1,5 +1,5 @@
 % File src/library/base/man/sQuote.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -72,7 +72,7 @@ dQuote(x)
   To work around this, the default for \code{options("useFancyQuotes")}
   is \code{FALSE} on Windows except for the \code{Rgui} console.  There
   fancy quotes work with the default Courier New font and more elegantly with
-  Lucida Console and standard the CJK fonts, but directional double
+  Lucida Console and default East Asian fonts, but directional double
   quotes are missing in raster fonts such as Courier and FixedSys.
 #endif
 }
@@ -87,7 +87,7 @@ dQuote(x)
 }
 \references{
   Markus Kuhn, \dQuote{ASCII and Unicode quotation marks}.
-  \url{http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html}
+  \url{https://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html}
 }
 % these char strings have to be readable in any locale,
 % so cannot use \uxxxx (fails in Japanese).

@@ -18,9 +18,9 @@
 ## General Public License for more details.
 ##
 ## A copy of the GNU General Public License is available at
-## http://www.r-project.org/Licenses/
+## https://www.R-project.org/Licenses/
 
-revision='$Revision: 68388 $'
+revision='$Revision: 69170 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 

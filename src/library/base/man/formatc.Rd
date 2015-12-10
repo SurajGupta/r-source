@@ -1,5 +1,5 @@
 % File src/library/base/man/formatc.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -29,7 +29,7 @@ formatC(x, digits = NULL, width = NULL,
 
 prettyNum(x, big.mark = "",   big.interval = 3L,
           small.mark  = "", small.interval = 5L,
-          decimal.mark = getOption("OutDec"), input.d.mark = ".",
+          decimal.mark = getOption("OutDec"), input.d.mark = decimal.mark,
           preserve.width = c("common", "individual", "none"),
           zero.print = NULL, drop0trailing = FALSE, is.cmplx = NA,
           \dots)

@@ -1,5 +1,5 @@
 #  File src/library/parallel/R/unix/mcparallel.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2013 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 ### Derived from multicore version 0.1-6 by Simon Urbanek
 
@@ -51,7 +51,7 @@ mccollect <- function(jobs, wait = TRUE, timeout = 0, intermediate = FALSE)
 {
     if (missing(jobs)) jobs <- children()
     if (!length(jobs)) return (NULL)
-    if (isTRUE(intermediate)) intermediate <- str
+    if (isTRUE(intermediate)) intermediate <- utils::str
     if (!wait) {
         s <- selectChildren(jobs, timeout)
         if (is.logical(s) || !length(s)) return(NULL)

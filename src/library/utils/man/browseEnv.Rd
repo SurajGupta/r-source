@@ -1,5 +1,5 @@
 % File src/library/utils/man/browseEnv.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -47,7 +47,7 @@ browseEnv(envir = .GlobalEnv, pattern,
 
   It can be generalized.  See sources for details.
   Most probably, this should rather work through using the \pkg{tkWidget}
-  package (from \url{http://www.bioconductor.org}).
+  package (from \url{https://www.bioconductor.org}).
 }
 \seealso{
   \code{\link{str}}, \code{\link{ls}}.

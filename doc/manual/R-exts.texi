@@ -1201,7 +1201,7 @@ lines of
 execs <- c("one", "two", "three")
 if(WINDOWS) execs <- paste0(execs, ".exe")
 if ( any(file.exists(execs)) ) @{
-  dest <- file.path(R_PACKAGE_DIR,  paste0('bin', R_ARCH)
+  dest <- file.path(R_PACKAGE_DIR,  paste0('bin', R_ARCH))
   dir.create(dest, recursive = TRUE, showWarnings = FALSE)
   file.copy(execs, dest, overwrite = TRUE)
 @}
@@ -1561,6 +1561,7 @@ You will very likely need to ensure that the same C compiler and
 compiler flags are used in the @file{configure} tests as when compiling
 @R{} or your package.  Under a Unix-alike, you can achieve this by
 including the following fragment early in @file{configure.ac}
+(@emph{before} calling @code{AC_PROG_CC})
 
 @example
 @group
@@ -1588,8 +1589,10 @@ LDFLAGS=`"$@{R_HOME@}/bin/R" CMD config LDFLAGS`
 
 @noindent
 and packages written with C++ need to pick up the details for the C++
-compiler and switch the current language to C++ by
+compiler and switch the current language to C++ by something like
 @example
+CXX=`"$@{R_HOME@}/bin/R" CMD config CXX`
+CXXFLAGS=`"$@{R_HOME@}/bin/R" CMD config CXXFLAGS`
 AC_LANG(C++)
 @end example
 
@@ -1625,9 +1628,8 @@ override the test for the FORTRAN linker flags.)
 
 @strong{N.B.}: If the @command{configure} script creates files, e.g.@:
 @file{src/Makevars}, you do need a @command{cleanup} script to remove
-them.  Otherwise if the package has vignettes, @command{R CMD build}
-will ship the files that are created.  For example, package
-@CRANpkg{RODBC} has
+them.  Otherwise @command{R CMD build} may ship the files that are
+created.  For example, package @CRANpkg{RODBC} has
 
 @example
 #!/bin/sh
@@ -2004,7 +2006,7 @@ OpenMP@footnote{@uref{http://www.openmp.org/},
 @example
 SHLIB_OPENMP_CFLAGS
 SHLIB_OPENMP_CXXFLAGS
-Shlib_OPENMP_FCFLAGS
+SHLIB_OPENMP_FCFLAGS
 SHLIB_OPENMP_FFLAGS
 @end example
 
@@ -2013,10 +2015,10 @@ are available for use in @file{src/Makevars} or @file{src/Makevars.win}.
 Include the appropriate macro in @code{PKG_CFLAGS}, @code{PKG_CPPFLAGS}
 and so on, and also in @code{PKG_LIBS}.  C/C++ code that needs to be
 conditioned on the use of OpenMP can be used inside @code{#ifdef
-SUPPORT_OPENMP}, a macro defined in the header @file{Rconfig.h}
-(@pxref{Platform and version information}) or @code{_OPENMP}: note that
-some toolchains used for @R{} (including most of those using
-@command{clang}) have no OpenMP support at all, not even @file{omp.h}.
+_OPENMP}: note that some toolchains used for @R{} (including most of
+those using @command{clang}@footnote{Some builds of @command{clang} 3.7
+have support for OpenMP 3.1}) have no OpenMP support at all, not even
+@file{omp.h}.
 
 For example, a package with C code written for OpenMP should have in
 @file{src/Makevars} the lines
@@ -2030,20 +2032,34 @@ Note that the macro @code{SHLIB_OPENMP_CXXFLAGS} applies to the C++98
 compiler and not necessarily to the C++11 compiler: users of the latter
 should do their own @command{configure} checks.
 
+Some care is needed when compilers are from different families which may
+use different OpenMP runtimes (e.g.@: @command{clang} @emph{vs} GCC
+including @command{gfortran}, although it is currently possible to use
+the @command{clang} runtime with GCC but not @emph{vice versa}).  For a
+package with Fortran 77 code using OpenMP the appropriate lines are
+
+@example
+PKG_FFLAGS = $(SHLIB_OPENMP_FFLAGS)
+PKG_LIBS = $(SHLIB_OPENMP_CFLAGS)
+@end example
+
+@noindent
+as the C compiler will be used to link the package code (and there is no
+guarantee that this will work everywhere).
+
+
 There is nothing to say what version of OpenMP is supported: version 3.0
 (May 2008) is supported by recent versions of the Linux, Windows and
 Solaris platforms, but portable packages cannot assume that end users
-have recent versions.  OS X nowadays uses @command{clang}, and the Apple
-builds currently@footnote{Projects to add it has been announced, but it
-is unknown when or even if the Apple builds will incorporate them.}
-have no OpenMP support.
+have recent versions.  OS X currently uses Apple builds of
+@command{clang} with no OpenMP support.
 
 The performance of OpenMP varies substantially between platforms.  Both
 the Windows and earlier Apple OS X implementations have substantial
 overheads and are only beneficial if quite substantial tasks are run in
 parallel.  Also, on Windows new threads are started with the
-default@footnote{Windows, not MinGW-w64 default.} FPU control word, so
-computations done on OpenMP threads will not make use of
+default@footnote{Windows default, not MinGW-w64 default.} FPU control
+word, so computations done on OpenMP threads will not make use of
 extended-precision arithmetic which is the default for the main process.
 @c mingw64-public, 2015-02-02.
 @c http://stackoverflow.com/questions/2553725/is-the-fpu-control-word-setting-per-thread-or-per-process
@@ -2066,8 +2082,8 @@ dubious assumptions.  The best way to limit resources is to limit the
 overall number of threads available to OpenMP in the @R{} process: this
 can be done via environment variable @env{OMP_THREAD_LIMIT}, where
 implemented.@footnote{Which it was at the time of writing with GCC,
-Solaris Studio and Intel compilers.}  Alternatively, the number of
-threads per region can be limited by the environment variable
+Solaris Studio, Intel and Clang 3.7.x compilers.}  Alternatively, the
+number of threads per region can be limited by the environment variable
 @env{OMP_NUM_THREADS} or API call @code{omp_set_num_threads}, or,
 better, for the regions in your code as part of their
 specification. E.g.@: @R{} uses
@@ -3323,7 +3339,7 @@ package should be @emph{exported} to make them available to package
 users, and which variables should be @emph{imported} from other
 packages.
 
-The mechanism for specifying a namespace for a package is to place a
+The namespace for a package is specified by the
 @file{NAMESPACE} file in the top level package directory.  This file
 contains @emph{namespace directives} describing the imports and exports
 of the namespace.  Additional directives register any shared objects to
@@ -3430,7 +3446,8 @@ importFrom(foo, f, g)
 @noindent
 specifies that the exported variables @code{f} and @code{g} of the
 package @pkg{foo} are to be imported.  Using @code{importFrom}
-selectively rather than @code{import} is good practice.
+selectively rather than @code{import} is good practice and recommended
+notably when importing from packages with more than a dozen exports.
 
 It is possible to export variables from a namespace which it has
 imported from other namespaces: this has to be done explicitly and not
@@ -4190,6 +4207,24 @@ specified by @option{-l} options) to be found from those directories,
 and libraries are searched once in the order they are specified.  Not
 all linkers allow a space after @option{-L} .
 
+@item
+The @command{ar} utility is often used in makefiles to make static
+libraries.  Its modifier @code{u} is defined by POSIX but is disabled in
+GNU @command{ar} on some recent Linux distributions which use
+`deterministic mode'.  The safe way to make a static library is to first
+remove any existing file of that name then use @command{ar -cr} and then
+@command{ranlib} if needed (which is system-dependent: on most
+systems@footnote{some versions of OS X did not.} @command{ar} always
+maintains a symbol table).
+
+@item
+Some people have a need to set a locale.  Locale names are not portable,
+and e.g.@: @samp{fr_FR.utf8} is common used on Linux but not accepted on
+either Solaris or OS X.  @samp{fr_FR.UTF-8} is more portable, being
+accepted on recent Linux, AIX, FreeBSD, OS X and Solaris (at least).
+However, some Linux distributions micro-package, so locales defined by
+@pkg{glibc} (including these examples) may not be installed.
+
 @end itemize
 
 Do be careful in what your tests (and examples) actually test.  Bad
@@ -4294,7 +4329,7 @@ and suitable options might be
 @end example
 
 @noindent
-; see @uref{https://www.ghostscript.com/@/doc/@/current/@/Ps2pdf.htm} for
+; see @uref{http://www.ghostscript.com/@/doc/@/current/@/Ps2pdf.htm} for
 more such and consider all the options for image downsampling).  There
 have been examples in @acronym{CRAN} packages for which Ghostscript 9.06
 and later produced much better reductions than 9.05 or earlier.
@@ -4388,9 +4423,10 @@ language of the UTF-8 locale, and your users would need to be told how
 to select the @samp{encoding} argument.
 
 If you want to run @command{R CMD check} on a Unix-alike over a package
-that sets a package encoding in its @file{DESCRIPTION} file you may need
-to specify a suitable locale @emph{via} environment variable
-@env{R_ENCODING_LOCALES}.  The default is equivalent to the value
+that sets a package encoding in its @file{DESCRIPTION} file @emph{and do
+not use a UTF-8 locale} you may need to specify a suitable locale
+@emph{via} environment variable @env{R_ENCODING_LOCALES}.  The default
+is equivalent to the value
 
 @example
 "latin1=en_US:latin2=pl_PL:UTF-8=en_US.UTF-8:latin9=fr_FR.iso885915@@euro"
@@ -4431,11 +4467,13 @@ A not-uncommonly-seen problem is to mistakenly call @code{floor(x/y)} or
 
 @item
 Function @code{fabs} is defined only for floating-point types, except in
-C++11 which has overloads in @file{<cmath>} for integer types.  Function
-@code{abs} is defined in C99's @file{<stdlib.h>} for @code{int} and in
-C++98's @file{<cstdlib>} for integer types, overloaded in @file{<cmath>}
-for floating-point types.  C++11 has additional overloads for @code{abs}
-in @file{<cmath>} for integer types.
+C++11 which has overloads for @code{std::fabs} in @file{<cmath>} for
+integer types.  Function @code{abs} is defined in C99's
+@file{<stdlib.h>} for @code{int} and in C++98's @file{<cstdlib>} for
+integer types, overloaded in @file{<cmath>} for floating-point types.
+C++11 has additional overloads for @code{std::abs} in @file{<cmath>} for
+integer types.  The effect of calling @code{abs} for a floating-point
+type is implementation-specific: it may truncate to an integer.
 
 @item
 Functions/macros such as @code{isnan}, @code{isinf} and @code{isfinite}
@@ -4457,8 +4495,8 @@ provides the portable @code{R_PosInf} (and @code{R_NegInf} for
 available.
 
 Some (but not all) extensions are listed at
-@uref{https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html} and
-@uref{https://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Extensions.html}.
+@uref{https://gcc.gnu.org/@/onlinedocs/@/gcc/@/C-Extensions.html} and
+@uref{https://gcc.gnu.org/@/onlinedocs/@/gcc/@/C_002b_002b-Extensions.html}.
 
 @item
 Including C headers in C++ code is not portable.  Including the C
@@ -4501,9 +4539,14 @@ typically upper-case, may be defined by the compiler or system headers
 and can cause problems.
 @c http://lists.x.org/archives/xorg-devel/2013-November/038808.html
 The most common issue involves the names of the Intel CPU registers such
-as @code{CS}, @code{DS} and @code{SS} defined on i586/x64 Solaris in
+as @code{CS}, @code{DS}, @code{ES}, @code{FS}, @code{GS} and @code{SS}
+(and more with longer abbreviations) defined on i586/x64 Solaris in
 @file{<sys/regset.h>} and often included indirectly by @file{<stdlib.h>}
 and other core headers.
+
+@item
+@code{typedef}s in OS headers can conflict with those in the package: an
+example is @code{index_t} defined in @file{<sys/types.h>} on Solaris.
 @end itemize
 
 Some additional information for C++ is available at
@@ -4673,7 +4716,7 @@ the default).
 The procedures make use of @code{msgfmt} and @code{xgettext} which are
 part of @acronym{GNU} @code{gettext} and this will need to be installed:
 Windows users can find pre-compiled binaries at
-@uref{https://www.stats.ox.ac.uk/pub/Rtools/goodies/gettext-tools.zip}.
+@uref{https://www.stats.ox.ac.uk/@/pub/@/Rtools/@/goodies/@/gettext-tools.zip}.
 
 @menu
 * C-level messages::            
@@ -5497,7 +5540,7 @@ give a description of each column, preferably as a list or table.
 @item \source@{@dots{}@}
 @findex \source
 Details of the original source (a reference or @acronym{URL},
-@xref{Specifying URLs}).  In addition, section @code{\references} could
+@pxref{Specifying URLs}).  In addition, section @code{\references} could
 give secondary sources and usages.
 @end table
 
@@ -6461,7 +6504,7 @@ separately).
 
 Another is the Eclipse IDE with the Stat-ET plugin
 (@uref{http://www.walware.de/goto/statet}), and (on Windows only)
-Tinn-R (@uref{http://sourceforge.net/projects/tinn-r/}).
+Tinn-R (@uref{http://sourceforge.net/@/projects/@/tinn-r/}).
 
 People have also used @LaTeX{} mode in a editor, as @file{.Rd} files are
 rather similar to @LaTeX{} files.
@@ -7705,19 +7748,24 @@ threaded programs.
 @command{AddressSanitizer} (`ASan') is a tool with similar aims to the
 memory checker in @command{valgrind}.  It is available with suitable
 builds@footnote{currently only on @cputype{ix86}/@cputype{x86_64} Linux
-and OS X, not including the versions distributed by Apple in
-@code{Xcode} 4.6 or 5. On some platforms, e.g.@: Fedora, the runtime
-library, @pkg{libasan}, needs to be installed separately. OS X users can
-install a suitable @command{clang} from the sources or possibly
-distributions such as MacPorts or Homebrew.} of @command{gcc} 4.8.0 or
-@command{clang} 3.1 and later on common Linux and OS X platforms.  See
-@uref{http://clang.llvm.org/docs/UsersManual.html#controlling-code-generation},
-@uref{http://clang.llvm.org/docs/AddressSanitizer.html} and
-@uref{https://code.google.com/p/address-sanitizer/}.
+and OS X (including the builds in Xcode 7 beta but not earlier Apple
+releases).  On some platforms, e.g.@: Fedora, the runtime library,
+@pkg{libasan}, needs to be installed separately. OS X users can install
+a suitable @command{clang} from the sources,
+@url{http://llvm.org/releases/} or possibly distributions such as
+MacPorts or Homebrew.} of @command{gcc} and @command{clang} on common
+Linux and OS X platforms.  See
+@uref{http://clang.llvm.org/@/docs/@/UsersManual.html#controlling-code-generation},
+@uref{http://clang.llvm.org/@/docs/@/AddressSanitizer.html} and
+@uref{https://code.google.com/@/p/@/address-sanitizer/}.
+
+More thorough checks of C++ code are done if the C++ library has been
+`annotated': at the time of writing this applied to @code{std::vector}
+in @code{libc++} for use with @command{clang} and gives rise to
+@samp{container-overflow} reports.
 
 It requires code to have been compiled @emph{and linked} with
-@option{-fsanitize=address}@footnote{@option{-faddress-sanitizer} in
-@command{clang} 3.1}, and compiling with @code{-fno-omit-frame-pointer}
+@option{-fsanitize=address} and compiling with @code{-fno-omit-frame-pointer}
 will give more legible reports.  It has a runtime penalty of 2--3x,
 extended compilation times and uses substantially more memory, often
 1--2GB, at run time.  On 64-bit platforms it reserves (but does not
@@ -7728,28 +7776,31 @@ By comparison with @command{valgrind}, ASan can
 detect misuse of stack and global variables but not the use of
 uninitialized memory.
 
-@command{gcc} as from version 4.9.0 returns symbolic addresses for the
-location of the error, but most other versions do not.  For the latter,
-one possibility is to use an external symbolizer.  Depending on the
-version, this can be done @emph{via} an environment variable, e.g.@:
+Recent versions return symbolic addresses for the location of the error
+provided @command{llvm-symbolizer}@footnote{part of the LLVM project and
+in distributed in @code{llvm} RPMs and @code{.deb}s on Linux.  It is not
+currently shipped by Apple.} is on the path: if it is available but not
+on the path or has been renamed@footnote{as Ubuntu does.}, one can use an
+environment variable, e.g.@:
 
 @example
 ASAN_SYMBOLIZER_PATH=/path/to/llvm-symbolizer
 @end example
 
 @noindent
-or by piping the output through
+An alternative is to pipe the output through
 @command{asan_symbolize.py}@footnote{installed on some Linux systems as
 @command{asan_symbolize}, and obtainable from
-@uref{https://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/asan/scripts/asan_symbolize.py}:
-it makes use of @command{llvm-symbolizer} if available.} and
-perhaps then (for compiled C++ code) @command{c++filt}.
+@uref{https://llvm.org/@/svn/@/llvm-project/@/compiler-rt/@/trunk/@/lib/@/asan/scripts/@/asan_symbolize.py}:
+it makes use of @command{llvm-symbolizer} if available.} and perhaps
+then (for compiled C++ code) @command{c++filt}.  (On OS X, you may need
+to run @command{dsymutil} to get line-number reports.)
 
 The simplest way to make use of this is to build a version of @R{} with
 something like
 
 @example
-CC="gcc-4.9 -std=gnu99 -fsanitize=address"
+CC="gcc -std=gnu99 -fsanitize=address"
 CFLAGS="-fno-omit-frame-pointer -g -O2 -Wall -pedantic -mtune=native"
 @end example
 
@@ -7778,7 +7829,7 @@ specified as part of @samp{CC} when @R{} was built.
 
 For options available @emph{via} the environment variable
 @env{ASAN_OPTIONS} see
-@uref{https://code.google.com/p/address-sanitizer/wiki/Flags#Run-time_flags}.
+@uref{https://code.google.com/@/p/@/address-sanitizer/@/wiki/@/Flags#Run-time_flags}.
 With @command{gcc} additional control is available @emph{via} the
 @option{--params} flag: see its @command{man} page.
 
@@ -7789,7 +7840,7 @@ produced: for @command{gdb} or @command{lldb} you could use
 break __asan_report_error
 @end example
 (See
-@uref{https://code.google.com/p/address-sanitizer/wiki/AddressSanitizer#gdb}.)
+@uref{https://code.google.com/@/p/@/address-sanitizer/@/wiki@//AddressSanitizer#gdb}.)
 
 @menu
 * Using Leak Sanitizer::        
@@ -7799,7 +7850,7 @@ break __asan_report_error
 @subsubsection Using the Leak Sanitizer
 
 For @code{x86_64} Linux there is a leak sanitizer, `LSan': see
-@uref{https://code.google.com/p/address-sanitizer/wiki/LeakSanitizer}.
+@uref{https://code.google.com/@/p/@/address-sanitizer/@/wiki/@/LeakSanitizer}.
 This is available on recent versions of @code{gcc} and @code{clang}, and
 where available is compiled in as part of ASan.
 
@@ -7817,12 +7868,12 @@ When LSan is enabled, leaks give the process a failure error status (by
 default @code{23}).  For an @R{} package this means the @R{} process,
 and as the parser retains some memory to the end of the process, if @R{}
 itself was built against ASan, all runs will have a failure error status
-(and that includes running @R{} as part of building @R{} itself).
+(which may include running @R{} as part of building @R{} itself).
 
 To disable both this and some strict checking use
 
 @example
-setenv ASAN_OPTIONS 'alloc_dealloc_mismatch=0:detect_leaks=0'
+setenv ASAN_OPTIONS 'alloc_dealloc_mismatch=0:detect_leaks=0:detect_odr_violation=0'
 @end example
 
 LSan also has a `stand-alone' mode where it is compiled in using
@@ -7845,25 +7896,28 @@ might be @code{NA_INTEGER}.
 
 `UBSanitizer' is a tool for C/C++ source code selected by
 @option{-fsanitize=undefined} in suitable builds of @command{clang}, and
-GCC as from 4.9.0.  Its runtime library is linked into each package's
-DLL, so it is less often needed to be included in @env{MAIN_LDFLAGS}.
+GCC as from 4.9.0.  Its (main) runtime library is linked into each
+package's DLL, so it is less often needed to be included in
+@env{MAIN_LDFLAGS}.
 
-Some versions have greatly increased compilation times on a few files
-(e.g.@: @file{src/extra/bzip2/decompress.c} in the @R{} sources with
-@command{clang} 3.5).
+Some versions have greatly increased compilation times on a few
+files@footnote{e.g.@: @file{src/main/dotcode.c} and parts of the
+@pkg{Matrix} sources with @command{clang} 3.7.0).}.
 
 This sanitizer can be combined with the Address Sanitizer by
-@option{-fsanitize=undefined,address}.
+@option{-fsanitize=undefined,address} (where both are supported).
 
 Finer control of what is checked can be achieved by other options: for
 @command{clang} see
-@uref{http://clang.llvm.org/docs/UsersManual.html#controlling-code-generation}.
+@uref{http://clang.llvm.org/@/docs/@/UsersManual.html#controlling-code-generation}.@footnote{or
+the user manual for your version of @command{clang}, e.g.@:
+@uref{http://llvm.org/@/releases/@/3.6.2@//tools/@/docs/@/UsersManual.html}.}
 The current set for @command{clang} is (on a single line):
 @example
--fsanitize=alignment,bounds,bool,enum,float-cast-overflow,
-float-divide-by-zero,function,integer-divide-by-zero,null,object-size,
-return,returns-nonnull-attribute,shift,signed-integer-overflow,
-unreachable,vla-bound,vptr
+-fsanitize=alignment,bool,bounds,enum,float-cast-overflow,
+float-divide-by-zero,function,integer-divide-by-zero,non-null-attribute,
+null,object-size,return,returns-nonnull-attribute,shift,
+signed-integer-overflow,unreachable,vla-bound,vptr
 @end example
 
 @noindent
@@ -7875,47 +7929,53 @@ like
 @end example
 
 @noindent
-In addition,
+(@code{function}, @code{return} and @code{vptr} apply only to C++).  In
+addition,
 @example
 -fsanitize=unsigned-integer-overflow
 @end example
 is available as a separate option in some versions of @command{clang}
 (not enabled by @option{-fsanitize=undefined}).
 
-@command{clang} 3.5 and later seem to need
+@command{clang} 3.5 and later may need
 
 @example
 -fsanitize=undefined -fno-sanitize=float-divide-by-zero,vptr
 @end example
 
 @noindent
-for C++ code (in @code{CXX} and @code{CXX1X}).
-
-A smaller selection is currently released for GCC, for 4.9.x defaulting
-to
+for C++ code (in @code{CXX} and @code{CXX1X}) as the run-time library
+for @code{vptr} needs to be linked into the main @R{} executable (and
+that would need to be linked by @code{clang++}, not @code{clang}: you
+could try building @R{} with something like
 @example
--fsanitize=integer-divide-by-zero,null,
-return,shift,signed-integer-overflow,unreachable,vla-bound
+MAIN_LD="clang++ -fsanitize=undefined"
+R_OPENMP_CFLAGS="-fopenmp=libomp"
 @end example
+or add @code{-lclang_rt.asan_cxx-x86_64}@footnote{This includes the C++
+UBSAN handlers, despite its name.} or similar to @code{LD_FLAGS}).
 
-See
-@uref{https://gcc.gnu.org/onlinedocs/gcc/Debugging-Options.html} (or the
-manual for your version of GCC).  GCC 5.1.0 added
+See @uref{https://gcc.gnu.org/@/onlinedocs/@/gcc/@/Debugging-Options.html} (or
+the manual for your version of GCC, installed or @emph{via}
+@uref{https://gcc.gnu.org/@/onlinedocs/}) for the options supported by
+GCC: 5.2.0 supports
 @example
--fsanitize=alignment,bounds,float-cast-overflow,object-size,
-nonnull-attribute,returns-nonnull-attribute,bool,enum,vptr
+-fsanitize=alignment,bool,bounds,enum,float-cast-overflow,
+integer-divide-by-zero,non-null-attribute,null,object-size,
+return,returns-nonnull-attribute,shift,signed-integer-overflow,
+unreachable,vla-bound,vptr
 @end example
 @noindent
 with
 @example
 -fsanitize=float-divide-by-zero
 @end example
-
 @noindent
 as a separate option not enabled by @code{-fsanitize=undefined} (and not
 desirable for @R{} uses).  At the time of writing the @code{object-size}
 and @code{vptr} checks produced many warnings on GCC's own C++ headers,
 so should be disabled.
+
 
 Other useful flags include
 @example
@@ -7941,7 +8001,7 @@ and @option{-ftrapv}, said to be more reliable in @command{clang} than
 
 For more details on the topic see
 @uref{http://blog.regehr.org/archives/213} and
-@uref{http://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html}
+@uref{http://blog.llvm.org/@/2011/@/05/@/what-every-c-programmer-should-know.html}
 (which has 3 parts).
 
 
@@ -7949,10 +8009,10 @@ For more details on the topic see
 @subsection Other analyses with `clang'
 
 Recent versions of @command{clang} on @cputype{x86_64} Linux have
-`ThreadSanitizer' (@uref{https://code.google.com/p/thread-sanitizer/}),
+`ThreadSanitizer' (@uref{https://code.google.com/@/p/@/thread-sanitizer/}),
 a `data race detector for C/C++ programs', and `MemorySanitizer'
-(@uref{http://clang.llvm.org/docs/MemorySanitizer.html},
-@uref{https://code.google.com/p/memory-sanitizer/wiki/MemorySanitizer})
+(@uref{http://clang.llvm.org/@/docs/@/MemorySanitizer.html},
+@uref{https://code.google.com/@/p/@/memory-sanitizer/@/wiki/@/MemorySanitizer})
 for the detection of uninitialized memory.  Both are based on and
 provide similar functionality to tools in @command{valgrind}.
 
@@ -7997,11 +8057,10 @@ when you run @command{R CMD check}.
 
 This may report incorrectly errors with the way that Fortran character
 variables are passed, particularly when Fortran subroutines are called
-from C code.  This may include@footnote{depending on the compiler
-version, with @command{gfortran} @code{4.8.x} doing this less than
-@code{4.7.x}.} the use of BLAS and LAPACK subroutines in @R{}, so it is
-not advisable to build @R{} itself with bounds checking (and may not
-even be possible as these subroutines are called during the @R{} build).
+from C code.  This may include the use of BLAS and LAPACK subroutines in
+@R{}, so it is not advisable to build @R{} itself with bounds checking
+(and may not even be possible as these subroutines are called during the
+@R{} build).
 
 
 @node Debugging compiled code,  , Checking memory access, Debugging
@@ -8794,7 +8853,7 @@ symbol.
 Examples of registering routines can be found in the different packages
 in the @R{} source tree (e.g., @pkg{stats}).  Also, there is a
 brief, high-level introduction in @emph{R News} (volume 1/3, September
-2001, pages 20--23, @uref{https://www.r-project.org/doc/Rnews/Rnews_2001-3.pdf}).
+2001, pages 20--23, @uref{https://www.r-project.org/@/doc/@/Rnews/Rnews_2001-3.pdf}).
 
 Once routines are registered, they can be referred to as @R{} objects if
 they this is arranged in the @code{useDynLib} call in the package's
@@ -13608,8 +13667,9 @@ available, that is having @code{getrlimit} and on Linux or having
 @code{sysctl} supporting @code{KERN_USRSTACK}, including FreeBSD and OS
 X.} when @code{Rf_initialize_R} is called, to values appropriate to the
 main thread.  Stack-checking can be disabled by setting
-@code{R_CStackLimit = (uintptr_t)-1}, but it is better to if possible
-set appropriate values.  (What these are and how to determine them are
+@code{R_CStackLimit = (uintptr_t)-1} immediately after
+@code{Rf_initialize_R} is called, but it is better to if possible set
+appropriate values.  (What these are and how to determine them are
 OS-specific, and the stack size limit may differ for secondary threads.
 If you have a choice of stack size, at least 10Mb is recommended.)
 

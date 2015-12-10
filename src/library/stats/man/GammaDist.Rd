@@ -1,5 +1,5 @@
 % File src/library/stats/man/GammaDist.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -113,7 +113,7 @@ rgamma(n, shape, rate = 1, scale = 1/rate)
   \eqn{\Gamma(a,x)}) from package \CRANpkg{gsl}.
 
   See also
-  \url{http://en.wikipedia.org/wiki/Incomplete_gamma_function}, or
+  \url{https://en.wikipedia.org/wiki/Incomplete_gamma_function}, or
   \url{http://dlmf.nist.gov/8.2#i}.
 }
 \source{

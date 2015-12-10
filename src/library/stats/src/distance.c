@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -153,9 +153,9 @@ static double R_dist_binary(double *x, int nr, int nc, int i1, int i2)
 		warning(_("treating non-finite values as NA"));
 	    }
 	    else {
-		if(x[i1] || x[i2]) {
+		if(x[i1] != 0. || x[i2] != 0.) {
 		    count++;
-		    if( ! (x[i1] && x[i2]) ) dist++;
+		    if( ! (x[i1] != 0. && x[i2] != 0.) ) dist++;
 		}
 		total++;
 	    }

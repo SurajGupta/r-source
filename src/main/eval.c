@@ -15,7 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 
@@ -491,7 +491,7 @@ SEXP eval(SEXP e, SEXP rho)
 	evalcount = 0 ;
     }
 
-    /* handle self-evluating objects with minimal overhead */
+    /* handle self-evaluating objects with minimal overhead */
     switch (TYPEOF(e)) {
     case NILSXP:
     case LISTSXP:
@@ -862,6 +862,17 @@ static R_INLINE SEXP getSrcref(SEXP srcrefs, int ind)
 	return R_NilValue;
 }
 
+/* There's another copy of this in main.c */
+static void PrintCall(SEXP call, SEXP rho)
+{
+    int old_bl = R_BrowseLines,
+        blines = asInteger(GetOption1(install("deparse.max.lines")));
+    if(blines != NA_INTEGER && blines > 0)
+	R_BrowseLines = blines;
+    PrintValueRec(call, rho);
+    R_BrowseLines = old_bl;
+}
+
 SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedvars)
 {
     SEXP formals, actuals, savedrho;
@@ -974,18 +985,13 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedvars)
 		     || (RDEBUG(rho) && R_BrowserLastCommand == 's')) ;
     if( RSTEP(op) ) SET_RSTEP(op, 0);
     if (RDEBUG(newrho)) {
-	int old_bl = R_BrowseLines,
-	    blines = asInteger(GetOption1(install("deparse.max.lines")));
 	SEXP savesrcref;
 	cntxt.browserfinish = 0; /* Don't want to inherit the "f" */
 	/* switch to interpreted version when debugging compiled code */
 	if (TYPEOF(body) == BCODESXP)
 	    body = bytecodeExpr(body);
 	Rprintf("debugging in: ");
-	if(blines != NA_INTEGER && blines > 0)
-	    R_BrowseLines = blines;
-	PrintValueRec(call, rho);
-	R_BrowseLines = old_bl;
+	PrintCall(call, rho);
 
 	/* Is the body a bare symbol (PR#6804) */
 	if (!isSymbol(body) & !isVectorAtomic(body)){
@@ -1043,7 +1049,7 @@ SEXP applyClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho, SEXP suppliedvars)
 
     if (RDEBUG(op) && R_current_debug_state()) {
 	Rprintf("exiting from: ");
-	PrintValueRec(call, rho);
+	PrintCall(call, rho);
     }
     UNPROTECT(3);
     return (tmp);
@@ -1086,18 +1092,13 @@ static SEXP R_execClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho,
     if( RSTEP(op) ) SET_RSTEP(op, 0);
     //  RDEBUG(op) .. FIXME? applyClosure has RDEBUG(newrho) which has just been set
     if (RDEBUG(op) && R_current_debug_state()) {
-	int old_bl = R_BrowseLines,
-	    blines = asInteger(GetOption1(install("deparse.max.lines")));
 	SEXP savesrcref;
 	cntxt.browserfinish = 0; /* Don't want to inherit the "f" */
 	/* switch to interpreted version when debugging compiled code */
 	if (TYPEOF(body) == BCODESXP)
 	    body = bytecodeExpr(body);
 	Rprintf("debugging in: ");
-	if(blines != NA_INTEGER && blines > 0)
-	    R_BrowseLines = blines;
-	PrintValueRec(call,rho);
-	R_BrowseLines = old_bl;
+	PrintCall(call,rho);
 
 	/* Is the body a bare symbol (PR#6804) */
 	if (!isSymbol(body) & !isVectorAtomic(body)){
@@ -1151,7 +1152,7 @@ static SEXP R_execClosure(SEXP call, SEXP op, SEXP arglist, SEXP rho,
 
     if (RDEBUG(op) && R_current_debug_state()) {
 	Rprintf("exiting from: ");
-	PrintValueRec(call, rho);
+	PrintCall(call, rho);
     }
     UNPROTECT(1);
     return (tmp);
@@ -1385,7 +1386,7 @@ static R_INLINE Rboolean asLogicalNoNA(SEXP s, SEXP call)
     Rboolean cond = NA_LOGICAL;
 
     if (length(s) > 1) {
-    	PROTECT(s);	 /* needed as per PR#15990.  call gets protected by warningcall() */
+	PROTECT(s);	 /* needed as per PR#15990.  call gets protected by warningcall() */
 	warningcall(call,
 		    _("the condition has length > 1 and only the first element will be used"));
 	UNPROTECT(1);
@@ -3658,7 +3659,7 @@ static SEXP cmp_arith2(SEXP call, int opval, SEXP opsym, SEXP x, SEXP y,
 	}								\
 	SEXP call = VECTOR_ELT(constants, GETOP());			\
 	SEXP tmp = GETSTACK(-2);					\
-	SEXP args = CONS_NR(tmp, CONS_NR(GETSTACK(-1), R_NilValue)); 	\
+	SEXP args = CONS_NR(tmp, CONS_NR(GETSTACK(-1), R_NilValue));	\
 	R_BCNodeStackTop--;						\
 	SETSTACK(-1, args); /* to protect */				\
 	SEXP op = getPrimitive(R_LogSym, SPECIALSXP);			\
@@ -5009,7 +5010,7 @@ static R_INLINE Rboolean GETSTACK_LOGICAL_NO_NA_PTR(R_bcstack_t *s, int callidx,
 
 static SEXP bcEval(SEXP body, SEXP rho, Rboolean useCache)
 {
-  SEXP value, constants;
+  SEXP value = R_NilValue, constants;
   BCODE *pc, *codebase;
   R_bcstack_t *oldntop = R_BCNodeStackTop;
   static int evalcount = 0;

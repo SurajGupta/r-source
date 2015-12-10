@@ -1,5 +1,5 @@
 % File src/library/tools/man/checkRdaFiles.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2012-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -71,7 +71,7 @@ checkPoFiles(language, dir = ".")
 }
 \references{
   See the GNU gettext manual for the \file{.po} file format:\cr
-  \url{http://www.gnu.org/software/gettext/manual/gettext.html}.
+  \url{https://www.gnu.org/software/gettext/manual/gettext.html}.
 }
 \author{
   Duncan Murdoch

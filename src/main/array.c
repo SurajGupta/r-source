@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -182,7 +182,7 @@ SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    }
 	    break;
 	case RAWSXP:
-	    memset(RAW(ans), 0, N);
+	    if (N) memset(RAW(ans), 0, N);
 	    break;
 	default:
 	    /* don't fill with anything */
@@ -338,11 +338,11 @@ SEXP DropDims(SEXP x)
 	   subset.c & others have a contrary version that leaves the
 	   S4 class in, incorrectly, in the case of vectors.  JMC
 	   3/3/09 */
-/* 	if(IS_S4_OBJECT(x)) {/\* no longer valid subclass of array or
- 	matrix *\/ */
-/* 	    setAttrib(x, R_ClassSymbol, R_NilValue); */
-/* 	    UNSET_S4_OBJECT(x); */
-/* 	} */
+/*	if(IS_S4_OBJECT(x)) {/\* no longer valid subclass of array or
+	matrix *\/ */
+/*	    setAttrib(x, R_ClassSymbol, R_NilValue); */
+/*	    UNSET_S4_OBJECT(x); */
+/*	} */
 	UNPROTECT(1); /* newnames */
     } else {
 	/* We have a lower dimensional array. */
@@ -1181,7 +1181,7 @@ SEXP attribute_hidden do_transpose(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    iip[itmp]++;				\
 	    break;					\
 	}						\
-    for (lj = 0, itmp = 0; itmp < n; itmp++)	       	\
+    for (lj = 0, itmp = 0; itmp < n; itmp++)		\
 	lj += iip[itmp] * stride[itmp];
 
 /* aperm (a, perm, resize = TRUE) */
@@ -1319,10 +1319,21 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* handle the resize */
     int resize = asLogical(CADDR(args));
     if (resize == NA_LOGICAL) error(_("'resize' must be TRUE or FALSE"));
-    setAttrib(r, R_DimSymbol, resize ? dimsr : dimsa);
 
-    /* and handle the dimnames, if any */
+    /* and handle names(dim(.)) and the dimnames if any */
     if (resize) {
+	SEXP nmdm = getAttrib(dimsa, R_NamesSymbol);
+	if(nmdm != R_NilValue) { // dimsr needs correctly permuted names()
+	    PROTECT(nmdm);
+	    SEXP nm_dr = PROTECT(allocVector(STRSXP, n));
+	    for (i = 0; i < n; i++) {
+		SET_STRING_ELT(nm_dr, i, STRING_ELT(nmdm, pp[i]));
+	    }
+	    setAttrib(dimsr, R_NamesSymbol, nm_dr);
+	    UNPROTECT(2);
+	}
+	setAttrib(r, R_DimSymbol, dimsr);
+
 	PROTECT(dna = getAttrib(a, R_DimNamesSymbol));
 	if (dna != R_NilValue) {
 	    SEXP dnna, dnr, dnnr;
@@ -1346,6 +1357,8 @@ SEXP attribute_hidden do_aperm(SEXP call, SEXP op, SEXP args, SEXP rho)
 	}
 	UNPROTECT(1);
     }
+    else // !resize
+	setAttrib(r, R_DimSymbol, dimsa);
 
     UNPROTECT(3); /* dimsa, r, dimsr */
     return r;
@@ -1378,7 +1391,7 @@ SEXP attribute_hidden do_colsum(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("'x' must be numeric"));
     }
     if (n * (double)p > XLENGTH(x)) // can only happen for "dotted" versions: .colSums() ...
-    	error(_("'X' is too short")); /* PR#16367 */
+	error(_("'X' is too short")); /* PR#16367 */
 
     int OP = PRIMVAL(op);
     if (OP == 0 || OP == 1) { /* columns */

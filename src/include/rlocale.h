@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 
@@ -58,12 +58,15 @@ extern "C" {
  *  The display widths of characters are not prescribed in Unicode.
  *  Double-width characters are used in the CJK area: their width can
  *  be font-specific, with different fonts in use in different parts
- *  of the CJK area.  The tables supplied in many OSes and by Marcus
+ *  of the CJK area.  The tables supplied in many OSes and by Markus
  *  Kuhn are not do not take the exact locale into account.  The
  *  tables supplied in rlocale_data.h allow different widths for
  *  different parts of the CJK area, and also where needed different
  *  widths on Windows.  (The Windows differences are in zh_CN, and
  *  apply to European characters.)
+ *
+ * The differences are mainly (but not exclusively) in the
+ * Unicode 'East Asian Ambiguous' class.
  *
  */
 extern int Ri18n_wcwidth(wchar_t);

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  *
  *  Quartz Quartz device module header file
  *
@@ -109,7 +109,7 @@ SEXP logit_mu_eta(SEXP eta)
 static R_INLINE
 double y_log_y(double y, double mu)
 {
-    return (y) ? (y * log(y/mu)) : 0;
+    return (y != 0.) ? (y * log(y/mu)) : 0;
 }
 
 SEXP binomial_dev_resids(SEXP y, SEXP mu, SEXP wt)

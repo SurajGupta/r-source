@@ -1,5 +1,172 @@
 R News
 
+CHANGES IN R 3.2.3:
+
+  NEW FEATURES:
+
+    * Some recently-added Windows time zone names have been added to
+      the conversion table used to convert these to Olson names.
+      (Including those relating to changes for Russia in Oct 2014, as
+      in PR#16503.)
+
+    * (Windows) Compatibility information has been added to the
+      manifests for Rgui.exe, Rterm.exe and Rscript.exe.  This should
+      allow win.version() and Sys.info() to report the actual Windows
+      version up to Windows 10.
+
+    * Windows "wininet" FTP first tries EPSV / PASV mode rather than
+      only using active mode (reported by Dan Tenenbaum).
+
+    * which.min(x) and which.max(x) may be much faster for logical and
+      integer x and now also work for long vectors.
+
+    * The 'emulation' part of tools::texi2dvi() has been somewhat
+      enhanced, including supporting quiet = TRUE.  It can be selected
+      by texi2dvi = "emulation".
+
+      (Windows) MiKTeX removed its texi2dvi.exe command in Sept 2015:
+      tools::texi2dvi() tries texify.exe if it is not found.
+
+    * (Windows only) Shortcuts for printing and saving have been added
+      to menus in Rgui.exe.  (Request of PR#16572.)
+
+    * loess(..., iterTrace=TRUE) now provides diagnostics for
+      robustness iterations, and the print() method for
+      summary(<loess>) shows slightly more.
+
+    * The included version of PCRE has been updated to 8.38, a bug-fix
+      release.
+
+    * View() now displays nested data frames in a more friendly way.
+      (Request with patch in PR#15915.)
+
+  INSTALLATION and INCLUDED SOFTWARE:
+
+    * The included configuration code for libintl has been updated to
+      that from gettext version 0.19.5.1 - this should only affect how
+      an external library is detected (and the only known instance is
+      under OpenBSD).  (Wish of PR#16464.)
+
+    * configure has a new argument --disable-java to disable the checks
+      for Java.
+
+    * The configure default for MAIN_LDFLAGS has been changed for the
+      FreeBSD, NetBSD and Hurd OSes to one more likely to work with
+      compilers other than gcc (FreeBSD 10 defaults to clang).
+
+    * configure now supports the OpenMP flags -fopenmp=libomp (clang)
+      and -qopenmp (Intel C).
+
+    * Various macros can be set to override the default behaviour of
+      configure when detecting OpenMP: see file config.site.
+
+    * Source installation on Windows has been modified to allow for
+      MiKTeX installations without texi2dvi.exe.  See file
+      MkRules.dist.
+
+  BUG FIXES:
+
+    * regexpr(pat, x, perl = TRUE) with Python-style named capture did
+      not work correctly when x contained NA strings.  (PR#16484)
+
+    * The description of dataset ToothGrowth has been
+      improved/corrected.  (PR#15953)
+
+    * model.tables(type = "means") and hence TukeyHSD() now support
+      "aov" fits without an intercept term.  (PR#16437)
+
+    * close() now reports the status of a pipe() connection opened with
+      an explicit open argument.  (PR#16481)
+
+    * Coercing a list without names to a data frame is faster if the
+      elements are very long. (PR#16467)
+
+    * (Unix-only) Under some rare circumstances piping the output from
+      Rscript or R -f could result in attempting to close the input
+      file twice, possibly crashing the process.  (PR#16500)
+
+    * (Windows) Sys.info() was out of step with win.version() and did
+      not report Windows 8.
+
+    * topenv(baseenv()) returns baseenv() again as in R 3.1.0 and
+      earlier.  This also fixes compilerJIT(3) when used in .Rprofile.
+
+    * detach()ing the methods package keeps .isMethodsDispatchOn()
+      true, as long as the methods namespace is not unloaded.
+
+    * Removed some spurious warnings from configure about the
+      preprocessor not finding header files.  (PR#15989)
+
+    * rchisq(*, df=0, ncp=0) now returns 0 instead of NaN, and
+      dchisq(*, df=0, ncp=*) also no longer returns NaN in limit cases
+      (where the limit is unique).  (PR#16521)
+
+    * pchisq(*, df=0, ncp > 0, log.p=TRUE) no longer underflows (for
+      ncp > ~60).
+
+    * nchar(x, "w") returned -1 for characters it did not know about
+      (e.g. zero-width spaces): it now assumes 1.  It now knows about
+      most zero-width characters and a few more double-width
+      characters.
+
+    * Help for which.min() is now more precise about behavior with
+      logical arguments.  (PR#16532)
+
+    * The print width of character strings marked as "latin1" or
+      "bytes" was in some cases computed incorrectly.
+
+    * abbreviate() did not give names to the return value if minlength
+      was zero, unlike when it was positive.
+
+    * (Windows only) dir.create() did not always warn when it failed to
+      create a directory.  (PR#16537)
+
+    * When operating in a non-UTF-8 multibyte locale (e.g. an East
+      Asian locale on Windows), grep() and related functions did not
+      handle UTF-8 strings properly.  (PR#16264)
+
+    * read.dcf() sometimes misread lines longer than 8191 characters.
+      (Reported by Herv'e Pag`es with a patch.)
+
+    * within(df, ..) no longer drops columns whose name start with a
+      ".".
+
+    * The built-in HTTP server converted entire Content-Type to
+      lowercase including parameters which can cause issues for
+      multi-part form boundaries (PR#16541).
+
+    * Modifying slots of S4 objects could fail when the methods package
+      was not attached. (PR#16545)
+
+    * splineDesign(*, outer.ok=TRUE) (splines) is better now
+      (PR#16549), and interpSpline() now allows sparse=TRUE for speedup
+      with non-small sizes.
+
+    * If the expression in the traceback was too long, traceback() did
+      not report the source line number.  (Patch by Kirill M"uller.)
+
+    * The browser did not truncate the display of the function when
+      exiting with options("deparse.max.lines") set.  (PR#16581)
+
+    * When bs(*, Boundary.knots=) had boundary knots inside the data
+      range, extrapolation was somewhat off.  (Patch by Trevor Hastie.)
+
+    * var() and hence sd() warn about factor arguments which are
+      deprecated now. (PR#16564)
+
+    * loess(*, weights = *) stored wrong weights and hence gave
+      slightly wrong predictions for newdata.  (PR#16587)
+
+    * aperm(a, *) now preserves names(dim(a)).
+
+    * poly(x, ..) now works when either raw=TRUE or coef is specified.
+      (PR#16597)
+
+    * data(package=*) is more careful in determining the path.
+
+    * prettyNum(*, decimal.mark, big.mark): fixed bug introduced when
+      fixing PR#16411.
+
 CHANGES IN R 3.2.2:
 
   SIGNIFICANT USER-VISIBLE CHANGES:
@@ -21,9 +188,9 @@ CHANGES IN R 3.2.2:
       (Windows only) The default method for accessing URLs _via_
       download.file() and url() has been changed to be "wininet" using
       Windows API calls.  This changes the way proxies need to be set
-      and security settings made: there have been some reports of sites
-      being inaccessible under the new default method (but the previous
-      methods remain available).
+      and security settings made: there have been some reports of ftp:
+      sites being inaccessible under the new default method (but the
+      previous methods remain available).
 
   NEW FEATURES:
 
@@ -45,12 +212,12 @@ CHANGES IN R 3.2.2:
       url() uses the "wininet" method: to revert to the previous
       default use setInternet2(FALSE).
 
-      This means that https:// can be read by default by
+      This means that https:// URLs can be read by default by
       download.file() (they have been readable by file() and url()
       since R 3.2.0).
 
       There are implications for how proxies need to be set (see
-      ?download.file): also, cacheOK = FALSE is not supported.
+      ?download.file).
 
     * chooseCRANmirror() and chooseBioCmirror() now offer HTTPS mirrors
       in preference to HTTP mirrors.  This changes the interpretation
@@ -151,10 +318,11 @@ CHANGES IN R 3.2.1:
       it can infer the type of file.
 
     * nchar(x, *) and nzchar(x) gain a new argument keepNA which
-      governs how the result for NAs in x is determined.  For the R
-      3.2.x series, the default remains FALSE which is fully back
-      compatible.  From R 3.3.0, the default will change to keepNA = NA
-      and you are advised to consider this for code portability.
+      governs how the result for NAs in x is determined.  For nzchar()
+      in general and nchar() in the R 3.2.x series, the default remains
+      FALSE which is fully back compatible.  From R 3.3.0, nchar()'s
+      default will change to keepNA = NA and you are advised to
+      consider this for code portability.
 
     * news() more flexibly extracts dates from package NEWS.Rd files.
 
@@ -885,7 +1053,7 @@ CHANGES IN R 3.1.3:
     * abs() failed with named arguments when the argument was complex.
       (PR#16047)
 
-    * "noquote" objects may now be used as columns in dataframes.
+    * "noquote" objects may now be used as columns in data frames.
       (PR#15997)
 
     * Some values with extremely long names were printed incorrectly.
@@ -2200,7 +2368,7 @@ CHANGES IN R 3.0.3:
       time.  (The platforms affected include Linux and OS X, but not
       Windows nor Solaris.)
 
-    * rowsum() has more support for matrices and dataframes with 2^31
+    * rowsum() has more support for matrices and data frames with 2^31
       or more elements. (PR#15587)
 
     * predict(<lm object>, interval = "confidence", scale =
@@ -2929,7 +3097,7 @@ CHANGES IN R 3.0.0:
       representable as an integer (as often happens for package
       Matrix), this is converted to an integer.
 
-    * Matrix indexing of dataframes by two-column numeric indices is
+    * Matrix indexing of data frames by two-column numeric indices is
       now supported for replacement as well as extraction.
 
     * setNames() now has a default for its object argument, useful for

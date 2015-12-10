@@ -1,5 +1,5 @@
 % File src/library/base/man/Comparison.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -96,9 +96,9 @@ x != y
   always preferable.  See the examples.  (This also applies to the other
   comparison operators.)
   
-  These operators are sometimes called as functions as e.g.
-  \code{`<`(x, y)}: see the description of how argument-matching is done
-  in \code{\link[base]{Ops}}.
+  These operators are sometimes called as functions as
+  e.g.\sspace{}\code{`<`(x, y)}: see the description of how
+  argument-matching is done in \code{\link[base]{Ops}}.
 }
 \section{S4 methods}{
   These operators are members of the S4 \code{\link{Compare}} group generic,
@@ -113,7 +113,7 @@ x != y
 
   Collation of character strings is a complex topic.  For an
   introduction see
-  \url{http://en.wikipedia.org/wiki/Collating_sequence}.  The
+  \url{https://en.wikipedia.org/wiki/Collating_sequence}.  The
   \emph{Unicode Collation Algorithm}
   (\url{http://unicode.org/reports/tr10/}) is likely to be increasingly
   influential.  Where available \R by default makes use of ICU

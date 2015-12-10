@@ -1,5 +1,5 @@
 % File src/library/base/man/environment.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
@@ -138,7 +138,7 @@ env.profile(env)
 }
 \seealso{
   For the performance implications of hashing or not, see
-  \url{http://en.wikipedia.org/wiki/Hash_table}.
+  \url{https://en.wikipedia.org/wiki/Hash_table}.
 
   The \code{envir} argument of \code{\link{eval}}, \code{\link{get}},
   and \code{\link{exists}}.

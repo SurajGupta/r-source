@@ -1,5 +1,5 @@
 % File src/library/tools/man/bibstyle.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2010-2013 R Core Team
 % Distributed under GPL 2 or later
 
@@ -109,7 +109,7 @@ c(bibentry(bibtype = "manual",
     organization = "R Foundation for Statistical Computing",
     address = "Vienna, Austria",
     year = 2013,
-    url = "http://www.R-project.org"),
+    url = "https://www.R-project.org"),
   bibentry(bibtype = "article",
     author = c(person(c("George", "E.", "P."), "Box"),
                person(c("David",  "R."),      "Cox")),

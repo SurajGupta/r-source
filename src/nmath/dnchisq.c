@@ -1,8 +1,8 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000-12 The R Core Team
- *  Copyright (C) 2004-8 The R Foundation
+ *  Copyright (C) 2000-15 The R Core Team
+ *  Copyright (C) 2004-15 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  *
  *  DESCRIPTION
  *
@@ -38,16 +38,15 @@ double dnchisq(double x, double df, double ncp, int give_log)
     if (ISNAN(x) || ISNAN(df) || ISNAN(ncp))
 	return x + df + ncp;
 #endif
-    if (ncp < 0 || df <= 0) ML_ERR_return_NAN;
 
-    if (!R_FINITE(df) || !R_FINITE(ncp))
-	ML_ERR_return_NAN;
+    if (!R_FINITE(df) || !R_FINITE(ncp) || ncp < 0 || df < 0)
+    	ML_ERR_return_NAN;
 
     if(x < 0) return R_D__0;
     if(x == 0 && df < 2.)
 	return ML_POSINF;
     if(ncp == 0)
-	return dchisq(x, df, give_log);
+	return (df > 0) ? dchisq(x, df, give_log) : R_D__0;
     if(x == ML_POSINF) return R_D__0;
 
     ncp2 = 0.5 * ncp;
@@ -89,7 +88,7 @@ double dnchisq(double x, double df, double ncp, int give_log)
     } while (q >= 1 || term * q > (1-q)*eps || term > 1e-10*sum);
     /* lower tail */
     term = mid; df = dfmid; i = imax;
-    while (i) {
+    while (i != 0) {
 	df -= 2;
 	q = i * df / x2;
 	i--;

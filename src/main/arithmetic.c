@@ -16,7 +16,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -223,7 +223,7 @@ double R_pow(double x, double y) /* = x ^ y */
 	    return (y < 0.)? 0. : R_PosInf;
 	else {			/* (-Inf) ^ y */
 	    if(R_FINITE(y) && y == floor(y)) /* (-Inf) ^ n */
-		return (y < 0.) ? 0. : (myfmod(y, 2.) ? x  : -x);
+		return (y < 0.) ? 0. : (myfmod(y, 2.) != 0 ? x  : -x);
 	}
     }
     if(!R_FINITE(y)) {

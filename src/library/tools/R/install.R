@@ -1,5 +1,5 @@
 #  File src/library/tools/R/install.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -16,7 +16,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 #### R based engine for  R CMD INSTALL SHLIB Rprof
 ####
@@ -2283,7 +2283,7 @@ function(name="", version = "0.0")
         "            VALUE \"FileVersion\", \"", version, "\\0\"\n", sep = "")
     writeLines(c(
                  '            VALUE "Compiled under R Version", R_MAJOR "." R_MINOR " (" R_YEAR "-" R_MONTH "-" R_DAY ")\\0"',
-                 '            VALUE "Project info", "http://www.r-project.org\\0"',
+                 '            VALUE "Project info", "https://www.r-project.org\\0"',
                  '        END',
                  '    END',
                  '    BLOCK "VarFileInfo"',

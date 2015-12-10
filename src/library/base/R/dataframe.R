@@ -1,5 +1,5 @@
 #  File src/library/base/R/dataframe.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 # Statlib code by John Chambers, Bell Labs, 1994
 # Changes Copyright (C) 1998-2015 The R Core Team
@@ -436,7 +436,7 @@ data.frame <-
 	else {
             if(length(namesi)) vnames[[i]] <- namesi
             else if (no.vn[[i]]) {
-                tmpname <- deparse(object[[i]])[1L]
+                tmpname <- deparse(object[[i]], nlines = 1L)[1L]
                 if( substr(tmpname, 1L, 2L) == "I(" ) {
                     ntmpn <- nchar(tmpname, "c")
                     if(substr(tmpname, ntmpn, ntmpn) == ")")

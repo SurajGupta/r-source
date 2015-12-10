@@ -1,5 +1,5 @@
 #  File src/library/stats/R/contrast.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2012 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 
 ## This is also called from C : do_model_matrix() { ../../../main/model.c }:
@@ -91,7 +91,7 @@ contrasts <- function (x, contrasts = TRUE, sparse = FALSE)
 	    stop(gettextf("%s needs package 'Matrix' correctly installed",
                           "contr*(.., sparse=TRUE)"),
                  domain = NA)
-	new("ddiMatrix", diag = "U", Dim = d, Dimnames = dn)
+	methods::new("ddiMatrix", diag = "U", Dim = d, Dimnames = dn)
     } else
 	array(c(rep.int(c(1, numeric(n)), n-1L), 1), d, dn)
 }
@@ -102,7 +102,7 @@ contrasts <- function (x, contrasts = TRUE, sparse = FALSE)
 	stop(gettextf("%s needs package 'Matrix' correctly installed",
                       "contr*(.., sparse=TRUE)"),
              domain = NA)
-    as(m, "sparseMatrix")
+    methods::as(m, "sparseMatrix")
 }
 
 ## contr.poly() is in ./contr.poly.R

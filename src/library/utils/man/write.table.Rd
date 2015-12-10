@@ -1,5 +1,5 @@
 % File src/library/utils/man/write.table.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -144,7 +144,7 @@ write.csv2(\dots)
   (perhaps Latin-1) and \sQuote{PC-8} files.  OpenOffice 3.x asks for
   the character set when opening the file.
 
-  There is an IETF RFC4180 (\url{http://tools.ietf.org/html/rfc4180})
+  There is an IETF RFC4180 (\url{https://tools.ietf.org/html/rfc4180})
   for CSV files, which mandates comma as the separator and CRLF line
   endings.  \code{write.csv} writes compliant files on Windows: use
   \code{eol = "\r\n"} on other platforms.

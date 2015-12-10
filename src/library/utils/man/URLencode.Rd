@@ -1,5 +1,5 @@
 % File src/library/utils/man/URLencode.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -8,7 +8,7 @@
 \alias{URLdecode}
 \title{Encode or Decode a (partial) URL}
 \description{
-  Functions to encode or decode characters in URLs.
+  Functions to percent-encode or decode characters in URLs.
 }
 \usage{
 URLencode(URL, reserved = FALSE, repeated = FALSE)
@@ -26,7 +26,7 @@ URLdecode(URL)
   \samp{- _ . ~} should be encoded as \code{\%}
   plus a two-digit hexadecimal representation, and any single-byte
   character can be so encoded. (Multi-byte characters are encoded
-  byte-by-byte.)
+  byte-by-byte.)  The standard refers to this as \sQuote{percent-encoding}.
 
   In addition, \samp{! $ & ' ( ) * + , ; = : / ? @ # [ ]} are reserved
   characters, and should be encoded unless used in their reserved sense,

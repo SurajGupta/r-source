@@ -1,5 +1,5 @@
 % File src/library/base/man/print.default.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -102,7 +102,7 @@
   issued.  The only known exceptions are certain Japanese ISO 2022
   locales on commercial Unixes, which use a concatenation of the bytes:
   it is unlikely that \R compiles on such a system.
-% http://www.cl.cam.ac.uk/~mgk25/ucs/iso2022-wc.html
+% https://www.cl.cam.ac.uk/~mgk25/ucs/iso2022-wc.html
 
   It is possible to have a character string in a character vector that
   is not valid in the current locale.  If a byte is encountered that is

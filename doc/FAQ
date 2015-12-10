@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 3.2.2015-08-09
+Version 3.2.2015-12-04
 Kurt Hornik
 
 
@@ -199,7 +199,7 @@ script files.
    The design of R has been heavily influenced by two existing
 languages: Becker, Chambers & Wilks' S (*note What is S?::) and
 Sussman's Scheme
-(http://www.cs.indiana.edu/scheme-repository/home.html).  Whereas the
+(https://www.cs.indiana.edu/scheme-repository/home.html).  Whereas the
 resulting language is very similar in appearance to S, the underlying
 implementation and semantics are derived from Scheme.  *Note What are
 the differences between R and S?::, for further details.
@@ -256,7 +256,7 @@ mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 3.2.2.  Based on this
+The current released version is 3.2.3.  Based on this
 'major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release ('r-patched')
 and one working towards the next minor or eventually major ('r-devel')
@@ -378,7 +378,7 @@ Iacus).  The "R for Mac OS X FAQ
 details.
 
    Snapshots of the r-patched and r-devel versions of R are available as
-Apple installer packages at <http://r.research.att.com>.
+Apple installer packages at <https://r.research.att.com>.
 
 2.6 Are there Unix-like binaries for R?
 =======================================
@@ -401,7 +401,7 @@ install r-base-dev' to obtain the additional tools required for this.
 So-called "backports" of the current R packages for at least the
 "stable" distribution of Debian are provided by Johannes Ranke, and
 available from CRAN.  See
-<https://CRAN.R-project.org/bin/linux/debian/README.html> for details on
+<https://CRAN.R-project.org/bin/linux/debian/index.html> for details on
 R Debian packages and installing the backports, which should also be
 suitable for other Debian derivatives.  Native backports for Ubuntu are
 provided by Michael Rutter.
@@ -478,7 +478,7 @@ can be found at
 
      John M. Chambers (2008), "Software for Data Analysis: Programming
      with R". Springer, New York, ISBN 978-0-387-75935-7,
-     <https://statweb.stanford.edu/~jmc4/Rbook/>.
+     <http://statweb.stanford.edu/~jmc4/Rbook/>.
 
      Peter Dalgaard (2008), "Introductory Statistics with R", 2nd
      edition.  Springer, ISBN 978-0-387-79053-4,
@@ -537,7 +537,7 @@ obtained by 'citation()'.
 ===================================
 
 Thanks to Martin Maechler <Martin.Maechler@R-project.org>, there are
-four mailing lists devoted to R.
+several mailing lists devoted to R, including the following:
 
 'R-announce'
      A moderated list for major announcements about the development of R
@@ -553,6 +553,9 @@ four mailing lists devoted to R.
 'R-devel'
      This list is for questions and discussion about code development in
      R.
+'R-package-devel'
+     A list which which provides a forum for learning about the R
+     package development process.
 
 Please read the posting guide
 (https://www.R-project.org/posting-guide.html) _before_ sending anything
@@ -613,25 +616,8 @@ can be found at the URL
 
      <https://CRAN.R-project.org/>
 
-Daily mirrors are available at URLs including
-
-     <http://cran.at.R-project.org/>  (Wirtschaftsuniversität
-                                      Wien, Austria)
-     <http://cran.au.R-project.org/>  (University of Melbourne,
-                                      Australia)
-     <http://cran.br.R-project.org/>  (Universidade Federal do
-                                      Paraná, Brazil)
-     <http://cran.ch.R-project.org/>  (ETH Zürich, Switzerland)
-     <http://cran.dk.R-project.org/>  (dotsrc.org, Aalborg,
-                                      Denmark)
-     <http://cran.es.R-project.org/>  (Spanish National Research
-                                      Network, Madrid, Spain)
-     <http://cran.pt.R-project.org/>  (Universidade do Porto,
-                                      Portugal)
-     <http://cran.uk.R-project.org/>  (U of Bristol, United
-                                      Kingdom)
-
-See <https://CRAN.R-project.org/mirrors.html> for a complete list of
+and is mirrored daily to many sites around the world.  See
+<https://CRAN.R-project.org/mirrors.html> for a complete list of
 mirrors.  Please use the CRAN site closest to you to reduce network
 load.
 
@@ -658,7 +644,7 @@ all Open Source licenses, permits all and any use of the package.  It
 only restricts distribution of R or of other programs containing code
 from R. This is made clear in clause 6 ("No Discrimination Against
 Fields of Endeavor") of the Open Source Definition
-(http://www.opensource.org/docs/definition.html):
+(https://opensource.org/docs/definition.html):
 
      The license must not restrict anyone from making use of the program
      in a specific field of endeavor.  For example, it may not restrict
@@ -756,13 +742,13 @@ S.
 
    * John M. Chambers (1998), "Programming with Data," New York:
      Springer, ISBN 0-387-98503-4
-     (<https://statweb.stanford.edu/~jmc4/Sbook/>).
+     (<http://statweb.stanford.edu/~jmc4/Sbook/>).
 
      This "_Green Book_" describes version 4 of S, a major revision of S
      designed by John Chambers to improve its usefulness at every stage
      of the programming process.
 
-   See <https://statweb.stanford.edu/~jmc4/papers/96.7.ps> for further
+   See <http://statweb.stanford.edu/~jmc4/papers/96.7.ps> for further
 information on the "Evolution of the S Language".
 
    There is a huge amount of user-contributed code for S, available at
@@ -1192,7 +1178,7 @@ enterprise-class statistical analysis system based on R, suitable for
 deployment in professional, commercial and regulated environments.
 
    See also
-<http://en.wikipedia.org/wiki/R_programming_language#Commercialized_versions_of_R>
+<https://en.wikipedia.org/wiki/R_programming_language#Commercialized_versions_of_R>
 for pointers to commercialized versions of R.
 
 4 R Web Interfaces
@@ -1437,13 +1423,14 @@ Bioconductor (https://www.bioconductor.org/) is an open source and open
 development software project for the analysis and comprehension of
 genomic data.  Most Bioconductor components are distributed as R add-on
 packages.  Initially most of the Bioconductor software packages
-(https://www.bioconductor.org/packages/bioc/) focused primarily on DNA
-microarray data analysis.  As the project has matured, the functional
-scope of the software packages broadened to include the analysis of all
-types of genomic data, such as SAGE, sequence, or SNP data.  In
-addition, there are metadata (annotation, CDF and probe) and experiment
-data packages.  See <https://www.bioconductor.org/download/> for
-available packages and a complete taxonomy via BioC Views.
+(https://bioconductor.org/packages/release/BiocViews.html#___Software)
+focused primarily on DNA microarray data analysis.  As the project has
+matured, the functional scope of the software packages broadened to
+include the analysis of all types of genomic data, such as SAGE,
+sequence, or SNP data.  In addition, there are metadata (annotation, CDF
+and probe) and experiment data packages.  See
+<https://www.bioconductor.org/download/> for available packages and a
+complete taxonomy via BioC Views.
 
 5.1.5 Other add-on packages
 ---------------------------
@@ -1634,7 +1621,7 @@ from transcript files).
 
    The latest stable version of ESS is available via CRAN or the ESS web
 page (http://ESS.R-project.org/).  The HTML version of the documentation
-can be found at <http://stat.ethz.ch/ESS/>.
+can be found at <https://stat.ethz.ch/ESS/>.
 
    ESS comes with detailed installation instructions.
 
@@ -2836,8 +2823,8 @@ maintainers, mentioning the package in the subject line.
 
    A bug report can be generated using the function 'bug.report()'.  For
 reports on R this will open the Web page at
-<http://bugs.R-project.org/>: for a contributed package it will open the
-package's bug tracker Web page or help you compose an email to the
+<https://bugs.R-project.org/>: for a contributed package it will open
+the package's bug tracker Web page or help you compose an email to the
 maintainer.
 
    There is a section of the bug repository for suggestions for

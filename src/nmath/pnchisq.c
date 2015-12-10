@@ -11,8 +11,8 @@
  *    distribution function. Appl.Statist., 41, 478-482.
 
  *  Other parts
- *  Copyright (C) 2000-2014  The R Core Team
- *  Copyright (C) 2003-2014  The R Foundation
+ *  Copyright (C) 2000-2015  The R Core Team
+ *  Copyright (C) 2003-2015  The R Foundation
  */
 
 
@@ -23,7 +23,7 @@
 /*----------- DEBUGGING -------------
  *
  *	make CFLAGS='-DDEBUG_pnch ....'
-(cd ~/R/D/r-devel/debian-64-inst/src/nmath; gcc -I. -I../../src/include -I../../../R/src/include -I/usr/local/include -DHAVE_CONFIG_H -DDEBUG_pnch -fopenmp -g -pedantic -Wall --std=gnu99 -DDEBUG_q -Wcast-align -Wclobbered  -c ../../../R/src/nmath/pnchisq.c -o pnchisq.o )
+(cd `R-devel RHOME`/src/nmath; gcc -I. -I../../src/include -I../../../R/src/include -I/usr/local/include -DHAVE_CONFIG_H -fopenmp -g -O0 -pedantic -Wall --std=gnu99 -DDEBUG_pnch -DDEBUG_q -Wcast-align -Wclobbered  -c ../../../R/src/nmath/pnchisq.c -o pnchisq.o )
 
  * -- Feb.6, 2000 (R pre0.99); M.Maechler:  still have
  * bad precision & non-convergence in some cases (x ~= f, both LARGE)
@@ -90,12 +90,14 @@ pnchisq_raw(double x, double f, double theta /* = ncp */,
     LDOUBLE ans, u, v, t, lt, lu =-1;
 
     if (x <= 0.) {
-	if(x == 0. && f == 0.)
-	    return lower_tail ? exp(-0.5*theta) : -expm1(-0.5*theta);
+	if(x == 0. && f == 0.) {
+#define _L  (-0.5 * theta) // = -lambda
+	    return lower_tail ? R_D_exp(_L) : (log_p ? R_Log1_Exp(_L) : -expm1(_L));
+	}
 	/* x < 0  or {x==0, f > 0} */
-	return lower_tail ? 0. : 1.;
+	return R_DT_0;
     }
-    if(!R_FINITE(x))	return lower_tail ? 1. : 0.;
+    if(!R_FINITE(x))	return R_DT_1;
 
     /* This is principally for use from qnchisq */
 #ifndef MATHLIB_STANDALONE
@@ -103,7 +105,7 @@ pnchisq_raw(double x, double f, double theta /* = ncp */,
 #endif
 
     if(theta < 80) { /* use 110 for Inf, as ppois(110, 80/2, lower.tail=FALSE) is 2e-20 */
-	LDOUBLE sum, sum2, lambda = 0.5 * theta, pr, ans;
+	LDOUBLE ans;
 	int i;
 	// Have  pgamma(x,s) < x^s / Gamma(s+1) (< and ~= for small x)
 	// ==> pchisq(x, f) = pgamma(x, f/2, 2) = pgamma(x/2, f/2)
@@ -115,10 +117,11 @@ pnchisq_raw(double x, double f, double theta /* = ncp */,
 	   log(x) < M_LN2 + 2/f*(lgamma(f/2. + 1) + _dbl_min_exp)) {
 	    // all  pchisq(x, f+2*i, lower_tail, FALSE), i=0,...,110 would underflow to 0.
 	    // ==> work in log scale
+	    double lambda = 0.5 * theta;
+	    double sum, sum2, pr = -lambda;
 	    sum = sum2 = ML_NEGINF;
-	    pr = -lambda;
 	    /* we need to renormalize here: the result could be very close to 1 */
-	    for(i = 0; i < 110;  pr += LOG(lambda) - LOG(++i)) {
+	    for(i = 0; i < 110;  pr += log(lambda) - log(++i)) {
 		sum2 = logspace_add(sum2, pr);
 		sum = logspace_add(sum, pr + pchisq(x, f+2*i, lower_tail, TRUE));
 		if (sum2 >= -1e-15) /*<=> EXP(sum2) >= 1-1e-15 */ break;
@@ -131,8 +134,8 @@ pnchisq_raw(double x, double f, double theta /* = ncp */,
 	    return (double) (log_p ? ans : EXP(ans));
 	}
 	else {
-	    sum = sum2 = 0;
-	    pr = EXP(-lambda); // does this need a feature test?
+	    LDOUBLE lambda = 0.5 * theta;
+	    LDOUBLE sum = 0, sum2 = 0, pr = EXP(-lambda); // does this need a feature test?
 	    /* we need to renormalize here: the result could be very close to 1 */
 	    for(i = 0; i < 110;  pr *= lambda/++i) {
 		// pr == exp(-lambda) lambda^i / i!  ==  dpois(i, lambda)
@@ -295,5 +298,6 @@ pnchisq_raw(double x, double f, double theta /* = ncp */,
 #ifdef DEBUG_pnch
     REprintf("\n == L_End: n=%d; term= %g; bound=%g\n",n,term,bound);
 #endif
-    return (double) R_DT_val(ans);
+    double dans = (double) ans;
+    return R_DT_val(dans);
 }

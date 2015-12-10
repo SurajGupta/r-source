@@ -1,5 +1,5 @@
 % File src/library/grDevices/man/unix/x11.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -17,7 +17,7 @@
   \code{x11} is recognized as a synonym for \code{X11}.
 
   The \R function is a wrapper for two devices, one based on Xlib
-  (\url{http://en.wikipedia.org/wiki/Xlib}) and one using cairographics
+  (\url{https://en.wikipedia.org/wiki/Xlib}) and one using cairographics
   (\url{http://www.cairographics.org}).
 }
 \usage{

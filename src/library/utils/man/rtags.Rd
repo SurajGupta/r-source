@@ -1,5 +1,5 @@
 % File src/library/tools/man/rtags.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 2008-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -70,7 +70,7 @@ rtags(path = ".", pattern = "\\\\.[RrSs]$",
 }
 
 \references{
-  \url{http://en.wikipedia.org/wiki/Ctags},
+  \url{https://en.wikipedia.org/wiki/Ctags},
   \url{https://www.gnu.org/software/emacs/manual/html_node/eintr/etags.html}
 }
 \author{Deepayan Sarkar}

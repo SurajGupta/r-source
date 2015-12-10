@@ -1,5 +1,5 @@
 % File src/library/base/man/ns-topenv.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -7,8 +7,8 @@
 \title{Top Level Environment}
 \alias{topenv}
 \description{
-  Finding the top level environment from an environment \code{envir} and
-  its enclosing environments.
+  Finding the top level \code{\link{environment}} from an environment
+  \code{envir} and its enclosing environments.
 }
 \usage{
 topenv(envir = parent.frame(),
@@ -24,10 +24,16 @@ topenv(envir = parent.frame(),
       Supplying the argument as \code{NULL} means it will never match.}
 }
 \details{
-  \code{topenv} returns the first top level environment found when
-  searching \code{envir} and its enclosing environments.  An environment is
-  considered top level if it is the internal environment of a namespace,
-  a package environment in the search path, or \code{.GlobalEnv}.
+  \code{topenv} returns the first top level \code{\link{environment}}
+  found when searching \code{envir} and its enclosing environments.  An
+  environment is considered top level if it is the internal environment
+  of a namespace, a package environment in the \code{\link{search}}
+  path, or \code{\link{.GlobalEnv}} .
+}
+\seealso{
+  \code{\link{environment}}, notably \code{parent.env()} on
+  \dQuote{enclosing environments};
+  \code{\link{loadNamespace}} for more on namespaces.
 }
 \examples{
 topenv(.GlobalEnv)
@@ -35,8 +41,10 @@ topenv(new.env()) # also global env
 topenv(environment(ls))# namespace:base
 topenv(environment(lm))# namespace:stats
 \dontshow{
-stopifnot(identical(.GlobalEnv, topenv(.GlobalEnv)),
-          identical(.GlobalEnv, topenv(new.env())),
+stopifnot(identical(.GlobalEnv,        topenv(new.env())),
+          identical(.GlobalEnv,        topenv(.GlobalEnv)),
+          identical(baseenv(),         topenv(baseenv())),
+          identical(.BaseNamespaceEnv, topenv(.BaseNamespaceEnv)),
           identical(topenv(environment(ls)), asNamespace("base")),
           identical(topenv(environment(lm)), asNamespace("stats")))
 }

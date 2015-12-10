@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 #ifdef HAVE_CONFIG_H
@@ -706,7 +706,7 @@ void tcltk_init(int *TkUp)
     }
 #if !defined(Win32) && !defined(HAVE_AQUA)
     else
-	warning(_("no DISPLAY variable so Tk is not available"));
+	warningcall(R_NilValue, _("no DISPLAY variable so Tk is not available"));
 #endif
 
     Tcl_CreateCommand(RTcl_interp,

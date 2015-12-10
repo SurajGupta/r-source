@@ -1,5 +1,5 @@
 % File src/library/stats/man/ts.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -105,7 +105,7 @@ is.ts(x)
   
   For other definitions of \sQuote{time series} (e.g.,
   time-ordered observations) see the CRAN task view at
-  \url{http://cran.r-project.org/web/views/TimeSeries.html}.
+  \url{https://cran.r-project.org/web/views/TimeSeries.html}.
 }
 \examples{
 require(graphics)

@@ -1,5 +1,5 @@
 % File src/library/base/man/DateTimeClasses.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -193,7 +193,7 @@
   to billions of years), but such times can only be interpreted with
   reference to a time zone.
 
-  % http://www.timeanddate.com/calendar/julian-gregorian-switch.html
+  % https://www.timeanddate.com/calendar/julian-gregorian-switch.html
   The concept of time zones was first adopted in the nineteenth century,
   and the Gregorian calendar was introduced in 1582 but not universally
   adopted until 1927.  OS services almost invariably assume the
@@ -252,7 +252,7 @@
 \references{
   Ripley, B. D. and Hornik, K. (2001) Date-time classes. \emph{R News},
   \bold{1/2}, 8--11.
-  \url{http://www.r-project.org/doc/Rnews/Rnews_2001-2.pdf}
+  \url{https://www.r-project.org/doc/Rnews/Rnews_2001-2.pdf}
 }
 
 \section{Warnings}{

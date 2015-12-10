@@ -1,5 +1,5 @@
 % File src/library/grDevices/man/Japanese.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2013 R Core Team
 % Distributed under GPL 2 or later
 
@@ -27,7 +27,7 @@
   \code{\link{demo}(Japanese)}, \code{\link{Hershey}}, \code{\link{text}}
 }
 \references{
-  \url{http://www.gnu.org/software/plotutils/plotutils.html}
+  \url{https://www.gnu.org/software/plotutils/plotutils.html}
 }
 \examples{
 require(graphics)

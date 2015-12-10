@@ -1,5 +1,5 @@
 % File src/library/datasets/man/Titanic.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2007 R Core Team
 % Distributed under GPL 2 or later
 
@@ -50,7 +50,7 @@
   Dawson, Robert J. MacG. (1995),
   The \sQuote{Unusual Episode} Data Revisited.
   \emph{Journal of Statistics Education}, \bold{3}.
-  \url{http://www.amstat.org/publications/jse/v3n3/datasets.dawson.html}
+  \url{https://www.amstat.org/publications/jse/v3n3/datasets.dawson.html}
 
   The source provides a data set recording class, sex, age, and survival
   status for each person on board of the Titanic, and is based on data

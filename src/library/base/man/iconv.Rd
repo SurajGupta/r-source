@@ -1,5 +1,5 @@
 % File src/library/base/man/iconv.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2015 R Core Team
 % Distributed under GPL 2 or later
 
@@ -58,7 +58,9 @@ iconvlist()
 
   Any encoding bits (see \code{\link{Encoding}}) on elements of \code{x}
   are ignored: they will always be translated as if from encoding
-  \code{from} even if declared otherwise.
+  \code{from} even if declared otherwise.  \code{\link{enc2native}} and
+  \code{\link{enc2utf8}} provide alternatives which do take declared
+  encodings into account.
 
   Note that implementations of \code{iconv} typically do not do much
   validity checking and will often mis-convert inputs which are invalid
@@ -82,7 +84,7 @@ iconvlist()
   the \dQuote{R Installation and Administration Manual} recommends
   installing GNU \samp{libiconv} on Solaris and AIX, for example.
 
-  There are other implementations, e.g\sspace{} NetBSD has used one from the
+  There are other implementations, e.g.\sspace{} NetBSD has used one from the
   Citrus project (which does not support \samp{//TRANSLIT}) and there is
   an older FreeBSD port (\samp{libiconv} is usually used there): it has
   not been reported whether or not these work with \R.
@@ -144,7 +146,7 @@ iconvlist()
   \code{from} and \code{to} (as from \R 3.0.3) by \code{iconv}, but not
   for e.g.\sspace{}\code{fileEncoding} arguments.  \code{"macintosh"} is
   the official (and most widely supported) name for \sQuote{Mac Roman}
-  (\url{http://en.wikipedia.org/wiki/Mac_OS_Roman}).
+  (\url{https://en.wikipedia.org/wiki/Mac_OS_Roman}).
 }
 
 \seealso{

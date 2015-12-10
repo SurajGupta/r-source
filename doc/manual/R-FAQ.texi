@@ -5,11 +5,11 @@
 @settitle R FAQ
 @setchapternewpage on
 @set FAQ_YEAR 2015
-@set FAQ_DATE @value{FAQ_YEAR}-08-09
+@set FAQ_DATE @value{FAQ_YEAR}-12-04
 @set REL_YEAR 2015
 @set REL_MAJOR 3
 @set REL_MINOR 2
-@set REL_PATCHLEVEL 2
+@set REL_PATCHLEVEL 3
 @set REL_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{REL_PATCHLEVEL}
 @set FAQ_VERSION @value{REL_MAJOR}.@value{REL_MINOR}.@value{FAQ_DATE}
 @documentlanguage en
@@ -160,7 +160,6 @@ info}, @url{https://CRAN.R-project.org/doc/FAQ/R-FAQ.html,, @HTML{}},
 @c @url{https://CRAN.R-project.org/doc/FAQ/R-FAQ.ps.gz,, PostScript}
 as well as the @url{https://CRAN.R-project.org/doc/FAQ/R-FAQ.texi,,
 Texinfo source} used for creating all these formats using the
-@c @url{http://texinfo.org/, @acronym{GNU} Texinfo system}. Defunct
 @acronym{GNU} Texinfo system.
 
 You can also obtain the R @acronym{FAQ} from the @file{doc/FAQ}
@@ -242,7 +241,7 @@ script files.
 
 The design of R has been heavily influenced by two existing languages:
 Becker, Chambers & Wilks' S (@pxref{What is S?}) and Sussman's
-@url{http://www.cs.indiana.edu/scheme-repository/home.html, Scheme}.
+@url{https://www.cs.indiana.edu/scheme-repository/home.html, Scheme}.
 Whereas the resulting language is very similar in appearance to S, the
 underlying implementation and semantics are derived from Scheme.
 @xref{What are the differences between R and S?}, for further details.
@@ -485,7 +484,7 @@ is maintained by @email{Simon.Urbanek@@R-project.org, Simon Urbanek}
 OS X @acronym{FAQ}} has more details.
 
 Snapshots of the r-patched and r-devel versions of R are available as
-Apple installer packages at @uref{http://r.research.att.com}.
+Apple installer packages at @uref{https://r.research.att.com}.
 
 @node Are there Unix-like binaries for R?, What documentation exists for R?, How can R be installed?, R Basics
 @section Are there Unix-like binaries for R?
@@ -533,7 +532,7 @@ install r-base-dev} to obtain the additional tools required for this.
 So-called ``backports'' of the current R packages for at least the
 @dfn{stable} distribution of Debian are provided by Johannes Ranke, and
 available from @CRAN{}.  See
-@url{https://CRAN.R-project.org/bin/linux/debian/README.html} for details on R
+@url{https://CRAN.R-project.org/bin/linux/debian/index.html} for details on R
 Debian packages and installing the backports, which should also be
 suitable for other Debian derivatives.  Native backports for Ubuntu are
 provided by Michael Rutter.
@@ -582,6 +581,7 @@ version is always available for web browsing at
 
 Printed copies of the R reference manual for some version(s) are
 available from Network Theory Ltd, at
+@c https: is untrusted
 @url{http://www.network-theory.co.uk/R/base/}.  For each set of manuals
 sold, the publisher donates USD 10 to the R Foundation (@pxref{What is
 the R Foundation?}).
@@ -621,7 +621,7 @@ Books on R by R Core Team members include
 @quotation
 John M. Chambers (2008), ``Software for Data Analysis: Programming with
 R''.  Springer, New York, ISBN 978-0-387-75935-7,
-@url{https://statweb.stanford.edu/~jmc4/Rbook/}.
+@url{http://statweb.stanford.edu/~jmc4/Rbook/}.
 
 Peter Dalgaard (2008), ``Introductory Statistics with R'', 2nd edition.
 Springer, ISBN 978-0-387-79053-4,
@@ -686,7 +686,7 @@ obtained by @code{citation()}.
 @section What mailing lists exist for R?
 
 Thanks to @email{Martin.Maechler@@R-project.org, Martin Maechler}, there
-are four mailing lists devoted to R.
+are several mailing lists devoted to R, including the following:
 
 @table @code
 @item R-announce
@@ -707,6 +707,9 @@ This list is for questions and discussion about code development in R.
 @c discussions about the future of R, proposals of new functionality, and
 @c pre-testing of new versions.  It is meant for those who maintain an
 @c active position in the development of R.
+@item R-package-devel
+A list which which provides a forum for learning about the R package
+development process.
 @end table
 
 @noindent
@@ -777,39 +780,7 @@ can be found at the @acronym{URL}
 @end quotation
 
 @noindent
-@c (which is the same as @url{http://cran.at.R-project.org/})
-Daily mirrors are available at @acronym{URL}s including
-
-@quotation
-@multitable @columnfractions .45 .40
-@item @url{http://cran.at.R-project.org/}
-@tab (Wirtschaftsuniversit@"at Wien, Austria)
-@item @url{http://cran.au.R-project.org/}
-@tab (University of Melbourne, Australia)
-@item @url{http://cran.br.R-project.org/}
-@tab (Universidade Federal do Paran@'a, Brazil)
-@item @url{http://cran.ch.R-project.org/}
-@tab (ETH Z@"urich, Switzerland)
-@item @url{http://cran.dk.R-project.org/}
-@tab (dotsrc.org, Aalborg, Denmark)
-@item @url{http://cran.es.R-project.org/}
-@tab (Spanish National Research Network, Madrid, Spain)
-@c @item @url{http://cran.fr.R-project.org/}
-@c @tab (INRA, Toulouse, France)
-@c @item @url{http://cran.hu.R-project.org/}
-@c @tab (Semmelweis U, Hungary)
-@item @url{http://cran.pt.R-project.org/}
-@tab (Universidade do Porto, Portugal)
-@item @url{http://cran.uk.R-project.org/}
-@tab (U of Bristol, United Kingdom)
-@c @item @url{http://cran.us.R-project.org/}
-@c @tab (pair Networks, USA)
-@c @item @url{http://cran.za.R-project.org/}
-@c @tab (Rhodes U, South Africa)
-@end multitable
-@end quotation
-
-@noindent
+and is mirrored daily to many sites around the world.
 See @url{https://CRAN.R-project.org/mirrors.html} for a complete list of
 mirrors.  Please use the @CRAN{} site closest to you to reduce network
 load.
@@ -841,7 +812,7 @@ all Open Source licenses, permits all and any use of the package.  It
 only restricts distribution of R or of other programs containing code
 from R.  This is made clear in clause 6 (``No Discrimination Against
 Fields of Endeavor'') of the
-@url{http://www.opensource.org/docs/definition.html, Open Source
+@url{https://opensource.org/docs/definition.html, Open Source
 Definition}:
 
 @quotation
@@ -902,7 +873,7 @@ mailing lists, bug tracking, message boards/forums, site hosting,
 permanent file archival, full backups, and total web-based
 administration.  For more information, see the R-Forge web page and
 Stefan Theu@ss{}l and Achim Zeileis (2009), ``Collaborative software
-development using R-Forge'', @url{http://journal.R-project.org/, ,
+development using R-Forge'', @url{https://journal.R-project.org/, ,
 @emph{The R Journal}}, @strong{1}(1):9--14.
 
 
@@ -963,14 +934,14 @@ This is also called the ``@emph{White Book}'', and introduced S version
 @item
 John M. Chambers (1998), ``Programming with Data,'' New York: Springer,
 ISBN 0-387-98503-4
-(@url{https://statweb.stanford.edu/~jmc4/Sbook/}).
+(@url{http://statweb.stanford.edu/~jmc4/Sbook/}).
 
 This ``@emph{Green Book}'' describes version 4 of S, a major revision of
 S designed by John Chambers to improve its usefulness at every stage of
 the programming process.
 @end itemize
 
-See @url{https://statweb.stanford.edu/~jmc4/papers/96.7.ps}
+See @url{http://statweb.stanford.edu/~jmc4/papers/96.7.ps}
 for further information on the ``Evolution of the S Language''.
 
 There is a huge amount of user-contributed code for S, available at the
@@ -1540,7 +1511,7 @@ environments.
 @c support, and consulting services, as well as related R-based products.
 
 See also
-@url{http://en.wikipedia.org/wiki/R_programming_language#Commercialized_versions_of_R}
+@url{https://en.wikipedia.org/wiki/R_programming_language#Commercialized_versions_of_R}
 for pointers to commercialized versions of R.
 
 @node R Web Interfaces, R Add-On Packages, R and S, Top
@@ -1843,8 +1814,9 @@ available from the Omega project.
 open development software project for the analysis and comprehension of
 genomic data.  Most Bioconductor components are distributed as R add-on
 packages.  Initially most of the
-@url{https://www.bioconductor.org/packages/bioc/, Bioconductor software
-packages} focused primarily on DNA microarray data analysis.  As the
+@url{https://bioconductor.org/packages/release/BiocViews.html#___Software,
+Bioconductor software packages}
+focused primarily on DNA microarray data analysis.  As the 
 project has matured, the functional scope of the software packages
 broadened to include the analysis of all types of genomic data, such as
 SAGE, sequence, or SNP data.  In addition, there are metadata
@@ -2109,7 +2081,7 @@ files).
 
 The latest stable version of @acronym{ESS} is available via @CRAN{} or
 the @url{http://ESS.R-project.org/, ESS web page}.  The @HTML{} version
-of the documentation can be found at @url{http://stat.ethz.ch/ESS/}.
+of the documentation can be found at @url{https://stat.ethz.ch/ESS/}.
 
 @acronym{ESS} comes with detailed installation instructions.
 
@@ -3636,7 +3608,7 @@ the subject line.
 
 A bug report can be generated using the function @code{bug.report()}.
 For reports on R this will open the Web page at
-@url{http://bugs.R-project.org/}: for a contributed package it will open
+@url{https://bugs.R-project.org/}: for a contributed package it will open
 the package's bug tracker Web page or help you compose an email to the
 maintainer.
 

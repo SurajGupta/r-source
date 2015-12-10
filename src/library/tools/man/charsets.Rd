@@ -1,5 +1,5 @@
 % File src/library/tools/man/charsets.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2014 R Core Team
 % Distributed under GPL 2 or later
 
@@ -35,7 +35,7 @@ Adobe_glyphs
   \file{\var{\link{R_HOME}}/share/encodings/Adobe_glyphlist}.
 }
 \source{
-  \url{http://partners.adobe.com/public/developer/en/opentype/glyphlist.txt}
+  \url{https://partners.adobe.com/public/developer/en/opentype/glyphlist.txt}
 }
 \examples{
 ## find Adobe names for ISOLatin2 chars.

@@ -1,5 +1,5 @@
 #  File src/library/stats/R/xtabs.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
 #  Copyright (C) 1995-2015 The R Core Team
 #
@@ -14,7 +14,7 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 xtabs <- function(formula = ~., data = parent.frame(), subset, sparse = FALSE,
 		  na.action, exclude = c(NA, NaN), drop.unused.levels = FALSE)
@@ -90,12 +90,12 @@ xtabs <- function(formula = ~., data = parent.frame(), subset, sparse = FALSE,
 	cl <- levels(cols)
 	if (is.null(y))
 	    y <- rep.int(1, length(rows))
-	as(new("dgTMatrix",
-	       i = as.integer(rows) - 1L,
-	       j = as.integer(cols) - 1L,
-	       x = as.double(y),
-	       Dim = c(length(rl), length(cl)),
-	       Dimnames = list(rl, cl)), "CsparseMatrix")
+	methods::as(methods::new("dgTMatrix",
+                                 i = as.integer(rows) - 1L,
+                                 j = as.integer(cols) - 1L,
+                                 x = as.double(y),
+                                 Dim = c(length(rl), length(cl)),
+                                 Dimnames = list(rl, cl)), "CsparseMatrix")
     }
 }
 

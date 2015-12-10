@@ -1,5 +1,5 @@
 % File src/library/grDevices/man/Hershey.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2012 R Core Team
 % Distributed under GPL 2 or later
 
@@ -204,7 +204,7 @@ You cannot use mathematical expressions (\code{\link{plotmath}}) with
 }
 
 \references{
-  \url{http://www.gnu.org/software/plotutils/plotutils.html}.
+  \url{https://www.gnu.org/software/plotutils/plotutils.html}.
 }
 \seealso{ \code{\link{demo}(Hershey)}, \code{\link{par}},
   \code{\link{text}}, \code{\link{contour}}.

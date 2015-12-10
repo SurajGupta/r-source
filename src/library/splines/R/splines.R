@@ -1,7 +1,7 @@
 #  File src/library/splines/R/splines.R
-#  Part of the R package, http://www.R-project.org
+#  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -14,24 +14,23 @@
 #  GNU General Public License for more details.
 #
 #  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
+#  https://www.R-project.org/Licenses/
 
 bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
                Boundary.knots = range(x))
 {
+    ord <- 1L + (degree <- as.integer(degree))
+    if(ord <= 1) stop("'degree' must be integer >= 1")
     nx <- names(x)
     x <- as.vector(x)
     nax <- is.na(x)
     if(nas <- any(nax))
         x <- x[!nax]
-    if(!missing(Boundary.knots)) {
+    outside <- if(!missing(Boundary.knots)) {
         Boundary.knots <- sort(Boundary.knots)
-        outside <- (ol <- x < Boundary.knots[1L]) | (or <- x > Boundary.knots[2L])
-    }
-    else outside <- FALSE #rep(FALSE, length = length(x))
+        (ol <- x < Boundary.knots[1L]) | (or <- x > Boundary.knots[2L])
+    } else FALSE
 
-    ord <- 1L + (degree <- as.integer(degree))
-    if(ord <= 1) stop("'degree' must be integer >= 1")
     if(!is.null(df) && is.null(knots)) {
 	nIknots <- df - ord + (1L - intercept) # ==  #{inner knots}
         if(nIknots < 0L) {
@@ -43,7 +42,7 @@ bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
             if(nIknots > 0L) {
                 knots <- seq.int(from = 0, to = 1,
                                  length.out = nIknots + 2L)[-c(1L, nIknots + 2L)]
-                stats::quantile(x[!outside], knots)
+                quantile(x[!outside], knots)
             }
     }
     Aknots <- sort(c(rep(Boundary.knots, ord), knots))
@@ -52,17 +51,20 @@ bs <- function(x, df = NULL, knots = NULL, degree = 3, intercept = FALSE,
         derivs <- 0:degree
         scalef <- gamma(1L:ord)# factorials
         basis <- array(0, c(length(x), length(Aknots) - degree - 1L))
+	e <- 1/4 # in theory anything in (0,1); was (implicitly) 0 in R <= 3.2.2
         if(any(ol)) {
-            k.pivot <- Boundary.knots[1L]
+	    ## left pivot inside, i.e., a bit to the right of the boundary knot
+	    k.pivot <- (1-e)*Boundary.knots[1L] + e*Aknots[ord+1]
             xl <- cbind(1, outer(x[ol] - k.pivot, 1L:degree, "^"))
             tt <- splineDesign(Aknots, rep(k.pivot, ord), ord, derivs)
-            basis[ol,  ] <- xl %*% (tt/scalef)
+            basis[ol, ] <- xl %*% (tt/scalef)
         }
         if(any(or)) {
-            k.pivot <- Boundary.knots[2L]
+	    ## right pivot inside, i.e., a bit to the left of the boundary knot:
+	    k.pivot <- (1-e)*Boundary.knots[2L] + e*Aknots[length(Aknots)-ord]
             xr <- cbind(1, outer(x[or] - k.pivot, 1L:degree, "^"))
             tt <- splineDesign(Aknots, rep(k.pivot, ord), ord, derivs)
-            basis[or,  ] <- xr %*% (tt/scalef)
+            basis[or, ] <- xr %*% (tt/scalef)
         }
         if(any(inside <- !outside))
             basis[inside,  ] <- splineDesign(Aknots, x[inside], ord)
@@ -108,7 +110,7 @@ ns <- function(x, df = NULL, knots = NULL, intercept = FALSE,
         knots <- if(nIknots > 0L) {
             knots <- seq.int(0, 1,
                              length.out = nIknots + 2L)[-c(1L, nIknots + 2L)]
-            stats::quantile(x[!outside], knots)
+            quantile(x[!outside], knots)
         } ## else  NULL
     } else nIknots <- length(knots)
     Aknots <- sort(c(rep(Boundary.knots, 4L), knots))
@@ -193,8 +195,10 @@ makepredictcall.bs <- function(var, call)
 spline.des <- function(knots, x, ord = 4, derivs = integer(length(x)),
 		       outer.ok = FALSE, sparse = FALSE)
 {
-    list(knots = sort(as.vector(knots)), order = ord, derivs = derivs,
+    if(is.unsorted(knots <- as.numeric(knots)))
+	knots <- sort.int(knots)
+    list(knots = knots, order = ord, derivs = derivs,
 	 design = splineDesign(knots, x, ord, derivs,
-	 outer.ok = outer.ok, sparse = sparse))
+			       outer.ok = outer.ok, sparse = sparse))
 }
 ## splineDesign() is in ./splineClasses.R

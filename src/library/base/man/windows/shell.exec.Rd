@@ -1,5 +1,5 @@
 % File src/library/base/man/windows/shell.exec.Rd
-% Part of the R package, http://www.R-project.org
+% Part of the R package, https://www.R-project.org
 % Copyright 1995-2008 R Core Team
 % Distributed under GPL 2 or later
 
@@ -23,9 +23,8 @@ shell.exec(file)
   \R versions 2.13.0 and earlier interpreted \code{file} relative to
   the \R home directory, so a complete path was usually needed.
 
-  Encoded \samp{file://} URLs should be in the Windows standard form, e.g.
-  \code{"file:///c:/path/to/file.txt"}.
-
+  Encoded \samp{file://} URLs should be in the Windows standard form,
+  e.g.\sspace{}\code{"file:///c:/path/to/file.txt"}.
 }
 \value{
   No value, but informative error messages will be given if the

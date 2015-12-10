@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* Private header file for use during compilation of R */
@@ -23,8 +23,8 @@
 
 
 double private_rint(double x);
-N01type N01_kind;
-double BM_norm_keep;
+extern N01type N01_kind;
+extern double BM_norm_keep;
 
 
 #endif /* MATHLIB_PRIVATE2_H */

@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* This is a small HTTP server that serves requests by evaluating
@@ -686,6 +686,7 @@ static void process_request_(void *ptr)
 				    free(fbuf);
 				    UNPROTECT(7);
 				    c->attr |= CONNECTION_CLOSE;
+				    fclose(f);
 				    return;
 				}
 				send_response(c->sock, fbuf, rd);
@@ -695,6 +696,7 @@ static void process_request_(void *ptr)
 			} else { /* allocation error - get out */
 			    UNPROTECT(7);
 			    c->attr |= CONNECTION_CLOSE;
+			    fclose(f);
 			    return;
 			}
 		    }

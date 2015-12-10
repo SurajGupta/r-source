@@ -14,7 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, a copy is available at
- *  http://www.r-project.org/Licenses/
+ *  https://www.R-project.org/Licenses/
  */
 
 /* <UTF8> the only interpretation of char is ASCII */
@@ -780,8 +780,8 @@ void *in_R_HTTPOpen(const char *url, const char *headers, const int cacheOK)
     if(ctxt != NULL) {
 	int rc = RxmlNanoHTTPReturnCode(ctxt);
 	if(rc != 200) {
-	    warning(_("cannot open: HTTP status was '%d %s'"), rc,
-		    RxmlNanoHTTPStatusMsg(ctxt));
+	    warning(_("cannot open URL '%s': HTTP status was '%d %s'"), 
+		    url, rc, RxmlNanoHTTPStatusMsg(ctxt));
 	    RxmlNanoHTTPClose(ctxt);
 	    return NULL;
 	} else {
@@ -946,7 +946,8 @@ static void *in_R_HTTPOpen2(const char *url, const char *headers,
 	InternetCloseHandle(wictxt->session);
 	InternetCloseHandle(wictxt->hand);
 	free(wictxt);
-	warning(_("cannot open: HTTP status was '%d %s'"), status, buf);
+	warning(_("cannot open URL '%s': HTTP status was '%d %s'"), 
+		url, status, buf);
 	return NULL;
     }
 
@@ -1008,9 +1009,11 @@ static void *in_R_FTPOpen2(const char *url)
 	return NULL;
     }
 
+    DWORD flag = INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_NO_CACHE_WRITE;
     wictxt->session = InternetOpenUrl(wictxt->hand, url, NULL, 0,
-	INTERNET_FLAG_KEEP_CONNECTION | INTERNET_FLAG_NO_CACHE_WRITE,
-				      0);
+    	flag | INTERNET_FLAG_PASSIVE, 0);
+    if(!wictxt->session)
+    	wictxt->session = InternetOpenUrl(wictxt->hand, url, NULL, 0, flag, 0);
     if(!wictxt->session) {
 	char buf[256];
 	DWORD err1 = GetLastError(), err2, blen = 256;
