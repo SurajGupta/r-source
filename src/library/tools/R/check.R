@@ -1,7 +1,7 @@
 #  File src/library/tools/R/check.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2015 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -215,9 +215,10 @@ setRlibs <-
                      env = "R_DEFAULT_PACKAGES='utils,grDevices,graphics,stats'")
             {
                 out <- R_runR(cmd, R_opts2, env)
+                ## htmltools produced non-UTF-8 output in Dec 2015
                 if (R_check_suppress_RandR_message)
                     grep('^Xlib: *extension "RANDR" missing on display', out,
-                         invert = TRUE, value = TRUE)
+                         invert = TRUE, value = TRUE, useBytes = TRUE)
                 else out
             }
 
@@ -642,7 +643,7 @@ setRlibs <-
         ## entries because these really are a part of R: hence, skip the
         ## check.
         check_license <- if (!is_base_pkg) {
-            Check_license <- Sys.getenv("_R_CHECK_LICENSE_", NA)
+            Check_license <- Sys.getenv("_R_CHECK_LICENSE_", NA_character_)
             if(is.na(Check_license)) {
                 ## The check code conditionalizes *output* on _R_CHECK_LICENSE_.
                 Sys.setenv('_R_CHECK_LICENSE_' = "TRUE")
@@ -1693,6 +1694,9 @@ setRlibs <-
             ## Current example is TeachingDemos
             out <- grep("^Loading required package:", out,
                         invert = TRUE, value = TRUE)
+            ## and methods can give Notes, e.g. from metaheur
+            out <- grep("^Note: the specification for", out,
+                        invert = TRUE, value = TRUE)
             err <- grep("^Error", out)
             if (length(err)) {
                 errorLog(Log)
@@ -2727,7 +2731,8 @@ setRlibs <-
                     lines <- lines[max(1, ll-12):ll]
                     if (R_check_suppress_RandR_message)
                         lines <- grep('^Xlib: *extension "RANDR" missing on display',
-                                      lines, invert = TRUE, value = TRUE)
+                                      lines, invert = TRUE, value = TRUE,
+                                      useBytes = TRUE)
                     printLog(Log, sprintf("Running the tests in %s failed.\n", sQuote(file)))
                     printLog(Log, "Last 13 lines of output:\n")
                     printLog0(Log, .format_lines_with_indent(lines), "\n")
@@ -3034,7 +3039,7 @@ setRlibs <-
                                file.path(pkgoutdir, "vign_test", pkgname0),
                                "')")
                 t1 <- proc.time()
-                outfile <- tempfile()
+                outfile <- file.path(pkgoutdir, "build_vignettes.log")
                 status <- R_runR(Rcmd, R_opts2, jitstr,
                                  stdout = outfile, stderr = outfile)
                 t2 <- proc.time()
@@ -3063,6 +3068,8 @@ setRlibs <-
                     ## clean up
                     if (config_val_to_logical(Sys.getenv("_R_CHECK_CLEAN_VIGN_TEST_", "true")))
                         unlink(vd2, recursive = TRUE)
+                    if (!config_val_to_logical(Sys.getenv("_R_CHECK_ALWAYS_LOG_VIGNETTE_OUTPUT_", "false")))
+                            unlink(outfile)
                     print_time(t1, t2, Log)
                     resultLog(Log, "OK")
                 }
@@ -3340,8 +3347,7 @@ setRlibs <-
                 ## Case B. All output from installation redirected,
                 ## or already available in the log file.
                 checkingLog(Log,
-                            "whether package ",
-                            sQuote(desc["Package"]),
+			    "whether package ", sQuote(desc["Package"]),
                             " can be installed")
                 outfile <- file.path(pkgoutdir, "00install.out")
                 if (grepl("^check", install)) {
@@ -3640,7 +3646,7 @@ setRlibs <-
             printLog(Log, sprintf("  installed size is %4.1fMb\n", total/1024))
             rest <- res2[-nrow(res2), ]
             rest[, 2L] <- sub("./", "", rest[, 2L])
-            # keep only top-level directories
+            ## keep only top-level directories
             rest <- rest[!grepl("/", rest[, 2L]), ]
             rest <- rest[rest[, 1L] > 1024, ] # > 1Mb
             if(nrow(rest)) {
@@ -4087,7 +4093,7 @@ setRlibs <-
     options(showErrorCalls=FALSE, warn = 1)
 
     ## Read in check environment file.
-    Renv <- Sys.getenv("R_CHECK_ENVIRON", unset = NA)
+    Renv <- Sys.getenv("R_CHECK_ENVIRON", unset = NA_character_)
     if(!is.na(Renv)) {
         ## Do not read any check environment file if R_CHECK_ENVIRON is
         ## set to empty of something non-existent.
@@ -4380,9 +4386,9 @@ setRlibs <-
         Sys.setenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE")
         Sys.setenv("_R_CHECK_DOT_FIRSTLIB_" = "TRUE")
         Sys.setenv("_R_CHECK_PACKAGES_USED_CRAN_INCOMING_NOTES_" = "TRUE")
-        prev <- Sys.getenv("_R_CHECK_LIMIT_CORES_", NA)
+        prev <- Sys.getenv("_R_CHECK_LIMIT_CORES_", NA_character_)
         if(is.na(prev)) Sys.setenv("_R_CHECK_LIMIT_CORES_" = "TRUE")
-        prev <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", NA)
+        prev <- Sys.getenv("_R_CHECK_SCREEN_DEVICE_", NA_character_)
         if(is.na(prev)) Sys.setenv("_R_CHECK_SCREEN_DEVICE_" = "stop")
         Sys.setenv("_R_CHECK_CODE_USAGE_VIA_NAMESPACES_" = "TRUE")
         Sys.setenv("_R_CHECK_S3_METHODS_NOT_REGISTERED_" = "TRUE")
@@ -4401,7 +4407,8 @@ setRlibs <-
     } else {
         ## do it this way so that INSTALL produces symbols.rds
         ## when called from check but not in general.
-        if(is.na(Sys.getenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_", NA)))
+        if(is.na(Sys.getenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_",
+                            NA_character_)))
             Sys.setenv("_R_SHLIB_BUILD_OBJECTS_SYMBOL_TABLES_" = "TRUE")
     }
 

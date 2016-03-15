@@ -35,7 +35,12 @@ function(data = NA, dim = length(data), dimnames = NULL)
             data <- rep_len(data, vl)
         }
         if(length(dim)) dim(data) <- dim
-        if(is.list(dimnames) && length(dimnames)) dimnames(data) <- dimnames
+	if(length(dimnames)) {
+	    if(is.list(dimnames))
+		dimnames(data) <- dimnames
+	    else
+		warning("non-list dimnames are disregarded; will be an error in R 3.3.0")
+	}
         data
     } else .Internal(array(data, dim, dimnames))
 }
@@ -60,7 +65,7 @@ function(x, MARGIN)
     y
 }
 
-provideDimnames <- function(x, sep = "", base = list(LETTERS))
+provideDimnames <- function(x, sep = "", base = list(LETTERS), unique = TRUE)
 {
     ## provide dimnames where missing - not copying x unnecessarily
     dx <- dim(x)
@@ -71,7 +76,8 @@ provideDimnames <- function(x, sep = "", base = list(LETTERS))
     for(i in which(vapply(dnx, is.null, NA))) {
 	ii <- 1L+(i-1L) %% k # recycling
         ss <- seq_len(dx[i]) - 1L # dim could be zero
-	dnx[[i]] <- make.unique(base[[ii]][1L+ (ss %% M[ii])], sep = sep)
+	bi <- base[[ii]][1L+ (ss %% M[ii])]
+	dnx[[i]] <- if(unique) make.unique(bi, sep = sep) else bi
 	new <- TRUE
     }
     if(new) dimnames(x) <- dnx

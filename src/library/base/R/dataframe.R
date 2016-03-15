@@ -15,7 +15,7 @@
 #  https://www.R-project.org/Licenses/
 
 # Statlib code by John Chambers, Bell Labs, 1994
-# Changes Copyright (C) 1998-2015 The R Core Team
+# Changes Copyright (C) 1998-2016 The R Core Team
 
 
 ## As from R 2.4.0, row.names can be either character or integer.
@@ -196,24 +196,32 @@ as.data.frame.list <-
 }
 
 as.data.frame.vector <- function(x, row.names = NULL, optional = FALSE, ...,
-                                 nm = paste(deparse(substitute(x),
-                                 width.cutoff = 500L), collapse=" ")  )
+				 nm = paste(deparse(substitute(x),
+						    width.cutoff = 500L),
+					    collapse = " "))
 {
     force(nm)
     nrows <- length(x)
+    ## ## row.names -- for now warn about and "forget" illegal row.names
+    ## ##           -- can simplify much (move this *after* the is.null(.) case) once we stop() !
+    if(!(is.null(row.names) || (is.character(row.names) && length(row.names) == nrows))) {
+	warning(gettextf(
+	    "'row.names' is not a character vector of length %d -- omitting it. Will be an error!",
+	    nrows), domain = NA)
+	row.names <- NULL
+    }
     if(is.null(row.names)) {
 	if (nrows == 0L)
 	    row.names <- character()
-	else if(length(row.names <- names(x)) == nrows &&
-		!anyDuplicated(row.names)) {}
-	else row.names <- .set_row_names(nrows)
+	else if(length(row.names <- names(x)) != nrows || anyDuplicated(row.names))
+	    row.names <- .set_row_names(nrows)
     }
+    ## else if(length(row.names) != nrows) # same behavior as the 'matrix' method
+    ##     row.names <- .set_row_names(nrows)
     if(!is.null(names(x))) names(x) <- NULL # remove names as from 2.0.0
     value <- list(x)
     if(!optional) names(value) <- nm
-    attr(value, "row.names") <- row.names
-    class(value) <- "data.frame"
-    value
+    structure(value, row.names = row.names, class = "data.frame")
 }
 
 as.data.frame.ts <- function(x, ...)
@@ -339,7 +347,6 @@ as.data.frame.array <- function(x, row.names = NULL, optional = FALSE, ...)
 
 as.data.frame.AsIs <- function(x, row.names = NULL, optional = FALSE, ...)
 {
-    ## why not remove class and NextMethod here?
     if(length(dim(x)) == 2L)
 	as.data.frame.model.matrix(x, row.names, optional)
     else { # as.data.frame.vector without removing names
@@ -1190,7 +1197,8 @@ xpdrows.data.frame <- function(x, old.rows, new.rows)
 cbind.data.frame <- function(..., deparse.level = 1)
     data.frame(..., check.names = FALSE)
 
-rbind.data.frame <- function(..., deparse.level = 1, make.row.names = TRUE)
+rbind.data.frame <- function(..., deparse.level = 1, make.row.names = TRUE,
+                             stringsAsFactors = default.stringsAsFactors())
 {
     match.names <- function(clabs, nmi)
     {
@@ -1246,7 +1254,8 @@ rbind.data.frame <- function(..., deparse.level = 1, make.row.names = TRUE)
 	xi <- allargs[[i]]
 	nmi <- nms[i]
         ## coerce matrix to data frame
-        if(is.matrix(xi)) allargs[[i]] <- xi <- as.data.frame(xi)
+        if(is.matrix(xi)) allargs[[i]] <- xi <-
+            as.data.frame(xi, stringsAsFactors = stringsAsFactors)
 	if(inherits(xi, "data.frame")) {
 	    if(is.null(cl))
 		cl <- oldClass(xi)
@@ -1375,7 +1384,8 @@ rbind.data.frame <- function(..., deparse.level = 1, make.row.names = TRUE)
 	    rlabs <- make.unique(as.character(rlabs), sep = "")
     }
     if(is.null(cl)) {
-	as.data.frame(value, row.names = rlabs)
+	as.data.frame(value, row.names = rlabs,
+		      stringsAsFactors = stringsAsFactors)
     } else {
 	structure(value, class = cl,
 		  row.names = if(is.null(rlabs)) .set_row_names(nrow) else rlabs)

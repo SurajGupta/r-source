@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 3.2.2015-12-04
+Version 3.2.2016-03-08
 Kurt Hornik
 
 
@@ -100,6 +100,7 @@ R FAQ
   7.41 Why does summary() report strange results for the R^2 estimate when I fit a linear model with no intercept?
   7.42 Why is R apparently not releasing memory?
   7.43 How can I enable secure https downloads in R?
+  7.44 How can I get CRAN package binaries for outdated versions of R?
 8 R Programming
   8.1 How should I write summary methods?
   8.2 How can I debug dynamically loaded code?
@@ -122,7 +123,7 @@ questions about R.
 1.1 Legalese
 ============
 
-This document is copyright © 1998-2015 by Kurt Hornik.
+This document is copyright © 1998-2016 by Kurt Hornik.
 
    This document is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by the
@@ -155,13 +156,13 @@ CRAN site (*note What is CRAN?::).
 1.3 Citing this document
 ========================
 
-In publications, please refer to this FAQ as Hornik (2015), "The R FAQ",
+In publications, please refer to this FAQ as Hornik (2016), "The R FAQ",
 and give the above, _official_ URL:
 
      @Misc{,
        author        = {Kurt Hornik},
        title         = {{R} {FAQ}},
-       year          = {2015},
+       year          = {2016},
        url           = {https://CRAN.R-project.org/doc/FAQ/R-FAQ.html}
      }
 
@@ -256,7 +257,7 @@ mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 3.2.3.  Based on this
+The current released version is 3.2.4.  Based on this
 'major.minor.patchlevel' numbering scheme, there are two development
 versions of R, a patched version of the current release ('r-patched')
 and one working towards the next minor or eventually major ('r-devel')
@@ -526,7 +527,7 @@ To cite R in publications, use
        author       = {{R Core Team}},
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
-       year         = 2015,
+       year         = 2016,
        url          = {https://www.R-project.org}
      }
 
@@ -627,6 +628,9 @@ bzipped tar files, a wealth of additional contributed code, as well as
 prebuilt binaries for various operating systems (Linux, Mac OS Classic,
 OS X, and MS Windows).  CRAN also provides access to documentation on R,
 existing mailing lists and the R Bug Tracking system.
+
+   Since March 2016, "old" material is made available from a central
+CRAN archive server (<https://CRAN-archive.R-project.org/>).
 
    Please always use the URL of the master site when referring to CRAN.
 
@@ -1230,8 +1234,8 @@ installer has the necessary security permissions.  David's paper
 "CGIwithR: Facilities for Processing Web Forms Using R" was published in
 the Journal of Statistical Software
 (<http://www.jstatsoft.org/v08/i10/>).  The package is now maintained by
-Duncan Temple Lang <duncan@wald.ucdavis.edu> and has a web page at
-<http://www.omegahat.org/CGIwithR/>.
+Duncan Temple Lang <duncan@wald.ucdavis.edu>.  and has a web page at
+<http://www.omegahat.net/CGIwithR/>.
 
    Jeff Horner is working on the R/Apache Integration Project which
 embeds the R interpreter inside Apache 2 (and beyond).  A tutorial and
@@ -1408,12 +1412,12 @@ default repository for recent versions of R for Windows.
 5.1.3 Add-on packages from Omegahat
 -----------------------------------
 
-The Omega Project for Statistical Computing (http://www.omegahat.org/)
+The Omega Project for Statistical Computing (http://www.omegahat.net/)
 provides a variety of open-source software for statistical applications,
 with special emphasis on web-based software, Java, the Java virtual
 machine, and distributed computing.  A CRAN style R package repository
-is available via <http://www.omegahat.org/R/>.  See
-<http://www.omegahat.org/> for information on most R packages available
+is available via <http://www.omegahat.net/R/>.  See
+<http://www.omegahat.net/> for information on most R packages available
 from the Omega project.
 
 5.1.4 Add-on packages from Bioconductor
@@ -2638,8 +2642,10 @@ default: this is done automatically for such URLs as from R 3.2.2.
 recommend that you use these methods.  The requisite code to add to
 '.Rprofile' or 'Rprofile.site' is:
 
-     options(download.file.method = "wininet", url.method = "wininet")     (Windows)
-     options(download.file.method = "libcurl", url.method = "libcurl")     (Linux and OS X)
+     options(download.file.method = "wininet", url.method = "wininet")
+     (Windows)
+     options(download.file.method = "libcurl", url.method = "libcurl")
+     (Linux and OS X)
 
 (Method '"wininet"' is the default on Windows as from R 3.2.2.)
 
@@ -2649,6 +2655,20 @@ FALSE', we recommend method '"wget"' on Linux and '"curl"' on OS X. It
 is possible that system versions of '"libcurl"', 'wget' or 'curl' may
 have been compiled without HTTPS support, but this is unlikely.  As from
 R 3.3.0 '"libcurl"' with HTTPS support is required except on Windows.
+
+7.44 How can I get CRAN package binaries for outdated versions of R?
+====================================================================
+
+Since March 2016, Windows and OS X binaries of CRAN packages for old
+versions of R (released more than 5 years ago) are made available from a
+central CRAN archive server instead of the CRAN mirrors.  To get these,
+one should set the CRAN "mirror" element of the 'repos' option
+accordingly, by something like
+     local({r <- getOption("repos")
+            r["CRAN"] <- "http://CRAN-archive.R-project.org"
+            options(repos = r)
+           })
+(see '?options' for more information).
 
 8 R Programming
 ***************

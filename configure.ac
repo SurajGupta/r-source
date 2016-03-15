@@ -2,7 +2,7 @@
 ###
 ### Process this file with autoconf to produce a configure script.
 ###
-### Copyright (C) 1998-2015 R Core Team
+### Copyright (C) 1998-2016 R Core Team
 ###
 ### This file is part of R.
 ###
@@ -18,7 +18,7 @@
 ###
 ### You should have received a copy of the GNU General Public License
 ### along with R; if not, a copy is available at
-### http://www.r-project.org/Licenses/
+### https://www.r-project.org/Licenses/
 
 AC_PREREQ(2.62)
 
@@ -77,7 +77,7 @@ AC_DEFINE_UNQUOTED(R_OS, "${host_os}",
 case "${host_os}" in
    ## Darwin 1.3.1 was OS X 10.0, 1.4.1 was 10.1, 5 is 10.2 etc
    ## with 13 being 10.9.  We no longer support < 10.4 (Tiger)
-   ## http://en.wikipedia.org/wiki/Darwin_OS
+   ## https://en.wikipedia.org/wiki/Darwin_OS
    darwin1.*)
      AC_MSG_ERROR([The earliest supported OS X is 10.4.]
      ;; 
@@ -695,6 +695,8 @@ case "${host_os}" in
     ## changes DYLD_LIBRARY_PATH), because they override the system
     ## look-up sequence. Such automatic override has proven to break things
     ## like system frameworks (e.g. ImageIO or OpenGL framework).
+    ## Not so bad in later versions of Darwin, 
+    ## where DYLD_FALLBACK_LIBRARY_PATH is used (see below).
     ;;
   *)
     for arg in ${LDFLAGS}; do
@@ -710,8 +712,9 @@ esac
 
 ## Record name of environment variable which tells the dynamic linker
 ## where to find shlibs (typically, 'LD_LIBRARY_PATH').
-## Used in etc/ldpaths: override what libtool thinks on OS X
+## Used in etc/ldpaths: As from R 3.0.0 override what libtool thinks on OS X
 ## http://hublog.hubmed.org/archives/001192.html suggests this was in 10.4
+## However, as from 10.11 this variable is not passed down to shells.
 case "${host_os}" in
   darwin*)
     Rshlibpath_var=DYLD_FALLBACK_LIBRARY_PATH
@@ -748,7 +751,7 @@ case "${host_os}" in
     ## OS X <= 10.2 dlcompat, >= 10.3 included dlcompat in libSystem
     AC_SEARCH_LIBS(dlopen, dl,,[AC_MSG_ERROR([Your OS X is too old.])])
     ## SI says we want '-lcc_dynamic' on Darwin, although currently
-    ## http://developer.apple.com/documentation/MacOSX/ has nothing
+    ## https://developer.apple.com/documentation/MacOSX/ has nothing
     ## official.  Bill Northcott <w.northcott@unsw.edu.au> points out
     ## that it is only needed for GCC 3.x (and earlier) ...
     if test "${GCC}" = yes; then
@@ -1873,7 +1876,7 @@ AC_CHECK_DECLS([alloca], , ,
 ## FreeBSD 7.3 lacks nearbyintl/rintl (nearbyint appeared in 5.2)
 ## Apparently rint was once broken on HP-UX: undefine HAVE_RINT for such platforms
 ## Cygwin and FreeBSD lacked powl (FreeBSD 10 seems to have it).
-## Cygwin has rintl but not nearbyintl
+## Cygwin had rintl but not nearbyintl
 R_CHECK_FUNCS([expm1 hypot log1p log1pl log2 log10 nearbyint nearbyintl powl rint rintl], [#include <math.h>])
 ## va_copy is C99: required as from R 2.13.0
 R_CHECK_FUNCS([va_copy], [#include <stdarg.h>])
@@ -1887,11 +1890,11 @@ AC_CHECK_FUNCS(isblank)
 AC_CHECK_HEADERS(sunmath.h)
 AC_CHECK_LIB(sunmath, cospi)
 
-## Functions from draft C11 extensions, some of which are already in glibc
+## Functions from ISO/IEC TS 18661-4:2015 C11 extensions.
 ## For now, do not define _GNU_SOURCE here.
 ## All but pown have long been in libsunmath
 AC_CHECK_FUNCS([atanpi atan2pi cospi exp10 pown sinpi tanpi], 
-[#define __STDC_WANT_IEC_60559_TYPES_EXT__ 1
+[#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
 #include <math.h>
 #ifdef HAVE_SUNMATH_H
 #include <sunmath.h>
@@ -2442,9 +2445,11 @@ case "${host_os}" in
     [AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include "confdefs.h"
 #include <stdlib.h>
+/* This might get optimized out if not used */
 extern void * __libc_stack_end;
 
 int main () {
+    if(!__libc_stack_end) exit(1);
     exit(0);
 }
   ]])], [r_cv_libc_stack_end=yes], [r_cv_libc_stack_end=no], 

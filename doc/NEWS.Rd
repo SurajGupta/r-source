@@ -5,6 +5,171 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R 3.2.4}{
+  \subsection{NEW FEATURES}{
+    \itemize{
+      \item \code{install.packages()} and related functions now give a
+      more informative warning when an attempt is made to install a base
+      package.
+
+      \item \code{summary(x)} now prints with less rounding when
+      \code{x} contains infinite values. (Request of \PR{16620}.)
+
+      \item \code{provideDimnames()} gets an optional \code{unique} argument.
+
+      \item \code{shQuote()} gains \code{type = "cmd2"} for quoting
+      in \command{cmd.exe} in Windows.  (Response to \PR{16636}.)
+
+      \item The \code{data.frame} method of \code{rbind()} gains an
+      optional argument \code{stringsAsFactors} (instead of only
+      depending on \code{getOption("stringsAsFactors")}).
+
+      \item \code{smooth(x, *)} now also works for long vectors.
+
+      \item \code{tools::texi2dvi()} has a workaround for problems with
+      the \command{texi2dvi} script supplied by \pkg{texinfo 6.1}.
+
+      It extracts more error messages from the LaTeX logs when in
+      emulation mode.
+    }
+  }
+
+  \subsection{UTILITIES}{
+    \itemize{
+      \item \command{R CMD check} will leave a log file
+      \file{build_vignettes.log} from the re-building of vignettes in
+      the \file{.Rcheck} directory if there is a problem, and always if
+      environment variable \env{_R_CHECK_ALWAYS_LOG_VIGNETTE_OUTPUT_} is
+      set to a true value.
+    }
+  }
+
+  \subsection{DEPRECATED AND DEFUNCT}{
+    \itemize{
+      \item Use of \samp{SUPPORT_OPENMP} from header \file{Rconfig.h} is
+      deprecated in favour of the standard OpenMP define \samp{_OPENMP}.
+
+      (This has been the recommendation in the manual for a while now.)
+
+      \item The \command{make} macro \code{AWK} which is long unused by
+      \R itself but recorded in file \file{etc/Makeconf} is deprecated
+      and will be removed in \R 3.3.0.
+
+      \item The C header file \file{S.h} is no longer documented: its
+      use should be replaced by \file{R.h}.
+    }
+  }
+
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \code{kmeans(x, centers = <1-row>)} now works. (\PR{16623})
+
+      \item \code{Vectorize()} now checks for clashes in argument names.
+      (\PR{16577})
+
+      \item \code{file.copy(overwrite = FALSE)} would signal a successful
+      copy when none had taken place.  (\PR{16576})
+
+      \item \code{ngettext()} now uses the same default domain as
+      \code{gettext()}.  (\PR{14605})
+
+      \item \code{array(.., dimnames = *)} now warns about
+      non-\code{list} dimnames and, from \R 3.3.0, will signal the same
+      error for invalid dimnames as \code{matrix()} has always done.
+
+      \item \code{addmargins()} now adds dimnames for the extended
+      margins in all cases, as always documented.
+
+      \item \code{heatmap()} evaluated its \code{add.expr} argument
+      in the wrong environment.  (\PR{16583})
+
+      \item \code{require()} etc now give the correct entry of
+      \code{lib.loc} in the warning about an old version of a package
+      masking a newer required one.
+
+      \item The internal deparser did not add parentheses when
+      necessary,  e.g. before \code{[]} or \code{[[]]}.  (Reported by
+      Lukas Stadler; additional fixes included as well).
+
+      \item \code{as.data.frame.vector(*, row.names=*)} no longer
+      produces \sQuote{corrupted} data frames from row names of incorrect
+      length, but rather warns about them.  This will become an error.
+
+      \item \code{url} connections with \code{method = "libcurl"} are
+      destroyed properly. (\PR{16681})
+
+      \item \code{withCallingHandler()} now (again) handles warnings
+      even during S4 generic's argument evaluation.  (\PR{16111})
+
+      \item \code{deparse(..., control = "quoteExpressions")}
+      incorrectly quoted empty expressions.  (\PR{16686})
+
+      \item \code{format()}ting datetime objects (\code{"POSIX[cl]?t"})
+      could segfault or recycle wrongly.  (\PR{16685})
+
+      \item \code{plot.ts(<matrix>, las = 1)} now does use \code{las}.
+
+      \item \code{saveRDS(*, compress = "gzip")} now works as
+      documented.  (\PR{16653})
+
+      \item (Windows only) The \command{Rgui} front end did not
+      always initialize the console properly, and could cause
+      \R to crash.  (\PR{16998})
+
+      \item \code{dummy.coef.lm()} now works in more cases, thanks to a
+      proposal by Werner Stahel (\PR{16665}).  In addition, it now works
+      for multivariate linear models (\code{"mlm"}, \code{\link{manova}})
+      thanks to a proposal by Daniel Wollschlaeger.
+
+      \item The \code{as.hclust()} method for \code{"dendrogram"}s
+      failed often when there were ties in the heights.
+
+      \item \code{reorder()} and \code{midcache.dendrogram()} now are
+      non-recursive and hence applicable to somewhat deeply nested
+      dendrograms, thanks to a proposal by Suharto Anggono in \PR{16424}.
+
+      \item \code{cor.test()} now calculates very small p values
+      more accurately (affecting the result only in extreme not
+      statistically relevant cases).  (\PR{16704})
+
+      \item \code{smooth(*, do.ends=TRUE)} did not always work correctly
+      in \R versions between 3.0.0 and 3.2.3.
+
+      \item \code{pretty(D)} for date-time objects \code{D} now also
+      works well if \code{range(D)} is (much) smaller than a second.  In
+      the case of only one unique value in \code{D}, the pretty range
+      now is more symmetric around that value than previously.
+      \cr
+      Similarly, \code{pretty(dt)} no longer returns a length 5 vector
+      with duplicated entries for \code{Date} objects \code{dt} which
+      span only a few days.
+
+      \item The figures in help pages such as \code{?points} were
+      accidentally damaged, and did not appear in \R 3.2.3.
+      (\PR{16708})
+
+      \item \code{available.packages()} sometimes deleted the wrong
+      file when cleaning up temporary files.  (\PR{16712})
+
+      \item The \code{X11()} device sometimes froze on Red Hat
+      Enterprise Linux 6. It now waits for \code{MapNotify} events
+      instead of \code{Expose} events, thanks to Siteshwar
+      Vashisht. (\PR{16497})
+
+      \item \code{[dpqr]nbinom(*, size=Inf, mu=.)} now works as limit
+      case, for \sQuote{dpq} as the Poisson.  (\PR{16727})\cr
+      \code{pnbinom()} no longer loops infinitely in border cases.
+
+      \item \code{approxfun(*, method="constant")} and hence \code{ecdf()}
+      which calls the former now correctly \dQuote{predict} \code{NaN}
+      values as \code{NaN}.
+
+      \item \code{summary.data.frame()} now displays \code{NA}s in
+      \code{Date} columns in all cases.  (\PR{16709})
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R 3.2.3}{
   \subsection{NEW FEATURES}{
     \itemize{
@@ -41,10 +206,10 @@
       \item \code{loess(..., iterTrace=TRUE)} now provides diagnostics
       for robustness iterations, and the \code{print()} method for
       \code{summary(<loess>)} shows slightly more.
-      
+
       \item The included version of PCRE has been updated to 8.38, a
       bug-fix release.
-      
+
       \item \code{View()} now displays nested data frames in a more
       friendly way.  (Request with patch in \PR{15915}.)
     }
@@ -1495,7 +1660,7 @@
 
       \item \code{sub()} and \code{gsub()} did not handle regular
       expressions like \code{"\\s{2,}"} properly if the text
-      contained \code{NA} or non-ascii elements in a UTF-8
+      contained \code{NA} or non-ASCII elements in a UTF-8
       locale.  Part of this was due to a bug in the TRE library.
       (\PR{16009})
 

@@ -189,7 +189,7 @@ SEXP attribute_hidden do_matrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ;
 	}
     }
-    if(!isNull(dimnames)&& length(dimnames) > 0)
+    if(!isNull(dimnames) && length(dimnames) > 0)
 	ans = dimnamesgets(ans, dimnames);
     UNPROTECT(1);
     return ans;
@@ -1645,12 +1645,13 @@ SEXP attribute_hidden do_array(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     ans = dimgets(ans, dims);
-    if (TYPEOF(dimnames) == VECSXP && LENGTH(dimnames)) {
-	PROTECT(ans);
-	ans = dimnamesgets(ans, dimnames);
-	UNPROTECT(1);
+    if(!isNull(dimnames) && length(dimnames) > 0) {
+	// R 3.2.3 patched only: do not signal an error yet for wrong dimnames
+	if (TYPEOF(dimnames) != VECSXP)
+	    warning(_("non-list dimnames are disregarded; will be an error in R 3.3.0"));
+	else
+	    ans = dimnamesgets(ans, dimnames);
     }
-
     UNPROTECT(2);
     return ans;
 }

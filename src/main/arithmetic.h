@@ -39,7 +39,7 @@ static R_INLINE double R_POW(double x, double y) /* handle x ^ 2 inline */
 
 /* some systems get this wrong, possibly depend on what libs are loaded */
 static R_INLINE double R_log(double x) {
-    return x > 0 ? log(x) : x < 0 ? R_NaN : R_NegInf;
+    return x > 0 ? log(x) : x == 0 ? R_NegInf : R_NaN;
 }
 
 /* Note that the behaviour of log(0) required is not necessarily that
@@ -50,10 +50,10 @@ static R_INLINE double R_log(double x) {
 static R_INLINE double logbase(double x, double base)
 {
 #ifdef HAVE_LOG10
-    if(base == 10) return x > 0 ? log10(x) : x < 0 ? R_NaN : R_NegInf;
+    if(base == 10) return x > 0 ? log10(x) : x == 0 ? R_NegInf : R_NaN;
 #endif
 #ifdef HAVE_LOG2
-    if(base == 2) return x > 0 ? log2(x) : x < 0 ? R_NaN : R_NegInf;
+    if(base == 2) return x > 0 ? log2(x) : x == 0 ? R_NegInf : R_NaN;
 #endif
     return R_log(x) / R_log(base);
 }

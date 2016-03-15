@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2005-12   The R Core Team
+ *  Copyright (C) 2005-2016   The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,29 +17,26 @@
  *  https://www.R-project.org/Licenses/
  */
 
+/* Internal header, not installed */
 
 /*  This file was contributed by Ei-ji Nakama.
- *  See also the comments in src/main/rlocale.c.
+ *  See also the comments in  ../main/rlocale.c.
 
  *  It does 2 things:
  * (a) supplies wrapper/substitute wc[s]width functions for use in 
  *    character.c, errors.c, printutils.c, devPS.c, RGui console.
  * (b) Defines a replacment for iswctype to be used on Windows, OS X and AIX.
  * in gram.c 
+ *
+ * It is not an installed header.
  */
 
 #ifndef R_LOCALE_H
 #define R_LOCALE_H
 
-#ifndef NO_C_HEADERS
 #include <wchar.h>
 #include <ctype.h>
 #include <wctype.h>
-#endif
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 /*
  * Windows CJK
@@ -117,7 +114,4 @@ extern int      Ri18n_iswctype(wint_t, wctype_t);
 #define iswctype(__x,__y) Ri18n_iswctype(__x,__y)
 #endif
 
-#ifdef  __cplusplus
-}
-#endif
 #endif /* R_LOCALE_H */

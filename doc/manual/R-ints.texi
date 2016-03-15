@@ -540,7 +540,7 @@ enclosure.
 There are additional places that `variables' can be looked up, called
 `user databases' in comments in the code.  These seem undocumented in
 the @R{} sources, but apparently refer to the @pkg{RObjectTable} package
-at @uref{http://www.omegahat.org/RObjectTables/}.
+at @uref{http://www.omegahat.net/RObjectTables/}.
 
 @cindex base environment
 @cindex environment, base
@@ -3855,8 +3855,8 @@ Controls the minimum level for reporting warnings from @code{checkRd}.
 Default: -1.
 @item _R_CHECK_XREFS_REPOSITORIES_
 If set to a non-empty value, a space-separated list of repositories to
-use to determine known packages.  Default: empty, when the CRAN,
-Omegahat and Bioconductor repositories known to @R{} is used.
+use to determine known packages.  Default: empty, when the CRAN
+and Bioconductor repositories known to @R{} is used.
 @item _R_CHECK_SRC_MINUS_W_IMPLICIT_
 Control whether installation output is checked for compilation warnings
 about implicit function declarations (as spotted by GCC with command
@@ -3920,7 +3920,8 @@ to a valid program, or @command{gs} (or on Windows,
 Default: false (but true for CRAN submission checks).
 @item _R_CHECK_ALWAYS_LOG_VIGNETTE_OUTPUT_
 By default the output from running the @R{} code in the vignettes is
-kept only if there is an error.
+kept only if there is an error.  As from @R{} 3.2.4 this also applies to
+the @file{build_vignettes.log} log from the re-building of vignettes.
 Default: false.
 @item _R_CHECK_CLEAN_VIGN_TEST_
 Should the @file{vign_test} directory be removed if the test is successful?
@@ -3930,7 +3931,7 @@ Should warnings about replacing imports be reported?  These sometimes come
 from auto-generated @file{NAMESPACE} files in other packages, but most
 often from importing the whole of a namespace rather than using
 @code{importFrom}.
-Default: false (but true for CRAN submission checks).
+Default: true.
 @item _R_CHECK_UNSAFE_CALLS_
 Check for calls that appear to tamper with (or allow tampering with)
 already loaded code not from the current package: such calls may well

@@ -1,6 +1,6 @@
 % File src/library/base/man/cbind.Rd
 % Part of the R package, https://www.R-project.org
-% Copyright 1995-2015 R Core Team
+% Copyright 1995-2016 R Core Team
 % Distributed under GPL 2 or later
 
 \name{cbind}
@@ -20,7 +20,8 @@
 \usage{
 cbind(\dots, deparse.level = 1)
 rbind(\dots, deparse.level = 1)
-\method{rbind}{data.frame}(\dots, deparse.level = 1, make.row.names = TRUE)
+\method{rbind}{data.frame}(\dots, deparse.level = 1, make.row.names = TRUE,
+      stringsAsFactors = default.stringsAsFactors())
 }
 \arguments{
   \item{\dots}{(generalized) vectors or matrices.  These can be given as named
@@ -37,6 +38,9 @@ rbind(\dots, deparse.level = 1)
   \item{make.row.names}{(only for data frame method:) logical
     indicating if unique and valid \code{\link{row.names}} should be
     constructed from the arguments.}
+  \item{stringsAsFactors}{logical, passed to \code{\link{as.data.frame}};
+    only has an effect when the \code{\dots} arguments contain a
+    (non-\code{data.frame}) \code{\link{character}}.}
 }
 \details{
   The functions \code{cbind} and \code{rbind} are S3 generic, with
