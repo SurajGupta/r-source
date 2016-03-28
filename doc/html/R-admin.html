@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This manual is for R, version 3.2.4 (2016-03-10).
+<!-- This manual is for R, version 3.2.4 Revised (2016-03-16).
 
 Copyright (C) 2001-2016 R Core Team
 
@@ -333,7 +333,7 @@ p {
 
 <p>This is a guide to installation and administration for R.
 </p>
-<p>This manual is for R, version 3.2.4 (2016-03-10).
+<p>This manual is for R, version 3.2.4 Revised (2016-03-16).
 </p>
 <p>Copyright &copy; 2001&ndash;2016 R Core Team
 </p>
@@ -1323,7 +1323,7 @@ from <acronym>CRAN</acronym> to run on 32- or 64-bit Windows (XP or later) on
 perhaps for some network-mounted systems).
 </p>
 <p>Installation is <em>via</em> the installer
-<samp>R-3.2.4-win.exe</samp>.  Just double-click on the icon and
+<samp>R-3.2.4revised-win.exe</samp>.  Just double-click on the icon and
 follow the instructions.  When installing on a 64-bit version of Windows
 the options will include 32- or 64-bit versions of R (and the default is
 to install both).  You can uninstall R from the Control Panel.
@@ -1721,7 +1721,7 @@ source tree) in <samp>src/gnuwin32/installer</samp> run
 installation (in double quotes if it contains spaces or backslashes).
 </p>
 <p>Both methods create an executable with a standard name such as
-<samp>R-3.2.4-win.exe</samp>, so please rename it to indicate that
+<samp>R-3.2.4revised-win.exe</samp>, so please rename it to indicate that
 it is customized.  If you intend to <em>distribute</em> a customized
 installer please do check that license requirements are met &ndash; note that
 the installer will state that the contents are distributed under GPL
@@ -1780,21 +1780,21 @@ make msi
 </pre></div>
 
 <p>which will result in a file with a name like
-<samp>R-3.2.4-win32.msi</samp>.  This can be double-clicked to be
+<samp>R-3.2.4revised-win32.msi</samp>.  This can be double-clicked to be
 installed, but those who need it will know what to do with it (usually
 by running <code>msiexec /i</code> with additional options).  Properties
 that users might want to set from the <code>msiexec</code> command line
 include &lsquo;<samp>ALLUSERS</samp>&rsquo;, &lsquo;<samp>INSTALLDIR</samp>&rsquo; (something like
-<samp>c:\Program Files\R\R-3.2.4</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
+<samp>c:\Program Files\R\R-3.2.4revised</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
 to the &lsquo;<samp>R</samp>&rsquo; folder on the start menu) and &lsquo;<samp>STARTDIR</samp>&rsquo; (the
 starting directory for R shortcuts, defaulting to something like
 <samp>c:\Users\name\Documents\R</samp>).
 </p>
 <p>The MSI installer can be built both from a 32-bit build of R
-(<samp>R-3.2.4-win32.msi</samp>) and from a 64-bit build of R
-(<samp>R-3.2.4-win64.msi</samp>, optionally including 32-bit files
+(<samp>R-3.2.4revised-win32.msi</samp>) and from a 64-bit build of R
+(<samp>R-3.2.4revised-win64.msi</samp>, optionally including 32-bit files
 by setting the macro <code>HOME32</code>, when the name is
-<samp>R-3.2.4-win.msi</samp>).  Unlike the main installer, a 64-bit
+<samp>R-3.2.4revised-win.msi</samp>).  Unlike the main installer, a 64-bit
 MSI installer can only be run on 64-bit Windows.
 </p>
 <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -5795,7 +5795,7 @@ install LaTeX packages on first use.
 <a name="The-Inno-Setup-installer-1"></a>
 <h3 class="section">D.2 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp>R-3.2.4-win.exe</samp>) we
+<p>To make the installer package (<samp>R-3.2.4revised-win.exe</samp>) we
 currently require the Unicode version of Inno Setup 5.3.7 or later from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>. This is <em>not</em> included in
 <samp>Rtools*.exe</samp>.
