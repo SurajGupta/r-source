@@ -1,12 +1,15 @@
 R News
 
-CHANGES IN R 3.2.4 patched:
+CHANGES IN R 3.2.5:
 
   BUG FIXES:
 
-    • format.POSIXlt() behaved wrongly, e.g.,
-      format(as.POSIXlt(paste0(1940:2000,"-01-01"), tz="CET"),
-      usetz=TRUE) ended in two "CEST" time formats.
+    • format.POSIXlt() behaved incorrectly in R 3.2.4.  E.g. the output
+      of format(as.POSIXlt(paste0(1940:2000,"-01-01"), tz = "CET"),
+      usetz = TRUE) ended in two "CEST" time formats.
+
+    • A typo in the Makefile for src/extra/xz prevented builds of
+      liblzma.a. (Notice that this will become unbundled in 3.3.0.)
 
 CHANGES IN R 3.2.4:
 

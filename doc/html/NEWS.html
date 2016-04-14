@@ -7,7 +7,7 @@
 
 <h2>R News</h2>
 
-<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.2.4 patched</h3>
+<h3><img src="../help/figures/../../html/logo.jpg" alt="../../html/logo.jpg" /> CHANGES IN R 3.2.5</h3>
 
 
 
@@ -15,9 +15,15 @@
 
 
 <ul>
-<li> <p><code>format.POSIXlt()</code> behaved wrongly, e.g.,
-<code>format(as.POSIXlt(paste0(1940:2000,"-01-01"), tz="CET"),
-	usetz=TRUE)</code> ended in two <code>"CEST"</code> time formats.
+<li> <p><code>format.POSIXlt()</code> behaved incorrectly in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> 3.2.4.
+E.g. the output of
+<code>format(as.POSIXlt(paste0(1940:2000,"-01-01"), tz = "CET"),
+	usetz = TRUE)</code> ended in two <code>"CEST"</code> time formats.
+</p>
+</li>
+<li><p> A typo in the Makefile for &lsquo;<span class="file">src/extra/xz</span>&rsquo; prevented 
+builds of &lsquo;<span class="file">liblzma.a</span>&rsquo;. (Notice that this will become
+unbundled in 3.3.0.)
 </p>
 </li></ul>
 
