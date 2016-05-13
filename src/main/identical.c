@@ -220,9 +220,9 @@ R_compute_identical(SEXP x, SEXP y, int flags)
 	while (x != R_NilValue) {
 	    if(y == R_NilValue)
 		return FALSE;
-	    if(!R_compute_identical(CAR(x), CAR(y), flags))
-		return FALSE;
 	    if(!R_compute_identical(PRINTNAME(TAG(x)), PRINTNAME(TAG(y)), flags))
+		return FALSE;
+	    if(!R_compute_identical(CAR(x), CAR(y), flags))
 		return FALSE;
 	    x = CDR(x);
 	    y = CDR(y);
