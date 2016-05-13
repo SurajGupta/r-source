@@ -18,9 +18,8 @@ opt.conformance <- 0
 Meps <- .Machine $ double.eps
 xMax <- .Machine $ double.xmax
 options(rErr.eps = 1e-30)
-rErr <- function(approx, true, eps = .Options$rErr.eps)
+rErr <- function(approx, true, eps = getOption("rErr.eps", 1e-30))
 {
-    if(is.null(eps)) { eps <- 1e-30; options(rErr.eps = eps) }
     ifelse(Mod(true) >= eps,
 	   1 - approx / true, # relative error
 	   true - approx)     # absolute error (e.g. when true=0)
@@ -642,7 +641,12 @@ for(nu in df.set) {
     pqq <- pt(-qq, df = nu, log=TRUE)
     stopifnot(is.finite(pqq))
 }
-##
+## PR#14230 -- more extreme beta cases {should no longer rely on denormalized}
+x <- (256:512)/1024
+P <- pbeta(x, 3, 2200, lower.tail=FALSE, log.p=TRUE)
+stopifnot(is.finite(P), P < -600,
+	  -.001 < (D3P <- diff(P, diff = 3)), D3P < 0, diff(D3P) < 0)
+## all but the first 43 where -Inf in R <= 2.9.1
 stopifnot(All.eq(pt(2^-30, df=10),
                  0.50000000036238542))
 ## = .5+ integrate(dt, 0,2^-30, df=10, rel.tol=1e-20)
@@ -872,9 +876,10 @@ pb <- c(## via Rmpfr's roundMpfr(pbetaI(x, a,b, log.p=TRUE, precBits = 2048), 64
     -4320.30273911659058550, -5186.73671481652222237, -6919.60466621638549567,
     -8652.47261761624876897, -10385.3405690161120427, -12118.2085204159753165,
     -13851.0764718158385902, -15583.9444232157018631, -17316.8123746155651368)
+stopifnot(all.equal(pb, pbeta(x,a,b, log.p=TRUE), tol=8e-16))# seeing {1.5|1.6|2.0}e-16
 qp <- qbeta(pb, a,b, log.p=TRUE)
 ## x == qbeta(pbeta(x, *), *) :
-stopifnot(qp > 0, all.equal(x, qp, tol= 1e-15))# seeing 2.4e-16
+stopifnot(qp > 0, all.equal(x, qp, tol= 1e-15))# seeing {2.4|3.3}e-16
 
 ## qbeta(), PR#15755
 a1 <- 0.0672788; b1 <- 226390
@@ -888,7 +893,7 @@ stopifnot(All.eq(0.695, pbeta(qbeta(0.695, b,a), b,a)))
 x <- -exp(seq(0, 14, by=2^-9))
 ct <- system.time(qx <- qbeta(x, a,b, log.p=TRUE))[[1]]
 pqx <- pbeta(qx, a,b, log=TRUE)
-stopifnot(all.equal(x, pqx, tol= 2e-15)) # 3.51e-16
+stopifnot(all.equal(x, pqx, tol= 2e-15)) # seeing {3.51|3.54}e-16
 ## note that qx[x > -exp(2)] is too close to 1 to get full accuracy:
 ## i2 <- x > -exp(2); all.equal(x[i2], pqx[i2], tol= 0)#-> 5.849e-12
 if(ct > 0.5) { cat("system.time:\n"); print(ct) }# lynne(2013): 0.048
@@ -920,6 +925,56 @@ ct2 <- system.time(q2 <- qbeta(0.95, a,a))[1]
 stopifnot(is.finite(qb), qb < 1e-300, q2 == 1)
 if(ct2 > 0.020) { cat("system.time:\n"); print(ct2) }
 ## had warnings and was much slower for R <= 3.1.0
+
+## qt(p, df= Inf, ncp)  <==> qnorm(p, m=ncp)
+p <- (0:32)/32
+stopifnot(all.equal(qt(p, df=Inf, ncp=5), qnorm(p, m=5)))
+## qt(*, df=Inf, .)  gave NaN in  R <= 3.2.1
+
+## rhyper(*, <large>);  PR#16489
+ct3 <- system.time(N <- rhyper(100, 8000, 1e9-8000, 1e6))[1]
+table(N)
+summary(N)
+stopifnot(abs(mean(N) - 8) < 1.5)
+if(ct3 > 0.02) { cat("system.time:\n"); print(ct3) }
+## N were all 0 and took very long for R <= 3.2.1
+set.seed(17)
+stopifnot(rhyper(1, 3024, 27466, 251) == 25,
+          rhyper(1,  329,  3059, 225) == 22)
+## failed for a day after a "thinko" in the above bug fix.
+
+## *chisq(*, df=0, ncp=0) == Point mass at 0
+stopifnot(rchisq(32,        df=0, ncp=0) == 0,
+          dchisq((0:16)/16, df=0, ncp=0) == c(Inf, rep(0, 16)))
+## gave all NaN's  for R <= 3.2.2
+
+## pchisq(*, df=0, ncp > 0, log.p=TRUE) :
+th <- 10*c(1:9,10^c(1:3,7))
+pp <- pchisq(0, df = 0, ncp=th, log.p=TRUE)
+stopifnot(all.equal(pp, -th/2, tol=1e-15))
+## underflowed at about th ~= 60  in R <= 3.2.2
+
+## pnbinom (-> C's bratio())
+op <- options(warn = 1)# -- NaN's giving warnings
+L <- 1e308; p <- suppressWarnings(pnbinom(L, L, mu = 5)) # NaN or 1 (for 64 / 32 bit)
+is.nan(p) || p == 1
+## gave infinite loop on some 64b platforms in R <= 3.2.3
+
+## [dpqr]nbinom(*, mu, size=Inf) -- PR#16727
+L <- 1e308; mu <- 5; pp <- (0:16)/16
+x <- c(0:3, 1e10, 1e100, L, Inf)
+(d <- dnbinom(x,  mu = mu, size = Inf)) # gave NaN (for 0 and L)
+(p <- pnbinom(x,  mu = mu, size = Inf)) # gave all NaN
+(q <- qnbinom(pp, mu = mu, size = Inf)) # gave all NaN
+set.seed(1); NI <- rnbinom(32, mu = mu, size = Inf)# gave all NaN
+set.seed(1); N2 <- rnbinom(32, mu = mu, size = L  )
+stopifnot(all.equal(d, dpois(x, mu)),
+	  all.equal(p, ppois(x, mu)),
+	  q == qpois(pp, mu),
+	  identical(NI, N2))
+options(op)
+## size = Inf -- mostly gave NaN  in R <= 3.2.3
+
 
 
 cat("Time elapsed: ", proc.time() - .ptime,"\n")

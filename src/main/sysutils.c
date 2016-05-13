@@ -636,14 +636,14 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		PROTECT(ans = duplicate(x));
 	    else {
 		PROTECT(ans = allocVector(STRSXP, LENGTH(x)));
-		DUPLICATE_ATTRIB(ans, x);
+		SHALLOW_DUPLICATE_ATTRIB(ans, x);
 	    }
 	} else {
 	    if(TYPEOF(x) != STRSXP)
 		error(_("'x' must be a character vector"));
 	    if(toRaw) {
 		PROTECT(ans = allocVector(VECSXP, LENGTH(x)));
-		DUPLICATE_ATTRIB(ans, x);
+		SHALLOW_DUPLICATE_ATTRIB(ans, x);
 	    } else
 		PROTECT(ans = duplicate(x));
 	}
@@ -655,7 +655,7 @@ SEXP attribute_hidden do_iconv(SEXP call, SEXP op, SEXP args, SEXP env)
 		    if (!toRaw) SET_STRING_ELT(ans, i, NA_STRING);
 		    continue;
 		} else if (TYPEOF(si) != RAWSXP)
-		    error(_("'x' must be a list of NULL or raw vectors"));
+		    error(_("'x' must be a character vector or a list of NULL or raw vectors"));
 	    } else {
 		si = STRING_ELT(x, i);
 		if (si == NA_STRING) {

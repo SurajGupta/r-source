@@ -948,8 +948,8 @@ SEXP attribute_hidden do_scan(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* set up a context which will close the connection if there is
        an error or user interrupt */
-    begincontext(&cntxt, CTXT_CCODE, call, R_BaseEnv, R_BaseEnv,
-		 R_NilValue, R_NilValue);
+    begincontext(&cntxt, CTXT_CCODE, R_GlobalContext->call, R_BaseEnv,
+		 R_BaseEnv, R_NilValue, R_NilValue);
     cntxt.cend = &scan_cleanup;
     cntxt.cenddata = &data;
 
@@ -1008,8 +1008,8 @@ SEXP attribute_hidden do_readln(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(length(prompt) > 0) {
 	    strncpy(ConsolePrompt, translateChar(STRING_ELT(prompt, 0)),
 		    CONSOLE_PROMPT_SIZE - 1);
-            ConsolePrompt[CONSOLE_PROMPT_SIZE - 1] = '\0';
-        }
+	    ConsolePrompt[CONSOLE_PROMPT_SIZE - 1] = '\0';
+	}
     }
 
     if(R_Interactive) {

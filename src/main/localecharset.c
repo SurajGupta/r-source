@@ -617,7 +617,7 @@ const char *locale2charset(const char *locale)
 	p = strrchr(la_loc, '.');
 	if(p) *p = '\0';
     }
-
+    
 #ifdef Win32
     /*
       ## PUTTY suggests mapping Windows code pages as

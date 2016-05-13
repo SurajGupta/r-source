@@ -1,6 +1,6 @@
 Name,Country,City,URL,Host,Maintainer,OK,CountryCode,Comment
-"0-Cloud [https]",0-Cloud,0-Cloud,https://cran.rstudio.com/,"Rstudio, automatic redirection to servers worldwide","winston # stdout.org",1,us,"secure_mirror_from_master"
-0-Cloud,0-Cloud,0-Cloud,http://cran.rstudio.com/,"Rstudio, automatic redirection to servers worldwide","winston # stdout.org",1,us,"secure_mirror_from_master"
+"0-Cloud [https]",0-Cloud,0-Cloud,https://cloud.r-project.org/,"Automatic redirection to servers worldwide, currently sponsored by Rstudio","winston # stdout.org",1,us,"secure_mirror_from_master"
+0-Cloud,0-Cloud,0-Cloud,http://cloud.r-project.org/,"Automatic redirection to servers worldwide, currently sponsored by Rstudio","winston # stdout.org",1,us,"secure_mirror_from_master"
 Algeria,Algeria,Algiers,http://cran.usthb.dz/,"University of Science and Technology Houari Boumediene","Boukala m c <mboukala # usthb.dz>",1,dz
 "Argentina (La Plata)",Argentina,"La Plata",http://mirror.fcaglp.unlp.edu.ar/CRAN/,"Universidad Nacional de La Plata","esuarez # Fcaglp.unlp.edu.ar",1,ar
 "Australia (Canberra)",Australia,Canberra,http://cran.csiro.au/,CSIRO,"Bill.Venables # CSIRO.au, ServiceDesk2 # CSIRO.au",1,au
@@ -8,6 +8,7 @@ Algeria,Algeria,Algiers,http://cran.usthb.dz/,"University of Science and Technol
 "Austria [https]",Austria,Wien,https://cran.wu.ac.at/,"Wirtschaftsuniversität Wien","CRAN # R-project.org",1,at
 Austria,Austria,Wien,http://cran.wu.ac.at/,"Wirtschaftsuniversität Wien","CRAN # R-project.org",1,at
 "Belgium (Antwerp)",Belgium,Antwerp,http://www.freestatistics.org/cran/,"K.U.Leuven Association","patrick # wessa.net",1,be
+"Belgium (Ghent) [https]",Belgium,Ghent,https://lib.ugent.be/CRAN/,"Ghent University Library","Patrick Hochstenbach <Patrick.Hochstenbach # UGent.be>",1,be
 "Belgium (Ghent)",Belgium,Ghent,http://lib.ugent.be/CRAN/,"Ghent University Library","Patrick Hochstenbach <Patrick.Hochstenbach # UGent.be>",1,be
 "Brazil (BA)",Brazil,Ilheus,http://nbcgib.uesc.br/mirrors/cran/,"Center for Comp. Biol. at Universidade Estadual de Santa Cruz","eduardo # nbcgib.uesc.br",1,br
 "Brazil (PR)",Brazil,Curitiba,http://cran-r.c3sl.ufpr.br/,"Universidade Federal do Parana","Paulo Justiniano Ribeiro Junior <paulojus # ufpr.br>",1,br
@@ -29,11 +30,10 @@ Chile,Chile,Santiago,http://dirichlet.mat.puc.cl/,"Pontificia Universidad Catoli
 "Colombia (Cali) [https]",Colombia,Cali,https://www.icesi.edu.co/CRAN/,"Icesi University","adminred # Icesi.edu.co",1,co,"secure_mirror_from_master"
 "Colombia (Cali)",Colombia,Cali,http://www.icesi.edu.co/CRAN/,"Icesi University","adminred # Icesi.edu.co",1,co,"secure_mirror_from_master"
 "Czech Republic","Czech Republic","Prague",http://mirrors.nic.cz/R/,"CZ.NIC, Prague","mirrors # nic.cz",1,cz
-Denmark,Denmark,Aalborg,http://mirrors.dotsrc.org/cran/,"dotsrc.org, Aalborg","mirror # dotsrc.org",1,dk
 Ecuador,Ecuador,Guayaquil,http://cran.espol.edu.ec/,"Escuela Superior Politecnica del Litoral","jrodrig # espol.edu.ec",1,ec,"secure_mirror_from_master"
 "El Salvador","El Salvador","San Salvador",http://cran.salud.gob.sv/,"Ministry of Health (Ministerio de Salud)","mirror # salud.gob.sv",1,sv
 "Estonia",Estonia,Tartu,http://ftp.eenet.ee/pub/cran/,"EENet","eenet # eenet.ee",1,ee,"secure_mirror_from_master"
-"France (Lyon 1)",France,Lyon,http://cran.univ-lyon1.fr/,"Dept. of Biometry & Evol. Biology, University of Lyon","Jean Thioulouse <Jean.Thioulouse # univ-lyon1.fr>",1,fr
+"France (Lyon 1) [https]",France,Lyon,https://pbil.univ-lyon1.fr/CRAN/,"Dept. of Biometry & Evol. Biology, University of Lyon","Jean Thioulouse <Jean.Thioulouse # univ-lyon1.fr>",1,fr,"secure_mirror_from_master"
 "France (Lyon 2) [https]",France,Lyon,https://mirror.ibcp.fr/pub/CRAN/,"CNRS IBCP, Lyon","alexis.michon # ibcp.fr",1,fr,"secure_mirror_from_master"
 "France (Lyon 2)",France,Lyon,http://mirror.ibcp.fr/pub/CRAN/,"CNRS IBCP, Lyon","alexis.michon # ibcp.fr",1,fr,"secure_mirror_from_master"
 "France (Marseille)",France,Marseille,"http://cran.biotools.fr/","IBDM, Marseille","andrew.saurin # univ-amu.fr",1,fr
@@ -54,10 +54,11 @@ India,India,Chennai,http://ftp.iitm.ac.in/cran/,"Indian Institute of Technology 
 Iran,Iran,Mashhad,http://cran.um.ac.ir/,"Ferdowsi University of Mashhad","Majid Sarmad <sarmad # um.ac.ir>",1,ir
 Ireland,Ireland,Dublin,http://ftp.heanet.ie/mirrors/cran.r-project.org/,"HEAnet,Dublin","mirrors # heanet.ie",1,ie
 "Italy (Milano)",Italy,Milano,http://cran.mirror.garr.it/mirrors/CRAN/,"Garr Mirror, Milano","mirror-service # garr.it",1,it
-"Italy (Padua) [https]",Italy,Padua,http://cran.stat.unipd.it/,"University of Padua","cran # stat.unipd.it",1,it
+"Italy (Padua) [https]",Italy,Padua,https://cran.stat.unipd.it/,"University of Padua","cran # stat.unipd.it",1,it
 "Italy (Padua)",Italy,Padua,http://cran.stat.unipd.it/,"University of Padua","cran # stat.unipd.it",1,it
 "Italy (Palermo)",Italy,Palermo,http://dssm.unipa.it/CRAN/,"Universita degli Studi di Palermo","angelo.mineo # unipa.it, apontillo # gmail.com",1,it
-"Japan (Tokyo)",Japan,Tokyo,http://cran.ism.ac.jp/,"Institute of Statistical Mathematics, Tokyo","Junji Nakano <nakanoj # ism.ac.jp>",1,jp,"secure_mirror_from_master"
+"Japan (Tokyo) [https]",Japan,Tokyo,https://cran.ism.ac.jp/,"The Institute of Statistical Mathematics, Tokyo","Junji Nakano <nakanoj # ism.ac.jp>",1,jp,"secure_mirror_from_master"
+"Japan (Tokyo)",Japan,Tokyo,http://cran.ism.ac.jp/,"The Institute of Statistical Mathematics, Tokyo","Junji Nakano <nakanoj # ism.ac.jp>",1,jp,"secure_mirror_from_master"
 "Japan (Yamagata)",Japan,Yamagata,http://ftp.yz.yamagata-u.ac.jp/pub/cran/,"Yamagata University","ftp-admin # ftp.yz.yamagata-u.ac.jp",1,jp
 "Korea (Seoul 1)",Korea,Seoul,http://cran.nexr.com/,"NexR Corporation, Seoul","mining # nexr.com",1,kr
 "Korea (Seoul 2)",Korea,Seoul,http://healthstat.snu.ac.kr/CRAN/,"Graduate School of Public Health, Seoul National University, Seoul","Sunghow # gmail.com",1,kr,"secure_mirror_from_master"
@@ -69,11 +70,12 @@ Lebanon,Lebanon,Byblos,http://rmirror.lau.edu.lb/,"Lebanese American University,
 "Mexico (Queretaro)",Mexico,Queretaro,http://cran.jellyfish.lol/,"Jellyfish Foundation","Marco Galicia <galprasmarco # gmail.com>",1,mx
 "Netherlands (Amsterdam)",Netherlands,Amsterdam,http://cran.xl-mirror.nl/,"XL-Data, Amsterdam","werner # xl-mirror.nl",1,nl
 "Netherlands (Utrecht)",Netherlands,Utrecht,http://cran-mirror.cs.uu.nl/,"Utrecht University","webmaster # cs.uu.nl",1,nl
+"New Zealand [https]","New Zealand",Auckland,https://cran.stat.auckland.ac.nz/,"University of Auckland","w.schmidt # auckland.ac.nz",1,nz
 "New Zealand","New Zealand",Auckland,http://cran.stat.auckland.ac.nz/,"University of Auckland","w.schmidt # auckland.ac.nz",1,nz
 Norway,Norway,Bergen,http://cran.uib.no/,"University of Bergen","sundrift # It.uib.no",1,no
 Philippines,Philippines,"Quezon City",http://cran.stat.upd.edu.ph/,"University of the Philippines and PREGINET","Edward Santos <edward.p.santos # upd.edu.ph>, ops # pregi.net",1,ph
 Poland,Poland,Wroclaw,http://r.meteo.uni.wroc.pl/,"University of Wroclaw","Paweł Netzel <netzel # meteo.uni.wroc.pl>",1,pl,"maintainer_address_bounces"
-"Portugal (Lisbon)",Portugal,Lisbon,http://cran.radicaldevelop.com/,"RadicalDevelop, Lda","geral # radicaldevelop.com",0,pt
+"Portugal (Lisbon)",Portugal,Lisbon,http://cran.radicaldevelop.com/,"RadicalDevelop, Lda","geral # radicaldevelop.com",1,pt
 "Portugal (Porto)",Portugal,Porto,http://cran.dcc.fc.up.pt/,"University of Porto","labcc # labcc.dcc.fc.up.pt",0,pt
 "Russia (Moscow) [https]",Russia,Moscow,https://cran.gis-lab.info/,GIS-Lab.info,"sim # gis-lab.info",1,ru
 "Russia (Moscow)",Russia,Moscow,http://cran.gis-lab.info/,GIS-Lab.info,"sim # gis-lab.info",1,ru
@@ -83,7 +85,8 @@ Slovakia,Slovakia,Bratislava,http://cran.fyxm.net/,"FYXM.net, Bratislava","docko
 "South Africa (Johannesburg)","South Africa",Johannesburg,http://cran.mirror.ac.za/,"TENET, Johannesburg","Patrick Holahan <patrickh # tenet.ac.za>",1,za
 "Spain (A Coruña) [https]","Spain","A Coruña",https://ftp.cixug.es/CRAN/,"Oficina de software libre (CIXUG)","<osl # cixug.es>",1,es,"secure_mirror_from_master"
 "Spain (A Coruña)","Spain","A Coruña",http://ftp.cixug.es/CRAN/,"Oficina de software libre (CIXUG)","<osl # cixug.es>",1,es,"secure_mirror_from_master"
-"Spain (Madrid)",Spain,Madrid,http://cran.es.r-project.org/,"Spanish National Research Network, Madrid","Jose Manuel Macias <jmanuel.macias # rediris.es>",1,es,"secure_mirror_from_master"
+"Spain (Madrid) [https]",Spain,Madrid,https://cran.rediris.es/,"Spanish National Research Network, Madrid","Jose Manuel Macias <jmanuel.macias # rediris.es>",1,es,"secure_mirror_from_master"
+"Spain (Madrid)",Spain,Madrid,http://cran.rediris.es/,"Spanish National Research Network, Madrid","Jose Manuel Macias <jmanuel.macias # rediris.es>",1,es,"secure_mirror_from_master"
 Sweden,Sweden,Umeå,http://ftp.acc.umu.se/mirror/CRAN/,"Academic Computer Club, Umeå University","<ftp-adm # acc.umu.se>",1,se
 "Switzerland [https]",Switzerland,Zürich,https://stat.ethz.ch/CRAN/,"ETH Zürich","Martin.Maechler # R-project.org",1,ch,"secure_mirror_from_master"
 Switzerland,Switzerland,Zürich,http://stat.ethz.ch/CRAN/,"ETH Zürich","Martin.Maechler # R-project.org",1,ch,"secure_mirror_from_master"
@@ -99,10 +102,9 @@ Thailand,Thailand,Hatyai,http://mirrors.psu.ac.th/pub/cran/,"Prince of Songkla U
 "UK (London 1)",UK,London,http://cran.ma.imperial.ac.uk/,"Imperial College London","s.rochford # imperial.ac.uk",1,uk
 "UK (London 2)",UK,"London",http://mirror.mdx.ac.uk/R/,"Middlesex University London","Louis Slabbert <l.slabbert # mdx.ac.uk>",1,uk
 "UK (St Andrews)",UK,"St Andrews",http://star-www.st-andrews.ac.uk/cran/,"St Andrews University","Lee Kelvin <lsk9 # St-andrews.ac.uk>",1,uk,"maintainer_address_bounces"
-"USA (CA 1) [https]",USA,Berkeley,https://cran.cnr.Berkeley.edu/,"University of California, Berkeley, CA","casterln # nature.berkeley.edu",1,us,"secure_mirror_from_master"
-"USA (CA 1)",USA,Berkeley,http://cran.cnr.Berkeley.edu/,"University of California, Berkeley, CA","casterln # nature.berkeley.edu",1,us,"secure_mirror_from_master"
+"USA (CA 1) [https]",USA,Berkeley,https://cran.cnr.berkeley.edu/,"University of California, Berkeley, CA","casterln # nature.berkeley.edu",1,us,"secure_mirror_from_master"
+"USA (CA 1)",USA,Berkeley,http://cran.cnr.berkeley.edu/,"University of California, Berkeley, CA","casterln # nature.berkeley.edu",1,us,"secure_mirror_from_master"
 "USA (CA 2)",USA,"Los Angeles",http://cran.stat.ucla.edu/,"University of California, Los Angeles, CA","Jose Hales-Garcia <jose # stat.ucla.edu>",1,us
-"USA (CO)",USA,Denver,http://cran.mirrorcatalogs.com/,"Qarea Inc.","Gregory Edigarov <admin # mirrorcatalogs.com>",1,us,"secure_mirror_from_master"
 "USA (IA)",USA,Ames,http://mirror.las.iastate.edu/CRAN/,"Iowa State University, Ames, IA","statit # iastate.edu",1,us
 "USA (IN)",USA,Bloomington,http://ftp.ussg.iu.edu/CRAN/,"Indiana University","rtadmin # indiana.edu",1,us
 "USA (KS) [https]",USA,Lawrence,https://rweb.crmda.ku.edu/cran/,"University of Kansas, Lawrence, KS","Paul Johnson <pauljohn # ku.edu>",1,us,"secure_mirror_from_master"
@@ -117,7 +119,7 @@ Thailand,Thailand,Hatyai,http://mirrors.psu.ac.th/pub/cran/,"Prince of Songkla U
 "USA (OH 1)",USA,Cleveland,http://cran.case.edu/,"Case Western Reserve University, Cleveland, OH","""Alberto H. Santana"" <ahs4 # case.edu>",1,us
 "USA (OH 2)",USA,Dayton,http://iis.stat.wright.edu/CRAN/,"Wright State University, Dayton, OH","Long Qu <long.qu # wright.edu>",1,us
 "USA (OR)",USA,Corvallis,http://ftp.osuosl.org/pub/cran/,"Oregon State University","support # Osuosl.org",1,us
-"USA (PA 1)",USA,Pittsburgh,http://lib.stat.cmu.edu/R/CRAN/,"Statlib, Carnegie Mellon University, Pittsburgh, PA",,0,us
+"USA (PA 1)",USA,Pittsburgh,http://lib.stat.cmu.edu/R/CRAN/,"Statlib, Carnegie Mellon University, Pittsburgh, PA","Carl Skipper <remarks # stat.cmu.edu>",1,us
 "USA (PA 2)",USA,Pittsburgh,http://cran.mirrors.hoobly.com/,"Hoobly Classifieds, Pittsburgh, PA","Peter Grigor <pgrigor # hoobly.com>",1,us
 "USA (TN) [https]",USA,"Oak Ridge",https://mirrors.nics.utk.edu/cran/,"National Institute for Computational Sciences, Oak Ridge, TN","help # nics.utk.edu",1,us
 "USA (TN)",USA,"Oak Ridge",http://mirrors.nics.utk.edu/cran/,"National Institute for Computational Sciences, Oak Ridge, TN","help # nics.utk.edu",1,us

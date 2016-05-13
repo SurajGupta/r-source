@@ -2,9 +2,10 @@
 useDynLib(stats, .registration = TRUE, .fixes = "C_")
 
 import(graphics)
-importFrom(grDevices, dev.interactive, palette, extendrange, xy.coords)
-importFrom(utils, str)
-
+importFrom(grDevices, as.graphicsAnnot, dev.cur, dev.flush, dev.hold,
+           dev.interactive, dev.new, dev.set, devAskNewPage,
+           extendrange, n2mfrow, palette, xy.coords)
+importFrom(utils, count.fields, flush.console, str, tail)
 
 export(.checkMFClasses, .getXlevels, .MFclass, .nknots.smspl,
        acf, acf2AR, add.scope,
@@ -62,7 +63,7 @@ export(.checkMFClasses, .getXlevels, .MFclass, .nknots.smspl,
        rlnorm, rlogis, rmultinom, rnbinom, rnorm, rpois, rsignrank,
        rstandard, rstudent, rt, runif, runmed, rweibull, rwilcox,
        rWishart, scatter.smooth, screeplot, sd, se.contrast,
-       selfStart, setNames, simulate, smooth, smooth.spline,
+       selfStart, setNames, sigma, simulate, smooth, smooth.spline,
        smoothEnds, sortedXyData, spec.ar, spec.pgram, spec.taper,
        spectrum, spline, splinefun, splinefunH, SSD, SSasymp,
        SSasympOff, SSasympOrig, SSbiexp, SSfol, SSfpl, SSgompertz,
@@ -165,6 +166,7 @@ S3method(coef, aov)
 S3method(coef, Arima)
 S3method(coef, default)
 S3method(coef, listof)
+S3method(coef, maov)
 S3method(coef, nls)
 S3method(confint, default)
 S3method(confint, glm)
@@ -453,6 +455,8 @@ S3method(se.contrast, aov)
 S3method(se.contrast, aovlist)
 S3method(selfStart, default)
 S3method(selfStart, formula)
+S3method(sigma, default)
+S3method(sigma, mlm)
 S3method(simulate, lm)
 S3method(sortedXyData, default)
 S3method(str, dendrogram)

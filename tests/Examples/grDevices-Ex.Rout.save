@@ -1,5 +1,5 @@
 
-R version 3.2.4 RC (2016-03-02 r70281) -- "Very Secure Dishes"
+R version 3.3.0 beta (2016-04-19 r70517) -- "Supposedly Educational"
 Copyright (C) 2016 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -236,7 +236,7 @@ $allowed
 > ### Name: as.raster
 > ### Title: Create a Raster Object
 > ### Aliases: is.raster as.raster as.raster.logical as.raster.numeric
-> ###   as.raster.character as.raster.matrix as.raster.array
+> ###   as.raster.raw as.raster.character as.raster.matrix as.raster.array
 > ### Keywords: dplot
 > 
 > ### ** Examples
@@ -287,7 +287,7 @@ $allowed
      [,8]      [,9]      [,10]    
 [1,] "#FFFFFF" "#000000" "#FFFFFF"
 > 
-> # Matrix can also be logical or numeric ...
+> # Matrix can also be logical or numeric (or raw) ...
 > as.raster(matrix(c(TRUE, FALSE), nrow = 3, ncol = 2))
      [,1]      [,2]     
 [1,] "#FFFFFF" "#000000"
@@ -3226,63 +3226,65 @@ attr(,"class")
 > 
 > ### ** Examples
 > 
+> pretty(as.Date("2000-03-01")) # R 1.0.0 came in a leap year
+[1] "2000-02-28" "2000-02-29" "2000-03-01" "2000-03-02" "2000-03-03"
+[6] "2000-03-04"
 > 
-> steps <-
-+     list("10 secs", "1 min", "5 mins", "30 mins", "6 hours", "12 hours",
-+          "1 DSTday", "2 weeks", "1 month", "6 months", "1 year",
-+          "10 years", "50 years", "1000 years")
-> 
-> names(steps) <- paste("span =", unlist(steps))
-> 
+> ## time ranges in diverse scales:% also in ../../../../tests/reg-tests-1c.R
+> require(stats)
+> steps <- setNames(,
++     c("10 secs", "1 min", "5 mins", "30 mins", "6 hours", "12 hours",
++       "1 DSTday", "2 weeks", "1 month", "6 months", "1 year",
++       "10 years", "50 years", "1000 years"))
 > x <- as.POSIXct("2002-02-02 02:02")
 > lapply(steps,
 +        function(s) {
 +            at <- pretty(seq(x, by = s, length = 2), n = 5)
 +            attr(at, "labels")
 +        })
-$`span = 10 secs`
+$`10 secs`
 [1] "00" "02" "04" "06" "08" "10"
 
-$`span = 1 min`
+$`1 min`
 [1] "00" "10" "20" "30" "40" "50" "00"
 
-$`span = 5 mins`
+$`5 mins`
 [1] "02:02" "02:03" "02:04" "02:05" "02:06" "02:07"
 
-$`span = 30 mins`
-[1] "02:05" "02:10" "02:15" "02:20" "02:25" "02:30"
+$`30 mins`
+[1] "02:00" "02:10" "02:20" "02:30" "02:40"
 
-$`span = 6 hours`
-[1] "03:00" "04:00" "05:00" "06:00" "07:00" "08:00"
+$`6 hours`
+[1] "02:00" "03:00" "04:00" "05:00" "06:00" "07:00" "08:00" "09:00"
 
-$`span = 12 hours`
-[1] "03:00" "06:00" "09:00" "12:00"
+$`12 hours`
+[1] "00:00" "03:00" "06:00" "09:00" "12:00" "15:00"
 
-$`span = 1 DSTday`
-[1] "Feb 02 06:00" "Feb 02 12:00" "Feb 02 18:00" "Feb 03 00:00"
+$`1 DSTday`
+[1] "Feb 02 00:00" "Feb 02 06:00" "Feb 02 12:00" "Feb 02 18:00" "Feb 03 00:00"
+[6] "Feb 03 06:00"
 
-$`span = 2 weeks`
-[1] "Feb 04" "Feb 06" "Feb 08" "Feb 10" "Feb 12" "Feb 14" "Feb 16"
+$`2 weeks`
+[1] "Jan 28" "Feb 04" "Feb 11" "Feb 18"
 
-$`span = 1 month`
-[1] "Feb 04" "Feb 11" "Feb 18" "Feb 25"
+$`1 month`
+[1] "Jan 28" "Feb 04" "Feb 11" "Feb 18" "Feb 25" "Mar 04"
 
-$`span = 6 months`
-[1] "Mar" "Apr" "May" "Jun" "Jul" "Aug"
+$`6 months`
+[1] "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep"
 
-$`span = 1 year`
-[1] "Apr" "Jul" "Oct" "Jan"
+$`1 year`
+[1] "Jan" "Apr" "Jul" "Oct" "Jan" "Apr"
 
-$`span = 10 years`
-[1] "2004" "2006" "2008" "2010" "2012"
+$`10 years`
+[1] "2002" "2004" "2006" "2008" "2010" "2012" "2014"
 
-$`span = 50 years`
-[1] "2010" "2020" "2030" "2040" "2050"
+$`50 years`
+[1] "2000" "2010" "2020" "2030" "2040" "2050" "2060"
 
-$`span = 1000 years`
-[1] "2200" "2400" "2600" "2800" "3000"
+$`1000 years`
+[1] "2000" "2200" "2400" "2600" "2800" "3000" "3200"
 
-> 
 > 
 > 
 > 
@@ -3764,7 +3766,7 @@ $zlab
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  7.656 0.126 7.782 0 0 
+Time elapsed:  7.866 0.131 7.997 0 0 
 > grDevices::dev.off()
 null device 
           1 

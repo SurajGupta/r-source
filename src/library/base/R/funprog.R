@@ -95,7 +95,7 @@ function(f, x, init, right = FALSE, accumulate = FALSE)
         ## If all results have length one, we can simplify.
         ## (Note that we do not simplify to arrays in case all results
         ## have a common length > 1.)
-	if(all(vapply(out, length, 1.) == 1L))
+	if(all(lengths(out) == 1L))
             out <- unlist(out, recursive = FALSE)
         out
     }
@@ -105,7 +105,7 @@ Filter <-
 function(f, x)
 {
     ind <- as.logical(unlist(lapply(x, f)))
-    x[!is.na(ind) & ind]
+    x[which(ind)]
 }
 
 

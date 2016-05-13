@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2015   The R Core Team.
+ *  Copyright (C) 1999-2016   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -26,16 +26,23 @@
 #ifndef R_INTERNALS_H_
 #define R_INTERNALS_H_
 
+// Support for NO_C_HEADERS added in R 3.3.0
 #ifdef __cplusplus
-# include <cstdio>
-# ifdef __SUNPRO_CC
+# ifndef NO_C_HEADERS
+#  include <cstdio>
+#  ifdef __SUNPRO_CC
 using std::FILE;
+#  endif
+#  include <climits>
+#  include <cstddef>
 # endif
-# include <climits>
 extern "C" {
 #else
-# include <stdio.h>
-# include <limits.h> /* for INT_MAX */
+# ifndef NO_C_HEADERS
+#  include <stdio.h>
+#  include <limits.h> /* for INT_MAX */
+#  include <stddef.h> /* for ptrdiff_t */
+# endif
 #endif
 
 #include <R_ext/Arith.h>
@@ -356,6 +363,7 @@ typedef union { VECTOR_SEXPREC s; double align; } SEXPREC_ALIGN;
   } while (0)
 # define IS_SCALAR(x, type) (TYPEOF(x) == (type) && SHORT_VEC_LENGTH(x) == 1)
 #else
+# define SHORT_VEC_LENGTH(x) (((VECSEXP) (x))->vecsxp.length)
 # define LENGTH(x)	(((VECSEXP) (x))->vecsxp.length)
 # define TRUELENGTH(x)	(((VECSEXP) (x))->vecsxp.truelength)
 # define XLENGTH(x) LENGTH(x)
@@ -440,7 +448,7 @@ typedef struct SEXPREC *SEXP;
 #define CHAR(x)		R_CHAR(x)
 const char *(R_CHAR)(SEXP x);
 
-/* Various tests with macro versions in the USE_RINTERNALS section */
+/* Various tests with macro versions in the second USE_RINTERNALS section */
 Rboolean (Rf_isNull)(SEXP s);
 Rboolean (Rf_isSymbol)(SEXP s);
 Rboolean (Rf_isLogical)(SEXP s);
@@ -527,6 +535,7 @@ void (SET_TYPEOF)(SEXP x, int v);
 void (SET_NAMED)(SEXP x, int v);
 void SET_ATTRIB(SEXP x, SEXP v);
 void DUPLICATE_ATTRIB(SEXP to, SEXP from);
+void SHALLOW_DUPLICATE_ATTRIB(SEXP to, SEXP from);
 
 /* S4 object testing */
 int (IS_S4_OBJECT)(SEXP x);
@@ -719,6 +728,7 @@ LibExtern SEXP  R_dot_defined;      /* ".defined" */
 LibExtern SEXP  R_dot_Method;       /* ".Method" */
 LibExtern SEXP	R_dot_packageName;// ".packageName"
 LibExtern SEXP  R_dot_target;       /* ".target" */
+LibExtern SEXP  R_dot_Generic;      /* ".Generic" */
 
 /* Missing Values - others from Arith.h */
 #define NA_STRING	R_NaString
@@ -810,6 +820,7 @@ SEXP Rf_installDDVAL(int i);
 SEXP Rf_installS3Signature(const char *, const char *);
 Rboolean Rf_isFree(SEXP);
 Rboolean Rf_isOrdered(SEXP);
+Rboolean Rf_isUnmodifiedSpecSym(SEXP sym, SEXP env);
 Rboolean Rf_isUnordered(SEXP);
 Rboolean Rf_isUnsorted(SEXP, Rboolean);
 SEXP Rf_lengthgets(SEXP, R_len_t);
@@ -1049,6 +1060,8 @@ SEXP R_Unserialize(R_inpstream_t ips);
 SEXP R_do_slot(SEXP obj, SEXP name);
 SEXP R_do_slot_assign(SEXP obj, SEXP name, SEXP value);
 int R_has_slot(SEXP obj, SEXP name);
+/* S3-S4 class (inheritance), attrib.c */
+SEXP R_S4_extends(SEXP klass, SEXP useTable);
 
 /* class definition, new objects (objects.c) */
 SEXP R_do_MAKE_CLASS(const char *what);
@@ -1090,7 +1103,9 @@ Rboolean R_compute_identical(SEXP, SEXP, int);
 
 /* C version of R's  indx <- order(..., na.last, decreasing) :
    e.g.  arglist = Rf_lang2(x,y)  or  Rf_lang3(x,y,z) */
-void R_orderVector(int *indx, int n, SEXP arglist, Rboolean nalast, Rboolean decreasing);
+void R_orderVector (int *indx, int n, SEXP arglist, Rboolean nalast, Rboolean decreasing);
+// C version of R's  indx <- order(x, na.last, decreasing) :
+void R_orderVector1(int *indx, int n, SEXP x,       Rboolean nalast, Rboolean decreasing);
 
 #ifndef R_NO_REMAP
 #define acopy_string		Rf_acopy_string
@@ -1185,6 +1200,7 @@ void R_orderVector(int *indx, int n, SEXP arglist, Rboolean nalast, Rboolean dec
 #define isS4			Rf_isS4
 #define isString		Rf_isString
 #define isTs			Rf_isTs
+#define isUnmodifiedSpecSym	Rf_isUnmodifiedSpecSym
 #define isUnordered		Rf_isUnordered
 #define isUnsorted		Rf_isUnsorted
 #define isUserBinop		Rf_isUserBinop

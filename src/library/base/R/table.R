@@ -245,3 +245,13 @@ margin.table <- function(x, margin = NULL)
     class(z) <- oldClass(x) # avoid adding "matrix"
     z
 }
+
+`[.table` <-
+function(x, i, j, ..., drop = TRUE)
+{
+    ret <- NextMethod()
+    ldr <- length(dim(ret))
+    if((ldr > 1L) || (ldr == length(dim(x))))
+        class(ret) <- "table"
+    ret
+}    

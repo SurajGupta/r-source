@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.11.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2015-06-06 13:58+0100\n"
-"PO-Revision-Date: 2013-03-19 22:36-0600\n"
+"POT-Creation-Date: 2015-06-06 13:51+0100\n"
+"PO-Revision-Date: 2016-04-05 18:06-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -18,8 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=KOI8-R\n"
 "Content-Transfer-Encoding: 8bit\n"
 "First-Translator: Dmitri I GOULIAEV <dmitri.gouliaev@telkel.net\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: Rmd5.c:37
 msgid "argument 'files' must be character"
@@ -55,21 +54,23 @@ msgstr "нераспознанное описание формата '%s'"
 
 #: getfmts.c:136
 msgid "at most one asterisk '*' is supported in each conversion specification"
-msgstr ""
-"самое большее одна звездочка '*' поддерживается в каждом описании "
-"преобразования"
+msgstr "самое большее одна звездочка '*' поддерживается в каждом описании преобразования"
 
-#: gramLatex.c:2499 gramRd.c:3933
+#: gramLatex.c:2499
+#: gramRd.c:3933
 #, c-format
 msgid "unable to allocate buffer for long string at line %d"
 msgstr "не могу разместить буфер для длинной подстроки на строке %d"
 
-#: gramLatex.c:2736 gramRd.c:4422 gramRd.c:4428
+#: gramLatex.c:2736
+#: gramRd.c:4422
+#: gramRd.c:4428
 #, c-format
 msgid "invalid '%s' value"
 msgstr "неправильное значение '%s'"
 
-#: gramRd.c:2591 gramRd.c:2594
+#: gramRd.c:2591
+#: gramRd.c:2594
 #, c-format
 msgid "bad markup (extra space?) at %s:%d:%d"
 msgstr "плохая разметка (лишний пробел?) на %s:%d:%d"
@@ -89,7 +90,8 @@ msgstr "Максимум 4 аргумента разрешены для пользовательских макросов."
 msgid "No macro definition for '%s'."
 msgstr "Нет определения макроса для '%s'."
 
-#: gramRd.c:3348 gramRd.c:3352
+#: gramRd.c:3348
+#: gramRd.c:3352
 #, c-format
 msgid "newline within quoted string at %s:%d"
 msgstr "новая строка внутри закавыченной подстроки на %s:%d"
@@ -142,7 +144,9 @@ msgstr "плохой текстовый режим %d в 'deparseRd'"
 msgid "invalid bind address specification"
 msgstr "неправильное описание адреса привязки"
 
-#: install.c:112 install.c:133 install.c:135
+#: install.c:112
+#: install.c:133
+#: install.c:135
 #, c-format
 msgid "invalid '%s' argument"
 msgstr "неправильный аргумент '%s'"
@@ -163,6 +167,8 @@ msgstr "psnice()  на этой платформе не поддерживается"
 msgid "invalid argument type"
 msgstr "неправильный тип аргумента"
 
-#: text.c:223 text.c:245
+#: text.c:223
+#: text.c:245
 msgid "out of memory"
 msgstr "не хватает памяти"
+

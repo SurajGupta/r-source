@@ -51,12 +51,6 @@ getCRANmirrors(all = FALSE, local.only = FALSE)
   is best used with \code{local.only = TRUE} and row numbers in
    \file{\var{\link{R_HOME}}/doc/CRAN_mirrors.csv}.
 }
-\note{
-  The online list of mirrors is always accessed using HTTPS.  If your 
-  build of R does not support HTTPS, R uses the local copy
-  in \file{\var{\link{R_HOME}}/doc/CRAN_mirrors.csv}.  It can be
-  updated from \url{https://cran.r-project.org/CRAN_mirrors.csv}.
-}
 \value{
   None for \code{chooseCRANmirror()}, this function is invoked for its
   side effect of updating \code{options("repos")}.

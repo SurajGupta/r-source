@@ -71,12 +71,6 @@ static char * R_ConciseTraceback(SEXP call, int skip);
   WarningMessage()-> warningcall (but with message from WarningDB[]).
 */
 
-static void reset_stack_limit(void *data)
-{
-    uintptr_t *limit = (uintptr_t *) data;
-    R_CStackLimit = *limit;
-}
-
 void NORET R_SignalCStackOverflow(intptr_t usage)
 {
     /* We do need some stack space to process error recovery, so
@@ -84,15 +78,13 @@ void NORET R_SignalCStackOverflow(intptr_t usage)
        reduced R_CStackLimit to 95% of the initial value in
        setup_Rmainloop.
     */
-    RCNTXT cntxt;
-    uintptr_t stacklimit = R_CStackLimit;
-    R_CStackLimit += 0.05*R_CStackLimit;
-    begincontext(&cntxt, CTXT_CCODE, R_NilValue, R_BaseEnv, R_BaseEnv,
-		 R_NilValue, R_NilValue);
-    cntxt.cend = &reset_stack_limit;
-    cntxt.cenddata = &stacklimit;
+    if (R_OldCStackLimit == 0) {
+	R_OldCStackLimit = R_CStackLimit;
+	R_CStackLimit = (uintptr_t) (R_CStackLimit / 0.95);
+    }
 
-    errorcall(R_NilValue, "C stack usage  %ld is too close to the limit", usage);
+    errorcall(R_NilValue, "C stack usage  %ld is too close to the limit",
+	      usage);
     /* Do not translate this, to save stack space */
 }
 
@@ -813,7 +805,8 @@ static void jump_to_top_ex(Rboolean traceback,
 
     haveHandler = FALSE;
 
-    if (tryUserHandler && inError < 3) {
+    /* don't use options("error") when handling a C stack overflow */
+    if (R_OldCStackLimit == 0 && tryUserHandler && inError < 3) {
 	if (! inError)
 	    inError = 1;
 
@@ -860,10 +853,9 @@ static void jump_to_top_ex(Rboolean traceback,
 
     /* WARNING: If oldInError > 0 ABSOLUTELY NO ALLOCATION can be
        triggered after this point except whatever happens in writing
-       the traceback and R_run_onexits.  The error could be an out of
-       memory error and any allocation could result in an
-       infinite-loop condition. All you can do is reset things and
-       exit.  */
+       the traceback.  The error could be an out of memory error and
+       any allocation could result in an infinite-loop condition. All
+       you can do is reset things and exit.  */
 
     /* jump to a browser/try if one is on the stack */
     if (! ignoreRestartContexts)
@@ -888,33 +880,7 @@ static void jump_to_top_ex(Rboolean traceback,
 	}
     }
 
-    /* Run onexit/cend code for all contexts down to but not including
-       the jump target.  This may cause recursive calls to
-       jump_to_top_ex, but the possible number of such recursive
-       calls is limited since each exit function is removed before it
-       is executed.  In addition, all but the first should have
-       inError > 0.  This is not a great design because we could run
-       out of other resources that are on the stack (like C stack for
-       example).  The right thing to do is arrange to execute exit
-       code *after* the LONGJMP, but that requires a more extensive
-       redesign of the non-local transfer of control mechanism.
-       LT. */
-    R_run_onexits(R_ToplevelContext);
-
-    if ( !R_Interactive && !haveHandler
-	 /* only bail out if at session top level, not in R_tryEval calls */
-	 && R_ToplevelContext == R_SessionContext ) {
-	REprintf(_("Execution halted\n"));
-	R_CleanUp(SA_NOSAVE, 1, 0); /* quit, no save, no .Last, status=1 */
-    }
-
-    R_GlobalContext = R_ToplevelContext;
-    R_restore_globals(R_GlobalContext);
-    LONGJMP(R_ToplevelContext->cjmpbuf, 0);
-    /* not reached
-    endcontext(&cntxt);
-    inError = oldInError;
-    */
+    R_jumpctxt(R_ToplevelContext, 0, NULL);
 }
 
 void NORET jump_to_toplevel()
@@ -931,6 +897,7 @@ void NORET jump_to_toplevel()
 /* gettext(domain, string) */
 SEXP attribute_hidden do_gettext(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
 #ifdef ENABLE_NLS
     const char *domain = "", *cfn;
     char *buf;
@@ -1134,6 +1101,7 @@ SEXP attribute_hidden NORET do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
 /* error(.) : really doesn't return anything; but all do_foo() must be SEXP */
     SEXP c_call;
+    checkArity(op, args);
 
     if(asLogical(CAR(args))) /* find context -> "Error in ..:" */
 	c_call = findCall();
@@ -1156,6 +1124,7 @@ SEXP attribute_hidden NORET do_stop(SEXP call, SEXP op, SEXP args, SEXP rho)
 SEXP attribute_hidden do_warning(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP c_call;
+    checkArity(op, args);
 
     if(asLogical(CAR(args))) /* find context -> "... in: ..:" */
 	c_call = findCall();
@@ -1315,12 +1284,7 @@ void NORET R_JumpToToplevel(Rboolean restart)
     if (c != R_ToplevelContext)
 	warning(_("top level inconsistency?"));
 
-    /* Run onexit/cend code for everything above the target. */
-    R_run_onexits(c);
-
-    R_ToplevelContext = R_GlobalContext = c;
-    R_restore_globals(R_GlobalContext);
-    LONGJMP(c->cjmpbuf, CTXT_TOPLEVEL);
+    R_jumpctxt(R_ToplevelContext, CTXT_TOPLEVEL, NULL);
 }
 #endif
 
@@ -1581,6 +1545,10 @@ static void vsignalError(SEXP call, const char *format, va_list ap)
 	    if (ENTRY_HANDLER(entry) == R_RestartToken)
 		return; /* go to default error handling; do not reset stack */
 	    else {
+		/* if we are in the process of handling a C stack
+		   overflow, treat all calling handlers ar failed */
+		if (R_OldCStackLimit)
+		    break;
 		SEXP hooksym, hcall, qcall;
 		/* protect oldstack here, not outside loop, so handler
 		   stack gets unwound in case error is protect stack

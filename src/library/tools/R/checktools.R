@@ -1,7 +1,7 @@
 #  File src/library/tools/R/checktools.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 2013-2014 The R Core Team
+#  Copyright (C) 2013-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -110,19 +110,21 @@ function(dir,
     ## Build a package db from the source packages in the working
     ## directory.
     write_PACKAGES(dir, type = "source")
-
+    if(dir.exists(depdir <- file.path(dir, "Depends"))) {
+        write_PACKAGES(depdir, type = "source")
+        curl <- c(curl, paste0(curl, "/Depends"))
+    }
     ## Determine packages available locally (for checking) and in the
     ## repositories, and merge the information giving preference to the
     ## former.
-    curls <- utils::contrib.url(getOption("repos"), type = "source")
     localones <- utils::available.packages(contriburl = curl,
                                            type = "source")
+    curls <- utils::contrib.url(getOption("repos"), type = "source")
     available <- utils::available.packages(contriburl = curls,
                                            type = "source")
-    pos <- match(localones[, "Package"], available[, "Package"])
-    if(length(pos <- pos[!is.na(pos)]))
-        available <- available[-pos, , drop = FALSE]
     available <- rbind(localones, available)
+    available <-
+        available[!duplicated(available[, "Package"]), , drop = FALSE]
     curls <- c(curl, curls)
 
     ## As of c52164, packages with OS_type different from the current
@@ -199,7 +201,8 @@ function(dir,
             for(i in seq_along(rfiles)) {
                 message(sprintf("downloading %s ... ", rfiles[i]),
                         appendLF = FALSE)
-                status <- if(!utils::download.file(rfurls[i], rfiles[i]))
+                status <- if(!utils::download.file(rfurls[i], rfiles[i],
+                                                   quiet = TRUE))
                     "ok" else "failed"
                 message(status)
             }
@@ -222,8 +225,7 @@ function(dir,
     depends <-
         package_dependencies(pnames, available, which = "most")
     depends <- setdiff(unique(unlist(depends, use.names = FALSE)),
-                       unlist(.get_standard_package_names(),
-                              use.names = FALSE))
+                       .get_standard_package_names()$base)
 
     ## Need to install depends which are not installed or installed but
     ## old.
@@ -236,7 +238,7 @@ function(dir,
                                         available = available)[, "Package"]))
     if(length(depends)) {
         message(paste(strwrap(sprintf("installing dependencies %s",
-                                      paste(sQuote(depends),
+                                      paste(sQuote(sort(depends)),
                                             collapse = ", ")),
                               exdent = 2L),
                       collapse = "\n"), domain = NA)
@@ -341,7 +343,7 @@ function(dir,
 
     timings <- do.call(rbind, lapply(timings, summary))
     rownames(timings) <- pnames
-    write.table(timings, "timings.tab")
+    utils::write.table(timings, "timings.tab")
 
     file.rename(sprintf("%s.Rcheck", rnames),
                 sprintf("rdepends_%s.Rcheck", rnames))
@@ -415,7 +417,7 @@ function(options)
         options <- c(num, options)
     }
 
-    dis <- Sys.getenv("DISPLAY", unset = NA)
+    dis <- Sys.getenv("DISPLAY", unset = NA_character_)
 
     ## We need to start Xvfb with the given options and obtain its pid
     ## so that we can terminate it when done checking.
@@ -467,7 +469,7 @@ function(dir, all = FALSE, invert = FALSE)
 {
     dir <- normalizePath(dir)
     outdirs <- dir(dir, pattern = "\\.Rcheck")
-    ind <- grepl("^rdepends_", basename(outdirs))
+    ind <- startsWith(basename(outdirs), "rdepends_")
     ## Re-arrange to have reverse dependencies last if at all.
     outdirs <- if(invert)
         c(if(all) outdirs[!ind], outdirs[ind])
@@ -540,17 +542,7 @@ function(dir, all = TRUE, full = FALSE)
             "OK")) {
         writeLines(c("", "Check results details:"))
         details <- check_packages_in_dir_details(logs = logs)
-        flags <- details$Flags
-        out <- cbind(sprintf("Package: %s %s",
-                             details$Package, details$Version),
-                     ifelse(nzchar(flags),
-                            sprintf("Flags: %s\n", flags),
-                            ""),
-                     sprintf("Check: %s, Result: %s",
-                             details$Check, details$Status),
-                     c(gsub("\n", "\n  ", details$Output,
-                            perl = TRUE, useBytes = TRUE)))
-        cat(t(out), sep = c("\n", "", "\n  ", "\n\n"))
+        writeLines(paste(format(details), collapse = "\n\n"))
         invisible(TRUE)
     } else {
         invisible(FALSE)
@@ -582,7 +574,7 @@ function(dir, all = FALSE, full = FALSE)
         tfiles <- Sys.glob(file.path(R_check_outdirs(dir, all = all),
                                      "*-Ex.timings"))
         if(length(tfiles)) message("")
-        timings <- lapply(tfiles, read.table, header = TRUE)
+        timings <- lapply(tfiles, utils::read.table, header = TRUE)
         ## Order by CPU time.
         timings <- lapply(timings,
                           function(x)
@@ -647,7 +639,7 @@ function(results)
 {
     if(!length(results)) return()
     status <- vapply(results, `[[`, "", "status")
-    ind <- grepl("^rdepends_", names(results))
+    ind <- startsWith(names(results), "rdepends_")
     tab <- table(ifelse(ind, "Reverse depends", "Source packages"),
                  status, deparse.level = 0L)
     tab <- tab[match(c("Source packages", "Reverse depends"),
@@ -708,6 +700,8 @@ function(log, drop_ok = TRUE)
         lines <- iconv(lines, enc, "UTF-8", sub = "byte")
         ## If the check log uses ASCII, there should be no non-ASCII
         ## characters in the message lines: could check for this.
+        if(any(bad <- !validEnc(lines)))
+            lines[bad] <- iconv(lines[bad], to = "ASCII", sub = "byte")
     } else return()
 
     ## Get header.
@@ -740,6 +734,7 @@ function(log, drop_ok = TRUE)
         len <- len - 1L
     }
     ## Summary footers.
+    ## Better (but 'perl=TRUE' ??) if(startsWith(lines[len], "Status: "))
     if(grepl("^Status: ", lines[len],
              perl = TRUE, useBytes = TRUE)) {
         ## New-style status summary.
@@ -856,7 +851,7 @@ function(dir, logs = NULL, drop_ok = TRUE)
     ## Group when used ...
 
     mysub <- function(p, r, x) sub(p, r, x, perl = TRUE, useBytes = TRUE)
-    
+
     checks <- db[, "Check"]
     checks <- mysub(sprintf("checking whether package (%s).*(%s) can be installed",
                             lqa, rqa),
@@ -873,14 +868,43 @@ function(dir, logs = NULL, drop_ok = TRUE)
     db[, "Check"] <- checks
     ## In fact, for tabulation purposes it would even be more convenient
     ## to shorten the check names ...
-    
+
     db[, "Output"] <- mysub("[[:space:]]+$", "", db[, "Output"])
-    
+
     db <- as.data.frame(db, stringsAsFactors = FALSE)
     db$Check <- as.factor(db$Check)
     db$Status <- as.factor(db$Status)
 
+    class(db) <- c("check_details", "data.frame")
     db
+}
+
+format.check_details <-
+function(x, ...)
+{
+    flags <- x$Flags
+    flavor <- x$Flavor
+    paste(sprintf("Package: %s %s\n",
+                  x$Package, x$Version),
+          ifelse(nzchar(flavor),
+                 sprintf("Flavor: %s\n", flavor),
+                 ""),
+          ifelse(nzchar(flags),
+                 sprintf("Flags: %s\n", flags),
+                 ""),
+          sprintf("Check: %s, Result: %s\n",
+                  x$Check, x$Status),
+          sprintf("  %s",
+                  gsub("\n", "\n  ", x$Output,
+                       perl = TRUE, useBytes = TRUE)),
+          sep = "")
+}
+
+print.check_details <-
+function(x, ...)
+{
+    writeLines(paste(format(x, ...), collapse = "\n\n"))
+    invisible(x)
 }
 
 ### ** check_packages_in_dir_changes
@@ -941,12 +965,12 @@ function(dir, old, outputs = FALSE, sources = FALSE)
                    e
                })
     db <- do.call(rbind, chunks)
-    
+
     ## Drop checks that are OK in both versions
     x.issue <- !is.na(match(db$Status.x, c("NOTE","ERROR","WARNING")))
     y.issue <- !is.na(match(db$Status.y, c("NOTE","ERROR","WARNING")))
     db <- db[x.issue | y.issue,]
-    
+
     ## Even with the above simplification, missing entries do not
     ## necessarily indicate "OK" (checks could have been skipped).
     ## Hence leave as missing and show as empty in the diff.

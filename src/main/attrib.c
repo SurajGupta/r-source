@@ -39,7 +39,7 @@ static SEXP row_names_gets(SEXP vec , SEXP val)
     if (vec == R_NilValue)
 	error(_("attempt to set an attribute on NULL"));
 
-    if(isReal(val) && length(val) == 2 && ISNAN(REAL(val)[0]) ) {
+    if(isReal(val) && LENGTH(val) == 2 && ISNAN(REAL(val)[0]) ) {
 	/* This should not happen, but if a careless user dput()s a
 	   data frame and sources the result, it will */
 	PROTECT(vec);
@@ -106,7 +106,7 @@ SEXP attribute_hidden getAttrib0(SEXP vec, SEXP name)
     if (name == R_NamesSymbol) {
 	if(isVector(vec) || isList(vec) || isLanguage(vec)) {
 	    s = getAttrib(vec, R_DimSymbol);
-	    if(TYPEOF(s) == INTSXP && length(s) == 1) {
+	    if(TYPEOF(s) == INTSXP && LENGTH(s) == 1) {
 		s = getAttrib(vec, R_DimNamesSymbol);
 		if(!isNull(s)) {
 		    SET_NAMED(VECTOR_ELT(s, 0), 2);
@@ -403,13 +403,13 @@ SEXP tspgets(SEXP vec, SEXP val)
 	error(_("attempt to set an attribute on NULL"));
 
     if(IS_S4_OBJECT(vec)) { /* leave validity checking to validObject */
-        if (!isNumeric(val)) /* but should have been checked */
+	if (!isNumeric(val)) /* but should have been checked */
 	    error(_("'tsp' attribute must be numeric"));
 	installAttrib(vec, R_TspSymbol, val);
 	return vec;
     }
 
-    if (!isNumeric(val) || length(val) != 3)
+    if (!isNumeric(val) || LENGTH(val) != 3)
 	error(_("'tsp' attribute must be numeric of length three"));
 
     if (isReal(val)) {
@@ -485,7 +485,7 @@ SEXP classgets(SEXP vec, SEXP klass)
 	if (ncl <= 0) {
 	    SET_ATTRIB(vec, stripAttrib(R_ClassSymbol, ATTRIB(vec)));
 	    SET_OBJECT(vec, 0);
-            // problems when package building:  UNSET_S4_OBJECT(vec);
+	    // problems when package building:  UNSET_S4_OBJECT(vec);
 	}
 	else {
 	    /* When data frames were a special data type */
@@ -665,11 +665,11 @@ static SEXP cache_class(const char *class, SEXP klass)
     return klass;
 }
 
-static SEXP S4_extends(SEXP klass)
-{
+static SEXP S4_extends(SEXP klass, Rboolean use_tab) {
     static SEXP s_extends = 0, s_extendsForS3;
     SEXP e, val; const char *class;
-    const void *vmax = vmaxget();
+    const void *vmax;
+    if(use_tab) vmax = vmaxget();
     if(!s_extends) {
 	s_extends = install("extends");
 	s_extendsForS3 = install(".extendsForS3");
@@ -678,12 +678,15 @@ static SEXP S4_extends(SEXP klass)
     }
     /* sanity check for methods package available */
     if(findVar(s_extends, R_GlobalEnv) == R_UnboundValue)
-        return klass;
+	return klass;
     class = translateChar(STRING_ELT(klass, 0)); /* TODO: include package attr. */
-    val = findVarInFrame(R_S4_extends_table, install(class));
-    vmaxset(vmax);
-    if(val != R_UnboundValue)
-       return val;
+    if(use_tab) {
+	val = findVarInFrame(R_S4_extends_table, install(class));
+	vmaxset(vmax);
+	if(val != R_UnboundValue)
+	    return val;
+    }
+    // else:  val <- .extendsForS3(klass) -- and cache it
     PROTECT(e = allocVector(LANGSXP, 2));
     SETCAR(e, s_extendsForS3);
     val = CDR(e);
@@ -693,6 +696,12 @@ static SEXP S4_extends(SEXP klass)
     UNPROTECT(2); /* val, e */
     return(val);
 }
+
+SEXP R_S4_extends(SEXP klass, SEXP useTable)
+{
+    return S4_extends(klass, asLogical(useTable));
+}
+
 
 /* pre-allocated default class attributes */
 static struct {
@@ -727,34 +736,34 @@ attribute_hidden
 void InitS3DefaultTypes()
 {
     for(int type = 0; type < MAX_NUM_SEXPTYPE; type++) {
-        SEXP part2 = R_NilValue;
-        SEXP part3 = R_NilValue;
-        int nprotected = 0;
+	SEXP part2 = R_NilValue;
+	SEXP part3 = R_NilValue;
+	int nprotected = 0;
 
-        switch(type) {
-            case CLOSXP:
-            case SPECIALSXP:
-            case BUILTINSXP:
-	        part2 = PROTECT(mkChar("function"));
-	        nprotected++;
-	        break;
-            case INTSXP:
+	switch(type) {
+	    case CLOSXP:
+	    case SPECIALSXP:
+	    case BUILTINSXP:
+		part2 = PROTECT(mkChar("function"));
+		nprotected++;
+		break;
+	    case INTSXP:
 	    case REALSXP:
-	        part2 = PROTECT(type2str_nowarn(type));
-	        part3 = PROTECT(mkChar("numeric"));
-	        nprotected += 2;
-	        break;
+		part2 = PROTECT(type2str_nowarn(type));
+		part3 = PROTECT(mkChar("numeric"));
+		nprotected += 2;
+		break;
 	    case LANGSXP:
-	        /* part2 remains R_NilValue: default type cannot be
+		/* part2 remains R_NilValue: default type cannot be
 		   pre-allocated, as it depends on the object value */
-	        break;
-            case SYMSXP:
-                part2 = PROTECT(mkChar("name"));
-                nprotected++;
-                break;
+		break;
+	    case SYMSXP:
+		part2 = PROTECT(mkChar("name"));
+		nprotected++;
+		break;
 	    default:
-	        part2 = PROTECT(type2str_nowarn(type));
-	        nprotected++;
+		part2 = PROTECT(type2str_nowarn(type));
+		nprotected++;
 	}
 
 	Type2DefaultClass[type].vector =
@@ -779,60 +788,59 @@ void InitS3DefaultTypes()
 SEXP attribute_hidden R_data_class2 (SEXP obj)
 {
     SEXP klass = getAttrib(obj, R_ClassSymbol);
-      if(length(klass) > 0) {
+    if(length(klass) > 0) {
 	if(IS_S4_OBJECT(obj))
-	    return S4_extends(klass);
+	    return S4_extends(klass, TRUE);
 	else
 	    return klass;
-      }
-      else { /* length(klass) == 0 */
+    }
+    else { /* length(klass) == 0 */
 
-        SEXP dim = getAttrib(obj, R_DimSymbol);
-        int n = length(dim);
-        SEXPTYPE t = TYPEOF(obj);
-        SEXP defaultClass;
-        switch(n) {
-            case 0: defaultClass = Type2DefaultClass[t].vector; break;
-            case 2: defaultClass = Type2DefaultClass[t].matrix; break;
-            default: defaultClass = Type2DefaultClass[t].array; break;
-        }
+	SEXP dim = getAttrib(obj, R_DimSymbol);
+	int n = length(dim);
+	SEXPTYPE t = TYPEOF(obj);
+	SEXP defaultClass;
+	switch(n) {
+	case 0:  defaultClass = Type2DefaultClass[t].vector; break;
+	case 2:  defaultClass = Type2DefaultClass[t].matrix; break;
+	default: defaultClass = Type2DefaultClass[t].array;  break;
+	}
 
-        if (defaultClass != R_NilValue) {
-            return defaultClass;
-        }
+	if (defaultClass != R_NilValue) {
+	    return defaultClass;
+	}
 
-        /* now t == LANGSXP, but check to make sure */
+	/* now t == LANGSXP, but check to make sure */
 	if (t != LANGSXP)
 	    error("type must be LANGSXP at this point");
-        if (n == 0) {
-            return ScalarString(lang2str(obj, t));
-        }
-        SEXP part1;
-        if (n == 2) {
-            part1 = mkChar("matrix");
-        } else {
-            part1 = mkChar("array");
-        }
-        PROTECT(part1);
-        defaultClass = PROTECT(allocVector(STRSXP, 2));
-        SET_STRING_ELT(defaultClass, 0, part1);
-        SET_STRING_ELT(defaultClass, 1, lang2str(obj, t));
-        UNPROTECT(2); /* part1, defaultClass */
-        return defaultClass;
+	if (n == 0) {
+	    return ScalarString(lang2str(obj, t));
+	}
+	SEXP part1;
+	if (n == 2) {
+	    part1 = mkChar("matrix");
+	} else {
+	    part1 = mkChar("array");
+	}
+	PROTECT(part1);
+	defaultClass = PROTECT(allocVector(STRSXP, 2));
+	SET_STRING_ELT(defaultClass, 0, part1);
+	SET_STRING_ELT(defaultClass, 1, lang2str(obj, t));
+	UNPROTECT(2); /* part1, defaultClass */
+	return defaultClass;
     }
 }
 
-// class() & .cache_class() :
+// class(x)  &  .cache_class(classname, extendsForS3(.)) {called from methods} :
 SEXP attribute_hidden R_do_data_class(SEXP call, SEXP op, SEXP args, SEXP env)
 {
   checkArity(op, args);
-  if(PRIMVAL(op) == 1) { // .cache_class() :
-      const char *class; SEXP klass;
+  if(PRIMVAL(op) == 1) { // .cache_class() - typically re-defining existing cache
       check1arg(args, call, "class");
-      klass = CAR(args);
+      SEXP klass = CAR(args);
       if(TYPEOF(klass) != STRSXP || LENGTH(klass) < 1)
 	  error("invalid class argument to internal .class_cache");
-      class = translateChar(STRING_ELT(klass, 0));
+      const char *class = translateChar(STRING_ELT(klass, 0));
       return cache_class(class, CADR(args));
   }
   // class():
@@ -1002,7 +1010,7 @@ static SEXP dimnamesgets1(SEXP val1)
        have the context at this point to do so */
 
     if (inherits(val1, "factor"))  /* mimic as.character.factor */
-        return asCharacterFactor(val1);
+	return asCharacterFactor(val1);
 
     if (!isString(val1)) { /* mimic as.character.default */
 	PROTECT(this2 = coerceVector(val1, STRSXP));
@@ -1029,7 +1037,7 @@ SEXP dimnamesgets(SEXP vec, SEXP val)
     /* there may be old pair-lists out there */
     /* There are, when this gets used as names<- for 1-d arrays */
     if (!isPairList(val) && !isNewList(val))
-	error(_("'dimnames' must be a list"));
+	error(_("'%s' must be a list"), "dimnames");
     dims = getAttrib(vec, R_DimSymbol);
     if ((k = LENGTH(dims)) < length(val))
 	error(_("length of 'dimnames' [%d] must match that of 'dims' [%d]"),
@@ -1369,7 +1377,7 @@ SEXP attribute_hidden do_attr(SEXP call, SEXP op, SEXP args, SEXP env)
     static SEXP do_attr_formals = NULL;
 
     if (do_attr_formals == NULL)
-        do_attr_formals = allocFormalsList3(install("x"), install("which"),
+	do_attr_formals = allocFormalsList3(install("x"), install("which"),
 					    R_ExactSymbol);
 
     argList = matchArgs(do_attr_formals, args, call);
@@ -1501,9 +1509,7 @@ static void check_slot_assign(SEXP obj, SEXP input, SEXP value, SEXP env)
 */
 SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP obj, name, argList;
-    static SEXP do_attrgets_formals = NULL;
-
+    SEXP obj, name;
     checkArity(op, args);
 
     if(PRIMVAL(op)) { /* @<- */
@@ -1535,32 +1541,35 @@ SEXP attribute_hidden do_attrgets(SEXP call, SEXP op, SEXP args, SEXP env)
 	UNPROTECT(2);
 	return value;
     }
+    else { // attr(obj, "name") <- value :
+	SEXP argList;
+	static SEXP do_attrgets_formals = NULL;
 
+	obj = CAR(args);
+	if (MAYBE_SHARED(obj))
+	    PROTECT(obj = shallow_duplicate(obj));
+	else
+	    PROTECT(obj);
 
-    obj = CAR(args);
-    if (MAYBE_SHARED(obj))
-	PROTECT(obj = shallow_duplicate(obj));
-    else
-	PROTECT(obj);
+	/* argument matching */
+	if (do_attrgets_formals == NULL)
+	    do_attrgets_formals = allocFormalsList3(install("x"), install("which"),
+						    install("value"));
+	argList = matchArgs(do_attrgets_formals, args, call);
+	PROTECT(argList);
 
-    /* argument matching */
-    if (do_attrgets_formals == NULL)
-        do_attrgets_formals = allocFormalsList3(install("x"), install("which"),
-						install("value"));
-    argList = matchArgs(do_attrgets_formals, args, call);
-    PROTECT(argList);
-
-    name = CADR(argList);
-    if (!isValidString(name) || STRING_ELT(name, 0) == NA_STRING)
-	error(_("'name' must be non-null character string"));
-    /* TODO?  if (isFactor(obj) && !strcmp(asChar(name), "levels"))
-     * ---         if(any_duplicated(CADDR(args)))
-     *                  error(.....)
-     */
-    setAttrib(obj, name, CADDR(args));
-    UNPROTECT(2);
-    SET_NAMED(obj, 0);
-    return obj;
+	name = CADR(argList);
+	if (!isValidString(name) || STRING_ELT(name, 0) == NA_STRING)
+	    error(_("'name' must be non-null character string"));
+	/* TODO?  if (isFactor(obj) && !strcmp(asChar(name), "levels"))
+	 * ---         if(any_duplicated(CADDR(args)))
+	 *                  error(.....)
+	 */
+	setAttrib(obj, name, CADDR(args));
+	UNPROTECT(2);
+	SET_NAMED(obj, 0);
+	return obj;
+    }
 }
 
 
@@ -1701,10 +1710,10 @@ SEXP R_do_slot(SEXP obj, SEXP name) {
 	if(value == R_NilValue) {
 	    SEXP input = name, classString;
 	    if(name == s_dot_S3Class) /* defaults to class(obj) */
-	        return R_data_class(obj, FALSE);
+		return R_data_class(obj, FALSE);
 	    else if(name == R_NamesSymbol &&
 		    TYPEOF(obj) == VECSXP) /* needed for namedList class */
-	        return value;
+		return value;
 	    if(isSymbol(name) ) {
 		input = PROTECT(ScalarString(PRINTNAME(name)));
 		classString = getAttrib(obj, R_ClassSymbol);
@@ -1778,6 +1787,7 @@ SEXP attribute_hidden do_AT(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     SEXP  nlist, object, ans, klass;
 
+    checkArity(op, args);
     if(!isMethodsDispatchOn())
 	error(_("formal classes cannot be used without the 'methods' package"));
     nlist = CADR(args);

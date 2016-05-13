@@ -58,11 +58,11 @@ capabilities(what = NULL)
 #endif
   \item{http/ftp}{does the internal method for \code{\link{url}} and
     \code{\link{download.file}} support \samp{http://} and \samp{ftp://}
-    URLs?}
-  \item{sockets}{are \code{\link{make.socket}} and related functions
-    available?}
+    URLs?  Always \code{TRUE} as from \R 3.3.0.}
+  \item{sockets}{are  \code{\link{make.socket}} and related functions
+    available?  Always \code{TRUE} as from \R 3.3.0.}
   \item{libxml}{is there support for integrating \code{libxml} with
-    the \R event loop?}
+    the \R event loop?  Always \code{TRUE} as from \R 3.3.0.}
   \item{fifo}{are FIFO \link{connections} supported?}
   \item{cledit}{is command-line editing available in the current \R
     session?  This is false in non-interactive sessions.
@@ -103,7 +103,8 @@ capabilities(what = NULL)
 
   \item{libcurl}{is \code{libcurl} available in this build?  Used by
     function \code{\link{curlGetHeaders}} and optionally by
-    \code{\link{download.file}} and \code{\link{url}}.}
+    \code{\link{download.file}} and \code{\link{url}}.   As from \R
+    3.3.0 always true for Unix-alikes, and true for CRAN Windows builds.}
 }
 \seealso{\code{\link{.Platform}} and \code{\link{extSoftVersion}} (and
     links there) for availability capabilities \emph{external} to \R but
@@ -112,8 +113,8 @@ capabilities(what = NULL)
 \examples{
 capabilities()
 
-if(!capabilities("http/ftp"))
-   warning("internal download.file() method is not available")
+if(!capabilities("ICU"))
+   warning("ICU is not available")
 
 ## See also the examples for 'connections'.
 }

@@ -1,6 +1,6 @@
 /*  R : A Computer Language for Statistical Data Analysis
  *
- *  Copyright (C) 1999-2012	The R Core Team
+ *  Copyright (C) 1999-2016	The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,9 +20,6 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
-
-/* do this first to get the right options for math.h */
-#include <R_ext/Arith.h>
 
 #include <R.h>
 #include "ts.h"

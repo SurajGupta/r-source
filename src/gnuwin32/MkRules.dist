@@ -57,6 +57,8 @@
 # BINPREF = c:/Rtools/gcc492_32/bin/
 # prefix for 64-bit:
 # BINPREF64 = c:/Rtools/gcc492_64/bin/
+# Set this to indicate a non-gcc compiler and version
+# COMPILED_BY = <determined automatically>
 
 # Others use a -m64 or -m32 option to select architectures
 # M_ARCH =
@@ -70,10 +72,10 @@
 # 32- or 64-bit Windows?
 # WIN = 32
 
-# The gcc 4.9.2 64 bit toolchain is set up for the 'medium code' model and needs
-# to remove the .refptr entries from the exports list; this is the default
+# The gcc 4.9.3 64 bit toolchain is set up for the 'medium code' model and needs
+# to remove the .refptr and .weak entries from the exports list; this is the default
 # when WIN = 64, with blank for WIN = 32:
-# NM_FILTER = | $(SED) -e '/.refptr./d'
+# NM_FILTER = | $(SED) -e '/[.]refptr[.]/d' -e '/[.]weak[.]/d'
 
 # We normally link directly against DLLs, 
 # but this macro forces the use of import libs

@@ -2,7 +2,7 @@
 #
 # ${R_HOME}/tests/Makefile.common
 
-## If you add test scripts here, review src/library/tools/R/testing.R
+## If you add test scripts here, review  ../src/library/tools/R/testing.R
 
 test-src-gct = \
 	eval-etc.R \
@@ -12,7 +12,6 @@ test-src-gct = \
 	lm-tests.R \
 	ok-errors.R \
 	method-dispatch.R \
-	array-subset.R \
 	any-all.R
 test-src-strict-1 = \
 	$(test-src-gct) \
@@ -44,8 +43,10 @@ test-src-random = p-r-random-tests.R
 test-src-regexp = utf8-regex.R
 test-src-segfault = no-segfault.R
 
-test-src-reg-1 = reg-tests-1a.R reg-tests-1b.R reg-tests-1c.R reg-tests-2.R \
+test-src-reg-1 = array-subset.R \
+  reg-tests-1a.R reg-tests-1b.R reg-tests-1c.R reg-tests-2.R \
   reg-examples1.R reg-examples2.R reg-packages.R p-qbeta-strict-tst.R \
+  r-strict-tst.R \
   reg-IO.R reg-IO2.R reg-plot.R reg-S4.R reg-BLAS.R
 ## added to in Makefile.win
 test-src-reg-1e =
@@ -194,6 +195,7 @@ test-Packages1:
 	@for p in $(R_PKGS_BASE); do \
 	  $(ECHO) "checking package '$${p}'"; \
 	  _R_CHECK_FF_CALLS_=registration \
+	  _R_CHECK_CODE_USAGE_WITH_ONLY_BASE_ATTACHED_=true \
 	  $(top_builddir)/bin/R CMD check --install=skip \
 	    --no-build-vignettes \
 	    $(top_srcdir)/src/library/$${p} || $(ECHO); \
@@ -213,7 +215,8 @@ stamp-Packages: $(PKG_OBJECTS)
 	@$(ECHO) "begin checking package '`basename $@ .log`'"
 	@rm -f $@
 	@_R_CHECK_FF_CALLS_=registration \
-	$(top_builddir)/bin/R CMD check --install=skip --no-build-vignettes \
+	  _R_CHECK_CODE_USAGE_WITH_ONLY_BASE_ATTACHED_=true \
+	  $(top_builddir)/bin/R CMD check --install=skip --no-build-vignettes \
 	  $(top_srcdir)/src/library/`basename $@ .log` > $@ 2>&1
 	@cat $@
 

@@ -1,6 +1,6 @@
 % File src/library/base/man/abbreviate.Rd
 % Part of the R package, https://www.R-project.org
-% Copyright 1995-2013 R Core Team
+% Copyright 1995-2015 R Core Team
 % Copyright 2008      The R Foundation
 % Distributed under GPL 2 or later
 
@@ -16,7 +16,7 @@ abbreviate(names.arg, minlength = 4, use.classes = TRUE,
   \item{names.arg}{a character vector of names to be abbreviated, or an
     object to be coerced to a character vector by \code{\link{as.character}}.}
   \item{minlength}{the minimum length of the abbreviations.}
-  \item{use.classes}{logical (currently ignored by \R).}
+  \item{use.classes}{logical: should lowercase characters be removed first?}
   \item{dot}{logical: should a dot (\code{"."}) be appended?}
   \item{strict}{logical: should \code{minlength} be observed strictly?
     Note that setting \code{strict = TRUE} may return \emph{non}-unique
@@ -32,28 +32,27 @@ abbreviate(names.arg, minlength = 4, use.classes = TRUE,
 \details{
   The default algorithm (\code{method = "left.kept"}) used is similar
   to that of S.  For a single string it works as follows.
-  First all spaces at the beginning of the string are stripped.
+  First spaces at the ends of the string are stripped.
   Then (if necessary) any other spaces are stripped.
-  Next, lower case vowels are removed (starting at the right)
-  followed by lower case consonants.
+  Next, lower case vowels are removed followed by lower case consonants.
   Finally if the abbreviation is still longer than \code{minlength}
-  upper case letters are stripped.
+  upper case letters and symbols are stripped.
 
-  Characters are always stripped from the end of the word first.
-  If an element of \code{names.arg} contains more than one word (words
-  are separated by space) then at least one letter from each word will be
+  Characters are always stripped from the end of the strings first.  If
+  an element of \code{names.arg} contains more than one word (words are
+  separated by spaces) then at least one letter from each word will be
   retained.
 
   Missing (\code{NA}) values are unaltered.
 
   If \code{use.classes} is \code{FALSE} then the only distinction is to
-  be between letters and space.  This has NOT been implemented.
+  be between letters and space.
 }
 \value{
-  A character vector containing abbreviations for the strings in its
-  first argument.  Duplicates in the original \code{names.arg} will be
-  given identical abbreviations.  If any non-duplicated elements have
-  the same \code{minlength} abbreviations then, if \code{method =
+  A character vector containing abbreviations for the character strings
+  in its first argument.  Duplicates in the original \code{names.arg}
+  will be given identical abbreviations.  If any non-duplicated elements
+  have the same \code{minlength} abbreviations then, if \code{method =
   "both.sides"} the basic internal \code{abbreviate()} algorithm is
   applied to the characterwise \emph{reversed} strings; if there are
   still duplicated abbreviations and if \code{strict = FALSE} as by
@@ -63,11 +62,21 @@ abbreviate(names.arg, minlength = 4, use.classes = TRUE,
 
   The character version of \code{names.arg} is attached to the returned
   value as a names argument: no other attributes are retained.
+
+  If a input element contains non-ASCII characters, the corresponding
+  value will be in UTF-8 and marked as such (see \code{\link{Encoding}}).
 }
 \section{Warning}{
-  This is really only suitable for English, and does not work correctly with
-  non-ASCII characters in multibyte locales.  It will warn if used with
-  non-ASCII characters (and required to reduce the length).
+  If \code{use.classes} is true (the default), this is really only
+  suitable for English, and prior to \R 3.3.0 did not work correctly
+  with non-ASCII characters in multibyte locales.  It will warn if used
+  with non-ASCII characters (and required to reduce the length).
+
+  As from \R 3.3.0 the concept of \sQuote{vowel} is extended from
+  English vowels by including characters which are accented versions of
+  lower-case English vowels (including \sQuote{o with stroke}).  Of
+  course, there are languages (even Western European languages such as
+  Welsh) with other vowels.
 }
 \seealso{
   \code{\link{substr}}.
@@ -83,7 +92,11 @@ as <- abbreviate(state.name, 3, strict = TRUE)
 as[which(as == "Mss")]
 \dontshow{stopifnot(which(as == "Mss") == c(21,24,25))
 }
-## method="both.sides" helps:  no 4-letters, and only 4 3-letters:
+## and without distinguishing vowels:
+st.abb2 <- abbreviate(state.name, 2, FALSE)
+cbind(st.abb, st.abb2)[st.abb2 != st.abb, ]
+
+## method = "both.sides" helps:  no 4-letters, and only 4 3-letters:
 st.ab2 <- abbreviate(state.name, 2, method = "both")
 table(nchar(st.ab2))
 ## Compare the two methods:

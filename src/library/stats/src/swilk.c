@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-12   The R Core Team.
+ *  Copyright (C) 2000-2016   The R Core Team.
  *
  *  Based on Applied Statistics algorithms AS181, R94
  *    (C) Royal Statistical Society 1982, 1995
@@ -23,6 +23,8 @@
 /* swilk.f -- translated by f2c (version 19980913).
  * ------- and produced by f2c-clean,v 1.8 --- and hand polished: M.Maechler
  */
+
+#include <math.h>
 #include <Rmath.h>
 
 #ifndef min

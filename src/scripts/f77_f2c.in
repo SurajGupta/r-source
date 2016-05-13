@@ -21,7 +21,7 @@
 ## A copy of the GNU General Public License is available at
 ## https://www.R-project.org/Licenses/
 
-revision='$Rev: 69170 $'
+revision='$Rev: 68951 $'
 version=`set - ${revision}; echo ${2}`
 version="R front-end script to f2c: ${R_VERSION} (r${version})
 

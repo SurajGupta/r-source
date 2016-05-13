@@ -127,7 +127,7 @@ representation <-
     ## since set SClass works separately with the slots and extends arguments.
     anames <- allNames(value)
     for(i in seq_along(value)) {
-        ei <- el(value, i)
+        ei <- value[[i]]
         if(!is.character(ei) || length(ei) != 1L)
             stop(gettextf("element %d of the representation was not a single character string", i), domain = NA)
     }
@@ -179,7 +179,9 @@ makeClassRepresentation <-
   ## The formal definition of the class is set according to the arguments.
   ##
   ## Users should call setClass instead of this function.
-  function(name, slots = list(), superClasses = character(), prototype = NULL, package, validity = NULL, access = list(), version = .newExternalptr(), sealed = FALSE, virtual = NA, where)
+  function(name, slots = list(), superClasses = character(), prototype = NULL,
+	   package, validity = NULL, access = list(), version = .newExternalptr(),
+	   sealed = FALSE, virtual = NA, where)
 {
     if(any(superClasses %in% .AbnormalTypes))
         superClasses <- .addAbnormalDataType(superClasses)
@@ -193,23 +195,24 @@ makeClassRepresentation <-
     if(nzchar(package))
         packageSlot(name) <- package
     for(what in superClasses) {
-        if(is(what, "classRepresentation"))
-            whatClassDef <- what
-        else if(is.null(packageSlot(what)))
-            whatClassDef <- getClass(what, where = where)
-        else
-            whatClassDef <- getClass(what)
+	whatClassDef <-
+	    if(is(what, "classRepresentation"))
+		what
+	    else if(is.null(packageSlot(what)))
+		getClass(what, where = where)
+	    else
+		getClass(what)
         what <- whatClassDef@className # includes package name as attribute
         ## Create the SClassExtension objects (will be simple, possibly dataPart).
         ## The slots are supplied explicitly, since `name' is currently an undefined class
-        elNamed(contains, what) <- makeExtends(name, what, slots = slots,
+        contains[[what]] <- makeExtends(name, what, slots = slots,
                                               classDef2 = whatClassDef, package = package)
     }
     validity <- .makeValidityMethod(name, validity)
     if(is.na(virtual)) {
         virtual <- testVirtual(slots, contains, prototype, where)
         if(virtual && !is.na(match("VIRTUAL", superClasses)))
-            elNamed(contains, "VIRTUAL") <- NULL
+            contains[["VIRTUAL"]] <- NULL
     }
     # new() must return an S4 object, except perhaps for basic classes
     if(!is.null(prototype) && is.na(match(name, .BasicClasses)))
@@ -245,11 +248,10 @@ getClassDef <-
 	## should be in that package.
 	if(identical(nzchar(package), TRUE)) {
 	    whereP <- .requirePackage(package)
-	    if(exists(cname, whereP, inherits = inherits))
-		value <- get(cname, whereP)
+	    value <- get0(cname, whereP, inherits = inherits) # NULL if not existing
 	}
-	if(is.null(value) && exists(cname, where, inherits = inherits))
-	    value <- get(cname, where)
+	if(is.null(value))
+	    value <- get0(cname, where, inherits = inherits) # NULL if not existing
     }
     value
 }
@@ -303,7 +305,7 @@ checkSlotAssignment <- function(obj, name, value)
 {
     cl <- class(obj)
     ClassDef <- getClass(cl) # fails if cl not a defined class (!)
-    slotClass <- elNamed(ClassDef@slots, name)
+    slotClass <- ClassDef@slots[[name]]
     if(is.null(slotClass))
         stop(gettextf("%s is not a slot in class %s",
                       sQuote(name), dQuote(cl)),
@@ -329,7 +331,7 @@ checkSlotAssignment <- function(obj, name, value)
 checkAtAssignment <- function(cl, name, valueClass)
 {
     ClassDef <- getClass(cl) # fails if cl not a defined class (!)
-    slotClass <- elNamed(ClassDef@slots, name)
+    slotClass <- ClassDef@slots[[name]]
     if(is.null(slotClass))
         stop(gettextf("%s is not a slot in class %s",
                       sQuote(name), dQuote(cl)),
@@ -439,15 +441,17 @@ getClasses <-
   function(where = .externalCallerEnv(), inherits = missing(where))
 {
     pat <- paste0("^",classMetaName(""))
+    if(!is.environment(where)) ## e.g. for "package:stats4"
+	where <- as.environment(where)
     if(inherits) {
         evList <- .parentEnvList(where)
         clNames <- character()
         for(ev in evList)
-            clNames <- c(clNames, objects(ev, pattern = pat, all.names = TRUE))
+            clNames <- c(clNames, grep(pat, names(ev), value=TRUE))
         clNames <- unique(clNames)
     }
     else
-        clNames <- objects(where, pattern = pat, all.names = TRUE)
+        clNames <- grep(pat, names(where), value=TRUE)
     ## strip off the leading pattern (this implicitly assumes the characters
     ## in classMetaName("") are either "." or not metacharacters
     substring(clNames, nchar(pat, "c"))
@@ -639,11 +643,11 @@ initialize <- function(.Object, ...) {
         supers <- args[!which]
         thisExtends <- names(ClassDef@contains)
         slotDefs <- ClassDef@slots
-        dataPart <- elNamed(slotDefs, ".Data")
+        dataPart <- slotDefs[[".Data"]]
         if(is.null(dataPart)) dataPart <- "missing"
         if(length(supers)) {
             for(i in rev(seq_along(supers))) {
-                obj <- el(supers, i)
+                obj <- supers[[i]]
                 Classi <- class(obj)
                 if(length(Classi) > 1L)
                     Classi <- Classi[[1L]] #possible S3 inheritance
@@ -696,10 +700,10 @@ initialize <- function(.Object, ...) {
                      domain = NA)
             firstTime <- TRUE
             for(i in seq_along(snames)) {
-                slotName <- el(snames, i)
-                slotClass <- elNamed(slotDefs, slotName)
+                slotName <- snames[[i]]
+                slotClass <- slotDefs[[slotName]]
                 slotClassDef <- getClassDef(slotClass, package = ClassDef@package)
-                slotVal <- el(elements, i)
+                slotVal <- elements[[i]]
                 ## perform non-strict coercion, but leave the error messages for
                 ## values not conforming to the slot definitions to validObject(),
                 ## hence the check = FALSE argument in the slot assignment

@@ -99,11 +99,7 @@ known OS with 64-bit time_t and complete tables is Linux.
 
 typedef struct tm stm;
 #define R_tzname tzname
-# if defined(__CYGWIN__)
-extern __declspec(dllimport) char *tzname[2];
-# else
 extern char *tzname[2];
-# endif
 
 #endif
 
@@ -668,7 +664,7 @@ makelt(stm *tm, SEXP ans, R_xlen_t i, int valid, double frac_secs)
 }
 
 
-             /* --------- R interfaces --------- */
+	     /* --------- R interfaces --------- */
 
 // We assume time zone names/abbreviations are ASCII, as all known ones are.
 
@@ -934,7 +930,7 @@ SEXP attribute_hidden do_formatPOSIXlt(SEXP call, SEXP op, SEXP args, SEXP env)
 	tm.tm_isdst = INTEGER(VECTOR_ELT(x, 8))[i%nlen[8]];
 	if(have_zone) {
 	    strncpy(tm_zone, CHAR(STRING_ELT(VECTOR_ELT(x, 9), i%n)), 20);
-            tm_zone[20 - 1] = '\0';
+	    tm_zone[20 - 1] = '\0';
 #ifdef HAVE_TM_ZONE
 	    tm.tm_zone = tm_zone;
 #elif defined USE_INTERNAL_MKTIME

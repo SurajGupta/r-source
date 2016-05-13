@@ -1976,30 +1976,21 @@ dnl needed for Rhttpd.c but missed before R 3.2.4
      && test "${ac_cv_search_gethostbyname}" !=  no; then
   r_cv_bsd_networking=yes
 else
-  r_cv_bsd_networking=no
+  AC_MSG_ERROR([BSD networking functions are required])
 fi])
-if test "${r_cv_bsd_networking}" = yes; then
-  AC_DEFINE(HAVE_BSD_NETWORKING, 1,
-            [Define if you have BSD networking headers and libraries.])
-  AC_DEFINE(HAVE_SOCKETS, 1,
-            [Define if you have support for sockets.])
-  AC_DEFINE(HAVE_INTERNET, 1,
-            [Define if you have support for ftp/http access.])
-  AC_DEFINE(SUPPORT_LIBXML, 1,
-            [Define if you provide support for the libxml ftp/http
-	     functions.])
-fi
 ])# R_BSD_NETWORKING
 
 ## R_BITMAPS
 ## ---------
+## This is the version used without png-config
 ## Here we only need any old -lz, and don't need zlib.h.
 ## However, we do need recent enough libpng and jpeg, and so check both
 ## the header versions and for key routines in the library.
 ## The png code will do a run-time check of the consistency of libpng
 ## versions.
 AC_DEFUN([R_BITMAPS],
-[BITMAP_LIBS=
+[BITMAP_CPPFLAGS=
+BITMAP_LIBS=
 if test "${use_jpeglib}" = yes; then
   _R_HEADER_JPEGLIB
   have_jpeg=${r_cv_header_jpeglib_h}
@@ -2054,8 +2045,103 @@ if test "${use_libtiff}" = yes; then
     fi
   fi
 fi
+AC_SUBST(BITMAP_CPPFLAGS)
 AC_SUBST(BITMAP_LIBS)
 ])# R_BITMAPS
+
+## R_BITMAPS2
+## ---------
+## This is the version used with png-config
+AC_DEFUN([R_BITMAPS2],
+[BITMAP_CPPFLAGS=
+BITMAP_LIBS=
+if test "${use_jpeglib}" = yes; then
+   save_CPPFLAGS=${CPPFLAGS}
+  ## jpeglib does not support pkg-config, although some OSes add it.
+  ## This is untested.
+  if "${PKGCONF}" --exists jpeg; then
+    JPG_CPPFLAGS=`"${PKGCONF}" --cflags jpeg`
+    JPG_LIBS=`"${PKGCONF}" --libs jpeg`
+    CPPFLAGS="${CPPFLAGS} ${JPG_CPPFLAGS}"
+  fi
+  _R_HEADER_JPEGLIB
+  CPPFLAGS=${save_CPPFLAGS}
+  have_jpeg=${r_cv_header_jpeglib_h}
+  if test "${have_jpeg}" = yes; then
+    AC_CHECK_LIB(jpeg, jpeg_destroy_compress,
+		 [have_jpeg=yes], [have_jpeg=no], [${JPG_LIBS} ${LIBS}])
+  fi
+  if test "${have_jpeg}" = yes; then
+    if test -n "${JPG_LIBS}"; then
+      BITMAP_LIBS="${JPG_LIBS}"
+    else
+      BITMAP_LIBS=-ljpeg
+    fi
+    AC_DEFINE(HAVE_JPEG, 1,
+	      [Define if you have the JPEG headers and libraries.])
+  fi
+fi
+if test "${use_libpng}" = yes; then
+  if "${PKGCONF}" --exists libpng; then
+    save_CPPFLAGS=${CPPFLAGS}
+    PNG_CPPFLAGS=`"${PKGCONF}" --cflags libpng`
+    CPPFLAGS="${CPPFLAGS} ${PNG_CPPFLAGS}"
+    _R_HEADER_PNG
+    have_png=${r_cv_header_png_h}
+    CPPFLAGS=${save_CPPFLAGS}
+    if test "${have_png}" = yes; then
+      PNG_LIBS=`"${PKGCONF}" --libs libpng`
+      AC_CHECK_LIB(png, png_create_write_struct, 
+                   [have_png=yes], [have_png=no], [${PNG_LIBS} ${LIBS}])
+      if test "${have_png}" = no; then
+        PNG_LIBS=`"${PKGCONF}" --static --libs libpng`
+        AC_CHECK_LIB(png, png_create_write_struct, 
+                     [have_png=yes], [have_png=no], [${PNG_LIBS} ${LIBS}])
+      fi
+    fi
+    if test "${have_png}" = yes; then
+      BITMAP_CPPFLAGS="${BITMAP_CPPFLAGS} ${PNG_CPPFLAGS}"
+      BITMAP_LIBS="${BITMAP_LIBS} ${PNG_LIBS}"
+      AC_DEFINE(HAVE_PNG, 1,
+	        [Define if you have the PNG headers and libraries.])
+    fi
+  fi
+fi
+if test "${use_libtiff}" = yes; then
+  mod=
+  ## pkg-config support was introduced in libtiff 4.0.0
+  ## I guess the module name might change in future, so
+  ## program defensively here.
+  if "${PKGCONF}" --exists libtiff-4; then
+    mod=libtiff-4
+  fi  
+  if test -n "${mod}"; then
+    save_CPPFLAGS=${CPPFLAGS}
+    TIF_CPPFLAGS=`"${PKGCONF}" --cflags ${mod}`
+    CPPFLAGS="${CPPFLAGS} ${TIF_CPPFLAGS}"
+    AC_CHECK_HEADERS(tiffio.h)
+    CPPFLAGS=${save_CPPFLAGS}
+    if test "x${ac_cv_header_tiffio_h}" = xyes ; then
+      TIF_LIBS=`"${PKGCONF}" --libs ${mod}`
+      AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no],
+                   [${TIF_LIBS} ${BITMAP_LIBS}])
+      if test "x${have_tiff}" = xno; then
+        TIF_LIBS=`"${PKGCONF}" --static --libs ${mod}`
+        AC_CHECK_LIB(tiff, TIFFOpen, [have_tiff=yes], [have_tiff=no],
+                     [${TIF_LIBS} ${BITMAP_LIBS}])
+      fi
+      if test "x${have_tiff}" = xyes; then
+        AC_DEFINE(HAVE_TIFF, 1, [Define this if libtiff is available.])
+        BITMAP_LIBS="${TIF_LIBS} ${BITMAP_LIBS}"
+        BITMAP_CPPFLAGS="${BITMAP_CPPFLAGS} ${TIF_CPPFLAGS}"
+      fi
+    fi
+  fi
+fi
+AC_SUBST(BITMAP_CPPFLAGS)
+AC_SUBST(BITMAP_LIBS)
+])# R_BITMAPS2
+
 
 ## _R_HEADER_JPEGLIB
 ## -----------------
@@ -2305,6 +2391,7 @@ if test -z "${TCLTK_CPPFLAGS}"; then
   if test "${have_tcltk}" = yes; then
     ## Part 2.  Check for tk.h.
     found_tk_h=no
+    found_tk_by_config=no
     if test -n "${TK_CONFIG}"; then
       . ${TK_CONFIG}
       ## TK_INCLUDE_SPEC (if set) is what we want.
@@ -2314,6 +2401,7 @@ if test -z "${TCLTK_CPPFLAGS}"; then
 	AC_CHECK_HEADER([tk.h],
 		        [TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} ${TK_INCLUDE_SPEC}"
 			 found_tk_h=yes])
+	found_tk_by_config=yes
 	CPPFLAGS="${r_save_CPPFLAGS}"
       fi
       if test "${found_tk_h}" = no; then
@@ -2355,8 +2443,12 @@ if test -z "${TCLTK_CPPFLAGS}"; then
     fi
   fi
 fi
+## TK_XINCLUDES should be empty for Aqua Tk, so earlier test was wrong
+## Our code does not include any X headers, but tk.h may ....
+## That is true even on OS X, but Aqua Tk has a private version of
+## X11 headers, and we want that one and not the XQuartz one.
 if test "${have_tcltk}" = yes; then
-  if test -n "${TK_XINCLUDES}"; then
+  if test "${found_tk_by_config}" = yes; then
     TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} ${TK_XINCLUDES}"
   else
     TCLTK_CPPFLAGS="${TCLTK_CPPFLAGS} ${X_CFLAGS}"
@@ -2368,8 +2460,7 @@ fi
 ## -------------
 ## Find the tcl and tk libraries.
 AC_DEFUN([_R_TCLTK_LIBS],
-[AC_REQUIRE([AC_PATH_XTRA])
-AC_REQUIRE([_R_TCLTK_CONFIG])
+[AC_REQUIRE([_R_TCLTK_CONFIG])
 if test -z "${TCLTK_LIBS}"; then
   ## We have to do the work.
   if test "${have_tcltk}" = yes; then
@@ -2990,27 +3081,22 @@ AC_SUBST(TIRPC_CPPFLAGS)
 ## Try finding zlib library and headers.
 ## We check that both are installed, and that the header >= 1.2.3
 AC_DEFUN([R_ZLIB],
-[if test "x${use_system_zlib}" = xyes; then
-  AC_CHECK_LIB(z, inflateInit2_, [have_zlib=yes], [have_zlib=no])
-  if test "${have_zlib}" = yes; then
-    AC_CHECK_HEADER(zlib.h, [have_zlib=yes], [have_zlib=no])
-  fi
-  if test "${have_zlib}" = yes; then
-    _R_HEADER_ZLIB
-    have_zlib=${r_cv_header_zlib_h}
-  fi
-else
-  have_zlib="no"
-fi
-AC_MSG_CHECKING([whether zlib support needs to be compiled])
+[AC_CHECK_LIB(z, inflateInit2_, [have_zlib=yes], [have_zlib=no])
 if test "${have_zlib}" = yes; then
-  AC_MSG_RESULT([no])
-  LIBS="-lz ${LIBS}"
+  AC_CHECK_HEADER(zlib.h, [have_zlib=yes], [have_zlib=no])
+fi
+if test "${have_zlib}" = yes; then
+  _R_HEADER_ZLIB
+  have_zlib=${r_cv_header_zlib_h}
+fi
+AC_MSG_CHECKING([whether zlib support suffices])
+if test "${have_zlib}" != yes; then
+  AC_MSG_ERROR([zlib library and headers are required])
 else
+  LIBS="-lz ${LIBS}"
   AC_MSG_RESULT([yes])
   _R_ZLIB_MMAP
 fi
-AM_CONDITIONAL(BUILD_ZLIB, [test "x${have_zlib}" = xno])
 AM_CONDITIONAL(USE_MMAP_ZLIB,
 [test "x${have_zlib}" = xno && test "x${r_cv_zlib_mmap}" = xyes])
 ])# R_ZLIB
@@ -3067,22 +3153,18 @@ caddr_t hello() {
 ## ------
 ## If selected, try finding system pcre library and headers.
 ## RedHat put the headers in /usr/include/pcre.
-## There are known problems < 8.10.
+## There are known problems < 8.10, and important bug fixes in 8.32
 AC_DEFUN([R_PCRE],
-[if test "x${use_system_pcre}" = xyes; then
-  AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
-  if test "${have_pcre}" = yes; then
-    AC_CHECK_HEADERS(pcre.h pcre/pcre.h)
-    if test "${ac_cv_header_pcre_h}" = no \
-	&& test "${ac_cv_header_pcre_pcre_h}" = no; then
-      have_pcre=no
-    fi
+[AC_CHECK_LIB(pcre, pcre_fullinfo, [have_pcre=yes], [have_pcre=no])
+if test "${have_pcre}" = yes; then
+  AC_CHECK_HEADERS(pcre.h pcre/pcre.h)
+  if test "${ac_cv_header_pcre_h}" = no \
+    && test "${ac_cv_header_pcre_pcre_h}" = no; then
+    have_pcre=no
   fi
-else
-  have_pcre=no
 fi
-r_save_LIBS="${LIBS}"
 if test "x${have_pcre}" = xyes; then
+r_save_LIBS="${LIBS}"
 LIBS="-lpcre ${LIBS}"
 AC_CACHE_CHECK([if PCRE version >= 8.10, < 10.0 and has UTF-8 support], [r_cv_have_pcre810],
 [AC_RUN_IFELSE([AC_LANG_SOURCE([[
@@ -3115,14 +3197,36 @@ fi
 if test "x${r_cv_have_pcre810}" != xyes; then
   have_pcre=no
   LIBS="${r_save_LIBS}"
+else
+AC_CACHE_CHECK([if PCRE version >= 8.32], [r_cv_have_pcre832],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_PCRE_PCRE_H
+#include <pcre/pcre.h>
+#else
+#ifdef HAVE_PCRE_H
+#include <pcre.h>
+#endif
+#endif
+int main() {
+#if PCRE_MAJOR == 8 && PCRE_MINOR >= 32
+  exit(0);
+#else
+  exit(1);
+#endif
+}
+]])], [r_cv_have_pcre832=yes], [r_cv_have_pcre832=no], [r_cv_have_pcre832=no])])
 fi
-AC_MSG_CHECKING([whether PCRE support needs to be compiled])
-if test "x${r_cv_have_pcre810}" = xyes; then
-  AC_MSG_RESULT([no])
+
+AC_MSG_CHECKING([whether PCRE support suffices])
+if test "x${r_cv_have_pcre810}" != xyes; then
+  AC_MSG_ERROR([pcre >= 8.10 library and headers are required])
 else
   AC_MSG_RESULT([yes])
 fi
-AM_CONDITIONAL(BUILD_PCRE, [test "x${r_cv_have_pcre810}" != xyes])
+if test "x${r_cv_have_pcre832}" != xyes; then
+  warn_pcre_version="pcre < 8.32 is deprecated"
+  AC_MSG_WARN([${warn_pcre_version}])
+fi
 ])# R_PCRE
 
 ## R_BZLIB
@@ -3131,13 +3235,9 @@ AM_CONDITIONAL(BUILD_PCRE, [test "x${r_cv_have_pcre810}" != xyes])
 ## We check that both are installed,
 ## and that BZ2_bzlibVersion is in the library.
 AC_DEFUN([R_BZLIB],
-[if test "x${use_system_bzlib}" = xyes; then
-  AC_CHECK_LIB(bz2, BZ2_bzlibVersion, [have_bzlib=yes], [have_bzlib=no])
-  if test "${have_bzlib}" = yes; then
-    AC_CHECK_HEADERS(bzlib.h, [have_bzlib=yes], [have_bzlib=no])
-  fi
-else
-  have_bzlib=no
+[AC_CHECK_LIB(bz2, BZ2_bzlibVersion, [have_bzlib=yes], [have_bzlib=no])
+if test "${have_bzlib}" = yes; then
+  AC_CHECK_HEADERS(bzlib.h, [have_bzlib=yes], [have_bzlib=no])
 fi
 if test "x${have_bzlib}" = xyes; then
 AC_CACHE_CHECK([if bzip2 version >= 1.0.6], [r_cv_have_bzlib],
@@ -3159,14 +3259,13 @@ fi
 if test "x${r_cv_have_bzlib}" = xno; then
   have_bzlib=no
 fi
-AC_MSG_CHECKING([whether bzip2 support needs to be compiled])
+AC_MSG_CHECKING([whether bzip2 support suffices])
 if test "x${have_bzlib}" = xyes; then
   AC_MSG_RESULT([no])
   LIBS="-lbz2 ${LIBS}"
 else
-  AC_MSG_RESULT([yes])
+  AC_MSG_ERROR([bzip2 library and headers are required])
 fi
-AM_CONDITIONAL(BUILD_BZLIB, [test "x${have_bzlib}" = xno])
 ])# R_BZLIB
 
 ## R_TRE
@@ -3194,11 +3293,10 @@ AM_CONDITIONAL(BUILD_TRE, [test x${have_tre} != xyes])
 ## Try finding liblzma library and headers.
 ## We check that both are installed,
 AC_DEFUN([R_LZMA],
-[if test "x${use_system_xz}" = xyes; then
-  AC_CHECK_LIB(lzma, lzma_version_number, [have_lzma=yes], [have_lzma=no])
-  if test "${have_lzma}" = yes; then
-    AC_CHECK_HEADERS(lzma.h, [have_lzma=yes], [have_lzma=no])
-  fi
+[AC_CHECK_LIB(lzma, lzma_version_number, [have_lzma=yes], [have_lzma=no])
+if test "${have_lzma}" = yes; then
+  AC_CHECK_HEADERS(lzma.h, [have_lzma=yes], [have_lzma=no])
+fi
 if test "x${have_lzma}" = xyes; then
 AC_CACHE_CHECK([if lzma version >= 5.0.3], [r_cv_have_lzma],
 [AC_LANG_PUSH(C)
@@ -3225,11 +3323,9 @@ fi
 if test "x${have_lzma}" = xyes; then
   AC_DEFINE(HAVE_LZMA, 1, [Define if your system has lzma >= 5.0.3.])
   LIBS="-llzma ${LIBS}"
-fi
 else
-  have_lzma="no"
+  AC_MSG_ERROR("liblzma library and headers are required")
 fi
-AM_CONDITIONAL(BUILD_XZ, [test x${have_lzma} != xyes])
 ])# R_LZMA
 
 
@@ -4049,6 +4145,87 @@ AC_ARG_VAR([SHLIB_CXX1XLD],
             files from the C++11 compiler])
 AC_ARG_VAR([SHLIB_CXX1XLDFLAGS], [special flags used by SHLIB_CXX1XLD])
 ])# R_CXX1X
+
+## R_LIBCURL
+## ----------------
+AC_DEFUN([R_LIBCURL],
+[## curl-config might not match the installed libcurl,
+## so we allow the user to set CURL_CPPFLAGS, CURL_LIBS
+## and check the version directly rather than by curl-config --checkfor
+AC_PATH_PROG(CURL_CONFIG, curl-config)
+if test -n "${CURL_CONFIG}"; then
+  echo "checking libcurl version ..." \
+    `${CURL_CONFIG} --version | sed -e 's,^[[^0-9]]*,,'`
+  if test -z "${CURL_CPPFLAGS}"; then
+    CURL_CPPFLAGS=`${CURL_CONFIG} --cflags`
+  fi
+  ## This should be correct for a static-only build, user will
+  ## need to override to specify static linking (see config.site)
+  if test -z "${CURL_LIBS}"; then
+    CURL_LIBS=`${CURL_CONFIG} --libs`
+  fi
+fi
+r_save_CPPFLAGS="${CPPLAGS}"
+CPPFLAGS="${CURL_CPPFLAGS} ${CPPFLAGS}"
+r_save_LIBS="${LIBS}"
+LIBS="${CURL_LIBS} ${LIBS}"
+AC_CHECK_HEADERS(curl/curl.h, [have_libcurl=yes], [have_libcurl=no])
+
+if test "x${have_libcurl}" = "xyes"; then
+AC_CACHE_CHECK([if libcurl is version 7 and >= 7.28.0], [r_cv_have_curl728],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdlib.h>
+#include <curl/curl.h>
+int main() 
+{
+#ifdef LIBCURL_VERSION_MAJOR
+#if LIBCURL_VERSION_MAJOR > 7
+  exit(1);
+#elif LIBCURL_VERSION_MAJOR == 7 && LIBCURL_VERSION_MINOR >= 28
+  exit(0);
+#else
+  exit(1);
+#endif
+#else
+  exit(1);
+#endif
+}
+]])], [r_cv_have_curl728=yes], [r_cv_have_curl728=no], [r_cv_have_curl728=no])])
+fi
+if test "x${r_cv_have_curl728}" = xno; then
+  have_libcurl=no
+fi
+
+if test "x${have_libcurl}" = "xyes"; then
+AC_CACHE_CHECK([if libcurl supports https], [r_cv_have_curl_https],
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <string.h>
+#include <curl/curl.h>
+int main()
+{
+    curl_version_info_data *data = curl_version_info(CURLVERSION_NOW);
+    const char * const *p  = data->protocols;
+    int found = 0;
+    for (; *p; p++)
+	if(strcmp(*p, "https") == 0) {found = 1; break;}
+    exit(found ? 0 : 1);
+}
+]])], [r_cv_have_curl_https=yes], [r_cv_have_curl_https=no], [r_cv_have_curl_https=no])])
+fi
+if test "x${r_cv_have_curl_https}" = xno; then
+  have_libcurl=no
+fi
+if test "x${have_libcurl}" = xyes; then
+  AC_DEFINE(HAVE_LIBCURL, 1, [Define if your system has libcurl >= 7.28.0 with support for https.])
+  CPPFLAGS="${r_save_CPPFLAGS}"
+  LIBS="${r_save_LIBS}"
+  AC_SUBST(CURL_CPPFLAGS)
+  AC_SUBST(CURL_LIBS)
+else
+  AC_MSG_ERROR([libcurl >= 7.28.0 library and headers are required with support for https])
+fi
+])# R_LIBCURL
+
 
 
 ### Local variables: ***

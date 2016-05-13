@@ -272,7 +272,7 @@ static void printNamedIntegerVector(int * x, int n, SEXP * names)
 
 static void printNamedRealVector(double * x, int n, SEXP * names)
     PRINT_N_VECTOR(INI_F_REAL,
-		   Rprintf("%s%*s",
+		   Rprintf("%s%*s", 
 			   EncodeReal0(x[k],w,d,e, OutDec),R_print.gap,""))
 
 #undef INI_F_CPLX

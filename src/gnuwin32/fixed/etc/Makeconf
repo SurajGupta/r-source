@@ -17,6 +17,7 @@ LINKFLAGS+= -static-libgcc
 ## Things which are substituted by fixed/Makefile (and also -O3 -> -O2)
 WIN = 32
 BINPREF =
+COMPILED_BY =
 # SYMPAT = 's/^.* [BCDRT] _/ /p' for 32-bit
 # SYMPAT = 's/^.* [BCDRT] / /p' for 64-bit
 SYMPAT = @SYMPAT@
@@ -62,8 +63,6 @@ TCL_VERSION = 85
 ZLIB_LIBS = -lz
 
 AR = $(BINPREF)ar
-## Used by packages 'maps' and 'mapdata'
-AWK = gawk
 BLAS_LIBS = -L"$(R_HOME)/$(IMPDIR)" -lRblas
 C_VISIBILITY = 
 CC = $(BINPREF)gcc $(M_ARCH)
@@ -93,7 +92,7 @@ FCLIBS =
 F77 = $(BINPREF)gfortran $(M_ARCH)
 F77_VISIBILITY = 
 FFLAGS = -O3 $(DEBUGFLAG) @EOPTS@
-FLIBS = -lgfortran
+FLIBS = -lgfortran -lm -lquadmath
 FCPICFLAGS =
 FPICFLAGS = 
 FOUNDATION_CPPFLAGS =

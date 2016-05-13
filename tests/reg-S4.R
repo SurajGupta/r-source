@@ -327,10 +327,7 @@ selectMethod("!", "foo")
 xx <- new("foo", FALSE)
 !xx
 
-## This failed for about one day -- as.vector(x, mode) :
-setMethod("as.vector", signature(x = "foo", mode = "missing"),
-          function(x) unclass(x))
-## whereas this fails in R versions earlier than 2.6.0:
+## This fails in R versions earlier than 2.6.0:
 setMethod("as.vector", "foo", function(x) unclass(x))
 stopifnot(removeClass("foo"))
 
@@ -514,7 +511,7 @@ x <- new("numWithId", 1:3, id = "An Example")
 xtfrm(x) # works as the base representation is numeric
 setMethod('xtfrm', 'numWithId', function(x) x@.Data)
 xtfrm(x)
-stopifnot(identical(xtfrm(x), 1:3))
+stopifnot(identical(xtfrm(x), 1:3))# "integer" is "numeric"
 ## new in 2.11.0
 
 ## [-dispatch using callNextMethod()
@@ -607,6 +604,7 @@ a <- new("A", aa=aa)
 setMethod(length, "A", function(x) length(x@aa))
 setMethod(`[[`,   "A", function(x, i, j, ...) x@aa[[i]])
 setMethod(`[`,    "A", function(x, i, j, ...) new("A", aa = x@aa[i]))
+setMethod("is.na","A", function(x) is.na(x@aa))
 stopifnot(length(a) == 6, identical(a[[5]], aa[[5]]),
           identical(a, rev(rev(a))), # using '['
 	  identical(mapply(`*`, aa, rep(1:3, 2)),
@@ -614,12 +612,7 @@ stopifnot(length(a) == 6, identical(a[[5]], aa[[5]]),
 ## Up to R 2.15.2, internally 'a' is treated as if it was of length 1
 ## because internal dispatch did not work for length().
 
-## is.unsorted() for formal classes - and R > 3.0.0 :
-## Fails, unfortunately (from C, base::.gtn() is called w/o dispatch)
-## setMethod("anyNA", "A", function(x) anyNA(x@aa))
-## setMethod(".gtn", "A", function(x,strictly) .gtn(x@aa, strictly))
-## but this now works (thanks to DispatchOrEval() ):
-setMethod("is.unsorted", "A", function(x, na.rm=FALSE, strictly=FALSE)
+setMethod("is.unsorted", "A", function(x, na.rm, strictly)
     is.unsorted(x@aa, na.rm=na.rm, strictly=strictly))
 
 stopifnot(!is.unsorted(a), # 11:16 *is* sorted
@@ -767,8 +760,68 @@ stopifnot(identical(t(m3), rbind(m1, three, m2+3, deparse.level = 2)),
           identical(colnames(mm), c("", "", "T")),
           identical(cbind(m1, m2, deparse.level=0),
                     cbind(m1@.Data, m2@.Data)))
-rm(m1,m2)
-removeClass("mondate")
 ##
+## Cleanup all class definitions etc -- seems necessary for the following "re"-definitions:
+invisible(lapply(getClasses(globalenv()), removeClass))
+nn <- names(globalenv())
+rm(list = c("nn", nn))
+
+## Using "data.frame" in a slot -- all have worked for long:
+setClass("A", representation(slot1="numeric", slot2="logical"))
+setClass("D1", contains="A", representation(design="data.frame"))
+setClass("D2", contains="D1")
+validObject(a <- new("A", slot1=77, slot2=TRUE))
+validObject(D. <- new("D2", a, design = data.frame(x = 1)))
+## using "formula" in a slot -- from Hervé Pages :
+setClass("B", contains="A", representation(design="formula"))
+setClass("C", contains="B")
+##
+a <- new("A", slot1=77, slot2=TRUE)
+validObject(C1 <- new("C", a, design = x ~ y))# failed for R <= 3.2.0
+C2 <- new("C", slot1=a@slot1, slot2=a@slot2, design=x ~ y)
+stopifnot(identical(C1, C2),
+	  identical(formula(), formula(NULL)),
+	  length(N <- new("formula")) == 0, inherits(N, "formula"),
+	  length(N <- new("table")  ) == 0, is.table(N),
+	  validObject(N <- new("summary.table")),
+	  length(N <- new("ordered")) == 0, is.ordered(N))
+## formula() and new("formula"), new("..") also failed  in R <= 3.2.0
+
+require("stats4")# -> "mle" class
+validObject(sig <- new("signature", obj = "mle"))
+stopifnot(c("package", "names") %in% slotNames(sig))
+str(sig) # failed, too
+
+cl4 <- getClasses("package:stats4")
+stopifnot(identical(getClasses(which(search() == "package:stats4")), cl4),
+	  c("mle", "profile.mle", "summary.mle") %in% cl4)
+## failed after an optimization patch
+
+detach("package:methods", force=TRUE)
+C1@slot1 <- pi
+stopifnot(identical(C1@slot1, pi))
+stopifnot(require("methods"))
+## Slot assignment failed in R <= 3.2.2, C code calling checkAtAssignment()
+
+## Error in argument evaluation of S4 generic - PR#16111
+f <- function() {
+    signal <- FALSE
+    withCallingHandlers({ g(sqrt(-1)) }, warning = function(w) {
+        signal <<- TRUE
+        invokeRestart("muffleWarning")
+    })
+    signal
+}
+g <- function(x) x
+op <- options(warn = 2)# warnings give errors
+stopifnot(isTRUE( f() ))
+setGeneric("g")
+stopifnot(isTRUE( f() ))
+options(op)
+## the second  f()  gave a warning and FALSE in  R versions  2.12.0 <= . <= 3.2.3
 
 
+stopifnot(
+    identical(formals(getGeneric("as.vector")), formals(base::as.vector)),
+    identical(formals(getGeneric("unlist")),    formals(base::unlist)))
+## failed for a while in R-devel (3.3.0)

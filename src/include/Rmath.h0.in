@@ -31,11 +31,22 @@
 #ifndef RMATH_H
 #define RMATH_H
 
-/* Note that on some systems we need to include math.h before the
-   defines below. */
+/* Note that on some systems you need to include math.h before the
+   defines below. If so, define this yourself. */
 #ifndef NO_C_HEADERS
-# define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
-# include <math.h>
+/* needed for cospi etc */
+# ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+#  define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+# endif
+/* See the comment in R.h */
+# ifdef __SUNPRO_CC
+#  define DO_NOT_USE_CXX_HEADERS
+# endif
+# if defined(__cplusplus) && !defined(DO_NOT_USE_CXX_HEADERS)
+#  include <cmath>
+# else
+#  include <math.h>
+# endif
 #endif
 
 /*-- Mathlib as part of R --  define this for standalone : */
@@ -259,9 +270,11 @@ double  Rlog1p(double);
 #define lgammafn	Rf_lgammafn
 #define lgammafn_sign	Rf_lgammafn_sign
 #define lgamma1p	Rf_lgamma1p
+#define log1pexp       	Rf_log1pexp
 #define log1pmx		Rf_log1pmx
 #define logspace_add	Rf_logspace_add
 #define logspace_sub	Rf_logspace_sub
+#define logspace_sum	Rf_logspace_sum
 #define pbeta		Rf_pbeta
 #define pbeta_raw	Rf_pbeta_raw
 #define pbinom		Rf_pbinom
@@ -398,7 +411,7 @@ double  log1pexp(double); // <-- ../nmath/plogis.c
 double  lgamma1p(double);
 double  logspace_add(double, double);
 double  logspace_sub(double, double);
-double  logspace_sum(double *, int);
+double  logspace_sum(const double *, int);
 
 	/* Beta Distribution */
 
@@ -612,7 +625,7 @@ double  lgamma1p(double);/* accurate log(gamma(x+1)), small x (0 < x < 0.5) */
 
    In future these declarations could clash with system headers if
    someone had already included math.h with
-   __STDC_WANT_IEC_60559_TYPES_EXT__ defined.
+   __STDC_WANT_IEC_60559_FUNCS_EXT__ defined.
    We can add a check for that via the value of
    __STDC_IEC_60559_FUNCS__ (>= 201ymmL, exact value not yet known).
 */

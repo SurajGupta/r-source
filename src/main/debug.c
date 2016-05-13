@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Langage for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1998-2014   The R Core Team.
+ *  Copyright (C) 1998-2015   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,9 +40,10 @@ SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     find_char_fun
 
-    if (TYPEOF(CAR(args)) != CLOSXP && TYPEOF(CAR(args)) != SPECIALSXP
-         &&  TYPEOF(CAR(args)) != BUILTINSXP )
-	errorcall(call, _("argument must be a closure"));
+    if (TYPEOF(CAR(args)) != CLOSXP &&
+	TYPEOF(CAR(args)) != SPECIALSXP &&
+	TYPEOF(CAR(args)) != BUILTINSXP)
+	errorcall(call, _("argument must be a function"));
     switch(PRIMVAL(op)) {
     case 0: // debug()
 	SET_RDEBUG(CAR(args), 1);
@@ -53,26 +54,25 @@ SEXP attribute_hidden do_debug(SEXP call, SEXP op, SEXP args, SEXP rho)
 	SET_RDEBUG(CAR(args), 0);
 	break;
     case 2: // isdebugged()
-        ans = ScalarLogical(RDEBUG(CAR(args)));
-        break;
+	ans = ScalarLogical(RDEBUG(CAR(args)));
+	break;
     case 3: // debugonce()
-        SET_RSTEP(CAR(args), 1);
-        break;
+	SET_RSTEP(CAR(args), 1);
+	break;
     }
     return ans;
 }
 
-/* primitives .primTrace and .primUntrace */
+/* primitives .primTrace() and .primUntrace() */
 SEXP attribute_hidden do_trace(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-    check1arg(args, call, "x");
 
     find_char_fun
 
     if (TYPEOF(CAR(args)) != CLOSXP &&
-	TYPEOF(CAR(args)) != BUILTINSXP &&
-	TYPEOF(CAR(args)) != SPECIALSXP)
+	TYPEOF(CAR(args)) != SPECIALSXP &&
+	TYPEOF(CAR(args)) != BUILTINSXP)
 	    errorcall(call, _("argument must be a function"));
 
     switch(PRIMVAL(op)) {
@@ -175,11 +175,15 @@ SEXP attribute_hidden do_untracemem(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden NORET do_tracemem(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
+    check1arg(args, call, "x");
     errorcall(call, _("R was not compiled with support for memory profiling"));
 }
 
 SEXP attribute_hidden NORET do_untracemem(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
+    check1arg(args, call, "x");
     errorcall(call, _("R was not compiled with support for memory profiling"));
 }
 
@@ -223,7 +227,7 @@ SEXP attribute_hidden do_retracemem(SEXP call, SEXP op, SEXP args, SEXP rho)
     static SEXP do_retracemem_formals = NULL;
 
     if (do_retracemem_formals == NULL)
-        do_retracemem_formals = allocFormalsList2(install("x"),
+	do_retracemem_formals = allocFormalsList2(install("x"),
 						  R_PreviousSymbol);
 
     PROTECT(argList =  matchArgs(do_retracemem_formals, args, call));

@@ -24,6 +24,7 @@
 
 #include <Defn.h>
 #include <Internal.h>
+#include <R_ext/Itermacros.h>
 
 /* interval at which to check interrupts, a guess */
 // #define NINTERRUPT 10000000
@@ -180,7 +181,8 @@ static SEXP lunary(SEXP call, SEXP op, SEXP arg)
 	errorcall(call, _("invalid argument type"));
     }
     if (isLogical(arg) || isRaw(arg))
-	x = PROTECT(duplicate(arg));  // copy all attributes in this case
+	// copy all attributes in this case
+	x = PROTECT(shallow_duplicate(arg));
     else {
 	x = PROTECT(allocVector(isRaw(arg) ? RAWSXP : LGLSXP, len));
 	PROTECT(names = getAttrib(arg, R_NamesSymbol));
@@ -288,7 +290,7 @@ SEXP attribute_hidden do_logic2(SEXP call, SEXP op, SEXP args, SEXP env)
 
 static SEXP binaryLogic(int code, SEXP s1, SEXP s2)
 {
-    R_xlen_t i, n, n1, n2;
+    R_xlen_t i, n, n1, n2, i1, i2;
     int x1, x2;
     SEXP ans;
 
@@ -303,30 +305,30 @@ static SEXP binaryLogic(int code, SEXP s1, SEXP s2)
 
     switch (code) {
     case 1:		/* & : AND */
-	for (i = 0; i < n; i++) {
+	MOD_ITERATE2(n, n1, n2, i, i1, i2, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    x1 = LOGICAL(s1)[i % n1];
-	    x2 = LOGICAL(s2)[i % n2];
+	    x1 = LOGICAL(s1)[i1];
+	    x2 = LOGICAL(s2)[i2];
 	    if (x1 == 0 || x2 == 0)
 		LOGICAL(ans)[i] = 0;
 	    else if (x1 == NA_LOGICAL || x2 == NA_LOGICAL)
 		LOGICAL(ans)[i] = NA_LOGICAL;
 	    else
 		LOGICAL(ans)[i] = 1;
-	}
+	});
 	break;
     case 2:		/* | : OR */
-	for (i = 0; i < n; i++) {
+	MOD_ITERATE2(n, n1, n2, i, i1, i2, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    x1 = LOGICAL(s1)[i % n1];
-	    x2 = LOGICAL(s2)[i % n2];
+	    x1 = LOGICAL(s1)[i1];
+	    x2 = LOGICAL(s2)[i2];
 	    if ((x1 != NA_LOGICAL && x1) || (x2 != NA_LOGICAL && x2))
 		LOGICAL(ans)[i] = 1;
 	    else if (x1 == 0 && x2 == 0)
 		LOGICAL(ans)[i] = 0;
 	    else
 		LOGICAL(ans)[i] = NA_LOGICAL;
-	}
+	});
 	break;
     case 3:
 	error(_("Unary operator `!' called with two arguments"));
@@ -337,7 +339,7 @@ static SEXP binaryLogic(int code, SEXP s1, SEXP s2)
 
 static SEXP binaryLogic2(int code, SEXP s1, SEXP s2)
 {
-    R_xlen_t i, n, n1, n2;
+    R_xlen_t i, n, n1, n2, i1, i2;
     Rbyte x1, x2;
     SEXP ans;
 
@@ -352,20 +354,20 @@ static SEXP binaryLogic2(int code, SEXP s1, SEXP s2)
 
     switch (code) {
     case 1:		/* & : AND */
-	for (i = 0; i < n; i++) {
+	MOD_ITERATE2(n, n1, n2, i, i1, i2, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    x1 = RAW(s1)[i % n1];
-	    x2 = RAW(s2)[i % n2];
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
 	    RAW(ans)[i] = x1 & x2;
-	}
+	});
 	break;
     case 2:		/* | : OR */
-	for (i = 0; i < n; i++) {
+	MOD_ITERATE2(n, n1, n2, i, i1, i2, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    x1 = RAW(s1)[i % n1];
-	    x2 = RAW(s2)[i % n2];
+	    x1 = RAW(s1)[i1];
+	    x2 = RAW(s2)[i2];
 	    RAW(ans)[i] = x1 | x2;
-	}
+	});
 	break;
     }
     return ans;
@@ -380,19 +382,19 @@ static int checkValues(int op, int na_rm, int *x, R_xlen_t n)
     int has_na = 0;
     for (i = 0; i < n; i++) {
 //	if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-        if (!na_rm && x[i] == NA_LOGICAL) has_na = 1;
-        else {
-            if (x[i] == TRUE && op == _OP_ANY) return TRUE;
-            if (x[i] == FALSE && op == _OP_ALL) return FALSE;
-        }
+	if (!na_rm && x[i] == NA_LOGICAL) has_na = 1;
+	else {
+	    if (x[i] == TRUE && op == _OP_ANY) return TRUE;
+	    if (x[i] == FALSE && op == _OP_ALL) return FALSE;
+	}
     }
     switch (op) {
     case _OP_ANY:
-        return has_na ? NA_LOGICAL : FALSE;
+	return has_na ? NA_LOGICAL : FALSE;
     case _OP_ALL:
-        return has_na ? NA_LOGICAL : TRUE;
+	return has_na ? NA_LOGICAL : TRUE;
     default:
-        error("bad op value for do_logic3");
+	error("bad op value for do_logic3");
     }
     return NA_LOGICAL; /* -Wall */
 }
@@ -439,13 +441,13 @@ SEXP attribute_hidden do_logic3(SEXP call, SEXP op, SEXP args, SEXP env)
 	    t = coerceVector(t, LGLSXP);
 	}
 	val = checkValues(PRIMVAL(op), narm, LOGICAL(t), XLENGTH(t));
-        if (val != NA_LOGICAL) {
-            if ((PRIMVAL(op) == _OP_ANY && val)
-                || (PRIMVAL(op) == _OP_ALL && !val)) {
-                has_na = 0;
-                break;
-            }
-        } else has_na = 1;
+	if (val != NA_LOGICAL) {
+	    if ((PRIMVAL(op) == _OP_ANY && val)
+		|| (PRIMVAL(op) == _OP_ALL && !val)) {
+		has_na = 0;
+		break;
+	    }
+	} else has_na = 1;
     }
     UNPROTECT(2);
     return has_na ? ScalarLogical(NA_LOGICAL) : ScalarLogical(val);

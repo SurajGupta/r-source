@@ -752,8 +752,7 @@ reconcilePropertiesAndPrototype <-
       }
       ## check for conflicts in the slots
       allProps <- properties
-      for(i in seq_along(superClasses)) {
-          cl <- superClasses[[i]]
+      for(cl in superClasses) {
           clDef <- getClassDef(cl, where)
           if(is(clDef, "classRepresentation")) {
               theseProperties <- getSlots(clDef)
@@ -977,37 +976,28 @@ possibleExtends <- function(class1, class2, ClassDef1, ClassDef2)
 {
     if(.identC(class1[[1L]], class2) || .identC(class2, "ANY"))
         return(TRUE)
-    ## ext <- TRUE # may become a list of extends definitions
     if(is.null(ClassDef1)) # class1 not defined
         return(FALSE)
     ## else
     ext <- ClassDef1@contains
-    nm1 <- names(ext)
-    i <- match(class2, nm1)
-    if(is.na(i)) {
-        ## look for class1 in the known subclasses of class2
-        if(!is.null(ClassDef2)) {
-            ext <- ClassDef2@subclasses
-            ## check for a classUnion definition, not a plain "classRepresentation"
-            if(!.identC(class(ClassDef2), "classRepresentation") &&
-               isClassUnion(ClassDef2))
-                ## a simple TRUE iff class1 or one of its superclasses belongs to the union
-                i <- any(c(class1, nm1) %in% names(ext))
-            else {
-                ## class1 could be multiple classes here.
-                ## I think we want to know if any extend
-                i <- match(class1, names(ext))
-                ii <- i[!is.na(i)]
-                i <- if(length(ii)) ii[1L] else i[1L]
-            }
-        }
+    if(!is.null(contained <- ext[[class2]]))
+	contained
+    else if (is.null(ClassDef2))
+	FALSE
+    else { ## look for class1 in the known subclasses of class2
+	subs <- ClassDef2@subclasses
+	## check for a classUnion definition, not a plain "classRepresentation"
+	if(!.identC(class(ClassDef2), "classRepresentation") && isClassUnion(ClassDef2))
+	    ## a simple TRUE iff class1 or one of its superclasses belongs to the union
+	    any(c(class1, names(ext)) %in% names(subs))
+	else {
+	    ## class1 could be multiple classes here.
+	    ## I think we want to know if any extend
+	    i <- match(class1, names(subs))
+	    i <- i[!is.na(i)]
+	    if(length(i)) subs[[ i[1L] ]] else FALSE
+	}
     }
-    if(is.na(i))
-        FALSE
-    else if(is.logical(i))
-        i
-    else
-        el(ext, i)
 }
 
   ## complete the extends information in the class definition, by following
@@ -1293,9 +1283,12 @@ requireMethods <-
         method <- getMethod(f, optional = TRUE)
         if(!is.function(method))
             method <- getGeneric(f, where = where)
-	body(method) <- substitute(stop(methods:::.missingMethod(FF, MESSAGE,
-								 if(exists(".Method")).Method),
-					domain=NA), list(FF=f, MESSAGE=message))
+        ## this is not eval()ed in this namespace
+	body(method) <-
+            substitute(stop(methods:::.missingMethod(FF, MESSAGE,
+                                                     if(exists(".Method")) .Method),
+                            domain = NA),
+                       list(FF = f, MESSAGE = message))
         environment(method) <- .GlobalEnv
         setMethod(f, signature, method, where = where)
     }
@@ -1916,6 +1909,7 @@ substituteFunctionArgs <-
 ## See .cacheGeneric, etc. for analogous computations for generics
 .classTable <- new.env(TRUE, baseenv())
 assign("#HAS_DUPLICATE_CLASS_NAMES", FALSE, envir = .classTable)
+## FIXME We've seen duplicated classes in .classTable
 .duplicateClassesExist <- function(on) {
     value <- get("#HAS_DUPLICATE_CLASS_NAMES", envir = .classTable)
     if(nargs())
@@ -1926,35 +1920,36 @@ assign("#HAS_DUPLICATE_CLASS_NAMES", FALSE, envir = .classTable)
 .cacheClass <- function(name, def, doSubclasses = FALSE, env) {
     if(!identical(doSubclasses, FALSE))
       .recacheSubclasses(def@className, def, doSubclasses, env)
-    if(exists(name, envir = .classTable, inherits = FALSE)) {
-        newpkg <- def@package
-        prev <- get(name, envir = .classTable)
-        if(is(prev, "classRepresentation")) {
-            if(identical(prev, def))
-               return()
-            pkg <- prev@package # start a per-package list
-            if(identical(pkg, newpkg)) { # redefinition
-                ## cache for S3, to override possible previous cache
-                base:::.cache_class(name, .extendsForS3(def))
-##                base:::.cache_class(name, extends(def))
-                return(assign(name, def, envir = .classTable))
-            }
-            else if(.simpleDuplicateClass(def, prev))
-                return()
-            prev <- list(prev)
-            names(prev) <- pkg
-        }
-        i <- match(newpkg, names(prev))
-        if(is.na(i))
-           prev[[newpkg]] <- def
-        else if(identical(def, prev[[i]]))
-          return()
-        else
-            prev[[i]] <- def
-        def <- prev
-        .duplicateClassesExist(TRUE)
+    if(!is.null(prev <- .classTable[[name]])) {
+	newpkg <- def@package
+	if(is(prev, "classRepresentation")) {
+	    if(identical(prev, def))
+		return()
+	    pkg <- prev@package # start a per-package list
+	    if(identical(pkg, newpkg)) { # redefinition
+		## cache for S3, to override possible previous cache
+		.cache_class(name, .extendsForS3(def))
+		return(.classTable[[name]] <- def)
+	    }
+	    else if(.simpleDuplicateClass(def, prev))
+		return()
+	    prev <- list(prev)
+	    names(prev) <- pkg
+	}
+	## now  prev  is a named list of class definitions (>= 1),
+	## where the names are names of packages (rather: namespaces)
+	i <- match(newpkg, names(prev))
+	if(is.na(i))
+	    prev[[newpkg]] <- def
+	else if(identical(def, prev[[i]]))
+	    return()
+	else # replace previous
+	    prev[[i]] <- def
+	def <- prev
+	if(length(def) > 1L)
+	    .duplicateClassesExist(TRUE)
     }
-    assign(name, def, envir = .classTable)
+    .classTable[[name]] <- def # return()s invisibly
 }
 
 ## test for identical def, prev class definitions
@@ -2014,23 +2009,22 @@ assign("#HAS_DUPLICATE_CLASS_NAMES", FALSE, envir = .classTable)
 }
 
 .uncacheClass <- function(name, def) {
-  if(!is.null(prev <- .classTable[[name]])) {
+    if(!is.null(prev <- .classTable[[name]])) {
         if(is(def, "classRepresentation")) # paranoia: should only be called this way
             newpkg <- def@package
         else
             newpkg <- ""
-        if(is(prev, "classRepresentation") &&
-           identical(prev@package, newpkg) )
+        if(is(prev, "classRepresentation") && identical(prev@package, newpkg) )
             return(remove(list = name, envir = .classTable))
-         i <- match(newpkg, names(prev))
+        i <- match(newpkg, names(prev))
         if(!is.na(i))
-           prev[[i]] <- NULL
+            prev[[i]] <- NULL
         else # we might warn about unchaching more than once
-          return()
+            return()
         if(length(prev) == 0L)
-          return(remove(list = name, envir = .classTable))
+            return(remove(list = name, envir = .classTable))
         else if(length(prev) == 1L)
-          prev <- prev[[1L]]
+            prev <- prev[[1L]]
         assign(name, prev, envir  = .classTable)
     }
 }
@@ -2277,9 +2271,9 @@ classesToAM <- function(classes, includeSubclasses = FALSE,
   if(length(abbr) != 1 || is.na(abbr))
     stop("argument 'abbreviate' must be 0, 1, 2, or 3")
   if(abbr %% 2)
-    dimnames(value)[[1]] <- base::abbreviate(dimnames(value)[[1]])
+    dimnames(value)[[1]] <- abbreviate(dimnames(value)[[1]])
   if(abbr %/% 2)
-    dimnames(value)[[2]] <- base::abbreviate(dimnames(value)[[2]])
+    dimnames(value)[[2]] <- abbreviate(dimnames(value)[[2]])
   value
 }
 

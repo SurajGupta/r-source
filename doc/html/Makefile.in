@@ -11,12 +11,14 @@ subdir = doc/html
 include $(top_builddir)/Makeconf
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+## logo.jpg is not used in R >= 3.3.0.
+## Rlogo.pdf is only used to make NEWS.pdf
 INSTFILES = \
-	NEWS.2.html R.css Search.html SearchOn.html \
-	favicon.ico left.jpg logo.jpg logosm.jpg right.jpg up.jpg \
+	NEWS.2.html R.css Rlogo.svg Rlogo.pdf Search.html SearchOn.html \
+	favicon.ico left.jpg logo.jpg right.jpg up.jpg \
 	about.html packages-head-utf8.html
 NON_SVN_INSTFILES = resources.html NEWS.html
-DISTFILES = Makefile.in $(INSTFILES) index-default.html
+DISTFILES = Makefile.in $(INSTFILES) index-default.html Notes
 OBJECTS = index.html
 ## <FIXME>
 ## We really should not create packages.html in *this* directory.

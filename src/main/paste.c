@@ -117,8 +117,8 @@ SEXP attribute_hidden do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if (!isString(VECTOR_ELT(x, j)))
 		error(_("non-string argument to internal 'paste'"));
 	}
-	if(xlength(VECTOR_ELT(x, j)) > maxlen)
-	    maxlen = xlength(VECTOR_ELT(x, j));
+	if(XLENGTH(VECTOR_ELT(x, j)) > maxlen)
+	    maxlen = XLENGTH(VECTOR_ELT(x, j));
     }
     if(maxlen == 0)
 	return (!isNull(collapse)) ? mkString("") : allocVector(STRSXP, 0);
@@ -142,7 +142,7 @@ SEXP attribute_hidden do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 
 	pwidth = 0;
 	for (j = 0; j < nx; j++) {
-	    k = xlength(VECTOR_ELT(x, j));
+	    k = XLENGTH(VECTOR_ELT(x, j));
 	    if (k > 0) {
 		SEXP cs = STRING_ELT(VECTOR_ELT(x, j), i % k);
 		if(IS_UTF8(cs)) use_UTF8 = TRUE;
@@ -152,7 +152,7 @@ SEXP attribute_hidden do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 	if (use_Bytes) use_UTF8 = FALSE;
 	vmax = vmaxget();
 	for (j = 0; j < nx; j++) {
-	    k = xlength(VECTOR_ELT(x, j));
+	    k = XLENGTH(VECTOR_ELT(x, j));
 	    if (k > 0) {
 		if(use_Bytes)
 		    pwidth += strlen(CHAR(STRING_ELT(VECTOR_ELT(x, j), i % k)));
@@ -175,7 +175,7 @@ SEXP attribute_hidden do_paste(SEXP call, SEXP op, SEXP args, SEXP env)
 	cbuf = buf = R_AllocStringBuffer(pwidth, &cbuff);
 	vmax = vmaxget();
 	for (j = 0; j < nx; j++) {
-	    k = xlength(VECTOR_ELT(x, j));
+	    k = XLENGTH(VECTOR_ELT(x, j));
 	    if (k > 0) {
 		SEXP cs = STRING_ELT(VECTOR_ELT(x, j), i % k);
 		if (use_UTF8) {
@@ -320,7 +320,7 @@ SEXP attribute_hidden do_filepath(SEXP call, SEXP op, SEXP args, SEXP env)
 	    if (!isString(VECTOR_ELT(x, j)))
 		error(_("non-string argument to Internal paste"));
 	}
-	ln = length(VECTOR_ELT(x, j));
+	ln = LENGTH(VECTOR_ELT(x, j));
 	if(ln > maxlen) maxlen = ln;
 	if(ln == 0) {nzero++; break;}
     }
@@ -331,13 +331,13 @@ SEXP attribute_hidden do_filepath(SEXP call, SEXP op, SEXP args, SEXP env)
     for (i = 0; i < maxlen; i++) {
 	pwidth = 0;
 	for (j = 0; j < nx; j++) {
-	    k = length(VECTOR_ELT(x, j));
+	    k = LENGTH(VECTOR_ELT(x, j));
 	    pwidth += (int) strlen(translateChar(STRING_ELT(VECTOR_ELT(x, j), i % k)));
 	}
 	pwidth += (nx - 1) * sepw;
 	cbuf = buf = R_AllocStringBuffer(pwidth, &cbuff);
 	for (j = 0; j < nx; j++) {
-	    k = length(VECTOR_ELT(x, j));
+	    k = LENGTH(VECTOR_ELT(x, j));
 	    if (k > 0) {
 		s = translateChar(STRING_ELT(VECTOR_ELT(x, j), i % k));
 		strcpy(buf, s);
@@ -612,7 +612,6 @@ SEXP attribute_hidden do_formatinfo(SEXP call, SEXP op, SEXP args, SEXP env)
     R_xlen_t n = XLENGTH(x);
     PrintDefaults();
 
-    digits = asInteger(CADR(args));
     if (!isNull(CADR(args))) {
 	digits = asInteger(CADR(args));
 	if (digits == NA_INTEGER || digits < R_MIN_DIGITS_OPT

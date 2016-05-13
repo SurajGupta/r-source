@@ -1,5 +1,5 @@
 
-R version 3.2.4 RC (2016-03-02 r70281) -- "Very Secure Dishes"
+R version 3.3.0 RC (2016-04-27 r70557) -- "Supposedly Educational"
 Copyright (C) 2016 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -28,7 +28,7 @@ Loading required package: MASS
 > if(require("survival")) {
 +   model3 <- clogit(case ~ spontaneous+induced+strata(stratum), data = infert)
 +   print(summary(model3))
-+   detach("package:survival")  # survival (conflicts)
++   detach("package:survival", unload = TRUE)  # survival (conflicts)
 + }
 Loading required package: survival
 Call:
@@ -531,7 +531,7 @@ pckgDs>
 > ## lattice may not be installed
 > ## Avoid possibly large list from R_HOME/site-library, which --vanilla includes.
 > dependsOnPkgs("lattice", lib.loc = .Library)
-[1] "Matrix" "nlme"   "mgcv"  
+[1] "Matrix"   "nlme"     "mgcv"     "survival"
 > 
 > ## This may not be installed
 > gridEx <- system.file("doc", "grid.Rnw", package = "grid")
@@ -552,5 +552,12 @@ $R
 [1] "R (>= 3.0.0)"
 
 attr(,"class")
-[1] "DependsList" "list"       
+[1] "DependsList"
+Warning messages:
+1: 'getDepList' is deprecated.
+Use 'dependsOnPkgs() or package_dependencies()' instead.
+See help("Deprecated") 
+2: 'package.dependencies' is deprecated.
+Use 'package_dependencies' instead.
+See help("Deprecated") 
 > 

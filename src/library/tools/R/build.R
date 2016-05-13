@@ -1,7 +1,7 @@
 #  File src/library/tools/R/build.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2015 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -237,9 +237,15 @@ get_exclude_patterns <- function()
         }
         if (vignettes &&
             parse_description_field(desc, "BuildVignettes", TRUE)) {
+
+            vignette_index_path <- file.path("build", "vignette.rds")
+            if(file.exists(vignette_index_path))
+                unlink(vignette_index_path)
+
 ## this is not a logical field
 ##	    if (nchar(parse_description_field(desc, "VignetteBuilder", "")))
 ##		ensure_installed()
+
             ## PR#15775: check VignetteBuilder packages are installed
             ## This is a bit wasteful: we do not need them in this process
             loadVignetteBuilder(pkgdir, TRUE)
@@ -325,7 +331,7 @@ get_exclude_patterns <- function()
 		## Save the list
 		dir.create("build", showWarnings = FALSE)
 		saveRDS(vignetteIndex,
-			file = file.path("build", "vignette.rds"))
+			file = vignette_index_path)
             }
         } else {
             fv <- file.path("build", "vignette.rds")
@@ -490,7 +496,19 @@ get_exclude_patterns <- function()
     }
 
     build_Rd_db <- function(pkgdir, libdir, desc) {
-    	db <- .build_Rd_db(pkgdir, stages = NULL,
+
+        build_partial_Rd_db_path <-
+            file.path("build", "partial.rdb")
+        if(file.exists(build_partial_Rd_db_path))
+            unlink(build_partial_Rd_db_path)
+
+        ## Use a full path as this could be passed to ..Rd2pdf().
+        build_refman_path <-
+            file.path(pkgdir, "build", paste0(basename(pkgdir), ".pdf"))
+        if(file.exists(build_refman_path))
+            unlink(build_refman_path)
+
+        db <- .build_Rd_db(pkgdir, stages = NULL,
                            os = c("unix", "windows"), step = 1)
     	if (!length(db)) return(FALSE)
 
@@ -521,7 +539,7 @@ get_exclude_patterns <- function()
 	    messageLog(Log, "saving partial Rd database")
 	    partial <- db[containsBuildSexprs]
 	    dir.create("build", showWarnings = FALSE)
-	    saveRDS(partial, file.path("build", "partial.rdb"))
+	    saveRDS(partial, build_partial_Rd_db_path)
 	}
 	needRefman <- manual &&
             parse_description_field(desc, "BuildManual", TRUE) &&
@@ -529,10 +547,8 @@ get_exclude_patterns <- function()
 	if (needRefman) {
 	    messageLog(Log, "building the PDF package manual")
 	    dir.create("build", showWarnings = FALSE)
-	    refman <- file.path(pkgdir, "build",
-                                paste0(basename(pkgdir), ".pdf"))
 	    ..Rd2pdf(c("--force", "--no-preview",
-	               paste0("--output=", refman),
+	               paste0("--output=", build_refman_path),
 	               pkgdir), quit = FALSE)
         }
 	return(TRUE)
@@ -664,16 +680,20 @@ get_exclude_patterns <- function()
     resave_data_others <- function(pkgname, resave_data)
     {
         if (resave_data == "no") return()
-        ddir <- file.path(pkgname, "data")
+        if(!dir.exists(ddir <- file.path(pkgname, "data")))
+            return()
+        ddir <- normalizePath(ddir)
         dataFiles <- grep("\\.(rda|RData)$",
                           list_files_with_type(ddir, "data"),
                           invert = TRUE, value = TRUE)
         if (!length(dataFiles)) return()
+        resaved <- character()
+        on.exit(unlink(resaved))
         Rs <- grep("\\.[Rr]$", dataFiles, value = TRUE)
         if (length(Rs)) { # these might use .txt etc
             messageLog(Log, "re-saving .R files as .rda")
             ## ensure utils is visible
-            library("utils")
+            ##   library("utils")
             lapply(Rs, function(x){
                 envir <- new.env(hash = TRUE)
                 sys.source(x, chdir = TRUE, envir = envir)
@@ -681,7 +701,7 @@ get_exclude_patterns <- function()
                      file = sub("\\.[Rr]$", ".rda", x),
                      compress = TRUE, compression_level = 9,
                      envir = envir)
-                unlink(x)
+                resaved <<- c(resaved, x)
             })
             printLog(Log,
                      "  NB: *.R converted to .rda: other files may need to be removed\n")
@@ -696,7 +716,7 @@ get_exclude_patterns <- function()
                     con <- gzfile(paste(nm, "gz", sep = "."), "wb")
                     writeLines(x, con)
                     close(con)
-                    unlink(nm)
+                    resaved <<- c(resaved, nm)
                 })
             } else {
                 OK <- TRUE
@@ -709,7 +729,7 @@ get_exclude_patterns <- function()
                     sizes <- file.size(nm3) * c(0.9, 1, 1)
                     ind <- which.min(sizes)
                     if(ind > 1) OK <<- FALSE
-                    unlink(c(nm, nm3[-ind]))
+                    resaved <<- c(resaved, nm, nm3[-ind])
                 })
                 if (!OK) fixup_R_dep(pkgname, "2.10")
             }
@@ -725,7 +745,7 @@ get_exclude_patterns <- function()
     options(showErrorCalls = FALSE, warn = 1)
 
     ## Read in build environment file.
-    Renv <- Sys.getenv("R_BUILD_ENVIRON", unset = NA)
+    Renv <- Sys.getenv("R_BUILD_ENVIRON", unset = NA_character_)
     if(!is.na(Renv)) {
         ## Do not read any build environment file if R_BUILD_ENVIRON is
         ## set to empty of something non-existent.
@@ -916,15 +936,17 @@ get_exclude_patterns <- function()
         ## FIXME: GNU make uses GNUmakefile (note capitalization)
         exclude <- exclude | bases %in% c("Read-and-delete-me", "GNUMakefile")
         ## Mac resource forks
-        exclude <- exclude | grepl("^\\._", bases)
+        exclude <- exclude | startsWith(bases, "._")
         exclude <- exclude | (isdir & grepl("^src.*/[.]deps$", allfiles))
 	## Windows DLL resource file
         exclude <- exclude | (allfiles == paste0("src/", pkgname, "_res.rc"))
         ## inst/doc/.Rinstignore is a mistake
-        exclude <- exclude | grepl("inst/doc/[.](Rinstignore|build[.]timestamp)$", allfiles)
-        exclude <- exclude | grepl("vignettes/[.]Rinstignore$", allfiles)
+        exclude <- exclude | endsWith(allfiles, "inst/doc/.Rinstignore") |
+            endsWith(allfiles, "inst/doc/.build.timestamp") |
+            endsWith(allfiles, "vignettes/.Rinstignore")
         ## leftovers
         exclude <- exclude | grepl("^.Rbuildindex[.]", allfiles)
+        ## or simply?  exclude <- exclude | startsWith(allfiles, ".Rbuildindex.")
         exclude <- exclude | (bases %in% .hidden_file_exclusions)
         unlink(allfiles[exclude], recursive = TRUE, force = TRUE)
         setwd(owd)

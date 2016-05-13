@@ -48,9 +48,9 @@
 
    level 0 is no additional instrumentation
    level 1 marks uninitialized numeric, logical, integer, raw,
-           complex vectors and R_alloc memory
+	   complex vectors and R_alloc memory
    level 2 marks the data section of vector nodes as inaccessible
-           when they are freed.
+	   when they are freed.
 
    level 3 was withdrawn in R 3.2.0.
 
@@ -78,12 +78,6 @@
 // internal version of headers
 #  include "vg/memcheck.h"
 # endif
-# ifndef VALGRIND_MAKE_MEM_NOACCESS
-// old headers (<= 3.3.0?)
-#  define VALGRIND_MAKE_MEM_NOACCESS VALGRIND_MAKE_NOACCESS
-#  define VALGRIND_MAKE_MEM_DEFINED VALGRIND_MAKE_READABLE
-#  define VALGRIND_MAKE_MEM_UNDEFINED VALGRIND_MAKE_WRITABLE
-# endif
 #endif
 
 
@@ -94,6 +88,7 @@
 #include <R_ext/Rdynload.h>
 #include <R_ext/Rallocators.h> /* for R_allocator_t structure */
 #include <Rmath.h> // R_pow_di
+#include <Print.h> // R_print
 
 #if defined(Win32)
 extern void *Rm_malloc(size_t n);
@@ -226,6 +221,7 @@ const char *sexptype2char(SEXPTYPE type) {
 
 #define GC_TORTURE
 
+static int gc_pending = 0;
 #ifdef GC_TORTURE
 /* **** if the user specified a wait before starting to force
    **** collections it might make sense to also wait before starting
@@ -233,9 +229,9 @@ const char *sexptype2char(SEXPTYPE type) {
 static int gc_force_wait = 0;
 static int gc_force_gap = 0;
 static Rboolean gc_inhibit_release = FALSE;
-#define FORCE_GC (gc_force_wait > 0 ? (--gc_force_wait > 0 ? 0 : (gc_force_wait = gc_force_gap, 1)) : 0)
+#define FORCE_GC (gc_pending || (gc_force_wait > 0 ? (--gc_force_wait > 0 ? 0 : (gc_force_wait = gc_force_gap, 1)) : 0))
 #else
-# define FORCE_GC 0
+# define FORCE_GC gc_pending
 #endif
 
 #ifdef R_MEMORY_PROFILING
@@ -1590,6 +1586,7 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_BaseEnv);
     FORWARD_NODE(R_EmptyEnv);
     FORWARD_NODE(R_Warnings);	           /* Warnings, if any */
+    FORWARD_NODE(R_ReturnedValue);
 
     FORWARD_NODE(R_HandlerStack);          /* Condition handler stack */
     FORWARD_NODE(R_RestartStack);          /* Available restarts stack */
@@ -1599,6 +1596,9 @@ static void RunGenCollect(R_size_t size_needed)
     FORWARD_NODE(R_TrueValue);
     FORWARD_NODE(R_FalseValue);
     FORWARD_NODE(R_LogicalNAValue);
+
+    FORWARD_NODE(R_print.na_string);
+    FORWARD_NODE(R_print.na_string_noquote);
 
     if (R_SymbolTable != NULL)             /* in case of GC during startup */
 	for (i = 0; i < HSIZE; i++)        /* Symbol table */
@@ -1627,6 +1627,7 @@ static void RunGenCollect(R_size_t size_needed)
 	FORWARD_NODE(ctxt->handlerstack);  /* the condition handler stack */
 	FORWARD_NODE(ctxt->restartstack);  /* the available restarts stack */
 	FORWARD_NODE(ctxt->srcref);	   /* the current source reference */
+	FORWARD_NODE(ctxt->returnValue);   /* For on.exit calls */
     }
 
     FORWARD_NODE(R_PreciousList);
@@ -1643,6 +1644,9 @@ static void RunGenCollect(R_size_t size_needed)
 #else
 	FORWARD_NODE(*sp);
 #endif
+
+    FORWARD_NODE(R_CachedScalarReal);
+    FORWARD_NODE(R_CachedScalarInteger);
 
     /* main processing loop */
     PROCESS_NODES();
@@ -2736,7 +2740,8 @@ SEXP allocS4Object(void)
    return s;
 }
 
-SEXP allocFormalsList(int nargs, ...) {
+static SEXP allocFormalsList(int nargs, ...)
+{
     SEXP res = R_NilValue;
     SEXP n;
     int i;
@@ -2744,15 +2749,15 @@ SEXP allocFormalsList(int nargs, ...) {
     va_start(syms, nargs);
 
     for(i = 0; i < nargs; i++) {
-        res = CONS(R_NilValue, res);
+	res = CONS(R_NilValue, res);
     }
     R_PreserveObject(res);
 
     n = res;
     for(i = 0; i < nargs; i++) {
-        SET_TAG(n, (SEXP) va_arg(syms, SEXP));
-        MARK_NOT_MUTABLE(n);
-        n = CDR(n);
+	SET_TAG(n, (SEXP) va_arg(syms, SEXP));
+	MARK_NOT_MUTABLE(n);
+	n = CDR(n);
     }
     va_end(syms);
 
@@ -2760,23 +2765,29 @@ SEXP allocFormalsList(int nargs, ...) {
 }
 
 
-SEXP allocFormalsList2(SEXP sym1, SEXP sym2) {
+SEXP allocFormalsList2(SEXP sym1, SEXP sym2)
+{
     return allocFormalsList(2, sym1, sym2);
 }
 
-SEXP allocFormalsList3(SEXP sym1, SEXP sym2, SEXP sym3) {
+SEXP allocFormalsList3(SEXP sym1, SEXP sym2, SEXP sym3)
+{
     return allocFormalsList(3, sym1, sym2, sym3);
 }
 
-SEXP allocFormalsList4(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4) {
+SEXP allocFormalsList4(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4)
+{
     return allocFormalsList(4, sym1, sym2, sym3, sym4);
 }
 
-SEXP allocFormalsList5(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4, SEXP sym5) {
+SEXP allocFormalsList5(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4, SEXP sym5)
+{
     return allocFormalsList(5, sym1, sym2, sym3, sym4, sym5);
 }
 
-SEXP allocFormalsList6(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4, SEXP sym5, SEXP sym6) {
+SEXP allocFormalsList6(SEXP sym1, SEXP sym2, SEXP sym3, SEXP sym4, 
+		       SEXP sym5, SEXP sym6)
+{
     return allocFormalsList(6, sym1, sym2, sym3, sym4, sym5, sym6);
 }
 
@@ -2848,6 +2859,16 @@ static void gc_end_timing(void)
 
 static void R_gc_internal(R_size_t size_needed)
 {
+    if (!R_GCEnabled) {
+      if (NO_FREE_NODES())
+	R_NSize = R_NodesInUse + 1;
+      if (size_needed > VHEAP_FREE())
+	R_VSize += size_needed - VHEAP_FREE();
+      gc_pending = TRUE;
+      return;
+    }
+    gc_pending = FALSE;
+
     R_size_t onsize = R_NSize /* can change during collection */;
     double ncells, vcells, vfrac, nfrac;
     SEXPTYPE first_bad_sexp_type = 0;
@@ -2985,6 +3006,7 @@ SEXP attribute_hidden do_memoryprofile(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP ans, nms;
     int i, tmp;
 
+    checkArity(op, args);
     PROTECT(ans = allocVector(INTSXP, 24));
     PROTECT(nms = allocVector(STRSXP, 24));
     for (i = 0; i < 24; i++) {
@@ -3129,7 +3151,7 @@ void NORET R_signal_reprotect_error(PROTECT_INDEX i)
     error(ngettext("R_Reprotect: only %d protected item, can't reprotect index %d",
 		   "R_Reprotect: only %d protected items, can't reprotect index %d",
 		   R_PPStackTop),
-          R_PPStackTop, i);
+	  R_PPStackTop, i);
 }
 
 #ifndef INLINE_PROTECT
@@ -3333,6 +3355,11 @@ void (SET_RTRACE)(SEXP x, int v) { SET_RTRACE(CHK(x), v); }
 int (SETLEVELS)(SEXP x, int v) { return SETLEVELS(CHK(x), v); }
 void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
     SET_ATTRIB(CHK(to), duplicate(CHK(ATTRIB(CHK(from)))));
+    SET_OBJECT(CHK(to), OBJECT(from));
+    IS_S4_OBJECT(from) ?  SET_S4_OBJECT(to) : UNSET_S4_OBJECT(to);
+}
+void SHALLOW_DUPLICATE_ATTRIB(SEXP to, SEXP from) {
+    SET_ATTRIB(CHK(to), shallow_duplicate(CHK(ATTRIB(CHK(from)))));
     SET_OBJECT(CHK(to), OBJECT(from));
     IS_S4_OBJECT(from) ?  SET_S4_OBJECT(to) : UNSET_S4_OBJECT(to);
 }

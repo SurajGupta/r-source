@@ -36,6 +36,11 @@ regmatches(x, m, invert = FALSE) <- value
   matches similar to \code{\link{strsplit}} (for vector match data, at
   most a single split is performed).
 
+  If \code{invert} is \code{NA}, \code{regmatches} extracts both
+  non-matched and matched substrings, always starting and ending with a
+  non-match (empty if the match occurred at the beginning or the end,
+  respectively).
+
   Note that the match data can be obtained from regular expression
   matching on a modified version of \code{x} with the same numbers of
   characters.
@@ -52,7 +57,7 @@ regmatches(x, m, invert = FALSE) <- value
 \value{
   For \code{regmatches}, a character vector with the matched substrings
   if \code{m} is a vector and \code{invert} is \code{FALSE}.  Otherwise,
-  a list with the matched or non-matched substrings.
+  a list with the matched or/and non-matched substrings.
 
   For \code{regmatches<-}, the updated character vector.
 }
@@ -79,10 +84,7 @@ x <- "John (fishing, hunting), Paul (hiking, biking)"
 m <- gregexpr("\\\\([^)]*\\\\)", x)
 ## Write a little utility for creating blank strings with given numbers
 ## of characters.
-blanks <- function(n) {
-     vapply(Map(rep.int, rep.int(" ", length(n)), n, USE.NAMES = FALSE),
-           paste, "", collapse = "")
-}
+blanks <- function(n) strrep(" ", n)
 ## Create a copy of x with the parenthesized parts blanked out.
 s <- x
 regmatches(s, m) <- Map(blanks, lapply(regmatches(s, m), nchar))

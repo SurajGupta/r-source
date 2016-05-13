@@ -12,7 +12,7 @@
 }
 \usage{
 rank(x, na.last = TRUE,
-     ties.method = c("average", "first", "random", "max", "min"))
+     ties.method = c("average", "first", "last", "random", "max", "min"))
 }
 \arguments{
   \item{x}{a numeric, complex, character or logical vector.}
@@ -33,8 +33,9 @@ rank(x, na.last = TRUE,
   well defined, with values in \code{seq_along(x)}.  With some values equal
   (called \sQuote{ties}), the argument \code{ties.method} determines the
   result at the corresponding indices.  The \code{"first"} method results
-  in a permutation with increasing values at each index set of ties.
-  The \code{"random"} method puts these in random order whereas the
+  in a permutation with increasing values at each index set of ties, and
+  analogously \code{"first"} with decreasing values.  The
+  \code{"random"} method puts these in random order whereas the
   default, \code{"average"}, replaces them by their mean, and
   \code{"max"} and \code{"min"} replaces them by their maximum and
   minimum respectively, the latter being the typical sports
@@ -72,6 +73,7 @@ stopifnot(rank(r1) == r1, rank(r2) == r2)
 
 ## ranks without averaging
 rank(x2, ties.method= "first")  # first occurrence wins
+rank(x2, ties.method= "last")   #  last occurrence wins
 rank(x2, ties.method= "random") # ties broken at random
 rank(x2, ties.method= "random") # and again
 
@@ -79,5 +81,14 @@ rank(x2, ties.method= "random") # and again
 (rma <- rank(x2, ties.method= "max"))  # as used classically
 (rmi <- rank(x2, ties.method= "min"))  # as in Sports
 stopifnot(rma + rmi == round(r2 + r2))
+
+## Comparing all tie.methods:
+tMeth <- eval(formals(rank)$ties.method)
+rx2 <- sapply(tMeth, function(M) rank(x2, ties.method=M))
+cbind(x2, rx2)
+## ties.method's does not matter w/o ties:
+x <- sample(47)
+rx <- sapply(tMeth, function(MM) rank(x, ties.method=MM))
+stopifnot(all(rx[,1] == rx))
 }
 \keyword{univar}

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: R-3.1.0\n"
-"Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2015-06-06 13:58+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-04-01 10:28-0700\n"
 "PO-Revision-Date: 2013-02-28 16:20+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-core <R-core@r-project.org>\n"
@@ -20,7 +20,12 @@ msgstr ""
 msgid "no base graphics system is registered"
 msgstr "kein Basisgrafiksystem registriert"
 
-#: base.c:333 base.c:340 base.c:348
+#: base.c:310
+#, fuzzy
+msgid "Incompatible graphics state"
+msgstr "ungültiger Grafikzustand"
+
+#: base.c:385 base.c:392 base.c:400
 msgid "the base graphics system is not registered"
 msgstr "das Basisgrafiksystem ist nicht registriert"
 
@@ -35,11 +40,11 @@ msgstr "Versuch auf das Nulldevice zu zeichnen"
 
 #: graphics.c:1843
 msgid "outer margins too large (figure region too small)"
-msgstr "äußere Ränder zu groß (figure region zu klein)"
+msgstr "äußere Ränder zu groß (figure Bereich zu klein)"
 
 #: graphics.c:1845
 msgid "figure region too large"
-msgstr "figure region zu groß"
+msgstr "figure Bereich zu groß"
 
 #: graphics.c:1847
 msgid "figure margins too large"
@@ -47,7 +52,7 @@ msgstr "Grafikränder zu groß"
 
 #: graphics.c:1849
 msgid "plot region too large"
-msgstr "plot region zu groß"
+msgstr "plot Bereich zu groß"
 
 #: graphics.c:1896
 #, c-format
@@ -217,7 +222,7 @@ msgstr "mindestens 3 Argumente nötig"
 
 #: plot.c:492
 msgid "\"log=\" specification must be character"
-msgstr "\"log=\" Spezifikation muss ein Charakter sein"
+msgstr "\"log=\" Spezifikation muss eine Zeichenkette sein"
 
 #: plot.c:503
 #, c-format
@@ -257,7 +262,7 @@ msgstr "zu wenig Argumente"
 #: plot.c:776
 #, c-format
 msgid "invalid axis number %d"
-msgstr "ungültige Achsnummer %d"
+msgstr "ungültige Achsennummer %d"
 
 #: plot.c:866
 msgid "'hadj' must be of length one"
@@ -340,7 +345,7 @@ msgstr "ungültiger Pfeilspitzenwinkel"
 
 #: plot.c:1924
 msgid "invalid arrow head specification"
-msgstr "ungültige Pfeilsitzenspezifikation"
+msgstr "ungültige Pfeilspitzenspezifikation"
 
 #: plot.c:2158
 msgid "no coordinates were supplied"
@@ -509,15 +514,15 @@ msgstr "ungültige Grenzen für 'z'"
 
 #: plot3d.c:1137
 msgid "'xlab' must be a character vector of length 1"
-msgstr "'xlab' muss ein Charktervektor der Länge 1 sein"
+msgstr "'xlab' muss ein Zeichenkettenvektor der Länge 1 sein"
 
 #: plot3d.c:1139
 msgid "'ylab' must be a character vector of length 1"
-msgstr "'ylab' muss ein Charktervektor der Länge 1 sein"
+msgstr "'ylab' muss ein Zeichenkettenvektor der Länge 1 sein"
 
 #: plot3d.c:1141
 msgid "'zlab' must be a character vector of length 1"
-msgstr "'zlab' muss ein Charktervektor der Länge 1 sein"
+msgstr "'zlab' muss ein Zeichenkettenvektor der Länge 1 sein"
 
 #: plot3d.c:1161
 msgid "invalid viewing parameters"

@@ -161,20 +161,20 @@ SEXP attribute_hidden do_vapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    PROTECT_WITH_INDEX(val, &indx);
 	    if (length(val) != commonLen)
 		error(_("values must be length %d,\n but FUN(X[[%d]]) result is length %d"),
-	               commonLen, i+1, length(val));
+		       commonLen, i+1, length(val));
 	    valType = TYPEOF(val);
 	    if (valType != commonType) {
 		Rboolean okay = FALSE;
 		switch (commonType) {
 		case CPLXSXP: okay = (valType == REALSXP) || (valType == INTSXP)
-		                    || (valType == LGLSXP); break;
+				    || (valType == LGLSXP); break;
 		case REALSXP: okay = (valType == INTSXP) || (valType == LGLSXP); break;
 		case INTSXP:  okay = (valType == LGLSXP); break;
-	        }
-	        if (!okay)
-	            error(_("values must be type '%s',\n but FUN(X[[%d]]) result is type '%s'"),
-		  type2char(commonType), i+1, type2char(valType));
-	        REPROTECT(val = coerceVector(val, commonType), indx);
+		}
+		if (!okay)
+		    error(_("values must be type '%s',\n but FUN(X[[%d]]) result is type '%s'"),
+			  type2char(commonType), i+1, type2char(valType));
+		REPROTECT(val = coerceVector(val, commonType), indx);
 	    }
 	    /* Take row names from the first result only */
 	    if (i == 0 && useNames && isNull(rowNames))
@@ -276,10 +276,13 @@ static SEXP do_one(SEXP X, SEXP FUN, SEXP classes, SEXP deflt,
     /* if X is a list, recurse.  Otherwise if it matches classes call f */
     if(isNewList(X)) {
 	n = length(X);
-	PROTECT(ans = allocVector(VECSXP, n));
-	names = getAttrib(X, R_NamesSymbol);
-	/* or copy attributes if replace = TRUE? */
-	if(!isNull(names)) setAttrib(ans, R_NamesSymbol, names);
+  if (replace) {
+    PROTECT(ans = shallow_duplicate(X));
+  } else {
+    PROTECT(ans = allocVector(VECSXP, n));
+    names = getAttrib(X, R_NamesSymbol);
+    if(!isNull(names)) setAttrib(ans, R_NamesSymbol, names);
+  }
 	for(i = 0; i < n; i++)
 	    SET_VECTOR_ELT(ans, i, do_one(VECTOR_ELT(X, i), FUN, classes,
 					  deflt, replace, rho));
@@ -332,10 +335,13 @@ SEXP attribute_hidden do_rapply(SEXP call, SEXP op, SEXP args, SEXP rho)
     if(!isString(how)) error(_("invalid '%s' argument"), "how");
     replace = strcmp(CHAR(STRING_ELT(how, 0)), "replace") == 0; /* ASCII */
     n = length(X);
-    PROTECT(ans = allocVector(VECSXP, n));
-    names = getAttrib(X, R_NamesSymbol);
-    /* or copy attributes if replace = TRUE? */
-    if(!isNull(names)) setAttrib(ans, R_NamesSymbol, names);
+    if (replace) {
+      PROTECT(ans = shallow_duplicate(X));
+    } else {
+      PROTECT(ans = allocVector(VECSXP, n));
+      names = getAttrib(X, R_NamesSymbol);
+      if(!isNull(names)) setAttrib(ans, R_NamesSymbol, names);
+    }
     for(i = 0; i < n; i++)
 	SET_VECTOR_ELT(ans, i, do_one(VECTOR_ELT(X, i), FUN, classes, deflt,
 				      replace, rho));

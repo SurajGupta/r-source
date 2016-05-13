@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2015  The R Core Team
+ *  Copyright (C) 1998-2016  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,11 @@
 #else
 #  define LDOUBLE double
 #endif
+
+/* To ensure atanpi, cospi,  sinpi, tanpi are defined */
+# ifndef __STDC_WANT_IEC_60559_FUNCS_EXT__
+#  define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+# endif
 
 #include <math.h>
 #include <float.h> /* DBL_MIN etc */
@@ -104,7 +109,15 @@ void R_CheckUserInterrupt(void);
 #define MATHLIB_WARNING5(fmt,x,x2,x3,x4,x5) printf(fmt,x,x2,x3,x4,x5)
 
 #define ISNAN(x) (isnan(x)!=0)
-#define R_FINITE(x)    R_finite(x)
+// Arith.h defines it
+#ifndef R_FINITE
+#ifdef HAVE_WORKING_ISFINITE
+/* isfinite is defined in <math.h> according to C99 */
+# define R_FINITE(x)    isfinite(x)
+#else
+# define R_FINITE(x)    R_finite(x)
+#endif
+#endif
 int R_finite(double);
 
 #define ML_POSINF	(1.0 / 0.0)
@@ -179,6 +192,11 @@ int R_finite(double);
 #define lfastchoose	Rf_lfastchoose
 #define lgammacor	Rf_lgammacor
 #define stirlerr       	Rf_stirlerr
+#define pnchisq_raw   	Rf_pnchisq_raw
+#define pgamma_raw   	Rf_pgamma_raw
+#define pnbeta_raw   	Rf_pnbeta_raw
+#define pnbeta2       	Rf_pnbeta2
+#define bratio       	Rf_bratio
 
 	/* Chebyshev Series */
 

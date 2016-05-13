@@ -241,7 +241,7 @@ As an example, the [[GETVAR]] instruction takes one operand, the index
 in the constant pool of a symbol. The opcode for this instruction is
 [[GETVAR.OP]].  The instruction retrieves the symbol from the constant
 pool, looks up its value in the current environment, and pushes the
-value on the stack.  If [[sym]] is a variable with value a symbol,
+value on the stack.  If [[sym]] is a variable with value of a symbol,
 then code to enter the symbol in the constant pool and emit an
 instruction to get its value would be
 <<example of emitting a [[GETVAR]] instruction>>=
@@ -267,7 +267,7 @@ Otherwise it returns [[NULL]].  If constant folding is successful,
 then the result is compiled as a constant.  Otherwise, the standard
 code generation process is used.
 %% **** comment on alternative of doing constant folding as an
-%% **** optimization on the butecode or an intermediate representation?
+%% **** optimization on the bytecode or an intermediate representation?
 
 In the interpreter there are four types of objects that are not
 treated as constants, i.e. as evaluating to themselves: function calls
@@ -352,14 +352,12 @@ It might be useful to handle other constants in a similar way, such as
 %% **** check out if small integers is worth doing.
 %% **** mention peephole optimization as alternative
 
-Ideally the implementation should be able to mark the values in the
-constant pool of a byte code object as read-only by setting the
-[[NAMED]] field to 2, but experience in testing shows that there are
-several packages in the wild that assume that an expression [[TRUE]],
-for example, appearing in code will result in a freshly allocated
-value that can be freely modified in [[.C]] calls. It would be good to
-educate users not to do this, but for now the implementation
-duplicates all values as they are retrieved from the constant pool.
+The implementation marks values in the constant pool as read-only after they
+are loaded, by setting the [[NAMED]] field to 2. In the past, all values
+were duplicated as they were retrieved from the constant pool as a
+precaution against bad package code: several packages in the wild assumed
+that an expression [[TRUE]], for example, appearing in code would result in a
+freshly allocated value that could be freely modified in [[.C]] calls.
 
 
 \subsection{Compiling variable references}
@@ -450,8 +448,6 @@ then this may be effective.
 %% **** Neal's em by about 10% (just lookup, not assignment -- with
 %% **** assignment should be a bit better)
 
-%% **** Avoid using ftype variable in bcEval. Could just look at the
-%% **** fun on the stack, or use the intstack instead.
 %% **** Is it really necessary for bcEval to save/restore stack tops?
 %% **** Shouldn't that happen automatically?
 %% **** Is it possible to have closure calling stay in the same bc?
@@ -874,7 +870,7 @@ putlabel <- function(name) labels[[name]] <<- codeCount
 Once code generation is complete the symbolic labels in the code
 stream need to be converted to numerical offset values.  This is done
 by [[patchlabels]].  Labels can appear directly in the instruction
-stream os in lists that have been placed in the instruction stream;
+stream and in lists that have been placed in the instruction stream;
 this is used for the [[SWITCH]] instruction.
 <<label management interface>>=
 patchlabels <- function() {
@@ -1219,6 +1215,11 @@ notifyMultipleSwitchDefaults <- function(ndflt, cntxt)
                    cntxt)
 @ %def notifyMultipleSwitchDefaults
 
+<<[[notifyNoSwitchcases]] function>>=
+notifyNoSwitchcases <- function(cntxt)
+    if (! suppressAll(cntxt))
+        cntxt$warn(gettext("'switch' with no alternatives"), cntxt)
+@ %def notifyNoSwitchcases
 
 \section{Compilation environments}
 \label{sec:environments}
@@ -1782,9 +1783,11 @@ tryInline <- function(e, cb, cntxt) {
 The function [[getInlineInfo]] implements the optimization rules
 described at the beginning of this section.
 <<[[getInlineInfo]] function>>=
+noInlineSymbols <- c("standardGeneric")
+
 getInlineInfo <- function(name, cntxt) {
     optimize <- cntxt$optimize
-    if (optimize > 0) {
+    if (optimize > 0 && ! (name %in% noInlineSymbols)) {
         info <- findCenvVar(name, cntxt$env)
         if (is.null(info))
             NULL
@@ -3548,12 +3551,16 @@ setInlineHandler("switch", function(e, cb, cntxt) {
 The first step in processing the [[switch]] expression is to extract
 the selector expression [[expr]] and the case expressions, to identify
 which, if any, of the cases are empty, and to extract the names of the
-cases as [[nm]].  If there is only one case and that case is not named
-then setting [[nm = ""]] allows this situation to be processed by code
-used when names are present.
+cases as [[nm]].  A warning is issued if there are no cases.  If there
+is only one case and that case is not named then setting [[nm = ""]]
+allows this situation to be processed by code used when names are
+present.
 <<extract the [[switch]] expression components>>=
 expr <- e[[2]]
 cases <-e[-c(1, 2)]
+
+if (is.null(cases))
+    notifyNoSwitchcases(cntxt)
 
 miss <- missingArgs(cases)
 nm <- names(cases)
@@ -3663,7 +3670,7 @@ cmp(expr, cb, ncntxt)
 @ %def
 
 The switch instruction takes the selector off the stack and four
-operands form the instruction stream: the call index, an index for the
+operands from the instruction stream: the call index, an index for the
 names, or [[NULL]] if there are none, and indices for the labels for a
 character selector and for a numeric selector.  At this point lists of
 labels are placed in the instruction buffer.  At code extraction time
@@ -4293,7 +4300,7 @@ setSetterInlineHandler("@<-", function(afun, place, acall, cb, cntxt) {
         TRUE
     }
     else FALSE
-}, "methods")
+})
 @ 
 
 
@@ -4629,7 +4636,7 @@ cmpfun <- function(f, options = NULL) {
             val <- asS4(val)
         val
     }
-    else if (typeof(f) == "builtin" || type == "special")
+    else if (type == "builtin" || type == "special")
         f
     else stop("cannot compile a non-function")
 }
@@ -4642,6 +4649,12 @@ error during compilation.
 tryCmpfun <- function(f)
     tryCatch(cmpfun(f), error = function(e) f)
 @ %def tryCmpfun
+
+A similar usility for expressions for use in JIT compilation of loops:
+<<[[tryCompile]] function>>=
+tryCompile <- function(e, ...)
+    tryCatch(compile(e, ...), error = function(err) e)
+@ %def tryCompile
 
 
 \subsection{Compiling and loading files}
@@ -4798,6 +4811,7 @@ setCompilerOptions <- function(...) {
             stop(gettextf("'%s' is not a valid compiler option", n),
                  domain = NA)
     old <- list()
+    newOptions <- as.list(compilerOptions) # copy options
     for (n in nm) {
         op <- options[[n]]
         switch(n,
@@ -4806,14 +4820,14 @@ setCompilerOptions <- function(...) {
                    if (length(op) == 1 && 0 <= op && op <= 3) {
                        old <- c(old, list(optimize =
                                           compilerOptions$optimize))
-                       compilerOptions$optimize <- op
+                       newOptions$optimize <- op
                    }
                },
                suppressAll = {
                    if (identical(op, TRUE) || identical(op, FALSE)) {
                        old <- c(old, list(suppressAll =
                                           compilerOptions$suppressAll))
-                       compilerOptions$suppressAll <- op
+                       newOptions$suppressAll <- op
                    }
                },
                suppressUndefined = {
@@ -4821,10 +4835,14 @@ setCompilerOptions <- function(...) {
                        is.character(op)) {
                        old <- c(old, list(suppressUndefined =
                                           compilerOptions$suppressUndefined))
-                       compilerOptions$suppressUndefined <- op
+                       newOptions$suppressUndefined <- op
                    }
                })
     }
+    jitEnabled <- enableJIT(-1)
+    if (checkCompilerOptions(jitEnabled, newOptions))
+        for(n in names(newOptions)) # commit the new options
+            assign(n, newOptions[[n]], compilerOptions)
     invisible(old)
 }
 @ %def
@@ -4849,6 +4867,27 @@ optimization level to be specified using environment variables.
         }, error = function(e) e, warning = function(w) w)
 }
 @ %def .onLoad
+
+When [[enableJIT]] is set to 3, loops should be compiled before executing. 
+However, if the [[optimize]] option is set to 0 or 1, a compiled loop will
+call to the same primitive function as is used by the AST interpretter (e.g. 
+[[do_for]]), and the compilation would run into infinite recursion. 
+[[checkCompilerOptions]] will detect invalid combinations of [[enableJIT]]
+and [[optimize]] and report a warning.
+%% **** could also change the interface and atomically set enableJIT and optimize
+<<[[checkCompilerOptions]] function>>=
+checkCompilerOptions <- function(jitEnabled, options = NULL) {
+    optimize <- getCompilerOption("optimize", options)
+    if (jitEnabled <= 2 || optimize >= 2)
+        TRUE
+    else {
+        stop(gettextf(
+            "invalid compiler options: optimize(==%d)<2 and jitEnabled(==%d)>2",
+            optimize, jitEnabled))
+        FALSE
+    }
+}
+@ %def checkCompilerOptions
 
 
 \subsection{Disassembler}
@@ -5255,6 +5294,7 @@ result using [[rep]].
 frameTypes <- function(env) {
     top <- topenv(env)
     empty <- emptyenv()
+    base <- baseenv()
     <<find the number [[nl]] of local frames>>
     <<find the number [[nn]] of namespace frames>>
     <<find the number [[ng]] of global frames>>
@@ -5266,6 +5306,8 @@ frames with [[parent.env]] until the top level environment is reached.
 <<find the number [[nl]] of local frames>>=
 nl <- 0
 while (! identical(env, top)) {
+    if (isNamespace(env))
+        stop("namespace found within local environments")
     env <- parent.env(env)
     nl <- nl + 1
     if (identical(env, empty))
@@ -5278,6 +5320,11 @@ parent frames until [[.GlobalEnv]] is reached.
 nn <- 0
 if (isNamespace(env)) {
     while (! identical(env, .GlobalEnv)) {
+        if (!isNamespace(env)) {
+            name <- attr(env, "name")
+            if (!is.character(name) || !startsWith(name, "imports:"))
+		stop("non-namespace found within namespace environments")
+        }
         env <- parent.env(env)
         nn <- nn + 1
         if (identical(env, empty))
@@ -5291,6 +5338,8 @@ the length of the result returned by [[search]]
 <<find the number [[ng]] of global frames>>=
 ng <- 0
 while (! identical(env, empty)) {
+    if (isNamespace(env))
+	stop("namespace found within global environments")
     env <- parent.env(env)
     ng <- ng + 1
 }
@@ -5440,7 +5489,7 @@ bcprof <- function(expr) {
     expr
     .Internal(bcprofstop())
     val <- structure(.Internal(bcprofcounts()),
-                     names = compiler:::Opcodes.names)
+                     names = Opcodes.names)
     hits <- sort(val[val > 0], decreasing = TRUE)
     pct <- round(100 * hits / sum(hits), 1)
     data.frame(hits = hits, pct = pct)
@@ -6195,6 +6244,8 @@ Opcodes.names <- names(Opcodes.argc)
 
 <<[[notifyMultipleSwitchDefaults]] function>>
 
+<<[[notifyNoSwitchcases]] function>>
+
 
 ##
 ## Compiler interface
@@ -6205,6 +6256,8 @@ Opcodes.names <- names(Opcodes.argc)
 <<[[cmpfun]] function>>
 
 <<[[tryCmpfun]] function>>
+
+<<[[tryCompile]] function>>
 
 <<[[cmpframe]] function>>
 
@@ -6221,6 +6274,8 @@ Opcodes.names <- names(Opcodes.argc)
 <<[[setCompilerOptions]] function>>
 
 <<[[.onLoad]] function>>
+
+<<[[checkCompilerOptions]] function>>
 
 
 ##

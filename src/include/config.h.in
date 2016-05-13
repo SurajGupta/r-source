@@ -67,9 +67,6 @@
 /* Define to 1 if you have the `atanpi' function. */
 #undef HAVE_ATANPI
 
-/* Define if you have BSD networking headers and libraries. */
-#undef HAVE_BSD_NETWORKING
-
 /* Define to 1 if the compiler understands __builtin_expect. (For intl) */
 #undef HAVE_BUILTIN_EXPECT
 
@@ -312,6 +309,9 @@
 /* Define to 1 if you have the `getgrgid' function. */
 #undef HAVE_GETGRGID
 
+/* Define to 1 if you have the `getline' function. */
+#undef HAVE_GETLINE
+
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
@@ -370,9 +370,6 @@
 /* Define to 1 if the system has the type `int64_t'. */
 #undef HAVE_INT64_T
 
-/* Define if you have support for ftp/http access. */
-#undef HAVE_INTERNET
-
 /* Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>. (For
    intl) */
 #undef HAVE_INTMAX_T
@@ -423,8 +420,8 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
-/* Define to 1 if you have the `cc_dynamic' library (-lcc_dynamic). */
-#undef HAVE_LIBCC_DYNAMIC
+/* Define if your system has libcurl >= 7.28.0 with support for https. */
+#undef HAVE_LIBCURL
 
 /* Define if __libc_stack_end is visible. */
 #undef HAVE_LIBC_STACK_END
@@ -661,9 +658,6 @@
 
 /* Define to 1 if you have the `snprintf' function. */
 #undef HAVE_SNPRINTF
-
-/* Define if you have support for sockets. */
-#undef HAVE_SOCKETS
 
 /* Define to 1 if the system has the type `stack_t'. */
 #undef HAVE_STACK_T
@@ -922,8 +916,17 @@
 /* Define if you have the X11/Xmu headers and libraries. */
 #undef HAVE_X11_Xmu
 
+/* Define to 1 if you have the `__cospi' function. */
+#undef HAVE___COSPI
+
 /* Define to 1 if you have the `__fsetlocking' function. */
 #undef HAVE___FSETLOCKING
+
+/* Define to 1 if you have the `__sinpi' function. */
+#undef HAVE___SINPI
+
+/* Define to 1 if you have the `__tanpi' function. */
+#undef HAVE___TANPI
 
 /* Define as const if the declaration of iconv() needs const. */
 #undef ICONV_CONST
@@ -937,8 +940,7 @@
 /* Define if you have 32 bit ints. */
 #undef INT_32_BITS
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
 /* Define if mktime sets errno. */
@@ -1056,9 +1058,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
-
-/* Define if you provide support for the libxml ftp/http functions. */
-#undef SUPPORT_LIBXML
 
 /* Define if you have C/C++/Fortran OpenMP support for package code. */
 #undef SUPPORT_OPENMP

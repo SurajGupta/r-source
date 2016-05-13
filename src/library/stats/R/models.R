@@ -1,7 +1,7 @@
 #  File src/library/stats/R/models.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #  https://www.R-project.org/Licenses/
 
 formula <- function(x, ...) UseMethod("formula")
-formula.default <- function (x, env = parent.frame(), ...)
+formula.default <- function (x = NULL, env = parent.frame(), ...)
 {
     notAtomic <- !is.atomic(x)
     notnull <- function(z) notAtomic && !is.null(z)
@@ -82,7 +82,7 @@ print.formula <- function(x, showEnv = !identical(e, .GlobalEnv), ...)
 `[.formula` <- function(x,i) {
     ans <- NextMethod("[")
     ## as.character gives a vector.
-    if(as.character(ans[[1L]])[1L] == "~") {
+    if(length(ans) == 0L || as.character(ans[[1L]])[1L] == "~") {
 	class(ans) <- "formula"
         environment(ans) <- environment(x)
     }

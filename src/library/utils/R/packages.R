@@ -17,8 +17,9 @@
 #  https://www.R-project.org/Licenses/
 
 available.packages <-
-function(contriburl = contrib.url(getOption("repos"), type), method,
-         fields = NULL, type = getOption("pkgType"), filters = NULL)
+function(contriburl = contrib.url(repos, type), method,
+         fields = NULL, type = getOption("pkgType"),
+         filters = NULL, repos = getOption("repos"))
 {
     requiredFields <-
         c(tools:::.get_standard_repository_db_fields(), "File")
@@ -247,9 +248,9 @@ function(db, predicate, recursive = TRUE)
     ## Now find the recursive reverse dependencies of these and the
     ## non-standard packages missing from the db.
     rdepends <-
-        tools:::package_dependencies(db1$Package[ind], db = db1,
-                                     reverse = TRUE,
-                                     recursive = recursive)
+        tools::package_dependencies(db1$Package[ind], db = db1,
+                                    reverse = TRUE,
+                                    recursive = recursive)
     rdepends <- unique(unlist(rdepends))
     ind[match(rdepends, db1$Package, nomatch = 0L)] <- TRUE
 
@@ -793,13 +794,20 @@ contrib.url <- function(repos, type = getOption("pkgType"))
     if(!local.only) {
         ## Try to handle explicitly failure to connect to CRAN.
         f <- tempfile()
-        m <- try(download.file(url, destfile = f, quiet = TRUE))
-        if(!inherits(m, "try-error") && m == 0L)
-            m <- try(read.csv(f, as.is = TRUE, encoding = "UTF-8"))
-        else m <- NULL
-        unlink(f)
+        on.exit(unlink(f))
+        m <- tryCatch({
+            m <- download.file(url, destfile = f, quiet = TRUE)
+            if(m != 0L)
+                stop(gettextf("'download.file()' error code '%d'", m))
+            read.csv(f, as.is = TRUE, encoding = "UTF-8")
+        }, error=function(err) {
+            warning(gettextf("failed to download mirrors file (%s); using local file '%s'",
+                             conditionMessage(err), local.file),
+                    call.=FALSE, immediate.=TRUE)
+            NULL
+        })
     }
-    if(is.null(m) || inherits(m, "try-error"))
+    if(is.null(m))
         m <- read.csv(local.file, as.is = TRUE, encoding = "UTF-8")
     if(!all) m <- m[as.logical(m$OK), ]
     m
@@ -819,7 +827,7 @@ getCRANmirrors <- function(all = FALSE, local.only = FALSE)
     if (length(ind))
         res <- as.integer(ind)[1L]
     else {
-    	isHTTPS <- grepl("^https", m[, "URL"])
+    	isHTTPS <- startsWith(m[, "URL"], "https")
     	mHTTPS <- m[isHTTPS,]
     	mHTTP <- m[!isHTTPS,]
     	if (useHTTPS) {
@@ -843,7 +851,8 @@ getCRANmirrors <- function(all = FALSE, local.only = FALSE)
     	}
     }
     if (res > 0L) {
-        URL <- setNames(m[res, "URL"], m[res, "Name"])
+        URL <- m[res, "URL"]
+        names(URL) <- m[res, "Name"]
         sub("/$", "", URL[1L])
     } else character()
 }

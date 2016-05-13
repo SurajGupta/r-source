@@ -96,29 +96,7 @@ SEXP Rdownload(SEXP args)
     }
 }
 
-#ifdef Win32
-SEXP attribute_hidden do_setInternet2(SEXP call, SEXP op, SEXP args, SEXP env)
-{
-    int newUseInternet2;
-    SEXP newval, retval;
-
-    PROTECT(retval = ScalarLogical(UseInternet2));
-
-    checkArity(op, args);
-    newval = CAR(args);
-    if (length(newval) != 1) error(_("bad value"));
-    newUseInternet2 = asLogical(newval);
-
-    if (newUseInternet2 != NA_LOGICAL) {
-	R_Visible = FALSE;
-	UseInternet2 = newUseInternet2;
-    }
-    UNPROTECT(1);
-    return retval;
-}
-#endif
-
-Rconnection attribute_hidden
+Rconnection attribute_hidden 
 R_newurl(const char *description, const char * const mode, int type)
 {
     if(!initialized) internet_Init();
@@ -254,13 +232,14 @@ SEXP Rsockread(SEXP ssock, SEXP smaxlen)
     SET_STRING_ELT(ans, 0, mkCharLen(buf, maxlen));
     UNPROTECT(1);
     return ans;
-
+		       
 }
 
 SEXP Rsockclose(SEXP ssock)
 {
     if (length(ssock) != 1) error("invalid 'socket' argument");
     int sock = asInteger(ssock);
+    if (sock <= 0) error(_("attempt to close invalid socket"));
     if(!initialized) internet_Init();
     if(initialized > 0)
 	(*ptr->sockclose)(&sock);
@@ -331,6 +310,7 @@ int Rsockselect(int nsock, int *insockfd, int *ready, int *write,
 
 SEXP attribute_hidden do_curlVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     if(!initialized) internet_Init();
     if(initialized > 0)
 	return (*ptr->curlVersion)(call, op, args, rho);
@@ -342,6 +322,7 @@ SEXP attribute_hidden do_curlVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_curlGetHeaders(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     if(!initialized) internet_Init();
     if(initialized > 0)
 	return (*ptr->curlGetHeaders)(call, op, args, rho);
@@ -353,6 +334,7 @@ SEXP attribute_hidden do_curlGetHeaders(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op, args);
     if(!initialized) internet_Init();
     if(initialized > 0)
 	return (*ptr->curlDownload)(call, op, args, rho);
@@ -374,3 +356,4 @@ R_newCurlUrl(const char *description, const char * const mode, int type)
     }
     return (Rconnection)0; /* -Wall */
 }
+

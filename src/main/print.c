@@ -118,13 +118,6 @@ SEXP attribute_hidden do_invisible(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 }
 
-#if 0
-SEXP attribute_hidden do_visibleflag(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    return ScalarLogical(R_Visible);
-}
-#endif
-
 /* This is *only* called via outdated R_level prmatrix() : */
 SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
@@ -166,6 +159,7 @@ SEXP attribute_hidden do_prmatrix(SEXP call, SEXP op, SEXP args, SEXP rho)
 /* .Internal( print.function(f, useSource, ...)) */
 SEXP attribute_hidden do_printfunction(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
+    checkArity(op,args);
     SEXP s = CAR(args);
     switch (TYPEOF(s)) {
     case CLOSXP:

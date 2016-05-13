@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.2.0\n"
+"Project-Id-Version: R 3.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2015-06-06 13:58+0100\n"
-"PO-Revision-Date: 2015-03-20 23:11+0100\n"
+"POT-Creation-Date: 2015-06-06 13:52+0100\n"
+"PO-Revision-Date: 2016-04-21 09:14+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
 "Language: de\n"
@@ -30,7 +30,7 @@ msgstr "ungültiges '%s' Argument"
 
 #: io.c:347 io.c:831
 msgid "invalid quote symbol set"
-msgstr "ungültiges Symbol für Quotatinen gesetzt"
+msgstr "ungültiges quote Symbol gesetzt"
 
 #: io.c:359 io.c:854 io.c:1056
 msgid "cannot open the connection"
@@ -43,16 +43,16 @@ msgstr "kann aus dieser Verbindung nicht lesen"
 #: io.c:413 io.c:431
 #, c-format
 msgid "quoted string on line %d terminated by EOF"
-msgstr "quotierte Zeichenkette in Zeile %d mit EOF beendet"
+msgstr "Zeichenkette in Anführungszeichen in Zeile %d mit EOF beendet"
 
 #: io.c:565
 msgid "the first argument must be of mode character"
-msgstr "das erste Argument muss vom Mode character sein"
+msgstr "das erste Argument muss vom Modus character sein"
 
 #: io.c:595
 #, c-format
 msgid "invalid 'numerals' string: \"%s\""
-msgstr "unzulässiger 'numerals' Zeichenkette \"%s\""
+msgstr "unzulässige 'numerals' Zeichenkette \"%s\""
 
 #: io.c:771
 #, c-format
@@ -70,7 +70,7 @@ msgstr "\\\\ gefolgt von EOF"
 #: io.c:937 io.c:940
 #, c-format
 msgid "incomplete final line found by readTableHeader on '%s'"
-msgstr "unvollstädige letzte Zeile von readTableHeader in '%s' gefunden"
+msgstr "unvollständige letzte Zeile von readTableHeader in '%s' gefunden"
 
 #: io.c:997
 msgid "index out of range"
@@ -91,7 +91,7 @@ msgstr "'dec' muss ein einzelnes Zeichen sein"
 #: io.c:1108
 #, c-format
 msgid "corrupt data frame -- length of column %d does not not match nrows"
-msgstr "korrupter Datafram -- Länge der Spalte %d entspricht nicht nrows"
+msgstr "beschädigterter Dataframe -- Länge der Spalte %d entspricht nicht nrows"
 
 #: io.c:1139
 #, c-format
@@ -100,7 +100,7 @@ msgstr "Spalte %s behauptet Faktor zu sein, hat aber keine numerischen Kodes"
 
 #: io.c:1157
 msgid "corrupt matrix -- dims not not match length"
-msgstr "korrupte Matrix -- Dimensionen entsprechen nicht der Länge"
+msgstr "beschädigte Matrix -- Dimensionen entsprechen nicht der Länge"
 
 #: stubs.c:56
 msgid "'savehistory' can only be used in Rgui and Rterm"
@@ -129,7 +129,7 @@ msgstr "ungültige '%s' Spezifikation"
 
 #: utils.c:83
 msgid "'hostname' must be a character vector of length 1"
-msgstr "'hostname' muss ein Zeihenkettenetor der Länge 1 sein"
+msgstr "'hostname' muss ein Zeichenkettenvektor der Länge 1 sein"
 
 #: utils.c:89
 #, c-format
@@ -170,7 +170,7 @@ msgstr "kann Menüeintrag nicht hinzufügen (%s)"
 
 #: windows/dialogs.c:318
 msgid "menu does not exist"
-msgstr "Menü exisitiert nicht"
+msgstr "Menü existiert nicht"
 
 #: windows/dialogs.c:325
 #, c-format
@@ -222,10 +222,11 @@ msgstr "'%s' muss Länge 1 haben"
 msgid "'%s' must be a list"
 msgstr "'%s' muss eine Liste sein"
 
+# +
 #: windows/util.c:561
 #, c-format
 msgid "'%s' element %d is not a window handle"
-msgstr "'%s' Element %d ist keine Fensterhandle"
+msgstr "'%s' Element %d ist keine Fenster-Handle"
 
 #: windows/widgets.c:108
 msgid "Select one or more"
@@ -237,7 +238,7 @@ msgstr "Wähle eins"
 
 #: windows/widgets.c:182 windows/widgets.c:247
 msgid "'default' must be a character string"
-msgstr "'default' muss Zeichenkette sein"
+msgstr "'default' muss eine Zeichenkette sein"
 
 #: windows/widgets.c:184 windows/widgets.c:249
 msgid "'default' is overlong"
@@ -245,7 +246,7 @@ msgstr "'default' ist überlang"
 
 #: windows/widgets.c:188 windows/widgets.c:253
 msgid "'caption' must be a character string"
-msgstr "'caption' muss Zeichenkette sein"
+msgstr "'caption' muss eine Zeichenkette sein"
 
 #: windows/widgets.c:190
 msgid "'multi' must be a logical value"

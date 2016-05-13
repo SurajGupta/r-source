@@ -3924,7 +3924,8 @@ kept only if there is an error.  As from @R{} 3.2.4 this also applies to
 the @file{build_vignettes.log} log from the re-building of vignettes.
 Default: false.
 @item _R_CHECK_CLEAN_VIGN_TEST_
-Should the @file{vign_test} directory be removed if the test is successful?
+Should the @file{vign_test} directory be removed if the test is
+successful?
 Default: true.
 @item _R_CHECK_REPLACING_IMPORTS_
 Should warnings about replacing imports be reported?  These sometimes come
@@ -4070,6 +4071,11 @@ If set, check code usage (via @CRANpkg{codetools}) directly on the
 package namespace without loading and attaching the package and its
 suggests and enhances.
 Default: true (and true for CRAN submission checks).
+
+@item _R_CHECK_CODE_USAGE_WITH_ONLY_BASE_ATTACHED_
+If set, check code usage (via @CRANpkg{codetools}) with only the base
+package attached.
+Default: true.
 
 @item _R_CHECK_EXIT_ON_FIRST_ERROR_
 If set to a true value, the check will exit on the first error.

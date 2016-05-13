@@ -8,7 +8,7 @@
 \alias{nzchar}
 \title{Count the Number of Characters (or Bytes or Width)}
 \usage{
-nchar(x, type = "chars", allowNA = FALSE, keepNA = FALSE)
+nchar(x, type = "chars", allowNA = FALSE, keepNA = NA)
 
 nzchar(x, keepNA = FALSE)
 }
@@ -29,15 +29,12 @@ nzchar(x, keepNA = FALSE)
     multibyte strings or \code{"bytes"}-encoded strings (rather than
     throwing an error)?}
   \item{keepNA}{logical: should \code{NA} be returned where ever
-    \code{x} is \code{\link{NA}}?  If false, the (implicit or explicit)
-    default for \code{nzchar()} and for \R versions \eqn{\le}{<=} 3.2.x,
-    \code{nchar()} returns \code{2}, as that is the number of printing
-    characters used when strings are written to output, and
-    \code{nzchar()} is \code{TRUE}.
-    From \R version 3.3.0 on, for \code{nchar()} only, the default will
-    be \code{NA}, which means to use \code{keepNA = TRUE} unless
-    \code{type} is \code{"width"}.  Used to be (implicitly) hard coded
-    to \code{FALSE} in \R versions \eqn{\le}{<=} 3.2.0.}
+  \code{x} is \code{\link{NA}}?  If false, \code{nchar()} returns
+  \code{2}, as that is the number of printing characters used when
+  strings are written to output, and \code{nzchar()} is \code{TRUE}.  The
+  default for \code{nchar()}, \code{NA}, means to use \code{keepNA = TRUE}
+  unless \code{type} is \code{"width"}.  Used to be (implicitly) hard
+  coded to \code{FALSE} in \R versions \eqn{\le}{<=} 3.2.0.}
 }
 \details{
   The \sQuote{size} of a character string can be measured in one of
@@ -51,8 +48,8 @@ nzchar(x, keepNA = FALSE)
       if this cannot be calculated.}
   }
   These will often be the same, and almost always will be in single-byte
-  locales (but note how \code{type} may influence \code{NA} treatment
-  for \code{keepNA = NA}).  There will be differences between the first two with
+  locales (but note how \code{type} determines the default for
+  \code{keepNA}).  There will be differences between the first two with
   multibyte character sequences, e.g.\sspace{}in UTF-8 locales.
 
   The internal equivalent of the default method of
@@ -154,8 +151,8 @@ nchar(deparse(mean))
 x[3] <- NA; x
 nchar(x, keepNA= TRUE) #  5  6 NA  1 15
 nchar(x, keepNA=FALSE) #  5  6  2  1 15
-stopifnot(identical(nchar(x, "w", keepNA = NA),
-                    nchar(x,      keepNA = FALSE)),
-          identical(is.na(x), is.na(nchar(x, keepNA=NA))))
+stopifnot(identical(nchar(x     ), nchar(x, keepNA= TRUE)),
+          identical(nchar(x, "w"), nchar(x, keepNA=FALSE)),
+          identical(is.na(x), is.na(nchar(x))))
 }
 \keyword{character}

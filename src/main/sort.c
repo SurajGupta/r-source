@@ -179,9 +179,8 @@ SEXP attribute_hidden do_isunsorted(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    ScalarLogical(isUnsorted(x, strictly));
     }
     if(isObject(x)) {
-	// try dispatch -- fails entirely for S4: need "DispatchOrEval()" ?
 	SEXP call;
-	PROTECT(call =	// R>  .gtn(x, strictly) :
+	PROTECT(call = 	// R>  .gtn(x, strictly) :
 		lang3(install(".gtn"), x, CADR(args)));
 	ans = eval(call, rho);
 	UNPROTECT(2);
@@ -928,6 +927,12 @@ GREATER_2_SUB_DEF(intdbl2greater,    int, double, icmp, rcmp)
     }
 
 
+/* TODO: once LONG_VECTOR_SUPPORT and  R_xlen_t  belong to the R API,
+ * ----  also add "long" versions, say,
+ *    R_orderVectorl (R_xlen_t *indx, R_xlen_t n, SEXP arglist, ...)
+ *    R_orderVector1l(R_xlen_t *indx, R_xlen_t n, SEXP arg,  ...)
+ * to the API */
+
 // Usage:  R_orderVector(indx, n,  Rf_lang2(x,y),  nalast, decreasing)
 void R_orderVector(int *indx, // must be pre-allocated to length >= n
 		   int n,
@@ -938,6 +943,14 @@ void R_orderVector(int *indx, // must be pre-allocated to length >= n
     for(int i = 0; i < n; i++) indx[i] = i;
     orderVector(indx, n, arglist, nalast, decreasing, listgreater);
     return;
+}
+
+// Fast version of 1-argument case of R_orderVector()
+void R_orderVector1(int *indx, int n, SEXP x,
+		    Rboolean nalast, Rboolean decreasing)
+{
+    for(int i = 0; i < n; i++) indx[i] = i;
+    orderVector1(indx, n, x, nalast, decreasing, R_NilValue);
 }
 
 
@@ -1386,105 +1399,6 @@ SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
     UNPROTECT(1);
     return rank;
-}
-
-#include <R_ext/RS.h>
-
-/* also returns integers/doubles (a method for sort.list) */
-SEXP attribute_hidden do_radixsort(SEXP call, SEXP op, SEXP args, SEXP rho)
-{
-    SEXP x, ans;
-    Rboolean nalast, decreasing;
-    R_xlen_t i, n;
-    int tmp, xmax = NA_INTEGER, xmin = NA_INTEGER, off, napos;
-
-    checkArity(op, args);
-
-    x = CAR(args);
-    nalast = asLogical(CADR(args));
-    if(nalast == NA_LOGICAL)
-	error(_("invalid '%s' value"), "na.last");
-    decreasing = asLogical(CADDR(args));
-    if(decreasing == NA_LOGICAL)
-	error(_("'decreasing' must be TRUE or FALSE"));
-    off = nalast^decreasing ? 0 : 1;
-    n = XLENGTH(x);
-#ifdef LONG_VECTOR_SUPPORT
-    Rboolean isLong = n > INT_MAX;
-    if(isLong)
-	ans = allocVector(REALSXP, n);
-    else
-	ans = allocVector(INTSXP, n);
-#else
-    ans = allocVector(INTSXP, n);
-#endif
-    PROTECT(ans); // not currently needed
-    for(i = 0; i < n; i++) {
-	tmp = INTEGER(x)[i];
-	if(tmp == NA_INTEGER) continue;
-	if(xmax == NA_INTEGER || tmp > xmax) xmax = tmp;
-	if(xmin == NA_INTEGER || tmp < xmin) xmin = tmp;
-    }
-    if(xmin == NA_INTEGER) {  /* all NAs, so nothing to do */
-#ifdef LONG_VECTOR_SUPPORT
-	if (isLong) {
-	    for(i = 0; i < n; i++) REAL(ans)[i] = (double)(i+1);
-	} else
-#endif
-	{
-	    for(i = 0; i < n; i++) INTEGER(ans)[i] = (int)(i+1);
-	}
-	UNPROTECT(1);
-	return ans;
-    }
-
-    xmax -= xmin;
-    if(xmax > 100000) error(_("too large a range of values in 'x'"));
-    napos = off ? 0 : xmax + 1;
-    off -= xmin;
-    /* automatic allocation should be fine here: we know this is small */
-    R_CheckStack2((xmax+2) * sizeof(R_xlen_t));
-    R_xlen_t cnts[xmax+2];
-
-    for(i = 0; i <= xmax+1; i++) cnts[i] = 0;
-    for(i = 0; i < n; i++) {
-	if(INTEGER(x)[i] == NA_INTEGER) cnts[napos]++;
-	else cnts[off+INTEGER(x)[i]]++;
-    }
-
-    for(i = 1; i <= xmax+1; i++) cnts[i] += cnts[i-1];
-#ifdef LONG_VECTOR_SUPPORT
-    if (isLong) {
-	if(decreasing)
-	    for(i = 0; i < n; i++) {
-		tmp = INTEGER(x)[i];
-		REAL(ans)[n-(cnts[(tmp == NA_INTEGER) ? napos : off+tmp]--)] =
-		    (double)(i+1);
-	    }
-	else
-	    for(i = n-1; i >= 0; i--) {
-		tmp = INTEGER(x)[i];
-		REAL(ans)[--cnts[(tmp == NA_INTEGER) ? napos : off+tmp]] =
-		    (double)(i+1);
-	    }
-    } else
-#endif
-    {
-	if(decreasing)
-	    for(i = 0; i < n; i++) {
-		tmp = INTEGER(x)[i];
-		INTEGER(ans)[n-(cnts[(tmp == NA_INTEGER) ? napos : off+tmp]--)] =
-		    (int)(i+1);
-	    }
-	else
-	    for(i = n-1; i >= 0; i--) {
-		tmp = INTEGER(x)[i];
-		INTEGER(ans)[--cnts[(tmp == NA_INTEGER) ? napos : off+tmp]] =
-		    (int)(i+1);
-	    }
-    }
-    UNPROTECT(1);
-    return ans;
 }
 
 SEXP attribute_hidden do_xtfrm(SEXP call, SEXP op, SEXP args, SEXP rho)

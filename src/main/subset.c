@@ -158,9 +158,7 @@ static SEXP ExtractSubset(SEXP x, SEXP result, SEXP indx, SEXP call)
    matrix indexing of arrays */
 static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
 {
-    R_xlen_t n;
-    int mode;
-    R_xlen_t stretch = 1;
+    R_xlen_t n, stretch = 1;
     SEXP indx, result, attrib, nattrib;
 
     if (s == R_MissingArg) return duplicate(x);
@@ -172,16 +170,16 @@ static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
     /* If we do, make a real subscript vector and protect it. */
 
     if (isMatrix(s) && isArray(x) && ncols(s) == length(attrib)) {
-        if (isString(s)) {
-            s = strmat2intmat(s, GetArrayDimnames(x), call);
-            UNPROTECT(1);
-            PROTECT(s);
-        }
-        if (isInteger(s) || isReal(s)) {
-            s = mat2indsub(attrib, s, call);
-            UNPROTECT(1);
-            PROTECT(s);
-        }
+	if (isString(s)) {
+	    s = strmat2intmat(s, GetArrayDimnames(x), call);
+	    UNPROTECT(1);
+	    PROTECT(s);
+	}
+	if (isInteger(s) || isReal(s)) {
+	    s = mat2indsub(attrib, s, call);
+	    UNPROTECT(1);
+	    PROTECT(s);
+	}
     }
 
     /* Convert to a vector of integer subscripts */
@@ -192,7 +190,7 @@ static SEXP VectorSubset(SEXP x, SEXP s, SEXP call)
 
     /* Allocate the result. */
 
-    mode = TYPEOF(x);
+    int mode = TYPEOF(x);
     /* No protection needed as ExtractSubset does not allocate */
     result = allocVector(mode, n);
     if (mode == VECSXP || mode == EXPRSXP)
@@ -296,6 +294,7 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 		    SET_STRING_ELT(result, ij, NA_STRING);
 		    break;
 		case VECSXP:
+		case EXPRSXP:
 		    SET_VECTOR_ELT(result, ij, R_NilValue);
 		    break;
 		case RAWSXP:
@@ -325,6 +324,7 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 		    SET_STRING_ELT(result, ij, STRING_ELT(x, iijj));
 		    break;
 		case VECSXP:
+		case EXPRSXP:
 		    SET_VECTOR_ELT(result, ij, VECTOR_ELT_FIX_NAMED(x, iijj));
 		    break;
 		case RAWSXP:
@@ -341,6 +341,8 @@ static SEXP MatrixSubset(SEXP x, SEXP s, SEXP call, int drop)
 	PROTECT(attr = allocVector(INTSXP, 2));
 	INTEGER(attr)[0] = nrs;
 	INTEGER(attr)[1] = ncs;
+	if(!isNull(getAttrib(dim, R_NamesSymbol)))
+	    setAttrib(attr, R_NamesSymbol, getAttrib(dim, R_NamesSymbol));
 	setAttrib(result, R_DimSymbol, attr);
 	UNPROTECT(1);
     }
@@ -475,6 +477,7 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
 		SET_STRING_ELT(result, i, NA_STRING);
 	    break;
 	case VECSXP:
+	case EXPRSXP:
 	    if (ii != NA_INTEGER)
 		SET_VECTOR_ELT(result, i, VECTOR_ELT_FIX_NAMED(x, ii));
 	    else
@@ -499,11 +502,13 @@ static SEXP ArraySubset(SEXP x, SEXP s, SEXP call, int drop)
 	}
     }
 
-    PROTECT(xdims = allocVector(INTSXP, k));
+    SEXP new_dim = PROTECT(allocVector(INTSXP, k));
     for(int i = 0 ; i < k ; i++)
-	INTEGER(xdims)[i] = bound[i];
-    setAttrib(result, R_DimSymbol, xdims);
-    UNPROTECT(1); /* xdims */
+	INTEGER(new_dim)[i] = bound[i];
+    if(!isNull(getAttrib(xdims, R_NamesSymbol)))
+	setAttrib(new_dim, R_NamesSymbol, getAttrib(xdims, R_NamesSymbol));
+    setAttrib(result, R_DimSymbol, new_dim);
+    UNPROTECT(1); // new_dim
 
     /* The array elements have been transferred. */
     /* Now we need to transfer the attributes. */
@@ -661,18 +666,22 @@ SEXP attribute_hidden do_subset(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 static R_INLINE R_xlen_t scalarIndex(SEXP s)
 {
-    if (ATTRIB(s) == R_NilValue)
-	switch (TYPEOF(s)) {
-	case REALSXP: // treat infinite indices as NA, like asInteger
-	    if (XLENGTH(s) == 1 && R_FINITE(REAL(s)[0]))
-		return (R_xlen_t) REAL(s)[0];
+    if (ATTRIB(s) == R_NilValue) {
+	if (IS_SCALAR(s, INTSXP)) {
+	    int ival = INTEGER(s)[0];
+	    if (ival != NA_INTEGER)
+		return ival;
 	    else return -1;
-	case INTSXP:
-	    if (XLENGTH(s) == 1 && INTEGER(s)[0] != NA_INTEGER)
-		return INTEGER(s)[0];
-	    else return -1;
-	default: return -1;
 	}
+	else if (IS_SCALAR(s, REALSXP)) {
+	    double rval = REAL(s)[0];
+	    // treat infinite indices as NA, like asInteger
+	    if (R_FINITE(rval))
+		return (R_xlen_t) rval;
+	    else return -1;
+	}
+	else return -1;
+    }
     else return -1;
 }
 
@@ -821,18 +830,19 @@ SEXP attribute_hidden do_subset_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 	   length one and drop == TRUE
 	*/
 	if(ndim == 1) {
-	    SEXP attr, attrib, nattrib;
 	    int len = length(ans);
-
 	    if(!drop || len > 1) {
 		// must grab these before the dim is set.
 		SEXP nm = PROTECT(getAttrib(ans, R_NamesSymbol));
-		PROTECT(attr = allocVector(INTSXP, 1));
+		SEXP attr = PROTECT(allocVector(INTSXP, 1));
 		INTEGER(attr)[0] = length(ans);
+		if(!isNull(getAttrib(dim, R_NamesSymbol)))
+		    setAttrib(attr, R_NamesSymbol, getAttrib(dim, R_NamesSymbol));
 		setAttrib(ans, R_DimSymbol, attr);
+		SEXP attrib;
 		if((attrib = getAttrib(x, R_DimNamesSymbol)) != R_NilValue) {
 		    /* reinstate dimnames, include names of dimnames */
-		    PROTECT(nattrib = duplicate(attrib));
+		    SEXP nattrib = PROTECT(duplicate(attrib));
 		    SET_VECTOR_ELT(nattrib, 0, nm);
 		    setAttrib(ans, R_DimNamesSymbol, nattrib);
 		    setAttrib(ans, R_NamesSymbol, R_NilValue);
@@ -948,7 +958,7 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
 
     /* code to allow classes to extend environment */
     if(TYPEOF(x) == S4SXP) {
-        x = R_getS4DataSlot(x, ANYSXP);
+	x = R_getS4DataSlot(x, ANYSXP);
 	if(x == R_NilValue)
 	  errorcall(call, _("this S4 class is not subsettable"));
     }
@@ -1087,6 +1097,21 @@ SEXP attribute_hidden do_subset2_dflt(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
+SEXP attribute_hidden dispatch_subset2(SEXP x, R_xlen_t i, SEXP call, SEXP rho)
+{
+    static SEXP bracket_op = NULL;
+    SEXP args, x_elt;
+    if (isObject(x)) {
+        if (bracket_op == NULL)
+            bracket_op = R_Primitive("[[");
+        PROTECT(args = list2(x, ScalarReal(i + 1)));
+        x_elt = do_subset2(call, bracket_op, args, rho);
+        UNPROTECT(1);
+    } else {
+        x_elt = VECTOR_ELT(x, i);
+    }
+    return(x_elt);
+}
 
 enum pmatch {
     NO_MATCH,
@@ -1189,7 +1214,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
     slen = strlen(translateChar(input));
      /* The mechanism to allow a class extending "environment" */
     if( IS_S4_OBJECT(x) && TYPEOF(x) == S4SXP ){
-        x = R_getS4DataSlot(x, ANYSXP);
+	x = R_getS4DataSlot(x, ANYSXP);
 	if(x == R_NilValue)
 	    errorcall(call, "$ operator not defined for this S4 class");
     }
@@ -1201,13 +1226,13 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
     if (isPairList(x)) {
 	SEXP xmatch = R_NilValue;
 	int havematch;
-	UNPROTECT(2); /* input, x */
 	havematch = 0;
 	for (y = x ; y != R_NilValue ; y = CDR(y)) {
 	    switch(pstrmatch(TAG(y), input, slen)) {
 	    case EXACT_MATCH:
 		y = CAR(y);
 		if (NAMED(x) > NAMED(y)) SET_NAMED(y, NAMED(x));
+		UNPROTECT(2); /* input, x */
 		return y;
 	    case PARTIAL_MATCH:
 		havematch++;
@@ -1234,15 +1259,17 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	    }
 	    y = CAR(xmatch);
 	    if (NAMED(x) > NAMED(y)) SET_NAMED(y, NAMED(x));
+	    UNPROTECT(2); /* input, x */
 	    return y;
 	}
+	UNPROTECT(2); /* input, x */
 	return R_NilValue;
     }
     else if (isVectorList(x)) {
 	R_xlen_t i, n, imatch = -1;
 	int havematch;
 	nlist = getAttrib(x, R_NamesSymbol);
-	UNPROTECT(2); /* input, x */
+
 	n = xlength(nlist);
 	havematch = 0;
 	for (i = 0 ; i < n ; i = i + 1) {
@@ -1251,6 +1278,7 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 		y = VECTOR_ELT(x, i);
 		if (NAMED(x) > NAMED(y))
 		    SET_NAMED(y, NAMED(x));
+		UNPROTECT(2); /* input, x */
 		return y;
 	    case PARTIAL_MATCH:
 		havematch++;
@@ -1285,8 +1313,10 @@ SEXP attribute_hidden R_subset3_dflt(SEXP x, SEXP input, SEXP call)
 	    }
 	    y = VECTOR_ELT(x, imatch);
 	    if (NAMED(x) > NAMED(y)) SET_NAMED(y, NAMED(x));
+	    UNPROTECT(2); /* input, x */
 	    return y;
 	}
+	UNPROTECT(2); /* input, x */
 	return R_NilValue;
     }
     else if( isEnvironment(x) ){

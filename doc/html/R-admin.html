@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This manual is for R, version 3.2.5 (2016-04-14).
+<!-- This manual is for R, version 3.3.0 (2016-05-03).
 
 Copyright (C) 2001-2016 R Core Team
 
@@ -333,7 +333,7 @@ p {
 
 <p>This is a guide to installation and administration for R.
 </p>
-<p>This manual is for R, version 3.2.5 (2016-04-14).
+<p>This manual is for R, version 3.3.0 (2016-05-03).
 </p>
 <p>Copyright &copy; 2001&ndash;2016 R Core Team
 </p>
@@ -926,13 +926,13 @@ specified on the <code>make install</code> command line (at least for
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-3.2.5</code>.
+<code>rincludedir=/usr/local/include/R-3.3.0</code>.
 </p>
 <p>If you want the R home to be something other than
 <samp><var>libdir</var>/R</samp>, use <samp>rhome</samp>: for example
 </p>
 <div class="example">
-<pre class="example">make install rhome=/usr/local/lib64/R-3.2.5
+<pre class="example">make install rhome=/usr/local/lib64/R-3.3.0
 </pre></div>
 
 <p>will use a version-specific R home on a non-Debian Linux 64-bit
@@ -1286,10 +1286,6 @@ by
 <pre class="example">testInstalledBasic(&quot;internet&quot;)
 </pre></div>
 
-<p>(On Windows that runs the tests using whichever of internal or WinInet
-internet functions has been selected for that session: to test both run
-this twice selecting both options using <code>setInternet2</code>.)
-</p>
 <p>These tests work best if <code>diff</code> (in <samp>Rtools*.exe</samp> for
 Windows users) is in the path.
 </p>
@@ -1323,7 +1319,7 @@ from <acronym>CRAN</acronym> to run on 32- or 64-bit Windows (XP or later) on
 perhaps for some network-mounted systems).
 </p>
 <p>Installation is <em>via</em> the installer
-<samp>R-3.2.5-win.exe</samp>.  Just double-click on the icon and
+<samp>R-3.3.0-win.exe</samp>.  Just double-click on the icon and
 follow the instructions.  When installing on a 64-bit version of Windows
 the options will include 32- or 64-bit versions of R (and the default is
 to install both).  You can uninstall R from the Control Panel.
@@ -1390,12 +1386,12 @@ will call this directory <samp><var>R_HOME</var></samp> below.
 
 <p>You need to collect the following sets of files:
 </p><ul>
-<li> Get the R source code tarball <samp>R-3.2.5.tar.gz</samp> from
+<li> Get the R source code tarball <samp>R-3.3.0.tar.gz</samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at directory
 <var>R_HOME</var>, and run
 
 <div class="example">
-<pre class="example">tar -xf R-3.2.5.tar.gz
+<pre class="example">tar -xf R-3.3.0.tar.gz
 </pre></div>
 
 <p>to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
@@ -1404,7 +1400,7 @@ If you are using an account with administrative privileges you may get a
 lot of messages which can be suppressed by
 </p>
 <div class="example">
-<pre class="example">tar --no-same-owner -xf R-3.2.5.tar.gz
+<pre class="example">tar --no-same-owner -xf R-3.3.0.tar.gz
 </pre></div>
 
 <a name="index-TAR_005fOPTIONS-1"></a>
@@ -1721,7 +1717,7 @@ source tree) in <samp>src/gnuwin32/installer</samp> run
 installation (in double quotes if it contains spaces or backslashes).
 </p>
 <p>Both methods create an executable with a standard name such as
-<samp>R-3.2.5-win.exe</samp>, so please rename it to indicate that
+<samp>R-3.3.0-win.exe</samp>, so please rename it to indicate that
 it is customized.  If you intend to <em>distribute</em> a customized
 installer please do check that license requirements are met &ndash; note that
 the installer will state that the contents are distributed under GPL
@@ -1780,21 +1776,21 @@ make msi
 </pre></div>
 
 <p>which will result in a file with a name like
-<samp>R-3.2.5-win32.msi</samp>.  This can be double-clicked to be
+<samp>R-3.3.0-win32.msi</samp>.  This can be double-clicked to be
 installed, but those who need it will know what to do with it (usually
 by running <code>msiexec /i</code> with additional options).  Properties
 that users might want to set from the <code>msiexec</code> command line
 include &lsquo;<samp>ALLUSERS</samp>&rsquo;, &lsquo;<samp>INSTALLDIR</samp>&rsquo; (something like
-<samp>c:\Program Files\R\R-3.2.5</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
+<samp>c:\Program Files\R\R-3.3.0</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
 to the &lsquo;<samp>R</samp>&rsquo; folder on the start menu) and &lsquo;<samp>STARTDIR</samp>&rsquo; (the
 starting directory for R shortcuts, defaulting to something like
 <samp>c:\Users\name\Documents\R</samp>).
 </p>
 <p>The MSI installer can be built both from a 32-bit build of R
-(<samp>R-3.2.5-win32.msi</samp>) and from a 64-bit build of R
-(<samp>R-3.2.5-win64.msi</samp>, optionally including 32-bit files
+(<samp>R-3.3.0-win32.msi</samp>) and from a 64-bit build of R
+(<samp>R-3.3.0-win64.msi</samp>, optionally including 32-bit files
 by setting the macro <code>HOME32</code>, when the name is
-<samp>R-3.2.5-win.msi</samp>).  Unlike the main installer, a 64-bit
+<samp>R-3.3.0-win.msi</samp>).  Unlike the main installer, a 64-bit
 MSI installer can only be run on 64-bit Windows.
 </p>
 <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1862,7 +1858,7 @@ Windows&rsquo; CRLF line endings.
 
 
 <p>The front page of a <acronym>CRAN</acronym> site has a link &lsquo;Download R for OS
-X&rsquo;. Click on that, then download the file <samp>R-3.2.5.pkg</samp>
+X&rsquo;. Click on that, then download the file <samp>R-3.3.0.pkg</samp>
 and install it. This runs on OS X 10.9 and later (Mavericks, Yosemite,
 El Capitan, &hellip;).
 </p>
@@ -1928,7 +1924,7 @@ typed as commands like any other Unix-alike: see the next chapter of
 this manual.  There are some small differences which may surprise users
 of R on other platforms, notably the default location of the personal
 library directory (under <samp>~/Library/R</samp>,
-e.g. <samp>~/Library/R/3.2/library</samp>), and that warnings, messages and
+e.g. <samp>~/Library/R/3.3/library</samp>), and that warnings, messages and
 other output to <samp>stderr</samp> are highlighted in bold.
 </p>
 <p>It has been reported that running <small>R.APP</small> under Yosemite may fail if no
@@ -2000,6 +1996,8 @@ pkgutil --files org.r-project.x86_64.texinfo
 
 <p>These are paths relative to <samp>/</samp>, the root of the file system.
 </p>
+
+
 <hr>
 <a name="Multiple-versions"></a>
 <a name="Multiple-versions-1"></a>
@@ -2009,13 +2007,13 @@ pkgutil --files org.r-project.x86_64.texinfo
 which it finds installed.  This can be avoided by using <code>pkgutil
 --forget</code> (see the previous section).  However, note that different
 versions are installed under
-<samp>/Library/Frameworks/R.framework/Versions</samp> as <samp>3.1</samp>,
-<samp>3.2</samp> and so on, so it is not possible to have different
+<samp>/Library/Frameworks/R.framework/Versions</samp> as <samp>3.2</samp>,
+<samp>3.3</samp> and so on, so it is not possible to have different
 &lsquo;<samp>3.x.y</samp>&rsquo; versions installed for the same &lsquo;<samp>x</samp>&rsquo;.
 </p>
 <p>A version of R can be run directly from the command-line as e.g.
 </p><div class="example">
-<pre class="example">/Library/Frameworks/R.framework/Versions/3.2/Resources/bin/R
+<pre class="example">/Library/Frameworks/R.framework/Versions/3.3/Resources/bin/R
 </pre></div>
 
 <p>However, <small>R.APP</small> will always run the &lsquo;current&rsquo; version, that is the last
@@ -2285,13 +2283,16 @@ directory of a bundled distribution of Gtk2 from
 the path: it should work to have both 32- and 64-bit Gtk+ <samp>bin</samp>
 directories in the path on a 64-bit version of R.
 </p>
-<p><code>R CMD INSTALL</code> works in Windows to install source packages.  No
-additional tools are needed if the package does not contain compiled
-code, and <code>install.packages(type=&quot;source&quot;)</code> will work for such
-packages (and for those with compiled code if the tools (see <a href="#The-Windows-toolset">The Windows toolset</a>) are in the path).  We have seen occasional permission
-problems after unpacking source packages on some systems: these have
-been circumvented by setting the environment variable
-<code>R_INSTALL_TAR</code> to &lsquo;<samp>tar.exe</samp>&rsquo;.
+<p><code>R CMD INSTALL</code> works in Windows to install source packages.
+No additional tools are needed if the package does not contain
+compiled code, and <code>install.packages(type=&quot;source&quot;)</code> will work
+for such packages (and for those with compiled code if the tools (see
+<a href="#The-Windows-toolset">The Windows toolset</a>) are on the path, and the variables
+<code>BINPREF</code> and <code>BINPREF64</code> are set properly; see the
+discussion below).  We have seen occasional permission problems after
+unpacking source packages on some systems: these have been
+circumvented by setting the environment variable <code>R_INSTALL_TAR</code>
+to &lsquo;<samp>tar.exe</samp>&rsquo;.
 <a name="index-R_005fINSTALL_005fTAR"></a>
 </p>
 <p>If you have only a source package that is known to work with current
@@ -2319,14 +2320,22 @@ sources on Windows without any additional tools.
 </p>
 
 <a name="index-LOCAL_005fSOFT"></a>
-<p>There is provision to make use of a system-wide library of installed
-external software by setting the <code>make</code> variable
-<code>LOCAL_SOFT</code>, to give an equivalent of <samp>/usr/local</samp> on a
-Unix-alike.  This can be set in <samp>src/gnuwin/MkRules.local</samp> when
-R is built from sources (see the comments in
-<samp>src/gnuwin/MkRules.dist</samp>), or in file<a name="DOCF18" href="#FOOT18"><sup>18</sup></a>  <samp>etc/i386/Makeconf</samp> or <samp>etc/x64/Makeconf</samp> for an
-installed version of R.  The version used by <acronym>CRAN</acronym> can be
-installed as described in <a href="#Building-from-source">Building from source</a>.
+<a name="index-BINPREF"></a>
+<a name="index-BINPREF64"></a>
+<p>Packages with compiled code may need to have paths to the compilers
+set explicitly, and there is provision to make use of a system-wide
+library of installed external software. The compiler paths are set
+using the <code>make</code> variables <code>BINPREF</code> (and in some cases
+<code>BINPREF64</code>).  The library location is set using <code>make</code>
+variable <code>LOCAL_SOFT</code>, to give an equivalent of <samp>/usr/local</samp>
+on a Unix-alike.  All of these can be set in
+<samp>src/gnuwin/MkRules.local</samp> when R is built from sources (see
+the comments in <samp>src/gnuwin/MkRules.dist</samp>), or in
+file<a name="DOCF18" href="#FOOT18"><sup>18</sup></a>
+<samp>etc/i386/Makeconf</samp> or <samp>etc/x64/Makeconf</samp> for an installed
+version of R.  In the latter case only <code>BINPREF</code> is used, with
+the 64 bit path used in <samp>etc/x64/Makeconf</samp>. The version used by
+<acronym>CRAN</acronym> can be installed as described in <a href="#Building-from-source">Building from source</a>.
 </p>
 
 <hr>
@@ -2353,7 +2362,7 @@ source versions of packages without compiled C/C++/Fortran code and offer
 to do so for those with, if <code>make</code> is available.
 </p>
 <p>Note that most binary packages including compiled code are tied to a
-particular series (e.g. R 3.2.x or 3.1.x) of R.
+particular series (e.g. R 3.2.x or 3.3.x) of R.
 </p>
 <p>Installing source packages which do not contain compiled code should
 work with no additional tools. For others you will need the
@@ -3050,7 +3059,7 @@ is the current working directory (in the build directory tree on a
 Unix-alike if that is separate from the sources).
 </p>
 <p><samp>Rmath.h</samp> contains &lsquo;<samp>R_VERSION_STRING</samp>&rsquo;, which is a character
-string containing the current R version, for example <code>&quot;3.2.0&quot;</code>.
+string containing the current R version, for example <code>&quot;3.3.0&quot;</code>.
 </p>
 <p>There is full access to R&rsquo;s handling of <code>NaN</code>, <code>Inf</code> and
 <code>-Inf</code> via special versions of the macros and functions
@@ -3292,8 +3301,33 @@ can make use of <acronym>GNU</acronym> <code>libiconv</code> (as used on OS X: s
 types: this is checked at configuration.  A small number of POSIX
 functions<a name="DOCF34" href="#FOOT34"><sup>34</sup></a> are essential, and others<a name="DOCF35" href="#FOOT35"><sup>35</sup></a> will be used if available.
 </p>
+<p>Installations of <code>zlib</code> (version 1.2.5 or later), <code>libbz2</code>
+(version 1.0.6 or later: called <strong>bzip2-libs</strong>/<strong>bzip2-devel</strong> or
+<strong>libbz2-1.0</strong>/<strong>libbz2-dev</strong> by some Linux distributions),
+<code>liblzma</code><a name="DOCF36" href="#FOOT36"><sup>36</sup></a> version 5.0.3 or
+later are required.
+</p>
+<p>PCRE<a name="DOCF37" href="#FOOT37"><sup>37</sup></a> (version 8.32 or later, although versions 8.10&ndash;8.31 will
+be accepted with a deprecation warning) is required (or just its library
+and headers if packaged separately).  PCRE must be built with UTF-8
+support (not the default, and checked by <code>configure</code>) and
+support for Unicode properties is assumed by some R packages.  JIT
+support is desirable for the best performance: support for this and
+Unicode properties can be checked at run-time by calling
+<code>pcre_config()</code>.  If building PCRE for use with R a suitable
+<code>configure</code> command might be
+</p><div class="example">
+<pre class="example">/configure --enable-utf --enable-unicode-properties --enable-jit --disable-cpp
+</pre></div>
+<p>The <samp>--enable-jit</samp> flag is supported for most common CPUs.
+</p>
+<p>Library <code>libcurl</code> (version 7.28.0 or later) is required.
+Information on <code>libcurl</code> is found from the <code>curl-config</code>
+script: if that is missing or needs to be overridden<a name="DOCF38" href="#FOOT38"><sup>38</sup></a> there are macros to do so described in file
+<samp>config.site</samp>.
+</p>
 <p>A <code>tar</code> program is needed to unpack the sources and packages
-(including the recommended packages).  A version<a name="DOCF36" href="#FOOT36"><sup>36</sup></a> that can
+(including the recommended packages).  A version<a name="DOCF39" href="#FOOT39"><sup>39</sup></a> that can
 automagically detect compressed archives is preferred for use with
 <code>untar()</code>: the configure script looks for <code>gtar</code> and
 <code>gnutar</code> before
@@ -3313,9 +3347,14 @@ make PDF versions of the manuals you will also need file
 <samp>texinfo.tex</samp> installed (which is part of the <acronym>GNU</acronym>
 <strong>texinfo</strong> distribution but is often made part of the TeX package
 in re-distributions) as well as
-<code>texi2dvi</code>.<a name="DOCF37" href="#FOOT37"><sup>37</sup></a>
+<code>texi2dvi</code>.<a name="DOCF40" href="#FOOT40"><sup>40</sup></a>
 Further, the versions of <code>texi2dvi</code> and <samp>texinfo.tex</samp> need
 to be compatible: we have seen problems with older TeX distributions.
+</p>
+<a name="index-Subversion-1"></a>
+<p>If you want to build from the R Subversion repository then
+<code>texi2any</code> is highly recommended as it is used to create files
+which are in the tarball but not stored in the Subversion repository.
 </p>
 <a name="index-Vignettes"></a>
 <p>The PDF documentation (including <samp>doc/NEWS.pdf</samp>) and building
@@ -3337,12 +3376,6 @@ based on TeX Live the simplest approach may be to install collections
 <strong>collection-latexextra</strong> (assuming they are not installed by
 default): Fedora uses names like <strong>texlive-collection-fontsextra</strong> and
 Debian/Ubuntu like <strong>texlive-fonts-extra</strong>.
-</p>
-
-<a name="index-Subversion-1"></a>
-<p>If you want to build from the R Subversion repository then
-<code>texi2any</code> is highly recommended as it is used to create files
-which are in the tarball but not stored in the Subversion repository.
 </p>
 <a name="index-PATH"></a>
 <p>The essential programs should be in your <code>PATH</code> at the time
@@ -3368,18 +3401,18 @@ earliest version we have tested.  (For Fedora users we believe the
 &lsquo;<samp>pangocairo</samp>&rsquo; package is installed (and if not, &lsquo;<samp>cairo</samp>&rsquo;) and if
 additional flags are needed for the &lsquo;<samp>cairo-xlib</samp>&rsquo; package, then if
 suitable code can be compiled.  These tests will fail if
-<code>pkg-config</code> is not installed<a name="DOCF38" href="#FOOT38"><sup>38</sup></a>, and are likely to fail if <code>cairo</code> was built
+<code>pkg-config</code> is not installed<a name="DOCF41" href="#FOOT41"><sup>41</sup></a>, and are likely to fail if <code>cairo</code> was built
 statically (unusual).  Most systems with <code>Gtk+</code> 2.8 or later
 installed will have suitable libraries
 </p>
 <p>For the best font experience with these devices you need suitable fonts
 installed: Linux users will want the <code>urw-fonts</code> package.  On
 platforms which have it available, the <code>msttcorefonts</code>
-package<a name="DOCF39" href="#FOOT39"><sup>39</sup></a> provides
+package<a name="DOCF42" href="#FOOT42"><sup>42</sup></a> provides
 TrueType versions of Monotype fonts such as Arial and Times New Roman.
 Another useful set of fonts is the &lsquo;liberation&rsquo; TrueType fonts available
 at
-<a href="https://fedorahosted.org/liberation-fonts/">https://fedorahosted.org/liberation-fonts/</a>,<a name="DOCF40" href="#FOOT40"><sup>40</sup></a> which cover the Latin, Greek and Cyrillic alphabets
+<a href="https://fedorahosted.org/liberation-fonts/">https://fedorahosted.org/liberation-fonts/</a>,<a name="DOCF43" href="#FOOT43"><sup>43</sup></a> which cover the Latin, Greek and Cyrillic alphabets
 plus a fair range of signs.  These share metrics with Arial, Times New
 Roman and Courier New, and contain fonts rather similar to the first two
 (<a href="https://en.wikipedia.org/wiki/Liberation_fonts">https://en.wikipedia.org/wiki/Liberation_fonts</a>).  Then there
@@ -3405,16 +3438,6 @@ only require a basic build of <code>libtiff</code> (not even JPEG support is
 needed).  Recent versions allow several other libraries to be linked
 into <code>libtiff</code> such as <code>lzma</code>, <code>jbig</code> and <code>jpeg12</code>,
 and these may need also to be present.
-</p>
-<p>If you have them installed (including the appropriate headers and of
-suitable versions), system versions of <code>zlib</code> (version 1.2.5 or
-later),, <code>libbz2</code> (version 1.0.6 or later: called
-<strong>bzip2-libs</strong>/<strong>bzip2-devel</strong> or <strong>libbz2-1.0</strong>/<strong>libbz2-dev</strong>
-by some Linux distributions) and PCRE (version 8.10 or later, preferably
-8.32 or later<a name="DOCF41" href="#FOOT41"><sup>41</sup></a>): will be used, otherwise
-versions in the R sources will be compiled in.  The external versions
-can be avoided by configure options <samp>--without-system-zlib</samp>,
-<samp>--without-system-bzlib</samp> and <samp>--without-system-pcre</samp>.
 </p>
 <p>Option <samp>--with-system-tre</samp> is also available: it needs a recent
 version of TRE. (The current sources are in the <code>git</code> repository
@@ -3453,15 +3476,6 @@ Linux distributions, Solaris, FreeBSD and AIX, usually as <code>libicu</code>
 or <code>icu4c</code>.  It will be used by default where available: should a
 very old or broken version of ICU be found this can be suppressed by
 <samp>--without-ICU</samp>.
-</p>
-<p>If <code>libcurl</code> version 7.28.0 or later is available (including its
-development files), it will be linked in to support
-<code>curlGetHeaders</code> and the <code>&quot;libcurl&quot;</code> methods of
-<code>download.file</code> and <code>url</code>.  This is recommended as it gives
-access to &lsquo;<samp>https://</samp>&rsquo; and &lsquo;<samp>ftps://</samp>&rsquo; URLs.  Information on
-<code>libcurl</code> is found from the <code>curl-config</code> script: if that
-is missing or needs to be overridden<a name="DOCF42" href="#FOOT42"><sup>42</sup></a>
-there are macros described in file <samp>config.site</samp>.
 </p>
 <p>The <code>bitmap</code> and <code>dev2bitmap</code> devices and function
 <code>embedFonts()</code> use ghostscript
@@ -3503,7 +3517,7 @@ files may be necessary to avoid confusion between them.
 <p>Versions of Tcl/Tk up to 8.5.19 and 8.6.4 have been tested (including
 most versions of 8.4.x, but not recently).
 </p>
-<p>Note that the <samp>tk.h</samp> header includes<a name="DOCF43" href="#FOOT43"><sup>43</sup></a> X11 headers, so you will need X11 and its
+<p>Note that the <samp>tk.h</samp> header includes<a name="DOCF44" href="#FOOT44"><sup>44</sup></a> X11 headers, so you will need X11 and its
 development files installed.
 </p>
 <hr>
@@ -3634,7 +3648,7 @@ well as <code>LSAME</code>), and appears to be usable.  However, an external
 position-independent code), and that is not checked.
 </p>
 <p>Some enhanced <acronym>BLAS</acronym>es are compiler-system-specific
-(<code>sunperf</code> on Solaris<a name="DOCF44" href="#FOOT44"><sup>44</sup></a>, <code>libessl</code> on IBM,
+(<code>sunperf</code> on Solaris<a name="DOCF45" href="#FOOT45"><sup>45</sup></a>, <code>libessl</code> on IBM,
 <code>Accelerate</code> on OS X).  The correct incantation for these is often
 found <em>via</em> <samp>--with-blas</samp> with no value on the appropriate
 platforms.
@@ -3716,7 +3730,7 @@ position-independent code, and as a shared library.
 <a name="ACML-1"></a>
 <h4 class="subsubsection">A.3.1.2 ACML</h4>
 
-<p>For &lsquo;<samp>x86_64</samp>&rsquo; processors<a name="DOCF45" href="#FOOT45"><sup>45</sup></a>  under Linux there is the AMD Core Math Library (ACML).
+<p>For &lsquo;<samp>x86_64</samp>&rsquo; processors<a name="DOCF46" href="#FOOT46"><sup>46</sup></a>  under Linux there is the AMD Core Math Library (ACML).
 For the <code>gcc</code> version we could use
 </p>
 <div class="example">
@@ -4039,7 +4053,7 @@ a dynamic (shared) library, typically called <samp>libR.so</samp>, and link
 the main R executable <samp>R.bin</samp> against that library.  This can
 only be done if all the code (including system libraries) can be
 compiled into a dynamic library, and there may be a
-performance<a name="DOCF46" href="#FOOT46"><sup>46</sup></a> penalty.  So you probably
+performance<a name="DOCF47" href="#FOOT47"><sup>47</sup></a> penalty.  So you probably
 only want this if you will be using an application which embeds R.
 Note that C code in packages installed on an R system linked with
 <samp>--enable-R-shlib</samp> is linked against the dynamic library and so
@@ -4056,7 +4070,8 @@ anything.)  The system headers for <code>valgrind</code> can be requested
 by option <samp>--with-system-valgrind-headers</samp>: they will be used if
 present (on Linux they may be in a separate package such as
 <strong>valgrind-devel</strong>).  Note though that there is no guarantee that the
-code in R will be compatible with future <code>valgrind</code> headers.
+code in R will be compatible with very old<a name="DOCF48" href="#FOOT48"><sup>48</sup></a> or future <code>valgrind</code>
+headers.
 </p>
 <p>If you need to re-configure R with different options you may need to run
 <code>make clean</code> or even <code>make distclean</code> before doing so.
@@ -4259,7 +4274,7 @@ is to search for
 <code>epcf90</code>,
 <code>g77</code>, <code>f77</code>, <code>xlf</code>, <code>frt</code>,
 <code>pgf77</code>, <code>cf77</code>, <code>fort77</code>, <code>fl32</code>,
-<code>af77</code> (in that order)<a name="DOCF47" href="#FOOT47"><sup>47</sup></a>, and use whichever is found first; if none is found,
+<code>af77</code> (in that order)<a name="DOCF49" href="#FOOT49"><sup>49</sup></a>, and use whichever is found first; if none is found,
 R cannot be compiled.
 However, if <code>CC</code> is <code>gcc</code>, the matching FORTRAN compiler
 (<code>g77</code> for <code>gcc</code>&nbsp;3 and <code>gfortran</code> for
@@ -4288,7 +4303,7 @@ pointer.  This is checked during the configuration process.
 </p>
 <p>Some of the FORTRAN code makes use of <code>COMPLEX*16</code> variables, which
 is a Fortran 90 extension.  This is checked for at configure
-time<a name="DOCF48" href="#FOOT48"><sup>48</sup></a>, but you may need to avoid
+time<a name="DOCF50" href="#FOOT50"><sup>50</sup></a>, but you may need to avoid
 compiler flags asserting FORTRAN 77 compliance.
 </p>
 <p>Compiling the version of LAPACK in the R sources also requires some
@@ -4507,7 +4522,7 @@ selection issues, they are more amenable than the issues with
 </p>
 <p>When X11 was designed, most displays were around 75dpi, whereas today
 they are of the order of 100dpi or more.  If you find that X11()
-is reporting<a name="DOCF49" href="#FOOT49"><sup>49</sup></a> missing font sizes, especially larger ones, it is likely
+is reporting<a name="DOCF51" href="#FOOT51"><sup>51</sup></a> missing font sizes, especially larger ones, it is likely
 that you are not using scalable fonts and have not installed the 100dpi
 versions of the X11 fonts.  The names and details differ by system, but
 will likely have something like Fedora&rsquo;s
@@ -4625,7 +4640,7 @@ significant performance improvements on recent CPUs (especially for
 the best possible performance on the machine on which R is being
 installed: if the compilation is for a site-wide installation, it may
 still be desirable to use something like
-<samp>-mtume=core2</samp>.<a name="DOCF50" href="#FOOT50"><sup>50</sup></a> It is also possible to increase the
+<samp>-mtume=core2</samp>.<a name="DOCF52" href="#FOOT52"><sup>52</sup></a> It is also possible to increase the
 optimization levels to <samp>-O3</samp>: however for many versions of the
 compilers this has caused problems in at least one <acronym>CRAN</acronym>
 package.
@@ -4701,7 +4716,7 @@ project (<a href="http://libcxx.llvm.org/">http://libcxx.llvm.org/</a>) has also
 R packages only the variant using <code>libcxxabi</code> was successful.
 </p>
 <p>Most builds of <code>clang</code> have no OpenMP support.  Builds of
-version 3.7.0 or later may.<a name="DOCF51" href="#FOOT51"><sup>51</sup></a>
+version 3.7.0 or later may.<a name="DOCF53" href="#FOOT53"><sup>53</sup></a>
 </p>
 <hr>
 <a name="Intel-compilers"></a>
@@ -4801,8 +4816,8 @@ the configure flag <samp>--disable-largefile</samp> was needed (since
 <a name="index-OS-X-2"></a>
 
 <p>The instructions here are for &lsquo;<samp>x86_64</samp>&rsquo; builds on 10.9
-(Mavericks) or later.  In principle R can be built for 10.4 to 10.8
-and for other CPUs, but these has not been tested recently.
+(Mavericks) or later.  In principle<a name="DOCF54" href="#FOOT54"><sup>54</sup></a> R can be
+built for 10.6 to 10.8 but these has not been tested recently.
 </p>
 <p>To build R you need Apple&rsquo;s &lsquo;Command Line Tools&rsquo;: these can be
 (re-)installed by <code>xcode-select --install</code>.  (If you have a
@@ -4811,22 +4826,27 @@ offer the installation of the command-line tools.  If you have installed
 Xcode, this provides the command-line tools.  The tools will need to be
 reinstalled when OS X is upgraded, as upgrading partially removes them.)
 </p>
+<p>You need <code>readline</code> (or to configure using
+<samp>--without-readline</samp>), and a Fortran compiler.  Those and other
+binary components are available from
+<a href="https://r.research.att.com/libs">https://r.research.att.com/libs</a>: you are likely to need
+<code>pcre</code> and <code>xz</code> (recent OS X provides libs but not headers for
+these).
+</p>
 <p>An X sub-system is required unless configuring using
-<samp>--without-x</samp>: see <a href="https://xquartz.macosforge.org/">https://xquartz.macosforge.org/</a>.  (Note
-that XQuartz will likely need to be re-installed after an OS upgrade.)
+<samp>--without-x</samp>: see <a href="https://xquartz.macosforge.org/">https://xquartz.macosforge.org/</a>.
 </p>
 <p>To use the <code>quartz()</code> graphics device you need to configure with
 <samp>--with-aqua</samp> (which is the default): <code>quartz()</code> then
 becomes the default device when running R at the console and X11
 would only be used for the command-line-R data editor/viewer and one
-version of Tcl/Tk.  (This needs an Objective-C compiler<a name="DOCF52" href="#FOOT52"><sup>52</sup></a> which can compile the source code of
+version of Tcl/Tk.  (This needs an Objective-C compiler<a name="DOCF55" href="#FOOT55"><sup>55</sup></a> which can compile the source code of
 <code>quartz()</code>.)
 </p>
 <p>Use <samp>--without-aqua</samp> if you want a standard Unix-alike build:
 apart from disabling <code>quartz()</code> and the ability to use the build
 with <small>R.APP</small>, it also changes the default location of the personal
-library (see <code>?.libPaths</code>).  Also use
-<samp>--disable-R-framework</samp> to install in the standard layout.
+library (see <code>?.libPaths</code>).
 </p>
 <p>Various compilers can be used.  The current <acronym>CRAN</acronym> distribution
 of R is built using
@@ -4846,7 +4866,7 @@ FCFLAGS=$F77FLAGS
 
 <p>with <code>clang</code> and <code>clang++</code> from the &lsquo;Command Line
 Tools&rsquo; and the Fortran compiler from
-<a href="https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2">https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2</a>.<a name="DOCF53" href="#FOOT53"><sup>53</sup></a>
+<a href="https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2">https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2</a>.<a name="DOCF56" href="#FOOT56"><sup>56</sup></a>
 </p>
 <p>Other builds of <code>gfortran</code> are available: see
 <a href="https://gcc.gnu.org/wiki/GFortranBinaries">https://gcc.gnu.org/wiki/GFortranBinaries</a> and
@@ -4857,14 +4877,14 @@ or path in a personal or site <samp>Makevars</samp> file (see <a href="#Customiz
 <p>More recent and complete distributions of <code>clang</code> are usually
 available from <a href="http://llvm.org/releases/">http://llvm.org/releases/</a>.  In particular, these
 include support for the &lsquo;Address Sanitizer&rsquo; (not included by Apple until
-Xcode 7) and for OpenMP<a name="DOCF54" href="#FOOT54"><sup>54</sup></a> in version 3.7.0 and later.
+Xcode 7) and for OpenMP<a name="DOCF57" href="#FOOT57"><sup>57</sup></a> in version 3.7.0 and later.
 </p>
 <p>Pre-compiled versions of many of the <a href="#Useful-libraries-and-programs">Useful libraries and programs</a>
 are available from <a href="https://r.research.att.com/libs/">https://r.research.att.com/libs/</a>.  You will
-most likely want at least <code>pcre</code>, <code>xz</code>, <code>jpeg</code> and
-<code>readline</code> (and perhaps <code>tiff</code>).  Command <code>pkg-config</code> is
-not provided by Apple and useful for many packages: it will also be used
-if present when configuring the <code>X11()</code> device.
+most likely want at least <code>jpeg</code> and <code>tiff</code>.
+<code>pkg-config</code> is not provided by Apple and used for many packages:
+it will also be used if present when configuring the <code>X11()</code> and
+bitmap devices.
 </p>
 <p>Support for <code>cairo</code> (without <code>Pango</code>) can be enabled in two
 ways: both need <code>pkg-config</code> available.  XQuartz ships <code>cairo</code>
@@ -4889,16 +4909,17 @@ Otherwise the binary libraries at
 </pre></div>
 
 <p>to provide potentially higher-performance versions of the <acronym>BLAS</acronym>
-and LAPACK routines.<a name="DOCF55" href="#FOOT55"><sup>55</sup></a>
+and LAPACK routines.<a name="DOCF58" href="#FOOT58"><sup>58</sup></a>
 </p>
 <p>Looking at the top of
 <samp>/Library/Frameworks/R.framework/Resources/etc/Makeconf</samp>
 will show the compilers and configuration options used for the
-<acronym>CRAN</acronym> binary package for R: at the time of writing
+<acronym>CRAN</acronym> binary package for R: at the time of writing the
+non-default options
 </p><div class="example">
-<pre class="example">--enable-memory-profiling
+<pre class="example">--enable-memory-profiling --enable-R-framework
 </pre></div>
-<p>was used.
+<p>were used.
 </p>
 <p>Configure option <samp>--with-internal-tzcode</samp> is the default on OS X,
 as the system implementation of time zones does not work correctly for
@@ -4924,6 +4945,7 @@ versions.
 and may need to re-install XQuartz and Java (this has been needed for
 some upgrades but not others).
 </p>
+
 
 <hr>
 <a name="El-Capitan"></a>
@@ -4998,7 +5020,7 @@ tclvalue(.Tcl(&quot;tk windowingsystem&quot;))  # &quot;x11&quot; or &quot;aqua&
 <a name="Java"></a>
 <h4 class="subsection">C.3.3 Java</h4>
 
-<p>The situation with Java support on OS X is messy.<a name="DOCF56" href="#FOOT56"><sup>56</sup></a>
+<p>The situation with Java support on OS X is messy.<a name="DOCF59" href="#FOOT59"><sup>59</sup></a>
 </p>
 <p>OS X no longer comes with an installed Java runtime (JRE), and an OS X
 upgrade removes one if already installed: it is intended to be installed
@@ -5008,7 +5030,7 @@ should prompt you to install it.  You can also install directly the
 latest Java from Oracle (currently from
 <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">http://www.oracle.com/technetwork/java/javase/downloads/index.html</a>).
 </p>
-<p>You may need to install what Apple calls &lsquo;legacy Java&rsquo;<a name="DOCF57" href="#FOOT57"><sup>57</sup></a> to suppress pop-up messages
+<p>You may need to install what Apple calls &lsquo;legacy Java&rsquo;<a name="DOCF60" href="#FOOT60"><sup>60</sup></a> to suppress pop-up messages
 even if you have a current version installed.
 </p>
 <p>To see what compatible versions of Java are currently installed, run
@@ -5050,14 +5072,14 @@ to <code>1</code> to install many of the Java-using packages.
 <h4 class="subsection">C.3.4 Frameworks</h4>
 
 <p>The <acronym>CRAN</acronym> build of R is installed as a framework, which is
-selected by the default option
+selected by the option
 </p>
 <div class="example">
 <pre class="example">./configure --enable-R-framework
 </pre></div>
 
 <p>(This is intended to be used with an Apple toolchain: other compilers may
-not support frameworks correctly.)
+not support frameworks correctly. It was the default prior to R 3.3.0.)
 </p>
 <p>It is only needed if you want to build R for use with the <small>R.APP</small>
 console, and implies <samp>--enable-R-shlib</samp> to build R as a
@@ -5134,9 +5156,7 @@ found in <samp>/usr/xpg4/bin</samp> and <samp>/usr/xpg6/bin</samp>.
 <p>A large selection of Open Source software can be installed from
 <a href="https://www.opencsw.org">https://www.opencsw.org</a>, by default installed under
 <samp>/opt/csw</samp>.  Solaris 10 ships with <code>bzlib</code> version 1.0.6
-(sufficient for the default <samp>--with-system-bzlib</samp>) but
-<code>zlib</code> version 1.2.3 (too old for <samp>--with-system-zlib</samp>):
-OpenCSW has 1.2.8.
+(sufficient) but <code>zlib</code> version 1.2.3 (too old): OpenCSW has 1.2.8.
 </p>
 <p>You will need <acronym>GNU</acronym> <code>libiconv</code> and <code>readline</code>: the
 Solaris version of <code>iconv</code> is not sufficiently powerful.
@@ -5166,7 +5186,7 @@ option <samp>--with-internal-tzcode</samp> is recommended, and required if
 you find time-zone abbreviations being given odd values (as has been
 seen on 64-bit builds without it).
 </p>
-<p>When using the Oracle compilers<a name="DOCF58" href="#FOOT58"><sup>58</sup></a> do <em>not</em> specify <samp>-fast</samp>, as this
+<p>When using the Oracle compilers<a name="DOCF61" href="#FOOT61"><sup>61</sup></a> do <em>not</em> specify <samp>-fast</samp>, as this
 disables <acronym>IEEE</acronym> arithmetic and <code>make check</code> will fail.
 </p>
 <p>It has been reported that some Solaris installations need
@@ -5541,13 +5561,6 @@ environment can be found in the &ldquo;R on AIX&rdquo; project on R-Forge
 R 3.0.2 at the time of writing.  Davor Cubranic reported some success
 on x86_64 FreeBSD 10.2 for R 3.2.2.
 </p>
-<p>It appears that versions of FreeBSD using <code>clang</code> as the compiler
-(the default as from 10.0) need
-</p><div class="example">
-<pre class="example">MAIN_LDFLAGS=-Wl,--export-dynamic
-</pre></div>
-<p>for R releases up to 3.2.2.
-</p>
 <p>Use of ICU for collation and the <code>configure</code> option
 <samp>--with-internal-tzcode</samp> are desirable workarounds.
 </p>
@@ -5567,54 +5580,11 @@ on x86_64 FreeBSD 10.2 for R 3.2.2.
 <a name="Cygwin-1"></a>
 <h3 class="section">C.8 Cygwin</h3>
 
-<p>The Cygwin emulation layer on Windows can be treated as a Unix-alike OS.
-This is unsupported, but experiments have been conducted and a few
-workarounds added.  Cygwin has not been tested for R 3.0.0 or later.
+<p>The 32-bit version has never worked well enough to pass R&rsquo;s
+<code>make check</code>, and residual support from earlier experiments was
+removed in R 3.3.0.
 </p>
-<p>The 64-bit version is completely unsupported.  The 32-bit version has
-never worked well enough to pass R&rsquo;s <code>make check</code>.
-</p>
-<p>R requires C99 complex type support, which is available as from
-Cygwin 1.7.8 (March 2011).  However, the (then) implementation of
-<code>cacos</code> gave incorrect results, so we undefine <code>HAVE_CACOS</code>
-in <samp>src/main/complex.c</samp> on that platform.  It has been reported
-that some C99 long double mathematical functions are missing, so
-configuring with <samp>--disable-long-double</samp> was required.
-</p>
-<p>Only building as a shared library can possibly work,<a name="DOCF59" href="#FOOT59"><sup>59</sup></a> so use e.g.
-</p>
-<div class="example">
-<pre class="example">./configure --disable-nls --enable-R-shlib FLIBS=-lgfortran
-make
-</pre></div>
-
-<p>Enabling NLS does work if required, although adding
-<samp>--with-included-gettext</samp> is preferable.  You will see many
-warnings about the use of auto-import.  Setting &lsquo;<samp>FLIBS</samp>&rsquo; explicitly
-seems needed currently as the auto-detection gives an incorrect value.
-</p>
-<p>You will need the <strong>tetex-extra</strong> Cygwin package to build
-<samp>NEWS.pdf</samp> and the vignettes.
-</p>
-<p>Note that this gives you a command-line application using <code>readline</code>
-for command editing.  The &lsquo;<samp>X11</samp>&rsquo; graphics device will work if a
-suitable X server is running, and the standard Unix-alike ways of
-installing source packages work.  There was a bug in the
-<samp>/usr/lib/tkConfig.sh</samp> script in the version we looked at, which
-needs to have
-</p>
-<div class="example">
-<pre class="example">TK_LIB_SPEC='-ltk84'
-</pre></div>
-
-<p>The overhead of using shell scripts makes this noticeably slower than a
-native build of R on Windows.
-</p>
-<p>Even when R could be built, not all the tests passed: there were
-incorrect results from wide-character regular expressions code and from
-sourcing CR-delimited files.
-</p>
-<p>Do not use Cygwin&rsquo;s BLAS library: it is known to give incorrect results.
+<p>The 64-bit version is completely unsupported.
 </p>
 <hr>
 <a name="New-platforms"></a>
@@ -5693,7 +5663,7 @@ will not need to build add-on packages from source; see <a href="#Add_002don-pac
 </p>
 <p>We have found that the build process for R is quite sensitive to
 the choice of tools: please follow our instructions <strong>exactly</strong>,
-even to the choice of particular versions of the tools.<a name="DOCF60" href="#FOOT60"><sup>60</sup></a>  The build process for add-on packages is somewhat more
+even to the choice of particular versions of the tools.<a name="DOCF62" href="#FOOT62"><sup>62</sup></a>  The build process for add-on packages is somewhat more
 forgiving, but we recommend using the exact toolset at first, and only
 substituting other tools once you are familiar with the process.
 </p>
@@ -5746,7 +5716,7 @@ use filepaths containing spaces: you can always use the short forms
 
 <p>It is essential that the directory containing the command line tools
 comes first or second in the path: there are typically like-named
-tools<a name="DOCF61" href="#FOOT61"><sup>61</sup></a> in other directories, and they will <strong>not</strong>
+tools<a name="DOCF63" href="#FOOT63"><sup>63</sup></a> in other directories, and they will <strong>not</strong>
 work. The ordering of the other directories is less important, but if in
 doubt, use the order above.
 </p>
@@ -5795,7 +5765,7 @@ install LaTeX packages on first use.
 <a name="The-Inno-Setup-installer-1"></a>
 <h3 class="section">D.2 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp>R-3.2.5-win.exe</samp>) we
+<p>To make the installer package (<samp>R-3.3.0-win.exe</samp>) we
 currently require the Unicode version of Inno Setup 5.3.7 or later from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>. This is <em>not</em> included in
 <samp>Rtools*.exe</samp>.
@@ -5853,7 +5823,7 @@ project&rsquo;s runtime.
 </p>
 <p>This toolchain uses <em>multilib</em>: that is there is a single front-end
 such as <code>gcc.exe</code> for each of the compilers and 32-bit (the
-default) and 64-bit compilation are selected by the flags<a name="DOCF62" href="#FOOT62"><sup>62</sup></a>  <samp>-m32</samp> and <samp>-m64</samp>
+default) and 64-bit compilation are selected by the flags<a name="DOCF64" href="#FOOT64"><sup>64</sup></a>  <samp>-m32</samp> and <samp>-m64</samp>
 respectively.  The tools are all 32-bit Windows executables and should
 be able to run on any current version of Windows&mdash;however you do need a
 64-bit version of Windows to build 64-bit R as the build process runs
@@ -6111,6 +6081,8 @@ be used to (de)compress files with that form of compression.
 <tr><td></td><th align="left">Index Entry</th><td>&nbsp;</td><th align="left"> Section</th></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Environment-variable-index_en_letter-B">B</a></th><td></td><td></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BINPREF"><code>BINPREF</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Windows-packages">Windows packages</a></td></tr>
+<tr><td></td><td valign="top"><a href="#index-BINPREF64"><code>BINPREF64</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#Windows-packages">Windows packages</a></td></tr>
 <tr><td></td><td valign="top"><a href="#index-BLAS_005fLIBS"><code>BLAS_LIBS</code></a>:</td><td>&nbsp;</td><td valign="top"><a href="#BLAS">BLAS</a></td></tr>
 <tr><td colspan="4"> <hr></td></tr>
 <tr><th><a name="Environment-variable-index_en_letter-C">C</a></th><td></td><td></td></tr>
@@ -6284,9 +6256,8 @@ the autobuilder this is the default.  Look at the source of
 <samp>tools:::.install_packages</samp> for the list.  It can also be specified
 in the package&rsquo;s <samp>DESCRIPTION</samp> file.</p>
 <h3><a name="FOOT18" href="#DOCF18">(18)</a></h3>
-<p>or by adding it in
-a file such as <samp>etc/i386/Makevars.site</samp>, which does not exist by
-default.</p>
+<p>or by adding it in a file such as
+<samp>etc/i386/Makevars.site</samp>, which does not exist by default.</p>
 <h3><a name="FOOT19" href="#DOCF19">(19)</a></h3>
 <p>They need to have been
 created using <samp>-headerpad_max_install_names</samp>, which is the
@@ -6351,106 +6322,110 @@ functionality of headers <samp>wchar.h</samp> and <samp>wctype.h</samp>, types
 <p>such as
 <code>realpath</code>, <code>symlink</code>.</p>
 <h3><a name="FOOT36" href="#DOCF36">(36)</a></h3>
+<p>most often distributed as part of <code>xz</code>:
+possible names in Linux distributions include
+<code>xz-devel</code>/<code>xz-libs</code> and <code>liblzma-dev</code>.</p>
+<h3><a name="FOOT37" href="#DOCF37">(37)</a></h3>
+<p>sometimes known as PCRE1, and not PCRE2 which started at
+version 10.0.</p>
+<h3><a name="FOOT38" href="#DOCF38">(38)</a></h3>
+<p>for
+example to specify static linking with a build which has both shared and
+static libraries.</p>
+<h3><a name="FOOT39" href="#DOCF39">(39)</a></h3>
 <p>Such as
 <acronym>GNU</acronym> <code>tar</code> 1.15 or later, <code>bsdtar</code> (from
 <a href="https://github.com/libarchive/libarchive/">https://github.com/libarchive/libarchive/</a>, as used by FreeBSD and OS
 X 10.6 and later) or <code>tar</code> from the Heirloom Toolchest
 (<a href="http://heirloom.sourceforge.net/tools.html">http://heirloom.sourceforge.net/tools.html</a>).</p>
-<h3><a name="FOOT37" href="#DOCF37">(37)</a></h3>
+<h3><a name="FOOT40" href="#DOCF40">(40)</a></h3>
 <p><code>texi2dvi</code> is normally a shell
 script.  Some versions (including that from <strong>texinfo</strong> 5.2 and 6.0)
 need to be run under <code>bash</code> rather than a Bourne shell,
 especially on Solaris. Some of the issues which have been observed with
 broken versions of <code>texi2dvi</code> can be circumvented by setting the
 environment variable <code>R_TEXI2DVICMD</code> to the value <code>emulation</code>.</p>
-<h3><a name="FOOT38" href="#DOCF38">(38)</a></h3>
+<h3><a name="FOOT41" href="#DOCF41">(41)</a></h3>
 <p>If necessary the path to
 <code>pkg-config</code> can be specified by setting <code>PKGCONF</code> in
 <samp>config.site</samp>, on the <code>configure</code> command line or in the
 environment.</p>
-<h3><a name="FOOT39" href="#DOCF39">(39)</a></h3>
+<h3><a name="FOOT42" href="#DOCF42">(42)</a></h3>
 <p>also known as <code>ttf-mscorefonts-installer</code> in the
 Debian/Ubuntu world: see also
 <a href="https://en.wikipedia.org/wiki/Core_fonts_for_the_Web">https://en.wikipedia.org/wiki/Core_fonts_for_the_Web</a>.</p>
-<h3><a name="FOOT40" href="#DOCF40">(40)</a></h3>
+<h3><a name="FOOT43" href="#DOCF43">(43)</a></h3>
 <p><code>ttf-liberation</code>
 in Debian/Ubuntu.</p>
-<h3><a name="FOOT41" href="#DOCF41">(41)</a></h3>
-<p>sometimes known as PCRE1, and not PCRE2, which
-started at version 10.0. PCRE must be built with UTF-8 support (not the
-default, and checked by <code>configure</code>) and support for Unicode
-properties is assumed by some R packages (this can be checked at
-run-time by calling <code>pcre_config()</code>).</p>
-<h3><a name="FOOT42" href="#DOCF42">(42)</a></h3>
-<p>for example to specify
-static linking with a build which has both shared and static libraries.</p>
-<h3><a name="FOOT43" href="#DOCF43">(43)</a></h3>
+<h3><a name="FOOT44" href="#DOCF44">(44)</a></h3>
 <p>This is true even for
 the &lsquo;Aqua&rsquo; version of Tk on OS X, but distributions of that include a
 copy of the X11 files needed.</p>
-<h3><a name="FOOT44" href="#DOCF44">(44)</a></h3>
+<h3><a name="FOOT45" href="#DOCF45">(45)</a></h3>
 <p>Using the Oracle Solaris Studio
 <code>cc</code> and <code>f95</code> compilers</p>
-<h3><a name="FOOT45" href="#DOCF45">(45)</a></h3>
+<h3><a name="FOOT46" href="#DOCF46">(46)</a></h3>
 <p>and &lsquo;<samp>i686</samp>&rsquo; for earlier
 versions.</p>
-<h3><a name="FOOT46" href="#DOCF46">(46)</a></h3>
+<h3><a name="FOOT47" href="#DOCF47">(47)</a></h3>
 <p>We have measured 15&ndash;20% on &lsquo;<samp>i686</samp>&rsquo; Linux
 and around 10% on &lsquo;<samp>x86_64</samp>&rsquo; Linux.</p>
-<h3><a name="FOOT47" href="#DOCF47">(47)</a></h3>
+<h3><a name="FOOT48" href="#DOCF48">(48)</a></h3>
+<p>We believe that
+versions 3.4.0 to 3.10.1 are compatible.</p>
+<h3><a name="FOOT49" href="#DOCF49">(49)</a></h3>
 <p>On HP-UX <code>fort77</code> is the
 <acronym>POSIX</acronym> compliant FORTRAN compiler, and comes after
 <code>g77</code>.</p>
-<h3><a name="FOOT48" href="#DOCF48">(48)</a></h3>
+<h3><a name="FOOT50" href="#DOCF50">(50)</a></h3>
 <p>as well as its equivalence to the <code>Rcomplex</code>
 structure defined in <samp>R_ext/Complex.h</samp>.</p>
-<h3><a name="FOOT49" href="#DOCF49">(49)</a></h3>
+<h3><a name="FOOT51" href="#DOCF51">(51)</a></h3>
 <p>for example, <code>X11 font at size 14 could not
 be loaded</code>.</p>
-<h3><a name="FOOT50" href="#DOCF50">(50)</a></h3>
+<h3><a name="FOOT52" href="#DOCF52">(52)</a></h3>
 <p>or <code>-mtune=corei7</code> for Intel Core
 i3/15/17 with <code>gcc &gt;= 4.6.0</code>.</p>
-<h3><a name="FOOT51" href="#DOCF51">(51)</a></h3>
+<h3><a name="FOOT53" href="#DOCF53">(53)</a></h3>
 <p>This also needs the OpenMP runtime,
 which is usually distributed separately, e.g. at
 <a href="http://llvm.org/releases">http://llvm.org/releases</a>.</p>
-<h3><a name="FOOT52" href="#DOCF52">(52)</a></h3>
+<h3><a name="FOOT54" href="#DOCF54">(54)</a></h3>
+<p>It will be necessary to
+install later versions of software such as <code>libcurl</code>.</p>
+<h3><a name="FOOT55" href="#DOCF55">(55)</a></h3>
 <p>These
 days that is defined by Apple&rsquo;s implementation of <code>clang</code>, so it is
 strongly recommended to use that.</p>
-<h3><a name="FOOT53" href="#DOCF53">(53)</a></h3>
+<h3><a name="FOOT56" href="#DOCF56">(56)</a></h3>
 <p>This
 is a tarball which needs to be unpacked in the Terminal by e.g.
 <code>sudo tar -zxf gfortran-4.8.2-darwin13.tar.bz2 -C /</code>. It does
 not run on Core 2 Duo Macs.</p>
-<h3><a name="FOOT54" href="#DOCF54">(54)</a></h3>
+<h3><a name="FOOT57" href="#DOCF57">(57)</a></h3>
 <p>This also needs the OpenMP runtime,
 which is distributed separately at that site.</p>
-<h3><a name="FOOT55" href="#DOCF55">(55)</a></h3>
+<h3><a name="FOOT58" href="#DOCF58">(58)</a></h3>
 <p>It is reported that for some non-Apple
 toolchains <code>CPPFLAGS</code> needed to contain <code>-D__ACCELERATE__</code>.</p>
-<h3><a name="FOOT56" href="#DOCF56">(56)</a></h3>
+<h3><a name="FOOT59" href="#DOCF59">(59)</a></h3>
 <p>For more
 details see <a href="http://www.macstrategy.com/article.php?3">http://www.macstrategy.com/article.php?3</a>.</p>
-<h3><a name="FOOT57" href="#DOCF57">(57)</a></h3>
+<h3><a name="FOOT60" href="#DOCF60">(60)</a></h3>
 <p>e.g.
 <code>Java For OS X 2015-001</code> from
 <a href="https://support.apple.com/kb/DL1572">https://support.apple.com/kb/DL1572</a>.</p>
-<h3><a name="FOOT58" href="#DOCF58">(58)</a></h3>
+<h3><a name="FOOT61" href="#DOCF61">(61)</a></h3>
 <p>including <code>gcc</code> for
 Sparc from Oracle.</p>
-<h3><a name="FOOT59" href="#DOCF59">(59)</a></h3>
-<p>Windows
-DLLs need to have all links resolved at build time and so cannot resolve
-against <samp>R.bin</samp>.</p>
-<h3><a name="FOOT60" href="#DOCF60">(60)</a></h3>
+<h3><a name="FOOT62" href="#DOCF62">(62)</a></h3>
 <p>For
 example, the Cygwin version of <code>make 3.81</code> fails to work
 correctly.</p>
-<h3><a name="FOOT61" href="#DOCF61">(61)</a></h3>
+<h3><a name="FOOT63" href="#DOCF63">(63)</a></h3>
 <p>such as <code>sort</code>, <code>find</code> and perhaps
 <code>make</code>.</p>
-<h3><a name="FOOT62" href="#DOCF62">(62)</a></h3>
+<h3><a name="FOOT64" href="#DOCF64">(64)</a></h3>
 <p>these
 flags apply to the compilers: some of the tools use different flags.
 32-bit builds are the default.</p>

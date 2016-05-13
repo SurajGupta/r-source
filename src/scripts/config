@@ -20,7 +20,7 @@
 ## A copy of the GNU General Public License is available at
 ## https://www.R-project.org/Licenses/
 
-revision='$Revision: 69170 $'
+revision='$Revision: 70539 $'
 version=`set - ${revision}; echo ${2}`
 version="R configuration information retrieval script: ${R_VERSION} (r${version})
 
@@ -109,7 +109,16 @@ Variables:
   TCLTK_CPPFLAGS
 		flags needed for finding the tcl.h and tk.h headers
   TCLTK_LIBS    flags needed for linking against the Tcl and Tk libraries
+"
 
+if test "${R_OSTYPE}" = "windows"; then
+  usage="${usage}
+Windows only:
+  COMPILED_BY   name and version of compiler used to build R"
+fi
+
+usage="${usage}
+  
 Report bugs at bugs.r-project.org ."
 
 ## <NOTE>
@@ -219,7 +228,7 @@ if test "${site}" = "yes"; then
 fi
 if test "${personal}" = "yes"; then
   if test "${R_OSTYPE}" = "windows"; then
-    if test -n "${R_MAKEVARS_USER}"; then
+    if test -f "${R_MAKEVARS_USER}"; then
       makefiles="${makefiles} -f ${R_MAKEVARS_USER}"
     elif test ${R_ARCH} = "/x64" -a -f "${HOME}/.R/Makevars.win64"; then
       makefiles="${makefiles} -f ${HOME}/.R/Makevars.win64"
@@ -230,7 +239,7 @@ if test "${personal}" = "yes"; then
     fi
   else
     . ${R_HOME}/etc${R_ARCH}/Renviron
-    if test -n "${R_MAKEVARS_USER}"; then
+    if test -f "${R_MAKEVARS_USER}"; then
       makefiles="${makefiles} -f ${R_MAKEVARS_USER}"
     elif test -f "${HOME}/.R/Makevars-${R_PLATFORM}"; then
       makefiles="${makefiles} -f ${HOME}/.R/Makevars-${R_PLATFORM}"
@@ -250,7 +259,7 @@ ok_f77_vars="F77 FFLAGS FPICFLAGS FLIBS SAFE_FFLAGS FC FCFLAGS FCPICFLAGS"
 ok_ld_vars="LDFLAGS"
 ok_shlib_vars="SHLIB_CFLAGS SHLIB_CXXLD SHLIB_CXXLDFLAGS SHLIB_EXT SHLIB_FFLAGS SHLIB_LD SHLIB_LDFLAGS SHLIB_FCLD SHLIB_FCLDFLAGS"
 ok_tcltk_vars="TCLTK_CPPFLAGS TCLTK_LIBS"
-ok_other_vars="BLAS_LIBS LAPACK_LIBS MAKE LIBnn LOCAL_SOFT"
+ok_other_vars="BLAS_LIBS LAPACK_LIBS MAKE LIBnn LOCAL_SOFT COMPILED_BY"
 
 ## Can we do this elegantly using case?
 

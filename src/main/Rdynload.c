@@ -976,10 +976,10 @@ Rf_MakeRegisteredNativeSymbol(R_RegisteredNativeSymbol *symbol)
     R_RegisteredNativeSymbol *copy;
     copy = (R_RegisteredNativeSymbol *) malloc(1 * sizeof(R_RegisteredNativeSymbol));
     if(!copy) {
-        error(ngettext("cannot allocate memory for registered native symbol (%d byte)",
+	error(ngettext("cannot allocate memory for registered native symbol (%d byte)",
 		       "cannot allocate memory for registered native symbol (%d bytes)",
-                      (int) sizeof(R_RegisteredNativeSymbol)),
-                      (int) sizeof(R_RegisteredNativeSymbol));
+		      (int) sizeof(R_RegisteredNativeSymbol)),
+		      (int) sizeof(R_RegisteredNativeSymbol));
     }
     *copy = *symbol;
 
@@ -1169,7 +1169,7 @@ createRSymbolObject(SEXP sname, DL_FUNC f, R_RegisteredNativeSymbol *symbol,
 
     PROTECT(klass = allocVector(STRSXP, (symbol->type != R_ANY_SYM ? 2 : 1)));
     numProtects++;
-    SET_STRING_ELT(klass, length(klass)-1, mkChar("NativeSymbolInfo"));
+    SET_STRING_ELT(klass, LENGTH(klass) - 1, mkChar("NativeSymbolInfo"));
 
     if(n > 3) {
 	/* Add the registration information:

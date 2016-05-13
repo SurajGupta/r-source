@@ -1,4 +1,30 @@
 
+Changes from grid_3.2.* to grid_3.3.0:
+-------------------------------------
+
+1.  Added "pseudonym" units to check made in absolute.size() so that,
+    for example, absolute.size(unit(1, "in")) works properly
+    (reported by Baptiste Auguie).
+
+2.  Registered absolute.units() methods in NAMESPACE, so that, for
+    example, a call to absolute.size(unit(1,"npc") + unit(2,"mm"))
+    works outside of 'grid' (reported by Baptiste Auguie).
+
+3.  Refactored grid.draw() so that grid.draw(NULL) now works 
+    (by doing nothing).  Reported by Hadley Wickham.
+
+4.  Modified grid.ls() so that it returns nothing if there are no
+    active devices (rather than opening a new device).
+  
+5.  Modified grid.grep() so that it returns an empty list (rather than
+    throwing an error) when the 'grid' display list is empty.
+
+6.  Added subassignment methods for unit objects
+    (e.g., x <- unit(1:3, "cm"); x[2] <- unit(.5, "npc"))
+
+    Thanks to Baptiste Auguie for code suggestions.
+
+
 Changes from grid_3.1.* to grid_3.2.0:
 -------------------------------------
 

@@ -1,7 +1,7 @@
 #  File src/library/base/R/sort.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2012 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,23 @@ sort.default <- function(x, decreasing = FALSE, na.last = NA, ...)
 
 sort.int <-
     function(x, partial = NULL, na.last = NA, decreasing = FALSE,
-             method = c("shell", "quick"), index.return = FALSE)
+             method = c("shell", "quick", "radix"), index.return = FALSE)
 {
+    useRadix <- (!missing(method) && method == "radix") ||
+        (missing(method) && is.null(partial) &&
+             (is.integer(x) || is.factor(x) || is.logical(x)))
+    if (useRadix) {
+        if (!is.null(partial)) {
+            stop("'partial' sorting not supported by radix method")
+        }
+        o <- order(x, na.last = na.last, decreasing = decreasing,
+                   method = "radix")
+        y <- x[o]
+        if (index.return)
+            return(list(x = y, ix = o))
+        else return(y)
+    }
+    
     if(isfact <- is.factor(x)) {
         if(index.return) stop("'index.return' only for non-factors")
 	lev <- levels(x)
@@ -58,12 +73,10 @@ sort.int <-
             .Internal(psort(x, partial))
         } else if (is.double(x)) .Internal(qsort(x, FALSE))
         else .Internal(sort(x, FALSE))
-    } else if(isfact && missing(method) && nlev < 100000) {
-        o <- sort.list(x, decreasing = decreasing, method = "radix")
-        y <- x[o]
     } else {
         nms <- names(x)
-        method <- if(is.numeric(x)) match.arg(method) else "shell"
+	method <- if(is.numeric(x) && !missing(method)) match.arg(method)
+		  else "shell"
         switch(method,
                "quick" = {
                    if(!is.null(nms)) {
@@ -96,36 +109,49 @@ sort.int <-
     y
 }
 
-order <- function(..., na.last = TRUE, decreasing = FALSE)
+order <- function(..., na.last = TRUE, decreasing = FALSE,
+                  method = c("shell", "radix"))
 {
     z <- list(...)
-    if(any(unlist(lapply(z, is.object)))) {
-        z <- lapply(z, function(x) if(is.object(x)) xtfrm(x) else x)
-        if(!is.na(na.last))
-            return(do.call("order", c(z, na.last = na.last,
-                                      decreasing = decreasing)))
-    } else if(!is.na(na.last)) {
-        if (length(z) == 1L && is.factor(zz <- z[[1L]]) && nlevels(zz) < 100000)
-            return(.Internal(radixsort(zz, na.last, decreasing)))
-        else return(.Internal(order(na.last, decreasing, ...)))
-    }
 
+    if (missing(method)) {
+        ints <- all(vapply(z, function(x) is.integer(x) || is.factor(x),
+                           logical(1L)))
+        method <- if (ints) "radix" else "shell"
+    } else {
+        method <- match.arg(method)
+    }
+    
+    if(any(unlist(lapply(z, is.object)))) {
+        z <- lapply(z, function(x) if(is.object(x)) as.vector(xtfrm(x)) else x)
+        if(method == "radix" || !is.na(na.last))
+            return(do.call("order", c(z, na.last = na.last,
+                                      decreasing = decreasing,
+                                      method = method)))
+    } else if(method != "radix" && !is.na(na.last)) {
+        return(.Internal(order(na.last, decreasing, ...)))
+    }
+    
+    if (method == "radix") {
+        decreasing <- rep_len(as.logical(decreasing), length(z))
+        return(.Internal(radixsort(na.last, decreasing, FALSE, TRUE, ...)))
+    }
+    
     ## na.last = NA case: remove nas
-    if(any(diff(l.z <- vapply(z, length, 1L)) != 0L))
+    if(any(diff((l.z <- lengths(z)) != 0L)))
         stop("argument lengths differ")
-    ans <- vapply(z, is.na, rep.int(NA, l.z[1L]))
-    ok <- if(is.matrix(ans)) !apply(ans, 1, any) else !any(ans)
+    na <- vapply(z, is.na, rep.int(NA, l.z[1L]))
+    ok <- if(is.matrix(na)) rowSums(na) == 0L else !any(na)
     if(all(!ok)) return(integer())
     z[[1L]][!ok] <- NA
     ans <- do.call("order", c(z, decreasing = decreasing))
-    keep <- seq_along(ok)[ok]
-    ans[ans %in% keep]
+    ans[ok[ans]]
 }
 
 sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
                       method = c("shell", "quick", "radix"))
 {
-    if (missing(method) && is.factor(x) && nlevels(x) < 100000) method <-"radix"
+    if (is.integer(x) || is.factor(x)) method <- "radix"
     method <- match.arg(method)
     if(!is.atomic(x))
         stop("'x' must be atomic for 'sort.list'\nHave you called 'sort' on a list?")
@@ -138,17 +164,15 @@ sort.list <- function(x, partial = NULL, na.last = TRUE, decreasing = FALSE,
                         method = "quick", index.return = TRUE)$ix)
         else stop("method = \"quick\" is only for numeric 'x'")
     }
+    if (is.na(na.last)) {
+        x <- x[!is.na(x)]
+        na.last <- TRUE
+    }
     if(method == "radix") {
-        if(!typeof(x) == "integer") # we do want to allow factors here
-            stop("method = \"radix\" is only for integer 'x'")
-        if(is.na(na.last))
-            return(.Internal(radixsort(x[!is.na(x)], TRUE, decreasing)))
-        else
-            return(.Internal(radixsort(x, na.last, decreasing)))
+        return(order(x, na.last=na.last, decreasing=decreasing, method="radix"))
     }
     ## method == "shell"
-    if(is.na(na.last)) .Internal(order(TRUE, decreasing, x[!is.na(x)]))
-    else .Internal(order(na.last, decreasing, x))
+    .Internal(order(na.last, decreasing, x))
 }
 
 
@@ -178,4 +202,17 @@ xtfrm.AsIs <- function(x)
 {
     n <- length(x)
     if(strictly) !all(x[-1L] > x[-n]) else !all(x[-1L] >= x[-n])
+}
+
+grouping <- function(...) {
+    z <- list(...)
+    if(any(vapply(z, is.object, logical(1L)))) {
+        z <- lapply(z, function(x) if(is.object(x)) as.vector(xtfrm(x)) else x)
+        return(do.call("grouping", z))
+    }
+    nalast <- FALSE
+    decreasing <- rep_len(FALSE, length(z))
+    group <- TRUE
+    sortStr <- FALSE
+    return(.Internal(radixsort(nalast, decreasing, group, sortStr, ...)))
 }

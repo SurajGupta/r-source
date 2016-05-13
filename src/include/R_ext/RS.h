@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1999-2007 The R Core Team.
+ *  Copyright (C) 1999-2016 The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License as published by
@@ -23,7 +23,14 @@
 #define R_RS_H
 
 #ifndef NO_C_HEADERS
-# include <string.h>		/* for memcpy, memset */
+# if defined(__cplusplus) && !defined(DO_NOT_USE_CXX_HEADERS)
+#  include <cstring>
+#  include <cstddef>
+using std::size_t;
+# else
+#  include <string.h>		/* for memcpy, memset */
+#  include <stddef.h> /* for size_t */
+# endif
 #endif
 
 #include <Rconfig.h>		/* for F77_APPEND_UNDERSCORE */

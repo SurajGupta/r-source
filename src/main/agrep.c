@@ -127,9 +127,9 @@ SEXP attribute_hidden do_agrep(SEXP call, SEXP op, SEXP args, SEXP env)
 
     if(opt_fixed) cflags |= REG_LITERAL;
 
-    if(!isString(pat) || length(pat) < 1)
+    if(!isString(pat) || LENGTH(pat) < 1)
 	error(_("invalid '%s' argument"), "pattern");
-    if(length(pat) > 1)
+    if(LENGTH(pat) > 1)
 	warning(_("argument '%s' has length > 1 and only the first element will be used"), "pattern");
 
     if(!isString(vec)) error(_("invalid '%s' argument"), "x");
@@ -783,28 +783,28 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
     n = XLENGTH(vec);
 
     if(!useBytes) {
-        haveBytes = IS_BYTES(STRING_ELT(pat, 0));
+	haveBytes = IS_BYTES(STRING_ELT(pat, 0));
 	if(!haveBytes)
-            for(i = 0; i < n; i++) {
-                if(IS_BYTES(STRING_ELT(vec, i))) {
-                    haveBytes = TRUE;
-                    break;
-                }
+	    for(i = 0; i < n; i++) {
+		if(IS_BYTES(STRING_ELT(vec, i))) {
+		    haveBytes = TRUE;
+		    break;
+		}
 	    }
 	if(haveBytes) useBytes = TRUE;
     }
 
     if(!useBytes) {
-        useWC = !IS_ASCII(STRING_ELT(pat, 0));
-        if(!useWC) {
-            for(i = 0 ; i < n ; i++) {
-                if(STRING_ELT(vec, i) == NA_STRING) continue;
-                if(!IS_ASCII(STRING_ELT(vec, i))) {
-                    useWC = TRUE;
-                    break;
-                }
-            }
-        }
+	useWC = !IS_ASCII(STRING_ELT(pat, 0));
+	if(!useWC) {
+	    for(i = 0 ; i < n ; i++) {
+		if(STRING_ELT(vec, i) == NA_STRING) continue;
+		if(!IS_ASCII(STRING_ELT(vec, i))) {
+		    useWC = TRUE;
+		    break;
+		}
+	    }
+	}
     }
 
     SEXP s_nchar = install("nchar");
@@ -824,15 +824,15 @@ SEXP attribute_hidden do_aregexec(SEXP call, SEXP op, SEXP args, SEXP env)
     else if(useWC)
 	rc = tre_regwcomp(&reg, wtransChar(STRING_ELT(pat, 0)), cflags);
     else {
-        s = translateChar(STRING_ELT(pat, 0));
-        if(mbcslocale && !mbcsValid(s))
-            error(_("regular expression is invalid in this locale"));
-        rc = tre_regcomp(&reg, s, cflags);
+	s = translateChar(STRING_ELT(pat, 0));
+	if(mbcslocale && !mbcsValid(s))
+	    error(_("regular expression is invalid in this locale"));
+	rc = tre_regcomp(&reg, s, cflags);
     }
     if(rc) {
-        char errbuf[1001];
-        tre_regerror(rc, &reg, errbuf, 1001);
-        error(_("regcomp error: '%s'"), errbuf);
+	char errbuf[1001];
+	tre_regerror(rc, &reg, errbuf, 1001);
+	error(_("regcomp error: '%s'"), errbuf);
     }
 
     nmatch = reg.re_nsub + 1;

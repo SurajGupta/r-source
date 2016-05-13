@@ -1,5 +1,5 @@
 
-R version 3.2.4 RC (2016-03-02 r70281) -- "Very Secure Dishes"
+R version 3.3.0 beta (2016-04-19 r70517) -- "Supposedly Educational"
 Copyright (C) 2016 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -15,21 +15,15 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
-> ## These are tests that require internet functionality, and
-> ## a working Internet connection.
-> ## We attempt to test for those.
-> 
-> if(!capabilities()["http/ftp"]) {
-+     warning("no internet capabilities")
-+     q()
-+ }
+> ## These are tests that require a working Internet connection.
+> ## We attempt to test for that.
 > 
 > if(.Platform$OS.type == "unix" &&
 +    is.null(nsl("cran.r-project.org"))) q()
 > 
 > # test do_download.
 > nrow(available.packages(contrib.url("http://cran.r-project.org")))
-[1] 8034
+[1] 8269
 > 
 > # test url connections on http
 > zz <- url("http://cran.r-project.org/")

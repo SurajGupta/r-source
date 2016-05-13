@@ -18,7 +18,7 @@
  */
 
 /*  The original version of this file was contributed by Ei-ji Nakama.
- *  See also the comments in rlocale.h.
+ *  See also the comments in ../include/rlocale.h.
  *
  *  It provides replacements for the wctype functions on
  *  Windows (where they are not correct in e.g. Japanese)
@@ -142,16 +142,16 @@ static cjk_locale_name_t cjk_locale_name[] = {
     {"ZH_CN.BIG5",                              MB_zh_TW},
     {"ZH_HK",                                   MB_zh_HK},
     {"ZH_SG",                                   MB_zh_SG},
-    {"JA_JP",				MB_ja_JP},
+    {"JA_JP",					MB_ja_JP},
     {"KO_KR",				        MB_ko_KR},
     {"ZH",				        MB_zh_CN},
-    {"JA",				MB_ja_JP},
+    {"JA",					MB_ja_JP},
     {"KO",				        MB_ko_KR},
     // Default, where all EA Ambiguous characters have width one.
     {"",				        MB_Default},
 };
 
-/* used in grDevices */
+// used in character.c, ../gnuwin32/console.c , ../library/grDevices/src/devP*.c :
 int Ri18n_wcwidth(wchar_t c)
 {
     char lc_str[128];
@@ -183,7 +183,7 @@ int Ri18n_wcwidth(wchar_t c)
     return zw ? 0 : 1; // assume unknown chars are width one.
 }
 
-/* Used in charcter.c, gnuwin32/console.c */
+/* Used in character.c, errors.c, ../gnuwin32/console.c */
 attribute_hidden
 int Ri18n_wcswidth (const wchar_t *s, size_t n)
 {

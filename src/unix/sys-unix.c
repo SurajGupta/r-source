@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1997--2014  The R Core Team
+ *  Copyright (C) 1997--2015  The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -159,6 +159,7 @@ const char *R_ExpandFileName(const char *s)
 
 SEXP attribute_hidden do_machine(SEXP call, SEXP op, SEXP args, SEXP env)
 {
+    checkArity(op, args);
     return mkString("Unix");
 }
 
@@ -250,7 +251,13 @@ SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("'intern' must be logical and not NA"));
     if (intern) { /* intern = TRUE */
 	FILE *fp;
-	char *x = "r", buf[INTERN_BUFSIZE];
+	char *x = "r",
+#ifdef HAVE_GETLINE
+	    *buf = NULL;
+	size_t buf_len = 0;
+#else
+	    buf[INTERN_BUFSIZE];
+#endif
 	const char *cmd;
 	int i, j, res;
 	SEXP tchar, rval;
@@ -261,16 +268,26 @@ SEXP attribute_hidden do_system(SEXP call, SEXP op, SEXP args, SEXP rho)
 	if(!(fp = R_popen(cmd, x)))
 	    error(_("cannot popen '%s', probable reason '%s'"),
 		  cmd, strerror(errno));
+#ifdef HAVE_GETLINE
+        size_t read;
+        for(i = 0; (read = getline(&buf, &buf_len, fp)) != -1; i++) {
+	    if (buf[read - 1] == '\n')
+#else
 	for (i = 0; fgets(buf, INTERN_BUFSIZE, fp); i++) {
 	    size_t read = strlen(buf);
 	    if(read >= INTERN_BUFSIZE - 1)
 		warning(_("line %d may be truncated in call to system(, intern = TRUE)"), i + 1);
 	    if (read > 0 && buf[read-1] == '\n')
+#endif
 		buf[read - 1] = '\0'; /* chop final CR */
 	    tchar = mkChar(buf);
 	    UNPROTECT(1);
 	    PROTECT(tlist = CONS(tchar, tlist));
 	}
+#ifdef HAVE_GETLINE
+        if (buf != NULL)
+          free(buf);
+#endif
 	res = pclose(fp);
 #ifdef HAVE_SYS_WAIT_H
 	if (WIFEXITED(res)) res = WEXITSTATUS(res);

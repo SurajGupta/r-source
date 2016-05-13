@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2015   The R Core Team.
+ *  Copyright (C) 2000-2016   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -369,7 +369,7 @@ int dummy_vfprintf(Rconnection con, const char *format, va_list ap)
 		/* is this safe? */
 		warning(_("invalid char string in output conversion"));
 	    *ob = '\0';
-	    con->write(outbuf, 1, strlen(outbuf), con);
+	    con->write(outbuf, 1, ob - outbuf, con);
 	} while(again && inb > 0);  /* it seems some iconv signal -1 on
 				       zero-length input */
     } else
@@ -1204,19 +1204,19 @@ SEXP attribute_hidden do_fifo(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     sfile = CAR(args);
-    if(!isString(sfile) || length(sfile) != 1)
+    if(!isString(sfile) || LENGTH(sfile) != 1)
 	error(_("invalid '%s' argument"), "description");
     if(length(sfile) > 1)
 	warning(_("only first element of 'description' argument used"));
     file = translateChar(STRING_ELT(sfile, 0)); /* for now, like fopen */
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     block = asLogical(CADDR(args));
     if(block == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "block");
     enc = CADDDR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
@@ -1363,9 +1363,9 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     scmd = CAR(args);
-    if(!isString(scmd) || length(scmd) != 1)
+    if(!isString(scmd) || LENGTH(scmd) != 1)
 	error(_("invalid '%s' argument"), "description");
-    if(length(scmd) > 1)
+    if(LENGTH(scmd) > 1)
 	warning(_("only first element of 'description' argument used"));
 #ifdef Win32
     if( !IS_ASCII(STRING_ELT(scmd, 0)) ) {
@@ -1379,11 +1379,11 @@ SEXP attribute_hidden do_pipe(SEXP call, SEXP op, SEXP args, SEXP env)
     file = translateChar(STRING_ELT(scmd, 0));
 #endif
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
     enc = CADDR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
 
@@ -1985,16 +1985,16 @@ SEXP attribute_hidden do_gzfile(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     sfile = CAR(args);
-    if(!isString(sfile) || length(sfile) != 1)
+    if(!isString(sfile) || LENGTH(sfile) != 1)
 	error(_("invalid '%s' argument"), "description");
-    if(length(sfile) > 1)
+    if(LENGTH(sfile) > 1)
 	warning(_("only first element of 'description' argument used"));
     file = translateChar(STRING_ELT(sfile, 0));
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     enc = CADDR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
     if(type < 2) {
@@ -2655,12 +2655,12 @@ SEXP attribute_hidden do_rawconnection(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     sfile = CAR(args);
-    if(!isString(sfile) || length(sfile) != 1)
+    if(!isString(sfile) || LENGTH(sfile) != 1)
 	error(_("invalid '%s' argument"), "description");
     desc = translateChar(STRING_ELT(sfile, 0));
     sraw = CADR(args);
     sopen = CADDR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
     if(strchr(open, 't'))
@@ -3049,12 +3049,12 @@ SEXP attribute_hidden do_textconnection(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     sfile = CAR(args);
-    if(!isString(sfile) || length(sfile) != 1)
+    if(!isString(sfile) || LENGTH(sfile) != 1)
 	error(_("invalid '%s' argument"), "description");
     desc = translateChar(STRING_ELT(sfile, 0));
     stext = CADR(args);
     sopen = CADDR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
     venv = CADDDR(args);
@@ -3078,7 +3078,7 @@ SEXP attribute_hidden do_textconnection(SEXP call, SEXP op, SEXP args, SEXP env)
 	SET_VECTOR_ELT(OutTextData, ncon, venv);
 	if(stext == R_NilValue)
 	    con = Connections[ncon] = newouttext("NULL", stext, open, ncon);
-	else if(isString(stext) && length(stext) == 1)
+	else if(isString(stext) && LENGTH(stext) == 1)
 	    con = Connections[ncon] =
 		newouttext(translateChar(STRING_ELT(stext, 0)), stext,
 			   open, ncon);
@@ -3130,9 +3130,8 @@ SEXP attribute_hidden do_sockconn(SEXP call, SEXP op, SEXP args, SEXP env)
     Rconnection con = NULL;
 
     checkArity(op, args);
-#ifdef HAVE_SOCKETS
     scmd = CAR(args);
-    if(!isString(scmd) || length(scmd) != 1)
+    if(!isString(scmd) || LENGTH(scmd) != 1)
 	error(_("invalid '%s' argument"), "host");
     host = translateChar(STRING_ELT(scmd, 0));
     args = CDR(args);
@@ -3149,12 +3148,12 @@ SEXP attribute_hidden do_sockconn(SEXP call, SEXP op, SEXP args, SEXP env)
 	error(_("invalid '%s' argument"), "blocking");
     args = CDR(args);
     sopen = CAR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
     args = CDR(args);
     enc = CAR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
     args = CDR(args);
@@ -3185,9 +3184,6 @@ SEXP attribute_hidden do_sockconn(SEXP call, SEXP op, SEXP args, SEXP env)
     setAttrib(ans, R_ConnIdSymbol, con->ex_ptr);
     R_RegisterCFinalizerEx(con->ex_ptr, conFinalizer, FALSE);
     UNPROTECT(3);
-#else
-    error(_("sockets are not available on this system"));
-#endif
     return ans;
 }
 
@@ -3203,16 +3199,16 @@ SEXP attribute_hidden do_unz(SEXP call, SEXP op, SEXP args, SEXP env)
 
     checkArity(op, args);
     sfile = CAR(args);
-    if(!isString(sfile) || length(sfile) != 1)
+    if(!isString(sfile) || LENGTH(sfile) != 1)
 	error(_("invalid '%s' argument"), "description");
     if(length(sfile) > 1)
 	warning(_("only first element of 'description' argument used"));
     file = translateChar(STRING_ELT(sfile, 0));
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     enc = CADDR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
@@ -3264,7 +3260,7 @@ SEXP attribute_hidden do_open(SEXP call, SEXP op, SEXP args, SEXP env)
 	return R_NilValue;
     }
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     block = asLogical(CADDR(args));
     if(block == NA_LOGICAL)
@@ -3703,7 +3699,7 @@ SEXP attribute_hidden do_writelines(SEXP call, SEXP op, SEXP args, SEXP env)
 	Rconnection con0;
 	do {
 	    con0 = getConnection(con_num);
-	    for(R_xlen_t i = 0; i < xlength(text); i++)
+	    for(R_xlen_t i = 0; i < XLENGTH(text); i++)
 		Rconn_printf(con0, "%s%s",
 			     useBytes ? CHAR(STRING_ELT(text, i)) :
 			     translateChar0(STRING_ELT(text, i)), ssep);
@@ -3711,7 +3707,7 @@ SEXP attribute_hidden do_writelines(SEXP call, SEXP op, SEXP args, SEXP env)
 	    con_num = getActiveSink(j++);
 	} while (con_num > 0);
     } else {
-	for(R_xlen_t i = 0; i < xlength(text); i++)
+	for(R_xlen_t i = 0; i < XLENGTH(text); i++)
 	    Rconn_printf(con, "%s%s",
 			 useBytes ? CHAR(STRING_ELT(text, i)) :
 			 translateChar0(STRING_ELT(text, i)), ssep);
@@ -3823,7 +3819,7 @@ SEXP attribute_hidden do_readbin(SEXP call, SEXP op, SEXP args, SEXP env)
 
     args = CDR(args);
     swhat = CAR(args); args = CDR(args);
-    if(!isString(swhat) || length(swhat) != 1)
+    if(!isString(swhat) || LENGTH(swhat) != 1)
 	error(_("invalid '%s' argument"), "what");
     what = CHAR(STRING_ELT(swhat, 0)); /* ASCII */
     n = asVecSize(CAR(args)); args = CDR(args);
@@ -4508,7 +4504,7 @@ SEXP attribute_hidden do_writechar(SEXP call, SEXP op, SEXP args, SEXP env)
 	slen = 0;
     } else {
 	usesep = TRUE;
-	if (!isString(sep) || length(sep) != 1)
+	if (!isString(sep) || LENGTH(sep) != 1)
 	    error(_("invalid '%s' argument"), "sep");
 	if(useBytes)
 	    ssep = CHAR(STRING_ELT(sep, 0));
@@ -4692,7 +4688,7 @@ SEXP attribute_hidden do_pushback(SEXP call, SEXP op, SEXP args, SEXP env)
     if(!con->text)
 	error(_("can only push back on text-mode connections"));
     nexists = con->nPushBack;
-    if((n = length(stext)) > 0) {
+    if((n = LENGTH(stext)) > 0) {
 	if(nexists > 0)
 	    q = (char **) realloc(con->PushBack, (n+nexists)*sizeof(char *));
 	else
@@ -4720,6 +4716,7 @@ SEXP attribute_hidden do_pushbacklength(SEXP call, SEXP op, SEXP args, SEXP env)
 {
     Rconnection con = NULL;
 
+    checkArity(op, args);
     con = getConnection(asInteger(CAR(args)));
     return ScalarInteger(con->nPushBack);
 }
@@ -4729,6 +4726,7 @@ SEXP attribute_hidden do_clearpushback(SEXP call, SEXP op, SEXP args, SEXP env)
     int j;
     Rconnection con = NULL;
 
+    checkArity(op, args);
     con = getConnection(asInteger(CAR(args)));
 
     if(con->nPushBack > 0) {
@@ -4969,26 +4967,22 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP scmd, sopen, ans, class, enc;
     char *class2 = "url";
     const char *url, *open;
-    int ncon, block, raw = 0, meth = 0, defmeth = 1;
-#ifdef Win32
-    int urlmeth = UseInternet2;
-#endif
+    int ncon, block, raw = 0, defmeth,
+	meth = 0, // 0: "default" | "internal" | "wininet", 1: "libcurl"
+	winmeth;  // 0: "internal", 1: "wininet" (Windows only)
     cetype_t ienc = CE_NATIVE;
     Rconnection con = NULL;
-#ifdef HAVE_INTERNET
-    UrlScheme type = HTTPsh;	/* -Wall */
-#endif
 
     checkArity(op, args);
     // --------- description
     scmd = CAR(args);
-    if(!isString(scmd) || length(scmd) != 1)
+    if(!isString(scmd) || LENGTH(scmd) != 1)
 	error(_("invalid '%s' argument"), "description");
-    if(length(scmd) > 1)
+    if(LENGTH(scmd) > 1)
 	warning(_("only first element of 'description' argument used"));
-    url = CHAR(STRING_ELT(scmd, 0)); /* ASCII */
 #ifdef Win32
-    if(PRIMVAL(op) == 1 && !IS_ASCII(STRING_ELT(scmd, 0)) ) {
+    winmeth = 1;
+    if(PRIMVAL(op) == 1 && !IS_ASCII(STRING_ELT(scmd, 0)) ) { // file(<non-ASCII>, *)
 	ienc = CE_UTF8;
 	url = translateCharUTF8(STRING_ELT(scmd, 0));
     } else {
@@ -4999,102 +4993,83 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 	    url = translateChar(STRING_ELT(scmd, 0));
     }
 #else
+    winmeth = 0;
     url = translateChar(STRING_ELT(scmd, 0));
 #endif
 
-#ifdef HAVE_INTERNET
-    if (strncmp(url, "http://", 7) == 0) type = HTTPsh;
-    else if (strncmp(url, "ftp://", 6) == 0) type = FTPsh;
-    else if (strncmp(url, "https://", 8) == 0) type = HTTPSsh;
-    // ftps:// is available via most libcurl.
-    else if (strncmp(url, "ftps://", 7) == 0) type = FTPSsh;
-#endif
+    UrlScheme type = HTTPsh;	/* -Wall */
+    Rboolean inet = TRUE;
+    if (strncmp(url, "http://", 7) == 0)
+	type = HTTPsh;
+    else if (strncmp(url, "ftp://", 6) == 0)
+	type = FTPsh;
+    else if (strncmp(url, "https://", 8) == 0)
+	type = HTTPSsh;
+    // ftps:// is available via most libcurl, only
+    // The internal and wininet methods will create a connection
+    // but refuse to open it so as from R 3.2.0 we switch to libcurl
+    else if (strncmp(url, "ftps://", 7) == 0)
+	type = FTPSsh;
+    else
+	inet = FALSE; // file:// URL or a file path
 
     // --------- open
     sopen = CADR(args);
-    if(!isString(sopen) || length(sopen) != 1)
+    if(!isString(sopen) || LENGTH(sopen) != 1)
 	error(_("invalid '%s' argument"), "open");
     open = CHAR(STRING_ELT(sopen, 0)); /* ASCII */
     // --------- blocking
     block = asLogical(CADDR(args));
     if(block == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "blocking");
+    // --------- encoding
     enc = CADDDR(args);
-    if(!isString(enc) || length(enc) != 1 ||
+    if(!isString(enc) || LENGTH(enc) != 1 ||
        strlen(CHAR(STRING_ELT(enc, 0))) > 100) /* ASCII */
 	error(_("invalid '%s' argument"), "encoding");
+
+    // --------- method
+    const char *cmeth = CHAR(asChar(CAD4R(args)));
+    meth = streql(cmeth, "libcurl"); // 1 if "libcurl", else 0
+    defmeth = streql(cmeth, "default");
+    if (streql(cmeth, "wininet")) {
+#ifdef Win32
+	winmeth = 1;  // it already was as this is the default
+#else
+	error(_("method = \"wininet\" is only supported on Windows"));
+#endif
+    }
+#ifdef Win32
+    else if (streql(cmeth, "internal")) winmeth = 0;
+#endif
+
+    // --------- raw, for file() only
     if(PRIMVAL(op) == 1) {
-	// --------- raw, for file() only
-	raw = asLogical(CAD4R(args));
+	raw = asLogical(CAD4R(CDR(args)));
 	if(raw == NA_LOGICAL)
 	    error(_("invalid '%s' argument"), "raw");
     }
 
-    if(PRIMVAL(op) == 0) { // url()
-	// --------- method
-	const char *cmeth = CHAR(asChar(CAD4R(args)));
-	meth = streql(cmeth, "libcurl");
-	defmeth = streql(cmeth, "default");
-	if (streql(cmeth, "wininet")) {
-#ifdef Win32
-	    urlmeth = 1;
-#else
-	    error(_("method = \"wininet\" is only supported on Windows"));
-#endif
-	}
-#ifdef Win32
-	else if (streql(cmeth, "internal")) urlmeth = 0;
-#endif
-    } else { // file(), look at option.
-	SEXP opt = GetOption1(install("url.method"));
-	if (isString(opt) && LENGTH(opt) >= 1) {
-	    const char *val = CHAR(STRING_ELT(opt, 0));
-	    defmeth = streql(val, "default");
-	    if (streql(val, "libcurl")) meth = 1;
-#ifdef Win32
-	    if (streql(val, "wininet")) urlmeth = 1;
-#endif
-	}
-    }
-
     if(!meth) {
-	if (strncmp(url, "ftps://", 7) == 0)
-#ifdef HAVE_CURL_CURL_H
-	{
-	    if(!defmeth) {
-		// We did not check ftps protocol support
-		REprintf("ftps:// URLs are not supported by method \"internal\": trying \"libcurl\"\n");
-		R_FlushConsole();
-	    }
-	    meth = 1;
-	}
-#else
-	error("ftps:// URLs are not supported");
+	if (strncmp(url, "ftps://", 7) == 0) {
+#ifdef HAVE_LIBCURL
+	    if (defmeth) meth = 1; else
 #endif
+		error("ftps:// URLs are not supported by this method");
+	}
 #ifdef Win32
-	if (!urlmeth && strncmp(url, "https://", 8) == 0) {
-	    if(!defmeth) {
-		REprintf("https:// URLs are not supported by method \"internal\": using \"wininet\"\n");
-		R_FlushConsole();
-	    }
-	    urlmeth = 1;
-	}
-	//   error("for https:// URLs use setInternet2(TRUE)");
-#else
-	if (strncmp(url, "https://", 8) == 0)
-# ifdef HAVE_CURL_CURL_H
-	{
-	    // this is slightly optimistic:
-	    // we did not check the libcurl build supports https
-	    if(!defmeth) {
-		REprintf("https:// URLs are not supported by method \"internal\": trying \"libcurl\"\n");
-		R_FlushConsole();
-	    }
-	    meth = 1;
-	}
-# else
-	error("https:// URLs are not supported");
+	if (!winmeth && strncmp(url, "https://", 8) == 0) {
+# ifdef HAVE_LIBCURL
+	    if (defmeth) meth = 1; else
 # endif
+		error("https:// URLs are not supported by this method");
+	}
+#else // Unix
+	if (strncmp(url, "https://", 8) == 0) {
+	    // We check the libcurl build does support https as from R 3.3.0
+	    if (defmeth) meth = 1; else
+		error("https:// URLs are not supported by the \"internal\" method");
+	}
 #endif
     }
 
@@ -5108,27 +5083,17 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 #endif
 	con = newfile(url + nh, ienc, strlen(open) ? open : "r", raw);
 	class2 = "file";
-#ifdef HAVE_INTERNET
-	// we could pass others to libcurl.
-    } else if (strncmp(url, "http://", 7) == 0 ||
-	       strncmp(url, "https://", 8) == 0 ||
-	       strncmp(url, "ftp://", 6) == 0 ||
-	       strncmp(url, "ftps://", 7) == 0) {
+    } else if (inet) {
 	if(meth) {
-#ifdef HAVE_CURL_CURL_H
+# ifdef HAVE_LIBCURL
 	    con = R_newCurlUrl(url, strlen(open) ? open : "r", 0);
-#else
+# else
 	    error("url(method = \"libcurl\") is not supported on this platform");
-#endif
+# endif
 	} else {
-#ifdef Win32
-	    con = R_newurl(url, strlen(open) ? open : "r", urlmeth);
-#else
-	    con = R_newurl(url, strlen(open) ? open : "r", 0);
-#endif
+	    con = R_newurl(url, strlen(open) ? open : "r", winmeth);
 	    ((Rurlconn)con->private)->type = type;
 	}
-#endif
     } else {
 	if(PRIMVAL(op) == 1) { /* call to file() */
 	    if(strlen(url) == 0) {
@@ -5188,7 +5153,7 @@ SEXP attribute_hidden do_url(SEXP call, SEXP op, SEXP args, SEXP env)
 		    con = newfile(url, ienc, strlen(open) ? open : "r", raw);
 	    }
 	    class2 = "file";
-	} else {
+	} else { // url()
 	    error(_("URL scheme unsupported by this method"));
 	}
     }
@@ -5242,6 +5207,11 @@ size_t R_ReadConnection(Rconnection con, void *buf, size_t n)
     if(!con->canread) error(_("cannot read from this connection"));
 
     return con->read(buf, 1, n, con);
+}
+
+Rconnection R_GetConnection(SEXP sConn) {
+    if (!inherits(sConn, "connection")) error(_("invalid connection"));
+    return getConnection(asInteger(sConn));
 }
 
 /* ------------------- (de)compression functions  --------------------- */
@@ -5512,6 +5482,7 @@ SEXP attribute_hidden do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
     int icon, level, allow;
     Rconnection incon = NULL, new = NULL;
     char *m, *mode = NULL /* -Wall */,  description[1000];
+    Rboolean text;
 
     checkArity(op, args);
     if(!inherits(CAR(args), "connection"))
@@ -5523,7 +5494,10 @@ SEXP attribute_hidden do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
     allow = asLogical(CADDR(args));
     if(allow == NA_INTEGER)
 	error(_("'allowNonCompression' must be TRUE or FALSE"));
-
+    text = asLogical(CADDDR(args));
+    if(text == NA_INTEGER)
+        error(_("'text' must be TRUE or FALSE"));
+    
     if(incon->isGzcon) {
 	warning(_("this is already a 'gzcon' connection"));
 	return CAR(args);
@@ -5554,7 +5528,7 @@ SEXP attribute_hidden do_gzcon(SEXP call, SEXP op, SEXP args, SEXP rho)
 	error(_("allocation of 'gzcon' connection failed"));
     }
     init_con(new, description, CE_NATIVE, mode);
-    new->text = FALSE;
+    new->text = text;
     new->isGzcon = TRUE;
     new->open = &gzcon_open;
     new->close = &gzcon_close;

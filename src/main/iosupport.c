@@ -169,12 +169,12 @@ int attribute_hidden R_IoBufferReadOffset(IoBuffer *iob)
     int result = iob->read_offset;
     BufferListItem* buf = iob->start_buf;
     while(buf && buf != iob->read_buf) {
-	result += IOBSIZE;
-	buf = buf->next;
+    	result += IOBSIZE;
+    	buf = buf->next;
     }
     return result;
 }
-
+    
 /* Initialization code for text buffers */
 
 static void transferChars(unsigned char *p, const char *q)

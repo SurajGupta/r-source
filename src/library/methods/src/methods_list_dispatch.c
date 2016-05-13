@@ -506,9 +506,13 @@ SEXP R_standardGeneric(SEXP fname, SEXP ev, SEXP fdef)
     switch(TYPEOF(f)) {
     case CLOSXP:
 	{
-	    SEXP R_execMethod(SEXP, SEXP);
-	    PROTECT(f); nprotect++; /* is this needed?? */
-	    val = R_execMethod(f, ev);
+	    if (inherits(f, "internalDispatchMethod")) {
+                val = R_deferred_default_method();
+            } else {
+                SEXP R_execMethod(SEXP, SEXP);
+                PROTECT(f); nprotect++; /* is this needed?? */
+                val = R_execMethod(f, ev);
+            }
 	}
 	break;
     case SPECIALSXP: case BUILTINSXP:
@@ -539,7 +543,7 @@ static Rboolean is_missing_arg(SEXP symbol, SEXP ev)
     /* Sanity check, so don't translate */
     if (!isSymbol(symbol)) error("'symbol' must be a SYMSXP");
     loc = R_findVarLocInFrame(ev, symbol);
-    if (loc == NULL)
+    if (R_VARLOC_IS_NULL(loc))
 	error(_("could not find symbol '%s' in frame of call"),
 	      CHAR(PRINTNAME(symbol)));
     return R_GetVarLocMISSING(loc);
@@ -672,6 +676,15 @@ SEXP R_nextMethodCall(SEXP matched_call, SEXP ev)
 	error("internal error in 'callNextMethod': '.nextMethod' was not assigned in the frame of the method call");
     PROTECT(e = duplicate(matched_call));
     prim_case = isPrimitive(op);
+    if (!prim_case) {
+        if (inherits(op, "internalDispatchMethod")) {
+	    SEXP generic = findVarInFrame3(ev, R_dot_Generic, TRUE);
+	    if(generic == R_UnboundValue)
+	        error("internal error in 'callNextMethod': '.Generic' was not assigned in the frame of the method call");
+	    op = INTERNAL(install(CHAR(asChar(generic))));
+	    prim_case = TRUE;
+	}
+    }
     if(prim_case) {
 	/* retain call to primitive function, suppress method
 	   dispatch for it */
@@ -685,7 +698,8 @@ SEXP R_nextMethodCall(SEXP matched_call, SEXP ev)
     appears) in which case ... was appended. */
     for(i=0; i<nargs; i++) {
 	this_sym = TAG(args);
-        if(CAR(args) != R_MissingArg) /* "missing" only possible in primitive */
+  /* "missing" only possible in primitive */
+        if(this_sym != R_NilValue && CAR(args) != R_MissingArg)
 	    SETCAR(args, this_sym);
 	args = CDR(args);
     }
@@ -822,7 +836,12 @@ static const char *class_string(SEXP obj)
 }
 
 /* internal version of paste(".", prefix, name, sep="__"),
-   for speed so few checks */
+   for speed so few checks
+
+   If you decide to change this:
+   - don't, you will break all installed S4-using packages!
+   - change the hard-coded ".__M__" in namespace.R
+*/
 SEXP R_methodsPackageMetaName(SEXP prefix, SEXP name, SEXP pkg)
 {
     char str[501];
@@ -845,7 +864,7 @@ SEXP R_identC(SEXP e1, SEXP e2)
 {
     if(TYPEOF(e1) == STRSXP && TYPEOF(e2) == STRSXP &&
        LENGTH(e1) == 1 && LENGTH(e2) == 1 &&
-       streql(CHAR(STRING_ELT(e1, 0)), CHAR(STRING_ELT(e2, 0))))
+       STRING_ELT(e1, 0) == STRING_ELT(e2, 0))
 	return R_TRUE;
     else
 	return R_FALSE;
@@ -855,6 +874,7 @@ SEXP R_getClassFromCache(SEXP class, SEXP table)
 {
     SEXP value;
     if(TYPEOF(class) == STRSXP) {
+	if (LENGTH(class) == 0) return R_NilValue;
 	SEXP package = PACKAGE_SLOT(class);
 	value = findVarInFrame(table, installChar(STRING_ELT(class, 0)));
 	if(value == R_UnboundValue)
@@ -952,7 +972,8 @@ SEXP R_dispatchGeneric(SEXP fname, SEXP ev, SEXP fdef)
     case SPECIALSXP: case BUILTINSXP:
 	PROTECT(fdef = R_primitive_generic(fdef)); nprotect++;
 	if(TYPEOF(fdef) != CLOSXP) {
-	    error(_("failed to get the generic for the primitive \"%s\""), CHAR(asChar(fname)));
+	    error(_("failed to get the generic for the primitive \"%s\""),
+		  CHAR(asChar(fname)));
 	    return R_NilValue;
 	}
 	f_env = CLOENV(fdef);
@@ -994,7 +1015,7 @@ SEXP R_dispatchGeneric(SEXP fname, SEXP ev, SEXP fdef)
 	    }
 	    if(check_err)
 		error(_("error in evaluating the argument '%s' in selecting a method for function '%s': %s"),
-		      CHAR(PRINTNAME(arg_sym)),CHAR(asChar(fname)),
+		      CHAR(PRINTNAME(arg_sym)), CHAR(asChar(fname)),
 		      R_curErrorBuf());
 	}
 	SET_VECTOR_ELT(classes, i, thisClass);
@@ -1025,14 +1046,18 @@ SEXP R_dispatchGeneric(SEXP fname, SEXP ev, SEXP fdef)
     /* the rest of this is identical to R_standardGeneric;
        hence the f=method to remind us  */
     f = method;
-    if(isObject(f))
-	f = R_loadMethod(f, fname, ev);
     switch(TYPEOF(f)) {
     case CLOSXP:
     {
-	SEXP R_execMethod(SEXP, SEXP);
-	PROTECT(f); nprotect++; /* is this needed?? */
-	val = R_execMethod(f, ev);
+        if (inherits(f, "internalDispatchMethod")) {
+            val = R_deferred_default_method();
+        } else {
+            SEXP R_execMethod(SEXP, SEXP);
+            if(isObject(f))
+                f = R_loadMethod(f, fname, ev);
+            PROTECT(f); nprotect++; /* is this needed?? */
+            val = R_execMethod(f, ev);
+        }
     }
     break;
     case SPECIALSXP: case BUILTINSXP:

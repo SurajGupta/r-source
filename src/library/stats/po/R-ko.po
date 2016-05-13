@@ -1,23 +1,26 @@
 # Korean translation for R stats package
-# src/library/stats/po/R-ko.po
-# 
-# Copyright (C) 1995-2015 The R Core Team
-# 
+# ./stats/po/R-ko.po
+#
+# Copyright (C) 1995-2016 The R Core Team
+#
 # This file is distributed under the same license as the R stats package.
-# Maintained by Chel Hee Lee <chl948@mail.usask.ca>, 2008-2015.
+# Maintained by Chel Hee Lee <chl948@mail.usask.ca>, 2008-2016.
+# Contact: Chel Hee Lee <gnustats@gmail.com>
 #
 # Notes:
+# Under development (unstable) starting from 11-APR-2016 for R-3.3.1 - QC: in progress
+# Freezed on 10-APR-2016 for R-3.3.0 - QC: PASS
 # Freezed on 30-MAR-2015 for R-3.2.0 - QC: PASS
-# Freezed on 06-FEB-2015 for R-3.1.3 - QC: PASS 
+# Freezed on 06-FEB-2015 for R-3.1.3 - QC: PASS
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.2.0\n"
+"Project-Id-Version: R-3.3.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2014-11-20 11:48\n"
-"PO-Revision-Date: 2015-03-30 14:01-0600\n"
+"POT-Creation-Date: 2016-04-01 09:50\n"
+"PO-Revision-Date: 2016-04-11 13:08-0600\n"
 "Last-Translator: Chel Hee Lee <chl948@mail.usask.ca>\n"
-"Language-Team: Chel Hee Lee  <chl948@mail.usask.ca>\n"
+"Language-Team: Chel Hee Lee <chl948@mail.usask.ca>\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -25,10 +28,10 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 msgid "models are not all fitted to the same number of observations"
-msgstr ""
+msgstr "모델적합에 사용된 관측치의 개수들이 같지 않습니다."
 
 msgid "empty model supplied"
-msgstr ""
+msgstr "주어진 모델이 없습니다."
 
 msgid "'acf' must be of length two or more"
 msgstr "'acf'는 반드시 길이가 2 또는 그 이상이어야 합니다"
@@ -487,6 +490,12 @@ msgstr "카이제곱 approximation은 정확하지 않을수도 있습니다"
 msgid "NA values not allowed in 'd'"
 msgstr "NA값들은 'd'에서 사용할 수 없습니다"
 
+msgid "eig=TRUE is disregarded when list.=FALSE"
+msgstr "list.=FALSE가 주어진 경우에 eig=TRUE는 사용되지 않습니다."
+
+msgid "x.ret=TRUE is disregarded when list.=FALSE"
+msgstr "list.=FALSE가 주어진 경우에 x.ret=TRUE는 사용되지 않습니다."
+
 msgid "distances must be result of 'dist' or a square matrix"
 msgstr "distances는 반드시 'dist'의 결과이거나 정방행렬이어야 합니다"
 
@@ -498,6 +507,9 @@ msgstr "'k'는 반드시 {1, 2, .. n - 1} 내에 있어야 합니다"
 
 msgid "only %d of the first %d eigenvalues are > 0"
 msgstr "처음 %2$d개의 고유치들 중 %1$d개만이 양수입니다"
+
+msgid "package 'MASS' must be installed"
+msgstr "패키지 'MASS'가 반드시 설치되어야 합니다."
 
 msgid "initial value is not in the interior of the feasible region"
 msgstr "초기값이 feasible region의 내부에 있지 않습니다"
@@ -540,6 +552,9 @@ msgstr "하나 이상의 벡터들이 제공되어야 합니다"
 
 msgid "arguments must have the same length"
 msgstr "인자들은 반드시 같은 길이를 가지고 있어야 합니다"
+
+msgid "wrong number of columns in new data:"
+msgstr ""
 
 msgid "contrasts apply only to factors"
 msgstr "contrasts는 요인들에만 적용합니다"
@@ -694,9 +709,6 @@ msgstr "'ColSideColors'는 반드시 길이가 ncol(x)인 문자형 벡터이어
 msgid "'RowSideColors' must be a character vector of length nrow(x)"
 msgstr "'RowSideColors'는 반드시 길이 nrow(x)인 문자형 벡터이어야 합니다"
 
-msgid "non-matched further arguments are disregarded"
-msgstr ""
-
 msgid "argument 'x' must be numeric"
 msgstr "인자 'x'는 반드시 수치형이어야 합니다"
 
@@ -710,7 +722,7 @@ msgid "'x' and 'weights' have unequal length"
 msgstr "'x'와 'weights'는 서로 다른 길이를 가지고 있습니다"
 
 msgid "'weights' must all be finite"
-msgstr ""
+msgstr "'weights'는 모두 유한한 값을 가지고 있어야 합니다. "
 
 msgid "'weights' must not be negative"
 msgstr "'weights'는 반드시 음수이어야 합니다"
@@ -771,7 +783,9 @@ msgid "x[] and prob[] must be equal length vectors."
 msgstr "x[]와 prob[]는 반드시 같은 길이를 가지는 벡터이어야 합니다"
 
 msgid "probabilities must be finite, non-negative and not all 0"
-msgstr "확률값들은 반드시 유한(finite)하고, 음의 값을 가지지 않아야 하며 모두가 0이어야서는 안됩니다."
+msgstr ""
+"확률값들은 반드시 유한(finite)하고, 음의 값을 가지지 않아야 하며 모두가 0이어"
+"야서는 안됩니다."
 
 msgid "'x' must be non-negative"
 msgstr "'x'는 반드시 음수가 아니어야 합니다"
@@ -784,6 +798,9 @@ msgstr "'prob'와 'mu' 모두 지정되어 있습니다"
 
 msgid "some terms will have NAs due to the limits of the method"
 msgstr "메소드의 한계로 인하여 일부 항들이 NA를 가질 것입니다"
+
+msgid "multivariate case with missing coefficients is not yet implemented"
+msgstr ""
 
 msgid "'x' must have 1 or more non-missing values"
 msgstr "'x'는 반드시 한 개 또는 그 이상의 결측되지 않은 값들이 있어야 합니다"
@@ -907,8 +924,10 @@ msgstr ""
 msgid "positive values only are allowed for the 'inverse.gaussian' family"
 msgstr "'inverse.gaussian' 페밀링에서는 양수값들만 사용할 수 있습니다"
 
-msgid "need CRAN package 'SuppDists' for the 'inverse.gaussian' family"
-msgstr "'inverse.gaussian' 페밀리는 CRAN 패키지 'SuppDists'를 필요로 합니다"
+msgid ""
+"need CRAN package 'SuppDists' for simulation from the 'inverse.gaussian' "
+"family"
+msgstr ""
 
 msgid "using weights as inverse variances"
 msgstr "weights를 inverse variances 로 사용합니다"
@@ -1191,11 +1210,11 @@ msgstr "'which'의 모든 구성요소들은 반드시 1과 %d사이에 있어�
 msgid "invalid parameter values"
 msgstr "유효하지 않은 파라미터 값입니다"
 
-msgid "a limit is missing"
-msgstr ""
+msgid "a limit is NA or NaN"
+msgstr "limit은 NA 또는 NaN이어야 합니다."
 
 msgid "missing values not allowed"
-msgstr ""
+msgstr "결측값들은 사용할 수 없습니다."
 
 msgid "'r' is less than 1"
 msgstr "'r'은 1보다 적습니다"
@@ -1378,7 +1397,7 @@ msgid "'object' has no 'effects' component"
 msgstr "'object'는 'effects' 구성요소를 가지고 있지 않습니다"
 
 msgid "the 'se.fit' argument is not yet implemented for \"mlm\" objects"
-msgstr ""
+msgstr "'se.fit' 인자는 아직 \"mlm\" 객체의 경우에 구현되지 않았습니다."
 
 msgid "invalid model QR matrix"
 msgstr ""
@@ -1405,6 +1424,9 @@ msgid "invalid NCOL(X)"
 msgstr "유효하지 않은 NCOL(X)입니다"
 
 msgid "only 1-4 predictors are allowed"
+msgstr "오로지 1-4개의 설명변수만이 허용됩니다."
+
+msgid "invalid NROW(X)"
 msgstr ""
 
 msgid "invalid 'y'"
@@ -1430,6 +1452,12 @@ msgstr "유효하지 않은 인자 'cell'입니다"
 
 msgid "invalid argument 'degree'"
 msgstr "유효하지 않은 인자 'degree'입니다"
+
+msgid "iterTrace ="
+msgstr ""
+
+msgid "not obeyed as iterations ="
+msgstr ""
 
 msgid "first argument must be a \"loess\" object"
 msgstr "첫번째 인자는 반드시 \"loess\" 객체이어야 합니다"
@@ -1951,8 +1979,8 @@ msgstr ""
 msgid "'varying' arguments must be the same length"
 msgstr "'varying' 인자들은 반드시 같은 길이이어야 합니다"
 
-msgid "'times' is wrong length"
-msgstr "'times'의 길이가 잘 못되었습니다"
+msgid "'lengths(varying)' must all match 'length(times)'"
+msgstr ""
 
 msgid "there are records with missing times, which will be dropped."
 msgstr "누락된 times와 함께 있는 레코드는 이용되지 않을 것입니다"
@@ -2240,7 +2268,8 @@ msgid "scatter plots only for univariate time series"
 msgstr ""
 
 msgid "'xy.labels' must be logical or character"
-msgstr "'xy.labels'는 반드시 논리형(logical) 또는 문자형(character)이어야 합니다."
+msgstr ""
+"'xy.labels'는 반드시 논리형(logical) 또는 문자형(character)이어야 합니다."
 
 msgid "'frequency' and 'deltat' are both supplied and are inconsistent"
 msgstr "'frequency'와 'deltat' 모두 제공되었으나 서로 일치하지 않습니다."
@@ -2345,47 +2374,73 @@ msgstr "%s는 2차원 테이블에만 적용됩니다."
 
 msgid "too few distinct input values to fit an asymptotic regression model"
 msgstr ""
-"점근회귀모형(asymptotic regression model)을 적합하기 하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+"점근회귀모형(asymptotic regression model)을 적합하기 하기에는 너무 적은 개수"
+"의 고유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "cannot fit an asymptotic regression model to these data"
-msgstr "점근회귀모형(asymptotic regression model)은 주어진 데이터에 적합할 수 없습니다."
+msgstr ""
+"점근회귀모형(asymptotic regression model)은 주어진 데이터에 적합할 수 없습니"
+"다."
 
 msgid "too few observations to fit an asymptotic regression model"
-msgstr "점근회귀모형(asymptotic regression model)을 적합하기에는 관측치의 수가 너무 적습니다."
+msgstr ""
+"점근회귀모형(asymptotic regression model)을 적합하기에는 관측치의 수가 너무 "
+"적습니다."
 
 msgid "too few distinct input values to fit the 'asympOff' model"
-msgstr "'asympOff' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"'asympOff' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input "
+"values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the 'asympOrig' model"
-msgstr "'asympOrig' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"'asympOrig' 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input "
+"values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a biexponential"
-msgstr "biexponent 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"biexponent 모형을 적합하기에는 너무 적은 개수의 고유한 값(distinct input "
+"values)들이 입력되었습니다."
 
 msgid "must have length of response = length of second argument to 'SSfol'"
-msgstr "응답변수(response)의 길이는 반드시 'SSfol'에 전달되는 두번째 인자의 길이와 같아야 합니다."
+msgstr ""
+"응답변수(response)의 길이는 반드시 'SSfol'에 전달되는 두번째 인자의 길이와 같"
+"아야 합니다."
 
 msgid "must have at least 4 observations to fit an 'SSfol' model"
-msgstr "'SSfol' 모형을 적합하기 위해서는 적어도 4개의 관측치들을 가지고 있어야 합니다. "
+msgstr ""
+"'SSfol' 모형을 적합하기 위해서는 적어도 4개의 관측치들을 가지고 있어야 합니"
+"다. "
 
 msgid "too few distinct input values to fit a four-parameter logistic"
-msgstr "4개의 파라미터를 가지는 로지스틱(logistic)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"4개의 파라미터를 가지는 로지스틱(logistic)을 적합하기에는 너무 적은 개수의 고"
+"유한 값(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a logistic model"
-msgstr "로지스틱 모형(logistic model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"로지스틱 모형(logistic model)을 적합하기에는 너무 적은 개수의 고유한 값"
+"(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit a Michaelis-Menten model"
-msgstr "Michaelis-Menten model을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"Michaelis-Menten model을 적합하기에는 너무 적은 개수의 고유한 값(distinct "
+"input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the Gompertz model"
-msgstr "곰페르츠 모형(Gompertz model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+msgstr ""
+"곰페르츠 모형(Gompertz model)을 적합하기에는 너무 적은 개수의 고유한 값"
+"(distinct input values)들이 입력되었습니다."
 
 msgid "too few distinct input values to fit the Weibull growth model"
 msgstr ""
-"와이블 성장모형(Weibull growth model)을 적합하기에는 너무 적은 개수의 고유한 값(distinct input values)들이 입력되었습니다."
+"와이블 성장모형(Weibull growth model)을 적합하기에는 너무 적은 개수의 고유한 "
+"값(distinct input values)들이 입력되었습니다."
 
 msgid "all 'x' values must be non-negative to fit the Weibull growth model"
-msgstr "와이블 성장모형(Weibuill growth model)을 적합하기 위해서는 모든 'x'의 값들이 반드시 음이 아닌 수이어야 합니다."
+msgstr ""
+"와이블 성장모형(Weibuill growth model)을 적합하기 위해서는 모든 'x'의 값들이 "
+"반드시 음이 아닌 수이어야 합니다."
 
 msgid "using the %d/%d row from a combined fit"
 msgid_plural "using the %d/%d rows from a combined fit"
@@ -2410,10 +2465,6 @@ msgstr[0] "'split' 리스트에 알 수 없는 이름 %s가 있습니다"
 msgid "extra argument %s is not of class \"%s\""
 msgid_plural "extra arguments %s are not of class \"%s\"s"
 msgstr[0] "추가 인자 %1$s는 클래스 \"%2$s\"가 아닙니다"
-
-msgid "extra argument %s will be disregarded"
-msgid_plural "extra arguments %s will be disregarded"
-msgstr[0] "추가 인자 %s는 사용되지 않을 것입니다."
 
 msgid "%d factor is too many for %d variables"
 msgid_plural "%d factors are too many for %d variables"
@@ -2498,11 +2549,22 @@ msgstr[0] "모수 %s(들)를 모델식(model formula)로부터 찾을 수 없습
 
 msgid "%d observation with NA, NaN or Inf deleted"
 msgid_plural "%d observations with NAs, NaNs and/or Infs deleted"
-msgstr[0] "NA, NaNs 그리고/또는 Infs를 가지는 %d 개의 관측치들이 삭제되었습니다."
+msgstr[0] ""
+"NA, NaNs 그리고/또는 Infs를 가지는 %d 개의 관측치들이 삭제되었습니다."
 
 msgid "'start.innov' is too short: need %d point"
 msgid_plural "'start.innov' is too short: need %d points"
 msgstr[0] ""
+
+#~ msgid "need CRAN package 'SuppDists' for the 'inverse.gaussian' family"
+#~ msgstr "'inverse.gaussian' 페밀리는 CRAN 패키지 'SuppDists'를 필요로 합니다"
+
+#~ msgid "'times' is wrong length"
+#~ msgstr "'times'의 길이가 잘 못되었습니다"
+
+#~ msgid "extra argument %s will be disregarded"
+#~ msgid_plural "extra arguments %s will be disregarded"
+#~ msgstr[0] "추가 인자 %s는 사용되지 않을 것입니다."
 
 #~ msgid "'merge' and 'height' do not fit!"
 #~ msgstr "'merge'와 'height'가 서로 맞아떨어지지 않습니다!"

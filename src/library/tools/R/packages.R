@@ -26,7 +26,7 @@ function(dir = ".", fields = NULL,
         type <- "win.binary"
     type <- match.arg(type)
     nfields <- 0
-    out <- file(file.path(dir, "PACKAGES"), "wt")
+    out   <-   file(file.path(dir, "PACKAGES"   ), "wt")
     outgz <- gzfile(file.path(dir, "PACKAGES.gz"), "wt")
 
     paths <- ""
@@ -41,6 +41,7 @@ function(dir = ".", fields = NULL,
         this <- if(nzchar(path)) file.path(dir, path) else dir
         desc <- .build_repository_package_db(this, fields, type, verbose,
                                              unpacked)
+        desc <- Filter(length, desc)
 
         if(length(desc)) {
             Files <- names(desc)
@@ -156,6 +157,11 @@ function(dir, fields = NULL,
                     }
                     temp["MD5sum"] <- md5sum(files[i])
                     db[[i]] <- temp
+                } else {
+                    message(gettextf("reading DESCRIPTION for package %s failed with message:\n  %s",
+                                     sQuote(basename(dirname(p))),
+                                     conditionMessage(temp)),
+                            domain = NA)
                 }
             }
             unlink(packages[i], recursive = TRUE)
@@ -190,6 +196,11 @@ function(dir, fields = NULL, verbose = getOption("verbose"))
             ## Cannot compute MD5 sum of the source tar.gz when working
             ## on the unpacked sources ...
             db[[i]] <- temp
+        } else {
+            warning(gettextf("reading DESCRIPTION for package %s failed with message:\n  %s",
+                             sQuote(basename(paths[i])),
+                             conditionMessage(temp)),
+                    domain = NA)
         }
     }
     if(verbose) message("done")
@@ -253,13 +264,15 @@ function(ap)
 }
 
 package_dependencies <-
-function(packages = NULL, db,
+function(packages = NULL, db = NULL,
          which = c("Depends", "Imports", "LinkingTo"),
          recursive = FALSE, reverse = FALSE, verbose = getOption("verbose"))
 {
     ## <FIXME>
     ## What about duplicated entries?
     ## </FIXME>
+
+    if(is.null(db)) db <- utils::available.packages()
 
     ## For given packages which are not found in the db, return "list
     ## NAs" (i.e., NULL entries), as opposed to character() entries
@@ -365,9 +378,9 @@ function(packages = NULL, db,
     }
     p_R <- tab[p_L]
     pos <- cbind(rep.int(p_L, lengths(p_R)), unlist(p_R))
-    ctr <- 1L
+    ctr <- 0L
     repeat {
-        if(verbose) cat("Cycle:", ctr)
+        if(verbose) cat("Cycle:", (ctr <- ctr + 1L))
         p_L <- split(pos[, 1L], pos[, 2L])
         new <- do.call(rbind,
                        Map(function(i, k)
@@ -379,7 +392,6 @@ function(packages = NULL, db,
         if(verbose) cat(" NNew:", nnew, "\n")
         if(!nnew) break
         pos <- npos
-        ctr <- ctr + 1L
     }
     depends <-
         split(all_packages[pos[, 2L]],

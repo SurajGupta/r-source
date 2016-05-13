@@ -1,6 +1,6 @@
 R FAQ
 Frequently Asked Questions on R
-Version 3.2.2016-04-14
+Version 2016-04-24
 Kurt Hornik
 
 
@@ -257,12 +257,15 @@ mips-sgi-irix, i386-freebsd, rs6000-ibm-aix, and sparc-sun-solaris.
 2.3 What is the current version of R?
 =====================================
 
-The current released version is 3.2.5.  Based on this
-'major.minor.patchlevel' numbering scheme, there are two development
-versions of R, a patched version of the current release ('r-patched')
-and one working towards the next minor or eventually major ('r-devel')
-releases of R, respectively.  Version r-patched is for bug fixes mostly.
-New features are typically introduced in r-devel.
+R uses a 'major.minor.patchlevel' numbering scheme.  Based on this,
+there are the current release version of R ('r-release') as well as two
+development versions of R, a patched version of the current release
+('r-patched') and one working towards the next minor or eventually major
+('r-devel') releases of R, respectively.  New features are typically
+introduced in r-devel, while r-patched is for bug fixes mostly.
+
+   See <https://CRAN.R-project.org/sources.html> for the current
+versions of r-release, r-patched and r-devel.
 
 2.4 How can R be obtained?
 ==========================
@@ -527,9 +530,11 @@ To cite R in publications, use
        author       = {{R Core Team}},
        organization = {R Foundation for Statistical Computing},
        address      = {Vienna, Austria},
-       year         = 2016,
+       year         = YEAR,
        url          = {https://www.R-project.org}
      }
+where YEAR is the release year of the version of R used and can
+determined as 'R.version$year'.
 
    Citation strings (or BibTeX entries) for R and R packages can also be
 obtained by 'citation()'.

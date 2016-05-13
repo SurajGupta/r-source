@@ -1,7 +1,7 @@
 #  File src/library/base/R/all.equal.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,8 +18,7 @@
 
 all.equal <- function(target, current, ...) UseMethod("all.equal")
 
-all.equal.default <-
-    function(target, current, ...)
+all.equal.default <- function(target, current, ...)
 {
     ## Really a dispatcher given mode() of args :
     ## use data.class as unlike class it does not give "integer"
@@ -46,7 +45,7 @@ all.equal.default <-
 }
 
 all.equal.numeric <-
-    function(target, current, tolerance = .Machine$double.eps ^ .5,
+    function(target, current, tolerance = sqrt(.Machine$double.eps),
              scale = NULL, ..., check.attributes = TRUE)
 {
     if (!is.numeric(tolerance))
@@ -149,8 +148,8 @@ all.equal.character <-
 ## In 'base' these are all visible, so need to test both args:
 
 all.equal.envRefClass <- function (target, current, ...) {
-    if(!is (target, "envRefClass")) return("'target' is not an envRefClass")
-    if(!is(current, "envRefClass")) return("'current' is not an envRefClass")
+    if(!methods::is(target, "envRefClass")) return("'target' is not an envRefClass")
+    if(!methods::is(current, "envRefClass")) return("'current' is not an envRefClass")
     if(!isTRUE(ae <- all.equal(class(target), class(current), ...)))
 	return(sprintf("Classes differ: %s", paste(ae, collapse=" ")))
     getCl <- function(x) { cl <- tryCatch(x$getClass(), error=function(e) NULL)
@@ -179,7 +178,8 @@ all.equal.envRefClass <- function (target, current, ...) {
     sns <- names(cld@slots); sns <- sns[sns != ".xData"]
     msg <- if(length(sns)) {
 	L <- lapply(sns, function(sn)
-	    all.equal(slot(target, sn), slot(current, sn), ...))
+	    all.equal(methods::slot(target, sn),
+                      methods::slot(current, sn), ...))
 	unlist(L[vapply(L, is.character, NA)])
     }
     if(is.character(n)) msg <- c(msg, n)

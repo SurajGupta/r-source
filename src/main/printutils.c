@@ -82,7 +82,6 @@
 
 #define BUFSIZE 8192  /* used by Rprintf etc */
 
-/* Only if ierr < 0 or not is currently used */
 attribute_hidden
 R_size_t R_Decode2Long(char *p, int *ierr)
 {
@@ -92,6 +91,7 @@ R_size_t R_Decode2Long(char *p, int *ierr)
     /* else look for letter-code ending : */
     if(R_Verbose)
 	REprintf("R_Decode2Long(): v=%ld\n", v);
+    // NB: currently, positive *ierr are not differentiated in the callers:
     if(p[0] == 'G') {
 	if((Giga * (double)v) > R_SIZE_T_MAX) { *ierr = 4; return(v); }
 	return (R_size_t) Giga * v;
@@ -384,7 +384,7 @@ int Rstrwid(const char *str, int slen, cetype_t ienc, int quote)
     const char *p = str;
     int len = 0, i;
 
-    if(ienc == CE_BYTES) {
+    if(ienc == CE_BYTES) { // not currently used for that encoding
 	for (i = 0; i < slen; i++) {
 	    unsigned char k = str[i];
 	    if (k >= 0x20 && k < 0x80) len += 1;
@@ -392,6 +392,10 @@ int Rstrwid(const char *str, int slen, cetype_t ienc, int quote)
 	}
 	return len;
     }
+    /* Future-proof: currently that is all Rstrlen calls it with,
+       and printarray has CE_NATIVE explicitly */
+    if(ienc > 2) // CE_NATIVE, CE_UTF8, CE_BYTES are supported
+	warning("unsupported encoding (%d) in Rstrwid", ienc);
     if(mbcslocale || ienc == CE_UTF8) {
 	int res;
 	mbstate_t mb_st;

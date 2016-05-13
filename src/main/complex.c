@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 2000-2014	    The R Core Team
+ *  Copyright (C) 2000-2016	    The R Core Team
  *  Copyright (C) 2005		    The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -47,11 +47,6 @@
 #undef HAVE_CTANH
 #endif
 
-#ifdef __CYGWIN__
-/* as of 1.7.8 it had cacos, but it does not work */
-#undef HAVE_CACOS
-#endif
-
 #ifdef __SUNPRO_C
 /* segfaults in Solaris Studio 12.3 */
 #undef HAVE_CPOW
@@ -63,6 +58,8 @@
 
 #include "arithmetic.h"		/* complex_*  */
 #include <complex.h>
+#include <R_ext/Itermacros.h>
+
 
 /* interval at which to check interrupts, a guess */
 #define NINTERRUPT 10000000
@@ -198,15 +195,11 @@ static double complex mycpow (double complex X, double complex Y)
     return Z;
 }
 
-/* See arithmetic.c */
-#define mod_iterate(n1,n2,i1,i2) for (i=i1=i2=0; i<n; \
-	i1 = (++i1 == n1) ? 0 : i1,\
-	i2 = (++i2 == n2) ? 0 : i2,\
-	++i)
+
 
 SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 {
-    R_xlen_t i,i1, i2, n, n1, n2;
+    R_xlen_t i, i1, i2, n, n1, n2;
     SEXP ans;
 
     /* Note: "s1" and "s2" are protected in the calling code. */
@@ -221,41 +214,38 @@ SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
 
     switch (code) {
     case PLUSOP:
-	mod_iterate(n1, n2, i1, i2) {
-	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    Rcomplex x1 = COMPLEX(s1)[i1], x2 = COMPLEX(s2)[i2];
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2, {
+	    Rcomplex x1 = COMPLEX(s1)[i1];
+	    Rcomplex x2 = COMPLEX(s2)[i2];
 	    COMPLEX(ans)[i].r = x1.r + x2.r;
 	    COMPLEX(ans)[i].i = x1.i + x2.i;
-	}
+	});
 	break;
     case MINUSOP:
-	mod_iterate(n1, n2, i1, i2) {
-	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    Rcomplex x1 = COMPLEX(s1)[i1], x2 = COMPLEX(s2)[i2];
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2, {
+	    Rcomplex x1 = COMPLEX(s1)[i1];
+	    Rcomplex x2 = COMPLEX(s2)[i2];
 	    COMPLEX(ans)[i].r = x1.r - x2.r;
 	    COMPLEX(ans)[i].i = x1.i - x2.i;
-	}
+	});
 	break;
     case TIMESOP:
-	mod_iterate(n1, n2, i1, i2) {
-	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2, {
 	    SET_C99_COMPLEX(COMPLEX(ans), i,
 			    C99_COMPLEX2(s1, i1) * C99_COMPLEX2(s2, i2));
-	}
+	});
 	break;
     case DIVOP:
-	mod_iterate(n1, n2, i1, i2) {
-	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2, {
 	    SET_C99_COMPLEX(COMPLEX(ans), i,
 			    C99_COMPLEX2(s1, i1) / C99_COMPLEX2(s2, i2));
-	}
+	});
 	break;
     case POWOP:
-	mod_iterate(n1, n2, i1, i2) {
-	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
+	MOD_ITERATE2_CHECK(NINTERRUPT, n, n1, n2, i, i1, i2, {
 	    SET_C99_COMPLEX(COMPLEX(ans), i,
 			    mycpow(C99_COMPLEX2(s1, i1), C99_COMPLEX2(s2, i2)));
-	}
+	});
 	break;
     default:
 	error(_("unimplemented complex operation"));
@@ -269,9 +259,9 @@ SEXP attribute_hidden complex_binary(ARITHOP_TYPE code, SEXP s1, SEXP s2)
     /* Copy attributes from longer argument. */
 
     if (ans != s2 && n == n2 && ATTRIB(s2) != R_NilValue)
-        copyMostAttrib(s2, ans);
+	copyMostAttrib(s2, ans);
     if (ans != s1 && n == n1 && ATTRIB(s1) != R_NilValue)
-        copyMostAttrib(s1, ans); /* Done 2nd so s1's attrs overwrite s2's */
+	copyMostAttrib(s1, ans); /* Done 2nd so s1's attrs overwrite s2's */
 
     return ans;
 }
@@ -331,7 +321,7 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
 	n = XLENGTH(x);
 	if(isReal(x)) PROTECT(x);
 	else PROTECT(x = coerceVector(x, REALSXP));
-        y = NO_REFERENCES(x) ? x : allocVector(REALSXP, n);
+	y = NO_REFERENCES(x) ? x : allocVector(REALSXP, n);
 
 	switch(PRIMVAL(op)) {
 	case 1:	/* Re */
@@ -363,10 +353,10 @@ SEXP attribute_hidden do_cmathfuns(SEXP call, SEXP op, SEXP args, SEXP env)
     else errorcall(call, _("non-numeric argument to function"));
 
     if (x != y && ATTRIB(x) != R_NilValue) {
-        PROTECT(x);
-        PROTECT(y);
-        DUPLICATE_ATTRIB(y, x);
-        UNPROTECT(2);
+	PROTECT(x);
+	PROTECT(y);
+	SHALLOW_DUPLICATE_ATTRIB(y, x);
+	UNPROTECT(2);
     }
     return y;
 }
@@ -484,7 +474,7 @@ static double complex casin(double complex z)
     ri = log(alpha + sqrt(alpha*alpha - 1));
     /* This comes from
        'z_asin() is continuous from below if x >= 1
-        and continuous from above if x <= -1.'
+	and continuous from above if x <= -1.'
     */
     if(y < 0 || (y == 0 && x > 1)) ri *= -1;
     return asin(t1  - t2) + ri*I;
@@ -623,7 +613,7 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     Rboolean naflag = FALSE;
 
     PROTECT(x = CAR(args));
-    n = xlength(x);
+    n = XLENGTH(x);
     PROTECT(y = allocVector(CPLXSXP, n));
 
     switch (PRIMVAL(op)) {
@@ -649,7 +639,7 @@ SEXP attribute_hidden complex_math1(SEXP call, SEXP op, SEXP args, SEXP env)
     }
     if (naflag)
 	warningcall(call, "NaNs produced in function \"%s\"", PRIMNAME(op));
-    DUPLICATE_ATTRIB(y, x);
+    SHALLOW_DUPLICATE_ATTRIB(y, x);
     UNPROTECT(2);
     return y;
 }
@@ -697,7 +687,7 @@ static void z_atan2(Rcomplex *r, Rcomplex *csn, Rcomplex *ccs)
 typedef void (*cm2_fun)(Rcomplex *, Rcomplex *, Rcomplex *);
 SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    R_xlen_t i, n, na, nb;
+    R_xlen_t i, n, na, nb, ia, ib;
     Rcomplex ai, bi, *a, *b, *y;
     SEXP sa, sb, sy;
     Rboolean naflag = FALSE;
@@ -722,14 +712,14 @@ SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
     PROTECT(sb = coerceVector(CADR(args), CPLXSXP));
     na = XLENGTH(sa); nb = XLENGTH(sb);
     if ((na == 0) || (nb == 0)) {
-        UNPROTECT(2);
-        return(allocVector(CPLXSXP, 0));
+	UNPROTECT(2);
+	return(allocVector(CPLXSXP, 0));
     }
     n = (na < nb) ? nb : na;
     PROTECT(sy = allocVector(CPLXSXP, n));
     a = COMPLEX(sa); b = COMPLEX(sb); y = COMPLEX(sy);
-    for (i = 0; i < n; i++) {
-	ai = a[i % na]; bi = b[i % nb];
+    MOD_ITERATE2(n, na, nb, i, ia, ib, {
+	ai = a[ia]; bi = b[ib];
 	if(ISNA(ai.r) && ISNA(ai.i) &&
 	   ISNA(bi.r) && ISNA(bi.i)) {
 	    y[i].r = NA_REAL; y[i].i = NA_REAL;
@@ -739,13 +729,13 @@ SEXP attribute_hidden complex_math2(SEXP call, SEXP op, SEXP args, SEXP env)
 		 !(ISNAN(ai.r) || ISNAN(ai.i) || ISNAN(bi.r) || ISNAN(bi.i)) )
 		naflag = TRUE;
 	}
-    }
+    });
     if (naflag)
 	warningcall(call, "NaNs produced in function \"%s\"", PRIMNAME(op));
     if(n == na) {
-	DUPLICATE_ATTRIB(sy, sa);
+	SHALLOW_DUPLICATE_ATTRIB(sy, sa);
     } else if(n == nb) {
-	DUPLICATE_ATTRIB(sy, sb);
+	SHALLOW_DUPLICATE_ATTRIB(sy, sb);
     }
     UNPROTECT(3);
     return sy;
@@ -756,6 +746,8 @@ SEXP attribute_hidden do_complex(SEXP call, SEXP op, SEXP args, SEXP rho)
     /* complex(length, real, imaginary) */
     SEXP ans, re, im;
     R_xlen_t i, na, nr, ni;
+
+    checkArity(op, args);
     na = asInteger(CAR(args));
     if(na == NA_INTEGER || na < 0)
 	error(_("invalid length"));

@@ -60,7 +60,8 @@ double bessel_y(double x, double alpha)
 	       ((alpha      == na ) ? 0 : bessel_j(x, -alpha) * sinpi(alpha)));
     }
     else if (alpha > 1e7) {
-	MATHLIB_WARNING("besselY(x, nu): nu=%g too large for bessel_y() algorithm", alpha);
+	MATHLIB_WARNING(_("besselY(x, nu): nu=%g too large for bessel_y() algorithm"),
+			alpha);
 	return ML_NAN;
     }
     nb = 1+ (int)na;/* nb-1 <= alpha < nb */
@@ -83,7 +84,7 @@ double bessel_y(double x, double alpha)
 	    return ML_POSINF;
 	}
 	else if(ncalc < -1)
-	    MATHLIB_WARNING4(_("bessel_y(%g): ncalc (=%ld) != nb (=%ld); alpha=%g. Arg. out of range?\n"),
+	    MATHLIB_WARNING4(_("bessel_y(%g): ncalc (=%d) != nb (=%d); alpha=%g. Arg. out of range?\n"),
 			     x, ncalc, nb, alpha);
 	else /* ncalc >= 0 */
 	    MATHLIB_WARNING2(_("bessel_y(%g,nu=%g): precision lost in result\n"),
@@ -121,7 +122,8 @@ double bessel_y_ex(double x, double alpha, double *by)
 	       ((alpha      == na ) ? 0 : bessel_j_ex(x, -alpha, by) * sinpi(alpha)));
     }
     else if (alpha > 1e7) {
-	MATHLIB_WARNING("besselY(x, nu): nu=%g too large for bessel_y() algorithm", alpha);
+	MATHLIB_WARNING(_("besselY(x, nu): nu=%g too large for bessel_y() algorithm"),
+			alpha);
 	return ML_NAN;
     }
     nb = 1+ (int)na;/* nb-1 <= alpha < nb */
@@ -131,7 +133,7 @@ double bessel_y_ex(double x, double alpha, double *by)
 	if(ncalc == -1)
 	    return ML_POSINF;
 	else if(ncalc < -1)
-	    MATHLIB_WARNING4(_("bessel_y(%g): ncalc (=%ld) != nb (=%ld); alpha=%g. Arg. out of range?\n"),
+	    MATHLIB_WARNING4(_("bessel_y(%g): ncalc (=%d) != nb (=%d); alpha=%g. Arg. out of range?\n"),
 			     x, ncalc, nb, alpha);
 	else /* ncalc >= 0 */
 	    MATHLIB_WARNING2(_("bessel_y(%g,nu=%g): precision lost in result\n"),

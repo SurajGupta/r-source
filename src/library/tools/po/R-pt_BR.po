@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 2.13.0\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2015-06-06 13:58\n"
+"POT-Creation-Date: 2016-04-01 09:50\n"
 "PO-Revision-Date: 2011-03-26 08:57-0300\n"
 "Last-Translator: Colin Robert <beasley@ufpa.br>\n"
 "Language-Team: http://www.feferraz.net/br/P/Projeto_Traducao_R_Portugues\n"
@@ -13,10 +13,10 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.0.5\n"
 
-msgid "Reading %s failed with message: %s"
+msgid "Checking %s"
 msgstr ""
 
-msgid "Checking %s"
+msgid "Processing %s ..."
 msgstr ""
 
 msgid "argument 'package' must be of length 1"
@@ -864,6 +864,9 @@ msgstr ""
 msgid "empty 'data' directory"
 msgstr ""
 
+msgid "cannot create unique directory for build"
+msgstr ""
+
 msgid "cannot create temporary directory"
 msgstr ""
 
@@ -926,6 +929,12 @@ msgid ""
 "%s"
 msgstr ""
 
+msgid "DESCRIPTION file not found"
+msgstr ""
+
+msgid "NEWS file not found"
+msgstr ""
+
 msgid "No news found in given file using old-style R-like format."
 msgstr ""
 
@@ -959,6 +968,11 @@ msgid ""
 msgstr ""
 
 msgid "Processing packages:"
+msgstr ""
+
+msgid ""
+"reading DESCRIPTION for package %s failed with message:\n"
+"  %s"
 msgstr ""
 
 msgid "%s must be a character string or a file/raw connection"
@@ -1044,6 +1058,9 @@ msgid "argument 'pkg' must be of length 1"
 msgstr "argumento 'package' deve ter comprimento 1"
 
 msgid "package '%s' was not found"
+msgstr ""
+
+msgid "the 'lib.loc' argument has always been unused and is deprecated now"
 msgstr ""
 
 msgid "bad operand"

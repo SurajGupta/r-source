@@ -1,7 +1,7 @@
 #  File src/library/tools/R/makeLazyLoad.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2014 The R Core Team
+#  Copyright (C) 1995-2015 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -52,10 +52,17 @@ list_data_in_pkg <- function(package, lib.loc = NULL, dataDir = NULL)
                  domain = NA)
         dataDir <- file.path(pkgpath, "data")
     } else {
-        pkgpath <- sub("/data$", "", dataDir)
-        package <- basename(pkgpath)
-	# avoid builddir != srcdir problems -- assume package has been installed
-        lib.loc <- c(dirname(pkgpath), .libPaths())
+	if(has.pkg <- !missing(package)) ## try with default lib.loc
+	    pkgpath <- find.package(package, lib.loc, quiet = TRUE)
+	if(!has.pkg || !length(pkgpath)) {
+	   ## <FIXME> making assumptions about dataDir (e.g., pkgpath *NOT* from R-forge symlink)
+	    pkgpath <- sub("/data$", "", dataDir)
+	    ## avoid builddir != srcdir problems -- assume package has been installed
+	    ## making use of the fact that utils::data() works with *source* package:
+	    lib.loc <- c(dirname(pkgpath), .libPaths())
+	    if(!has.pkg)
+		package <- basename(pkgpath)
+	}
     }
     if(dir.exists(dataDir)) {
         if(file.exists(sv <- file.path(dataDir, "Rdata.rds"))) {

@@ -95,14 +95,16 @@ imagedir:
 # files to make source packages
 	$(MKDIR) -p $(RPREFIX)/share \
 	  $(RPREFIX)/src/library $(RPREFIX)/src/gnuwin32
-	$(CP) $(R_HOME)/doc/html/logo.jpg $(RPREFIX)/doc/html
+	$(CP) $(R_HOME)/doc/html/logo.jpg $(R_HOME)/doc/html/Rlogo.svg $(RPREFIX)/doc/html
 	$(CP) $(R_HOME)/doc/KEYWORDS* $(RPREFIX)/doc
 	$(CP) -pR $(R_HOME)/include $(RPREFIX)
 	$(CP) -pR $(foreach i,$(SHARE_DIRS),$(R_HOME)/share/$i) $(RPREFIX)/share
 # This is odd -- better to clean the copy
 	(cd ..; $(MAKE) --no-print-directory PKGDIR=. pkgclean-windlgs)
 	$(CP) -pR ../windlgs $(RPREFIX)/src/library
-#
+# Edit Makeconf
+	$(SED) -e 's!^BINPREF [?]= .*!BINPREF ?= c:/Rtools/mingw_64/bin/!' \
+	  $(R_HOME)/etc/x64/Makeconf > $(RPREFIX)/etc/x64/Makeconf
 # test dir
 	mkdir $(RPREFIX)/tests
 	$(MAKE) --no-print-directory -C ../../../tests -f Makefile.win \
@@ -144,6 +146,9 @@ ifneq ($(strip $(HOME32)),)
              ../../../library/$${f}/DESCRIPTION \
              > $(RPREFIX)/library/$${f}/DESCRIPTION; \
 	done
+# Edit Makeconf file to default Rtools location
+	$(SED) -e 's!^BINPREF [?]= .*!BINPREF ?= c:/Rtools/mingw_32/bin/!' \
+	  $(HOME32)/etc/i386/Makeconf > $(RPREFIX)/etc/i386/Makeconf
 else
 	@echo "------------ not including 32-bit files"
 endif

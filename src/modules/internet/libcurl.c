@@ -29,7 +29,7 @@
 #include <Fileio.h>
 #include <errno.h>
 
-#ifdef HAVE_CURL_CURL_H
+#ifdef HAVE_LIBCURL
 # include <curl/curl.h>
 /*
   This need libcurl >= 7.28.0 (Oct 2012) for curl_multi_wait.
@@ -45,7 +45,7 @@ SEXP attribute_hidden in_do_curlVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
     SEXP ans = PROTECT(allocVector(STRSXP, 1));
-#ifdef HAVE_CURL_CURL_H
+#ifdef HAVE_LIBCURL
     curl_version_info_data *d = curl_version_info(CURLVERSION_NOW);
     SET_STRING_ELT(ans, 0, mkChar(d->version));
     SEXP sSSLVersion = install("ssl_version");
@@ -69,8 +69,105 @@ SEXP attribute_hidden in_do_curlVersion(SEXP call, SEXP op, SEXP args, SEXP rho)
     return ans;
 }
 
+#ifdef HAVE_LIBCURL
+static const char *http_errstr(const long status)
+{
+    const char *str;
+    switch(status) {
+    case 400: str = "Bad Request"; break;
+    case 401: str = "Unauthorized"; break;
+    case 402: str = "Payment Required"; break;
+    case 403: str = "Forbidden"; break;
+    case 404: str = "Not Found"; break;
+    case 405: str = "Method Not Allowed"; break;
+    case 406: str = "Not Acceptable"; break;
+    case 407: str = "Proxy Authentication Required"; break;
+    case 408: str = "Request Timeout"; break;
+    case 409: str = "Conflict"; break;
+    case 410: str = "Gone"; break;
+    case 411: str = "Length Required"; break;
+    case 412: str = "Precondition Failed"; break;
+    case 413: str = "Request Entity Too Large"; break;
+    case 414: str = "Request-URI Too Long"; break;
+    case 415: str = "Unsupported Media Type"; break;
+    case 416: str = "Requested Range Not Satisfiable"; break;
+    case 417: str = "Expectation Failed"; break;
+    case 500: str = "Internal Server Error"; break;
+    case 501: str = "Not Implemented"; break;
+    case 502: str = "Bad Gateway"; break;
+    case 503: str = "Service Unavailable"; break;
+    case 504: str = "Gateway Timeout"; break;
+    default: str = "Unknown Error"; break;
+    }
+    return str;
+}
 
-#ifdef HAVE_CURL_CURL_H
+static const char *ftp_errstr(const long status)
+{
+    const char *str;
+    switch (status) {
+    case 421: str = "Service not available, closing control connection"; break;
+    case 425: str = "Cannot open data connection"; break;
+    case 426: str = "Connection closed; transfer aborted"; break;
+    case 430: str = "Invalid username or password"; break;
+    case 434: str = "Requested host unavailable"; break;
+    case 450: str = "Requested file action not taken"; break;
+    case 451: str = "Requested action aborted; local error in processing"; break;
+    case 452:
+        str = "Requested action not taken; insufficient storage space in system";
+        break;
+    case 501: str = "Syntax error in parameters or arguments"; break;
+    case 502: str = "Command not implemented"; break;
+    case 503: str = "Bad sequence of commands"; break;
+    case 504: str = "Command not implemented for that parameter"; break;
+    case 530: str = "Not logged in"; break;
+    case 532: str = "Need account for storing files"; break;
+    case 550:
+        str = "Requested action not taken; file unavailable";
+        break;
+    case 551: str = "Requested action aborted; page type unknown"; break;
+    case 552:
+        str = "Requested file action aborted; exceeded storage allocation";
+        break;
+    case 553: str = "Requested action not taken; file name not allowed"; break;
+    default: str = "Unknown Error"; break;
+    }
+    return str;
+}
+
+/*
+  Check curl_multi_info_read for errors, reporting as warnings
+
+  Return: number of errors encountered
+ */
+static int curlMultiCheckerrs(CURLM *mhnd)
+{
+    int retval = 0;
+    for(int n = 1; n > 0;) {
+	CURLMsg *msg = curl_multi_info_read(mhnd, &n);
+	if (msg && (msg->data.result != CURLE_OK)) {
+	    const char *url, *strerr;
+	    long status = 0;
+	    curl_easy_getinfo(msg->easy_handle, CURLINFO_EFFECTIVE_URL, &url);
+	    curl_easy_getinfo(msg->easy_handle, CURLINFO_RESPONSE_CODE,
+			      &status);
+	    if (status >= 400) {
+		if (url && url[0] == 'h')
+		    strerr = http_errstr(status);
+		else
+		    strerr = ftp_errstr(status);
+		warning(_("URL '%s': status was '%d %s'"), url, status,
+			strerr);
+	    } else {
+		strerr = curl_easy_strerror(msg->data.result);
+		warning(_("URL '%s': status was '%s'"), url, strerr);
+	    }
+	    retval += 1;
+	}
+    }
+    return retval;
+}
+
 static void curlCommon(CURL *hnd, int redirect, int verify)
 {
     const char *capath = getenv("CURL_CA_BUNDLE");
@@ -139,7 +236,7 @@ SEXP attribute_hidden
 in_do_curlGetHeaders(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-#ifndef HAVE_CURL_CURL_H
+#ifndef HAVE_LIBCURL
     error(_("curlGetHeaders is not supported on this platform"));
     return R_NilValue;
 #else
@@ -184,7 +281,7 @@ in_do_curlGetHeaders(SEXP call, SEXP op, SEXP args, SEXP rho)
 #endif
 }
 
-#ifdef HAVE_CURL_CURL_H
+#ifdef HAVE_LIBCURL
 static double total;
 
 static int ndashes;
@@ -303,7 +400,7 @@ SEXP attribute_hidden
 in_do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     checkArity(op, args);
-#ifndef HAVE_CURL_CURL_H
+#ifndef HAVE_LIBCURL
     error(_("download.file(method = \"libcurl\") is not supported on this platform"));
     return R_NilValue;
 #else
@@ -344,16 +441,50 @@ in_do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
     }
 
     CURLM *mhnd = curl_multi_init();
-    int still_running, repeats = 0;
+    int still_running, repeats = 0, n_err = 0;
     CURL **hnd[nurls];
     FILE *out[nurls];
 
     for(int i = 0; i < nurls; i++) {
-	hnd[i] = curl_easy_init();
-	curl_multi_add_handle(mhnd, hnd[i]);
-
+	out[i] = NULL;
 	url = CHAR(STRING_ELT(scmd, i));
+	hnd[i] = curl_easy_init();
 	curl_easy_setopt(hnd[i], CURLOPT_URL, url);
+	curl_easy_setopt(hnd[i], CURLOPT_FAILONERROR, 1L);
+	/* Users will normally expect to follow redirections, although
+	   that is not the default in either curl or libcurl. */
+	curlCommon(hnd[i], 1, 1);
+	curl_easy_setopt(hnd[i], CURLOPT_TCP_KEEPALIVE, 1L);
+	if (!cacheOK)
+	    curl_easy_setopt(hnd[i], CURLOPT_HTTPHEADER, slist1);
+
+	/* check that connection can be opened... */
+	curl_easy_setopt(hnd[i], CURLOPT_NOPROGRESS, 1L);
+	curl_easy_setopt(hnd[i], CURLOPT_NOBODY, 1L);
+	curl_easy_setopt(hnd[i], CURLOPT_HEADERFUNCTION, &rcvHeaders);
+	curl_easy_setopt(hnd[i], CURLOPT_WRITEHEADER, &headers);
+	/* libcurl (at least 7.40.0) does not respect CURLOPT_NOBODY
+	   for some ftp header info (Content-Length and Accept-ranges). */
+	curl_easy_setopt(hnd[i], CURLOPT_WRITEFUNCTION, &rcvBody);
+	CURLcode ret = curl_easy_perform(hnd[i]);
+	curl_multi_add_handle(mhnd, hnd[i]);
+	if (ret != CURLE_OK) {
+	    n_err += 1;
+	    /* warning signalled via curlMultiCheckerrs */
+	    continue;
+	}
+	/* ...and that destfile can be written */
+	file = translateChar(STRING_ELT(sfile, i));
+	out[i] = R_fopen(R_ExpandFileName(file), mode);
+	if (!out[i]) {
+	    n_err += 1;
+	    warning(_("URL %s: cannot open destfile '%s', reason '%s'"),
+		    url, file, strerror(errno));
+	    continue;
+	}
+	curl_easy_setopt(hnd[i], CURLOPT_WRITEFUNCTION, NULL); /* necessary? */
+	curl_easy_setopt(hnd[i], CURLOPT_WRITEDATA, out[i]);
+	curl_easy_setopt(hnd[i], CURLOPT_NOBODY, 0L);
 	curl_easy_setopt(hnd[i], CURLOPT_HEADER, 0L);
 
 	total = 0.;
@@ -389,26 +520,12 @@ in_do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    // For libcurl >= 7.32.0 use CURLOPT_XFERINFOFUNCTION
 	    curl_easy_setopt(hnd[i], CURLOPT_PROGRESSFUNCTION, progress);
 	    curl_easy_setopt(hnd[i], CURLOPT_PROGRESSDATA, hnd[i]);
-	} else curl_easy_setopt(hnd[i], CURLOPT_NOPROGRESS, 1L);
-
-	/* Users will normally expect to follow redirections, although
-	   that is not the default in either curl or libcurl. */
-	curlCommon(hnd[i], 1, 1);
-	curl_easy_setopt(hnd[i], CURLOPT_TCP_KEEPALIVE, 1L);
-	if (!cacheOK) curl_easy_setopt(hnd[i], CURLOPT_HTTPHEADER, slist1);
+	}
 
 	/* This would allow the negotiation of compressed HTTP transfers,
 	   but it is not clear it is always a good idea.
 	   curl_easy_setopt(hnd[i], CURLOPT_ACCEPT_ENCODING, "gzip, deflate");
 	*/
-
-
-	file = translateChar(STRING_ELT(sfile, i));
-	out[i] = R_fopen(R_ExpandFileName(file), mode);
-	if (!out[i])
-	    error(_("cannot open destfile '%s', reason '%s'"),
-		  file, strerror(errno));
-	curl_easy_setopt(hnd[i], CURLOPT_WRITEDATA, out[i]);
 
 	if (!quiet) REprintf(_("trying URL '%s'\n"), url);
     }
@@ -461,25 +578,19 @@ in_do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
 	    warning(_("downloaded length %0.f != reported length %0.f"), dl, cl);
     }
 
-    // report all the pending messages.
-    for(int n = 1; n > 0;) {
-	CURLMsg *msg = curl_multi_info_read(mhnd, &n);
-	if (msg) {
-	    CURLcode ret = msg->data.result;
-	    if (ret != CURLE_OK) {
-		if (!quiet) REprintf("\n"); // clear progress display
-		error("  %s\n", curl_easy_strerror(ret));
-	    }
-	}
-    }
+    n_err += curlMultiCheckerrs(mhnd);
 
     for (int i = 0; i < nurls; i++) {
-	fclose(out[i]);
+	if (out[i])
+            fclose(out[i]);
 	curl_multi_remove_handle(mhnd, hnd[i]);
 	curl_easy_cleanup(hnd[i]);
     }
     curl_multi_cleanup(mhnd);
     if (!cacheOK) curl_slist_free_all(slist1);
+
+    if (n_err != 0)
+	error(_("cannot download all files"));
 
     return ScalarInteger(0);
 #endif
@@ -505,7 +616,7 @@ in_do_curlDownload(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 #define R_MIN(a, b) ((a) < (b) ? (a) : (b))
 
-#ifdef HAVE_CURL_CURL_H
+#ifdef HAVE_LIBCURL
 typedef struct Curlconn {
     char *buf, *current; // base of buffer, last read address
     size_t bufsize, filled;  // buffer size, amount which has been filled
@@ -550,80 +661,28 @@ static size_t consumeData(void *ptr, size_t max, RCurlconn ctxt)
     return size;
 }
 
-void fetchData(RCurlconn ctxt)
+/*
+  return: number of errors encountered
+ */
+static int fetchData(RCurlconn ctxt)
 {
     int repeats = 0;
+    CURLM *mhnd = ctxt->mh;
+    
     do {
 	int numfds;
-	CURLMcode mc = curl_multi_wait(ctxt->mh, NULL, 0, 100, &numfds);
+	CURLMcode mc = curl_multi_wait(mhnd, NULL, 0, 100, &numfds);
 	if (mc != CURLM_OK)
 	    error("curl_multi_wait() failed, code %d", mc);
 	if (!numfds) {
 	    if (repeats++ > 0) Rsleep(0.1);
 	} else repeats = 0;
-	curl_multi_perform(ctxt->mh, &ctxt->sr);
+	curl_multi_perform(mhnd, &ctxt->sr);
 	if (ctxt->available) break;
 	R_ProcessEvents();
     } while(ctxt->sr);
 
-    for(int msg = 1; msg > 0;) {
-	CURLMsg *out = curl_multi_info_read(ctxt->mh, &msg);
-	if (out) {
-	    CURLcode ret = out->data.result;
-	    if (ret != CURLE_OK) error(curl_easy_strerror(ret));
-	}
-    }
-}
-
-static size_t Curl_read(void *ptr, size_t size, size_t nitems,
-			Rconnection con)
-{
-    RCurlconn ctxt = (RCurlconn)(con->private);
-    size_t nbytes = size*nitems;
-    char *p = (char *) ptr;
-    size_t total = consumeData(ptr, nbytes, ctxt);
-    while((total < nbytes) && ctxt->sr) {
-	fetchData(ctxt);
-	total += consumeData(p + total, (nbytes - total), ctxt);
-    }
-    return total/size;
-}
-
-static Rboolean Curl_open(Rconnection con)
-{
-    char *url = con->description;
-    RCurlconn ctxt = (RCurlconn)(con->private);
-
-    if (con->mode[0] != 'r') {
-	REprintf("can only open URLs for reading");
-	return FALSE;
-    }
-
-    ctxt->hnd = curl_easy_init();
-    curl_easy_setopt(ctxt->hnd, CURLOPT_URL, url);
-    curlCommon(ctxt->hnd, 1, 1);
-    curl_easy_setopt(ctxt->hnd, CURLOPT_NOPROGRESS, 1L);
-    curl_easy_setopt(ctxt->hnd, CURLOPT_TCP_KEEPALIVE, 1L);
-
-    curl_easy_setopt(ctxt->hnd, CURLOPT_WRITEFUNCTION, rcvData);
-    curl_easy_setopt(ctxt->hnd, CURLOPT_WRITEDATA, ctxt);
-    ctxt->mh = curl_multi_init();
-    curl_multi_add_handle(ctxt->mh, ctxt->hnd);
-
-    ctxt->current = ctxt->buf; ctxt->filled = 0; ctxt->available = FALSE;
-
-    // Establish the connection: not clear if we should do this now.
-    ctxt->sr = 1;
-    while(ctxt->sr && !ctxt->available) fetchData(ctxt);
-
-    con->isopen = TRUE;
-    con->canwrite = (con->mode[0] == 'w' || con->mode[0] == 'a');
-    con->canread = !con->canwrite;
-    if (strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
-    else con->text = TRUE;
-    con->save = -1000;
-    set_iconv(con);
-    return TRUE;
+    return curlMultiCheckerrs(mhnd);
 }
 
 static void Curl_close(Rconnection con)
@@ -651,6 +710,69 @@ static void Curl_destroy(Rconnection con)
     free(ctxt);
 }
 
+static size_t Curl_read(void *ptr, size_t size, size_t nitems,
+			Rconnection con)
+{
+    RCurlconn ctxt = (RCurlconn)(con->private);
+    size_t nbytes = size*nitems;
+    char *p = (char *) ptr;
+    size_t total = consumeData(ptr, nbytes, ctxt);
+    int n_err = 0;
+    while((total < nbytes) && ctxt->sr) {
+	n_err += fetchData(ctxt);
+	total += consumeData(p + total, (nbytes - total), ctxt);
+    }
+    if (n_err != 0) {
+	Curl_close(con);
+	error(_("cannot read from connection"), n_err);
+    }
+    return total/size;
+}
+
+static Rboolean Curl_open(Rconnection con)
+{
+    char *url = con->description;
+    RCurlconn ctxt = (RCurlconn)(con->private);
+
+    if (con->mode[0] != 'r') {
+	REprintf("can only open URLs for reading");
+	return FALSE;
+    }
+
+    ctxt->hnd = curl_easy_init();
+    curl_easy_setopt(ctxt->hnd, CURLOPT_URL, url);
+    curl_easy_setopt(ctxt->hnd, CURLOPT_FAILONERROR, 1L);
+    curlCommon(ctxt->hnd, 1, 1);
+    curl_easy_setopt(ctxt->hnd, CURLOPT_NOPROGRESS, 1L);
+    curl_easy_setopt(ctxt->hnd, CURLOPT_TCP_KEEPALIVE, 1L);
+
+    curl_easy_setopt(ctxt->hnd, CURLOPT_WRITEFUNCTION, rcvData);
+    curl_easy_setopt(ctxt->hnd, CURLOPT_WRITEDATA, ctxt);
+    ctxt->mh = curl_multi_init();
+    curl_multi_add_handle(ctxt->mh, ctxt->hnd);
+
+    ctxt->current = ctxt->buf; ctxt->filled = 0; ctxt->available = FALSE;
+
+    // Establish the connection: not clear if we should do this now.
+    ctxt->sr = 1;
+    int n_err = 0;
+    while(ctxt->sr && !ctxt->available)
+	n_err += fetchData(ctxt);
+    if (n_err != 0) {
+	Curl_close(con);
+	error(_("cannot open connection"), n_err);
+    }
+
+    con->isopen = TRUE;
+    con->canwrite = (con->mode[0] == 'w' || con->mode[0] == 'a');
+    con->canread = !con->canwrite;
+    if (strlen(con->mode) >= 2 && con->mode[1] == 'b') con->text = FALSE;
+    else con->text = TRUE;
+    con->save = -1000;
+    set_iconv(con);
+    return TRUE;
+}
+
 static int Curl_fgetc_internal(Rconnection con)
 {
     unsigned char c;
@@ -664,7 +786,7 @@ static int Curl_fgetc_internal(Rconnection con)
 Rconnection 
 in_newCurlUrl(const char *description, const char * const mode, int type)
 {
-#ifdef HAVE_CURL_CURL_H
+#ifdef HAVE_LIBCURL
     Rconnection new = (Rconnection) malloc(sizeof(struct Rconn));
     if (!new) error(_("allocation of url connection failed"));
     new->class = (char *) malloc(strlen("url-libcurl") + 1);

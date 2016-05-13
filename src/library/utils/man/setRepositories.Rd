@@ -35,7 +35,7 @@ setRepositories(graphics = getOption("menu.graphics"),
   A Bioconductor mirror can be selected by setting
   \code{\link{options}("BioC_mirror")}, e.g.\sspace{}via
   \code{\link{chooseBioCmirror}} --- the default value is
-  \samp{"http://bioconductor.org"}.
+  \samp{"https://bioconductor.org"}.
 
   The items that are preselected are those that are currently in
   \code{options("repos")} plus those marked as default in the
@@ -54,11 +54,6 @@ setRepositories(graphics = getOption("menu.graphics"),
 
   This function requires the \R session to be interactive unless
   \code{ind} is supplied.
-
-  Some of the entries have \code{https} versions which use
-  \samp{https://} for access, so if selected need an \R build which
-  supports this.  (Choosing the \code{https} version provides some
-  guarantees on the identity of the site.)
 }
 \note{
   This does \strong{not} set the list of repositories at startup: to do

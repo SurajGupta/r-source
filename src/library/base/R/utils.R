@@ -24,23 +24,20 @@ shQuote <- function(string, type = c("sh", "csh", "cmd", "cmd2"))
     }
     if(missing(type) && .Platform$OS.type == "windows") type <- "cmd"
     type <- match.arg(type)
-    if(type == "cmd") 
-        paste0('"', gsub('"', '\\\\"', string), '"')
+    if(type == "cmd")
+	paste0('"', gsub('"', '\\\\"', string), '"')
     else if (type == "cmd2")
         gsub('([()%!^"<>&|])', "^\\1", string)
-    else {
-        if(!length(string)) return("")
-        has_single_quote <- grep("'", string)
-        if(!length(has_single_quote))
-            return(paste0("'", string, "'"))
-        if(type == "sh")
-            paste0('"', gsub('(["$`\\])', "\\\\\\1", string), '"')
-        else {
-            if(!length(grep("([$`])", string))) {
-                paste0('"', gsub('(["!\\])', "\\\\\\1", string), '"')
-            } else vapply(string, cshquote, "")
-        }
-    }
+    else if(!length(string))
+	""
+    else if(!any(grepl("'", string))) # has single quote
+	paste0("'", string, "'")
+    else if(type == "sh")
+	paste0('"', gsub('(["$`\\])', "\\\\\\1", string), '"')
+    else if(!any(grepl("([$`])", string)))
+	paste0('"', gsub('(["!\\])' , "\\\\\\1", string), '"')
+    else
+	vapply(string, cshquote, "")
 }
 
 .standard_regexps <-

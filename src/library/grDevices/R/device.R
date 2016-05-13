@@ -1,7 +1,7 @@
 #  File src/library/grDevices/R/device.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2015 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -161,9 +161,9 @@ dev.print <- function(device = postscript, ...)
             ## fits portrait but not landscape
             hz <- FALSE
         } else {
-            h0 <- ifelse(hz, wp, hp)
+            h0 <- if(hz) wp else hp
             if(h > h0) { w <- w * h0/h; h <- h0 }
-            w0 <- ifelse(hz, hp, wp)
+            w0 <- if(hz) hp else wp
             if(w > w0) { h <- h * w0/w; w <- w0 }
         }
         if(is.null(oc$pointsize)) {
@@ -382,14 +382,12 @@ dev.capabilities <- function(what = NULL)
         else {
             if(.Platform$OS.type == "windows") windows
             else {
-                dsp <- Sys.getenv("DISPLAY")
-                ## the first condition is running under R.app.
-                ## Recentish OS X with XQuartz installed sets DISPLAY
-                ## on X11 startup: we ignore such a setting
-                if(.Platform$GUI == "AQUA" ||
-                    ((!nzchar(dsp) || grepl("org.macosforge.xquartz", dsp, fixed = TRUE))
-                     && .Call(C_makeQuartzDefault))) quartz
-                else if(nzchar(dsp) && .Platform$GUI %in% c("X11", "Tk")) X11
+                ## This detects if quartz() was built and if we are
+                ## running at the OS X console (both of which have to
+                ## be true under R.app).
+                if(.Platform$GUI == "AQUA" ||.Call(C_makeQuartzDefault)) quartz
+                else if(nzchar(Sys.getenv("DISPLAY"))
+                        && .Platform$GUI %in% c("X11", "Tk")) X11
                 else defdev
             }
         }

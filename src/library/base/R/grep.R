@@ -16,6 +16,11 @@
 #  A copy of the GNU General Public License is available at
 #  https://www.R-project.org/Licenses/
 
+
+## Q: Why are we using   as.character(.)   all over the place instead of doing that in C ?
+## A: These must work for objects which have their own as.character(.) methods *and*
+##    as.character() is fast [Primitive]
+
 strsplit <-
 function(x, split, fixed = FALSE, perl = FALSE, useBytes = FALSE)
     .Internal(strsplit(x, as.character(split), fixed, perl, useBytes))
@@ -85,9 +90,44 @@ function(pattern, x, offset = 1L, ignore.case = FALSE, value = FALSE,
 }
 
 regexec <-
-function(pattern, text, ignore.case = FALSE,
+function(pattern, text, ignore.case = FALSE, perl = FALSE,
          fixed = FALSE, useBytes = FALSE)
-    .Internal(regexec(pattern, text, ignore.case, fixed, useBytes))
+{
+    if(!perl || fixed)
+        return(.Internal(regexec(pattern, text, ignore.case, fixed,
+                                 useBytes)))
+
+    ## For perl = TRUE, re-use regexpr(perl = TRUE) which always
+    ## captures subexpressions.
+
+    match_data_from_pos_and_len <- function(pos, len) {
+        attr(pos, "match.length") <- len
+        pos
+    }
+
+    m <- regexpr(pattern, text,
+                 ignore.case = ignore.case, useBytes = useBytes,
+                 perl = TRUE)
+    y <- vector("list", length(text))
+    ind <- (m == -1L)
+    if(any(ind)) {
+        y[ind] <- rep.int(list(match_data_from_pos_and_len(-1L, -1L)),
+                          sum(ind))
+    }
+    ind <- !ind
+    if(any(ind)) {
+        pos <- cbind(m[ind],
+                     attr(m, "capture.start")[ind, , drop = FALSE])
+        len <- cbind(attr(m, "match.length")[ind],
+                     attr(m, "capture.length")[ind, , drop = FALSE])
+        y[ind] <- Map(match_data_from_pos_and_len,
+                      split(pos, row(pos)),
+                      split(len, row(len)))
+    }
+    if(identical(attr(m, "useBytes"), TRUE))
+        y <- lapply(y, `attr<-`, "useBytes", TRUE)
+    y
+}
 
 agrep <-
 function(pattern, x, max.distance = 0.1, costs = NULL,
@@ -238,50 +278,76 @@ function(x, m, invert = FALSE)
     ## direct matches give nothing and inverse matches give NA (as
     ## nothing was matched).
 
-    if(!ili && !invert) {
+    if(!ili && identical(invert, FALSE)) {
         so <- m[ind <- (!is.na(m) & (m > -1L))]
         eo <- so + attr(m, "match.length")[ind] - 1L
         return(substring(x[ind], so, eo))
     }
 
-    y <- if(invert) {
+    y <- if(is.na(invert)) {
         Map(function(u, so, ml) {
-            if((n <- length(so)) == 1L) {
-                if(is.na(so) )
-                    return(NA_character_) # Or u ...
-                else if(so == -1L)
-                    return(u)
-            }
-            beg <- if(n > 1L) {
-                ## regexec() could give overlapping matches.
-                ## Matches are non-overlapping iff
-                ##   eo[i] < so[i + 1], i = 1, ..., n - 1.
+                if((n <- length(so)) == 1L) {
+                    if(is.na(so) )
+                        return(NA_character_) # Or u ...
+                    else if(so == -1L)
+                        return(u)
+                }
                 eo <- so + ml - 1L
-                if(any(eo[-n] >= so[-1L]))
-                    stop(gettextf("need non-overlapping matches for %s",
-                                  sQuote("invert = TRUE")),
-                         domain = NA)
-                c(1L, eo + 1L)
-            } else {
-                c(1L, so + ml)
-            }
-            end <- c(so - 1L, nchar(u))
-            substring(u, beg, end)
-        },
+                if(n > 1L) {
+                    ## regexec() could give overlapping matches.
+                    ## Matches are non-overlapping iff
+                    ##   eo[i] < so[i + 1], i = 1, ..., n - 1.
+                    if(any(eo[-n] >= so[-1L]))
+                        stop(gettextf("need non-overlapping matches for %s",
+                                      sQuote("invert = NA")),
+                             domain = NA)
+                }
+                beg <- c(1L, c(rbind(so, eo + 1L)))
+                end <- c(c(rbind(so - 1L, eo)), nchar(u))
+                substring(u, beg, end)
+            },
             x, m,
             if(ili)
-            lapply(m, attr, "match.length")
+                lapply(m, attr, "match.length")
             else
-            attr(m, "match.length"),
+                attr(m, "match.length"),
+            USE.NAMES = FALSE)
+    } else if(invert) {
+        Map(function(u, so, ml) {
+                if((n <- length(so)) == 1L) {
+                    if(is.na(so) )
+                        return(NA_character_) # Or u ...
+                    else if(so == -1L)
+                        return(u)
+                }
+                beg <- if(n > 1L) {
+                    ## See above.
+                    eo <- so + ml - 1L
+                    if(any(eo[-n] >= so[-1L]))
+                        stop(gettextf("need non-overlapping matches for %s",
+                                      sQuote("invert = TRUE")),
+                             domain = NA)
+                    c(1L, eo + 1L)
+                } else {
+                    c(1L, so + ml)
+                }
+                end <- c(so - 1L, nchar(u))
+                substring(u, beg, end)
+            },
+            x, m,
+            if(ili)
+                lapply(m, attr, "match.length")
+            else
+                attr(m, "match.length"),
             USE.NAMES = FALSE)
     } else {
         Map(function(u, so, ml) {
-            if(length(so) == 1L) {
-                if(is.na(so) || (so == -1L))
-                    return(character())
-            }
-            substring(u, so, so + ml - 1L)
-        },
+                if(length(so) == 1L) {
+                    if(is.na(so) || (so == -1L))
+                        return(character())
+                }
+                substring(u, so, so + ml - 1L)
+            },
             x, m,
             lapply(m, attr, "match.length"),
             USE.NAMES = FALSE)

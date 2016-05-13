@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 2000-2013   The R Core Team.
+ *  Copyright (C) 2000-2016   The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,8 +23,13 @@
 #include <R_ext/Boolean.h>
 
 #ifndef NO_C_HEADERS
-# include <stddef.h> /* for size_t */
-# include <stdarg.h> /* for va_list */
+# if defined(__cplusplus) && !defined(DO_NOT_USE_CXX_HEADERS)
+#  include <cstddef>
+#  include <cstdarg>
+# else
+#  include <stddef.h> /* for size_t */
+#  include <stdarg.h> /* for va_list */
+# endif
 #endif
 
 /* IMPORTANT: we do not expect future connection APIs to be
@@ -83,6 +88,7 @@ extern "C" {
 SEXP   R_new_custom_connection(const char *description, const char *mode, const char *class_name, Rconnection *ptr);
 size_t R_ReadConnection(Rconnection con, void *buf, size_t n);
 size_t R_WriteConnection(Rconnection con, void *buf, size_t n);
+Rconnection R_GetConnection(SEXP sConn);
 
 #ifdef  __cplusplus
 }

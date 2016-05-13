@@ -110,13 +110,7 @@ lm.fit <- function (x, y, offset = NULL, method = "qr", tol = 1e-07,
     if(method != "qr")
 	warning(gettextf("method = '%s' is not supported. Using 'qr'", method),
                 domain = NA)
-    dots <- list(...)
-    if(length(dots) > 1L)
-	warning("extra arguments ", paste(sQuote(names(dots)), sep=", "),
-                " are disregarded.", domain = NA)
-    else if(length(dots) == 1L)
-	warning("extra argument ", sQuote(names(dots)),
-                " is disregarded.", domain = NA)
+    chkDots(...)
     z <- .Call(C_Cdqrls, x, y, tol, FALSE)
     if(!singular.ok && z$rank < p) stop("singular fit encountered")
     coef <- z$coefficients
@@ -169,13 +163,7 @@ lm.wfit <- function (x, y, w, offset = NULL, method = "qr", tol = 1e-7,
     if(method != "qr")
 	warning(gettextf("method = '%s' is not supported. Using 'qr'", method),
                 domain = NA)
-    dots <- list(...)
-    if(length(dots) > 1L)
-	warning("extra arguments ", paste(sQuote(names(dots)), sep=", "),
-                " are disregarded.", domain = NA)
-    else if(length(dots) == 1L)
-	warning("extra argument ", sQuote(names(dots)),
-                " is disregarded.", domain = NA)
+    chkDots(...)
     x.asgn <- attr(x, "assign")# save
     zero.weights <- any(w == 0)
     if (zero.weights) {
@@ -764,10 +752,6 @@ predict.lm <-
 	asgn <- split(order(aa), aaa)
 	if (hasintercept) {
 	    asgn$"(Intercept)" <- NULL
-	    if(!mmDone) {
-                mm <- model.matrix(object)
-                mmDone <- TRUE
-            }
 	    avx <- colMeans(mm)
 	    termsconst <- sum(avx[piv] * beta[piv])
 	}

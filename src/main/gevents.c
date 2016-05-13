@@ -64,7 +64,7 @@ do_setGraphicsEventEnv(SEXP call, SEXP op, SEXP args, SEXP env)
 
     eventEnv = CAR(args);
     if (TYPEOF(eventEnv) != ENVSXP)
-        error(_("internal error"));
+	error(_("internal error"));
 
     if (!dd->canGenMouseDown &&
 	!dd->canGenMouseUp &&
@@ -111,7 +111,7 @@ Rboolean haveListeningDev()
 	for(int i = 1; i < NumDevices(); i++)
 	{
 	    if ((gd = GEgetDevice(i)) && (dd = gd->dev)
-	         && dd->gettingEvent){
+		 && dd->gettingEvent){
 		ret = TRUE;
 		break;
 	    }
@@ -137,8 +137,8 @@ do_getGraphicsEvent(SEXP call, SEXP op, SEXP args, SEXP env)
     /* NB:  cleanup of event handlers must be done by driver in onExit handler */
 
     if (!NoDevices()) {
-        /* Initialize all devices */
-        i = 1;
+	/* Initialize all devices */
+	i = 1;
 	devNum = curDevice();
 	while (i++ < NumDevices()) {
 	    if ((gd = GEgetDevice(devNum)) && (dd = gd->dev)) {
@@ -185,7 +185,7 @@ do_getGraphicsEvent(SEXP call, SEXP op, SEXP args, SEXP env)
 	    }
 	}
 	/* clean up */
-        i = 1;
+	i = 1;
 	devNum = curDevice();
 	while (i++ < NumDevices()) {
 	    if ((gd = GEgetDevice(devNum)) && (dd = gd->dev)) {
@@ -217,8 +217,8 @@ void doMouseEvent(pDevDesc dd, R_MouseEvent event,
 	PROTECT(handler);
     }
     if (TYPEOF(handler) == CLOSXP) {
-        SEXP s_which = install("which");
-        defineVar(s_which, ScalarInteger(ndevNumber(dd)+1), dd->eventEnv);
+	SEXP s_which = install("which");
+	defineVar(s_which, ScalarInteger(ndevNumber(dd)+1), dd->eventEnv);
 	// Be portable: see PR#15793
 	int len = ((buttons & leftButton) != 0)
 	  + ((buttons & middleButton) != 0)
@@ -264,12 +264,12 @@ void doKeybd(pDevDesc dd, R_KeyName rkey,
     }
 
     if (TYPEOF(handler) == CLOSXP) {
-        SEXP s_which = install("which");
-        defineVar(s_which, ScalarInteger(ndevNumber(dd)+1), dd->eventEnv);
+	SEXP s_which = install("which");
+	defineVar(s_which, ScalarInteger(ndevNumber(dd)+1), dd->eventEnv);
 	PROTECT(skey = mkString(keyname ? keyname : keynames[rkey]));
 	PROTECT(temp = lang2(handler, skey));
 	PROTECT(result = eval(temp, dd->eventEnv));
-        defineVar(install("result"), result, dd->eventEnv);
+	defineVar(install("result"), result, dd->eventEnv);
 	UNPROTECT(3);
 	R_FlushConsole();
     }

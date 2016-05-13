@@ -1,6 +1,6 @@
 /*
  *  Mathlib : A C Library of Special Functions
- *  Copyright (C) 1998-2012 The R Core Team
+ *  Copyright (C) 1998-2015 The R Core Team
  *  based on AS243 (C) 1989 Royal Statistical Society
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,8 @@
  *	make CFLAGS='-DDEBUG_pnt -g'
 
  * -- Feb.3, 1999; M.Maechler:
-	- For 't > ncp > 20' (or so)	the result is completely WRONG!
+	- For 't > ncp > 20' (or so)	the result is completely WRONG!  <== no longer true
+	- but for ncp > 100
  */
 
 double pnt(double t, double df, double ncp, int lower_tail, int log_p)
@@ -81,7 +82,7 @@ double pnt(double t, double df, double ncp, int lower_tail, int log_p)
 	/* Approx. from	 Abramowitz & Stegun 26.7.10 (p.949) */
 	s = 1./(4.*df);
 
-	return pnorm((double)(tt*(1. - s)), del, 
+	return pnorm((double)(tt*(1. - s)), del,
 		     sqrt((double) (1. + tt*tt*2.*s)),
 		     lower_tail != negdel, log_p);
     }
@@ -109,21 +110,21 @@ double pnt(double t, double df, double ncp, int lower_tail, int log_p)
 	    return R_DT_0;
 	}
 #ifdef DEBUG_pnt
-        REprintf("it  1e5*(godd,   geven)|          p           q           s"
-               /* 1.3 1..4..7.9 1..4..7.9|1..4..7.901 1..4..7.901 1..4..7.901 */
-                 "        pnt(*)     errbd\n");
-               /* 1..4..7..0..34 1..4..7.9*/
+	REprintf("it  1e5*(godd,   geven)|          p           q           s"
+	       /* 1.3 1..4..7.9 1..4..7.9|1..4..7.901 1..4..7.901 1..4..7.901 */
+		 "        pnt(*)     errbd\n");
+	       /* 1..4..7..0..34 1..4..7.9*/
 #endif
 	q = M_SQRT_2dPI * p * del;
 	s = .5 - p;
-        /* s = 0.5 - p = 0.5*(1 - exp(-.5 L)) =  -0.5*expm1(-.5 L)) */
-        if(s < 1e-7)
-            s = -0.5 * expm1(-0.5 * lambda);
+	/* s = 0.5 - p = 0.5*(1 - exp(-.5 L)) =  -0.5*expm1(-.5 L)) */
+	if(s < 1e-7)
+	    s = -0.5 * expm1(-0.5 * lambda);
 	a = .5;
 	b = .5 * df;
 	/* rxb = (1 - x) ^ b   [ ~= 1 - b*x for tiny x --> see 'xeven' below]
 	 *       where '(1 - x)' =: rxb {accurately!} above */
-        rxb = pow(rxb, b);
+	rxb = pow(rxb, b);
 	albeta = M_LN_SQRT_PI + lgammafn(b) - lgammafn(.5 + b);
 	xodd = pbeta(x, a, b, /*lower*/TRUE, /*log_p*/FALSE);
 	godd = 2. * rxb * exp(a * log(x) - albeta);

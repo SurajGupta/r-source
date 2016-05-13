@@ -28,8 +28,7 @@
 #include <config.h>
 #endif
 
-#include <R_ext/Arith.h>
-
+#include <R_ext/Arith.h> // includes math.h
 #include <Rinternals.h>
 
 /* NB: this only works in the lower half of y, but pads with zeros. */

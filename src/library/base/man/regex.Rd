@@ -206,10 +206,11 @@
   For complete details please consult the man pages for PCRE (and not
   PCRE2), especially \command{man pcrepattern} and \command{man
   pcreapi}), on your system or from the sources at
-  \url{http://www.pcre.org}. If PCRE support was compiled from the
-  sources within \R (the default), the PCRE version is 8.37 as described
-  here.  (The version in use can be found by calling
-  \code{\link{extSoftVersion}}.)
+  \url{http://www.pcre.org}.  (The version in use can be found by
+  calling \code{\link{extSoftVersion}}.  It need not be the version
+  described in the system's man page.  As PCRE has been feature-frozen
+  for some time, the man pages at
+  \url{http://www.pcre.org/original/doc/html/} should be a good match.)
 
   Perl regular expressions can be computed byte-by-byte or
   (UTF-8) character-by-character: the latter is used in all multibyte
@@ -293,8 +294,8 @@
   properties see the PCRE documentation, but for example \samp{Lu} is
   \sQuote{upper case letter} and \samp{Sc} is \sQuote{currency symbol}.
   (This support depends on the PCRE library being compiled with
-  \sQuote{Unicode property support}: an external library might not be.
-  It can be checked \emph{via} \code{\link{pcre_config}}.)
+  \sQuote{Unicode property support} which can be checked \emph{via}
+  \code{\link{pcre_config}}.)
 
   The sequence \samp{(?#} marks the start of a comment which continues
   up to the next closing parenthesis.  Nested parentheses are not

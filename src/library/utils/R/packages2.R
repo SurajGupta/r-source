@@ -1,7 +1,7 @@
 #  File src/library/utils/R/packages2.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2015 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ install.packages <-
         if (type2 == "source")
             stop("type 'binary' is not supported on this platform")
         else type <- type2
-        if(!missing(contriburl) || !is.null(available))
+        if(type == "both" && (!missing(contriburl) || !is.null(available)))
            stop("specifying 'contriburl' or 'available' requires a single type, not type = \"both\"")
     }
     if (is.logical(clean) && clean)
@@ -219,7 +219,7 @@ install.packages <-
         ## if no packages were specified, use a menu
 	if(.Platform$OS.type == "windows" || .Platform$GUI == "AQUA"
            || (capabilities("tcltk")
-               && capabilities("X11") && suppressWarnings(tcltk:::.TkUp)) ) {
+               && capabilities("X11") && suppressWarnings(tcltk::.TkUp)) ) {
             ## this is the condition for a graphical select.list()
 	} else
 	    stop("no packages were specified")
@@ -230,7 +230,7 @@ install.packages <-
 	    av <- available.packages(contriburl = contriburl, method = method)
 	    if (missing(repos)) ## Evaluating contriburl may have changed repos, which may be used below
 	      repos <- getOption("repos")
-            if(type != "both") available <- av 
+            if(type != "both") available <- av
         } else av <- available
 	if(NROW(av)) {
             ## avoid duplicate entries in menus, since the latest available
@@ -331,7 +331,7 @@ install.packages <-
            }
         }
     }
-    
+
     ## check if we should infer the type
     if (length(pkgs) == 1L && is.null(repos) && type == "both") {
     	if (  (type2 %in% "win.binary" && grepl("[.]zip$", pkgs))
@@ -748,7 +748,7 @@ install.packages <-
                 ##   cmd <- paste(c(shQuote(command), env, args),
                 ##                collapse = " ")
                 ## on Windows?
-                cmd <- paste(c(shQuote(cmd0), args), collapse = " ")
+                cmd <- paste(c("MAKEFLAGS=", shQuote(cmd0), args), collapse = " ")
                 ## </NOTE>
                 deps <- aDL[[pkg]]
                 deps <- deps[deps %in% upkgs]
@@ -812,10 +812,11 @@ install.packages <-
                 file.remove(outfiles)
             }
         }
+        ## Using stderr is the wish of PR#16420
         if(!quiet && nonlocalrepos && !is.null(tmpd) && is.null(destdir))
             cat("\n", gettextf("The downloaded source packages are in\n\t%s",
                                sQuote(normalizePath(tmpd, mustWork = FALSE))),
-                "\n", sep = "")
+                "\n", sep = "", file = stderr())
         ## update packages.html on Unix only if .Library was installed into
         libs_used <- unique(update[, 2L])
         if(.Platform$OS.type == "unix" && .Library %in% libs_used) {
@@ -872,10 +873,9 @@ registerNames <- function(names, package, .listFile, add = TRUE) {
 packageName <- function(env = parent.frame()) {
     if (!is.environment(env)) stop("'env' must be an environment")
     env <- topenv(env)
-    if (exists(".packageName", envir = env, inherits = FALSE))
-	get(".packageName", envir = env, inherits = FALSE)
+    if (!is.null(pn <- get0(".packageName", envir = env, inherits = FALSE)))
+	pn
     else if (identical(env, .BaseNamespaceEnv))
 	"base"
-    else
-	NULL
+    ## else NULL
 }

@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000-2014 The R Core Team
+ *  Copyright (C) 2000-2015 The R Core Team
  *  Copyright (C) 2004-2009 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -120,8 +120,8 @@
  *
  *  AUTHOR
  *
- *    Amos, D. E.  	(Fortran)
- *    Ross Ihaka   	(C Translation)
+ *    Amos, D. E.	(Fortran)
+ *    Ross Ihaka	(C Translation)
  *    Martin Maechler   (x < 0, and psigamma())
  *
  *  REFERENCES
@@ -145,7 +145,7 @@
 
 #define n_max (100)
 
-/* From R, currently only used for kode = 1, m = 1, n in {0,1,2,3} : */
+/* From R, currently only used for kode = 1, m = 1 : */
 void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
 {
     const static double bvalues[] = {	/* Bernoulli Numbers */
@@ -481,7 +481,7 @@ void dpsifn(double x, int n, int kode, int m, double *ans, int *nz, int *ierr)
     }
 #else
 # define ML_TREAT_psigam(_IERR_)	\
-    if(_IERR_ != 0) 			\
+    if(_IERR_ != 0)			\
 	return ML_NAN
 #endif
 

@@ -314,6 +314,14 @@ function(x)
                  regmatches(x, gregexpr(pattern, y), invert = TRUE))
     x <- x[!sapply(x, .is_not_nonempty_text)]
 
+    ## don't expect Jr. to be a person
+    jr <- which(!is.na(match(x, c("Jr", "Jr.", "jr", "jr."))))
+    if(length(jr)) {
+        jr <- jr[jr > 1L]
+        x[jr - 1L] <- paste(x[jr - 1L], x[jr], sep = ", ")
+        x <- x[-jr]
+    }
+
     if(!length(x)) return(person())
 
     ## Step C.
@@ -333,7 +341,29 @@ function(x)
         else NULL
         x <- sub("[[:space:]]*\\[[^)]*\\]", "", x)
         x <- unlist(strsplit(x, "[[:space:]]+"))
-        z <- person(given = x[-length(x)], family = x[length(x)],
+
+	## try to correctly guess von/van/de, Jr., etc.
+	jr <- c("Jr", "Jr.")
+	von <- c("De", "Den", "Der", "La", "Le", "Ten", "Van", "Von")
+	family <- x[length(x)]
+	given <- x[-length(x)]
+	if(!is.null(family) &&
+           !is.na(match(family, c(jr, tolower(jr))))) {
+            family <- paste(given[length(given)], family)
+            given <- given[-length(given)]
+	}
+	if((ng <- length(given)) &&
+           !is.na(match(gng <- given[ng], c(von, tolower(von))))) {
+            family <- paste(gng, family)
+            given <- given[-ng]
+	}
+	if((ng <- length(given)) &&
+           !is.na(match(gng <- given[ng], c(von, tolower(von))))) {
+            family <- paste(gng, family)
+            given <- given[-ng]
+	}
+	
+        z <- person(given = given, family = family,
                     email = email, role = role, comment = comment)
         return(z)
     }
@@ -428,8 +458,14 @@ function(x, ...)
 
 toBibtex.person <-
 function(object, ...)
-    paste(format(object, include = c("given", "family")),
-          collapse = " and ")
+{
+    object <- sapply(object, function(p) {
+         br <- if(is.null(p$family)) c("{", "}") else c("", "")
+         format(p, include = c("family", "given"),
+                braces = list(given = br, family = c("", ",")))
+    })
+    paste(object, collapse = " and ")
+}
 
 ######################################################################
 
@@ -628,15 +664,21 @@ function(x, style = "text", .bibstyle = NULL,
         on.exit({tools::Rd2txt_options(saveopt); close(out)})
         sapply(.bibentry_expand_crossrefs(x),
                function(y) {
-                   rd <- tools::toRd(y, style = .bibstyle)
+                   txt <- tools::toRd(y, style = .bibstyle)
                    ## <FIXME>
                    ## Ensure a closing </p> via a final empty line for
                    ## now (PR #15692).
-                   if(style == "html") rd <- paste(rd, "\n")
+                   if(style == "html") txt <- paste(txt, "\n")
                    ## </FIXME>
-                   con <- textConnection(rd)
+                   con <- textConnection(txt)
                    on.exit(close(con))
-                   f(con, fragment = TRUE, out = out, permissive = TRUE, ...)
+                   rd <- tools::parse_Rd(con,
+                                         fragment = TRUE,
+                                         permissive = TRUE)
+                   rd <- tools:::processRdSexprs(rd,
+                                                 "build",
+                                                 macros = attr(rd, "macros"))
+                   f(rd, fragment = TRUE, out = out, ...)
                    paste(readLines(out), collapse = "\n")
                })
     }
@@ -769,11 +811,6 @@ function(x, style = "text", .bibstyle = NULL, ...)
     invisible(x)
 }
 
-## Not vectorized for now: see ?regmatches for a vectorized version.
-.blanks <-
-function(n)
-    paste(rep.int(" ", n), collapse = "")
-
 .format_call_RR <-
 function(cname, cargs)
 {
@@ -783,7 +820,7 @@ function(cname, cargs)
     lens <- lengths(cargs)
     sums <- cumsum(lens)
     starters <- c(sprintf("%s(", cname),
-                  rep.int(.blanks(nchar(cname) + 1L), sums[n] - 1L))
+                  rep.int(strrep(" ", nchar(cname) + 1L), sums[n] - 1L))
     trailers <- c(rep.int("", sums[n] - 1L), ")")
     trailers[sums[-n]] <- ","
     sprintf("%s%s%s", starters, unlist(cargs), trailers)
@@ -822,7 +859,7 @@ function(x, collapse = FALSE)
         n <- length(v)
         if(n > 1L)
             prefix <- c(prefix,
-                        rep.int(.blanks(nchar(prefix)), n - 1L))
+                        rep.int(strrep(" ", nchar(prefix)), n - 1L))
         sprintf("%s%s", prefix, v)
     }
 
@@ -853,10 +890,10 @@ function(x, collapse = FALSE)
 
     if(!is.null(mheader <- attr(x, "mheader")))
         s[[1L]] <- c(s[[1L]],
-                     paste("mheader = ", deparse(mheader)))
+                     paste("mheader =", deparse(mheader)))
     if(!is.null(mfooter <- attr(x, "mfooter")))
         s[[1L]] <- c(s[[1L]],
-                     paste("mfooter = ", deparse(mfooter)))
+                     paste("mfooter =", deparse(mfooter)))
 
     s <- Map(.format_call_RR, "bibentry", s)
     if(collapse && (length(s) > 1L))
@@ -1127,18 +1164,27 @@ function(package = "base", lib.loc = NULL, auto = NULL)
 
     year <- sub("-.*", "", meta$`Date/Publication`)
     if(!length(year)) {
-        year <- sub(".*((19|20)[[:digit:]]{2}).*", "\\1", meta$Date,
-                    perl = TRUE) # may not be needed, but safer
-        if(is.null(meta$Date)){
+        if(is.null(meta$Date)) {
             warning(gettextf("no date field in DESCRIPTION file of package %s",
                              sQuote(package)),
                     domain = NA)
+        } else {
+            date <- trimws(as.vector(meta$Date))[1L]
+            date <- strptime(date, "%Y-%m-%d", tz = "GMT")
+            if(!is.na(date)) year <- format(date, "%Y")
         }
-        else if(!length(year)) {
-            warning(gettextf("could not determine year for %s from package DESCRIPTION file",
-                             sQuote(package)),
-                    domain = NA)
-        }
+    }
+    ## If neither Date/Publication nor Date work, try Packaged (build
+    ## time stamp): if this fails too, use NA (PR #16550).
+    if(!length(year)) {
+        date <- as.POSIXlt(sub(";.*", "", trimws(meta$Packaged)[1L]))
+        if(!is.na(date)) year <- format(date, "%Y")
+    }
+    if(!length(year)) {
+        warning(gettextf("could not determine year for %s from package DESCRIPTION file",
+                         sQuote(package)),
+                domain = NA)
+        year <- NA_character_
     }
 
     author <- meta$`Authors@R`
@@ -1165,10 +1211,9 @@ function(package = "base", lib.loc = NULL, auto = NULL)
               note = paste("R package version", meta$Version)
               )
 
-    z$url <- if(identical(meta$Repository, "CRAN"))
-        sprintf("https://CRAN.R-project.org/package=%s", package)
-    else
-        meta$URL
+    if(identical(meta$Repository, "CRAN"))
+        z$url <- 
+            sprintf("https://CRAN.R-project.org/package=%s", package)
 
     if(identical(meta$Repository, "R-Forge")) {
         z$url <- if(!is.null(rfp <- meta$"Repository/R-Forge/Project"))
@@ -1177,6 +1222,15 @@ function(package = "base", lib.loc = NULL, auto = NULL)
             "https://R-Forge.R-project.org/"
         if(!is.null(rfr <- meta$"Repository/R-Forge/Revision"))
             z$note <- paste(z$note, rfr, sep = "/r")
+    }
+
+    if(!length(z$url) && !is.null(url <- meta$URL)) {
+        ## Cannot have several URLs in BibTeX and bibentry object URL
+        ## fields (PR #16240).
+        if(grepl("[, ]", url))
+            z$note <- url
+        else
+            z$url <- url
     }
 
     header <- if(!auto_was_meta) {

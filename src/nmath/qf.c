@@ -1,7 +1,7 @@
 /*
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 1998 Ross Ihaka
- *  Copyright (C) 2000-8 The R Core Team
+ *  Copyright (C) 2000-2015 The R Core Team
  *  Copyright (C) 2005 The R Foundation
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,13 +43,14 @@ double qf(double p, double df1, double df2, int lower_tail, int log_p)
     if (df1 <= df2 && df2 > 4e5) {
 	if(!R_FINITE(df1)) /* df1 == df2 == Inf : */
 	    return 1.;
- 	/* else */
+	/* else */
 	return qchisq(p, df1, lower_tail, log_p) / df1;
     }
     if (df1 > 4e5) { /* and so  df2 < df1 */
 	return df2 / qchisq(p, df2, !lower_tail, log_p);
     }
 
+    // FIXME: (1/qb - 1) = (1 - qb)/qb; if we know qb ~= 1, should use other tail
     p = (1. / qbeta(p, df2/2, df1/2, !lower_tail, log_p) - 1.) * (df2 / df1);
     return ML_VALID(p) ? p : ML_NAN;
 }

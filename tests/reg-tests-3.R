@@ -11,7 +11,7 @@ str(ordered(ff, exclude=NULL))
 if(require(survival)) {
     (sa <- Surv(aml$time, aml$status))
     str(sa)
-    detach("package:survival")
+    detach("package:survival", unload = TRUE)
 }
 ## were different, the last one failed in 1.6.2 (at least)
 
@@ -92,7 +92,7 @@ if(require("survival")) {
     print(as.matrix(df.soa)) # numeric result
     df.soac <- data.frame(soa, letters[1:5])
     print(as.matrix(df.soac)) # character result
-    detach("package:survival")
+    detach("package:survival", unload = TRUE)
 }
 ## failed in 2.8.1
 
@@ -183,3 +183,16 @@ if(require("Matrix")) {
  rm(M,M1,M2)
  detach("package:Matrix", unload=TRUE)
 }##{Matrix}
+
+## Invalid UTF-8 strings
+x <- c("Jetz", "no", "chli", "z\xc3\xbcrit\xc3\xbc\xc3\xbctsch:",
+       "(noch", "ein", "bi\xc3\x9fchen", "Z\xc3\xbc", "deutsch)",
+       "\xfa\xb4\xbf\xbf\x9f")
+lapply(x, utf8ToInt)
+Encoding(x) <- "UTF-8"
+nchar(x, "b")
+try(nchar(x, "c"))
+try(nchar(x, "w"))
+nchar(x, "c", allowNA = TRUE)
+nchar(x, "w", allowNA = TRUE)
+## Results differed by platform, but some gave incorrect results on string 10.

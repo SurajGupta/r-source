@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: R-3.1.0\n"
-"Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2015-06-06 13:58+0100\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-04-01 10:28-0700\n"
 "PO-Revision-Date: 2013-03-01 16:24+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core <r-core@r-project.org>\n"
@@ -35,7 +35,7 @@ msgstr "ungültiges tclObj -- evtl. aus einer anderen Sitzung gespeichert?"
 #: tcltk.c:625
 msgid "argument list is too long in tcltk internal function 'callback_closure'"
 msgstr ""
-"Argumentliste ist für internen tcltk Funktion 'calback_closure' zu lang"
+"Argumentliste ist für interne tcltk Funktion 'callback_closure' zu lang"
 
 #: tcltk.c:658
 msgid "argument is not of correct type"
@@ -51,7 +51,7 @@ msgstr "Tcl ist nicht geladen"
 
 #: tcltk_unix.c:98
 msgid "Tcl is not last loaded handler"
-msgstr "Tcl ist nicht der letztw geladenen Handler"
+msgstr "Tcl ist nicht der letzte geladene Handler"
 
 #~ msgid "Tcl already loaded"
 #~ msgstr "Tcl ist bereits geladen"

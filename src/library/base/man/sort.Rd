@@ -20,14 +20,16 @@ sort(x, decreasing = FALSE, \dots)
 \method{sort}{default}(x, decreasing = FALSE, na.last = NA, \dots)
 
 sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
-         method = c("shell", "quick"), index.return = FALSE)
+         method = c("shell", "quick", "radix"), index.return = FALSE)
 }
 \arguments{
   \item{x}{for \code{sort} an \R object with a class or a numeric,
     complex, character or logical vector.  For \code{sort.int}, a
     numeric, complex, character or logical vector, or a factor.}
   \item{decreasing}{logical.  Should the sort be increasing or decreasing?
-     Not available for partial sorting.}
+    For the \code{"radix"} method, this can be a vector of
+    length equal to the number of arguments in \code{\dots}. For the
+    other methods, it must be length one. Not available for partial sorting.}
   \item{\dots}{arguments to be passed to or from methods or (for the
     default methods and objects without a class) to \code{sort.int}.}
   \item{na.last}{for controlling the treatment of \code{NA}s.
@@ -37,8 +39,9 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   \item{method}{character string specifying the algorithm used.  Not
     available for partial sorting.  Can be abbreviated.}
   \item{index.return}{logical indicating if the ordering index vector should
-    be returned as well; this is only available for a few cases, the default
-    \code{na.last = NA} and full sorting of non-factors.}
+    be returned as well. Supported by \code{method == "radix"} for any
+    \code{na.last} mode and data type, and the other methods when
+    \code{na.last = NA} (the default) and fully sorting non-factors.}
 }
 \details{
   \code{sort} is a generic function for which methods can be written,
@@ -53,7 +56,8 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   Complex values are sorted first by the real part, then the imaginary
   part.
 
-  The sort order for character vectors will depend on the collating
+  Except for method \code{"radix"},
+  the sort order for character vectors will depend on the collating
   sequence of the locale in use: see \code{\link{Comparison}}.
   The sort order for factors is the order of their levels (which is
   particularly appropriate for ordered factors).
@@ -85,9 +89,42 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   performance in the rare worst case.  (Peto's modification using a
   pseudo-random midpoint is used to make the worst case rarer.)  This is
   not a stable sort, and ties may be reordered.
+  
+  Method \code{"radix"} relies on simple hashing to scale time linearly
+  with the input size, i.e., its asymptotic time complexity is O(n). The
+  specific variant and its implementation originated from the data.table
+  package and are due to Matt Dowle and Arun Srinivasan.  For small
+  inputs (< 200), the implementation uses an insertion sort (O(n^2))
+  that operates in-place to avoid the allocation overhead of the radix
+  sort. For integer vectors of range less than 100,000, it switches to a
+  simpler and faster linear time counting sort. In all cases, the sort
+  is stable; the order of ties is preserved. It is the default method
+  for integer vectors and factors.
 
-  Factors with less than 100,000 levels are sorted by radix sorting when
-  \code{method} is not supplied: see \code{\link{sort.list}}.
+  The \code{"radix"} method generally outperforms the other methods,
+  especially for character vectors and small integers. Compared to quick
+  sort, it is slightly faster for (large) integers and double vectors
+  (but unlike quick sort, radix is stable and supports all
+  \code{na.last} options). The implementation is order of magnitudes
+  faster than shell sort for character vectors, in part thanks to clever
+  use of the internal \code{CHARSXP} table.
+
+  However, there are some caveats with the radix sort:
+  \itemize{
+    \item{
+      If \code{x} is a \code{character} vector, all elements must share
+      the same encoding. Only UTF-8 (including ASCII) and Latin-1
+      encodings are supported. Collation always follows the "C" locale.
+    }
+    \item{
+      There is a small loss of precision when comparing double
+      values. This may be configurable in the future.
+    }
+    \item{
+      Long vectors (with more than 2^32 elements) and \code{complex}
+      vectors are not supported yet.
+    }
+  }
 }
 
 \value{
@@ -97,14 +134,17 @@ sort.int(x, partial = NULL, na.last = NA, decreasing = FALSE,
   specific method the default method will be used and is equivalent to
   \code{x[order(x, ...)]}: this depends on the class having a suitable
   method for \code{[} (and also that \code{\link{order}} will work,
-  which is not the case for a class based on a list).
+  which requires a \code{\link{xtfrm}} method).
 
   For \code{sort.int} the value is the sorted vector unless
   \code{index.return} is true, when the result is a list with components
   named \code{x} and \code{ix} containing the sorted numbers and the
   ordering index vector.  In the latter case, if \code{method ==
     "quick"} ties may be reversed in the ordering (unlike
-  \code{sort.list}) as quicksort is not stable.  NB: the index vector
+  \code{sort.list}) as quicksort is not stable.  For \code{method ==
+  "radix"}, \code{index.return} is supported for all \code{na.last}
+  modes. The other methods only support \code{index.return}
+  when \code{na.last} is \code{NA}, so the index vector
   refers to element numbers \emph{after removal of \code{NA}s}: see
   \code{\link{order}} if you want the original element numbers.
 
@@ -147,10 +187,10 @@ x <- swiss$Education[1:25]
 x; sort(x); sort(x, partial = c(10, 15))
 
 ## illustrate 'stable' sorting (of ties):
-sort(c(10:3, 2:12), method = "sh", index.return = TRUE) # is stable
+sort(c(10:3, 2:12), method = "shell", index.return = TRUE) # is stable
 ## $x : 2  3  3  4  4  5  5  6  6  7  7  8  8  9  9 10 10 11 12
 ## $ix: 9  8 10  7 11  6 12  5 13  4 14  3 15  2 16  1 17 18 19
-sort(c(10:3, 2:12), method = "qu", index.return = TRUE) # is not
+sort(c(10:3, 2:12), method = "quick", index.return = TRUE) # is not
 ## $x : 2  3  3  4  4  5  5  6  6  7  7  8  8  9  9 10 10 11 12
 ## $ix: 9 10  8  7 11  6 12  5 13  4 14  3 15 16  2 17  1 18 19
 
@@ -168,7 +208,7 @@ for(is in seq_len(Sim)){
   x <- rnorm(N)
   c1[is] <- system.time(for(i in 1:rep) sort(x, method = "shell"))[1]
   c2[is] <- system.time(for(i in 1:rep) sort(x, method = "quick"))[1]
-  stopifnot(sort(x, method = "s") == sort(x, method = "q"))
+  stopifnot(sort(x, method = "shell") == sort(x, method = "quick"))
 }
 rbind(ShellSort = c1, QuickSort = c2)
 cat("Speedup factor of quick sort():\n")
@@ -178,7 +218,9 @@ summary({qq <- c1 / c2; qq[is.finite(qq)]})
 x <- rnorm(1e7)
 system.time(x1 <- sort(x, method = "shell"))
 system.time(x2 <- sort(x, method = "quick"))
+system.time(x3 <- sort(x, method = "radix"))
 stopifnot(identical(x1, x2))
+stopifnot(all.equal(x1, x3)) # imprecision in radix sort
 }}
 \keyword{univar}
 \keyword{manip}

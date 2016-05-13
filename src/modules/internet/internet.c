@@ -110,7 +110,7 @@ static Rboolean url_open(Rconnection con)
     switch(type) {
 #ifdef Win32
     case HTTPSsh:
-	    warning(_("for https:// URLs use setInternet2(TRUE)"));
+	    warning(_("for https:// URLs use method = \"wininet\""));
 	    return FALSE;
 #endif
     case HTTPsh:
@@ -150,7 +150,7 @@ static Rboolean url_open(Rconnection con)
 	break;
 
     default:
-	warning(_("URL scheme unsupported by this method"));
+	warning(_("scheme not supported in URL '%s'"), url);
 	return FALSE;
     }
 
@@ -271,7 +271,7 @@ static Rboolean url_open2(Rconnection con)
 	break;
 
     default:
-	warning(_("URL scheme unsupported by this method"));
+	warning(_("scheme not supported in URL '%s'"), url);
 	return FALSE;
     }
 
@@ -470,12 +470,13 @@ static SEXP in_do_download(SEXP args)
     cacheOK = asLogical(CAR(args));
     if(cacheOK == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "cacheOK");
+    Rboolean file_URL = (strncmp(url, "file://", 7) == 0);
 #ifdef Win32
     int meth = asLogical(CADR(args));
     if(meth == NA_LOGICAL)
 	error(_("invalid '%s' argument"), "method");
-    if(meth == 0) meth = UseInternet2;
-    if (R_Interactive && !quiet && !pbar.wprog) {
+//    if(meth == 0) meth = UseInternet2;
+    if (!file_URL && R_Interactive && !quiet && !pbar.wprog) {
 	pbar.wprog = newwindow(_("Download progress"), rect(0, 0, 540, 100),
 			       Titlebar | Centered);
 	setbackground(pbar.wprog, dialog_bg());
@@ -484,7 +485,7 @@ static SEXP in_do_download(SEXP args)
 	pbar.pc = 0;
     }
 #endif
-    if(strncmp(url, "file://", 7) == 0) {
+    if(file_URL) {
 	FILE *in, *out;
 	static char buf[CPBUFSIZE];
 	size_t n;
@@ -495,7 +496,7 @@ static SEXP in_do_download(SEXP args)
 	if (strlen(url) > 9 && url[7] == '/' && url[9] == ':') nh = 8;
 #endif
 
-	/* Use binary transfers */
+	/* Use binary transfers? */
 	in = R_fopen(R_ExpandFileName(url+nh), (mode[2] == 'b') ? "rb" : "r");
 	if(!in) {
 	    error(_("cannot open URL '%s', reason '%s'"),
@@ -514,7 +515,6 @@ static SEXP in_do_download(SEXP args)
 	}
 	fclose(out); fclose(in);
 
-#ifdef HAVE_INTERNET
     } else if (strncmp(url, "http://", 7) == 0
 #ifdef Win32
 	       || ((strncmp(url, "https://", 8) == 0) && meth)
@@ -754,16 +754,12 @@ static SEXP in_do_download(SEXP args)
 	R_Busy(0);
 	fclose(out);
 	if (status == 1) error(_("cannot open URL '%s'"), url);
-#endif
-
     } else
-	error(_("unsupported URL scheme"));
+	error(_("scheme not supported in URL '%s'"), url);
 
     return ScalarInteger(status);
 }
 
-
-#if defined(SUPPORT_LIBXML)
 
 void *in_R_HTTPOpen(const char *url, const char *headers, const int cacheOK)
 {
@@ -869,7 +865,6 @@ static void in_R_FTPClose(void *ctx)
 	free(ctx);
     }
 }
-#endif /* SUPPORT_LIBXML */
 
 
 #ifdef Win32
@@ -888,7 +883,7 @@ static void *in_R_HTTPOpen2(const char *url, const char *headers,
 			    const int cacheOK)
 {
     WIctxt  wictxt;
-    DWORD status, d1 = 4, d2 = 0, d3 = 100;
+    DWORD status = 0, len = 0, d1 = 4, d2 = 0, d3 = 100;
     char buf[101], *p;
 
     wictxt = (WIctxt) malloc(sizeof(wIctxt));
@@ -955,20 +950,22 @@ static void *in_R_HTTPOpen2(const char *url, const char *headers,
 		  HTTP_QUERY_CONTENT_TYPE, &buf, &d3, &d2);
     d2 = 0;
     // NB: this can only retrieve in a DWORD, so up to 2GB or 4GB?
-    HttpQueryInfo(wictxt->session,
-		  HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER,
-		  &status, &d1, &d2);
-    wictxt->length = status;
+    if (HttpQueryInfo(wictxt->session,
+		      HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER,
+		      &len, &d1, &d2))
+	wictxt->length = len;
     wictxt->type = strdup(buf);
     if(!IDquiet) {
-	if(status > 1024*1024)
-	    REprintf("Content type '%s' length %0.0f bytes (%0.1f MB)\n",
-		     buf, (double) status, status/1024.0/1024.0);
-	else if(status > 10240)
-	    REprintf("Content type '%s' length %d bytes (%d KB)\n",
-		     buf, (int) status, (int) (status/1024));
-	else
-	    REprintf("Content type '%s' length %d bytes\n", buf, (int) status);
+	REprintf("Content type '%s'", buf);
+	if(len > 1024*1024)
+	    REprintf(" length %0.0f bytes (%0.1f MB)\n", (double)len,
+		     len/1024.0/1024.0);
+	else if(len > 10240)
+	    REprintf(" length %d bytes (%d KB)\n", 
+		     (int)len, (int)(len/1024));
+	else if(wictxt->length >= 0) /* signed; len is not */
+	    REprintf(" length %d bytes\n", (int)len);
+	else REprintf(" length unknown\n", len);
 	R_FlushConsole();
     }
 
@@ -1038,37 +1035,6 @@ static void *in_R_FTPOpen2(const char *url)
     return (void *)wictxt;
 }
 #endif // Win32
-
-#ifndef HAVE_INTERNET
-static void *in_R_HTTPOpen(const char *url, const char *headers,
-			   const int cacheOK)
-{
-    return NULL;
-}
-
-static int in_R_HTTPRead(void *ctx, char *dest, int len)
-{
-    return -1;
-}
-
-static void in_R_HTTPClose(void *ctx)
-{
-}
-
-static void *in_R_FTPOpen(const char *url)
-{
-    return NULL;
-}
-
-static int in_R_FTPRead(void *ctx, char *dest, int len)
-{
-    return -1;
-}
-
-static void in_R_FTPClose(void *ctx)
-{
-}
-#endif
 
 
 #define MBUFSIZE 8192

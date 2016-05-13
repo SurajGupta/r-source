@@ -41,13 +41,13 @@ newPSOCKnode <- function(machine = "localhost", ...,
                  " PORT=", port,
                  " OUT=", outfile,
                  " TIMEOUT=", timeout,
-                 " METHODS=", methods,
                  " XDR=", useXDR)
     arg <- "parallel:::.slaveRSOCK()"
     rscript <- if (getClusterOption("homogeneous", options)) {
         shQuote(getClusterOption("rscript", options))
     } else "Rscript"
     rscript_args <- getClusterOption("rscript_args", options)
+    if(methods) rscript_args <-c("--default-packages=datasets,utils,grDevices,graphics,stats,methods",  rscript_args)
 
     ## in principle we should quote these,
     ## but the current possible values do not need quoting
@@ -65,7 +65,7 @@ newPSOCKnode <- function(machine = "localhost", ...,
 
     if (manual) {
         cat("Manually start worker on", machine, "with\n    ", cmd, "\n")
-        flush.console()
+        utils::flush.console()
     } else {
         ## add the remote shell command if needed
         if (machine != "localhost") {
@@ -186,12 +186,10 @@ print.SOCKnode <- print.SOCK0node <- function(x, ...)
                PORT = {port <- value},
                OUT = {outfile <- value},
                TIMEOUT = {timeout <- value},
-               METHODS = {methods <- value},
                XDR = {useXDR <- as.logical(value)})
     }
     if (is.na(port)) stop("PORT must be specified")
 
-    if(as.logical(methods)) library("methods") ## because Rscript does not load methods by default
     ## We should not need to attach parallel, as we are running in the namespace.
 
     sinkWorkerOutput(outfile)

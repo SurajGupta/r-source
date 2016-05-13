@@ -175,47 +175,28 @@ function(x, ...)
     invisible(x)
 }
 
+## Summarize complete CRAN check status according to maintainer.
 
-## CRAN_check_results <-
-## function()
-## {
-##     ## This allows for partial local mirrors, or to
-##     ## look at a more-freqently-updated mirror
-##     CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
-##     rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
-##                              "web/checks/check_results.rds"),
-##                      open = "rb"))
-##     results <- readRDS(rds)
-##     close(rds)
-##
-##     results
-## }
+summarize_CRAN_check_status_according_to_maintainer <-
+function()
+{
+    pdb <- CRAN_package_db()
+    ind <- !duplicated(pdb[, "Package"])
 
-## CRAN_check_details <-
-## function()
-## {
-##     CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
-##     rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
-##                              "web/checks/check_details.rds"),
-##                      open = "rb"))
-##     details <- readRDS(rds)
-##     close(rds)
-##
-##     details
-## }
+    maintainer <- pdb[, "Maintainer"]
+    maintainer <- tolower(sub(".*<(.*)>.*", "\\1", maintainer))
 
-## CRAN_memtest_notes <-
-## function()
-## {
-##     CRAN_repos <- Sys.getenv("R_CRAN_WEB", getOption("repos")["CRAN"])
-##     rds <- gzcon(url(sprintf("%s/%s", CRAN_repos,
-##                              "web/checks/memtest_notes.rds"),
-##                      open = "rb"))
-##     mtnotes <- readRDS(rds)
-##     close(rds)
-##
-##     mtnotes
-## }
+    results <- CRAN_check_results()
+    details <- CRAN_check_details()
+    mtnotes <- CRAN_memtest_notes()
+
+    split(format(summarize_CRAN_check_status(pdb[ind, "Package"],
+                                             results,
+                                             details,
+                                             mtnotes),
+                 header = TRUE),
+          maintainer[ind])
+}
 
 CRAN_baseurl_for_src_area <-
 function()
@@ -267,8 +248,9 @@ function()
 
 CRAN_package_db <-
 function()
-    read_CRAN_object(CRAN_baseurl_for_web_area(),
-                     "web/packages/packages.rds")
+    as.data.frame(read_CRAN_object(CRAN_baseurl_for_web_area(),
+                                   "web/packages/packages.rds"),
+                  stringsAsFactors = FALSE)
 
 CRAN_aliases_db <-
 function()
@@ -293,29 +275,44 @@ function()
 check_CRAN_mirrors <-
 function(mirrors = NULL, verbose = FALSE)
 {
+    retry_upon_error <- function(expr, n = 3L) {
+        i <- 1L
+        repeat {
+            y <- tryCatch(expr, error = identity)
+            if(!inherits(y, "error") || (i >= n))
+                break
+            i <- i + 1L
+        }
+        y
+    }
+
     read_package_db <- function(baseurl) {
         path <- sprintf("%ssrc/contrib/PACKAGES.gz", baseurl)
-        db <- tryCatch({
+        db <- retry_upon_error({
             con <- gzcon(url(path, "rb"))
             on.exit(close(con))
             readLines(con)
-        },
-                       error = identity)
-        if(inherits(db, "error"))
-            stop(sprintf("Reading %s failed with message: %s",
-                         path, conditionMessage(db)))
+        })
+        if(inherits(db, "error")) {
+            msg <- sprintf("Reading %s failed with message: %s",
+                           path, conditionMessage(db))
+            return(simpleError(msg))
+        }
         db
     }
 
     read_timestamp <- function(baseurl, path) {
         path <- sprintf("%s%s", baseurl, path)
-        ts <- tryCatch(readLines(path),
-                       error = identity)
-        if(inherits(ts, "error"))
-            stop(sprintf("Reading %s failed with message: %s",
-                         path, conditionMessage(ts)))
-        ts
+        ts <- retry_upon_error(readLines(path))
+        if(inherits(ts, "error")) {
+            msg <- sprintf("Reading %s failed with message: %s",
+                           path, conditionMessage(ts))
+            return(simpleError(msg))
+        }
+        as.POSIXct(as.numeric(ts), origin = "1970-01-01")
     }
+
+    if_ok <- function(u, v) if(inherits(u, "error")) u else v
 
     check_mirror <- function(mirror) {
         mirror_packages <- read_package_db(mirror)
@@ -324,31 +321,23 @@ function(mirrors = NULL, verbose = FALSE)
         mirror_ts3 <- read_timestamp(mirror, path_ts3)
 
         list("PACKAGES" =
-             c("Delta_master_mirror" =
-               sprintf("%d/%d",
-                       length(setdiff(master_packages,
-                                      mirror_packages)),
-                       length(master_packages)),
-               "Delta_mirror_master" =
-               sprintf("%d/%d",
-                       length(setdiff(mirror_packages,
-                                      master_packages)),
-                       length(mirror_packages))),
+             if_ok(mirror_packages,
+                   c("Delta_master_mirror" =
+                         sprintf("%d/%d",
+                                 length(setdiff(master_packages,
+                                                mirror_packages)),
+                                 length(master_packages)),
+                     "Delta_mirror_master" =
+                         sprintf("%d/%d",
+                                 length(setdiff(mirror_packages,
+                                                master_packages)),
+                                 length(mirror_packages)))),
              "TIME" =
-             difftime(as.POSIXct(as.numeric(master_ts1),
-                                 origin = "1970-01-01"),
-                      as.POSIXct(as.numeric(mirror_ts1),
-                                 origin = "1970-01-01")),
+             if_ok(mirror_ts1, difftime(master_ts1, mirror_ts1)),
              "TIME_r-release" =
-             difftime(as.POSIXct(as.numeric(master_ts2),
-                                 origin = "1970-01-01"),
-                      as.POSIXct(as.numeric(mirror_ts2),
-                                 origin = "1970-01-01")),
+             if_ok(mirror_ts2, difftime(master_ts2, mirror_ts2)),
              "TIME_r-old-release" =
-             difftime(as.POSIXct(as.numeric(master_ts3),
-                                 origin = "1970-01-01"),
-                      as.POSIXct(as.numeric(mirror_ts3),
-                                 origin = "1970-01-01"))
+             if_ok(mirror_ts3, difftime(master_ts3, mirror_ts3))
              )
     }
 
@@ -363,7 +352,7 @@ function(mirrors = NULL, verbose = FALSE)
     master_ts3 <- read_timestamp(master, path_ts3)
 
     if(is.null(mirrors)) {
-        mirrors <- as.character(getCRANmirrors(all = TRUE)$URL)
+        mirrors <- as.character(utils::getCRANmirrors(all = TRUE)$URL)
     }
 
     results <- lapply(mirrors,
@@ -377,6 +366,91 @@ function(mirrors = NULL, verbose = FALSE)
 
     results
 }
+
+CRAN_mirror_maintainers_info <-
+function(mirrors, db = NULL)
+{
+    if(is.null(db))
+        db <- utils::getCRANmirrors(all = TRUE)
+    mirrors <- sort(unique(mirrors))
+    ind <- match(mirrors, as.character(db$URL))
+    addresses <- db[ind, "Maintainer"]
+    addresses <- gsub("[[:space:]]*#[[:space:]]*", "@", addresses)
+    to <- paste(unique(unlist(strsplit(addresses,
+                                       "[[:space:]]*,[[:space:]]*"))),
+                collapse = ",\n    ")
+    head <- c(paste("To:", to),
+              "CC: CRAN@R-project.org",
+              "Subject: CRAN mirrors maintained by you",
+              "Reply-To: CRAN@R-project.org")
+    len <- length(addresses)
+    body <- c(if(len > 1L) {
+                  "Dear maintainers,"
+              } else {
+                  "Dear maintainer,"
+              },
+              "",
+              strwrap(paste(if(length(mirrors) > 1L) {
+                                "This concerns the following CRAN mirrors"
+                            } else {
+                                "This concerns the following CRAN mirror"
+                            },
+                            "maintained by",
+                            if(len > 1L) "one of",
+                            "you:")),
+              "",
+              paste0("  ", formatDL(mirrors, addresses, style = "list"))
+              )
+    list(head = head, body = body)
+}
+
+CRAN_mirror_mirmon_status <-
+function()
+{
+    ## See
+    ## <http://www.projects.science.uu.nl/csg/mirmon/mirmon.html#state_file_format>.
+
+    fields <-
+        c("url",
+          "age",
+          "status_last_probe",
+          "time_last_successful_probe",
+          "probe_history",
+          "state_history",
+          "last_probe")
+    ts_to_POSIXct <- function(ts) {
+        suppressWarnings(as.POSIXct(as.numeric(as.character(ts)),
+                                    origin = "1970-01-01"))
+    }
+    read_mirmon_state_file <- function(con) {
+        db <- utils::read.table(con, header = FALSE, col.names = fields)
+        db$url <- as.character(db$url)
+        db$age <- ts_to_POSIXct(db$age)
+        db$time_last_successful_probe <-
+            ts_to_POSIXct(db$time_last_successful_probe)
+        db$last_probe <- ts_to_POSIXct(db$last_probe)
+        db$delta <- difftime(Sys.time(), db$age, units = "days")
+        db
+    }
+    state_files <-
+        c("TIME" = "mirror.state",
+          "TIME_r-release" = "mirror_release.state",
+          "TIME_r-old-release" = "mirror_old_release.state")
+
+    ## Need to always use master for now (the mirrors do not have the
+    ## state files).
+    do.call(rbind,
+            c(Map(function(u, v) {
+                      u <- paste0("https://cran.r-project.org/mirmon/state/", u)
+                      cbind(read_mirmon_state_file(u),
+                            timestamp = v,
+                            stringsAsFactors = FALSE)
+                  },
+                  state_files,
+                  names(state_files)),
+              list(make.row.names = FALSE)))
+}
+
 
 CRAN_Rd_xref_db_with_expansions <-
 function()
@@ -397,7 +471,7 @@ function()
                   unlist(targets, use.names = FALSE))
 }
 
-CRAN_Rd_xref_reverse_depends <-
+CRAN_Rd_xref_reverse_dependencies <-
 function(packages, db = NULL, details = FALSE)
 {
     if(is.null(db))
@@ -433,7 +507,7 @@ function()
     ## catches availability in standard repositories, but not in
     ## additional repositories.
     archived <- setdiff(names(CRAN_archive_db()),
-                        c(rownames(available.packages(filters = list())),
+                        c(rownames(utils::available.packages(filters = list())),
                           unlist(.get_standard_package_names(),
                                  use.names = FALSE)))
     y$xrefs_likely_to_archived_CRAN_packages <-
@@ -459,3 +533,188 @@ function(package, nora)
     ## Name OR Alias: nora.
     sprintf("%s::%s", package, nora)
 }
+
+CRAN_package_maintainers_db <-
+function()
+{
+    db <- CRAN_package_db()
+    maintainer <- db[, "Maintainer"]
+    address <- tolower(sub(".*<(.*)>.*", "\\1", maintainer))
+    maintainer <- gsub("\n", " ", maintainer)
+    data.frame(Package = db[, "Package"],
+               Address = address,
+               Maintainer = maintainer,
+               stringsAsFactors = FALSE)
+}
+
+CRAN_package_maintainers_info <-
+function(packages, db = NULL)
+{
+    if(is.null(db))
+        db <- CRAN_package_maintainers_db()
+    ind <- match(packages, db[, "Package"])
+    addresses <- db[ind, "Address"]
+    to <- paste(sort(unique(addresses)), collapse = ",\n    ")
+    head <- c(paste("To:", to),
+              "CC: CRAN@R-project.org",
+              "Subject: CRAN packages maintained by you",
+              "Reply-To: CRAN@R-project.org")
+    lst <- split(db[ind, "Package"], db[ind, "Maintainer"])
+    len <- length(addresses)
+    body <- c(if(len > 1L) {
+                  "Dear maintainers,"
+              } else {
+                  "Dear maintainer,"
+              },
+              "",
+              if(length(packages) > 1L) {
+                  "This concerns the CRAN packages"
+              } else {
+                  "This concerns the CRAN package"
+              },
+              "",
+              paste(strwrap(paste(sort(packages), collapse = " "),
+                            indent = 2L, exdent = 2L),
+                    collapse = "\n"),
+              "",
+              paste("maintained by",
+                    if(len > 1L) "one of",
+                    "you:"),
+              "",
+              paste0("  ",
+                     formatDL(vapply(lst, paste, "", collapse = " "),
+                              style = "list"))
+              )
+    list(head = head, body = body)
+}
+
+CRAN_package_reverse_dependencies_and_views <-
+function(packages)
+{
+    a <- utils::available.packages(filters = list())
+
+    v <- read_CRAN_object(CRAN_baseurl_for_src_area(),
+                          "src/contrib/Views.rds")
+    v <- do.call("rbind",
+                 mapply(cbind,
+                        Package =
+                        lapply(v, function(e) e$packagelist$name),
+                        View = sapply(v, "[[", "name")))
+    v <- split(v[, 2L], v[, 1L])
+
+    r <- package_dependencies(packages, a, reverse = TRUE)
+    rr <- package_dependencies(packages, a,
+                               reverse = TRUE, recursive = TRUE)
+    rrs <- package_dependencies(packages, a, "Suggests",
+                                reverse = TRUE, recursive = TRUE)
+
+    rxrefs <- CRAN_Rd_xref_reverse_dependencies(packages)
+
+    y <- lapply(packages,
+                function(p) {
+                    c(Package = p,
+                      if(length(z <- r[[p]])) {
+                          c("Reverse depends" =
+                            paste(sort(z), collapse = " "),
+                            if(length(zz <- setdiff(rr[[p]], z))) {
+                                c("Additional recursive reverse depends" =
+                                  paste(sort(zz), collapse = " "))
+                            })
+                      },
+                      if(length(z <- rrs[[p]])) {
+                          c("Reverse recursive suggests" =
+                            paste(sort(z), collapse = " "))
+                      },
+                      if(length(z <- rxrefs[[p]])) {
+                          c("Reverse Rd xref depends" =
+                            paste(sort(z), collapse = " "))
+                      },
+                      if(length(z <- v[[p]])) {
+                          c("Views" = paste(sort(z), collapse = " "))
+                      })
+                })
+    class(y) <- "CRAN_package_reverse_dependencies_and_views"
+    y
+}
+
+format.CRAN_package_reverse_dependencies_and_views <-
+function(x, ...)
+{
+    vapply(x,
+           function(e) {
+               paste(formatDL(e, style = "list", indent = 2L),
+                     collapse = "\n")
+           },
+           "")
+}
+
+print.CRAN_package_reverse_dependencies_and_views <-
+function(x, ...)
+{
+    writeLines(paste(format(x, ...), collapse = "\n\n"))
+    invisible(x)
+}
+
+CRAN_package_reverse_dependencies_with_maintainers <-
+function(packages, which = c("Depends", "Imports", "LinkingTo"),
+         recursive = FALSE)
+{
+    db <- CRAN_package_db()
+        
+    rdepends <- package_dependencies(packages, db, which,
+                                     recursive = recursive,
+                                     reverse = TRUE)
+    rdepends <- sort(unique(unlist(rdepends)))
+    pos <- match(rdepends, db[, "Package"], nomatch = 0L)
+
+    db[pos, c("Package", "Version", "Maintainer")]
+}
+
+CRAN_package_dependencies_with_dates <-
+function(packages)
+{
+    a <- utils::available.packages(filters = list(),
+                                   repos = .get_standard_repository_URLs()["CRAN"])
+    p <- CRAN_package_db()
+    d <- package_dependencies(packages, a, which = "most")
+    ## Note that we currently keep the base packages dependencies, which
+    ## have no date.  We could (perhaps at least optionally) do
+    ##   base_packages <- .get_standard_package_names()["base"]
+    ## and then use
+    ##   e <- setdiff(as.character(e), base_packages)
+    ## in the code below.
+    lapply(d,
+           function(e) {
+               e <- as.character(e)
+               d <- as.Date(p[match(e, p[, "Package"]), "Published"])
+               o <- order(d, decreasing = TRUE)
+               data.frame(Package = e[o], Date = d[o],
+                          stringsAsFactors = FALSE)
+           })
+}
+
+CRAN_packages_with_maintainer_matching <-
+function(pattern, ...)
+{
+    pdb <- CRAN_package_db()
+    ind <- grep(pattern, pdb[, "Maintainer"], ...)
+    pdb[ind, "Package"]
+}
+
+write_texts_to_dir <-
+function(lst, dir, verbose = FALSE)
+{
+    dir.create(dir, showWarnings = FALSE, recursive = FALSE)
+
+    Map(function(m, s) {
+        if(verbose)
+            message(sprintf("Processing %s ...", m))
+        writeLines(paste(s, collapse = "\n\n"),
+                   file.path(dir, sprintf("%s.txt", m)))
+    },
+        names(lst),
+        lst)
+
+    invisible()
+}
+

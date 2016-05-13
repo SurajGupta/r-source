@@ -40,7 +40,7 @@ SEXP attribute_hidden mkPRIMSXP(int offset, int eval)
     SEXPTYPE type = eval ? BUILTINSXP : SPECIALSXP;
     static SEXP PrimCache = NULL;
     static int FunTabSize = 0;
-
+    
     if (PrimCache == NULL) {
 	/* compute the number of entires in R_FunTab */
 	while (R_FunTab[FunTabSize].name)

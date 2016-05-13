@@ -648,15 +648,20 @@ language subtags which in essence are 2-letter ISO 639-1
 codes.
 
 @c DESCRIPTION field RdMacros
-As of @R{} 3.2.0, an @samp{RdMacros} field can be used to hold a
-comma-separated list of packages from which the current package will
-import @file{Rd} macro definitions.  These will be imported after the
-system macros, in the order listed in the @samp{RdMacros} field, before
-any macro definitions in the current package are loaded.  Macro
-definitions in individual @file{.Rd} files in the @file{man} directory
-are loaded last, and are local to later parts of that file.  In case of
-duplicates, the last loaded definition will be used@footnote{Duplicate
-definitions may trigger a warning: see @ref{User-defined macros}.}
+An @samp{RdMacros} field can be used to hold a comma-separated list of
+packages from which the current package will import @file{Rd} macro
+definitions.  These will be imported after the system macros, in the
+order listed in the @samp{RdMacros} field, before any macro definitions
+in the current package are loaded.  Macro definitions in individual
+@file{.Rd} files in the @file{man} directory are loaded last, and are
+local to later parts of that file.  In case of duplicates, the last
+loaded definition will be used@footnote{Duplicate definitions may
+trigger a warning: see @ref{User-defined macros}.}  Both @command{R CMD
+Rd2pdf} and @command{R CMD Rdconv} have an optional flag
+@option{--RdMacros=pkglist}.  The option is also a comma-separated list
+of package names, and has priority over the value given in
+@file{DESCRIPTION}.  Packages using @file{Rd} macros should depend on
+@R{} 3.2.0 or later.
 
 @c DESCRIPTION field Built
 @c DESCRIPTION field Packaged
@@ -1007,6 +1012,12 @@ visible (and if it is, it need not be the one from that namespace:
 @code{plot3d} occurs in several other packages).  If the intention is to
 give an error if the suggested package is not available, simply use
 e.g.@: @code{rgl::plot3d}.
+
+Note that the recommendation to use suggested packages conditionally in
+tests does also apply to packages used to manage test suites: a
+notorious example was @pkg{testthat} which in version 1.0.0 contained
+illegal C++ code and hence could not be installed on standards-compliant
+platforms.
 
 As noted above, packages in @samp{Enhances} @emph{must} be used
 conditionally and hence objects within them should always be accessed
@@ -1901,14 +1912,21 @@ all: $(SHLIB)
 $(SHLIB): mylibs
 
 mylibs:
-	(cd subdir; make)
+	(cd subdir; $(MAKE))
 @end example
 
 @noindent
-Be careful to create all the necessary dependencies, as there is a no
+Be careful to create all the necessary dependencies, as there is no
 guarantee that the dependencies of @code{all} will be run in a
 particular order (and some of the @acronym{CRAN} build machines use
-multiple CPUs and parallel makes).
+multiple CPUs and parallel makes).  In particular,
+
+@example
+all: mylibs
+@end example
+
+@noindent
+does @strong{not} suffice.
 
 Note that on Windows it is required that @file{Makevars[.win]} does
 create a DLL: this is needed as it is the only reliable way to ensure
@@ -2022,9 +2040,12 @@ are available for use in @file{src/Makevars} or @file{src/Makevars.win}.
 Include the appropriate macro in @code{PKG_CFLAGS}, @code{PKG_CPPFLAGS}
 and so on, and also in @code{PKG_LIBS}.  C/C++ code that needs to be
 conditioned on the use of OpenMP can be used inside @code{#ifdef
-_OPENMP}: note that some toolchains used for @R{} (including most of
-those using @command{clang}@footnote{Some builds of @command{clang} 3.7
-have support for OpenMP 3.1}) have no OpenMP support at all, not even
+_OPENMP}: note that some toolchains used for @R{} (including many of
+those using @command{clang}@footnote{Some builds of @command{clang}
+3.7.0 have support for OpenMP 3.1 (this is built by default as from
+3.8.0), but even if the compiler has, the @code{libomp} library may not
+be installed.  At the time of writing Apple builds of @command{clang}
+for OS X had no support.})  have no OpenMP support at all, not even
 @file{omp.h}.
 
 For example, a package with C code written for OpenMP should have in
@@ -2135,17 +2156,17 @@ For a tutorial see
 POSIX threads are not normally used on Windows, which has its own native
 concepts of threads.  However, there are two projects implementing
 @code{pthreads} on top of Windows, @code{pthreads-w32} and
-@code{winpthreads} (a recent part of the MinGW-w64 project).
+@code{winpthreads} (part of the MinGW-w64 project).
 
 Whether Windows toolchains implement @code{pthreads} is up to the
-toolchain provider: the currently recommended toolchain does by default
-provide it.  A @command{make} variable @code{SHLIB_PTHREAD_FLAGS} is
-available: this should be included in both @code{PKG_CPPFLAGS} (or the
-Fortran or F9x equivalents) and @code{PKG_LIBS}.
+toolchain provider.  A @command{make} variable
+@code{SHLIB_PTHREAD_FLAGS} is available: this should be included in both
+@code{PKG_CPPFLAGS} (or the Fortran or F9x equivalents) and
+@code{PKG_LIBS}.
 
 The presence of a working @code{pthreads} implementation cannot be
 unambiguously determined without testing for yourself: however, that
-@samp{_REENTRANT} is defined@footnote{some Windows toolchains have the
+@samp{_REENTRANT} is defined@footnote{some Windows toolchains had the
 typo @samp{_REENTRANCE} instead.} in C/C++ code is a good indication.
 
 See also the comments on thread-safety and performance under OpenMP: on
@@ -3466,6 +3487,19 @@ package @pkg{foo} are to be imported.  Using @code{importFrom}
 selectively rather than @code{import} is good practice and recommended
 notably when importing from packages with more than a dozen exports.
 
+To import every symbol from a package but for a few exceptions,
+pass the @code{except} argument to @code{import}. The directive
+
+@example
+import(foo, except=c(bar, baz))
+@end example
+
+@noindent
+imports every symbol from @pkg{foo} except @code{bar} and
+@code{baz}. The value of @code{except} should evaluate to something
+coercible to a character vector, after substituting each symbol for
+its corresponding string.
+
 It is possible to export variables from a namespace which it has
 imported from other namespaces: this has to be done explicitly and not
 @emph{via} @code{exportPattern}.
@@ -4041,9 +4075,9 @@ Bash extensions also need to be avoided in shell scripts, including
 expressions in Makefiles (which are passed to the shell for processing).
 Some @R{} platforms use strict@footnote{For example, @command{test}
 options @option{-a} and @option{-e} are not portable, and not supported
-in the AT&T Bourne shell used on Solaris, even though they are in the
-2008 POSIX standard.  Nor does Solaris support @samp{$(@var{cmd})}.} Bourne
-shells: the @R{} toolset on Windows and some Unix-alike OSes use
+in the AT&T Bourne shell used on Solaris 10/11, even though they are in
+the 2008 POSIX standard.  Nor does Solaris support @samp{$(@var{cmd})}.}
+Bourne shells: the @R{} toolset on Windows and some Unix-alike OSes use
 @command{ash} (@uref{https://en.wikipedia.org/@/wiki/@/Almquist_shell}),
 a rather minimal shell with few builtins.  Beware of assuming that all
 the POSIX command-line utilities are available, especially on Windows
@@ -4228,15 +4262,20 @@ all linkers allow a space after @option{-L} .
 The @command{ar} utility is often used in makefiles to make static
 libraries.  Its modifier @code{u} is defined by POSIX but is disabled in
 GNU @command{ar} on some recent Linux distributions which use
-`deterministic mode'.  The safe way to make a static library is to first
+`deterministic mode'.  The safest way to make a static library is to first
 remove any existing file of that name then use @command{ar -cr} and then
 @command{ranlib} if needed (which is system-dependent: on most
 systems@footnote{some versions of OS X did not.} @command{ar} always
-maintains a symbol table).
+maintains a symbol table).  The POSIX standard says options should be
+preceded by a hyphen (as in @option{-cr}), although most OSes accept
+them without.
+@c flowWorkspace failed on OS X in Mar 2016 because a wildcard spec was empty
+Note that on some systems @command{ar -cr} must have at least one file
+specified.
 
 @item
 Some people have a need to set a locale.  Locale names are not portable,
-and e.g.@: @samp{fr_FR.utf8} is common used on Linux but not accepted on
+and e.g.@: @samp{fr_FR.utf8} is commonly used on Linux but not accepted on
 either Solaris or OS X.  @samp{fr_FR.UTF-8} is more portable, being
 accepted on recent Linux, AIX, FreeBSD, OS X and Solaris (at least).
 However, some Linux distributions micro-package, so locales defined by
@@ -4483,14 +4522,21 @@ with versions for types @code{float}, @code{double}, @code{long double}
 and possibly more.  This means that calling @code{sqrt} on an integer
 type may have `overloading ambiguity' as it could be promoted to any of
 the supported floating-point types: this is commonly seen on Solaris,
-but for @code{pow} also seen on OS X.  (C++11 requires additional
-overloads for integer types, and ambiguous overloads are more common in
-C++11/C++14 compiler modes.)
+but for @code{pow} also seen on OS X.  (C++98 has an overload for
+@code{std::pow(<double>, <int>)}, but this may not be visible from the
+main namespace.  C++11 requires additional overloads for integer types,
+and ambiguous overloads are more common in C++11 (and later) compiler
+modes.)
 
 A not-uncommonly-seen problem is to mistakenly call @code{floor(x/y)} or
 @code{ceil(x/y)} for @code{int} arguments @code{x} and @code{y}.  Since
 @code{x/y} does integer division, the result is an @code{int} and
-`overloading ambiguity' may be reported.
+`overloading ambiguity' may be reported.  Some people have (pointlessly)
+called @code{floor} and @code{ceil} on integer arguments, which may have
+an `overloading ambiguity'.
+
+A surprising common misuse is things like @code{pow(10, -3)}: this
+should be the constant @code{1e-3}.
 
 @item
 Function @code{fabs} is defined only for floating-point types, except in
@@ -4499,7 +4545,7 @@ integer types.  Function @code{abs} is defined in C99's
 @file{<stdlib.h>} for @code{int} and in C++98's @file{<cstdlib>} for
 integer types, overloaded in @file{<cmath>} for floating-point types.
 C++11 has additional overloads for @code{std::abs} in @file{<cmath>} for
-integer types.  The effect of calling @code{abs} for a floating-point
+integer types.  The effect of calling @code{abs} with a floating-point
 type is implementation-specific: it may truncate to an integer.
 
 @item
@@ -6090,8 +6136,8 @@ logo in both @HTML{} (using the simple form) and @LaTeX{} (using the
 expert form), the following could be used:
 
 @example
-\if@{html@}@{\figure@{logo.jpg@}@{Our logo@}@}
-\if@{latex@}@{\figure@{logo.jpg@}@{options: width=0.5in@}@}
+\if@{html@}@{\figure@{Rlogo.svg@}@{options: width=100 alt="R logo"@}@}
+\if@{latex@}@{\figure@{Rlogo.pdf@}@{options: width=0.5in@}@}
 @end example
 
 The files containing the figures should be stored in the directory
@@ -9309,12 +9355,11 @@ that may cause conflicts---if this happens, try defining
 @samp{NO_C_HEADERS} before including the @R{} headers, and include C++
 versions (such as @samp{cmath} and @samp{cstdlib}) of the appropriate
 headers yourself before the @R{} headers. (Headers @file{R.h} and
-@file{Rmath.h} support @samp{NO_C_HEADERS}: the legacy header@file{S.h}
-does not.  Nor does @file{Rinternals.h} but that switches to the
-equivalent C++ headers when included from C++.)
+@file{Rmath.h} support @samp{NO_C_HEADERS}: the legacy header @file{S.h}
+does not.  Header @file{Rinternals.h} does as from @R{} 3.3.0.)
 
-By default header @file{Rmath.h} includes @file{math.h}.  Header
-@file{R.h} includes
+By default header @file{Rmath.h} includes @file{math.h} or @file{cmath}.
+Header @file{R.h} includes
 
 @example
 limits.h math.h stddef.h stdio.h stdlib.h string.h
@@ -9580,9 +9625,9 @@ In each case the @R{} objects are available for manipulation @emph{via}
 a set of functions and macros defined in the header file
 @file{Rinternals.h} or some @Sl{}-compatibility macros@footnote{That is,
 similar to those defined in @Sl{} version 4 from the 1990s: these are
-not kept up to date and are not recommended for new projects.  It is not
-compatible with defining @code{R_NO_REMAP}.} defined in
-@file{Rdefines.h}.  See @ref{Interface functions .Call and .External}
+not kept up to date and are not recommended for new projects.  Prior to
+@R{} 3.3.0 it was not compatible with defining @code{R_NO_REMAP}.} defined
+in @file{Rdefines.h}.  See @ref{Interface functions .Call and .External}
 for details on @code{.Call} and @code{.External}.
 
 Before you decide to use @code{.Call} or @code{.External}, you should
@@ -12193,26 +12238,33 @@ This might be provided by your platform@footnote{It is an optional C11
 extension.}, in which case it is not included in @file{Rmath.h}, but is
 in @file{math.h} which @file{Rmath.h} includes.  (Ensure that
 neither @file{math.h} nor @file{cmath} is included before
-@file{Rmath.h}, including not by @file{R.h}.)
+@file{Rmath.h} or define
+@example
+#define __STDC_WANT_IEC_60559_FUNCS_EXT__ 1
+@end example
+@noindent
+before the first inclusion.)
 @end deftypefun
 
 @deftypefun double sinpi (double @var{x})
 Computes @code{sin(pi * x)} accurately, notably for (half) integer @var{x}.
 
-This might be provided by your platform, in which case it is not included
-in @file{Rmath.h}, but is in @file{math.h} which @file{Rmath.h} includes.
+This might be provided by your platform, in which case it is not
+included in @file{Rmath.h}, but is in @file{math.h} which @file{Rmath.h}
+includes (but see the comments for @code{cospi}).
 @end deftypefun
 
 @deftypefun double tanpi (double @var{x})
 Computes @code{tan(pi * x)} accurately, notably for (half) integer @var{x}.
 
 This might be provided by your platform, in which case it is not included
-in @file{Rmath.h}, but is in @file{math.h} which @file{Rmath.h} includes.
+in @file{Rmath.h}, but is in @file{math.h} which @file{Rmath.h} includes
+(but see the comments for @code{cospi}).
 @end deftypefun
 
 @deftypefun double logspace_add (double @var{logx}, double @var{logy})
 @deftypefunx double logspace_sub (double @var{logx}, double @var{logy})
-@deftypefunx double logspace_sum (double* @var{logx}, int @var{n})
+@deftypefunx double logspace_sum (const double* @var{logx}, int @var{n})
 Compute the log of a sum or difference from logs of terms, i.e., ``x +
 y'' as @code{log (exp(@var{logx}) + exp(@var{logy}))} and ``x - y'' as
 @code{log (exp(@var{logx}) - exp(@var{logy}))},
@@ -12502,16 +12554,21 @@ available to users' C code.
 The following is declared in header file @file{Rinternals.h}.
 
 @deftypefun void  R_orderVector (int* @var{indx}, int @var{n}, SEXP @var{arglist}, Rboolean @var{nalast}, Rboolean @var{decreasing})
+@deftypefunx void R_orderVector1 (int* @var{indx}, int @var{n}, SEXP @var{x}, Rboolean @var{nalast}, Rboolean @var{decreasing})
 
-This corresponds to @R{}'s @code{order(..., na.last, decreasing)}.
+@code{R_orderVector()} corresponds to @R{}'s @code{order(..., na.last, decreasing)}.
 More specifically, @code{indx <- order(x, y, na.last, decreasing)} corresponds to
 @code{R_orderVector(indx, n, Rf_lang2(x, y), nalast, decreasing)} and for
 three vectors, @code{Rf_lang3(x,y,z)} is used as @var{arglist}.
 
-Note that  @code{R_orderVector()} assumes the vector @code{indx}
-to be allocated to length @eqn{\ge n, >= n}.  On return, @code{indx[]}
-contains a permutation of @code{0:(n-1)}, i.e., 0-based C indices (and not
-1-based @R{} indices, as @R{}'s @code{order()}).
+Both @code{R_orderVector} and @code{R_orderVector1} assume the vector
+@code{indx} to be allocated to length @eqn{\ge n, >= n}.  On return,
+@code{indx[]} contains a permutation of @code{0:(n-1)}, i.e., 0-based C
+indices (and not 1-based @R{} indices, as @R{}'s @code{order()}).
+
+When ordering only one vector, @code{R_orderVector1} is faster and
+corresponds (but is 0-based) to @R{}'s @code{indx <- order(x, na.last,
+decreasing)}.  It was added in @R{} 3.3.0.
 @end deftypefun
 
 All other sort routines are declared in header file
@@ -12581,6 +12638,7 @@ See @R{}'s help page @code{?max.col}.
 @end deftypefun
 
 @deftypefun int findInterval (double* @var{xt}, int @var{n}, double @var{x}, Rboolean @var{rightmost_closed}, Rboolean @var{all_inside}, int @var{ilo}, int* @var{mflag})
+@deftypefunx int findInterval2(double* @var{xt}, int @var{n}, double @var{x}, Rboolean @var{rightmost_closed}, Rboolean @var{all_inside}, Rboolean @var{left_open}, int @var{ilo}, int* @var{mflag})
 Given the ordered vector @var{xt} of length @var{n}, return the interval
 or index of @var{x} in @code{@var{xt}[]}, typically max(@math{i}; @eqn{1
 \le i \le @var{n}, 1 <= i <= @var{n}} & @math{@var{xt}[i]} @eqn{\le, <=}
@@ -12595,6 +12653,12 @@ outside the @var{xt}[] range.  On return, @code{*@var{mflag}} equals
 The algorithm is particularly fast when @var{ilo} is set to the last
 result of @code{findInterval()} and @var{x} is a value of a sequence which
 is increasing or decreasing for subsequent calls.
+
+@code{findInterval2()} is a generalization of @code{findInterval()},
+with an extra @code{Rboolean} argument @var{left_open}.  Setting
+@code{left_open = TRUE} basically replaces all left-closed right-open
+intervals @eqn{[s, t)} by left-open ones @eqn{(s, t]}, see the help page
+of @R{} function @code{findInterval} for details.
 
 There is also an @code{F77_CALL(interv)()} version of
 @code{findInterval()} with the same arguments, but all pointers.

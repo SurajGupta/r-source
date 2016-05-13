@@ -2,7 +2,7 @@
  *  Mathlib : A C Library of Special Functions
  *  Copyright (C) 2005-6 Morten Welinder <terra@gnome.org>
  *  Copyright (C) 2005-10 The R Foundation
- *  Copyright (C) 2006-10 The R Core Team
+ *  Copyright (C) 2006-2015 The R Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -259,7 +259,7 @@ double logspace_sub (double logx, double logy)
 # define EXP exp
 # define LOG log
 #endif
-double logspace_sum (double* logx, int n)
+double logspace_sum (const double* logx, int n)
 {
     if(n == 0) return ML_NEGINF; // = log( sum(<empty>) )
     if(n == 1) return logx[0];
@@ -276,8 +276,10 @@ double logspace_sum (double* logx, int n)
 
 
 
-/* dpois_wrap (x_P_1,  lambda, g_log) ==
- *   dpois (x_P_1 - 1, lambda, g_log) :=  exp(-L)  L^k / gamma(k+1) ,  k := x_P_1 - 1
+/* dpois_wrap (x__1, lambda) := dpois(x__1 - 1, lambda);  where
+ * dpois(k, L) := exp(-L) L^k / gamma(k+1)  {the usual Poisson probabilities}
+ *
+ * and  dpois*(.., give_log = TRUE) :=  log( dpois*(..) )
 */
 static double
 dpois_wrap (double x_plus_1, double lambda, int give_log)
@@ -441,7 +443,7 @@ pd_lower_cf (double y, double d)
 
 	if (b2 != 0) {
 	    f = a2 / b2;
- 	    /* convergence check: relative; "absolute" for very small f : */
+	    /* convergence check: relative; "absolute" for very small f : */
 	    if (fabs (f - of) <= DBL_EPSILON * fmax2(f0, fabs(f))) {
 #ifdef DEBUG_p
 		REprintf(" %g iter.\n", i);

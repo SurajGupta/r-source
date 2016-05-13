@@ -30,6 +30,7 @@
 #include <Internal.h>
 #include <float.h>  /* for DBL_EPSILON */
 #include <Rmath.h>
+#include <R_ext/Itermacros.h>
 
 #include "RBufferUtils.h"
 static R_StringBuffer cbuff = {NULL, 0, MAXELTSIZE};
@@ -267,57 +268,49 @@ static SEXP rep3(SEXP s, R_xlen_t ns, R_xlen_t na)
 
     PROTECT(a = allocVector(TYPEOF(s), na));
 
-    // i % ns is slow, especially with long R_xlen_t
     switch (TYPEOF(s)) {
     case LGLSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    LOGICAL(a)[i++] = LOGICAL(s)[j++];
-	}
+	    LOGICAL(a)[i] = LOGICAL(s)[j];
+	});
 	break;
     case INTSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    INTEGER(a)[i++] = INTEGER(s)[j++];
-	}
+	    INTEGER(a)[i] = INTEGER(s)[j];
+	});
 	break;
     case REALSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j,  {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    REAL(a)[i++] = REAL(s)[j++];
-	}
+	    REAL(a)[i] = REAL(s)[j];
+	});
 	break;
     case CPLXSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    COMPLEX(a)[i++] = COMPLEX(s)[j++];
-	}
+	    COMPLEX(a)[i] = COMPLEX(s)[j];
+	});
 	break;
     case RAWSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    RAW(a)[i++] = RAW(s)[j++];
-	}
+	    RAW(a)[i] = RAW(s)[j];
+	});
 	break;
     case STRSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    SET_STRING_ELT(a, i++, STRING_ELT(s, j++));
-	}
+	    SET_STRING_ELT(a, i, STRING_ELT(s, j));
+	});
 	break;
     case VECSXP:
     case EXPRSXP:
-	for (i = 0, j = 0; i < na;) {
+	MOD_ITERATE1(na, ns, i, j, {
 //	    if ((i+1) % NINTERRUPT == 0) R_CheckUserInterrupt();
-	    if (j >= ns) j = 0;
-	    SET_VECTOR_ELT(a, i++, lazy_duplicate(VECTOR_ELT(s, j++)));
-	}
+	    SET_VECTOR_ELT(a, i, lazy_duplicate(VECTOR_ELT(s, j)));
+	});
 	break;
     default:
 	UNIMPLEMENTED_TYPE("rep3", s);
@@ -604,7 +597,7 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
        rep(x, times, length.out, each, ...)
     */
     if (do_rep_formals == NULL)
-        do_rep_formals = allocFormalsList5(install("x"), install("times"),
+	do_rep_formals = allocFormalsList5(install("x"), install("times"),
 					   install("length.out"),
 					   install("each"), R_DotsSymbol);
     PROTECT(args = matchArgs(do_rep_formals, args, call));
@@ -676,7 +669,7 @@ SEXP attribute_hidden do_rep(SEXP call, SEXP op, SEXP args, SEXP rho)
 		    errorcall(call, _("invalid '%s' argument"), "times");
 		sum += it;
 	    }
-            len = sum;
+	    len = sum;
 	}
     }
 
@@ -727,7 +720,7 @@ SEXP attribute_hidden do_seq(SEXP call, SEXP op, SEXP args, SEXP rho)
        seq(from, to, by, length.out, along.with, ...)
     */
     if (do_seq_formals == NULL)
-        do_seq_formals = allocFormalsList6(install("from"), install("to"),
+	do_seq_formals = allocFormalsList6(install("from"), install("to"),
 					   install("by"), install("length.out"),
 					   install("along.with"), R_DotsSymbol);
     PROTECT(args = matchArgs(do_seq_formals, args, call));

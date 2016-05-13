@@ -151,11 +151,11 @@ static void _draw_stroke (vfontContext *vc, const pGEcontext gc, pGEDevDesc dd,
 /* this is the version of the flabelwidth() method that is specific to the
    case when the current Plotter font is a Hershey font; called in
    g_flabelwidth () .
-
+   
    Argument 'enc' is ignored: these are in their own encoding.
 */
 attribute_hidden
-double R_GE_VStrWidth (const char *s, cetype_t enc,
+double R_GE_VStrWidth (const char *s, cetype_t enc, 
 		       const pGEcontext gc, pGEDevDesc dd)
 {
   double label_width;
@@ -170,7 +170,7 @@ double R_GE_VStrWidth (const char *s, cetype_t enc,
 
   /* convert string to a codestring, including annotations */
   codestring = _controlify (dd, (const unsigned char *) s,
-			    gc->fontfamily[3] - 1, gc->fontface);
+			    gc->fontfamily[7] - 1, gc->fontface);
 
   label_width = _label_width_hershey (gc, dd, codestring);
 
@@ -192,7 +192,7 @@ static double _label_height_hershey (const pGEcontext gc,
 }
 
 attribute_hidden
-double R_GE_VStrHeight (const char *s, cetype_t enc,
+double R_GE_VStrHeight (const char *s, cetype_t enc, 
 			const pGEcontext gc, pGEDevDesc dd)
 {
   double label_height;
@@ -202,7 +202,7 @@ double R_GE_VStrHeight (const char *s, cetype_t enc,
 
   /* convert string to a codestring, including annotations */
   codestring = _controlify (dd, (const unsigned char *) s,
-			    gc->fontfamily[3] - 1, gc->fontface);
+			    gc->fontfamily[7] - 1, gc->fontface);
 
   label_height = _label_height_hershey (gc, dd, codestring);
 
@@ -258,7 +258,7 @@ void R_GE_VText (double x, double y, const char *s, cetype_t enc,
 
   /* convert string to a codestring, including annotations */
   codestring = _controlify (dd, (const unsigned char *)s,
-			    gc->fontfamily[3] - 1, gc->fontface);
+			    gc->fontfamily[7] - 1, gc->fontface);
 
 
   /* PAUL MURRELL
@@ -977,3 +977,4 @@ static bool _composite_char (unsigned char *composite,
 
   return found;
 }
+

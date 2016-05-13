@@ -1,7 +1,7 @@
 #  File src/library/utils/R/aspell.R
 #  Part of the R package, https://www.R-project.org
 #
-#  Copyright (C) 1995-2015 The R Core Team
+#  Copyright (C) 1995-2016 The R Core Team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -207,8 +207,7 @@ function(files, filter, control = list(), encoding = "unknown",
 
 	## Look at words not in dictionary with suggestions.
 
-	ind <- grepl("^&", lines)
-	if(any(ind)) {
+	if(any(ind <- startsWith(lines, "&"))) {
 	    info <- strsplit(lines[ind], ": ", fixed = TRUE)
 	    one <- strsplit(sapply(info, `[`, 1L), " ",  fixed = TRUE)
 	    two <- strsplit(sapply(info, `[`, 2L), ", ", fixed = TRUE)
@@ -223,8 +222,7 @@ function(files, filter, control = list(), encoding = "unknown",
 	    db <- rbind(db, db1)
 	}
 	## Looks at words not in dictionary with no suggestions.
-	ind <- grepl("^#", lines)
-	if(any(ind)) {
+	if(any(ind <- startsWith(lines, "#"))) {
 	    one <- strsplit(lines[ind], " ", fixed = TRUE)
 	    db1 <- data.frame(Original =
 			      as.character(sapply(one, `[`, 2L)),
@@ -268,8 +266,7 @@ function(x, sort = TRUE, verbose = FALSE, indent = 2L, ...)
                    from,
                    split(x$Suggestions, x$Original)))
     } else {
-        sep <- sprintf("\n%s",
-                       paste(rep.int(" ", indent), collapse = ""))
+        sep <- sprintf("\n%s", strrep(" ", indent))
         paste(names(from),
               sapply(from, paste, collapse = sep),
               sep = sep)
@@ -335,8 +332,7 @@ function(dictionaries, dirnames = character())
     dirnames <- c(file.path(R.home("share"), "dictionaries"), dirnames)
 
     ## For now, all dictionary files should be .rds files.
-    ind <- !grepl("\\.rds$", dictionaries)
-    if(any(ind))
+    if(any(ind <- !endsWith(dictionaries, ".rds")))
         dictionaries[ind] <- sprintf("%s.rds", dictionaries[ind])
 
     out <- character(n)
@@ -353,7 +349,6 @@ function(dictionaries, dirnames = character())
         out[pos] <- find_files_in_directories(dictionaries[pos],
                                               dirnames)
     }
-
     out
 }
 
@@ -736,10 +731,7 @@ function(ifile, encoding = "unknown", ignore = character())
         }
     }
 
-    for(re in ignore[nzchar(ignore)])
-        lines <- blank_out_regexp_matches(lines, re)
-
-    lines
+    blank_out_ignores_in_lines(lines, ignore)
 }
 
 get_parse_data_for_message_strings <-
@@ -917,11 +909,11 @@ function (ifile, encoding = "unknown", ignore = character())
         out <- character(length(s))
         i <- 1L
         out[i] <- blank_out_regexp_matches(s[i], "^msgid[ \t]+\"")
-        while(grepl("^\"", s[i <- i + 1L]))
+        while(startsWith(s[i <- i + 1L], '"'))
             out[i] <- sub("^\"", " ", s[i])
         if(grepl("^msgid_plural[ \t]", s[i])) {
             out[i] <- blank_out_regexp_matches(s[i], "^msgid_plural[ \t]+\"")
-            while(grepl("^\"", s[i <- i + 1L]))
+            while(startsWith(s[i <- i + 1L], '"'))
                 out[i] <- sub("^\"", " ", s[i])
         }
         out
@@ -938,10 +930,7 @@ function (ifile, encoding = "unknown", ignore = character())
     ## blanks, similar to what the R text filter does.
     ## </FIXME>
 
-    for(re in ignore[nzchar(ignore)])
-        lines <- blank_out_regexp_matches(lines, re)
-
-    lines
+    blank_out_ignores_in_lines(lines, ignore)
 }
 
 ## For spell-checking all pot files in a package.
@@ -1056,9 +1045,7 @@ function(ifile, encoding, keep = c("Title", "Description"),
     ind <- !ind
     lines[ind] <- lapply(lines[ind], paste0, " ")
     lines <- unlist(lines, use.names = FALSE)
-    for(re in ignore[nzchar(ignore)])
-        lines <- blank_out_regexp_matches(lines, re)
-    lines
+    blank_out_ignores_in_lines(lines, ignore)
 }
 
 ## For spell-checking package DESCRIPTION files.
@@ -1164,17 +1151,27 @@ function(dir, encoding = "unknown")
 ## Utilities.
 
 blank_out_regexp_matches <-
-function(s, re)
+function(s, re, ...)
 {
-    m <- gregexpr(re, s)
-    regmatches(s, m) <- Map(blanks, lapply(regmatches(s, m), nchar))
+    m <- gregexpr(re, s, ...)
+    regmatches(s, m) <-
+        Map(function(n) strrep(" ", n),
+            lapply(regmatches(s, m), nchar))
     s
 }
 
-blanks <-
-function(n) {
-    vapply(Map(rep.int, rep.int(" ", length(n)), n, USE.NAMES = FALSE),
-           paste, "", collapse = "")
+blank_out_ignores_in_lines <-
+function(lines, ignore)
+{
+    args <- list()
+    if(is.list(ignore)) {
+        args <- ignore[-1L]
+        ignore <- ignore[[1L]]
+    }
+    for(re in ignore[nzchar(ignore)])
+        lines <- do.call(blank_out_regexp_matches,
+                         c(list(lines, re), args))
+    lines
 }
 
 find_files_in_directories <-

@@ -8,6 +8,7 @@
 
 \alias{asNamespace}
 \alias{getNamespaceInfo}
+\alias{.getNamespaceInfo}
 \alias{importIntoEnv}
 \alias{isBaseNamespace}
 \alias{isNamespace}
@@ -37,9 +38,10 @@ importIntoEnv(impenv, impnames, expenv, expnames)
 isBaseNamespace(ns)
 isNamespace(ns)
 namespaceExport(ns, vars)
-namespaceImport(self, \dots, from = NULL)
+namespaceImport(self, \dots, from = NULL, except = character(0L))
 namespaceImportFrom(self, ns, vars, generics, packages,
-                    from = "non-package environment")
+                    from = "non-package environment",
+                    except = character(0L))
 namespaceImportClasses(self, ns, vars, from = NULL)
 namespaceImportMethods(self, ns, vars, from = NULL)
 packageHasNamespace(package, package.lib)
@@ -76,6 +78,9 @@ loadingNamespaceInfo()
   \item{\dots}{character arguments.}
   \item{metaname}{the methods table name.}
   \item{name}{symbol: name of namespace}
+  \item{except}{character vector naming symbols to exclude from the
+    import, particularly useful when \code{vars} is missing.
+  }
 }
 \description{
   Internal namespace support functions.  Not intended to be called
@@ -88,12 +93,24 @@ loadingNamespaceInfo()
   which \pkg{base} and some legacy packages do not.  But then you are
   not intended to be using it \dots.
 }
-
-\keyword{internal}
+\seealso{
+  \code{\link{loadNamespace}} or \code{\link{getNamespace}} are somewhat
+  higher level namespace related functions.
+}
 \author{
   Luke Tierney and other members of the R Core Team.
 }
 \examples{
+nsName <- "stats"
+(ns <- asNamespace(nsName)) # <environment: namespace:stats>
+
+## Inverse function of asNamespace() :
+environmentName(asNamespace("stats")) # "stats"
+environmentName(asNamespace("base"))  # "base"
+getNamespaceInfo(ns, "spec")[["name"]] ## -> "stats"
+\dontshow{stopifnot(identical(nsName,
+                      getNamespaceInfo(ns, "spec")[["name"]]))}
+
 ## Only for for the daring ones, trying to get into the bowels :
 
 lsNamespaceInfo <- function(ns, ...) {
@@ -105,3 +122,4 @@ allinfoNS <- function(ns) sapply(lsNamespaceInfo(ns), getNamespaceInfo, ns=ns)
 utils::str(allinfoNS("stats"))
 utils::str(allinfoNS("stats4"))
 }
+\keyword{internal}

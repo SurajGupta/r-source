@@ -27,21 +27,14 @@ download.file <-
         match.arg(method, c("auto", "internal", "wininet", "libcurl",
                             "wget", "curl", "lynx"))
 
-    if(missing(mode) && length(grep("\\.(gz|bz2|xz|tgz|zip|rda|RData)$", url))) mode <- "wb"
+    if(missing(mode) && length(grep("\\.(gz|bz2|xz|tgz|zip|rda|RData)$", url)))
+        mode <- "wb"
     if(method == "auto") {
+        if(length(url) != 1L || typeof(url) != "character")
+            stop("'url' must be a length-one character vector");
 	method <-
-	    if(capabilities("http/ftp"))
-		"internal"
-        ## unused from here down as test is always true.
-	    else if(grepl("^file:", url)) {
-		url <- URLdecode(url)
-		"internal"
-	    } else if(system("wget --help", invisible=TRUE) == 0L)
-		"wget"
-	    else if(system("curl --help", invisible=TRUE) == 0L)
-		"curl"
-	    else
-		stop("no download method found")
+            if(grepl("^ftps:", url) && capabilities("libcurl")) "libcurl"
+            else "wininet"
     }
 
     switch(method,
@@ -77,7 +70,7 @@ download.file <-
 				      " -o", shQuote(path.expand(destfile))))
 	   },
 	   "lynx" =
-	       stop("method 'lynx' is defunct as from R 3.1.0", domain = NA))
+	       stop("method 'lynx' is defunct", domain = NA))
 
     if(status > 0L)
         warning("download had nonzero exit status")

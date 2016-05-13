@@ -98,3 +98,13 @@ Rd_package_indices <- function(pkg, lib.loc = Sys.getenv("R_BUILD_TEMPLIB"))
     }
     result
 }
+
+Rd_expr_doi <- function(x)
+{
+    ## Be nice ...
+    x <- .canonicalize_doi(x)
+
+    sprintf("\\ifelse{text}{%s}{%s}",
+            sprintf("doi: %s (URL: http://doi.org/%s)", x, x),
+            sprintf("\\href{http://doi.org/%s}{doi:\\sspace{}%s}", x, x))
+}

@@ -22,9 +22,9 @@ close.socket(socket, \dots)
 }
 \author{Thomas Lumley}
 \seealso{
-  \code{\link{make.socket}}, \code{\link{read.socket}}.
+  \code{\link{make.socket}}, \code{\link{read.socket}}
 
-  Compiling in support for sockets is optional: see
+  Compiling in support for sockets was optional prior to \R 3.3.0: see
   \code{\link{capabilities}("sockets")} to see if it is available.
 }
 

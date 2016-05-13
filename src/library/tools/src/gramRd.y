@@ -594,7 +594,7 @@ static SEXP xxusermacro(SEXP macro, SEXP args, YYLTYPE *lloc)
 	SET_STRING_ELT(ans, i+1, STRING_ELT(CADR(CADR(nextarg)), 0));
     }	
     UNPROTECT_PTR(args);
-    UNPROTECT_PTR(macro);    
+
     /* Now push the expanded macro onto the input stream, in reverse order */
     xxungetc(END_MACRO);
     start = CHAR(STRING_ELT(ans, 0));
@@ -613,6 +613,8 @@ static SEXP xxusermacro(SEXP macro, SEXP args, YYLTYPE *lloc)
     SEXP s_Rd_tag = install("Rd_tag");
     setAttrib(ans, s_Rd_tag, mkString("USERMACRO"));
     setAttrib(ans, R_SrcrefSymbol, makeSrcref(lloc, SrcFile));
+    setAttrib(ans, install("macro"), macro);
+    UNPROTECT_PTR(macro);
 #if DEBUGVALS
     Rprintf(" result: %p\n", ans);
 #endif
@@ -1298,7 +1300,7 @@ static void yyerror(const char *s)
     	snprintf(ParseErrorMsg, PARSE_ERROR_SIZE, "%s", s);
     }
     filename = findVar(install("filename"), SrcFile);
-    if (isString(filename) && length(filename))
+    if (isString(filename) && LENGTH(filename))
     	strncpy(ParseErrorFilename, CHAR(STRING_ELT(filename, 0)), PARSE_ERROR_SIZE - 1);
     else
         ParseErrorFilename[0] = '\0';
@@ -1860,11 +1862,11 @@ SEXP C_deparseRd(SEXP e, SEXP state)
     char *outbuf, *out, lookahead;
     Rboolean escape;
 
-    if(!isString(e) || length(e) != 1) 
+    if(!isString(e) || LENGTH(e) != 1) 
     	error(_("'deparseRd' only supports deparsing character elements"));
     e = STRING_ELT(e, 0);
     
-    if(!isInteger(state) || length(state) != 5) error(_("bad state"));
+    if(!isInteger(state) || LENGTH(state) != 5) error(_("bad state"));
     
     PushState();
     

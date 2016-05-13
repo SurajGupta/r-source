@@ -1,5 +1,5 @@
 
-R version 3.2.4 RC (2016-03-02 r70281) -- "Very Secure Dishes"
+R version 3.3.0 beta (2016-04-19 r70517) -- "Supposedly Educational"
 Copyright (C) 2016 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -170,4 +170,25 @@ mm =  chr "Bde"
 > mycaller <- function(x = 1, callme = pi) { callme(x) }
 > mycaller()## wrongly gave `mm = NULL'  now = "Abc"
 mm =  chr "Abc"
+> 
+> 
+> ## Garbage collection  protection problem:
+> if(FALSE) ## only here to be run as part of  'make test-Gct'
++     gctorture() # <- for manual testing
+> x <- c("a", NA, "b")
+> fx <- factor(x, exclude="")
+> ST <- if(interactive()) system.time else invisible
+> ST(r <- replicate(20, capture.output(print(fx))))
+> table(ok. <- r[2,] == "Levels: a b <NA>") # want all TRUE
+
+TRUE 
+  20 
+> stopifnot(ok.) # in case of failure, see
+> r[2,] ## the '<NA>' levels part would be wrong occasionally
+ [1] "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>"
+ [5] "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>"
+ [9] "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>"
+[13] "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>"
+[17] "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>" "Levels: a b <NA>"
+> 
 > 
