@@ -5,6 +5,53 @@
 \title{R News}
 \encoding{UTF-8}
 
+\section{\Rlogo CHANGES IN R 3.3.1}{
+  \subsection{BUG FIXES}{
+    \itemize{
+      \item \command{R CMD INSTALL} and hence \code{install.packages()}
+      gave an internal error installing a package called
+      \pkg{description} from a tarball on a case-insensitive file system.
+
+      \item \code{match(x, t)} (and hence \code{x \%in\% t}) failed
+      when \code{x} was of length one, and either \code{character} and \code{x}
+      and \code{t} only differed in their \code{Encoding} or when
+      \code{x} and \code{t} where \code{complex} with \code{NA}s or \code{NaN}s.
+      (\PR{16885}.)
+
+      \item \code{unloadNamespace(ns)} also works again when \code{ns} is a
+      \sQuote{namespace}, as from \code{getNamespace()}.
+
+      \item \code{rgamma(1,Inf)} or \code{rgamma(1, 0,0)} no longer give
+      \code{NaN} but the correct limit.
+
+      \item \code{length(baseenv())} is correct now.
+
+      \item \code{pretty(d, ..)} for date-time \code{d} rarely failed
+      when \code{"halfmonth"} time steps were tried (\PR{16923}) and
+      on \sQuote{inaccurate} platforms such as 32-bit windows or
+      a configuration with \command{--disable-long-double}; see comment
+      #15 of \PR{16761}.
+
+      \item In \code{text.default(x, y, labels)}, the rarely(?) used
+      default for \code{labels} is now correct also for the case of a
+      2-column matrix \code{x} and missing \code{y}.
+
+      \item \code{as.factor(c(a = 1L))} preserves \code{names()} again
+      as in \R < 3.1.0.
+
+      \item \code{strtrim(""[0], 0[0])} now works.
+
+      \item Use of \code{Ctrl-C} to terminate a reverse incremental
+      search started by \code{Ctrl-R} in the \code{readline}-based Unix
+      terminal interface is now supported for \code{readline} >= 6.3
+      (\code{Ctrl-G} always worked).  (\PR{16603})
+
+      \item \code{diff(<difftime>)} now keeps the \code{"units"}
+      attribute, as subtraction already did, \PR{16940}.
+    }
+  }
+}
+
 \section{\Rlogo CHANGES IN R 3.3.0}{
   \subsection{SIGNIFICANT USER-VISIBLE CHANGES}{
     \itemize{
@@ -324,7 +371,7 @@
       \item \code{gzcon()} gains a new option \code{text}, which marks
       the connection as text-oriented (so e.g.\sspace{}\code{pushBack()}
       works).  It is still always opened in binary mode.
-      
+
       \item The \code{import()} namespace directive now accepts an
       argument \code{except} which names symbols to exclude from the
       imports. The \code{except} expression should evaluate to a
@@ -576,7 +623,7 @@
       \item \code{install.packages()} could give false errors when
       \code{options("pkgType")} was \code{"binary"}.  (Reported by
       Jose Claudio Faria.)
-      
+
       \item A bug fix in \R 3.0.2 fixed problems with \code{locator()}
       in X11, but introduced problems in Windows.  Now both should be
       fixed.  (\PR{15700})
@@ -584,7 +631,7 @@
       \item \code{download.file()} with \code{method = "wininet"}
       incorrectly warned of download file length difference when
       reported length was unknown. (\PR{16805})
-      
+
       \item \code{diag(NULL, 1)} crashed because of missed type
       checking.  (\PR{16853})
     }

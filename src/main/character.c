@@ -1520,44 +1520,47 @@ SEXP attribute_hidden do_strtrim(SEXP call, SEXP op, SEXP args, SEXP env)
     if (!isString(x = CAR(args)))
 	error(_("strtrim() requires a character vector"));
     len = XLENGTH(x);
-    PROTECT(width = coerceVector(CADR(args), INTSXP));
-    nw = LENGTH(width);
-    if (!nw || (nw < len && len % nw))
-	error(_("invalid '%s' argument"), "width");
-    for (i = 0; i < nw; i++)
-	if (INTEGER(width)[i] == NA_INTEGER ||
-	   INTEGER(width)[i] < 0)
-	    error(_("invalid '%s' argument"), "width");
     PROTECT(s = allocVector(STRSXP, len));
-    vmax = vmaxget();
-    for (i = 0; i < len; i++) {
-	if (STRING_ELT(x, i) == NA_STRING) {
-	    SET_STRING_ELT(s, i, STRING_ELT(x, i));
-	    continue;
+    if(len > 0) {
+	PROTECT(width = coerceVector(CADR(args), INTSXP));
+	nw = LENGTH(width);
+	if (!nw || (nw < len && len % nw))
+	    error(_("invalid '%s' argument"), "width");
+	for (i = 0; i < nw; i++)
+	    if (INTEGER(width)[i] == NA_INTEGER ||
+		INTEGER(width)[i] < 0)
+		error(_("invalid '%s' argument"), "width");
+	vmax = vmaxget();
+	for (i = 0; i < len; i++) {
+	    if (STRING_ELT(x, i) == NA_STRING) {
+		SET_STRING_ELT(s, i, STRING_ELT(x, i));
+		continue;
+	    }
+	    w = INTEGER(width)[i % nw];
+	    This = translateChar(STRING_ELT(x, i));
+	    nc = (int) strlen(This);
+	    buf = R_AllocStringBuffer(nc, &cbuff);
+	    wsum = 0;
+	    mbs_init(&mb_st);
+	    for (p = This, w0 = 0, q = buf; *p ;) {
+		nb =  (int) Mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
+		w0 = Ri18n_wcwidth(wc);
+		if (w0 < 0) { p += nb; continue; } /* skip non-printable chars */
+		wsum += w0;
+		if (wsum <= w) {
+		    for (k = 0; k < nb; k++) *q++ = *p++;
+		} else break;
+	    }
+	    *q = '\0';
+	    SET_STRING_ELT(s, i, markKnown(buf, STRING_ELT(x, i)));
+	    vmaxset(vmax);
 	}
-	w = INTEGER(width)[i % nw];
-	This = translateChar(STRING_ELT(x, i));
-	nc = (int) strlen(This);
-	buf = R_AllocStringBuffer(nc, &cbuff);
-	wsum = 0;
-	mbs_init(&mb_st);
-	for (p = This, w0 = 0, q = buf; *p ;) {
-	    nb =  (int) Mbrtowc(&wc, p, MB_CUR_MAX, &mb_st);
-	    w0 = Ri18n_wcwidth(wc);
-	    if (w0 < 0) { p += nb; continue; } /* skip non-printable chars */
-	    wsum += w0;
-	    if (wsum <= w) {
-		for (k = 0; k < nb; k++) *q++ = *p++;
-	    } else break;
-	}
-	*q = '\0';
-	SET_STRING_ELT(s, i, markKnown(buf, STRING_ELT(x, i)));
-	vmaxset(vmax);
+	R_FreeStringBufferL(&cbuff);
+	UNPROTECT(1);
     }
-    if (len > 0) R_FreeStringBufferL(&cbuff);
     SHALLOW_DUPLICATE_ATTRIB(s, x);
     /* This copied the class, if any */
-    UNPROTECT(2);
+    UNPROTECT(1);
     return s;
 }
 
@@ -1653,6 +1656,13 @@ SEXP attribute_hidden do_strrep(SEXP call, SEXP op, SEXP args, SEXP env)
 		error(_("invalid '%s' value"), "times");
 	    xi = CHAR(STRING_ELT(x, ix));
 	    nc = (int) strlen(xi);
+
+	    /* check for feasible result length; use double to protect
+	       against integer overflow */
+	    double len = ((double) nc) * ni;
+	    if (len > INT_MAX)
+		error("R character strings are limited to 2^31-1 bytes");
+
 	    cbuf = buf = CallocCharBuf(nc * ni);
 	    for(j = 0; j < ni; j++) {
 		strcpy(buf, xi);

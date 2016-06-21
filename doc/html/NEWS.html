@@ -7,6 +7,70 @@
 
 <h2>R News</h2>
 
+<h3><img src="../help/figures/../../html/Rlogo.svg" class="toplogo" alt="[R logo]" /> CHANGES IN R 3.3.1</h3>
+
+
+
+<h4>BUG FIXES</h4>
+
+
+<ul>
+<li> <p><code>R CMD INSTALL</code> and hence <code>install.packages()</code>
+gave an internal error installing a package called
+<span class="pkg">description</span> from a tarball on a case-insensitive file system.
+</p>
+</li>
+<li> <p><code>match(x, t)</code> (and hence <code>x %in% t</code>) failed
+when <code>x</code> was of length one, and either <code>character</code> and <code>x</code>
+and <code>t</code> only differed in their <code>Encoding</code> or when
+<code>x</code> and <code>t</code> where <code>complex</code> with <code>NA</code>s or <code>NaN</code>s.
+(<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16885">PR#16885</a>.)
+</p>
+</li>
+<li> <p><code>unloadNamespace(ns)</code> also works again when <code>ns</code> is a
+&lsquo;namespace&rsquo;, as from <code>getNamespace()</code>.
+</p>
+</li>
+<li> <p><code>rgamma(1,Inf)</code> or <code>rgamma(1, 0,0)</code> no longer give
+<code>NaN</code> but the correct limit.
+</p>
+</li>
+<li> <p><code>length(baseenv())</code> is correct now.
+</p>
+</li>
+<li> <p><code>pretty(d, ..)</code> for date-time <code>d</code> rarely failed
+when <code>"halfmonth"</code> time steps were tried (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16923">PR#16923</a>) and
+on &lsquo;inaccurate&rsquo; platforms such as 32-bit windows or
+a configuration with <code>--disable-long-double</code>; see comment
+#15 of <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16761">PR#16761</a>.
+</p>
+</li>
+<li><p> In <code>text.default(x, y, labels)</code>, the rarely(?) used
+default for <code>labels</code> is now correct also for the case of a
+2-column matrix <code>x</code> and missing <code>y</code>.
+</p>
+</li>
+<li> <p><code>as.factor(c(a = 1L))</code> preserves <code>names()</code> again
+as in <span style="font-family: Courier New, Courier; color: #666666;"><b>R</b></span> &lt; 3.1.0.
+</p>
+</li>
+<li> <p><code>strtrim(""[0], 0[0])</code> now works.
+</p>
+</li>
+<li><p> Use of <code>Ctrl-C</code> to terminate a reverse incremental
+search started by <code>Ctrl-R</code> in the <code>readline</code>-based Unix
+terminal interface is now supported for <code>readline</code> &gt;= 6.3
+(<code>Ctrl-G</code> always worked).  (<a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16603">PR#16603</a>)
+</p>
+</li>
+<li> <p><code>diff(&lt;difftime&gt;)</code> now keeps the <code>"units"</code>
+attribute, as subtraction already did, <a href="https://bugs.R-project.org/bugzilla3/show_bug.cgi?id=16940">PR#16940</a>.
+</p>
+</li></ul>
+
+
+
+
 <h3><img src="../help/figures/../../html/Rlogo.svg" class="toplogo" alt="[R logo]" /> CHANGES IN R 3.3.0</h3>
 
 

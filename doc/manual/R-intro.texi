@@ -7536,9 +7536,12 @@ Windows versions of @R{} have somewhat simpler command-line editing: see
 file @file{README.Rterm} for command-line editing under
 @code{Rterm.exe}.
 
-When using @R{} with @strong{readline} capabilities, the functions
-described below are available, as well as others (probably) documented
-in @command{man readline} or @command{info readline} on your system.
+When using @R{} with GNU@footnote{It is possible to build @R{} using an
+emulation of GNU @strong{readline}, such as one based on NetBSD's
+@strong{editline}, it which case only a subset of the capabilities may
+be provided.} @strong{readline} capabilities, the functions described
+below are available, as well as others (probably) documented in
+@command{man readline} or @command{info readline} on your system.
 
 Many of these use either Control or Meta characters.  Control
 characters, such as @kbd{Control-m}, are obtained by holding the
@@ -7553,6 +7556,10 @@ sequences starting with @kbd{ESC}.  Thus, to enter @kbd{M-b}, you could
 type @key{ESC}@key{b}.  The @kbd{ESC} character sequences are also
 allowed on terminals with real Meta keys.  Note that case is significant
 for Meta characters.
+
+Some but not all versions@footnote{In particular, not versions 6.3 or
+later: this is worked around as from @R{} 3.4.0.} of @strong{readline}
+will recognize resizing of the terminal window so this is best avoided.
 
 @appendixsection Editing actions
 
@@ -7583,7 +7590,8 @@ Go to the previous command (backwards in the history).
 @item C-n
 Go to the next command (forwards in the history).
 @item C-r @var{text}
-Find the last command with the @var{text} string in it.
+Find the last command with the @var{text} string in it.  This can be
+cancelled by @code{C-g} (and on some versions of @R{} by @code{C-c}).
 @end table
 
 On most terminals, you can also use the up and down arrow keys instead

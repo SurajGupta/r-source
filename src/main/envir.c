@@ -49,9 +49,10 @@
  */
 
 /* R 1.8.0: namespaces are no longer experimental, so the following
- *  are no longer 'experimental options':
+ *  are no longer 'experimental options', but rather three sections
+ *  describing the API:
  *
- * EXPERIMENTAL_NAMESPACES: When this is defined the variable
+ * NAMESPACES:
  *     R_BaseNamespace holds an environment that has R_GlobalEnv as
  *     its parent.  This environment does not actually contain any
  *     bindings of its own.  Instead, it redirects all fetches and
@@ -62,7 +63,7 @@
  * ENVIRONMENT_LOCKING: Locking an environment prevents new bindings
  *     from being created and existing bindings from being removed.
  *
- * FANCY_BINDINGS: This enables binding locking and "active bindings".
+ * FANCY_BINDINGS: We have binding locking and "active bindings".
  *     When a binding is locked, its value cannot be changed.  It may
  *     still be removed from the environment if the environment is not
  *     locked.
@@ -1642,7 +1643,6 @@ static SEXP setVarInFrame(SEXP rho, SEXP symbol, SEXP value)
 	frame = FRAME(rho);
 	while (frame != R_NilValue) {
 	    if (TAG(frame) == symbol) {
-		if (rho == R_GlobalEnv) R_DirtyImage = 1;
 		SET_BINDING_VALUE(frame, value);
 		SET_MISSING(frame, 0);	/* same as defineVar */
 		return symbol;
@@ -1659,7 +1659,6 @@ static SEXP setVarInFrame(SEXP rho, SEXP symbol, SEXP value)
 	hashcode = HASHVALUE(c) % HASHSIZE(HASHTAB(rho));
 	frame = R_HashGetLoc(hashcode, symbol, HASHTAB(rho));
 	if (frame != R_NilValue) {
-	    if (rho == R_GlobalEnv) R_DirtyImage = 1;
 	    SET_BINDING_VALUE(frame, value);
 	    SET_MISSING(frame, 0);	/* same as defineVar */
 	    return symbol;
@@ -2804,6 +2803,7 @@ SEXP attribute_hidden do_env2list(SEXP call, SEXP op, SEXP args, SEXP rho)
     int sort_nms = asLogical(CADDR(args)); /* sorted = TRUE/FALSE */
     if (sort_nms == NA_LOGICAL) sort_nms = 0;
 
+    // k := length(env) = envxlength(env) :
     if (env == R_BaseEnv || env == R_BaseNamespace)
 	k = BuiltinSize(all, 0);
     else if (HASHTAB(env) != R_NilValue)
@@ -2949,29 +2949,23 @@ SEXP attribute_hidden do_eapply(SEXP call, SEXP op, SEXP args, SEXP rho)
 }
 
 /* Leaks out via inlining in ../library/tools/src/ */
-int Rf_envlength(SEXP rho)
-{
-    if(IS_USER_DATABASE(rho)) {
-	R_ObjectTable *tb = (R_ObjectTable*)
-	    R_ExternalPtrAddr(HASHTAB(rho));
-	return length(tb->objects(tb));
-    } else if( HASHTAB(rho) != R_NilValue)
-	return HashTableSize(HASHTAB(rho), 1);
-    else
-	return FrameSize(FRAME(rho), 1);
+#define R_ENVLENGTH(NAME_, LENGTH_FN_, TYPE_)				\
+TYPE_ NAME_(SEXP rho)							\
+{									\
+    if(IS_USER_DATABASE(rho)) {						\
+	R_ObjectTable *tb = (R_ObjectTable*) R_ExternalPtrAddr(HASHTAB(rho)); \
+	return LENGTH_FN_(tb->objects(tb));				\
+    } else if( HASHTAB(rho) != R_NilValue)				\
+	return HashTableSize(HASHTAB(rho), 1);				\
+    else if (rho == R_BaseEnv || rho == R_BaseNamespace) 		\
+	return BuiltinSize(1, 0);					\
+    else								\
+	return FrameSize(FRAME(rho), 1);				\
 }
 
-R_xlen_t Rf_envxlength(SEXP rho)
-{
-    if(IS_USER_DATABASE(rho)) {
-	R_ObjectTable *tb = (R_ObjectTable*)
-	    R_ExternalPtrAddr(HASHTAB(rho));
-	return xlength(tb->objects(tb));
-    } else if( HASHTAB(rho) != R_NilValue)
-	return HashTableSize(HASHTAB(rho), 1);
-    else
-	return FrameSize(FRAME(rho), 1);
-}
+R_ENVLENGTH(Rf_envlength,   length, int)
+
+R_ENVLENGTH(Rf_envxlength, xlength, R_xlen_t)
 
 /*----------------------------------------------------------------------
 

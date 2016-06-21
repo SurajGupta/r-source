@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- This manual is for R, version 3.3.0 (2016-05-03).
+<!-- This manual is for R, version 3.3.1 (2016-06-21).
 
 Copyright (C) 2001-2016 R Core Team
 
@@ -333,7 +333,7 @@ p {
 
 <p>This is a guide to installation and administration for R.
 </p>
-<p>This manual is for R, version 3.3.0 (2016-05-03).
+<p>This manual is for R, version 3.3.1 (2016-06-21).
 </p>
 <p>Copyright &copy; 2001&ndash;2016 R Core Team
 </p>
@@ -926,13 +926,13 @@ specified on the <code>make install</code> command line (at least for
 <code>libdir</code>.  The C header files can be installed to the value of
 <code>rincludedir</code>: note that as the headers are not installed into a
 subdirectory you probably want something like
-<code>rincludedir=/usr/local/include/R-3.3.0</code>.
+<code>rincludedir=/usr/local/include/R-3.3.1</code>.
 </p>
 <p>If you want the R home to be something other than
 <samp><var>libdir</var>/R</samp>, use <samp>rhome</samp>: for example
 </p>
 <div class="example">
-<pre class="example">make install rhome=/usr/local/lib64/R-3.3.0
+<pre class="example">make install rhome=/usr/local/lib64/R-3.3.1
 </pre></div>
 
 <p>will use a version-specific R home on a non-Debian Linux 64-bit
@@ -1316,10 +1316,12 @@ from <acronym>CRAN</acronym> to run on 32- or 64-bit Windows (XP or later) on
 &lsquo;<samp>ix86</samp>&rsquo; and &lsquo;<samp>x86_64</samp>&rsquo; <acronym>CPU</acronym>s.
 </p>
 <p>Your file system must allow long file names (as is likely except
-perhaps for some network-mounted systems).
+perhaps for some network-mounted systems).  If it doesn&rsquo;t also support
+conversion to short name equivalents (a.k.a. DOS 8.3 names), then R
+<em>must</em> be installed in a path that does not contain spaces.
 </p>
 <p>Installation is <em>via</em> the installer
-<samp>R-3.3.0-win.exe</samp>.  Just double-click on the icon and
+<samp>R-3.3.1-win.exe</samp>.  Just double-click on the icon and
 follow the instructions.  When installing on a 64-bit version of Windows
 the options will include 32- or 64-bit versions of R (and the default is
 to install both).  You can uninstall R from the Control Panel.
@@ -1386,12 +1388,12 @@ will call this directory <samp><var>R_HOME</var></samp> below.
 
 <p>You need to collect the following sets of files:
 </p><ul>
-<li> Get the R source code tarball <samp>R-3.3.0.tar.gz</samp> from
+<li> Get the R source code tarball <samp>R-3.3.1.tar.gz</samp> from
 <acronym>CRAN</acronym>.  Open a command window (or another shell) at directory
 <var>R_HOME</var>, and run
 
 <div class="example">
-<pre class="example">tar -xf R-3.3.0.tar.gz
+<pre class="example">tar -xf R-3.3.1.tar.gz
 </pre></div>
 
 <p>to create the source tree in <var>R_HOME</var>.  <strong>Beware</strong>: do use
@@ -1400,7 +1402,7 @@ If you are using an account with administrative privileges you may get a
 lot of messages which can be suppressed by
 </p>
 <div class="example">
-<pre class="example">tar --no-same-owner -xf R-3.3.0.tar.gz
+<pre class="example">tar --no-same-owner -xf R-3.3.1.tar.gz
 </pre></div>
 
 <a name="index-TAR_005fOPTIONS-1"></a>
@@ -1717,7 +1719,7 @@ source tree) in <samp>src/gnuwin32/installer</samp> run
 installation (in double quotes if it contains spaces or backslashes).
 </p>
 <p>Both methods create an executable with a standard name such as
-<samp>R-3.3.0-win.exe</samp>, so please rename it to indicate that
+<samp>R-3.3.1-win.exe</samp>, so please rename it to indicate that
 it is customized.  If you intend to <em>distribute</em> a customized
 installer please do check that license requirements are met &ndash; note that
 the installer will state that the contents are distributed under GPL
@@ -1776,21 +1778,21 @@ make msi
 </pre></div>
 
 <p>which will result in a file with a name like
-<samp>R-3.3.0-win32.msi</samp>.  This can be double-clicked to be
+<samp>R-3.3.1-win32.msi</samp>.  This can be double-clicked to be
 installed, but those who need it will know what to do with it (usually
 by running <code>msiexec /i</code> with additional options).  Properties
 that users might want to set from the <code>msiexec</code> command line
 include &lsquo;<samp>ALLUSERS</samp>&rsquo;, &lsquo;<samp>INSTALLDIR</samp>&rsquo; (something like
-<samp>c:\Program Files\R\R-3.3.0</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
+<samp>c:\Program Files\R\R-3.3.1</samp>) and &lsquo;<samp>RMENU</samp>&rsquo; (the path
 to the &lsquo;<samp>R</samp>&rsquo; folder on the start menu) and &lsquo;<samp>STARTDIR</samp>&rsquo; (the
 starting directory for R shortcuts, defaulting to something like
 <samp>c:\Users\name\Documents\R</samp>).
 </p>
 <p>The MSI installer can be built both from a 32-bit build of R
-(<samp>R-3.3.0-win32.msi</samp>) and from a 64-bit build of R
-(<samp>R-3.3.0-win64.msi</samp>, optionally including 32-bit files
+(<samp>R-3.3.1-win32.msi</samp>) and from a 64-bit build of R
+(<samp>R-3.3.1-win64.msi</samp>, optionally including 32-bit files
 by setting the macro <code>HOME32</code>, when the name is
-<samp>R-3.3.0-win.msi</samp>).  Unlike the main installer, a 64-bit
+<samp>R-3.3.1-win.msi</samp>).  Unlike the main installer, a 64-bit
 MSI installer can only be run on 64-bit Windows.
 </p>
 <p>Thanks to David del Campo (Dept of Statistics, University of Oxford)
@@ -1858,7 +1860,7 @@ Windows&rsquo; CRLF line endings.
 
 
 <p>The front page of a <acronym>CRAN</acronym> site has a link &lsquo;Download R for OS
-X&rsquo;. Click on that, then download the file <samp>R-3.3.0.pkg</samp>
+X&rsquo;. Click on that, then download the file <samp>R-3.3.1.pkg</samp>
 and install it. This runs on OS X 10.9 and later (Mavericks, Yosemite,
 El Capitan, &hellip;).
 </p>
@@ -2329,8 +2331,8 @@ using the <code>make</code> variables <code>BINPREF</code> (and in some cases
 <code>BINPREF64</code>).  The library location is set using <code>make</code>
 variable <code>LOCAL_SOFT</code>, to give an equivalent of <samp>/usr/local</samp>
 on a Unix-alike.  All of these can be set in
-<samp>src/gnuwin/MkRules.local</samp> when R is built from sources (see
-the comments in <samp>src/gnuwin/MkRules.dist</samp>), or in
+<samp>src/gnuwin32/MkRules.local</samp> when R is built from sources (see
+the comments in <samp>src/gnuwin32/MkRules.dist</samp>), or in
 file<a name="DOCF18" href="#FOOT18"><sup>18</sup></a>
 <samp>etc/i386/Makeconf</samp> or <samp>etc/x64/Makeconf</samp> for an installed
 version of R.  In the latter case only <code>BINPREF</code> is used, with
@@ -3284,9 +3286,10 @@ really do not want these you will need to explicitly configure R
 without X11, using <samp>--with-x=no</samp>.
 </p>
 <p>The command-line editing (and command completion) depends on the
-<acronym>GNU</acronym> <code>readline</code> library: version 4.2 or later is needed
-for all the features to be enabled.  Otherwise you will need to
-configure with <samp>--with-readline=no</samp> (or equivalent).
+<acronym>GNU</acronym> <code>readline</code> library (including its headers): version
+4.2 or later is needed for all the features to be enabled.  Otherwise
+you will need to configure with <samp>--with-readline=no</samp> (or
+equivalent).
 </p>
 <p>A suitably comprehensive <code>iconv</code> function is essential.  The R
 usage requires <code>iconv</code> to be able to translate between
@@ -4826,12 +4829,10 @@ offer the installation of the command-line tools.  If you have installed
 Xcode, this provides the command-line tools.  The tools will need to be
 reinstalled when OS X is upgraded, as upgrading partially removes them.)
 </p>
-<p>You need <code>readline</code> (or to configure using
-<samp>--without-readline</samp>), and a Fortran compiler.  Those and other
-binary components are available from
-<a href="https://r.research.att.com/libs">https://r.research.att.com/libs</a>: you are likely to need
-<code>pcre</code> and <code>xz</code> (recent OS X provides libs but not headers for
-these).
+<p>You need <code>readline</code><a name="DOCF55" href="#FOOT55"><sup>55</sup></a> and a Fortran compiler.  Those and other binary
+components are available from <a href="https://r.research.att.com/libs">https://r.research.att.com/libs</a>:
+you are likely to need <code>pcre</code> and <code>xz</code> (recent OS X provides
+libraries but not headers for these).
 </p>
 <p>An X sub-system is required unless configuring using
 <samp>--without-x</samp>: see <a href="https://xquartz.macosforge.org/">https://xquartz.macosforge.org/</a>.
@@ -4840,7 +4841,7 @@ these).
 <samp>--with-aqua</samp> (which is the default): <code>quartz()</code> then
 becomes the default device when running R at the console and X11
 would only be used for the command-line-R data editor/viewer and one
-version of Tcl/Tk.  (This needs an Objective-C compiler<a name="DOCF55" href="#FOOT55"><sup>55</sup></a> which can compile the source code of
+version of Tcl/Tk.  (This needs an Objective-C compiler<a name="DOCF56" href="#FOOT56"><sup>56</sup></a> which can compile the source code of
 <code>quartz()</code>.)
 </p>
 <p>Use <samp>--without-aqua</samp> if you want a standard Unix-alike build:
@@ -4866,7 +4867,7 @@ FCFLAGS=$F77FLAGS
 
 <p>with <code>clang</code> and <code>clang++</code> from the &lsquo;Command Line
 Tools&rsquo; and the Fortran compiler from
-<a href="https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2">https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2</a>.<a name="DOCF56" href="#FOOT56"><sup>56</sup></a>
+<a href="https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2">https://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2</a>.<a name="DOCF57" href="#FOOT57"><sup>57</sup></a>
 </p>
 <p>Other builds of <code>gfortran</code> are available: see
 <a href="https://gcc.gnu.org/wiki/GFortranBinaries">https://gcc.gnu.org/wiki/GFortranBinaries</a> and
@@ -4877,7 +4878,7 @@ or path in a personal or site <samp>Makevars</samp> file (see <a href="#Customiz
 <p>More recent and complete distributions of <code>clang</code> are usually
 available from <a href="http://llvm.org/releases/">http://llvm.org/releases/</a>.  In particular, these
 include support for the &lsquo;Address Sanitizer&rsquo; (not included by Apple until
-Xcode 7) and for OpenMP<a name="DOCF57" href="#FOOT57"><sup>57</sup></a> in version 3.7.0 and later.
+Xcode 7) and for OpenMP<a name="DOCF58" href="#FOOT58"><sup>58</sup></a> in version 3.7.0 and later.
 </p>
 <p>Pre-compiled versions of many of the <a href="#Useful-libraries-and-programs">Useful libraries and programs</a>
 are available from <a href="https://r.research.att.com/libs/">https://r.research.att.com/libs/</a>.  You will
@@ -4909,7 +4910,7 @@ Otherwise the binary libraries at
 </pre></div>
 
 <p>to provide potentially higher-performance versions of the <acronym>BLAS</acronym>
-and LAPACK routines.<a name="DOCF58" href="#FOOT58"><sup>58</sup></a>
+and LAPACK routines.<a name="DOCF59" href="#FOOT59"><sup>59</sup></a>
 </p>
 <p>Looking at the top of
 <samp>/Library/Frameworks/R.framework/Resources/etc/Makeconf</samp>
@@ -5020,7 +5021,7 @@ tclvalue(.Tcl(&quot;tk windowingsystem&quot;))  # &quot;x11&quot; or &quot;aqua&
 <a name="Java"></a>
 <h4 class="subsection">C.3.3 Java</h4>
 
-<p>The situation with Java support on OS X is messy.<a name="DOCF59" href="#FOOT59"><sup>59</sup></a>
+<p>The situation with Java support on OS X is messy.<a name="DOCF60" href="#FOOT60"><sup>60</sup></a>
 </p>
 <p>OS X no longer comes with an installed Java runtime (JRE), and an OS X
 upgrade removes one if already installed: it is intended to be installed
@@ -5030,7 +5031,7 @@ should prompt you to install it.  You can also install directly the
 latest Java from Oracle (currently from
 <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">http://www.oracle.com/technetwork/java/javase/downloads/index.html</a>).
 </p>
-<p>You may need to install what Apple calls &lsquo;legacy Java&rsquo;<a name="DOCF60" href="#FOOT60"><sup>60</sup></a> to suppress pop-up messages
+<p>You may need to install what Apple calls &lsquo;legacy Java&rsquo;<a name="DOCF61" href="#FOOT61"><sup>61</sup></a> to suppress pop-up messages
 even if you have a current version installed.
 </p>
 <p>To see what compatible versions of Java are currently installed, run
@@ -5186,7 +5187,7 @@ option <samp>--with-internal-tzcode</samp> is recommended, and required if
 you find time-zone abbreviations being given odd values (as has been
 seen on 64-bit builds without it).
 </p>
-<p>When using the Oracle compilers<a name="DOCF61" href="#FOOT61"><sup>61</sup></a> do <em>not</em> specify <samp>-fast</samp>, as this
+<p>When using the Oracle compilers<a name="DOCF62" href="#FOOT62"><sup>62</sup></a> do <em>not</em> specify <samp>-fast</samp>, as this
 disables <acronym>IEEE</acronym> arithmetic and <code>make check</code> will fail.
 </p>
 <p>It has been reported that some Solaris installations need
@@ -5663,7 +5664,7 @@ will not need to build add-on packages from source; see <a href="#Add_002don-pac
 </p>
 <p>We have found that the build process for R is quite sensitive to
 the choice of tools: please follow our instructions <strong>exactly</strong>,
-even to the choice of particular versions of the tools.<a name="DOCF62" href="#FOOT62"><sup>62</sup></a>  The build process for add-on packages is somewhat more
+even to the choice of particular versions of the tools.<a name="DOCF63" href="#FOOT63"><sup>63</sup></a>  The build process for add-on packages is somewhat more
 forgiving, but we recommend using the exact toolset at first, and only
 substituting other tools once you are familiar with the process.
 </p>
@@ -5716,7 +5717,7 @@ use filepaths containing spaces: you can always use the short forms
 
 <p>It is essential that the directory containing the command line tools
 comes first or second in the path: there are typically like-named
-tools<a name="DOCF63" href="#FOOT63"><sup>63</sup></a> in other directories, and they will <strong>not</strong>
+tools<a name="DOCF64" href="#FOOT64"><sup>64</sup></a> in other directories, and they will <strong>not</strong>
 work. The ordering of the other directories is less important, but if in
 doubt, use the order above.
 </p>
@@ -5765,7 +5766,7 @@ install LaTeX packages on first use.
 <a name="The-Inno-Setup-installer-1"></a>
 <h3 class="section">D.2 The Inno Setup installer</h3>
 
-<p>To make the installer package (<samp>R-3.3.0-win.exe</samp>) we
+<p>To make the installer package (<samp>R-3.3.1-win.exe</samp>) we
 currently require the Unicode version of Inno Setup 5.3.7 or later from
 <a href="http://jrsoftware.org/">http://jrsoftware.org/</a>. This is <em>not</em> included in
 <samp>Rtools*.exe</samp>.
@@ -5823,7 +5824,7 @@ project&rsquo;s runtime.
 </p>
 <p>This toolchain uses <em>multilib</em>: that is there is a single front-end
 such as <code>gcc.exe</code> for each of the compilers and 32-bit (the
-default) and 64-bit compilation are selected by the flags<a name="DOCF64" href="#FOOT64"><sup>64</sup></a>  <samp>-m32</samp> and <samp>-m64</samp>
+default) and 64-bit compilation are selected by the flags<a name="DOCF65" href="#FOOT65"><sup>65</sup></a>  <samp>-m32</samp> and <samp>-m64</samp>
 respectively.  The tools are all 32-bit Windows executables and should
 be able to run on any current version of Windows&mdash;however you do need a
 64-bit version of Windows to build 64-bit R as the build process runs
@@ -6394,38 +6395,43 @@ which is usually distributed separately, e.g. at
 <p>It will be necessary to
 install later versions of software such as <code>libcurl</code>.</p>
 <h3><a name="FOOT55" href="#DOCF55">(55)</a></h3>
+<p>Apple provides a partial emulation of
+GNU readline 4.2 based on the NetBSD <code>editline</code> library.  That is
+not recommended but for the time being R&rsquo;s installation scripts will
+make use of it.</p>
+<h3><a name="FOOT56" href="#DOCF56">(56)</a></h3>
 <p>These
 days that is defined by Apple&rsquo;s implementation of <code>clang</code>, so it is
 strongly recommended to use that.</p>
-<h3><a name="FOOT56" href="#DOCF56">(56)</a></h3>
+<h3><a name="FOOT57" href="#DOCF57">(57)</a></h3>
 <p>This
 is a tarball which needs to be unpacked in the Terminal by e.g.
 <code>sudo tar -zxf gfortran-4.8.2-darwin13.tar.bz2 -C /</code>. It does
 not run on Core 2 Duo Macs.</p>
-<h3><a name="FOOT57" href="#DOCF57">(57)</a></h3>
+<h3><a name="FOOT58" href="#DOCF58">(58)</a></h3>
 <p>This also needs the OpenMP runtime,
 which is distributed separately at that site.</p>
-<h3><a name="FOOT58" href="#DOCF58">(58)</a></h3>
+<h3><a name="FOOT59" href="#DOCF59">(59)</a></h3>
 <p>It is reported that for some non-Apple
 toolchains <code>CPPFLAGS</code> needed to contain <code>-D__ACCELERATE__</code>.</p>
-<h3><a name="FOOT59" href="#DOCF59">(59)</a></h3>
+<h3><a name="FOOT60" href="#DOCF60">(60)</a></h3>
 <p>For more
 details see <a href="http://www.macstrategy.com/article.php?3">http://www.macstrategy.com/article.php?3</a>.</p>
-<h3><a name="FOOT60" href="#DOCF60">(60)</a></h3>
+<h3><a name="FOOT61" href="#DOCF61">(61)</a></h3>
 <p>e.g.
 <code>Java For OS X 2015-001</code> from
 <a href="https://support.apple.com/kb/DL1572">https://support.apple.com/kb/DL1572</a>.</p>
-<h3><a name="FOOT61" href="#DOCF61">(61)</a></h3>
+<h3><a name="FOOT62" href="#DOCF62">(62)</a></h3>
 <p>including <code>gcc</code> for
 Sparc from Oracle.</p>
-<h3><a name="FOOT62" href="#DOCF62">(62)</a></h3>
+<h3><a name="FOOT63" href="#DOCF63">(63)</a></h3>
 <p>For
 example, the Cygwin version of <code>make 3.81</code> fails to work
 correctly.</p>
-<h3><a name="FOOT63" href="#DOCF63">(63)</a></h3>
+<h3><a name="FOOT64" href="#DOCF64">(64)</a></h3>
 <p>such as <code>sort</code>, <code>find</code> and perhaps
 <code>make</code>.</p>
-<h3><a name="FOOT64" href="#DOCF64">(64)</a></h3>
+<h3><a name="FOOT65" href="#DOCF65">(65)</a></h3>
 <p>these
 flags apply to the compilers: some of the tools use different flags.
 32-bit builds are the default.</p>

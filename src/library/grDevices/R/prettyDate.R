@@ -110,6 +110,7 @@ prettyDate <- function(x, n = 5, min.n = n %/% 2, sep = " ", ...)
     calcSteps <- function(s, lim = range(zz)) {
         startTime <- trunc_POSIXt(lim[1], units = s$start) ## FIXME: should be trunc() eventually
         at <- seqDtime(startTime, end = lim[2], by = s$spec)
+	if(anyNA(at)) { at <- at[!is.na(at)]; if(!length(at)) return(at) }
 	r1 <- sum(at <= lim[1])
 	r2 <- length(at) + 1 - sum(at >= lim[2])
 	if(r2 == length(at) + 1) { # not covering at right -- add point at right
@@ -210,17 +211,17 @@ seqDtime <- function(beg, end, by, length=NULL) {
     ## intersperse at and at2 := 15-day-shifted( at ), via rbind():
     if(md == 1) {
         at2$mday <- 15L
-        at2 <- rbind(at, as.POSIXct(at2))
-    } else if(md == 15) {
+    } else if(md >= 15) { # (md == 16 may happen; not seen yet)
         at2$mday <- 1L
         at2$mon <- at2$mon + 1L
-        fix <- at2$mon == 13L
+        fix <- at2$mon == 13L # -> january, next year
         at2$mon [fix] <- 1L
         at2$year[fix] <- at2$year[fix] + 1L
         ## at2 now has wrong 'yday','wday',.. and we rely on as.POSIXct():
-        at2 <- rbind(at, as.POSIXct(at2))
+    } else if(md < 15) { ## e.g., southern hemisphere, seen 14
+        at2$mday <- md + 14L # consistent w (1 -> 15) in 1st case; ok even in Feb.
     }
-    else stop("'mday' must be 1 or 15 for \"halfmonth\"")
+    at2 <- rbind(at, as.POSIXct(at2), deparse.level = 0L)
     structure(at2[i], class = class(at), tzone = attr(at, "tzone"))
 }
 

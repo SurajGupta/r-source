@@ -399,7 +399,7 @@ stopifnot(identical(ans2, myFormula))
 
 
 ## PR#15753
-0x110p-5L
+0x110p-5L # (+ warning)
 stopifnot(.Last.value == 8.5)
 ## was 272 with a garbled message in R 3.0.0 - 3.1.0.
 
@@ -1409,8 +1409,7 @@ chkPretty <- function(x, n = 5, min.n = NULL, ..., max.D = 1) {
 		n %/% 3 # pretty.default
     }
     pr <- pretty(x, n=n, min.n=min.n, ...)
-    ## if debugging:
-    pr <- grDevices:::prettyDate(x, n=n, min.n=min.n, ...)
+    ## if debugging: pr <- grDevices:::prettyDate(x, n=n, min.n=min.n, ...)
     stopifnot(length(pr) >= (min.n+1),
 	      ## pretty(x, *) must cover range of x:
 	      min(pr) <= min(x), max(x) <= max(pr))
@@ -1499,19 +1498,42 @@ stopifnot(identical(Ls.ok,
 chkSeq <- function(st, x, n, max.D = if(n <= 4) 1 else if(n <= 10) 2 else 3, ...)
     tryCatch(chkPretty(seq(x, by = st, length = 2), n = n, max.D=max.D, ...),
              error = conditionMessage)
-c.ps <- lapply(nns, function(n) lapply(steps, chkSeq, x = t02, n = n))
-## ensure that all are ok *but* some which did not match 'n' well enough:
-cc.ps <- unlist(c.ps, recursive=FALSE)
-table(ok <- vapply(cc.ps, inherits, NA, what = "POSIXt"))
-errs <- unlist(cc.ps[!ok])
-stopifnot(startsWith(errs, prefix = "| |pretty(.)| - (n+1) |"))
-Ds <- as.numeric(sub(".*\\| = ([0-9]+) > max.*", "\\1", errs))
-table(Ds)
+prSeq.errs <- function(tt, nset, tSteps) {
+    stopifnot(length(tt) == 1)
+    c.ps <- lapply(nset, function(n) lapply(tSteps, chkSeq, x = tt, n = n))
+    ## ensure that all are ok *but* some which did not match 'n' well enough:
+    cc.ps <- unlist(c.ps, recursive=FALSE)
+    ok <- vapply(cc.ps, inherits, NA, what = "POSIXt")
+    errs <- unlist(cc.ps[!ok])
+    stopifnot(startsWith(errs, prefix = "| |pretty(.)| - (n+1) |"))
+    list(ok = ok,
+	 Ds = as.numeric(sub(".*\\| = ([0-9]+) > max.*", "\\1", errs)))
+}
+r.t02 <- prSeq.errs(t02, nset = nns, tSteps = steps)
+table(r.t02 $ ok)
+table(r.t02 $ Ds -> Ds)
 ## Currently   [may improve]
 ##  3  4  5  6  7  8
 ##  4 14  6  3  2  1
 ## ... and ensure we only improve:
 stopifnot(length(Ds) <= 30, max(Ds) <= 8, sum(Ds) <= 138)
+## A Daylight saving time -- halfmonth combo:
+(tOz <- structure(c(1456837200, 1460728800), class = c("POSIXct", "POSIXt"),
+		tzone = "Australia/Sydney"))
+(pz <- pretty(tOz)) # failed in R 3.3.0, PR#16923
+stopifnot(length(pz) <= 6, # is 5
+          attr(dpz <- diff(pz), "units") == "days", sd(dpz) < 1.6)
+if(FALSE) { # save 0.4 sec
+    print(system.time(
+        r.tOz <- prSeq.errs(tOz[1], nset = nns, tSteps = steps)
+    ))
+    stopifnot(sum(r.tOz $ ok) >= 132,
+              max(r.tOz $ Ds -> DOz) <= 8, mean(DOz) < 4.5)
+}
+nn <- c(1:33,10*(4:9),100*(1+unique(sort(rpois(20,4)))))
+pzn <- lengths(lapply(nn, pretty, x=tOz))
+stopifnot(0.5 <= min(pzn/(nn+1)), max(pzn/(nn+1)) <= 1.5)
+
 
 
 stopifnot(c("round.Date", "round.POSIXt") %in% as.character(methods(round)))
@@ -1559,4 +1581,40 @@ z <- ts(cbind(1:5,1:5))
 tsp(z) <- NULL
 stopifnot(identical(class(z), "matrix"))
 ## kept "mts" in 3.2.4, PR#16769
+
+
+## match(x, t): fast algorithm for length-1 'x'
+## a) string 'x'  when only encoding differs
+tmp <- "年付"
+tmp2 <- "\u5e74\u4ed8" ; Encoding(tmp2) <- "UTF-8"
+for(ex in list(c(tmp, tmp2), c("foo","foo"))) {
+    cat(sprintf("\n|%s|%s| :\n----------\n", ex[1], ex[2]))
+    for(enc in c("latin1", "UTF-8", "unknown")) { # , "MAC", "WINDOWS-1251"
+	cat(sprintf("%9s: ", enc))
+	tt <- ex[1]; Encoding(tt) <- enc; t2 <- ex[2]
+	if(identical(i1 <- (  tt       %in% t2),
+		     i2 <- (c(tt, "a") %in% t2)[1]))
+	    cat(i1,"\n")
+	else
+	    stop("differing: ", i1, ", ", i2)
+    }
+}
+outerID <- function(x,y, ...) outer(x,y, Vectorize(identical,c("x","y")), ...)
+## b) complex 'x' with different kinds of NaN
+x0 <- c(0,1, NA_real_, NaN)
+z <- outer(x0,x0, complex, length.out=1L)
+z <- c(z[is.na(z)], # <- of length 4 * 4 - 2*2 = 12
+       as.complex(NaN), as.complex(0/0), # <- typically these two differ in bits
+       complex(real = NaN), complex(imaginary = NaN),
+       NA_complex_, complex(real = NA), complex(imaginary = NA))
+## 1..12 all differ, then only [14] ("0/0") differs in first (low level):
+symnum(outerID(z,z, FALSE,FALSE,FALSE,FALSE))
+symnum(outerID(z,z))
+(mz <- match(z, z)) # currently different {NA,NaN} patterns differ - not in print()/format() _FIXME_
+stopifnot(identical(mz, c(1:4, 1L, 3L, 7:8, 2L, 4L, 8L, 12L, # <- would change after FIXME
+                          rep(2L, 4), 7L, 1L, 1L)))
+zRI <- rbind(Re=Re(z), Im=Im(z)) # and see the pattern :
+print(cbind(format = format(z), t(zRI), mz), quote=FALSE)
+stopifnot(identical(mz, sapply(z, match, table = z)))
+## the latter has length(x) == 1 in match(x,*)  and failed in R 3.3.0
 
