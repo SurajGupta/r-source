@@ -18,7 +18,7 @@
 
 termplot <- function(model, data = NULL, envir = environment(formula(model)),
                      partial.resid = FALSE,
-		     rug = FALSE, terms = NULL, se = FALSE,
+		     rug = FALSE, terms = NULL, se = FALSE, ff=1,
                      xlabs = NULL, ylabs = NULL,
                      main = NULL, col.term = 2, lwd.term = 1.5,
                      col.se = "orange", lty.se = 2, lwd.se = 1,
@@ -133,7 +133,7 @@ termplot <- function(model, data = NULL, envir = environment(formula(model)),
         if (!is.null(which.terms)) pres <- pres[, which.terms, drop = FALSE]
     }
 
-    se.lines <- function(x, iy, i, ff = 2) {
+    se.lines <- function(x, iy, i, ff = ff) {
         tt <- ff * terms$se.fit[iy, i]
         lines(x, tms[iy, i] + tt, lty = lty.se, lwd = lwd.se, col = col.se)
         lines(x, tms[iy, i] - tt, lty = lty.se, lwd = lwd.se, col = col.se)
