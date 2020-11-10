@@ -33,3 +33,46 @@ shapiro.test <- function(x)
     class(RVAL) <- "htest"
     return(RVAL)
 }
+
+#exapnd the shapiro.test by adding the plotting feature to test normality
+normarlity_test <- function(data,alpha=0.05,plotting = TRUE,verbose=TRUE) {
+  
+ if(any(is.na(data))) warning('There are missing values in your data. NAs will be omited in the follows steps')
+  
+ if (is.infinite(data)) stop("there is Inf value")
+  
+ if(verbose) message("Test in progress...")
+
+ if(plotting == TRUE) {
+    
+    par(mfrow=c(1,2))
+    
+    #Histogram and Desity Plot
+    hist(data,freq = FALSE,main = "Histogram and Density pLot",col="lightgray",na.rm=TRUE)
+    lines(density(data,na.rm=TRUE),lty=1,col="red",lwd=2)
+    
+    #Normal density plot for comparison
+    x<-c(round(min(data,na.rm = TRUE)):round(max(data,na.rm = TRUE)))
+    lines(x,dnorm(x,mean(data,na.rm = TRUE),sd(data,na.rm = TRUE)),col="blue",lwd=2,lty=2)
+    legend("topright", legend=c("Density", "Normality"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+    
+    #QQ plot
+    qqnorm(data,main="QQ-plot",col="blue")
+    qqline(data,lty=1,col="red",lwd=2)
+  }
+  
+    
+    #Shapiro-Wilk's method
+    result <- shapiro.test(data)
+    p_value <- result$p.value
+    
+    if(p_value>alpha){
+      print(paste("You data is normal,because your p_value =",p_value,">",alpha))
+      
+    }else{
+      print(paste("You data is not normal,because your p_value =",p_value,"<=",alpha))
+  
+    
+  }
+}
