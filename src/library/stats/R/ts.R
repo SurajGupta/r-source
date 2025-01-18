@@ -406,6 +406,16 @@ print.ts <- function(x, calendar, ...)
                     if(fr.x == 12) month.abb
                     else if(fr.x == 4) {
                         c("Qtr1", "Qtr2", "Qtr3", "Qtr4")
+                    } 
+                    else if(fr.x == 3) {
+                        c("Trim1", "Trim2", "Trim3")
+                    }
+                    else if (fr.x == 6) {
+                        c("Jan-Feb", "March-April", "May-June", "July-August",
+                        "September-October", "November-December")
+                    }
+                    else if(fr.x == 2) {
+                        c("Jan-June", "July-December")
                     } else paste0("p", 1L:fr.x)
                 if(NROW(x) <= fr.x && start(x)[1L] == end(x)[1L]) {
                     ## not more than one period
